@@ -30,7 +30,10 @@ object BrsLoweringPhases {
             // Phase 1: Validate and prepare
             ValidateSuspendUsageLowering(context),
 
-            // Phase 2: External interop preparation
+            // Phase 2: Parse @BrsInline code into AST (like JsCodeOutliningLowering)
+            BrsCodeOutliningLowering(context),
+
+            // Phase 3: External interop preparation
             BrsExternalLowering(context),
             DynamicAccessLowering(context),
             FieldObserverLowering(context),

@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrExternalPackageFragmentImpl
 import org.jetbrains.kotlin.ir.linkage.partial.partialLinkageConfig
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
+import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.impl.DescriptorlessExternalPackageFragmentSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContext
@@ -143,6 +144,12 @@ class BrsIrBackendContext(
      */
     val componentFieldObservers = mutableMapOf<IrClassSymbol, Map<String, IrFunction>>()
 
+    /**
+     * Map from @BrsInline function symbols to their parsed inline info.
+     * Populated by BrsCodeOutliningLowering, used during code generation.
+     */
+    val inlineFunctionInfo = mutableMapOf<IrFunctionSymbol, Any>()
+
     // ==================== Target Configuration ====================
 
     /**
@@ -156,6 +163,14 @@ class BrsIrBackendContext(
      */
     val supportsExceptions: Boolean
         get() = targetConfig.supportsExceptions()
+
+    // ==================== Runtime Helpers ====================
+
+    /**
+     * Whether runtime helper functions need to be generated.
+     * This is set to true initially and becomes false after helpers are added to the first file.
+     */
+    var needsRuntimeHelpers: Boolean = true
 
     /**
      * Whether continue statement is available on the target.

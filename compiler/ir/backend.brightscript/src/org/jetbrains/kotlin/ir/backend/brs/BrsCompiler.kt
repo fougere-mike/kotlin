@@ -6,13 +6,13 @@
 package org.jetbrains.kotlin.ir.backend.brs
 
 import org.jetbrains.kotlin.brs.BrsTargetConfig
-import org.jetbrains.kotlin.brs.backend.ast.BrsProgram
-import org.jetbrains.kotlin.brs.backend.ast.render
+import org.jetbrains.kotlin.brs.backend.ast.*
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.backend.brs.lower.BrsLoweringPhases
 import org.jetbrains.kotlin.ir.backend.brs.transformers.irToBrs.IrToBrsTransformer
+import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.name
@@ -89,6 +89,9 @@ class BrsCompiler(
             targetConfig = targetConfig
         )
 
+        // Create component extractor
+        val componentExtractor = BrsComponentExtractor(context)
+
         // Run lowering phases
         val loweredModule = BrsLoweringPhases.lower(irModule, context)
 
@@ -103,8 +106,8 @@ class BrsCompiler(
                 val output = compileFile(file, transformer, context)
                 outputs.add(output)
 
-                // Generate component XML if needed
-                generateComponentXml(file, context)?.let { (name, xml) ->
+                // Generate component XML for each component class in this file
+                generateComponentXmlForFile(file, componentExtractor, context).forEach { (name, xml) ->
                     componentXml[name] = xml
                 }
             } catch (e: Exception) {
@@ -121,6 +124,13 @@ class BrsCompiler(
         context: BrsIrBackendContext
     ): BrsCompilationOutput {
         val program = transformer.transformFile(irFile)
+
+        // Add runtime helpers to the first file only (they're shared)
+        if (context.needsRuntimeHelpers) {
+            addRuntimeHelpers(program)
+            context.needsRuntimeHelpers = false
+        }
+
         val sourceCode = program.render()
 
         val originalPath = irFile.path
@@ -134,51 +144,229 @@ class BrsCompiler(
         )
     }
 
+    /**
+     * Add runtime helper functions needed by the generated code.
+     */
+    private fun addRuntimeHelpers(program: BrsProgram) {
+        // Add isInstanceOf helper function for type checking
+        val isInstanceOfFunction = createIsInstanceOfHelper()
+        program.declarations.add(0, isInstanceOfFunction)
+    }
+
+    /**
+     * Create the isInstanceOf helper function.
+     *
+     * Generated BrightScript:
+     * ```
+     * function isInstanceOf(obj as Object, typeName as String) as Boolean
+     *     if obj = invalid then return false
+     *     if type(obj) <> "roAssociativeArray" then return false
+     *     proto = obj.__proto
+     *     if proto = invalid then return false
+     *     for each t in proto
+     *         if t = typeName then return true
+     *     end for
+     *     return false
+     * end function
+     * ```
+     */
+    private fun createIsInstanceOfHelper(): BrsFunction {
+        val body = BrsBlock(mutableListOf(
+            // if obj = invalid then return false
+            BrsIf(
+                condition = BrsBinaryOp(
+                    BrsIdentifier("obj"),
+                    BrsBinaryOperator.EQ,
+                    BrsInvalidLiteral()
+                ),
+                thenBranch = BrsBlock(mutableListOf(BrsReturn(BrsBooleanLiteral(false)))),
+                elseBranch = null
+            ),
+            // if type(obj) <> "roAssociativeArray" then return false
+            BrsIf(
+                condition = BrsBinaryOp(
+                    BrsTypeOf(BrsIdentifier("obj")),
+                    BrsBinaryOperator.NE,
+                    BrsStringLiteral("roAssociativeArray")
+                ),
+                thenBranch = BrsBlock(mutableListOf(BrsReturn(BrsBooleanLiteral(false)))),
+                elseBranch = null
+            ),
+            // proto = obj.__proto
+            BrsVariable(
+                name = "proto",
+                initializer = BrsDotAccess(BrsIdentifier("obj"), "__proto")
+            ),
+            // if proto = invalid then return false
+            BrsIf(
+                condition = BrsBinaryOp(
+                    BrsIdentifier("proto"),
+                    BrsBinaryOperator.EQ,
+                    BrsInvalidLiteral()
+                ),
+                thenBranch = BrsBlock(mutableListOf(BrsReturn(BrsBooleanLiteral(false)))),
+                elseBranch = null
+            ),
+            // for each t in proto
+            BrsForEach(
+                variable = "t",
+                iterable = BrsIdentifier("proto"),
+                body = BrsBlock(mutableListOf(
+                    // if t = typeName then return true
+                    BrsIf(
+                        condition = BrsBinaryOp(
+                            BrsIdentifier("t"),
+                            BrsBinaryOperator.EQ,
+                            BrsIdentifier("typeName")
+                        ),
+                        thenBranch = BrsBlock(mutableListOf(BrsReturn(BrsBooleanLiteral(true)))),
+                        elseBranch = null
+                    )
+                ))
+            ),
+            // return false
+            BrsReturn(BrsBooleanLiteral(false))
+        ))
+
+        return BrsFunction(
+            name = "isInstanceOf",
+            parameters = mutableListOf(
+                BrsParameter("obj", BrsType.OBJECT),
+                BrsParameter("typeName", BrsType.STRING)
+            ),
+            returnType = BrsType.BOOLEAN,
+            body = body
+        )
+    }
+
     private fun computeOutputPath(originalPath: String, context: BrsIrBackendContext): String {
         val fileName = File(originalPath).nameWithoutExtension + ".brs"
         return File(context.targetConfig.outputDir, fileName).path
     }
 
-    private fun generateComponentXml(
+    /**
+     * Generate component XML for all component classes in a file.
+     */
+    private fun generateComponentXmlForFile(
         irFile: IrFile,
+        extractor: BrsComponentExtractor,
         context: BrsIrBackendContext
-    ): Pair<String, String>? {
+    ): Map<String, String> {
+        val result = mutableMapOf<String, String>()
+
         // Find component classes in this file
-        val componentClasses = irFile.declarations.filterIsInstance<org.jetbrains.kotlin.ir.declarations.IrClass>()
-            .filter { context.isComponent(it) }
+        val componentClasses = irFile.declarations.filterIsInstance<IrClass>()
+            .filter { extractor.isComponent(it) }
 
-        if (componentClasses.isEmpty()) return null
-
-        // Generate XML for each component
-        val xmlBuilder = StringBuilder()
         for (componentClass in componentClasses) {
-            xmlBuilder.append(generateComponentXmlContent(componentClass, context))
+            val componentInfo = extractor.extractComponent(componentClass)
+            if (componentInfo != null) {
+                result[componentInfo.name] = generateComponentXmlContent(componentInfo, context)
+            }
         }
 
-        val componentName = componentClasses.first().name.asString()
-        return componentName to xmlBuilder.toString()
+        return result
     }
 
+    /**
+     * Generate the XML content for a SceneGraph component.
+     */
     private fun generateComponentXmlContent(
-        irClass: org.jetbrains.kotlin.ir.declarations.IrClass,
+        component: BrsComponentInfo,
         context: BrsIrBackendContext
     ): String {
-        val className = context.getBrsName(irClass)
+        val builder = StringBuilder()
 
-        // Find extends annotation or default to Group
-        val extendsType = "Group" // Will be extracted from annotation in full implementation
+        builder.appendLine("""<?xml version="1.0" encoding="utf-8" ?>""")
+        builder.appendLine("""<component name="${component.name}" extends="${component.extendsComponent}">""")
 
-        val scriptName = "${className}.brs"
+        // Add script reference
+        builder.appendLine("""    <script type="text/brightscript" uri="pkg:/source/${component.name}.brs" />""")
 
-        return """
-            <?xml version="1.0" encoding="utf-8" ?>
-            <component name="$className" extends="$extendsType">
-                <script type="text/brightscript" uri="pkg:/source/$scriptName" />
-                <interface>
-                    <!-- Fields and functions will be generated here -->
-                </interface>
-            </component>
-        """.trimIndent()
+        // Add additional scripts
+        for (script in component.additionalScripts) {
+            builder.appendLine("""    <script type="text/brightscript" uri="$script" />""")
+        }
+
+        // Generate interface section
+        builder.appendLine("    <interface>")
+
+        // Add fields
+        for (field in component.fields) {
+            builder.append("        <field id=\"${field.name}\" type=\"${field.type}\"")
+
+            field.defaultValue?.let { defaultValue ->
+                builder.append(" value=\"$defaultValue\"")
+            }
+
+            field.onChange?.let { onChange ->
+                builder.append(" onChange=\"$onChange\"")
+            }
+
+            if (field.alwaysNotify) {
+                builder.append(" alwaysNotify=\"true\"")
+            }
+
+            field.alias?.let { alias ->
+                builder.append(" alias=\"$alias\"")
+            }
+
+            builder.appendLine(" />")
+        }
+
+        // Add exported functions
+        for (export in component.exports) {
+            builder.appendLine("        <function name=\"${export.name}\" />")
+        }
+
+        builder.appendLine("    </interface>")
+        builder.appendLine("</component>")
+
+        return builder.toString()
+    }
+
+    /**
+     * Generate component initialization code for a component class.
+     *
+     * This creates the init() function that sets up field observers
+     * and initializes the component state.
+     */
+    fun generateComponentInitCode(component: BrsComponentInfo): BrsDeclaration {
+        val bodyStatements = mutableListOf<BrsStatement>()
+
+        // Add field observers for onChange handlers
+        for (field in component.fields) {
+            if (field.onChange != null) {
+                // m.top.observeField("fieldName", "handlerName")
+                bodyStatements.add(
+                    BrsExpressionStatement(
+                        BrsMethodCall(
+                            BrsDotAccess(BrsMRef(), "top"),
+                            "observeField",
+                            mutableListOf(
+                                BrsStringLiteral(field.name),
+                                BrsStringLiteral(field.onChange)
+                            )
+                        )
+                    )
+                )
+            }
+        }
+
+        // Initialize fields with default values from IR
+        for (field in component.fields) {
+            val irField = field.irField ?: field.irProperty?.backingField
+            if (irField?.initializer != null) {
+                // m.top.fieldName = initialValue
+                // Note: This would require transformer access - handled elsewhere
+            }
+        }
+
+        return BrsSub(
+            name = "init",
+            parameters = mutableListOf(),
+            body = BrsBlock(bodyStatements)
+        )
     }
 
     companion object {

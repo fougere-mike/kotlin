@@ -6,15 +6,19 @@
 package org.jetbrains.kotlin.ir.backend.brs.transformers.irToBrs
 
 import org.jetbrains.kotlin.brs.backend.ast.*
+import org.jetbrains.kotlin.ir.backend.brs.lower.BrsCodeOutliningLowering
+import org.jetbrains.kotlin.ir.backend.brs.lower.BrsInlineCallTransformer
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
+import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.util.isFunction
+import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.ir.util.isNullable
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitor
@@ -32,6 +36,7 @@ class IrToBrsTransformer(
 
     private val statementTransformer = IrStatementToBrsTransformer(this, context)
     private val expressionTransformer = IrExpressionToBrsTransformer(this, context)
+    private val inlineCallTransformer = BrsInlineCallTransformer(context)
 
     // ==================== Entry Points ====================
 
@@ -92,7 +97,14 @@ class IrToBrsTransformer(
             )
         }
 
-        val body = irFunction.body?.let { transformBody(it) } ?: BrsBlock()
+        // Check if this function has @BrsInline - use parsed code instead of IR body
+        val inlineInfo = context.inlineFunctionInfo[irFunction.symbol] as? BrsCodeOutliningLowering.BrsInlineInfo
+        val body = if (inlineInfo != null) {
+            // Use the parsed @BrsInline code
+            BrsBlock(inlineInfo.parsedStatements.toMutableList())
+        } else {
+            irFunction.body?.let { transformBody(it) } ?: BrsBlock()
+        }
 
         val returnType = mapTypeToBrs(irFunction.returnType)
 
@@ -137,6 +149,12 @@ class IrToBrsTransformer(
 
     /**
      * Transform a constructor to a BrightScript function.
+     *
+     * Classes are transformed to constructor functions that return associative arrays.
+     * Inheritance is handled via prototype chain pattern:
+     * - Child calls parent constructor first
+     * - Parent methods stored in `_super` for super calls
+     * - `__type` tracks class name, `__proto` tracks inheritance chain
      */
     private fun transformConstructor(irClass: IrClass, constructor: IrConstructor): BrsFunction? {
         val className = context.getBrsName(irClass)
@@ -153,11 +171,102 @@ class IrToBrsTransformer(
         // Build constructor body
         val bodyStatements = mutableListOf<BrsStatement>()
 
-        // Create the object (AA)
+        // Check if there's a superclass (not Any)
+        val superClass = irClass.superTypes
+            .mapNotNull { it.classOrNull?.owner }
+            .firstOrNull { !it.isInterface && it.name.asString() != "Any" }
+
+        if (superClass != null) {
+            // Call parent constructor: this = ParentClass_create(...)
+            val superClassName = context.getBrsName(superClass)
+            val superConstructorCall = BrsFunctionCall(
+                BrsIdentifier("${superClassName}_create"),
+                getSuperConstructorArgs(constructor)
+            )
+            bodyStatements.add(
+                BrsVariable(name = "this", initializer = superConstructorCall)
+            )
+
+            // Store parent methods for super calls: this._super = {}
+            bodyStatements.add(
+                BrsExpressionStatement(
+                    BrsBinaryOp(
+                        BrsDotAccess(BrsIdentifier("this"), "_super"),
+                        BrsBinaryOperator.EQ,
+                        BrsAALiteral()
+                    )
+                )
+            )
+
+            // Copy overridden methods to _super before overriding
+            for (function in irClass.declarations.filterIsInstance<IrSimpleFunction>()) {
+                if (!function.isFakeOverride && function.overriddenSymbols.isNotEmpty()) {
+                    val methodName = function.name.asString()
+                    bodyStatements.add(
+                        BrsExpressionStatement(
+                            BrsBinaryOp(
+                                BrsDotAccess(
+                                    BrsDotAccess(BrsIdentifier("this"), "_super"),
+                                    methodName
+                                ),
+                                BrsBinaryOperator.EQ,
+                                BrsDotAccess(BrsIdentifier("this"), methodName)
+                            )
+                        )
+                    )
+                }
+            }
+
+            // Update __proto chain
+            bodyStatements.add(
+                BrsExpressionStatement(
+                    BrsBinaryOp(
+                        BrsDotAccess(BrsIdentifier("this"), "__proto"),
+                        BrsBinaryOperator.EQ,
+                        BrsArrayLiteral(mutableListOf(
+                            BrsStringLiteral(className),
+                            BrsDotAccess(BrsIdentifier("this"), "__proto")
+                        ))
+                    )
+                )
+            )
+        } else {
+            // No superclass - create new object
+            bodyStatements.add(
+                BrsVariable(name = "this", initializer = BrsAALiteral())
+            )
+
+            // Set type info
+            bodyStatements.add(
+                BrsExpressionStatement(
+                    BrsBinaryOp(
+                        BrsDotAccess(BrsIdentifier("this"), "__type"),
+                        BrsBinaryOperator.EQ,
+                        BrsStringLiteral(className)
+                    )
+                )
+            )
+
+            // Initialize __proto chain with just this class
+            bodyStatements.add(
+                BrsExpressionStatement(
+                    BrsBinaryOp(
+                        BrsDotAccess(BrsIdentifier("this"), "__proto"),
+                        BrsBinaryOperator.EQ,
+                        BrsArrayLiteral(mutableListOf(BrsStringLiteral(className)))
+                    )
+                )
+            )
+        }
+
+        // Update __type to current class (for both inherited and base classes)
         bodyStatements.add(
-            BrsVariable(
-                name = "this",
-                initializer = BrsAALiteral()
+            BrsExpressionStatement(
+                BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier("this"), "__type"),
+                    BrsBinaryOperator.EQ,
+                    BrsStringLiteral(className)
+                )
             )
         )
 
@@ -176,10 +285,31 @@ class IrToBrsTransformer(
             }
         }
 
-        // Execute constructor body
+        // Add methods to the instance
+        for (function in irClass.declarations.filterIsInstance<IrSimpleFunction>()) {
+            if (!function.isFakeOverride && !function.isExternal) {
+                val methodName = function.name.asString()
+                val fullMethodName = "${className}_${methodName}"
+                bodyStatements.add(
+                    BrsExpressionStatement(
+                        BrsBinaryOp(
+                            BrsDotAccess(BrsIdentifier("this"), methodName),
+                            BrsBinaryOperator.EQ,
+                            BrsIdentifier(fullMethodName)
+                        )
+                    )
+                )
+            }
+        }
+
+        // Execute constructor body (handles property initialization from parameters, etc.)
         constructor.body?.let { body ->
             val transformed = transformBody(body)
-            bodyStatements.addAll(transformed.statements)
+            // Filter out delegating constructor calls since we handle them above
+            val filteredStatements = transformed.statements.filter { stmt ->
+                !(stmt is BrsExpressionStatement && isDelegatingConstructorCall(stmt))
+            }
+            bodyStatements.addAll(filteredStatements)
         }
 
         // Return the constructed object
@@ -191,6 +321,35 @@ class IrToBrsTransformer(
             BrsType.OBJECT,
             BrsBlock(bodyStatements)
         )
+    }
+
+    /**
+     * Get arguments for super constructor call from the delegating constructor call in the body.
+     */
+    private fun getSuperConstructorArgs(constructor: IrConstructor): MutableList<BrsExpression> {
+        // Find the delegating constructor call in the body
+        val delegatingCall = constructor.body?.let { body ->
+            when (body) {
+                is IrBlockBody -> body.statements.filterIsInstance<IrDelegatingConstructorCall>().firstOrNull()
+                else -> null
+            }
+        }
+
+        return if (delegatingCall != null) {
+            (0 until delegatingCall.valueArgumentsCount).mapNotNull { i ->
+                delegatingCall.getValueArgument(i)?.let { transformExpression(it) }
+            }.toMutableList()
+        } else {
+            mutableListOf()
+        }
+    }
+
+    /**
+     * Check if a statement is a delegating constructor call (super() or this()).
+     */
+    private fun isDelegatingConstructorCall(stmt: BrsStatement): Boolean {
+        // This is a simplified check - in practice we'd track which IR statements map to which BRS statements
+        return false
     }
 
     /**
@@ -526,6 +685,12 @@ class IrExpressionToBrsTransformer(
     override fun visitCall(expression: IrCall, data: Unit): BrsExpression {
         val function = expression.symbol.owner
 
+        // Check for operator expressions based on origin
+        expression.origin?.let { origin ->
+            val operatorResult = transformOperator(expression, origin)
+            if (operatorResult != null) return operatorResult
+        }
+
         // Check for intrinsics
         if (context.intrinsics.isIntrinsic(expression.symbol)) {
             return transformIntrinsic(expression)
@@ -587,6 +752,68 @@ class IrExpressionToBrsTransformer(
                 BrsFunctionCall(BrsIdentifier("print"), args.toMutableList())
             }
             else -> BrsFunctionCall(BrsIdentifier(name), mutableListOf())
+        }
+    }
+
+    /**
+     * Transform operator calls to BrightScript binary/unary operations.
+     * Returns null if the origin is not an operator origin.
+     */
+    private fun transformOperator(expression: IrCall, origin: IrStatementOrigin): BrsExpression? {
+        // Binary operators
+        val binaryOp = when (origin) {
+            IrStatementOrigin.PLUS -> BrsBinaryOperator.ADD
+            IrStatementOrigin.MINUS -> BrsBinaryOperator.SUB
+            IrStatementOrigin.MUL -> BrsBinaryOperator.MUL
+            IrStatementOrigin.DIV -> BrsBinaryOperator.DIV
+            IrStatementOrigin.PERC -> BrsBinaryOperator.MOD
+            IrStatementOrigin.LT -> BrsBinaryOperator.LT
+            IrStatementOrigin.GT -> BrsBinaryOperator.GT
+            IrStatementOrigin.LTEQ -> BrsBinaryOperator.LE
+            IrStatementOrigin.GTEQ -> BrsBinaryOperator.GE
+            IrStatementOrigin.EQEQ -> BrsBinaryOperator.EQ
+            IrStatementOrigin.EXCLEQ -> BrsBinaryOperator.NE
+            else -> null
+        }
+
+        if (binaryOp != null) {
+            val left = expression.dispatchReceiver?.let { visitElement(it, Unit) }
+                ?: expression.getValueArgument(0)?.let { visitElement(it, Unit) }
+                ?: return null
+            val right = expression.getValueArgument(0)?.let { visitElement(it, Unit) }
+                ?: expression.getValueArgument(1)?.let { visitElement(it, Unit) }
+                ?: return null
+            return BrsBinaryOp(left, binaryOp, right)
+        }
+
+        // Unary operators
+        return when (origin) {
+            IrStatementOrigin.UMINUS -> {
+                val operand = expression.dispatchReceiver?.let { visitElement(it, Unit) }
+                    ?: expression.getValueArgument(0)?.let { visitElement(it, Unit) }
+                    ?: return null
+                BrsUnaryOp(BrsUnaryOperator.NEG, operand)
+            }
+            IrStatementOrigin.UPLUS -> {
+                // Unary plus is a no-op in most cases
+                expression.dispatchReceiver?.let { visitElement(it, Unit) }
+                    ?: expression.getValueArgument(0)?.let { visitElement(it, Unit) }
+            }
+            IrStatementOrigin.EXCL -> {
+                val operand = expression.dispatchReceiver?.let { visitElement(it, Unit) }
+                    ?: expression.getValueArgument(0)?.let { visitElement(it, Unit) }
+                    ?: return null
+                BrsUnaryOp(BrsUnaryOperator.NOT, operand)
+            }
+            IrStatementOrigin.GET_ARRAY_ELEMENT -> {
+                // Array access: arr[index]
+                val array = expression.dispatchReceiver?.let { visitElement(it, Unit) }
+                    ?: return null
+                val index = expression.getValueArgument(0)?.let { visitElement(it, Unit) }
+                    ?: return null
+                BrsIndexAccess(array, index)
+            }
+            else -> null
         }
     }
 
@@ -660,31 +887,63 @@ class IrExpressionToBrsTransformer(
             IrTypeOperator.SAFE_CAST -> {
                 // Safe cast returns invalid if type doesn't match
                 BrsConditional(
-                    BrsBinaryOp(
-                        BrsTypeOf(argument.deepCopy()),
-                        BrsBinaryOperator.EQ,
-                        BrsStringLiteral(mapTypeToString(expression.typeOperand))
-                    ),
+                    generateInstanceCheck(argument.deepCopy(), expression.typeOperand),
                     argument,
                     BrsInvalidLiteral()
                 )
             }
             IrTypeOperator.INSTANCEOF -> {
-                BrsBinaryOp(
-                    BrsTypeOf(argument),
-                    BrsBinaryOperator.EQ,
-                    BrsStringLiteral(mapTypeToString(expression.typeOperand))
-                )
+                generateInstanceCheck(argument, expression.typeOperand)
             }
             IrTypeOperator.NOT_INSTANCEOF -> {
-                BrsBinaryOp(
-                    BrsTypeOf(argument),
-                    BrsBinaryOperator.NE,
-                    BrsStringLiteral(mapTypeToString(expression.typeOperand))
+                BrsUnaryOp(
+                    BrsUnaryOperator.NOT,
+                    generateInstanceCheck(argument, expression.typeOperand)
                 )
             }
             else -> argument
         }
+    }
+
+    /**
+     * Generate a type check expression for the given argument and target type.
+     *
+     * For primitive types, uses typeof() comparison.
+     * For class types, checks the __proto chain for the class name.
+     */
+    private fun generateInstanceCheck(argument: BrsExpression, targetType: IrType): BrsExpression {
+        // For primitive types, use typeof
+        when {
+            targetType.isInt() || targetType.isShort() || targetType.isByte() ->
+                return BrsBinaryOp(BrsTypeOf(argument), BrsBinaryOperator.EQ, BrsStringLiteral("roInt"))
+            targetType.isLong() ->
+                return BrsBinaryOp(BrsTypeOf(argument), BrsBinaryOperator.EQ, BrsStringLiteral("LongInteger"))
+            targetType.isFloat() ->
+                return BrsBinaryOp(BrsTypeOf(argument), BrsBinaryOperator.EQ, BrsStringLiteral("roFloat"))
+            targetType.isDouble() ->
+                return BrsBinaryOp(BrsTypeOf(argument), BrsBinaryOperator.EQ, BrsStringLiteral("roDouble"))
+            targetType.isBoolean() ->
+                return BrsBinaryOp(BrsTypeOf(argument), BrsBinaryOperator.EQ, BrsStringLiteral("roBoolean"))
+            targetType.isString() ->
+                return BrsBinaryOp(BrsTypeOf(argument), BrsBinaryOperator.EQ, BrsStringLiteral("roString"))
+            targetType.isArray() ->
+                return BrsBinaryOp(BrsTypeOf(argument), BrsBinaryOperator.EQ, BrsStringLiteral("roArray"))
+        }
+
+        // For class types, check the __proto chain
+        val classType = targetType.classOrNull?.owner
+        val className = if (classType != null) {
+            context.getBrsName(classType)
+        } else {
+            targetType.classFqName?.shortName()?.asString() ?: "Object"
+        }
+
+        // Generate: isInstanceOf(argument, "ClassName")
+        // This requires the isInstanceOf helper function to be generated
+        return BrsFunctionCall(
+            BrsIdentifier("isInstanceOf"),
+            mutableListOf(argument, BrsStringLiteral(className))
+        )
     }
 
     private fun mapTypeToString(type: IrType): String {
@@ -725,6 +984,23 @@ class IrExpressionToBrsTransformer(
     // ==================== Control Flow ====================
 
     override fun visitWhen(expression: IrWhen, data: Unit): BrsExpression {
+        // Check for ANDAND and OROR origins (logical operators)
+        when (expression.origin) {
+            IrStatementOrigin.ANDAND -> {
+                // a && b is represented as: if (a) b else false
+                val left = visitElement(expression.branches[0].condition, data)
+                val right = visitElement(expression.branches[0].result, data)
+                return BrsBinaryOp(left, BrsBinaryOperator.AND, right)
+            }
+            IrStatementOrigin.OROR -> {
+                // a || b is represented as: if (a) true else b
+                val left = visitElement(expression.branches[0].condition, data)
+                val right = visitElement(expression.branches[1].result, data)
+                return BrsBinaryOp(left, BrsBinaryOperator.OR, right)
+            }
+            else -> { /* fall through to default handling */ }
+        }
+
         // Transform to nested conditional expressions
         val branches = expression.branches
 
