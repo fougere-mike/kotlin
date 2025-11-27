@@ -30,6 +30,9 @@ dependencies {
 
     implementation(intellijCore())
     implementation(commonDependency("org.jetbrains.intellij.deps:trove4j"))
+
+    // Standard library for runtime
+    runtimeOnly(kotlinStdlib())
 }
 
 sourceSets {
