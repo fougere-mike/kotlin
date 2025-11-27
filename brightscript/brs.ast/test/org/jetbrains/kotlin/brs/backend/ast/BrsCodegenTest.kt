@@ -78,7 +78,7 @@ class BrsCodegenTest {
             ),
             returnType = BrsType.OBJECT,
             body = BrsBlock(mutableListOf(
-                BrsVariable("this", BrsType.OBJECT, BrsAALiteral()),
+                BrsVariable("this", null, BrsAALiteral()),  // No type annotation for cleaner output
                 BrsExpressionStatement(BrsBinaryOp(
                     BrsDotAccess(BrsIdentifier("this"), "name"),
                     BrsBinaryOperator.EQ,
@@ -338,7 +338,7 @@ class BrsCodegenTest {
                     name = "main",
                     parameters = mutableListOf(),
                     body = BrsBlock(mutableListOf(
-                        BrsVariable("result", BrsType.INTEGER,
+                        BrsVariable("result", null,  // No type annotation for cleaner output
                             BrsFunctionCall(BrsIdentifier("add"), mutableListOf(
                                 BrsIntLiteral(1),
                                 BrsIntLiteral(2)
