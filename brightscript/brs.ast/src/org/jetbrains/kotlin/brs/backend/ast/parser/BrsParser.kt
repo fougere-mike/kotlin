@@ -422,20 +422,38 @@ class BrsParser(private val tokens: List<BrsToken>) {
     }
 
     private fun parseExpressionStatement(): BrsStatement {
+        // Look ahead for simple variable assignment: IDENTIFIER = expr
+        // We need to detect this BEFORE calling expression() because expression()
+        // will consume the '=' as an equality comparison operator
+        if (check(BrsTokenType.IDENTIFIER)) {
+            val savedCurrent = current
+            val nameToken = advance()
+
+            when {
+                check(BrsTokenType.EQ) -> {
+                    // Simple assignment: x = value
+                    advance()
+                    val value = expression()
+                    return BrsVariable(nameToken.text, null, value)
+                }
+                check(BrsTokenType.AS) -> {
+                    // Variable declaration with type: x as Integer = 5
+                    advance()
+                    val type = parseType()
+                    val value = if (match(BrsTokenType.EQ)) expression() else null
+                    return BrsVariable(nameToken.text, type, value)
+                }
+                else -> {
+                    // Not an assignment, backtrack and parse as expression
+                    current = savedCurrent
+                }
+            }
+        }
+
         val expr = expression()
 
-        // Check for assignment
-        return if (expr is BrsIdentifier && check(BrsTokenType.EQ)) {
-            advance()
-            val value = expression()
-            BrsVariable(expr.name, null, value)
-        } else if (expr is BrsIdentifier && check(BrsTokenType.AS)) {
-            // Variable declaration with type: x as Integer = 5
-            advance()
-            val type = parseType()
-            val value = if (match(BrsTokenType.EQ)) expression() else null
-            BrsVariable(expr.name, type, value)
-        } else if (expr is BrsDotAccess && check(BrsTokenType.EQ)) {
+        // Check for compound assignment (dot access or index access)
+        return if (expr is BrsDotAccess && check(BrsTokenType.EQ)) {
             // Assignment to field: obj.field = value
             advance()
             val value = expression()

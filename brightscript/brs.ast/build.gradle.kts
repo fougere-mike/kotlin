@@ -16,3 +16,7 @@ sourceSets {
         projectDefault()
     }
 }
+
+tasks.test {
+    useJUnitPlatform()
+}
