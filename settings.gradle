@@ -141,6 +141,7 @@ include ":benchmarks",
         ":compiler:cli-base",
         ":compiler:cli",
         ":compiler:cli-js",
+        ":compiler:cli-brs",
         ":compiler:incremental-compilation-impl",
         ":compiler:tests-compiler-utils",
         ":compiler:tests-common",
@@ -160,6 +161,9 @@ include ":benchmarks",
         ":js:js.translator",
         ":js:js.tests",
         ":js:js.tests:klib-compatibility",
+        ":brightscript:brs.ast",
+        ":core:compiler.common.brightscript",
+        ":compiler:backend.brightscript",
         ":native:kotlin-native-utils",
         ":native:frontend.native",
         ":native:kotlin-klib-commonizer",
@@ -709,6 +713,7 @@ if (!buildProperties.inJpsBuildIdeaSync) {
             ":kotlin-stdlib-jdk8",
             ":kotlin-stdlib:samples",
             ":kotlin-stdlib-jvm-minimal-for-test",
+            ":kotlin-stdlib-brs",
             ":tools:binary-compatibility-validator",
             ":tools:jdk-api-validator",
             ":tools:kotlin-stdlib-gen",
@@ -730,6 +735,7 @@ if (!buildProperties.inJpsBuildIdeaSync) {
     project(':kotlin-stdlib-jdk8').projectDir = "$rootDir/libraries/stdlib/jdk8" as File
     project(':kotlin-stdlib:samples').projectDir = "$rootDir/libraries/stdlib/samples" as File
     project(":kotlin-stdlib-jvm-minimal-for-test").projectDir = "$rootDir/libraries/stdlib/jvm-minimal-for-test" as File
+    project(":kotlin-stdlib-brs").projectDir = "$rootDir/libraries/stdlib/brs" as File
 
     project(':tools').projectDir = "$rootDir/libraries/tools" as File
     project(':tools:binary-compatibility-validator').projectDir = "$rootDir/libraries/tools/binary-compatibility-validator" as File
@@ -758,6 +764,7 @@ project(':kotlin-build-common').projectDir = "$rootDir/build-common" as File
 project(':compiler:cli-common').projectDir = "$rootDir/compiler/cli/cli-common" as File
 project(':compiler:cli-base').projectDir = "$rootDir/compiler/cli/cli-base" as File
 project(':compiler:cli-js').projectDir = "$rootDir/compiler/cli/cli-js" as File
+project(':compiler:cli-brs').projectDir = "$rootDir/compiler/cli/cli-brs" as File
 project(':kotlin-runner').projectDir = "$rootDir/compiler/cli/cli-runner" as File
 project(':kotlin-daemon').projectDir = "$rootDir/compiler/daemon" as File
 project(':daemon-common').projectDir = "$rootDir/compiler/daemon/daemon-common" as File
@@ -775,6 +782,7 @@ project(':compiler:ir.backend.native').projectDir = "$rootDir/compiler/ir/backen
 project(':compiler:ir.actualization').projectDir = "$rootDir/compiler/ir/ir.actualization" as File
 project(':compiler:ir.inline').projectDir = "$rootDir/compiler/ir/ir.inline" as File
 project(':compiler:backend.js').projectDir = "$rootDir/compiler/ir/backend.js" as File
+project(':compiler:backend.brightscript').projectDir = "$rootDir/compiler/ir/backend.brightscript" as File
 project(':compiler:backend.wasm').projectDir = "$rootDir/compiler/ir/backend.wasm" as File
 project(':compiler:backend.jvm').projectDir = "$rootDir/compiler/ir/backend.jvm" as File
 project(':compiler:backend.jvm.lower').projectDir = "$rootDir/compiler/ir/backend.jvm/lower" as File

@@ -22,4 +22,5 @@ public enum EnvironmentConfigFiles {
     NATIVE_CONFIG_FILES,
     WASM_CONFIG_FILES,
     METADATA_CONFIG_FILES,
+    BRS_CONFIG_FILES,
 }

@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.fir.java.FirProjectSessionProvider
 import org.jetbrains.kotlin.fir.resolve.providers.impl.FirBuiltinSyntheticFunctionInterfaceProvider
 import org.jetbrains.kotlin.fir.resolve.providers.impl.syntheticFunctionInterfacesSymbolProvider
 import org.jetbrains.kotlin.fir.session.*
+import org.jetbrains.kotlin.fir.session.FirBrsSessionFactory
 import org.jetbrains.kotlin.fir.session.environment.AbstractProjectFileSearchScope
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.library.KotlinLibrary
@@ -32,6 +33,7 @@ import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
 import org.jetbrains.kotlin.platform.wasm.WasmTarget
+import org.jetbrains.kotlin.platform.brs.brsTargetPlatform
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.multiplatform.hmppModuleName
 import org.jetbrains.kotlin.resolve.multiplatform.isCommonSource
@@ -232,6 +234,52 @@ fun <F> prepareWasmSessions(
             extensionRegistrars,
             configuration.languageVersionSettings,
             configuration.wasmTarget,
+            lookupTracker,
+            icData = icData,
+            init = sessionConfigurator,
+        )
+    }
+}
+
+/**
+ * Creates library session and sources session for BrightScript platform
+ * Number of created session depends on mode of MPP:
+ *   - disabled
+ *   - legacy (one platform and one common module)
+ *   - HMPP (multiple number of modules)
+ */
+fun <F> prepareBrsSessions(
+    files: List<F>,
+    configuration: CompilerConfiguration,
+    rootModuleName: Name,
+    resolvedLibraries: List<KotlinLibrary>,
+    libraryList: DependencyListForCliModule,
+    extensionRegistrars: List<FirExtensionRegistrar>,
+    isCommonSource: (F) -> Boolean,
+    fileBelongsToModule: (F, String) -> Boolean,
+    lookupTracker: LookupTracker?,
+    icData: KlibIcData?,
+): List<SessionWithSources<F>> {
+    return SessionConstructionUtils.prepareSessions(
+        files, configuration, rootModuleName, brsTargetPlatform(),
+        metadataCompilationMode = false, libraryList, isCommonSource, isScript = { false },
+        fileBelongsToModule,
+        createLibrarySession = { sessionProvider ->
+            FirBrsSessionFactory.createLibrarySession(
+                rootModuleName,
+                resolvedLibraries,
+                sessionProvider,
+                libraryList.moduleDataProvider,
+                extensionRegistrars,
+                configuration,
+            )
+        }
+    ) { _, moduleData, sessionProvider, sessionConfigurator ->
+        FirBrsSessionFactory.createModuleBasedSession(
+            moduleData,
+            sessionProvider,
+            extensionRegistrars,
+            configuration,
             lookupTracker,
             icData = icData,
             init = sessionConfigurator,
