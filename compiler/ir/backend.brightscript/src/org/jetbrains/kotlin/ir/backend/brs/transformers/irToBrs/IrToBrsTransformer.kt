@@ -1173,9 +1173,21 @@ class IrToBrsTransformer(
 
     /**
      * Transform an IR statement to a BrightScript statement.
+     *
+     * Note: Some IR "statements" are actually expressions (like IrSetField).
+     * When these appear in a statement position, we wrap them in BrsExpressionStatement.
      */
     fun transformStatement(statement: IrStatement): BrsStatement? {
-        return statement.accept(statementTransformer, Unit)
+        // First try the statement transformer
+        val result = statement.accept(statementTransformer, Unit)
+        if (result != null) return result
+
+        // If the statement is actually an expression, wrap it in an expression statement
+        if (statement is IrExpression) {
+            return BrsExpressionStatement(transformExpression(statement))
+        }
+
+        return null
     }
 
     // ==================== Expressions ====================
@@ -1627,6 +1639,19 @@ class IrExpressionToBrsTransformer(
         }
 
         return BrsDotAccess(receiver, field.name.asString())
+    }
+
+    override fun visitSetField(expression: IrSetField, data: Unit): BrsExpression {
+        val field = expression.symbol.owner
+        val receiver = expression.receiver?.let { it.accept(this, data) }
+            ?: BrsMRef()
+
+        // Generate assignment expression: receiver.field = value
+        return BrsBinaryOp(
+            BrsDotAccess(receiver, field.name.asString()),
+            BrsBinaryOperator.EQ,
+            expression.value.accept(this, data)
+        )
     }
 
     override fun visitGetObjectValue(expression: IrGetObjectValue, data: Unit): BrsExpression {
