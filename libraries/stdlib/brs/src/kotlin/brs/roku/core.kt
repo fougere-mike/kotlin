@@ -8,6 +8,7 @@
 package kotlin.brs.roku
 
 import kotlin.brs.*
+import kotlin.js.definedExternally
 
 /**
  * Base interface for all BrightScript roInterface types.
@@ -24,7 +25,7 @@ public external class RoArray : RoInterface {
      * @param size Initial size (optional).
      * @param resize If true, array is resizable (default: true).
      */
-    public constructor(size: Int = 0, resize: Boolean = true)
+    public constructor(size: Int = definedExternally, resize: Boolean = definedExternally)
 
     /**
      * Appends a value to the end of the array.
@@ -140,12 +141,12 @@ public external class RoAssociativeArray : RoInterface {
  */
 @BrsExternal
 public external class RoString : RoInterface {
-    public constructor(value: String = "")
+    public constructor(value: String = definedExternally)
 
     public fun len(): Int
     public fun left(count: Int): String
     public fun right(count: Int): String
-    public fun mid(start: Int, length: Int = -1): String
+    public fun mid(start: Int, length: Int = definedExternally): String
     public fun instr(substring: String): Int
     public fun instr(start: Int, substring: String): Int
     public fun trim(): String
@@ -161,7 +162,7 @@ public external class RoString : RoInterface {
  */
 @BrsExternal
 public external class RoRegex : RoInterface {
-    public constructor(pattern: String, flags: String = "")
+    public constructor(pattern: String, flags: String = definedExternally)
 
     public fun isMatch(str: String): Boolean
     public fun match(str: String): RoArray

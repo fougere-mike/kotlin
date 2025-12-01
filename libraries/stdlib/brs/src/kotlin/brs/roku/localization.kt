@@ -193,8 +193,8 @@ public fun isLocaleAvailable(locale: String): Boolean {
  * Note: BrightScript has limited number formatting, this provides a basic implementation.
  */
 public fun formatNumber(value: Double, decimals: Int = 2): String {
-    val multiplier = Math.pow(10.0, decimals.toDouble())
-    val rounded = Math.round(value * multiplier) / multiplier
+    val multiplier = mathPow(10.0, decimals.toDouble())
+    val rounded = mathRound(value * multiplier) / multiplier
     return rounded.toString()
 }
 
@@ -272,11 +272,19 @@ private fun dayName(dayOfWeek: Int, abbreviated: Boolean): String {
     return names.getOrElse(dayOfWeek) { "Unknown" }
 }
 
-// Math helper for formatting
-private object Math {
-    @BrsInline("return int(x + 0.5)")
-    external fun round(x: Double): Long
-
-    @BrsInline("return x ^ y")
-    external fun pow(x: Double, y: Double): Double
+// Math helper for formatting - using inline implementations
+// Note: BrightScript math functions will be inlined by the backend
+private fun mathRound(x: Double): Long = (x + 0.5).toLong()
+private fun mathPow(x: Double, y: Double): Double {
+    // Simple integer power implementation
+    var result = 1.0
+    var exp = y.toInt()
+    if (exp < 0) {
+        return 1.0 / mathPow(x, (-exp).toDouble())
+    }
+    while (exp > 0) {
+        result *= x
+        exp--
+    }
+    return result
 }

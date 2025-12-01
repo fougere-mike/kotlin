@@ -8,6 +8,7 @@
 package kotlin.brs.roku
 
 import kotlin.brs.*
+import kotlin.js.definedExternally
 
 /**
  * Base class for all SceneGraph nodes.
@@ -112,7 +113,7 @@ public external open class Node : RoInterface {
     /**
      * Updates fields only if values differ.
      */
-    public fun update(fields: RoAssociativeArray, addFields: Boolean = false)
+    public fun update(fields: RoAssociativeArray, addFields: Boolean = definedExternally)
 
     /**
      * Calls a function on this node.
@@ -268,14 +269,7 @@ public external class Timer : Node {
     public var fire: Boolean
 }
 
-/**
- * Task node - runs background operations.
- */
-@BrsExternal
-public external open class Task : Node {
-    public var control: String // "run", "stop", "done"
-    public var state: String // "init", "run", "stop", "done"
-}
+// Task node is defined in task.kt with full documentation
 
 /**
  * ContentNode - holds content metadata.

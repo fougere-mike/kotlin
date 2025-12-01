@@ -10,7 +10,7 @@ package kotlin.io
  *
  * In BrightScript, this outputs to the debug console (BrightScript debugger).
  */
-public actual fun println() {
+public fun println() {
     brsIntrinsicPrint("")
 }
 
@@ -19,7 +19,7 @@ public actual fun println() {
  *
  * In BrightScript, this outputs to the debug console (BrightScript debugger).
  */
-public actual fun println(message: Any?) {
+public fun println(message: Any?) {
     brsIntrinsicPrint(message?.toString() ?: "null")
 }
 
@@ -30,7 +30,7 @@ public actual fun println(message: Any?) {
  * Note: BrightScript's print statement always adds a newline, so this may behave
  * differently than on other platforms when multiple print calls are made.
  */
-public actual fun print(message: Any?) {
+public fun print(message: Any?) {
     // BrightScript doesn't have a true "print without newline" so we use a special intrinsic
     brsIntrinsicPrintNoNewline(message?.toString() ?: "null")
 }
@@ -41,7 +41,7 @@ public actual fun print(message: Any?) {
  * @throws UnsupportedOperationException as Roku/BrightScript does not support console input.
  */
 @SinceKotlin("1.6")
-public actual fun readln(): String = throw UnsupportedOperationException("readln is not supported in Kotlin/BRS")
+public fun readln(): String = throw UnsupportedOperationException("readln is not supported in Kotlin/BRS")
 
 /**
  * Reads a line of input from the standard input stream.
@@ -49,7 +49,7 @@ public actual fun readln(): String = throw UnsupportedOperationException("readln
  * @throws UnsupportedOperationException as Roku/BrightScript does not support console input.
  */
 @SinceKotlin("1.6")
-public actual fun readlnOrNull(): String? = throw UnsupportedOperationException("readlnOrNull is not supported in Kotlin/BRS")
+public fun readlnOrNull(): String? = throw UnsupportedOperationException("readlnOrNull is not supported in Kotlin/BRS")
 
 /**
  * Intrinsic function for printing with a newline.

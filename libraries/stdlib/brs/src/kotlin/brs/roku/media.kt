@@ -8,111 +8,12 @@
 package kotlin.brs.roku
 
 import kotlin.brs.*
+import kotlin.js.definedExternally
 
 // ============================================
 // SceneGraph Media Nodes
 // ============================================
-
-/**
- * Video node - plays video content.
- *
- * Primary video playback node in SceneGraph apps.
- */
-@BrsExternal
-public external class Video : Group {
-    public var content: Node?
-    public var control: String
-    public var state: String
-    public var position: Float
-    public var duration: Float
-    public var bufferingStatus: RoAssociativeArray
-    public var videoFormat: String
-    public var streamingSegment: RoAssociativeArray
-    public var loop: Boolean
-    public var mute: Boolean
-    public var enableUI: Boolean
-    public var enableTrickPlay: Boolean
-    public var trickPlayBar: Node?
-    public var retrievingBar: Node?
-    public var bufferingBar: Node?
-    public var width: Float
-    public var height: Float
-    public var maxVideoDecodeResolution: String
-    public var globalCaptionMode: String
-    public var subtitleConfig: RoAssociativeArray
-    public var audioTrack: Int
-    public var notificationInterval: Float
-    public var timedMetaDataSelectionKeys: RoArray
-    public var timedMetaData: RoAssociativeArray
-    public var contentIsPlaylist: Boolean
-    public var disableScreenSaver: Boolean
-
-    public fun seek(position: Int)
-    public fun pause()
-    public fun resume()
-}
-
-/**
- * Audio node - plays audio content.
- *
- * Primary audio playback node in SceneGraph apps.
- */
-@BrsExternal
-public external class Audio : Node {
-    public var content: Node?
-    public var contentIndex: Int
-    public var control: String
-    public var state: String
-    public var loop: Boolean
-    public var seek: Int
-    public var timedMetaDataSelectionKeys: RoArray
-    public var timedMetaData: RoAssociativeArray
-    public var streamInfo: RoAssociativeArray
-    public var notificationInterval: Float
-
-    public fun pause()
-    public fun resume()
-}
-
-/**
- * ContentNode - content metadata container.
- *
- * Used to hold metadata for media items.
- */
-@BrsExternal
-public external class ContentNode : Node {
-    public var title: String
-    public var titleSeason: String
-    public var description: String
-    public var rating: String
-    public var starRating: Int
-    public var userStarRating: Int
-    public var releaseDate: String
-    public var length: Int
-    public var numEpisodes: Int
-    public var hdBranded: Boolean
-    public var hdBrandDisplayMode: String
-    public var isHD: Boolean
-    public var live: Boolean
-    public var url: String
-    public var streamFormat: String
-    public var contentType: String
-    public var sdPosterUrl: String
-    public var hdPosterUrl: String
-    public var fhdPosterUrl: String
-    public var shortDescriptionLine1: String
-    public var shortDescriptionLine2: String
-    public var actors: RoArray
-    public var directors: RoArray
-    public var categories: RoArray
-    public var genres: RoArray
-    public var subtitleConfig: RoAssociativeArray
-    public var playStart: Int
-    public var playDuration: Int
-    public var bookmarkPosition: Int
-    public var handlerConfigVideo: RoAssociativeArray
-    public var handlerConfigAudio: RoAssociativeArray
-}
+// Note: Video, Audio, ContentNode are defined in scenegraph.kt
 
 // ============================================
 // Legacy Media Objects (non-SceneGraph)
@@ -238,7 +139,7 @@ public external class RoVideoPlayerEvent : RoInterface {
 public external class RoAudioResource : RoInterface {
     public constructor(resource: String)
 
-    public fun trigger(volume: Int, channel: Int = 0): Boolean
+    public fun trigger(volume: Int, channel: Int = definedExternally): Boolean
     public fun stop(): Boolean
     public fun isPlaying(): Boolean
     public fun setMaxStreams(maxStreams: Int): Boolean
@@ -253,7 +154,7 @@ public external class RoAudioGuide : RoInterface {
     public constructor()
 
     public fun setMessagePort(port: RoMessagePort)
-    public fun say(text: String, flush: Boolean = false, voice: String = ""): Int
+    public fun say(text: String, flush: Boolean = definedExternally, voice: String = definedExternally): Int
     public fun flush(): Boolean
     public fun silence(duration: Int): Int
 }
@@ -270,7 +171,7 @@ public external class RoMicrophone : RoInterface {
     public fun startRecording(): Boolean
     public fun stopRecording(): RoByteArray
     public fun canRecord(): Boolean
-    public fun recordToFile(path: String, sampleRate: Int = 16000): Boolean
+    public fun recordToFile(path: String, sampleRate: Int = definedExternally): Boolean
 }
 
 // ============================================
@@ -306,10 +207,10 @@ public external class RoBitmap : RoInterface {
 public external class RoFont : RoInterface {
     public constructor()
 
-    public fun getDefaultFont(size: Int, bold: Boolean = false, italic: Boolean = false): RoFont
+    public fun getDefaultFont(size: Int, bold: Boolean = definedExternally, italic: Boolean = definedExternally): RoFont
     public fun getDefaultFontSize(): Int
     public fun getOneLineHeight(): Int
-    public fun getOneLineWidth(text: String, maxWidth: Int = 0): Int
+    public fun getOneLineWidth(text: String, maxWidth: Int = definedExternally): Int
     public fun getAscent(): Int
     public fun getDescent(): Int
     public fun getMaxAdvance(): Int
@@ -324,7 +225,7 @@ public external class RoFontRegistry : RoInterface {
     public constructor()
 
     public fun getFamilies(): RoArray
-    public fun getFont(family: String, size: Int, bold: Boolean = false, italic: Boolean = false): RoFont
-    public fun getDefaultFont(size: Int, bold: Boolean = false, italic: Boolean = false): RoFont
+    public fun getFont(family: String, size: Int, bold: Boolean = definedExternally, italic: Boolean = definedExternally): RoFont
+    public fun getDefaultFont(size: Int, bold: Boolean = definedExternally, italic: Boolean = definedExternally): RoFont
     public fun register(path: String): Boolean
 }

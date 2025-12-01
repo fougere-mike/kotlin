@@ -20,6 +20,8 @@ kotlin {
                 freeCompilerArgs.addAll(
                     "-Xallow-kotlin-package",
                     "-opt-in=kotlin.ExperimentalMultiplatform",
+                    "-opt-in=kotlin.contracts.ExperimentalContracts",
+                    "-Xexpect-actual-classes",
                     "-Xir-module-name=kotlin-brs"
                 )
             }
@@ -28,30 +30,33 @@ kotlin {
 
     sourceSets {
         val jsMain by getting {
+            // BRS-specific sources (bootstrap approach)
             kotlin.srcDir("src")
-            // Exclude files that conflict with JS stdlib or have unresolved issues
-            // These will be fixed incrementally
+
+            // Exclude files that have conflicts or issues
+            // Phase 2 Batch 1: Enabled ExceptionHelpers.kt, io/**, exceptionsBrs.kt
+            // Phase 2 Batch 6: Enabled Roku SDK bindings (kotlin/brs/roku/**)
+            // Note: Collections, Math, Random excluded - JS stdlib already provides these
+            // The bootstrap approach depends on JS stdlib which has all these implementations
             kotlin.exclude(
-                // Files with actual/expect mismatch - entire collections directory
+                // Collections - JS stdlib provides these
                 "kotlin/collections/**",
+                "kotlin/brs/collections/**",
                 "kotlin/AutoCloseableBrs.kt",
-                "kotlin/ExceptionHelpers.kt",
-                // All roku-specific files - these need core.kt fixed first
-                "kotlin/brs/roku/**",
-                // Math files with expect/actual in same module issue
+                // Math - JS stdlib provides these already
                 "kotlin/math.kt",
                 "kotlin/mathRuntime.kt",
-                // Text encoding
-                "kotlin/text/CharacterCodingExceptionBrs.kt",
-                "kotlin/text/utf8Encoding.kt",
-                // Files with other conflicts - will fix incrementally
                 "kotlin/random/**",
+                // Text encoding needs more work
+                "kotlin/text/utf8Encoding.kt",
+                "kotlin/text/CharacterCodingExceptionBrs.kt",
+                // Other files with conflicts
                 "kotlin/sequences/**",
-                "kotlin/exceptionsBrs.kt",
                 "kotlin/concurrent.kt",
                 "kotlin/enums/**",
                 "kotlin/coroutines/**",
-                "kotlin/io/**"
+                // Time module conflicts
+                "kotlin/time/**"
             )
             dependencies {
                 // Depend on JS stdlib for bootstrapping - provides basic types
