@@ -3,13 +3,17 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package kotlin.time
+package kotlin.brs.time
 
 import kotlin.math.*
 
-internal actual inline val durationAssertionsEnabled: Boolean get() = true
+/**
+ * BrightScript-specific duration formatting utilities.
+ */
 
-internal actual fun formatToExactDecimals(value: Double, decimals: Int): String {
+internal inline val brsDurationAssertionsEnabled: Boolean get() = true
+
+internal fun formatToExactDecimals(value: Double, decimals: Int): String {
     val rounded = if (decimals == 0) {
         value
     } else {

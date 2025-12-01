@@ -311,6 +311,10 @@ kotlin {
         commonWasmTargetConfiguration()
     }
 
+    // NOTE: BrightScript target is configured separately in libraries/stdlib/brs/build.gradle.kts
+    // Integration into main stdlib requires bootstrap plugin to have BRS support first.
+    // TODO: Once bootstrap is updated, add BRS target here following the wasmJs/wasmWasi pattern.
+
     if (kotlinBuildProperties.isInIdeaSync) {
         val hostOs = System.getProperty("os.name")
         val isMingwX64 = hostOs.startsWith("Windows")
@@ -542,6 +546,8 @@ kotlin {
                 srcDir("wasm/wasi/test")
             }
         }
+
+        // NOTE: BrightScript source sets are configured in libraries/stdlib/brs/build.gradle.kts
 
         if (kotlinBuildProperties.isInIdeaSync) {
             val nativeKotlinTestCommon by creating {
