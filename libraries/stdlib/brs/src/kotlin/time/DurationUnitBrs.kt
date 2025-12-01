@@ -3,11 +3,13 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package kotlin.time
+package kotlin.brs.time
 
-@SinceKotlin("1.6")
-@WasExperimental(ExperimentalTime::class)
-public actual enum class DurationUnit(internal val scale: Double) {
+/**
+ * BrightScript-specific time unit enum for duration conversions.
+ * This is separate from kotlin.time.DurationUnit to avoid conflicts during bootstrap compilation.
+ */
+public enum class BrsDurationUnit(internal val scale: Double) {
     /**
      * Time unit representing one nanosecond, which is 1/1000 of a microsecond.
      */
@@ -38,8 +40,7 @@ public actual enum class DurationUnit(internal val scale: Double) {
     DAYS(86400e9);
 }
 
-@SinceKotlin("1.3")
-internal actual fun convertDurationUnit(value: Double, sourceUnit: DurationUnit, targetUnit: DurationUnit): Double {
+internal fun convertBrsDurationUnit(value: Double, sourceUnit: BrsDurationUnit, targetUnit: BrsDurationUnit): Double {
     val sourceCompareTarget = sourceUnit.scale.compareTo(targetUnit.scale)
     return when {
         sourceCompareTarget > 0 -> value * (sourceUnit.scale / targetUnit.scale)
@@ -48,8 +49,7 @@ internal actual fun convertDurationUnit(value: Double, sourceUnit: DurationUnit,
     }
 }
 
-@SinceKotlin("1.5")
-internal actual fun convertDurationUnitOverflow(value: Long, sourceUnit: DurationUnit, targetUnit: DurationUnit): Long {
+internal fun convertBrsDurationUnitOverflow(value: Long, sourceUnit: BrsDurationUnit, targetUnit: BrsDurationUnit): Long {
     val sourceCompareTarget = sourceUnit.scale.compareTo(targetUnit.scale)
     return when {
         sourceCompareTarget > 0 -> value * (sourceUnit.scale / targetUnit.scale).toLong()
@@ -58,8 +58,7 @@ internal actual fun convertDurationUnitOverflow(value: Long, sourceUnit: Duratio
     }
 }
 
-@SinceKotlin("1.5")
-internal actual fun convertDurationUnit(value: Long, sourceUnit: DurationUnit, targetUnit: DurationUnit): Long {
+internal fun convertBrsDurationUnit(value: Long, sourceUnit: BrsDurationUnit, targetUnit: BrsDurationUnit): Long {
     val sourceCompareTarget = sourceUnit.scale.compareTo(targetUnit.scale)
     return when {
         sourceCompareTarget > 0 -> {
