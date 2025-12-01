@@ -40,6 +40,7 @@ fun <T : DecoratedExternalKotlinCompilation> DecoratedExternalKotlinTarget.creat
             KotlinPlatformType.js -> KotlinJsCompilerOptionsFactory
             KotlinPlatformType.native -> KotlinNativeCompilerOptionsFactory
             KotlinPlatformType.wasm -> KotlinMultiplatformCommonCompilerOptionsFactory
+            KotlinPlatformType.brs -> KotlinMultiplatformCommonCompilerOptionsFactory
         },
         compilationSourceSetsContainerFactory = { _, _ -> KotlinCompilationSourceSetsContainer(descriptor.defaultSourceSet) },
         compilationTaskNamesContainerFactory = { target, compilationName ->

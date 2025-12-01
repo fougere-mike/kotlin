@@ -79,6 +79,7 @@ fun <T : DecoratedExternalKotlinTarget> KotlinMultiplatformExtension.createExter
             -> project.objects.newInstance<KotlinJsCompilerOptionsDefault>()
         KotlinPlatformType.common -> project.objects.newInstance<KotlinCommonCompilerOptionsDefault>()
         KotlinPlatformType.native -> project.objects.newInstance<KotlinNativeCompilerOptionsDefault>()
+        KotlinPlatformType.brs -> project.objects.newInstance<KotlinCommonCompilerOptionsDefault>()
     }
 
     val target = ExternalKotlinTargetImpl(
