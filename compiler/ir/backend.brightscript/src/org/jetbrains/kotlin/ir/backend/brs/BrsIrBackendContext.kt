@@ -222,7 +222,17 @@ class BrsIrBackendContext(
     }
 
     private fun generateBrsFunctionName(irFunction: IrFunction): String {
-        val baseName = irFunction.name.asString()
+        val rawName = irFunction.name.asString()
+        // Sanitize property accessor names: <get-foo> -> get_foo, <set-foo> -> set_foo
+        val baseName = when {
+            rawName.startsWith("<get-") && rawName.endsWith(">") -> {
+                "get_" + rawName.removePrefix("<get-").removeSuffix(">")
+            }
+            rawName.startsWith("<set-") && rawName.endsWith(">") -> {
+                "set_" + rawName.removePrefix("<set-").removeSuffix(">")
+            }
+            else -> rawName
+        }
         val parent = irFunction.parent
 
         return when (parent) {
