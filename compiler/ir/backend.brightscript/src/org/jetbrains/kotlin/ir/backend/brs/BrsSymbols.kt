@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.util.kotlinPackageFqn
 import org.jetbrains.kotlin.name.BrsStandardClassIds
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.builtins.StandardNames.COLLECTIONS_PACKAGE_FQ_NAME
 
@@ -26,6 +27,9 @@ import org.jetbrains.kotlin.builtins.StandardNames.COLLECTIONS_PACKAGE_FQ_NAME
  *
  * This class provides access to standard library symbols and intrinsics
  * needed during IR lowering and code generation.
+ *
+ * Note: Many symbols are lazily evaluated and handle missing symbols gracefully,
+ * since the bootstrap stdlib may not have all required functions.
  */
 @OptIn(ObsoleteDescriptorBasedAPI::class, InternalSymbolFinderAPI::class)
 class BrsSymbols(
@@ -33,38 +37,61 @@ class BrsSymbols(
     private val intrinsics: BrsIntrinsics
 ) : Symbols(irBuiltIns) {
 
+    // Helper to find optional functions that may not exist in bootstrap stdlib
+    private fun findOptionalFunction(packageName: FqName, name: String): IrSimpleFunctionSymbol? =
+        symbolFinder.topLevelFunctions(packageName, name).firstOrNull()
+
+    // Helper to find optional classes that may not exist in bootstrap stdlib
+    private fun findOptionalClass(packageName: FqName, name: String): IrClassSymbol? =
+        symbolFinder.findClass(Name.identifier(name), packageName)
+
     // ==================== Exception Handling ====================
+    // These are lazily evaluated to avoid failures during context initialization.
+    // If the stdlib doesn't have these functions, the backend will generate inline errors.
 
-    override val throwNullPointerException: IrSimpleFunctionSymbol =
-        symbolFinder.topLevelFunction(kotlinPackageFqn, "THROW_NPE")
+    override val throwNullPointerException: IrSimpleFunctionSymbol by lazy {
+        findOptionalFunction(kotlinPackageFqn, "THROW_NPE")
+            ?: error("THROW_NPE not found - ensure stdlib is linked")
+    }
 
-    override val throwTypeCastException: IrSimpleFunctionSymbol =
-        symbolFinder.topLevelFunction(kotlinPackageFqn, "THROW_CCE")
+    override val throwTypeCastException: IrSimpleFunctionSymbol by lazy {
+        findOptionalFunction(kotlinPackageFqn, "THROW_CCE")
+            ?: error("THROW_CCE not found - ensure stdlib is linked")
+    }
 
-    override val throwUninitializedPropertyAccessException: IrSimpleFunctionSymbol =
-        symbolFinder.topLevelFunction(kotlinPackageFqn, "throwUninitializedPropertyAccessException")
+    override val throwUninitializedPropertyAccessException: IrSimpleFunctionSymbol by lazy {
+        findOptionalFunction(kotlinPackageFqn, "throwUninitializedPropertyAccessException")
+            ?: error("throwUninitializedPropertyAccessException not found - ensure stdlib is linked")
+    }
 
-    override val throwKotlinNothingValueException: IrSimpleFunctionSymbol =
-        symbolFinder.topLevelFunction(kotlinPackageFqn, "throwKotlinNothingValueException")
+    override val throwKotlinNothingValueException: IrSimpleFunctionSymbol by lazy {
+        findOptionalFunction(kotlinPackageFqn, "throwKotlinNothingValueException")
+            ?: error("throwKotlinNothingValueException not found - ensure stdlib is linked")
+    }
 
-    override val throwISE: IrSimpleFunctionSymbol =
-        symbolFinder.topLevelFunction(kotlinPackageFqn, "THROW_ISE")
+    override val throwISE: IrSimpleFunctionSymbol by lazy {
+        findOptionalFunction(kotlinPackageFqn, "THROW_ISE")
+            ?: error("THROW_ISE not found - ensure stdlib is linked")
+    }
 
-    override val throwIAE: IrSimpleFunctionSymbol =
-        symbolFinder.topLevelFunction(kotlinPackageFqn, "THROW_IAE")
+    override val throwIAE: IrSimpleFunctionSymbol by lazy {
+        findOptionalFunction(kotlinPackageFqn, "THROW_IAE")
+            ?: error("THROW_IAE not found - ensure stdlib is linked")
+    }
 
     // ==================== Default Constructor Marker ====================
 
-    override val defaultConstructorMarker: IrClassSymbol =
-        symbolFinder.topLevelClass(BrsStandardClassIds.BASE_BRS_PACKAGE, "DefaultConstructorMarker")
+    override val defaultConstructorMarker: IrClassSymbol by lazy {
+        findOptionalClass(BrsStandardClassIds.BASE_BRS_PACKAGE, "DefaultConstructorMarker")
+            ?: error("DefaultConstructorMarker not found - ensure stdlib is linked")
+    }
 
     // ==================== String Builder ====================
 
-    override val stringBuilder: IrClassSymbol
-        get() = symbolFinder.topLevelClass(
-            BrsStandardClassIds.BASE_BRS_INTERNAL_PACKAGE,
-            "StringBuilder"
-        )
+    override val stringBuilder: IrClassSymbol by lazy {
+        findOptionalClass(BrsStandardClassIds.BASE_BRS_INTERNAL_PACKAGE, "StringBuilder")
+            ?: error("StringBuilder not found - ensure stdlib is linked")
+    }
 
     // ==================== Coroutines (Not supported in BrightScript) ====================
 
@@ -94,38 +121,48 @@ class BrsSymbols(
 
     // ==================== Function Adapter ====================
 
-    override val functionAdapter: IrClassSymbol
-        get() = symbolFinder.topLevelClass(BrsStandardClassIds.BASE_BRS_INTERNAL_PACKAGE, "FunctionAdapter")
+    override val functionAdapter: IrClassSymbol by lazy {
+        findOptionalClass(BrsStandardClassIds.BASE_BRS_INTERNAL_PACKAGE, "FunctionAdapter")
+            ?: error("FunctionAdapter not found - ensure stdlib is linked")
+    }
 
     // ==================== Array Content Equals ====================
 
-    private val _arraysContentEquals = symbolFinder.topLevelFunctions(COLLECTIONS_PACKAGE_FQ_NAME, "contentEquals").filter {
-        it.descriptor.extensionReceiverParameter?.type?.isMarkedNullable == true
+    private val _arraysContentEquals by lazy {
+        symbolFinder.topLevelFunctions(COLLECTIONS_PACKAGE_FQ_NAME, "contentEquals").filter {
+            it.descriptor.extensionReceiverParameter?.type?.isMarkedNullable == true
+        }
     }
 
-    override val arraysContentEquals: Map<IrType, IrSimpleFunctionSymbol>
-        get() = _arraysContentEquals.associateBy { it.owner.parameters[0].type.makeNotNull() }
+    override val arraysContentEquals: Map<IrType, IrSimpleFunctionSymbol> by lazy {
+        _arraysContentEquals.associateBy { it.owner.parameters[0].type.makeNotNull() }
+    }
 
     // ==================== Progression Utilities ====================
 
-    private val getProgressionLastElementSymbols =
+    private val getProgressionLastElementSymbols by lazy {
         symbolFinder.findFunctions(Name.identifier("getProgressionLastElement"), "kotlin", "internal")
+    }
 
-    override val getProgressionLastElementByReturnType: Map<IrClassifierSymbol, IrSimpleFunctionSymbol> by lazy(LazyThreadSafetyMode.NONE) {
+    override val getProgressionLastElementByReturnType: Map<IrClassifierSymbol, IrSimpleFunctionSymbol> by lazy {
         getProgressionLastElementSymbols.associateBy { it.owner.returnType.classifierOrFail }
     }
 
     // ==================== Unsigned Integers ====================
 
-    private val toUIntSymbols = symbolFinder.findFunctions(Name.identifier("toUInt"), "kotlin")
+    private val toUIntSymbols by lazy {
+        symbolFinder.findFunctions(Name.identifier("toUInt"), "kotlin")
+    }
 
-    override val toUIntByExtensionReceiver: Map<IrClassifierSymbol, IrSimpleFunctionSymbol> by lazy(LazyThreadSafetyMode.NONE) {
+    override val toUIntByExtensionReceiver: Map<IrClassifierSymbol, IrSimpleFunctionSymbol> by lazy {
         toUIntSymbols.associateBy { it.owner.parameters[0].type.classifierOrFail }
     }
 
-    private val toULongSymbols = symbolFinder.findFunctions(Name.identifier("toULong"), "kotlin")
+    private val toULongSymbols by lazy {
+        symbolFinder.findFunctions(Name.identifier("toULong"), "kotlin")
+    }
 
-    override val toULongByExtensionReceiver: Map<IrClassifierSymbol, IrSimpleFunctionSymbol> by lazy(LazyThreadSafetyMode.NONE) {
+    override val toULongByExtensionReceiver: Map<IrClassifierSymbol, IrSimpleFunctionSymbol> by lazy {
         toULongSymbols.associateBy { it.owner.parameters[0].type.classifierOrFail }
     }
 
