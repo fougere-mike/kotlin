@@ -6,12 +6,15 @@
 package org.jetbrains.kotlin.gradle.targets.brs.dsl
 
 import org.gradle.api.provider.Property
+import org.jetbrains.kotlin.gradle.dsl.HasConfigurableKotlinCompilerOptions
+import org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptions
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 
 /**
  * DSL extension for configuring Kotlin/BrightScript target.
  */
-interface KotlinBrsTargetDsl : KotlinTarget {
+interface KotlinBrsTargetDsl : KotlinTarget,
+    HasConfigurableKotlinCompilerOptions<KotlinCommonCompilerOptions> {
     /**
      * Minimum Roku OS version to target.
      * Affects available language features (e.g., try/catch requires 9.0+).
