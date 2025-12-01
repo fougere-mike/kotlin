@@ -7,11 +7,9 @@ plugins {
     kotlin("multiplatform")
 }
 
-description = "Kotlin Standard Library for BrightScript"
+description = "Minimal BrightScript stdlib bootstrap - provides only intrinsics needed by the backend"
 
 kotlin {
-    // Use JS IR backend to produce klib format that BrightScript backend can consume
-    // This is a bootstrapping approach - eventually we'll have native BrightScript compilation
     js(IR) {
         nodejs()
         compilations["main"].compileTaskProvider.configure {
@@ -19,7 +17,7 @@ kotlin {
                 freeCompilerArgs.addAll(
                     "-Xallow-kotlin-package",
                     "-opt-in=kotlin.ExperimentalMultiplatform",
-                    "-Xir-module-name=kotlin-brs"
+                    "-Xir-module-name=kotlin-brs-bootstrap"
                 )
             }
         }
@@ -29,16 +27,8 @@ kotlin {
         val jsMain by getting {
             kotlin.srcDir("src")
             dependencies {
-                // Depend on JS stdlib for bootstrapping - provides basic types
                 implementation(project(":kotlin-stdlib"))
             }
         }
     }
-}
-
-// Expose the klib path for use by other build scripts
-val brsStdlibKlib by tasks.registering {
-    dependsOn("compileKotlinJs")
-    val klibDir = layout.buildDirectory.dir("classes/kotlin/js/main")
-    outputs.dir(klibDir)
 }

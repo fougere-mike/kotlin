@@ -661,7 +661,7 @@ class IrExpressionToBrsTransformer(
     }
 
     override fun visitGetField(expression: IrGetField, data: Unit): BrsExpression {
-        val receiver = expression.receiver?.let { visitElement(it, data) }
+        val receiver = expression.receiver?.let { it.accept(this, data) }
             ?: BrsMRef()
 
         return BrsDotAccess(receiver, expression.symbol.owner.name.asString())
@@ -701,11 +701,11 @@ class IrExpressionToBrsTransformer(
 
         // Add dispatch receiver if present
         expression.dispatchReceiver?.let { receiver ->
-            val receiverExpr = visitElement(receiver, data)
+            val receiverExpr = receiver.accept(this, data)
             // For method calls, transform to dot notation
             if (function.dispatchReceiverParameter != null) {
                 val args = (0 until expression.valueArgumentsCount).mapNotNull { i ->
-                    expression.getValueArgument(i)?.let { visitElement(it, data) }
+                    expression.getValueArgument(i)?.let { it.accept(this, data) }
                 }
                 return BrsMethodCall(receiverExpr, function.name.asString(), args.toMutableList())
             }
@@ -714,13 +714,13 @@ class IrExpressionToBrsTransformer(
 
         // Add extension receiver if present
         expression.extensionReceiver?.let { receiver ->
-            arguments.add(visitElement(receiver, data))
+            arguments.add(receiver.accept(this, data))
         }
 
         // Add value arguments
         for (i in 0 until expression.valueArgumentsCount) {
             expression.getValueArgument(i)?.let { arg ->
-                arguments.add(visitElement(arg, data))
+                arguments.add(arg.accept(this, data))
             }
         }
 
@@ -736,18 +736,18 @@ class IrExpressionToBrsTransformer(
                 val typeArg = expression.getValueArgument(0)
                 val objectType = (typeArg as? IrConst)?.value?.toString() ?: "Object"
                 val args = (1 until expression.valueArgumentsCount).mapNotNull { i ->
-                    expression.getValueArgument(i)?.let { visitElement(it, Unit) }
+                    expression.getValueArgument(i)?.let { it.accept(this, Unit) }
                 }
                 BrsCreateObject(objectType, args.toMutableList())
             }
             "typeOf" -> {
-                val arg = expression.getValueArgument(0)?.let { visitElement(it, Unit) }
+                val arg = expression.getValueArgument(0)?.let { it.accept(this, Unit) }
                     ?: BrsInvalidLiteral()
                 BrsTypeOf(arg)
             }
             "print" -> {
                 val args = (0 until expression.valueArgumentsCount).mapNotNull { i ->
-                    expression.getValueArgument(i)?.let { visitElement(it, Unit) }
+                    expression.getValueArgument(i)?.let { it.accept(this, Unit) }
                 }
                 BrsFunctionCall(BrsIdentifier("print"), args.toMutableList())
             }
@@ -777,11 +777,11 @@ class IrExpressionToBrsTransformer(
         }
 
         if (binaryOp != null) {
-            val left = expression.dispatchReceiver?.let { visitElement(it, Unit) }
-                ?: expression.getValueArgument(0)?.let { visitElement(it, Unit) }
+            val left = expression.dispatchReceiver?.let { it.accept(this, Unit) }
+                ?: expression.getValueArgument(0)?.let { it.accept(this, Unit) }
                 ?: return null
-            val right = expression.getValueArgument(0)?.let { visitElement(it, Unit) }
-                ?: expression.getValueArgument(1)?.let { visitElement(it, Unit) }
+            val right = expression.getValueArgument(0)?.let { it.accept(this, Unit) }
+                ?: expression.getValueArgument(1)?.let { it.accept(this, Unit) }
                 ?: return null
             return BrsBinaryOp(left, binaryOp, right)
         }
@@ -789,27 +789,27 @@ class IrExpressionToBrsTransformer(
         // Unary operators
         return when (origin) {
             IrStatementOrigin.UMINUS -> {
-                val operand = expression.dispatchReceiver?.let { visitElement(it, Unit) }
-                    ?: expression.getValueArgument(0)?.let { visitElement(it, Unit) }
+                val operand = expression.dispatchReceiver?.let { it.accept(this, Unit) }
+                    ?: expression.getValueArgument(0)?.let { it.accept(this, Unit) }
                     ?: return null
                 BrsUnaryOp(BrsUnaryOperator.NEG, operand)
             }
             IrStatementOrigin.UPLUS -> {
                 // Unary plus is a no-op in most cases
-                expression.dispatchReceiver?.let { visitElement(it, Unit) }
-                    ?: expression.getValueArgument(0)?.let { visitElement(it, Unit) }
+                expression.dispatchReceiver?.let { it.accept(this, Unit) }
+                    ?: expression.getValueArgument(0)?.let { it.accept(this, Unit) }
             }
             IrStatementOrigin.EXCL -> {
-                val operand = expression.dispatchReceiver?.let { visitElement(it, Unit) }
-                    ?: expression.getValueArgument(0)?.let { visitElement(it, Unit) }
+                val operand = expression.dispatchReceiver?.let { it.accept(this, Unit) }
+                    ?: expression.getValueArgument(0)?.let { it.accept(this, Unit) }
                     ?: return null
                 BrsUnaryOp(BrsUnaryOperator.NOT, operand)
             }
             IrStatementOrigin.GET_ARRAY_ELEMENT -> {
                 // Array access: arr[index]
-                val array = expression.dispatchReceiver?.let { visitElement(it, Unit) }
+                val array = expression.dispatchReceiver?.let { it.accept(this, Unit) }
                     ?: return null
-                val index = expression.getValueArgument(0)?.let { visitElement(it, Unit) }
+                val index = expression.getValueArgument(0)?.let { it.accept(this, Unit) }
                     ?: return null
                 BrsIndexAccess(array, index)
             }
@@ -823,7 +823,7 @@ class IrExpressionToBrsTransformer(
         val className = context.getBrsName(irClass)
 
         val arguments = (0 until expression.valueArgumentsCount).mapNotNull { i ->
-            expression.getValueArgument(i)?.let { visitElement(it, data) }
+            expression.getValueArgument(i)?.let { it.accept(this, data) }
         }
 
         // Check if this is an external class (Roku SDK type)
@@ -880,7 +880,7 @@ class IrExpressionToBrsTransformer(
     // ==================== Operators ====================
 
     override fun visitTypeOperator(expression: IrTypeOperatorCall, data: Unit): BrsExpression {
-        val argument = visitElement(expression.argument, data)
+        val argument = expression.argument.accept(this, data)
 
         return when (expression.operator) {
             IrTypeOperator.CAST, IrTypeOperator.IMPLICIT_CAST -> argument
@@ -962,7 +962,7 @@ class IrExpressionToBrsTransformer(
     // ==================== Binary Operations ====================
 
     override fun visitStringConcatenation(expression: IrStringConcatenation, data: Unit): BrsExpression {
-        val parts = expression.arguments.map { visitElement(it, data) }
+        val parts = expression.arguments.map { it.accept(this, data) }
         return parts.reduce { acc, expr ->
             BrsBinaryOp(acc, BrsBinaryOperator.CONCAT, expr)
         }
@@ -973,8 +973,8 @@ class IrExpressionToBrsTransformer(
     override fun visitVararg(expression: IrVararg, data: Unit): BrsExpression {
         val elements = expression.elements.map { element ->
             when (element) {
-                is IrExpression -> visitElement(element, data)
-                is IrSpreadElement -> visitElement(element.expression, data)
+                is IrExpression -> element.accept(this, data)
+                is IrSpreadElement -> element.expression.accept(this, data)
                 else -> BrsInvalidLiteral()
             }
         }
@@ -988,14 +988,14 @@ class IrExpressionToBrsTransformer(
         when (expression.origin) {
             IrStatementOrigin.ANDAND -> {
                 // a && b is represented as: if (a) b else false
-                val left = visitElement(expression.branches[0].condition, data)
-                val right = visitElement(expression.branches[0].result, data)
+                val left = expression.branches[0].condition.accept(this, data)
+                val right = expression.branches[0].result.accept(this, data)
                 return BrsBinaryOp(left, BrsBinaryOperator.AND, right)
             }
             IrStatementOrigin.OROR -> {
                 // a || b is represented as: if (a) true else b
-                val left = visitElement(expression.branches[0].condition, data)
-                val right = visitElement(expression.branches[1].result, data)
+                val left = expression.branches[0].condition.accept(this, data)
+                val right = expression.branches[1].result.accept(this, data)
                 return BrsBinaryOp(left, BrsBinaryOperator.OR, right)
             }
             else -> { /* fall through to default handling */ }
@@ -1013,8 +1013,8 @@ class IrExpressionToBrsTransformer(
 
         for (i in branches.indices.reversed()) {
             val branch = branches[i]
-            val condition = visitElement(branch.condition, data)
-            val value = visitElement(branch.result, data)
+            val condition = branch.condition.accept(this, data)
+            val value = branch.result.accept(this, data)
 
             result = if (i == branches.lastIndex && branch.isElse()) {
                 value
@@ -1058,7 +1058,7 @@ class IrExpressionToBrsTransformer(
         } else {
             val last = statements.last()
             if (last is IrExpression) {
-                visitElement(last, data)
+                last.accept(this, data)
             } else {
                 BrsInvalidLiteral()
             }
@@ -1073,7 +1073,7 @@ class IrExpressionToBrsTransformer(
         } else {
             val last = statements.last()
             if (last is IrExpression) {
-                visitElement(last, data)
+                last.accept(this, data)
             } else {
                 BrsInvalidLiteral()
             }

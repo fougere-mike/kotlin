@@ -359,7 +359,7 @@ class BrsRenderer(
     override fun visitVariable(variable: BrsVariable, data: Unit) {
         indent()
         builder.append(variable.name)
-        variable.type?.let { builder.append(" as ${it.typeName}") }
+        // BrightScript local variables don't have type declarations - just assignment
         variable.initializer?.let {
             builder.append(" = ")
             it.accept(this, data)

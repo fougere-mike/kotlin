@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.java.FirProjectSessionProvider
 import org.jetbrains.kotlin.fir.resolve.calls.overloads.ConeCallConflictResolverFactory
 import org.jetbrains.kotlin.fir.resolve.providers.impl.FirBuiltinSyntheticFunctionInterfaceProvider
+import org.jetbrains.kotlin.fir.resolve.providers.impl.FirFallbackBuiltinSymbolProvider
 import org.jetbrains.kotlin.fir.scopes.FirDefaultImportProviderHolder
 import org.jetbrains.kotlin.fir.scopes.FirKotlinScopeProvider
 import org.jetbrains.kotlin.fir.types.typeContext
@@ -68,6 +69,8 @@ object FirBrsSessionFactory : FirAbstractSessionFactory<FirBrsSessionFactory.Con
             extensionRegistrars,
             createProviders = { session, builtinsModuleData, kotlinScopeProvider, syntheticFunctionInterfaceProvider ->
                 listOfNotNull(
+                    // Fallback builtins provider - provides Int, String, etc. from compiler resources
+                    FirFallbackBuiltinSymbolProvider(session, builtinsModuleData, kotlinScopeProvider),
                     // For MVP with no pre-compiled libraries, just use the klib provider if libraries exist
                     if (resolvedLibraries.isNotEmpty()) {
                         KlibBasedSymbolProvider(

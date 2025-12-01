@@ -31,8 +31,12 @@ dependencies {
     implementation(intellijCore())
     implementation(commonDependency("org.jetbrains.intellij.deps:trove4j"))
 
-    // Standard library for runtime
+    // Runtime dependencies needed for CLI (from prepare/compiler)
     runtimeOnly(kotlinStdlib())
+    runtimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
+    runtimeOnly(commonDependency("org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil"))
+    runtimeOnly(commonDependency("org.codehaus.woodstox:stax2-api")) { isTransitive = false }
+    runtimeOnly(commonDependency("com.fasterxml:aalto-xml")) { isTransitive = false }
 }
 
 sourceSets {
@@ -58,4 +62,13 @@ tasks.register<Jar>("fatJar") {
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
     with(tasks.jar.get())
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+// Task to run the compiler
+tasks.register<JavaExec>("run") {
+    dependsOn(":compiler:cli-common:jar")
+    mainClass.set("org.jetbrains.kotlin.cli.brs.K2BrsCompiler")
+    classpath = sourceSets["main"].runtimeClasspath
+    // Run from project root so the hack for finding compiler.xml works
+    workingDir = rootProject.projectDir
 }

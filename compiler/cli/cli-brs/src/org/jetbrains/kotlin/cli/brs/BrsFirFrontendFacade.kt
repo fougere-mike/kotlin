@@ -12,9 +12,11 @@ import org.jetbrains.kotlin.backend.common.serialization.mangle.MangleMode
 import org.jetbrains.kotlin.backend.common.serialization.mangle.ir.IrBasedKotlinManglerImpl
 import org.jetbrains.kotlin.backend.common.serialization.mangle.ir.IrExportCheckerVisitor
 import org.jetbrains.kotlin.backend.common.serialization.mangle.ir.IrMangleComputer
+import org.jetbrains.kotlin.cli.common.fir.FirDiagnosticsCompilerResultsReporter
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.prepareBrsSessions
+import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporterFactory
@@ -103,7 +105,8 @@ object BrsFirFrontendFacade {
         project: Project,
         sourceFiles: List<KtFile>,
         configuration: CompilerConfiguration,
-        messageCollector: MessageCollector
+        messageCollector: MessageCollector,
+        libraries: List<KotlinLibrary> = emptyList()
     ): BrsFirAnalysisResult {
         val diagnosticsReporter = DiagnosticReporterFactory.createReporter(messageCollector)
 
@@ -128,7 +131,7 @@ object BrsFirFrontendFacade {
                 files = sourceFiles,
                 configuration = configuration,
                 rootModuleName = escapedModuleName,
-                resolvedLibraries = emptyList(), // No pre-compiled libraries for MVP
+                resolvedLibraries = libraries,
                 libraryList = dependencyList,
                 extensionRegistrars = extensionRegistrars,
                 isCommonSource = { false }, // No common sources for MVP
@@ -161,6 +164,13 @@ object BrsFirFrontendFacade {
             }
 
             val hasErrors = diagnosticsReporter.hasErrors
+
+            // Report all diagnostics to the message collector
+            FirDiagnosticsCompilerResultsReporter.reportToMessageCollector(
+                diagnosticsReporter,
+                messageCollector,
+                renderDiagnosticName = false
+            )
 
             return BrsFirAnalysisResult(
                 outputs = outputs,

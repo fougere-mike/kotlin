@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.cli.common.CommonCompilerPerformanceManager
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.common.arguments.K2BrsCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2BrsArgumentConstants
+import org.jetbrains.kotlin.cli.common.config.addKotlinSourceRoot
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
@@ -21,6 +22,10 @@ import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.ir.backend.brs.BrsCompiler
+import org.jetbrains.kotlin.backend.common.CommonKLibResolver
+import org.jetbrains.kotlin.cli.common.messages.getLogger
+import org.jetbrains.kotlin.library.KotlinLibrary
+import org.jetbrains.kotlin.library.uniqueName
 import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.KotlinPaths
@@ -102,6 +107,15 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
             )
         }
 
+        // Load libraries
+        val libraries = loadLibraries(arguments.libraries, configuration, messageCollector)
+        if (libraries.isNotEmpty()) {
+            messageCollector.report(
+                CompilerMessageSeverity.INFO,
+                "Loaded ${libraries.size} library/libraries"
+            )
+        }
+
         // Compile to BrightScript
         val exitCode = compileSourceFiles(
             environment.project,
@@ -109,7 +123,8 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
             configuration,
             targetConfig,
             outputDir,
-            messageCollector
+            messageCollector,
+            libraries
         )
 
         return exitCode
@@ -124,7 +139,8 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
         configuration: CompilerConfiguration,
         targetConfig: BrsTargetConfig,
         outputDir: File?,
-        messageCollector: MessageCollector
+        messageCollector: MessageCollector,
+        libraries: List<KotlinLibrary>
     ): ExitCode {
         // Report configuration
         messageCollector.report(
@@ -144,7 +160,7 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
         messageCollector.report(CompilerMessageSeverity.INFO, "Running FIR analysis...")
 
         val firResult = try {
-            BrsFirFrontendFacade.analyze(project, sourceFiles, configuration, messageCollector)
+            BrsFirFrontendFacade.analyze(project, sourceFiles, configuration, messageCollector, libraries)
         } catch (e: NotImplementedError) {
             messageCollector.report(
                 CompilerMessageSeverity.WARNING,
@@ -306,9 +322,65 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
         configuration.put(BrsConfigurationKeys.GENERATE_XML, arguments.generateXml)
         configuration.put(BrsConfigurationKeys.MINIFY, arguments.minify)
         configuration.put(BrsConfigurationKeys.STRICT_MODE, arguments.strictMode)
+
+        // Add source files from free arguments
+        for (arg in arguments.freeArgs) {
+            configuration.addKotlinSourceRoot(arg)
+        }
     }
 
     override fun executableScriptFileName(): String = "kotlinc-brs"
+
+    /**
+     * Load klib libraries from the given paths.
+     * Uses CommonKLibResolver like the JS backend does.
+     */
+    private fun loadLibraries(
+        librariesArg: String?,
+        configuration: CompilerConfiguration,
+        messageCollector: MessageCollector
+    ): List<KotlinLibrary> {
+        if (librariesArg.isNullOrBlank()) {
+            return emptyList()
+        }
+
+        val libraryPaths = librariesArg.split(File.pathSeparator)
+            .filter { it.isNotBlank() }
+
+        if (libraryPaths.isEmpty()) {
+            return emptyList()
+        }
+
+        return try {
+            // Use CommonKLibResolver like the JS backend does
+            val resolved = CommonKLibResolver.resolve(
+                libraries = libraryPaths,
+                logger = configuration.getLogger(treatWarningsAsErrors = false),
+                lenient = true  // Lenient for dependencies (e.g., 'kotlin' stdlib)
+            )
+            val libraries = resolved.getFullResolvedList().map { it.library }
+
+            messageCollector.report(
+                CompilerMessageSeverity.LOGGING,
+                "Resolved ${libraries.size} library/libraries from ${libraryPaths.size} path(s)"
+            )
+            for (lib in libraries) {
+                messageCollector.report(
+                    CompilerMessageSeverity.LOGGING,
+                    "  Library: ${lib.uniqueName} (${lib.libraryFile.absolutePath})"
+                )
+            }
+
+            libraries
+        } catch (e: Exception) {
+            messageCollector.report(
+                CompilerMessageSeverity.ERROR,
+                "Failed to resolve libraries: ${e.message}"
+            )
+            e.printStackTrace()
+            emptyList()
+        }
+    }
 
     companion object {
         @JvmStatic
