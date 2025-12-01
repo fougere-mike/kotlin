@@ -56,7 +56,12 @@ enum class KotlinPlatformType : Named, Serializable {
     /**
      * Represents a compilation output compiled for the Wasm Kotlin platform.
      */
-    wasm;
+    wasm,
+
+    /**
+     * Represents a compilation output compiled for the BrightScript (Roku) platform.
+     */
+    brs;
 
     /**
      * @suppress

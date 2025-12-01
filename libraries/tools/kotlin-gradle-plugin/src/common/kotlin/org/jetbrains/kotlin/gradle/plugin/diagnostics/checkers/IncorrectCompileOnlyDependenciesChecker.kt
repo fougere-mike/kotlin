@@ -103,6 +103,7 @@ internal object IncorrectCompileOnlyDependenciesChecker : KotlinGradleProjectChe
 
             KotlinPlatformType.wasm,
             KotlinPlatformType.js,
+            KotlinPlatformType.brs,
             -> false
 
             KotlinPlatformType.native -> {

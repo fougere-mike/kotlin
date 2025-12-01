@@ -11,6 +11,8 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithHostTests
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithHostTestsPreset
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithSimulatorTests
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithSimulatorTestsPreset
+import org.jetbrains.kotlin.gradle.targets.brs.KotlinBrsIrTarget
+import org.jetbrains.kotlin.gradle.targets.brs.KotlinBrsIrTargetPreset
 import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
 import org.jetbrains.kotlin.konan.target.DEPRECATED_TARGET_MESSAGE
 
@@ -36,6 +38,23 @@ interface KotlinTargetContainerWithPresetFunctions : KotlinTargetsContainerWithP
     fun jvm(name: String) = jvm(name) { }
     fun jvm(name: String, configure: Action<KotlinJvmTarget>) = jvm(name) { configure.execute(this) }
     fun jvm(configure: Action<KotlinJvmTarget>) = jvm { configure.execute(this) }
+
+    // BrightScript (Roku) target - manually added
+    fun brs(
+        name: String = "brs",
+        configure: KotlinBrsIrTarget.() -> Unit = { }
+    ): KotlinBrsIrTarget =
+        configureOrCreate(
+            name,
+            @Suppress("DEPRECATION_ERROR")
+            presets.getByName("brs") as KotlinBrsIrTargetPreset,
+            configure
+        )
+
+    fun brs() = brs("brs") { }
+    fun brs(name: String) = brs(name) { }
+    fun brs(name: String, configure: Action<KotlinBrsIrTarget>) = brs(name) { configure.execute(this) }
+    fun brs(configure: Action<KotlinBrsIrTarget>) = brs { configure.execute(this) }
 
     fun androidTarget(
         name: String = "android",
