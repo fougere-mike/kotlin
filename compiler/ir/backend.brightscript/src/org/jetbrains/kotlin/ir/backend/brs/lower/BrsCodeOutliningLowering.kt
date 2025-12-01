@@ -174,7 +174,7 @@ class BrsInlineCallTransformer(
      * Get the inline info for a function call.
      */
     fun getInlineInfo(call: IrCall): BrsCodeOutliningLowering.BrsInlineInfo? {
-        return context.inlineFunctionInfo[call.symbol]
+        return context.inlineFunctionInfo[call.symbol] as? BrsCodeOutliningLowering.BrsInlineInfo
     }
 
     /**

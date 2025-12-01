@@ -714,6 +714,7 @@ if (!buildProperties.inJpsBuildIdeaSync) {
             ":kotlin-stdlib:samples",
             ":kotlin-stdlib-jvm-minimal-for-test",
             ":kotlin-stdlib-brs",
+            ":kotlin-stdlib-brs-bootstrap",
             ":tools:binary-compatibility-validator",
             ":tools:jdk-api-validator",
             ":tools:kotlin-stdlib-gen",
@@ -736,6 +737,7 @@ if (!buildProperties.inJpsBuildIdeaSync) {
     project(':kotlin-stdlib:samples').projectDir = "$rootDir/libraries/stdlib/samples" as File
     project(":kotlin-stdlib-jvm-minimal-for-test").projectDir = "$rootDir/libraries/stdlib/jvm-minimal-for-test" as File
     project(":kotlin-stdlib-brs").projectDir = "$rootDir/libraries/stdlib/brs" as File
+    project(":kotlin-stdlib-brs-bootstrap").projectDir = "$rootDir/libraries/stdlib/brs-bootstrap" as File
 
     project(':tools').projectDir = "$rootDir/libraries/tools" as File
     project(':tools:binary-compatibility-validator').projectDir = "$rootDir/libraries/tools/binary-compatibility-validator" as File
