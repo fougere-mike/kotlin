@@ -5,6 +5,7 @@
 
 plugins {
     kotlin("jvm")
+    `maven-publish`
 }
 
 dependencies {
@@ -71,4 +72,22 @@ tasks.register<JavaExec>("run") {
     classpath = sourceSets["main"].runtimeClasspath
     // Run from project root so the hack for finding compiler.xml works
     workingDir = rootProject.projectDir
+}
+
+// Publishing configuration for the BRS compiler fat JAR
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = "org.jetbrains.kotlin"
+            artifactId = "kotlin-compiler-brs"
+            version = project.version.toString()
+
+            artifact(tasks.named("fatJar"))
+        }
+    }
+}
+
+// Convenience task matching other Kotlin modules
+tasks.register("install") {
+    dependsOn("publishToMavenLocal")
 }

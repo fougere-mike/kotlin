@@ -7,9 +7,12 @@ package org.jetbrains.kotlin.gradle.targets.brs
 
 import org.gradle.api.Project
 import org.gradle.api.provider.Property
+import org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptions
+import org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptionsDefault
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinOnlyTarget
 import org.jetbrains.kotlin.gradle.targets.brs.dsl.KotlinBrsTargetDsl
+import org.jetbrains.kotlin.gradle.utils.newInstance
 import javax.inject.Inject
 
 /**
@@ -20,6 +23,9 @@ abstract class KotlinBrsIrTarget @Inject constructor(
     platformType: KotlinPlatformType,
 ) : KotlinOnlyTarget<KotlinBrsIrCompilation>(project, platformType),
     KotlinBrsTargetDsl {
+
+    override val compilerOptions: KotlinCommonCompilerOptions =
+        project.objects.newInstance<KotlinCommonCompilerOptionsDefault>()
 
     override val minRokuOS: Property<String> = project.objects.property(String::class.java)
         .convention("9.4")
