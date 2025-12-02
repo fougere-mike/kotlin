@@ -184,15 +184,8 @@ class IrToBrsTransformer(
             }
         }
 
-        // Add enum initialization calls at module level
-        // These run after variable declarations but before other code
-        for (enumName in enumClassNames) {
-            statements.add(
-                BrsExpressionStatement(
-                    BrsFunctionCall(BrsIdentifier("${enumName}_initEntries"), mutableListOf())
-                )
-            )
-        }
+        // Note: BrightScript doesn't support top-level statements outside functions,
+        // so enum initialization is handled lazily via initEntries() calls in values()/valueOf()
 
         return BrsProgram(declarations, statements)
     }
@@ -310,14 +303,8 @@ class IrToBrsTransformer(
         val className = context.getBrsName(irClass)
         val instanceVarName = "${className}_instance"
 
-        // Add instance variable initialization: MySingleton_instance = invalid
-        statements.add(
-            BrsVariable(
-                name = instanceVarName,
-                type = BrsType.OBJECT,
-                initializer = BrsInvalidLiteral()
-            )
-        )
+        // Note: BrightScript doesn't support top-level statements, so we use m. for global storage
+        // Instance is lazily initialized in getInstance()
 
         // Generate the _create function (like regular class constructor)
         for (constructor in irClass.declarations.filterIsInstance<IrConstructor>()) {
@@ -327,20 +314,20 @@ class IrToBrsTransformer(
         // Generate getInstance function
         val getInstanceBody = mutableListOf<BrsStatement>()
 
-        // if MySingleton_instance = invalid then
-        //     MySingleton_instance = MySingleton_create()
+        // if m.MySingleton_instance = invalid then
+        //     m.MySingleton_instance = MySingleton_create()
         // end if
         getInstanceBody.add(
             BrsIf(
                 condition = BrsBinaryOp(
-                    BrsIdentifier(instanceVarName),
+                    BrsDotAccess(BrsIdentifier("m"), instanceVarName),
                     BrsBinaryOperator.EQ,
                     BrsInvalidLiteral()
                 ),
                 thenBranch = BrsBlock(mutableListOf(
                     BrsExpressionStatement(
                         BrsBinaryOp(
-                            BrsIdentifier(instanceVarName),
+                            BrsDotAccess(BrsIdentifier("m"), instanceVarName),
                             BrsBinaryOperator.EQ,
                             BrsFunctionCall(BrsIdentifier("${className}_create"), mutableListOf())
                         )
@@ -349,8 +336,8 @@ class IrToBrsTransformer(
             )
         )
 
-        // return MySingleton_instance
-        getInstanceBody.add(BrsReturn(BrsIdentifier(instanceVarName)))
+        // return m.MySingleton_instance
+        getInstanceBody.add(BrsReturn(BrsDotAccess(BrsIdentifier("m"), instanceVarName)))
 
         declarations.add(
             BrsFunction(
@@ -400,27 +387,9 @@ class IrToBrsTransformer(
         // Get all enum entries
         val enumEntries = irClass.declarations.filterIsInstance<IrEnumEntry>()
 
-        // 1. Add entry variables: Color_RED = invalid
-        for (entry in enumEntries) {
-            val entryVarName = "${className}_${entry.name.asString()}"
-            statements.add(
-                BrsVariable(
-                    name = entryVarName,
-                    type = BrsType.OBJECT,
-                    initializer = BrsInvalidLiteral()
-                )
-            )
-        }
-
-        // 2. Add initialized flag: Color_entriesInitialized = false
+        // Note: BrightScript doesn't support top-level statements, so we use m.global
+        // for enum entry storage. Variables are initialized lazily in initEntries().
         val initializedFlagName = "${className}_entriesInitialized"
-        statements.add(
-            BrsVariable(
-                name = initializedFlagName,
-                type = BrsType.BOOLEAN,
-                initializer = BrsBooleanLiteral(false)
-            )
-        )
 
         // 3. Generate the _create constructor function
         // Constructor takes name, ordinal, plus any custom parameters
@@ -428,29 +397,29 @@ class IrToBrsTransformer(
             transformEnumConstructor(irClass, constructor)?.let { declarations.add(it) }
         }
 
-        // 4. Generate initEntries function
+        // 4. Generate initEntries sub (using m. prefix for global scope)
         val initEntriesBody = mutableListOf<BrsStatement>()
 
-        // if Color_entriesInitialized then return
+        // if m.Color_entriesInitialized then return
         initEntriesBody.add(
             BrsIf(
-                condition = BrsIdentifier(initializedFlagName),
+                condition = BrsDotAccess(BrsIdentifier("m"), initializedFlagName),
                 thenBranch = BrsReturn(null)
             )
         )
 
-        // Color_entriesInitialized = true
+        // m.Color_entriesInitialized = true
         initEntriesBody.add(
             BrsExpressionStatement(
                 BrsBinaryOp(
-                    BrsIdentifier(initializedFlagName),
+                    BrsDotAccess(BrsIdentifier("m"), initializedFlagName),
                     BrsBinaryOperator.EQ,
                     BrsBooleanLiteral(true)
                 )
             )
         )
 
-        // Initialize each entry: Color_RED = Color_create("RED", 0, ...)
+        // Initialize each entry: m.Color_RED = Color_create("RED", 0, ...)
         enumEntries.forEachIndexed { ordinal, entry ->
             val entryVarName = "${className}_${entry.name.asString()}"
             val args = mutableListOf<BrsExpression>(
@@ -474,7 +443,7 @@ class IrToBrsTransformer(
             initEntriesBody.add(
                 BrsExpressionStatement(
                     BrsBinaryOp(
-                        BrsIdentifier(entryVarName),
+                        BrsDotAccess(BrsIdentifier("m"), entryVarName),
                         BrsBinaryOperator.EQ,
                         BrsFunctionCall(BrsIdentifier("${className}_create"), args)
                     )
@@ -483,10 +452,9 @@ class IrToBrsTransformer(
         }
 
         declarations.add(
-            BrsFunction(
+            BrsSub(
                 name = "${className}_initEntries",
                 parameters = mutableListOf(),
-                returnType = null,
                 body = BrsBlock(initEntriesBody)
             )
         )
@@ -501,9 +469,9 @@ class IrToBrsTransformer(
             )
         )
 
-        // return [Color_RED, Color_GREEN, ...]
+        // return [m.Color_RED, m.Color_GREEN, ...]
         val entryRefs = enumEntries.map { entry ->
-            BrsIdentifier("${className}_${entry.name.asString()}")
+            BrsDotAccess(BrsIdentifier("m"), "${className}_${entry.name.asString()}")
         }
         valuesBody.add(BrsReturn(BrsArrayLiteral(entryRefs.toMutableList())))
 
@@ -539,7 +507,7 @@ class IrToBrsTransformer(
                     BrsBinaryOperator.EQ,
                     BrsStringLiteral(entryName)
                 ),
-                thenBranch = BrsReturn(BrsIdentifier(entryVarName))
+                thenBranch = BrsReturn(BrsDotAccess(BrsIdentifier("m"), entryVarName))
             )
 
             if (firstIf == null) {
@@ -957,17 +925,42 @@ class IrToBrsTransformer(
 
     /**
      * Generate copy method for data class.
+     *
+     * BrightScript doesn't support expressions like `m.name` as default parameter values,
+     * so we use `invalid` as the default and add runtime checks to substitute the current value.
      */
     private fun generateDataClassCopy(className: String, properties: List<IrValueParameter>): BrsFunction {
         val bodyStatements = mutableListOf<BrsStatement>()
 
-        // Parameters with default values from m.property
+        // Parameters with invalid as default (BrightScript doesn't allow m.property as default)
         val parameters = properties.map { param ->
             val propName = param.name.asString()
             BrsParameter(
                 name = propName,
-                type = mapTypeToBrs(param.type),
-                defaultValue = BrsDotAccess(BrsIdentifier("m"), propName)
+                type = null,  // Untyped to allow invalid
+                defaultValue = BrsIdentifier("invalid")
+            )
+        }
+
+        // Add runtime checks: if param = invalid then param = m.param
+        properties.forEach { param ->
+            val propName = param.name.asString()
+            bodyStatements.add(
+                BrsIf(
+                    condition = BrsBinaryOp(
+                        BrsIdentifier(propName),
+                        BrsBinaryOperator.EQ,
+                        BrsIdentifier("invalid")
+                    ),
+                    thenBranch = BrsExpressionStatement(
+                        BrsBinaryOp(
+                            BrsIdentifier(propName),
+                            BrsBinaryOperator.EQ,
+                            BrsDotAccess(BrsIdentifier("m"), propName)
+                        )
+                    ),
+                    elseBranch = null
+                )
             )
         }
 
