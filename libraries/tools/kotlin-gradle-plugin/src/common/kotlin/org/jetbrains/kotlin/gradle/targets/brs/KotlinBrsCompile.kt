@@ -3,6 +3,8 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+@file:Suppress("DEPRECATION")
+
 package org.jetbrains.kotlin.gradle.targets.brs
 
 import org.gradle.api.DefaultTask
@@ -12,6 +14,10 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
 import org.gradle.process.ExecOperations
+import org.jetbrains.kotlin.gradle.dsl.KotlinBrsCompilerOptions
+import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
+import org.jetbrains.kotlin.gradle.dsl.KotlinBrsCompile as KotlinBrsCompileInterface
+import org.jetbrains.kotlin.gradle.targets.brs.internal.KotlinBrsOptionsCompat
 import javax.inject.Inject
 
 /**
@@ -21,8 +27,16 @@ import javax.inject.Inject
  */
 @CacheableTask
 abstract class KotlinBrsCompile @Inject constructor(
-    private val execOperations: ExecOperations
-) : DefaultTask() {
+    final override val compilerOptions: KotlinBrsCompilerOptions,
+    private val execOperations: ExecOperations,
+) : DefaultTask(), KotlinBrsCompileInterface {
+
+    /**
+     * Deprecated kotlinOptions for compatibility.
+     */
+    @Deprecated("Use compilerOptions instead")
+    @get:Internal
+    override val kotlinOptions: KotlinCommonOptions by lazy { KotlinBrsOptionsCompat(compilerOptions) }
 
     /**
      * The Kotlin source files to compile.
@@ -50,37 +64,25 @@ abstract class KotlinBrsCompile @Inject constructor(
     abstract val compilerJar: RegularFileProperty
 
     /**
+     * The compiler classpath (derived from compilerJar).
+     * This is used internally for configuration cache compatibility.
+     */
+    @get:Classpath
+    abstract val compilerClasspath: ConfigurableFileCollection
+
+    /**
      * The output directory for generated .brs files.
      */
     @get:OutputDirectory
     abstract val outputDirectory: DirectoryProperty
 
     /**
-     * The module name for the compilation.
-     */
-    @get:Input
-    abstract val moduleName: Property<String>
-
-    /**
-     * Minimum Roku OS version to target.
+     * Enable stdlib compilation mode.
+     * This adds -Xstdlib-compilation and -Xallow-kotlin-package flags.
      */
     @get:Input
     @get:Optional
-    abstract val minRokuOS: Property<String>
-
-    /**
-     * Enable debug mode.
-     */
-    @get:Input
-    @get:Optional
-    abstract val debugMode: Property<Boolean>
-
-    /**
-     * Enable SceneGraph XML generation.
-     */
-    @get:Input
-    @get:Optional
-    abstract val generateXml: Property<Boolean>
+    abstract val stdlibCompilation: Property<Boolean>
 
     init {
         group = "brightscript"
@@ -110,10 +112,10 @@ abstract class KotlinBrsCompile @Inject constructor(
         args.add("-output-dir")
         args.add(outputDir.absolutePath)
 
-        // Add module name
-        if (moduleName.isPresent) {
+        // Add module name from compiler options
+        if (compilerOptions.moduleName.isPresent) {
             args.add("-module-name")
-            args.add(moduleName.get())
+            args.add(compilerOptions.moduleName.get())
         }
 
         // Add libraries
@@ -122,20 +124,36 @@ abstract class KotlinBrsCompile @Inject constructor(
             args.add(libraries.files.joinToString(java.io.File.pathSeparator) { it.absolutePath })
         }
 
-        // Add Roku OS version
-        if (minRokuOS.isPresent) {
+        // Add Roku OS version from compiler options
+        if (compilerOptions.minRokuOS.isPresent) {
             args.add("-min-roku-os")
-            args.add(minRokuOS.get())
+            args.add(compilerOptions.minRokuOS.get())
         }
 
-        // Add debug mode
-        if (debugMode.getOrElse(false)) {
+        // Add debug mode from compiler options
+        if (compilerOptions.debugMode.getOrElse(false)) {
             args.add("-debug")
         }
 
-        // Add XML generation
-        if (generateXml.getOrElse(true)) {
+        // Add XML generation from compiler options
+        if (compilerOptions.generateXml.getOrElse(true)) {
             args.add("-generate-xml")
+        }
+
+        // Add minify from compiler options
+        if (compilerOptions.minify.getOrElse(false)) {
+            args.add("-minify")
+        }
+
+        // Add strict mode from compiler options
+        if (compilerOptions.strictMode.getOrElse(false)) {
+            args.add("-strict-mode")
+        }
+
+        // Add stdlib compilation mode flags
+        if (stdlibCompilation.getOrElse(false)) {
+            args.add("-Xstdlib-compilation")
+            args.add("-Xallow-kotlin-package")
         }
 
         logger.info("Compiling Kotlin to BrightScript: ${sources.files.size} source files")
@@ -143,7 +161,7 @@ abstract class KotlinBrsCompile @Inject constructor(
 
         execOperations.javaexec { spec ->
             spec.mainClass.set("org.jetbrains.kotlin.cli.brs.K2BrsCompiler")
-            spec.classpath = project.files(compilerJar)
+            spec.classpath = compilerClasspath
             spec.args = args
         }
     }

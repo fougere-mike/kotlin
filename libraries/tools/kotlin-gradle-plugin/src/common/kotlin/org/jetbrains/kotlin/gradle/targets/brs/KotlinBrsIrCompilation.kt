@@ -8,11 +8,9 @@
 package org.jetbrains.kotlin.gradle.targets.brs
 
 import org.gradle.api.tasks.TaskProvider
-import org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
 import org.jetbrains.kotlin.gradle.plugin.mpp.AbstractKotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.compilationImpl.KotlinCompilationImpl
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import javax.inject.Inject
 
 /**
@@ -25,7 +23,12 @@ open class KotlinBrsIrCompilation @Inject internal constructor(
     override val target: KotlinBrsIrTarget
         get() = super.target as KotlinBrsIrTarget
 
-    @Suppress("UNCHECKED_CAST")
-    override val compileTaskProvider: TaskProvider<KotlinCompilationTask<KotlinCommonCompilerOptions>>
-        get() = compilation.compileTaskProvider as TaskProvider<KotlinCompilationTask<KotlinCommonCompilerOptions>>
+    /**
+     * Access the BRS-specific compile task.
+     */
+    val brsCompileTaskProvider: TaskProvider<KotlinBrsCompile>
+        get() {
+            @Suppress("UNCHECKED_CAST")
+            return compilation.compileTaskProvider as TaskProvider<KotlinBrsCompile>
+        }
 }

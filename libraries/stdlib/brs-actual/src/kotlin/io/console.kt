@@ -11,29 +11,29 @@ package kotlin.io
  */
 
 /** Prints the line separator to the standard output stream. */
-public actual fun println() {
+public fun println() {
     // BrightScript print adds newline automatically
     brsIntrinsicPrint("")
 }
 
 /** Prints the given [message] and the line separator to the standard output stream. */
-public actual fun println(message: Any?) {
+public fun println(message: Any?) {
     brsIntrinsicPrint(message?.toString() ?: "null")
 }
 
 /** Prints the given [message] to the standard output stream. */
-public actual fun print(message: Any?) {
+public fun print(message: Any?) {
     // BrightScript doesn't have a print without newline, but we can use semicolon
     // to suppress the newline in code generation
     brsIntrinsicPrintNoNewline(message?.toString() ?: "null")
 }
 
 @SinceKotlin("1.6")
-public actual fun readln(): String =
+public fun readln(): String =
     throw UnsupportedOperationException("readln is not supported in BrightScript")
 
 @SinceKotlin("1.6")
-public actual fun readlnOrNull(): String? =
+public fun readlnOrNull(): String? =
     throw UnsupportedOperationException("readlnOrNull is not supported in BrightScript")
 
 /**

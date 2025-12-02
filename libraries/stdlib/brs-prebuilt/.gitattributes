@@ -1,0 +1,2 @@
+# Mark klib files as binary for proper VCS handling
+*.klib binary

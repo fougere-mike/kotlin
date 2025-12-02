@@ -81,7 +81,7 @@ public actual fun Double.toRawBits(): Long {
         this == 0.0 -> if (1.0 / this < 0) Long.MIN_VALUE else 0L // Handle +0 and -0
         isNaN() -> 0x7ff8000000000000L // NaN pattern
         this == Double.POSITIVE_INFINITY -> 0x7ff0000000000000L
-        this == Double.NEGATIVE_INFINITY -> 0xfff0000000000000L.toLong()
+        this == Double.NEGATIVE_INFINITY -> -4503599627370496L // 0xfff0000000000000 as signed Long
         else -> {
             // General case - approximate conversion
             // This is a simplified implementation; backend should provide proper intrinsic

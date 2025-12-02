@@ -30,6 +30,10 @@ internal interface KotlinNativeCompileTask : KotlinCompile<KotlinCommonOptions>,
 interface KotlinCommonCompile : KotlinCompile<KotlinMultiplatformCommonOptions>,
     KotlinCompilationTask<KotlinMultiplatformCommonCompilerOptions>
 
+@Suppress("DEPRECATION")
+interface KotlinBrsCompile : KotlinCompile<KotlinCommonOptions>,
+    KotlinCompilationTask<KotlinBrsCompilerOptions>
+
 @Suppress("DEPRECATION_ERROR")
 @Deprecated(KOTLIN_JS_DCE_TOOL_DEPRECATION_MESSAGE, level = DeprecationLevel.ERROR)
 interface KotlinJsDce : Task, KotlinToolTask<KotlinJsDceCompilerToolOptions> {

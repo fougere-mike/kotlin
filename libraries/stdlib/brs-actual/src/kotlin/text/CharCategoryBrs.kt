@@ -9,7 +9,7 @@ package kotlin.text
  * Represents the character general category in the Unicode specification.
  */
 @SinceKotlin("1.5")
-public actual enum class CharCategory(internal val value: Int, public actual val code: String) {
+public enum class CharCategory(internal val value: Int, public val code: String) {
     UNASSIGNED(0, "Cn"),
     UPPERCASE_LETTER(1, "Lu"),
     LOWERCASE_LETTER(2, "Ll"),
@@ -44,13 +44,15 @@ public actual enum class CharCategory(internal val value: Int, public actual val
     /**
      * Returns `true` if [char] character belongs to this category.
      */
-    public actual operator fun contains(char: Char): Boolean = char.category == this
+    public operator fun contains(char: Char): Boolean = char.category == this
 
     public companion object {
+        private val allValues: Array<CharCategory> = values()
+
         internal fun valueOf(category: Int): CharCategory =
             when (category) {
-                in 0..16 -> entries[category]
-                in 18..30 -> entries[category - 1]
+                in 0..16 -> allValues[category]
+                in 18..30 -> allValues[category - 1]
                 else -> throw IllegalArgumentException("Category #$category is not defined.")
             }
     }

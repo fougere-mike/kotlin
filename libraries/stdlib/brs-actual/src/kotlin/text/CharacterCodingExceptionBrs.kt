@@ -8,4 +8,4 @@ package kotlin.text
 /**
  * Thrown when a character encoding or decoding error occurs.
  */
-public actual open class CharacterCodingException actual constructor() : Exception()
+public open class CharacterCodingException constructor() : Exception()

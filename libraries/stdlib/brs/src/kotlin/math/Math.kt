@@ -10,6 +10,16 @@ package kotlin.math
 import kotlin.brs.runtime.*
 
 /**
+ * The ratio of the circumference of a circle to its diameter.
+ */
+public const val PI: Double = 3.141592653589793
+
+/**
+ * Base of the natural logarithm.
+ */
+public const val E: Double = 2.718281828459045
+
+/**
  * Actual implementations of math functions for BrightScript target.
  *
  * BrightScript provides these native math functions:
@@ -26,16 +36,16 @@ import kotlin.brs.runtime.*
 // ============================================
 
 @SinceKotlin("1.2")
-public actual fun sin(x: Double): Double = brsIntrinsicSin(x)
+public fun sin(x: Double): Double = brsIntrinsicSin(x)
 
 @SinceKotlin("1.2")
-public actual fun cos(x: Double): Double = brsIntrinsicCos(x)
+public fun cos(x: Double): Double = brsIntrinsicCos(x)
 
 @SinceKotlin("1.2")
-public actual fun tan(x: Double): Double = brsIntrinsicTan(x)
+public fun tan(x: Double): Double = brsIntrinsicTan(x)
 
 @SinceKotlin("1.2")
-public actual fun asin(x: Double): Double {
+public fun asin(x: Double): Double {
     // asin(x) = atan(x / sqrt(1 - x^2))
     if (x.isNaN() || x < -1.0 || x > 1.0) return Double.NaN
     if (x == 1.0) return PI / 2
@@ -44,17 +54,17 @@ public actual fun asin(x: Double): Double {
 }
 
 @SinceKotlin("1.2")
-public actual fun acos(x: Double): Double {
+public fun acos(x: Double): Double {
     // acos(x) = PI/2 - asin(x)
     if (x.isNaN() || x < -1.0 || x > 1.0) return Double.NaN
     return PI / 2 - asin(x)
 }
 
 @SinceKotlin("1.2")
-public actual fun atan(x: Double): Double = brsIntrinsicAtan(x)
+public fun atan(x: Double): Double = brsIntrinsicAtan(x)
 
 @SinceKotlin("1.2")
-public actual fun atan2(y: Double, x: Double): Double {
+public fun atan2(y: Double, x: Double): Double {
     // atan2 implementation using atan
     if (y.isNaN() || x.isNaN()) return Double.NaN
     if (y == 0.0 && x > 0.0) return 0.0
@@ -72,7 +82,7 @@ public actual fun atan2(y: Double, x: Double): Double {
 // ============================================
 
 @SinceKotlin("1.2")
-public actual fun sinh(x: Double): Double {
+public fun sinh(x: Double): Double {
     // sinh(x) = (e^x - e^-x) / 2
     if (x.isNaN()) return Double.NaN
     if (x.isInfinite()) return x
@@ -80,7 +90,7 @@ public actual fun sinh(x: Double): Double {
 }
 
 @SinceKotlin("1.2")
-public actual fun cosh(x: Double): Double {
+public fun cosh(x: Double): Double {
     // cosh(x) = (e^x + e^-x) / 2
     if (x.isNaN()) return Double.NaN
     if (x.isInfinite()) return Double.POSITIVE_INFINITY
@@ -88,7 +98,7 @@ public actual fun cosh(x: Double): Double {
 }
 
 @SinceKotlin("1.2")
-public actual fun tanh(x: Double): Double {
+public fun tanh(x: Double): Double {
     // tanh(x) = sinh(x) / cosh(x)
     if (x.isNaN()) return Double.NaN
     if (x == Double.POSITIVE_INFINITY) return 1.0
@@ -99,7 +109,7 @@ public actual fun tanh(x: Double): Double {
 }
 
 @SinceKotlin("1.2")
-public actual fun asinh(x: Double): Double {
+public fun asinh(x: Double): Double {
     // asinh(x) = ln(x + sqrt(x^2 + 1))
     if (x.isNaN()) return Double.NaN
     if (x.isInfinite()) return x
@@ -107,7 +117,7 @@ public actual fun asinh(x: Double): Double {
 }
 
 @SinceKotlin("1.2")
-public actual fun acosh(x: Double): Double {
+public fun acosh(x: Double): Double {
     // acosh(x) = ln(x + sqrt(x^2 - 1)), x >= 1
     if (x.isNaN() || x < 1.0) return Double.NaN
     if (x == Double.POSITIVE_INFINITY) return Double.POSITIVE_INFINITY
@@ -115,7 +125,7 @@ public actual fun acosh(x: Double): Double {
 }
 
 @SinceKotlin("1.2")
-public actual fun atanh(x: Double): Double {
+public fun atanh(x: Double): Double {
     // atanh(x) = 0.5 * ln((1 + x) / (1 - x)), -1 < x < 1
     if (x.isNaN() || x < -1.0 || x > 1.0) return Double.NaN
     if (x == 1.0) return Double.POSITIVE_INFINITY
@@ -128,20 +138,20 @@ public actual fun atanh(x: Double): Double {
 // ============================================
 
 @SinceKotlin("1.2")
-public actual fun hypot(x: Double, y: Double): Double {
+public fun hypot(x: Double, y: Double): Double {
     if (x.isInfinite() || y.isInfinite()) return Double.POSITIVE_INFINITY
     if (x.isNaN() || y.isNaN()) return Double.NaN
     return brsIntrinsicSqrt(x * x + y * y)
 }
 
 @SinceKotlin("1.2")
-public actual fun sqrt(x: Double): Double = brsIntrinsicSqrt(x)
+public fun sqrt(x: Double): Double = brsIntrinsicSqrt(x)
 
 @SinceKotlin("1.2")
-public actual fun exp(x: Double): Double = brsIntrinsicExp(x)
+public fun exp(x: Double): Double = brsIntrinsicExp(x)
 
 @SinceKotlin("1.2")
-public actual fun expm1(x: Double): Double {
+public fun expm1(x: Double): Double {
     // expm1(x) = exp(x) - 1, more precise for small x
     if (x.isNaN()) return Double.NaN
     if (x == Double.POSITIVE_INFINITY) return Double.POSITIVE_INFINITY
@@ -150,23 +160,23 @@ public actual fun expm1(x: Double): Double {
 }
 
 @SinceKotlin("1.2")
-public actual fun log(x: Double, base: Double): Double {
+public fun log(x: Double, base: Double): Double {
     if (x.isNaN() || base.isNaN()) return Double.NaN
     if (x < 0 || base <= 0 || base == 1.0) return Double.NaN
     return brsIntrinsicLog(x) / brsIntrinsicLog(base)
 }
 
 @SinceKotlin("1.2")
-public actual fun ln(x: Double): Double = brsIntrinsicLog(x)
+public fun ln(x: Double): Double = brsIntrinsicLog(x)
 
 @SinceKotlin("1.2")
-public actual fun log10(x: Double): Double = brsIntrinsicLog(x) / brsIntrinsicLog(10.0)
+public fun log10(x: Double): Double = brsIntrinsicLog(x) / brsIntrinsicLog(10.0)
 
 @SinceKotlin("1.2")
-public actual fun log2(x: Double): Double = brsIntrinsicLog(x) / brsIntrinsicLog(2.0)
+public fun log2(x: Double): Double = brsIntrinsicLog(x) / brsIntrinsicLog(2.0)
 
 @SinceKotlin("1.2")
-public actual fun ln1p(x: Double): Double {
+public fun ln1p(x: Double): Double {
     if (x.isNaN() || x < -1.0) return Double.NaN
     if (x == -1.0) return Double.NEGATIVE_INFINITY
     if (x == Double.POSITIVE_INFINITY) return Double.POSITIVE_INFINITY
@@ -178,16 +188,16 @@ public actual fun ln1p(x: Double): Double {
 // ============================================
 
 @SinceKotlin("1.2")
-public actual fun ceil(x: Double): Double = brsIntrinsicCeil(x)
+public fun ceil(x: Double): Double = brsIntrinsicCeil(x)
 
 @SinceKotlin("1.2")
-public actual fun floor(x: Double): Double = brsIntrinsicFloor(x)
+public fun floor(x: Double): Double = brsIntrinsicFloor(x)
 
 @SinceKotlin("1.2")
-public actual fun truncate(x: Double): Double = brsIntrinsicTrunc(x).toDouble()
+public fun truncate(x: Double): Double = brsIntrinsicTrunc(x).toDouble()
 
 @SinceKotlin("1.2")
-public actual fun round(x: Double): Double {
+public fun round(x: Double): Double {
     if (x.isNaN() || x.isInfinite()) return x
     // Round to nearest, ties to even
     val floor = floor(x)
@@ -204,10 +214,10 @@ public actual fun round(x: Double): Double {
 // ============================================
 
 @SinceKotlin("1.2")
-public actual fun abs(x: Double): Double = brsIntrinsicAbs(x)
+public fun abs(x: Double): Double = brsIntrinsicAbs(x)
 
 @SinceKotlin("1.2")
-public actual fun sign(x: Double): Double = when {
+public fun sign(x: Double): Double = when {
     x.isNaN() -> Double.NaN
     x > 0 -> 1.0
     x < 0 -> -1.0
@@ -215,13 +225,13 @@ public actual fun sign(x: Double): Double = when {
 }
 
 @SinceKotlin("1.2")
-public actual fun min(a: Double, b: Double): Double = brsIntrinsicMinDouble(a, b)
+public fun min(a: Double, b: Double): Double = brsIntrinsicMinDouble(a, b)
 
 @SinceKotlin("1.2")
-public actual fun max(a: Double, b: Double): Double = brsIntrinsicMaxDouble(a, b)
+public fun max(a: Double, b: Double): Double = brsIntrinsicMaxDouble(a, b)
 
 @SinceKotlin("1.8")
-public actual fun cbrt(x: Double): Double {
+public fun cbrt(x: Double): Double {
     // cbrt(x) = x^(1/3), preserving sign
     if (x.isNaN() || x.isInfinite() || x == 0.0) return x
     val sign = if (x < 0) -1.0 else 1.0
@@ -233,31 +243,31 @@ public actual fun cbrt(x: Double): Double {
 // ============================================
 
 @SinceKotlin("1.2")
-public actual fun Double.pow(x: Double): Double = brsIntrinsicPow(this, x)
+public fun Double.pow(x: Double): Double = brsIntrinsicPow(this, x)
 
 @SinceKotlin("1.2")
-public actual fun Double.pow(n: Int): Double = brsIntrinsicPow(this, n.toDouble())
+public fun Double.pow(n: Int): Double = brsIntrinsicPow(this, n.toDouble())
 
 @SinceKotlin("1.2")
-public actual val Double.absoluteValue: Double
+public val Double.absoluteValue: Double
     get() = abs(this)
 
 @SinceKotlin("1.2")
-public actual val Double.sign: Double
+public val Double.sign: Double
     get() = sign(this)
 
 @SinceKotlin("1.2")
-public actual fun Double.withSign(sign: Double): Double {
+public fun Double.withSign(sign: Double): Double {
     val thisSign = if (this < 0 || (this == 0.0 && 1.0 / this < 0)) -1.0 else 1.0
     val newSign = if (sign < 0 || (sign == 0.0 && 1.0 / sign < 0)) -1.0 else 1.0
     return if (thisSign == newSign) this else -this
 }
 
 @SinceKotlin("1.2")
-public actual fun Double.withSign(sign: Int): Double = withSign(sign.toDouble())
+public fun Double.withSign(sign: Int): Double = withSign(sign.toDouble())
 
 @SinceKotlin("1.2")
-public actual val Double.ulp: Double
+public val Double.ulp: Double
     get() {
         if (isNaN()) return Double.NaN
         if (isInfinite()) return Double.POSITIVE_INFINITY
@@ -269,7 +279,7 @@ public actual val Double.ulp: Double
     }
 
 @SinceKotlin("1.2")
-public actual fun Double.nextUp(): Double {
+public fun Double.nextUp(): Double {
     if (isNaN() || this == Double.POSITIVE_INFINITY) return this
     if (this == 0.0) return Double.MIN_VALUE
     val bits = toBits()
@@ -277,7 +287,7 @@ public actual fun Double.nextUp(): Double {
 }
 
 @SinceKotlin("1.2")
-public actual fun Double.nextDown(): Double {
+public fun Double.nextDown(): Double {
     if (isNaN() || this == Double.NEGATIVE_INFINITY) return this
     if (this == 0.0) return -Double.MIN_VALUE
     val bits = toBits()
@@ -285,14 +295,14 @@ public actual fun Double.nextDown(): Double {
 }
 
 @SinceKotlin("1.2")
-public actual fun Double.nextTowards(to: Double): Double {
+public fun Double.nextTowards(to: Double): Double {
     if (isNaN() || to.isNaN()) return Double.NaN
     if (this == to) return this
     return if (to > this) nextUp() else nextDown()
 }
 
 @SinceKotlin("1.2")
-public actual fun Double.roundToInt(): Int {
+public fun Double.roundToInt(): Int {
     if (isNaN()) throw IllegalArgumentException("Cannot round NaN to Int")
     if (this > Int.MAX_VALUE) return Int.MAX_VALUE
     if (this < Int.MIN_VALUE) return Int.MIN_VALUE
@@ -300,7 +310,7 @@ public actual fun Double.roundToInt(): Int {
 }
 
 @SinceKotlin("1.2")
-public actual fun Double.roundToLong(): Long {
+public fun Double.roundToLong(): Long {
     if (isNaN()) throw IllegalArgumentException("Cannot round NaN to Long")
     if (this > Long.MAX_VALUE) return Long.MAX_VALUE
     if (this < Long.MIN_VALUE) return Long.MIN_VALUE
@@ -312,143 +322,143 @@ public actual fun Double.roundToLong(): Long {
 // ============================================
 
 @SinceKotlin("1.2")
-public actual fun sin(x: Float): Float = sin(x.toDouble()).toFloat()
+public fun sin(x: Float): Float = sin(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun cos(x: Float): Float = cos(x.toDouble()).toFloat()
+public fun cos(x: Float): Float = cos(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun tan(x: Float): Float = tan(x.toDouble()).toFloat()
+public fun tan(x: Float): Float = tan(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun asin(x: Float): Float = asin(x.toDouble()).toFloat()
+public fun asin(x: Float): Float = asin(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun acos(x: Float): Float = acos(x.toDouble()).toFloat()
+public fun acos(x: Float): Float = acos(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun atan(x: Float): Float = atan(x.toDouble()).toFloat()
+public fun atan(x: Float): Float = atan(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun atan2(y: Float, x: Float): Float = atan2(y.toDouble(), x.toDouble()).toFloat()
+public fun atan2(y: Float, x: Float): Float = atan2(y.toDouble(), x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun sinh(x: Float): Float = sinh(x.toDouble()).toFloat()
+public fun sinh(x: Float): Float = sinh(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun cosh(x: Float): Float = cosh(x.toDouble()).toFloat()
+public fun cosh(x: Float): Float = cosh(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun tanh(x: Float): Float = tanh(x.toDouble()).toFloat()
+public fun tanh(x: Float): Float = tanh(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun asinh(x: Float): Float = asinh(x.toDouble()).toFloat()
+public fun asinh(x: Float): Float = asinh(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun acosh(x: Float): Float = acosh(x.toDouble()).toFloat()
+public fun acosh(x: Float): Float = acosh(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun atanh(x: Float): Float = atanh(x.toDouble()).toFloat()
+public fun atanh(x: Float): Float = atanh(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun hypot(x: Float, y: Float): Float = hypot(x.toDouble(), y.toDouble()).toFloat()
+public fun hypot(x: Float, y: Float): Float = hypot(x.toDouble(), y.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun sqrt(x: Float): Float = sqrt(x.toDouble()).toFloat()
+public fun sqrt(x: Float): Float = sqrt(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun exp(x: Float): Float = exp(x.toDouble()).toFloat()
+public fun exp(x: Float): Float = exp(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun expm1(x: Float): Float = expm1(x.toDouble()).toFloat()
+public fun expm1(x: Float): Float = expm1(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun log(x: Float, base: Float): Float = log(x.toDouble(), base.toDouble()).toFloat()
+public fun log(x: Float, base: Float): Float = log(x.toDouble(), base.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun ln(x: Float): Float = ln(x.toDouble()).toFloat()
+public fun ln(x: Float): Float = ln(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun log10(x: Float): Float = log10(x.toDouble()).toFloat()
+public fun log10(x: Float): Float = log10(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun log2(x: Float): Float = log2(x.toDouble()).toFloat()
+public fun log2(x: Float): Float = log2(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun ln1p(x: Float): Float = ln1p(x.toDouble()).toFloat()
+public fun ln1p(x: Float): Float = ln1p(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun ceil(x: Float): Float = ceil(x.toDouble()).toFloat()
+public fun ceil(x: Float): Float = ceil(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun floor(x: Float): Float = floor(x.toDouble()).toFloat()
+public fun floor(x: Float): Float = floor(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun truncate(x: Float): Float = truncate(x.toDouble()).toFloat()
+public fun truncate(x: Float): Float = truncate(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun round(x: Float): Float = round(x.toDouble()).toFloat()
+public fun round(x: Float): Float = round(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun abs(x: Float): Float = abs(x.toDouble()).toFloat()
+public fun abs(x: Float): Float = abs(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun sign(x: Float): Float = sign(x.toDouble()).toFloat()
+public fun sign(x: Float): Float = sign(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun min(a: Float, b: Float): Float = min(a.toDouble(), b.toDouble()).toFloat()
+public fun min(a: Float, b: Float): Float = min(a.toDouble(), b.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun max(a: Float, b: Float): Float = max(a.toDouble(), b.toDouble()).toFloat()
+public fun max(a: Float, b: Float): Float = max(a.toDouble(), b.toDouble()).toFloat()
 
 @SinceKotlin("1.8")
-public actual fun cbrt(x: Float): Float = cbrt(x.toDouble()).toFloat()
+public fun cbrt(x: Float): Float = cbrt(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun Float.pow(x: Float): Float = this.toDouble().pow(x.toDouble()).toFloat()
+public fun Float.pow(x: Float): Float = this.toDouble().pow(x.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun Float.pow(n: Int): Float = this.toDouble().pow(n).toFloat()
+public fun Float.pow(n: Int): Float = this.toDouble().pow(n).toFloat()
 
 @SinceKotlin("1.2")
-public actual val Float.absoluteValue: Float
+public val Float.absoluteValue: Float
     get() = abs(this)
 
 @SinceKotlin("1.2")
-public actual val Float.sign: Float
+public val Float.sign: Float
     get() = sign(this)
 
 @SinceKotlin("1.2")
-public actual fun Float.withSign(sign: Float): Float = this.toDouble().withSign(sign.toDouble()).toFloat()
+public fun Float.withSign(sign: Float): Float = this.toDouble().withSign(sign.toDouble()).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun Float.withSign(sign: Int): Float = this.toDouble().withSign(sign).toFloat()
+public fun Float.withSign(sign: Int): Float = this.toDouble().withSign(sign).toFloat()
 
 @SinceKotlin("1.2")
-public actual fun Float.roundToInt(): Int = this.toDouble().roundToInt()
+public fun Float.roundToInt(): Int = this.toDouble().roundToInt()
 
 @SinceKotlin("1.2")
-public actual fun Float.roundToLong(): Long = this.toDouble().roundToLong()
+public fun Float.roundToLong(): Long = this.toDouble().roundToLong()
 
 // ============================================
 // Integer Functions
 // ============================================
 
 @SinceKotlin("1.2")
-public actual fun abs(n: Int): Int = brsIntrinsicAbsInt(n)
+public fun abs(n: Int): Int = brsIntrinsicAbsInt(n)
 
 @SinceKotlin("1.2")
-public actual fun min(a: Int, b: Int): Int = brsIntrinsicMinInt(a, b)
+public fun min(a: Int, b: Int): Int = brsIntrinsicMinInt(a, b)
 
 @SinceKotlin("1.2")
-public actual fun max(a: Int, b: Int): Int = brsIntrinsicMaxInt(a, b)
+public fun max(a: Int, b: Int): Int = brsIntrinsicMaxInt(a, b)
 
 @SinceKotlin("1.2")
-public actual val Int.absoluteValue: Int
+public val Int.absoluteValue: Int
     get() = abs(this)
 
 @SinceKotlin("1.2")
-public actual val Int.sign: Int
+public val Int.sign: Int
     get() = when {
         this > 0 -> 1
         this < 0 -> -1
@@ -456,20 +466,20 @@ public actual val Int.sign: Int
     }
 
 @SinceKotlin("1.2")
-public actual fun abs(n: Long): Long = if (n < 0) -n else n
+public fun abs(n: Long): Long = if (n < 0) -n else n
 
 @SinceKotlin("1.2")
-public actual fun min(a: Long, b: Long): Long = if (a <= b) a else b
+public fun min(a: Long, b: Long): Long = if (a <= b) a else b
 
 @SinceKotlin("1.2")
-public actual fun max(a: Long, b: Long): Long = if (a >= b) a else b
+public fun max(a: Long, b: Long): Long = if (a >= b) a else b
 
 @SinceKotlin("1.2")
-public actual val Long.absoluteValue: Long
+public val Long.absoluteValue: Long
     get() = abs(this)
 
 @SinceKotlin("1.2")
-public actual val Long.sign: Int
+public val Long.sign: Int
     get() = when {
         this > 0L -> 1
         this < 0L -> -1
