@@ -41,6 +41,31 @@ internal external fun brsIntrinsicChr(code: Int): Char
 public fun Int.toChar(): Char = brsIntrinsicChr(this)
 
 // ============================================
+// String Extensions
+// ============================================
+
+/**
+ * Returns a substring of this string starting at the specified [startIndex] and ending at the specified [endIndex] (exclusive).
+ * Lowered to: Mid(string, startIndex + 1, endIndex - startIndex) in BrightScript (1-based indexing)
+ */
+public fun String.substring(startIndex: Int, endIndex: Int): String =
+    brsIntrinsicSubstring(this, startIndex, endIndex)
+
+/**
+ * Returns a substring of this string starting at the specified [startIndex] and extending to the end of the string.
+ * Lowered to: Mid(string, startIndex + 1) in BrightScript (1-based indexing)
+ */
+public fun String.substring(startIndex: Int): String =
+    brsIntrinsicSubstring(this, startIndex, this.length)
+
+/**
+ * Intrinsic function to get a substring.
+ * Lowered to: Mid(string, startIndex + 1, length)
+ */
+@PublishedApi
+internal external fun brsIntrinsicSubstring(string: String, startIndex: Int, endIndex: Int): String
+
+// ============================================
 // Range Utilities
 // ============================================
 

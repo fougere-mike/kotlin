@@ -15,7 +15,7 @@ val outputKlib = file("kotlin-stdlib-brs.klib")
 // The BRS compiler CLI can be found in multiple locations:
 // 1. Fat JAR built by :compiler:cli-brs:fatJar
 // 2. Dist location after ./gradlew dist
-val brsCompilerFatJar = rootProject.file("compiler/cli/cli-brs/build/libs/kotlinc-brs.jar")
+val brsCompilerFatJar = rootProject.file("compiler/cli/cli-brs/build/libs/kotlinc-brs-2.1.255-SNAPSHOT.jar")
 val distCompilerJar = rootProject.file("dist/kotlinc/lib/kotlin-compiler.jar")
 
 /**
