@@ -567,12 +567,11 @@ kotlin {
         }
 
         // BrightScript (Roku) source sets
-        // Note: BRS does not depend on commonMain yet because not all common sources are compatible.
-        // Once unsigned types and other missing primitives are implemented, we can add that dependency.
         val brsDir = "${projectDir}/brs"
         val brsActualDir = "${projectDir}/brs-actual"
         val brsMain by getting {
-            // Don't depend on commonMain for now - BRS needs its own minimal stdlib
+            // BRS now depends on commonMain - unsigned types have been implemented
+            dependsOn(commonMain.get())
             kotlin {
                 srcDir("$brsDir/builtins")
                 srcDir("$brsDir/runtime")
