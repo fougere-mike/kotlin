@@ -66,6 +66,25 @@ class IrToBrsTransformer(
     internal var currentClosureContext: List<CapturedVariable>? = null
 
     /**
+     * Temp variable substitution map for increment/decrement inlining.
+     * When transforming increment blocks, we need to inline the temp variable's
+     * initializer instead of outputting a reference to the temp var.
+     */
+    private val tempVarSubstitutions = mutableMapOf<IrValueSymbol, IrExpression>()
+
+    fun pushTempVarSubstitution(symbol: IrValueSymbol, initializer: IrExpression) {
+        tempVarSubstitutions[symbol] = initializer
+    }
+
+    fun popTempVarSubstitution(symbol: IrValueSymbol) {
+        tempVarSubstitutions.remove(symbol)
+    }
+
+    fun getTempVarSubstitution(symbol: IrValueSymbol): IrExpression? {
+        return tempVarSubstitutions[symbol]
+    }
+
+    /**
      * Detect variables captured by a function expression.
      * Returns a list of variables that are referenced but not declared within the function.
      */
@@ -1657,20 +1676,137 @@ class IrStatementToBrsTransformer(
             }
         }
 
-        val statements = expression.statements.mapNotNull { stmt ->
+        // Check if this is an increment/decrement block
+        // These have structure: { val <unary> = old; var = <unary>.inc(); <unary> }
+        // When used as statement, we can simplify to just the assignment
+        if (expression.origin == IrStatementOrigin.POSTFIX_INCR ||
+            expression.origin == IrStatementOrigin.POSTFIX_DECR ||
+            expression.origin == IrStatementOrigin.PREFIX_INCR ||
+            expression.origin == IrStatementOrigin.PREFIX_DECR) {
+            val result = transformIncrementDecrementBlock(expression)
+            if (result != null) {
+                return result
+            }
+        }
+
+        val statements = expression.statements.flatMap { stmt ->
             when (stmt) {
                 // Route IrReturn to statement transformer (has visitReturn handler)
                 // IrReturn extends IrExpression but needs statement-level handling
-                is IrReturn -> parent.transformStatement(stmt)
+                is IrReturn -> listOfNotNull(parent.transformStatement(stmt))
                 // These are handled during constructor/enum transformation, skip here
-                is IrDelegatingConstructorCall -> null
-                is IrInstanceInitializerCall -> null
-                is IrEnumConstructorCall -> null
+                is IrDelegatingConstructorCall -> emptyList()
+                is IrInstanceInitializerCall -> emptyList()
+                is IrEnumConstructorCall -> emptyList()
+                // Skip temp variable REFERENCES (IrGetValue) from increment/decrement blocks
+                // These are the return values at the end of the block that shouldn't be statements
+                is IrGetValue -> {
+                    val varName = stmt.symbol.owner.name.asString()
+                    if (varName.startsWith("<") && varName.endsWith(">")) {
+                        emptyList()  // Skip temp variable returns like <unary>
+                    } else {
+                        listOf(BrsExpressionStatement(parent.transformExpression(stmt)))
+                    }
+                }
+                // Keep temp variable DECLARATIONS - they're needed by the setter call
+                is IrVariable -> {
+                    val varName = stmt.name.asString()
+                    // Sanitize the name for BrightScript (remove < and >)
+                    val sanitizedName = if (varName.startsWith("<") && varName.endsWith(">")) {
+                        varName.removePrefix("<").removeSuffix(">").replace("-", "_")
+                    } else {
+                        varName
+                    }
+                    val init = stmt.initializer?.let { parent.transformExpression(it) }
+                    if (init != null) {
+                        listOf(BrsVariable(sanitizedName, parent.mapTypeToBrs(stmt.type), init))
+                    } else {
+                        emptyList()
+                    }
+                }
+                // For nested blocks/composites, flatten them to extract all statements
+                // This is important for postfix increment/decrement which use blocks
+                is IrBlock -> {
+                    val nested = visitBlock(stmt, Unit)
+                    if (nested is BrsBlock) nested.statements else listOf(nested)
+                }
+                is IrComposite -> {
+                    // Process each statement in the composite
+                    stmt.statements.flatMap { nestedStmt ->
+                        when (nestedStmt) {
+                            is IrBlock -> {
+                                val nested = visitBlock(nestedStmt, Unit)
+                                if (nested is BrsBlock) nested.statements else listOf(nested)
+                            }
+                            is IrExpression -> listOf(BrsExpressionStatement(parent.transformExpression(nestedStmt)))
+                            else -> listOfNotNull(parent.transformStatement(nestedStmt))
+                        }
+                    }
+                }
+                is IrExpression -> listOf(BrsExpressionStatement(parent.transformExpression(stmt)))
+                else -> listOfNotNull(parent.transformStatement(stmt))
+            }
+        }
+        return BrsBlock(statements.toMutableList())
+    }
+
+    /**
+     * Transform an increment/decrement block.
+     *
+     * Increment/decrement blocks have structure:
+     * IrBlock(origin=POSTFIX_INCR/DECR or PREFIX_INCR/DECR) {
+     *   val <unary> = oldValue       // temp variable (for postfix)
+     *   assignment                    // IrSetValue, IrSetField, or IrCall to setter
+     *   <unary> or newValue          // return value - discarded when used as statement
+     * }
+     *
+     * When used as a statement (result discarded), we output:
+     * 1. All statements EXCEPT the final value return
+     *
+     * Returns null if the pattern doesn't match.
+     */
+    private fun transformIncrementDecrementBlock(block: IrBlock): BrsStatement? {
+        val statements = block.statements
+        if (statements.isEmpty()) return null
+
+        // Process all statements except the last one (which is the return value)
+        // For postfix: [val <unary> = old, setter(<unary>+1), <unary>]
+        // For prefix: [val <unary> = var+1, setter(<unary>), <unary>]
+        // We want to output just the setter call, skipping temp var and return value
+
+        // Find statements that are NOT just getters (temp var returns)
+        // Include setter calls (IrCall to <set-*>), IrSetValue, IrSetField
+        val effectfulStatements = statements.filter { stmt ->
+            when (stmt) {
+                is IrGetValue -> false  // Skip value returns
+                is IrVariable -> false  // Skip temp variable declarations
+                is IrSetValue -> true   // Include direct assignments
+                is IrSetField -> true   // Include field assignments
+                is IrCall -> true       // Include all calls (including setter calls)
+                else -> false
+            }
+        }
+
+        if (effectfulStatements.isEmpty()) return null
+
+        // Transform each effectful statement
+        val brsStatements = effectfulStatements.mapNotNull { stmt ->
+            when (stmt) {
+                is IrSetValue -> visitSetValue(stmt, Unit)
+                is IrSetField -> visitSetField(stmt, Unit)
+                is IrCall -> BrsExpressionStatement(parent.transformExpression(stmt))
                 is IrExpression -> BrsExpressionStatement(parent.transformExpression(stmt))
                 else -> parent.transformStatement(stmt)
             }
         }
-        return BrsBlock(statements.toMutableList())
+
+        return if (brsStatements.isEmpty()) {
+            null
+        } else if (brsStatements.size == 1) {
+            brsStatements.first()
+        } else {
+            BrsBlock(brsStatements.toMutableList())
+        }
     }
 
     /**
@@ -1820,6 +1956,13 @@ class IrExpressionToBrsTransformer(
     // ==================== References ====================
 
     override fun visitGetValue(expression: IrGetValue, data: Unit): BrsExpression {
+        // Check if this is a temp variable that should be inlined (increment/decrement)
+        val substitution = parent.getTempVarSubstitution(expression.symbol)
+        if (substitution != null) {
+            // Inline the initializer expression instead of outputting the temp var reference
+            return substitution.accept(this, data)
+        }
+
         val rawName = expression.symbol.owner.name.asString()
 
         // Check if this variable is captured in a closure
@@ -2819,7 +2962,57 @@ class IrExpressionToBrsTransformer(
     }
 
     override fun visitBlock(expression: IrBlock, data: Unit): BrsExpression {
-        // Block expressions return the last statement's value
+        // Handle increment/decrement blocks - when used as statement (value discarded),
+        // we need to output just the setter/assignment with inlined temp variable
+        // Block structure: [IrVariable(<unary>) = getter(), setter(<unary>+1) or IrSetValue, IrGetValue(<unary>)]
+        if (expression.origin == IrStatementOrigin.POSTFIX_INCR ||
+            expression.origin == IrStatementOrigin.POSTFIX_DECR ||
+            expression.origin == IrStatementOrigin.PREFIX_INCR ||
+            expression.origin == IrStatementOrigin.PREFIX_DECR) {
+
+            val statements = expression.statements
+
+            // Find the temp variable and its initializer
+            val tempVar = statements.filterIsInstance<IrVariable>().firstOrNull {
+                it.name.asString().startsWith("<") && it.name.asString().endsWith(">")
+            }
+            val tempVarInitializer = tempVar?.initializer
+
+            // For property increment: Find setter call (IrCall that is NOT the last statement)
+            for (stmt in statements) {
+                if (stmt is IrCall && stmt !== statements.last()) {
+                    // This is the setter call - transform it with inlined temp var
+                    if (tempVar != null && tempVarInitializer != null) {
+                        // Register temp var substitution for this transformation
+                        parent.pushTempVarSubstitution(tempVar.symbol, tempVarInitializer)
+                        try {
+                            return stmt.accept(this, data)
+                        } finally {
+                            parent.popTempVarSubstitution(tempVar.symbol)
+                        }
+                    }
+                    return stmt.accept(this, data)
+                }
+            }
+
+            // For local var increment: Find IrSetValue or IrSetField
+            for (stmt in statements) {
+                if ((stmt is IrSetValue || stmt is IrSetField) && stmt !== statements.last()) {
+                    // Transform assignment with inlined temp var
+                    if (tempVar != null && tempVarInitializer != null) {
+                        parent.pushTempVarSubstitution(tempVar.symbol, tempVarInitializer)
+                        try {
+                            return parent.transformExpression(stmt)
+                        } finally {
+                            parent.popTempVarSubstitution(tempVar.symbol)
+                        }
+                    }
+                    return parent.transformExpression(stmt)
+                }
+            }
+        }
+
+        // Default: Block expressions return the last statement's value
         val statements = expression.statements
         return if (statements.isEmpty()) {
             BrsInvalidLiteral()
