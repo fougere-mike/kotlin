@@ -8,11 +8,28 @@ plugins {
     `maven-publish`
 }
 
-description = "Kotlin Standard Library for BrightScript"
+description = "Kotlin Standard Library for BrightScript (Bootstrap/Fallback Build)"
+
+/**
+ * This build script provides two modes:
+ *
+ * 1. BOOTSTRAP MODE (default): Uses JS IR backend to produce klib format.
+ *    This is used when the bootstrap Kotlin compiler doesn't have BRS support.
+ *    The generated klib is consumed by the BrightScript backend.
+ *
+ * 2. FIRST-CLASS MODE: Uses native BRS target from main stdlib.
+ *    When the bootstrap compiler has BRS support, the main stdlib's brs {}
+ *    target should be used instead (configured in ../build.gradle.kts).
+ *
+ * To switch to first-class mode:
+ * - Ensure bootstrap compiler has BRS target support
+ * - Use main stdlib's brs {} target instead of this build
+ * - This build can then be removed or kept as legacy fallback
+ */
 
 kotlin {
     // Use JS IR backend to produce klib format that BrightScript backend can consume
-    // This is a bootstrapping approach until the main stdlib supports BRS as a first-class target
+    // This is the bootstrap approach until the main stdlib supports BRS as a first-class target
     js(IR) {
         nodejs()
         compilations["main"].compileTaskProvider.configure {
@@ -30,16 +47,15 @@ kotlin {
 
     sourceSets {
         val jsMain by getting {
-            // BRS-specific sources (bootstrap approach)
+            // Include all BRS-specific sources
+            kotlin.srcDir("builtins")
+            kotlin.srcDir("runtime")
             kotlin.srcDir("src")
 
-            // Exclude files that have conflicts or issues
-            // Phase 2 Batch 1: Enabled ExceptionHelpers.kt, io/**, exceptionsBrs.kt
-            // Phase 2 Batch 6: Enabled Roku SDK bindings (kotlin/brs/roku/**)
-            // Note: Collections, Math, Random excluded - JS stdlib already provides these
-            // The bootstrap approach depends on JS stdlib which has all these implementations
+            // Exclude files that conflict with JS stdlib or need more work
+            // These exclusions are needed because bootstrap approach depends on JS stdlib
             kotlin.exclude(
-                // Collections - JS stdlib provides these
+                // Collections - JS stdlib provides these already
                 "kotlin/collections/**",
                 "kotlin/brs/collections/**",
                 "kotlin/AutoCloseableBrs.kt",
@@ -56,7 +72,9 @@ kotlin {
                 "kotlin/enums/**",
                 "kotlin/coroutines/**",
                 // Time module conflicts
-                "kotlin/time/**"
+                "kotlin/time/**",
+                // Builtins - use JS stdlib's implementations
+                "kotlin/Throwable.kt"
             )
             dependencies {
                 // Depend on JS stdlib for bootstrapping - provides basic types

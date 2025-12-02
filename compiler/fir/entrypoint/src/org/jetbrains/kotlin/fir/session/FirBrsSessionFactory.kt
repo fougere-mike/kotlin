@@ -11,10 +11,11 @@ import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.SessionConfiguration
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.FirBrsIdentityLessPlatformDeterminer
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.FirBrsPlatformDiagnosticSuppressor
 import org.jetbrains.kotlin.fir.analysis.checkers.FirIdentityLessPlatformDeterminer
 import org.jetbrains.kotlin.fir.analysis.checkers.FirPlatformDiagnosticSuppressor
-import org.jetbrains.kotlin.fir.analysis.js.checkers.FirJsIdentityLessPlatformDeterminer
-import org.jetbrains.kotlin.fir.analysis.js.checkers.FirJsPlatformDiagnosticSuppressor
+import org.jetbrains.kotlin.fir.checkers.registerBrsCheckers
 import org.jetbrains.kotlin.fir.declarations.FirTypeSpecificityComparatorProvider
 import org.jetbrains.kotlin.fir.deserialization.ModuleDataProvider
 import org.jetbrains.kotlin.fir.deserialization.SingleModuleDataProvider
@@ -147,8 +148,7 @@ object FirBrsSessionFactory : FirAbstractSessionFactory<FirBrsSessionFactory.Con
     }
 
     override fun FirSessionConfigurator.registerPlatformCheckers(c: Context) {
-        // For MVP, we don't register BrightScript-specific checkers
-        // TODO: Create and register BrightScript-specific FIR checkers
+        registerBrsCheckers()
     }
 
     override fun FirSession.registerSourceSessionComponents(c: Context) {
@@ -165,8 +165,8 @@ object FirBrsSessionFactory : FirAbstractSessionFactory<FirBrsSessionFactory.Con
     /**
      * Register BrightScript-specific session components.
      *
-     * For MVP, we reuse many JS components since BrightScript and JavaScript
-     * have similar characteristics (dynamic typing, scripting language).
+     * For MVP, we reuse some JS components for call resolution since BrightScript
+     * and JavaScript have similar dynamic typing characteristics.
      */
     fun FirSession.registerBrsComponents() {
         // Use the JS call conflict resolver (similar dynamic typing behavior)
@@ -178,13 +178,11 @@ object FirBrsSessionFactory : FirAbstractSessionFactory<FirBrsSessionFactory.Con
             FirTypeSpecificityComparatorProvider(JsTypeSpecificityComparatorWithoutDelegate(typeContext))
         )
 
-        // Use JS platform diagnostic suppressor for now
-        // TODO: Create BrightScript-specific diagnostic suppressor
-        register(FirPlatformDiagnosticSuppressor::class, FirJsPlatformDiagnosticSuppressor())
+        // Use BrightScript-specific platform diagnostic suppressor
+        register(FirPlatformDiagnosticSuppressor::class, FirBrsPlatformDiagnosticSuppressor())
 
-        // Use JS identity-less platform determiner for now
-        // TODO: Create BrightScript-specific platform determiner
-        register(FirIdentityLessPlatformDeterminer::class, FirJsIdentityLessPlatformDeterminer)
+        // Use BrightScript-specific identity-less platform determiner
+        register(FirIdentityLessPlatformDeterminer::class, FirBrsIdentityLessPlatformDeterminer)
 
         // Use JS platform analyzer services for default imports
         // TODO: Create BrsPlatformAnalyzerServices in a proper brs.frontend module

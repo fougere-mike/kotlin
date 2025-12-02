@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors
 import org.jetbrains.kotlin.fir.analysis.diagnostics.wasm.FirWasmErrors
 import org.jetbrains.kotlin.fir.analysis.diagnostics.web.common.FirWebCommonErrors
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.BrsDeclarationCheckers
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.BrsExpressionCheckers
 import org.jetbrains.kotlin.fir.analysis.js.checkers.JsDeclarationCheckers
 import org.jetbrains.kotlin.fir.analysis.js.checkers.JsExpressionCheckers
 import org.jetbrains.kotlin.fir.analysis.jvm.checkers.JvmDeclarationCheckers
@@ -60,6 +62,11 @@ fun FirSessionConfigurator.registerJsCheckers() {
     useCheckers(JsDeclarationCheckers)
     useCheckers(JsExpressionCheckers)
     registerDiagnosticContainers(FirWebCommonErrors, FirJsErrors)
+}
+
+fun FirSessionConfigurator.registerBrsCheckers() {
+    useCheckers(BrsDeclarationCheckers)
+    useCheckers(BrsExpressionCheckers)
 }
 
 fun FirSessionConfigurator.registerNativeCheckers() {

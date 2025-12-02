@@ -20,6 +20,7 @@ dependencies {
     implementation(project(":compiler:ir.tree"))
     implementation(project(":compiler:ir.backend.common"))
     implementation(project(":compiler:ir.serialization.common"))
+    implementation(project(":compiler:ir.serialization.brs"))
 
     // FIR frontend dependencies
     implementation(project(":compiler:fir:entrypoint"))

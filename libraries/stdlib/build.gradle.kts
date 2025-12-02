@@ -295,9 +295,36 @@ kotlin {
         commonWasmTargetConfiguration()
     }
 
-    // NOTE: BrightScript target is configured separately in libraries/stdlib/brs/build.gradle.kts
-    // Integration into main stdlib requires bootstrap plugin to have BRS support first.
-    // TODO: Once bootstrap is updated, add BRS target here following the wasmJs/wasmWasi pattern.
+    // BrightScript (Roku) target
+    // Note: Requires Kotlin Gradle Plugin with BRS support (already present in current development version)
+    // BOOTSTRAP CONSTRAINT: The stdlib uses the bootstrap Kotlin Gradle Plugin which doesn't have BRS support.
+    // For stdlib BRS compilation, use libraries/stdlib/brs/ with JS IR fallback instead.
+    // The brs {} target can only be used in external projects that use the development Gradle plugin.
+    /*
+    brs {
+        compilations {
+            all {
+                @Suppress("DEPRECATION")
+                kotlinOptions {
+                    freeCompilerArgs += listOfNotNull(
+                        "-Xallow-kotlin-package",
+                        "-Xexpect-actual-classes",
+                        diagnosticNamesArg
+                    )
+                }
+            }
+            val main by getting {
+                @Suppress("DEPRECATION")
+                kotlinOptions {
+                    freeCompilerArgs += "-Xir-module-name=kotlin-stdlib-brs"
+                }
+                compileTaskProvider.configure {
+                    compilerOptions.mainCompilationOptions()
+                }
+            }
+        }
+    }
+    */
 
     if (kotlinBuildProperties.isInIdeaSync) {
         val hostOs = System.getProperty("os.name")
@@ -541,7 +568,27 @@ kotlin {
             }
         }
 
-        // NOTE: BrightScript source sets are configured in libraries/stdlib/brs/build.gradle.kts
+        // BrightScript (Roku) source sets
+        // BOOTSTRAP CONSTRAINT: See note above about bootstrap Gradle plugin limitation
+        /*
+        val brsDir = "${projectDir}/brs"
+        val brsActualDir = "${projectDir}/brs-actual"
+        val brsMain by getting {
+            dependsOn(commonMain.get())
+            kotlin {
+                srcDir("$brsDir/builtins")
+                srcDir("$brsDir/runtime")
+                srcDir("$brsDir/src")
+                srcDir("$brsActualDir/src")  // First-class actual implementations
+            }
+        }
+        val brsTest by getting {
+            dependsOn(commonTest.get())
+            kotlin {
+                srcDir("$brsDir/test")
+            }
+        }
+        */
 
         if (kotlinBuildProperties.isInIdeaSync) {
             val nativeKotlinTestCommon by creating {

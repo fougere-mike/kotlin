@@ -112,7 +112,130 @@ class BrsIntrinsics(
         return symbol == createObject ||
                 symbol == typeOfFunction ||
                 symbol == printFunction ||
-                symbol == brsInline
+                symbol == brsInline ||
+                isStdlibIntrinsic(symbol)
+    }
+
+    /**
+     * Check if a function is a stdlib intrinsic (external function with brsIntrinsic* prefix).
+     * These are defined in the stdlib as `internal external fun brsIntrinsic*()` and
+     * are replaced by native BrightScript code during code generation.
+     */
+    fun isStdlibIntrinsic(symbol: IrSimpleFunctionSymbol): Boolean {
+        val function = symbol.owner
+        return function.isExternal && function.name.asString().startsWith("brsIntrinsic")
+    }
+
+    /**
+     * Mapping of stdlib intrinsic names to their BrightScript equivalents.
+     */
+    val stdlibIntrinsicMapping: Map<String, StdlibIntrinsic> = mapOf(
+        // Math intrinsics
+        "brsIntrinsicSin" to StdlibIntrinsic.SimpleCall("Sin"),
+        "brsIntrinsicCos" to StdlibIntrinsic.SimpleCall("Cos"),
+        "brsIntrinsicTan" to StdlibIntrinsic.SimpleCall("Tan"),
+        "brsIntrinsicAsin" to StdlibIntrinsic.Asin,               // asin(x) = atan(x / sqrt(1 - x*x))
+        "brsIntrinsicAcos" to StdlibIntrinsic.Acos,               // acos(x) = atan(sqrt(1 - x*x) / x)
+        "brsIntrinsicAtan" to StdlibIntrinsic.SimpleCall("Atn"),
+        "brsIntrinsicAtan2" to StdlibIntrinsic.Atan2,             // Custom handling for atan2
+        "brsIntrinsicSqrt" to StdlibIntrinsic.SimpleCall("Sqr"),
+        "brsIntrinsicExp" to StdlibIntrinsic.SimpleCall("Exp"),
+        "brsIntrinsicLog" to StdlibIntrinsic.SimpleCall("Log"),
+        "brsIntrinsicCeil" to StdlibIntrinsic.Ceil,               // Int(x) + 1 if not integer
+        "brsIntrinsicFloor" to StdlibIntrinsic.Floor,             // Int(x)
+        "brsIntrinsicRound" to StdlibIntrinsic.Round,             // Int(x + 0.5)
+        "brsIntrinsicAbs" to StdlibIntrinsic.SimpleCall("Abs"),
+        "brsIntrinsicPow" to StdlibIntrinsic.Pow,                 // x ^ y
+        "brsIntrinsicSinh" to StdlibIntrinsic.Sinh,               // (Exp(x) - Exp(-x)) / 2
+        "brsIntrinsicCosh" to StdlibIntrinsic.Cosh,               // (Exp(x) + Exp(-x)) / 2
+        "brsIntrinsicTanh" to StdlibIntrinsic.Tanh,               // sinh/cosh
+
+        // String intrinsics
+        "brsIntrinsicUCase" to StdlibIntrinsic.SimpleCall("UCase"),
+        "brsIntrinsicLCase" to StdlibIntrinsic.SimpleCall("LCase"),
+        "brsIntrinsicInstr" to StdlibIntrinsic.SimpleCall("Instr"),
+        "brsIntrinsicLen" to StdlibIntrinsic.SimpleCall("Len"),
+        "brsIntrinsicLeft" to StdlibIntrinsic.SimpleCall("Left"),
+        "brsIntrinsicRight" to StdlibIntrinsic.SimpleCall("Right"),
+        "brsIntrinsicMid" to StdlibIntrinsic.SimpleCall("Mid"),
+        "brsIntrinsicAsc" to StdlibIntrinsic.SimpleCall("Asc"),
+        "brsIntrinsicChr" to StdlibIntrinsic.SimpleCall("Chr"),
+        "brsIntrinsicVal" to StdlibIntrinsic.SimpleCall("Val"),
+        "brsIntrinsicStr" to StdlibIntrinsic.SimpleCall("Str"),
+        "brsIntrinsicStringI" to StdlibIntrinsic.SimpleCall("String"),
+        "brsIntrinsicSubstitute" to StdlibIntrinsic.SimpleCall("Substitute"),
+
+        // IO intrinsics
+        "brsIntrinsicPrint" to StdlibIntrinsic.Print(newline = true),
+        "brsIntrinsicPrintNoNewline" to StdlibIntrinsic.Print(newline = false),
+
+        // Time intrinsics
+        "brsIntrinsicCurrentTimeMillis" to StdlibIntrinsic.CurrentTimeMillis,
+
+        // Random intrinsics
+        "brsIntrinsicRnd" to StdlibIntrinsic.SimpleCall("Rnd"),
+        "brsIntrinsicRandomSeed" to StdlibIntrinsic.RandomSeed,
+
+        // JSON intrinsics
+        "brsIntrinsicParseJson" to StdlibIntrinsic.SimpleCall("ParseJson"),
+        "brsIntrinsicFormatJson" to StdlibIntrinsic.SimpleCall("FormatJson"),
+
+        // Type intrinsics
+        "brsIntrinsicType" to StdlibIntrinsic.SimpleCall("Type"),
+        "brsIntrinsicGetGlobalAA" to StdlibIntrinsic.SimpleCall("GetGlobalAA"),
+
+        // Node intrinsics
+        "brsIntrinsicCreateObject" to StdlibIntrinsic.CreateObject
+    )
+
+    /**
+     * Represents different types of stdlib intrinsics and how they should be generated.
+     */
+    sealed class StdlibIntrinsic {
+        /** Simple function call: brsIntrinsicSin(x) -> Sin(x) */
+        data class SimpleCall(val brsName: String) : StdlibIntrinsic()
+
+        /** Print with optional newline */
+        data class Print(val newline: Boolean) : StdlibIntrinsic()
+
+        /** Power operation: x ^ y */
+        data object Pow : StdlibIntrinsic()
+
+        /** Atan2 operation */
+        data object Atan2 : StdlibIntrinsic()
+
+        /** Asin: asin(x) = atan(x / sqrt(1 - x*x)) */
+        data object Asin : StdlibIntrinsic()
+
+        /** Acos: acos(x) = atan(sqrt(1 - x*x) / x) with quadrant adjustment */
+        data object Acos : StdlibIntrinsic()
+
+        /** Ceiling: Int(x) + (1 if x > Int(x) else 0) */
+        data object Ceil : StdlibIntrinsic()
+
+        /** Floor: Int(x) */
+        data object Floor : StdlibIntrinsic()
+
+        /** Round: Int(x + 0.5) */
+        data object Round : StdlibIntrinsic()
+
+        /** Sinh: (Exp(x) - Exp(-x)) / 2 */
+        data object Sinh : StdlibIntrinsic()
+
+        /** Cosh: (Exp(x) + Exp(-x)) / 2 */
+        data object Cosh : StdlibIntrinsic()
+
+        /** Tanh: sinh/cosh formula */
+        data object Tanh : StdlibIntrinsic()
+
+        /** Get current time in milliseconds using roTimespan */
+        data object CurrentTimeMillis : StdlibIntrinsic()
+
+        /** Seed the random generator */
+        data object RandomSeed : StdlibIntrinsic()
+
+        /** CreateObject with type and optional args */
+        data object CreateObject : StdlibIntrinsic()
     }
 
     /**

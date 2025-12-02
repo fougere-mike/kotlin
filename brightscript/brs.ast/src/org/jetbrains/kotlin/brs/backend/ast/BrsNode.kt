@@ -97,6 +97,7 @@ abstract class BrsVisitor<R, D> {
     open fun visitTypeOf(typeOf: BrsTypeOf, data: D): R = visitExpression(typeOf, data)
     open fun visitCreateObject(createObject: BrsCreateObject, data: D): R = visitExpression(createObject, data)
     open fun visitAnonymousFunction(func: BrsAnonymousFunction, data: D): R = visitExpression(func, data)
+    open fun visitPrintNoNewline(printNoNewline: BrsPrintNoNewline, data: D): R = visitExpression(printNoNewline, data)
 
     // Declarations
     open fun visitDeclaration(declaration: BrsDeclaration, data: D): R = visitNode(declaration, data)
