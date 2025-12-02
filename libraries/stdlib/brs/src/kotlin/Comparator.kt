@@ -24,6 +24,12 @@ public inline fun <T> compareBy(crossinline selector: (T) -> Comparable<*>?): Co
     Comparator { a, b -> compareValuesBy(a, b, selector) }
 
 /**
+ * Creates a descending comparator using the function to transform value to a [Comparable] instance for comparison.
+ */
+public inline fun <T> compareByDescending(crossinline selector: (T) -> Comparable<*>?): Comparator<T> =
+    Comparator { a, b -> compareValuesBy(b, a, selector) }
+
+/**
  * Compares two values using the specified functions [selector] to calculate a result of comparison.
  * The function returns zero if the values are equal, a negative number if [a] is less than [b],
  * or a positive number if [a] is greater than [b].
