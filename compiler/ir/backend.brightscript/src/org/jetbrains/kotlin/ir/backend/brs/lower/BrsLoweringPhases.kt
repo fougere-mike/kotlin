@@ -56,16 +56,20 @@ object BrsLoweringPhases {
             // Phase 8: Property lowering
             PropertyLowering(context),
 
-            // Phase 9: Exception handling (if needed)
+            // Phase 9: Increment/decrement lowering
+            // BrightScript doesn't have ++ or -- operators, so transform to + 1 or - 1
+            IncrementDecrementLowering(context),
+
+            // Phase 10: Exception handling (if needed)
             TryCatchLowering(context),
 
-            // Phase 10: String concatenation
+            // Phase 11: String concatenation
             StringConcatenationLowering(context),
 
-            // Phase 11: Control flow simplification
+            // Phase 12: Control flow simplification
             ControlFlowLowering(context),
 
-            // Phase 12: Final cleanup
+            // Phase 13: Final cleanup
             CleanupLowering(context)
         )
 
