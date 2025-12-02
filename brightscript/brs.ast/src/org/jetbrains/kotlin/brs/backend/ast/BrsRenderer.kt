@@ -537,6 +537,13 @@ class BrsRenderer(
         builder.append("end function")
     }
 
+    override fun visitPrintNoNewline(printNoNewline: BrsPrintNoNewline, data: Unit) {
+        // In BrightScript, a trailing semicolon after print suppresses the newline
+        builder.append("print ")
+        printNoNewline.value.accept(this, data)
+        builder.append(";")
+    }
+
     companion object {
         /**
          * Render a BrightScript AST node to a string.

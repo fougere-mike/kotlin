@@ -6,6 +6,8 @@
 package org.jetbrains.kotlin.fir.checkers
 
 import org.jetbrains.kotlin.fir.analysis.checkers.*
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.BrsDeclarationCheckers
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.BrsExpressionCheckers
 import org.jetbrains.kotlin.fir.analysis.js.checkers.JsDeclarationCheckers
 import org.jetbrains.kotlin.fir.analysis.js.checkers.JsExpressionCheckers
 import org.jetbrains.kotlin.fir.analysis.jvm.checkers.JvmDeclarationCheckers
@@ -48,6 +50,11 @@ fun FirSessionConfigurator.registerJvmCheckers() {
 fun FirSessionConfigurator.registerJsCheckers() {
     useCheckers(JsDeclarationCheckers)
     useCheckers(JsExpressionCheckers)
+}
+
+fun FirSessionConfigurator.registerBrsCheckers() {
+    useCheckers(BrsDeclarationCheckers)
+    useCheckers(BrsExpressionCheckers)
 }
 
 fun FirSessionConfigurator.registerNativeCheckers() {

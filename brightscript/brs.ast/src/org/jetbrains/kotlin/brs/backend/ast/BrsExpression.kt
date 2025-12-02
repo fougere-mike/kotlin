@@ -504,3 +504,26 @@ class BrsAnonymousFunction(
         body.deepCopy()
     ).also { it.source = source }
 }
+
+/**
+ * A print expression that suppresses the trailing newline.
+ *
+ * BrightScript uses a semicolon at the end of print to suppress newline:
+ * ```brightscript
+ * print "Hello";  ' no newline after this
+ * ```
+ *
+ * This is used when print appears in expression context in generated code.
+ */
+class BrsPrintNoNewline(
+    var value: BrsExpression
+) : BrsNodeBase(), BrsExpression {
+
+    override fun <R, D> accept(visitor: BrsVisitor<R, D>, data: D): R = visitor.visitPrintNoNewline(this, data)
+
+    override fun <R, D> acceptChildren(visitor: BrsVisitor<R, D>, data: D) {
+        value.accept(visitor, data)
+    }
+
+    override fun deepCopy(): BrsPrintNoNewline = BrsPrintNoNewline(value.deepCopy()).also { it.source = source }
+}
