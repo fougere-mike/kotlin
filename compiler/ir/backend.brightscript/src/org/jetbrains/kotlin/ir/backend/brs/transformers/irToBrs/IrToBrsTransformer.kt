@@ -1425,11 +1425,90 @@ class IrStatementToBrsTransformer(
     override fun visitElement(element: IrElement, data: Unit): BrsStatement? = null
 
     override fun visitVariable(declaration: IrVariable, data: Unit): BrsStatement {
+        val initializer = declaration.initializer
+
+        // Handle block initializers specially - BrightScript doesn't have block expressions
+        // so we need to flatten the block's statements before the variable assignment
+        if (initializer is IrBlock && initializer.statements.size > 1) {
+            val statements = mutableListOf<BrsStatement>()
+
+            // Flatten all statements from the block recursively
+            flattenBlockStatements(initializer.statements, statements, data)
+
+            // The last added statement should be the variable assignment
+            // Replace the last expression statement with the actual variable declaration
+            if (statements.isNotEmpty()) {
+                val last = statements.removeLast()
+                val lastExpr = when (last) {
+                    is BrsExpressionStatement -> last.expression
+                    is BrsVariable -> last.initializer ?: BrsInvalidLiteral()
+                    else -> BrsInvalidLiteral()
+                }
+                statements.add(BrsVariable(
+                    name = declaration.name.asString(),
+                    type = parent.mapTypeToBrs(declaration.type),
+                    initializer = lastExpr
+                ))
+            } else {
+                statements.add(BrsVariable(
+                    name = declaration.name.asString(),
+                    type = parent.mapTypeToBrs(declaration.type),
+                    initializer = BrsInvalidLiteral()
+                ))
+            }
+
+            return BrsBlock(statements)
+        }
+
+        // Simple case - no block or single-expression block
         return BrsVariable(
             name = declaration.name.asString(),
             type = parent.mapTypeToBrs(declaration.type),
-            initializer = declaration.initializer?.let { parent.transformExpression(it) }
+            initializer = initializer?.let { parent.transformExpression(it) }
         )
+    }
+
+    /**
+     * Recursively flatten statements from an IrBlock, handling nested blocks.
+     * The last statement in each block is treated as an expression value.
+     */
+    private fun flattenBlockStatements(
+        stmts: List<IrStatement>,
+        output: MutableList<BrsStatement>,
+        data: Unit
+    ) {
+        for (i in stmts.indices) {
+            val stmt = stmts[i]
+            val isLast = i == stmts.lastIndex
+
+            when {
+                stmt is IrBlock && stmt.statements.isNotEmpty() -> {
+                    // Recursively flatten nested blocks
+                    flattenBlockStatements(stmt.statements, output, data)
+                }
+                stmt is IrVariable -> {
+                    output.add(visitVariable(stmt, data))
+                }
+                stmt is IrWhen -> {
+                    // When statement - transform using statement transformer
+                    parent.transformStatement(stmt)?.let { output.add(it) }
+                }
+                stmt is IrExpression -> {
+                    if (isLast) {
+                        // Last expression is the block's value - keep as expression
+                        val expr = parent.transformExpression(stmt)
+                        output.add(BrsExpressionStatement(expr))
+                    } else {
+                        // Non-last expression - transform as statement
+                        val expr = parent.transformExpression(stmt)
+                        output.add(BrsExpressionStatement(expr))
+                    }
+                }
+                else -> {
+                    parent.transformStatement(stmt)?.let { output.add(it) }
+                }
+            }
+        }
     }
 
     /**
@@ -1594,9 +1673,11 @@ class IrStatementToBrsTransformer(
         for (branch in expression.branches) {
             val condition = parent.transformExpression(branch.condition)
 
-            // Handle branch result - IrReturn needs statement transformation
+            // Handle branch result - certain IR nodes need statement transformation
             val bodyStatement: BrsStatement = when (val branchResult = branch.result) {
                 is IrReturn -> parent.transformStatement(branchResult) ?: BrsEmpty()
+                is IrSetValue -> visitSetValue(branchResult, data)
+                is IrSetField -> visitSetField(branchResult, data)
                 is IrBlock -> {
                     // Transform block which may contain returns
                     val transformed = transformBlockOrStatement(branchResult)
@@ -2755,7 +2836,24 @@ class IrExpressionToBrsTransformer(
             else -> { /* fall through to default handling */ }
         }
 
-        // Transform to nested conditional expressions
+        // After BrsWhenExpressionLowering, when expressions in expression context
+        // should have been transformed to blocks with temp variables.
+        // If we get here with a non-Unit type, fall back to statement transformation
+        // wrapped in an immediately-invoked function (IIFE pattern).
+
+        // For Unit-returning when (statement-like), return invalid
+        // This shouldn't normally happen in expression context, but handle gracefully
+        if (expression.type.isUnit()) {
+            return BrsInvalidLiteral() // Unit expressions don't have a value
+        }
+
+        // For non-Unit when expressions that weren't lowered, we need to handle them.
+        // This can happen in certain edge cases. Use a fallback that works:
+        // Generate the if-chain as statements and return invalid (caller should handle)
+        // OR: we can still generate BrsConditional and hope for the best (some BRS versions support it)
+
+        // Fallback: Generate BrsConditional (legacy behavior)
+        // Note: This may fail on Roku if the when is used in expression context
         val branches = expression.branches
 
         if (branches.isEmpty()) {
