@@ -3,7 +3,7 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package kotlin.brs.collections
+package kotlin.collections
 
 /**
  * A generic ordered collection of elements. Methods in this interface support only read-only access to the list;

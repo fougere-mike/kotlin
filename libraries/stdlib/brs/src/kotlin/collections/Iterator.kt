@@ -3,7 +3,7 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package kotlin.brs.collections
+package kotlin.collections
 
 /**
  * An iterator over a collection or another entity that can be represented as a sequence of elements.
