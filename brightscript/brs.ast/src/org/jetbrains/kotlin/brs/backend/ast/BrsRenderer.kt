@@ -150,12 +150,25 @@ class BrsRenderer(
     }
 
     override fun visitIf(ifStatement: BrsIf, data: Unit) {
+        renderIfChain(ifStatement, data, isFirst = true)
+    }
+
+    /**
+     * Render an if/else-if/else chain iteratively to maintain proper indentation.
+     */
+    private fun renderIfChain(ifStatement: BrsIf, data: Unit, isFirst: Boolean) {
+        // Render "if" or "else if"
         indent()
-        builder.append("if ")
+        if (isFirst) {
+            builder.append("if ")
+        } else {
+            builder.append("else if ")
+        }
         ifStatement.condition.accept(this, data)
         builder.append(" then")
         newline()
 
+        // Render then branch with proper indentation
         withIndent {
             when (val thenBranch = ifStatement.thenBranch) {
                 is BrsBlock -> renderBlockContents(thenBranch)
@@ -166,6 +179,7 @@ class BrsRenderer(
             }
         }
 
+        // Handle else branch
         val elseBranch = ifStatement.elseBranch
         when {
             elseBranch == null -> {
@@ -173,13 +187,8 @@ class BrsRenderer(
                 builder.append("end if")
             }
             elseBranch is BrsIf -> {
-                indent()
-                builder.append("else ")
-                // Remove indent prefix since we're continuing on same line
-                val tempIndent = indentLevel
-                indentLevel = 0
-                elseBranch.accept(this, data)
-                indentLevel = tempIndent
+                // Continue the chain with else-if
+                renderIfChain(elseBranch, data, isFirst = false)
             }
             else -> {
                 indent()

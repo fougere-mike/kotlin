@@ -36,9 +36,7 @@ function AppConfig_create() as Object
     this = {}
     this.__type = "AppConfig"
     this.__proto = ["AppConfig"]
-    this.__type = "AppConfig"
-    "/* Unsupported: IrDelegatingConstructorCallImpl */"
-    "/* Unsupported: IrInstanceInitializerCallImpl */"
+    this.setting = "default"
     return this
 end function
 
@@ -59,7 +57,6 @@ function Color_create(__name as String, __ordinal as Integer, rgb as Integer) as
     this.name = __name
     this.ordinal = __ordinal
     this.rgb = rgb
-    "/* Unsupported: IrEnumConstructorCallImpl */"
     return this
 end function
 
@@ -83,12 +80,12 @@ function Color_valueOf(name as String) as Object
     if name = "RED" then
         return Color_RED
     else if name = "GREEN" then
-    return Color_GREEN
-else if name = "BLUE" then
-    return Color_BLUE
-else
-    return invalid
-end if
+        return Color_GREEN
+    else if name = "BLUE" then
+        return Color_BLUE
+    else
+        return invalid
+    end if
 end function
 
 function Person_create(name as String, age as Integer) as Object
@@ -157,10 +154,8 @@ function Outer_create(value as Integer) as Object
     this = {}
     this.__type = "Outer"
     this.__proto = ["Outer"]
-    this.__type = "Outer"
+    this.value = value
     this.createInner = Outer_createInner
-    "/* Unsupported: IrDelegatingConstructorCallImpl */"
-    "/* Unsupported: IrInstanceInitializerCallImpl */"
     return this
 end function
 
@@ -176,11 +171,9 @@ function Outer_Inner_create($outer as Object, offset as Integer) as Object
     this = {}
     this.__type = "Outer_Inner"
     this.__proto = ["Outer_Inner"]
-    this.__type = "Outer_Inner"
     this.$outer = $outer
+    this.offset = offset
     this.compute = Outer_Inner_compute
-    "/* Unsupported: IrDelegatingConstructorCallImpl */"
-    "/* Unsupported: IrInstanceInitializerCallImpl */"
     return this
 end function
 
@@ -215,9 +208,7 @@ function Counter_create() as Object
     this = {}
     this.__type = "Counter"
     this.__proto = ["Counter"]
-    this.__type = "Counter"
-    "/* Unsupported: IrDelegatingConstructorCallImpl */"
-    "/* Unsupported: IrInstanceInitializerCallImpl */"
+    this._count = 0
     return this
 end function
 
@@ -248,3 +239,4 @@ Color_RED = invalid
 Color_GREEN = invalid
 Color_BLUE = invalid
 Color_entriesInitialized = false
+Color_initEntries()
