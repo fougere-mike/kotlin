@@ -138,6 +138,22 @@ kotlin {
         }
     }
 
+    brs {
+        compilations.all {
+            // Configure the BRS compiler JAR path and libraries
+            (this as org.jetbrains.kotlin.gradle.targets.brs.KotlinBrsIrCompilation).brsCompileTaskProvider.configure {
+                compilerJar.set(rootDir.resolve("compiler/cli/cli-brs/build/libs/kotlinc-brs-${project.version}.jar"))
+                // Manually wire the bootstrap stdlib klib
+                libraries.from(files("${rootDir}/libraries/stdlib/brs-bootstrap/build/libs/kotlin-stdlib-brs-bootstrap-js-${project.version}.klib"))
+                // Ensure bootstrap stdlib is built before compiling
+                dependsOn(":kotlin-stdlib-brs-bootstrap:jsJar")
+            }
+        }
+        compilations["main"].compileTaskProvider.configure {
+            compilerOptions.freeCompilerArgs.add("-Xir-module-name=$KOTLINTEST_MODULE_NAME")
+        }
+    }
+
     targets.all {
         compilations.all {
             compileTaskProvider.configure {
@@ -243,6 +259,16 @@ kotlin {
         val wasmWasiMain by getting {
             dependsOn(wasmCommonMain)
             kotlin.srcDir("wasm/wasi/src/main/kotlin")
+        }
+        val brsMain by getting {
+            dependsOn(assertionsCommonMain)
+            dependsOn(annotationsCommonMain)
+            kotlin.setSrcDirs(listOf("brs/src/main/kotlin"))
+            dependencies {
+                // Use bootstrap stdlib klib - reference the file directly to bypass attribute matching
+                // The bootstrap stdlib is built using JS IR backend but needs to be consumed by BRS target
+                api(files("${rootDir}/libraries/stdlib/brs-bootstrap/build/libs/kotlin-stdlib-brs-bootstrap-js-${project.version}.klib"))
+            }
         }
     }
 }

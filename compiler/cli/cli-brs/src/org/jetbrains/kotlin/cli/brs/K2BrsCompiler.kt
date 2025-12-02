@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.ir.backend.brs.BrsCompiler
 import org.jetbrains.kotlin.backend.common.CommonKLibResolver
@@ -30,6 +31,18 @@ import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.KotlinPaths
 import java.io.File
+import org.jetbrains.kotlin.backend.common.serialization.CompatibilityMode
+import org.jetbrains.kotlin.backend.common.serialization.IrSerializationSettings
+import org.jetbrains.kotlin.backend.common.serialization.serializeModuleIntoKlib
+import org.jetbrains.kotlin.diagnostics.DiagnosticReporterFactory
+import org.jetbrains.kotlin.fir.pipeline.Fir2KlibMetadataSerializer
+import org.jetbrains.kotlin.ir.backend.brs.lower.serialization.ir.BrsIrModuleSerializer
+import org.jetbrains.kotlin.ir.backend.brs.lower.serialization.ir.BrsIrFileEmptyMetadataFactory
+import org.jetbrains.kotlin.library.*
+import org.jetbrains.kotlin.library.impl.BuiltInsPlatform
+import org.jetbrains.kotlin.library.impl.buildKotlinLibrary
+import org.jetbrains.kotlin.library.metadata.KlibMetadataVersion
+import java.util.Properties
 
 /**
  * CLI compiler for Kotlin to BrightScript.
@@ -118,6 +131,7 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
 
         // Compile to BrightScript
         val exitCode = compileSourceFiles(
+            arguments,
             environment.project,
             sourceFiles,
             configuration,
@@ -134,6 +148,7 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
      * Compile Kotlin source files to BrightScript.
      */
     private fun compileSourceFiles(
+        arguments: K2BrsCompilerArguments,
         project: com.intellij.openapi.project.Project,
         sourceFiles: List<KtFile>,
         configuration: CompilerConfiguration,
@@ -200,6 +215,36 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
             return ExitCode.COMPILATION_ERROR
         }
 
+        // Branch based on produce mode
+        val produceValue = arguments.produce ?: K2BrsArgumentConstants.DEFAULT_PRODUCE
+
+        when (produceValue) {
+            K2BrsArgumentConstants.PRODUCE_LIBRARY -> {
+                // Resolve and validate output path
+                val klibPath = arguments.output!! // Already validated
+                val klibFile = File(klibPath).let { file ->
+                    if (file.extension != "klib") {
+                        File(file.parent, "${file.nameWithoutExtension}.klib")
+                    } else file
+                }
+                klibFile.parentFile?.mkdirs()
+
+                // Serialize to klib
+                return serializeToKlib(
+                    irResult = irResult,
+                    firAnalysisResult = firResult,
+                    configuration = configuration,
+                    outputPath = klibFile.absolutePath,
+                    messageCollector = messageCollector,
+                    libraries = libraries
+                )
+            }
+
+            K2BrsArgumentConstants.PRODUCE_EXECUTABLE -> {
+                // Continue with existing BRS backend compilation
+            }
+        }
+
         // Step 3: Run BrightScript backend compilation
         messageCollector.report(CompilerMessageSeverity.INFO, "Transforming IR to BrightScript...")
 
@@ -244,6 +289,94 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
         return ExitCode.OK
     }
 
+    /**
+     * Serialize the IR module into a klib file.
+     */
+    private fun serializeToKlib(
+        irResult: BrsFir2IrResult,
+        firAnalysisResult: BrsFirAnalysisResult,
+        configuration: CompilerConfiguration,
+        outputPath: String,
+        messageCollector: MessageCollector,
+        libraries: List<KotlinLibrary>
+    ): ExitCode {
+        val moduleName = configuration.get(CommonConfigurationKeys.MODULE_NAME) ?: "main"
+
+        messageCollector.report(
+            CompilerMessageSeverity.INFO,
+            "Serializing module '$moduleName' to klib: $outputPath"
+        )
+
+        val diagnosticReporter = DiagnosticReporterFactory.createReporter(messageCollector)
+
+        // Create metadata serializer
+        val metadataSerializer = Fir2KlibMetadataSerializer(
+            compilerConfiguration = configuration,
+            firOutputs = firAnalysisResult.outputs,
+            fir2IrActualizedResult = irResult.fir2IrActualizedResult,
+            exportKDoc = false,
+            produceHeaderKlib = false
+        )
+
+        // Serialize IR and metadata
+        val serializerOutput = serializeModuleIntoKlib(
+            moduleName = moduleName,
+            irModuleFragment = irResult.irModuleFragment,
+            irBuiltins = irResult.irBuiltIns,
+            configuration = configuration,
+            diagnosticReporter = diagnosticReporter,
+            compatibilityMode = CompatibilityMode.CURRENT,
+            cleanFiles = emptyList(),
+            dependencies = libraries,
+            createModuleSerializer = { irDiagnosticReporter, irBuiltins, compatibilityMode,
+                                       normalizeAbsolutePaths, sourceBaseDirs,
+                                       languageVersionSettings, shouldCheckSignaturesOnUniqueness ->
+                BrsIrModuleSerializer(
+                    settings = IrSerializationSettings(
+                        languageVersionSettings = languageVersionSettings,
+                        compatibilityMode = compatibilityMode,
+                        normalizeAbsolutePaths = normalizeAbsolutePaths,
+                        sourceBaseDirs = sourceBaseDirs,
+                        shouldCheckSignaturesOnUniqueness = shouldCheckSignaturesOnUniqueness
+                    ),
+                    diagnosticReporter = irDiagnosticReporter,
+                    irBuiltIns = irBuiltins,
+                    brsIrFileMetadataFactory = BrsIrFileEmptyMetadataFactory
+                )
+            },
+            metadataSerializer = metadataSerializer
+        )
+
+        // Build and write klib file
+        val versions = KotlinLibraryVersioning(
+            abiVersion = KotlinAbiVersion.CURRENT,
+            compilerVersion = KotlinCompilerVersion.VERSION,
+            metadataVersion = KlibMetadataVersion.INSTANCE.toString()
+        )
+
+        buildKotlinLibrary(
+            linkDependencies = serializerOutput.neededLibraries,
+            metadata = serializerOutput.serializedMetadata
+                ?: error("Expected serialized metadata"),
+            ir = serializerOutput.serializedIr
+                ?: error("Expected serialized IR"),
+            versions = versions,
+            output = outputPath,
+            moduleName = moduleName,
+            nopack = false,
+            perFile = false,
+            manifestProperties = Properties(),
+            builtInsPlatform = BuiltInsPlatform.COMMON
+        )
+
+        messageCollector.report(
+            CompilerMessageSeverity.INFO,
+            "Klib written successfully: $outputPath"
+        )
+
+        return ExitCode.OK
+    }
+
     override fun MutableList<String>.addPlatformOptions(arguments: K2BrsCompilerArguments) {
         // BrightScript has no scripting support
     }
@@ -276,6 +409,36 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
                 )
                 valid = false
             }
+        }
+
+        // Validate produce argument
+        arguments.produce?.let { produce ->
+            if (produce !in K2BrsArgumentConstants.SUPPORTED_PRODUCE_VALUES) {
+                messageCollector.report(
+                    CompilerMessageSeverity.ERROR,
+                    "Unsupported produce value: $produce. " +
+                            "Supported values: ${K2BrsArgumentConstants.SUPPORTED_PRODUCE_VALUES.joinToString()}"
+                )
+                valid = false
+            }
+        }
+
+        // Validate library mode requires -output
+        val produceValue = arguments.produce ?: K2BrsArgumentConstants.DEFAULT_PRODUCE
+        if (produceValue == K2BrsArgumentConstants.PRODUCE_LIBRARY && arguments.output == null) {
+            messageCollector.report(
+                CompilerMessageSeverity.ERROR,
+                "Library mode requires -output argument to specify .klib file path"
+            )
+            valid = false
+        }
+
+        // Warn about conflicting arguments
+        if (produceValue == K2BrsArgumentConstants.PRODUCE_LIBRARY && arguments.outputDir != null) {
+            messageCollector.report(
+                CompilerMessageSeverity.WARNING,
+                "Both -output and -output-dir specified. In library mode, -output-dir is ignored."
+            )
         }
 
         return valid

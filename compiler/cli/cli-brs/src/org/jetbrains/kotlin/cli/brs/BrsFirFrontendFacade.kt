@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.backend.Fir2IrConfiguration
 import org.jetbrains.kotlin.fir.backend.Fir2IrExtensions
 import org.jetbrains.kotlin.fir.backend.Fir2IrVisibilityConverter
+import org.jetbrains.kotlin.fir.pipeline.Fir2IrActualizedResult
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.pipeline.FirResult
 import org.jetbrains.kotlin.fir.pipeline.ModuleCompilerAnalyzedOutput
@@ -56,7 +57,12 @@ data class BrsFirAnalysisResult(
     /**
      * Whether analysis completed successfully (no fatal errors).
      */
-    val hasErrors: Boolean
+    val hasErrors: Boolean,
+
+    /**
+     * The FIR result, needed for metadata serialization.
+     */
+    val firResult: FirResult? = null
 )
 
 /**
@@ -81,7 +87,12 @@ data class BrsFir2IrResult(
     /**
      * The diagnostics collector with any errors/warnings.
      */
-    val diagnosticsReporter: BaseDiagnosticsCollector
+    val diagnosticsReporter: BaseDiagnosticsCollector,
+
+    /**
+     * The FIR to IR actualized result, needed for metadata serialization.
+     */
+    val fir2IrActualizedResult: Fir2IrActualizedResult? = null
 )
 
 /**
@@ -172,10 +183,14 @@ object BrsFirFrontendFacade {
                 renderDiagnosticName = false
             )
 
+            // Create FirResult for metadata serialization
+            val firResult = FirResult(outputs)
+
             return BrsFirAnalysisResult(
                 outputs = outputs,
                 diagnosticsReporter = diagnosticsReporter,
-                hasErrors = hasErrors
+                hasErrors = hasErrors,
+                firResult = firResult
             )
         } catch (e: Exception) {
             messageCollector.report(
@@ -214,7 +229,7 @@ object BrsFirFrontendFacade {
                 firResult.diagnosticsReporter
             )
 
-            val result = FirResult(firResult.outputs).convertToIrAndActualize(
+            val fir2IrActualizedResult = FirResult(firResult.outputs).convertToIrAndActualize(
                 fir2IrExtensions,
                 fir2IrConfiguration,
                 emptyList(), // No IR generation extensions for now
@@ -227,10 +242,11 @@ object BrsFirFrontendFacade {
             )
 
             return BrsFir2IrResult(
-                irModuleFragment = result.irModuleFragment,
-                irBuiltIns = result.irBuiltIns,
-                symbolTable = result.symbolTable,
-                diagnosticsReporter = firResult.diagnosticsReporter
+                irModuleFragment = fir2IrActualizedResult.irModuleFragment,
+                irBuiltIns = fir2IrActualizedResult.irBuiltIns,
+                symbolTable = fir2IrActualizedResult.symbolTable,
+                diagnosticsReporter = firResult.diagnosticsReporter,
+                fir2IrActualizedResult = fir2IrActualizedResult
             )
         } catch (e: Exception) {
             messageCollector.report(

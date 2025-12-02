@@ -148,6 +148,28 @@ class K2BrsCompilerArguments : CommonKlibBasedCompilerArguments() {
             field = value
         }
 
+    @Argument(
+        value = "-Xproduce",
+        valueDescription = "{executable|library}",
+        description = "Compilation output type: 'executable' for .brs files (default), 'library' for .klib"
+    )
+    var produce: String? = null
+        set(value) {
+            checkFrozen()
+            field = if (value.isNullOrEmpty()) null else value
+        }
+
+    @Argument(
+        value = "-output",
+        valueDescription = "<path>",
+        description = "Output file path for library mode (.klib file)"
+    )
+    var output: String? = null
+        set(value) {
+            checkFrozen()
+            field = if (value.isNullOrEmpty()) null else value
+        }
+
     override fun configureAnalysisFlags(collector: MessageCollector, languageVersion: LanguageVersion): MutableMap<AnalysisFlag<*>, Any> {
         return super.configureAnalysisFlags(collector, languageVersion).also { map ->
             // BrightScript-specific analysis flags can be added here
@@ -180,6 +202,8 @@ fun copyK2BrsCompilerArguments(from: K2BrsCompilerArguments, to: K2BrsCompilerAr
     to.mainFunction = from.mainFunction
     to.defaultComponentExtends = from.defaultComponentExtends
     to.strictMode = from.strictMode
+    to.produce = from.produce
+    to.output = from.output
 
     return to
 }
@@ -204,5 +228,14 @@ object K2BrsArgumentConstants {
         MIN_ROKU_OS_11_0,
         MIN_ROKU_OS_12_0,
         MIN_ROKU_OS_13_0
+    )
+
+    const val PRODUCE_EXECUTABLE = "executable"
+    const val PRODUCE_LIBRARY = "library"
+    const val DEFAULT_PRODUCE = PRODUCE_EXECUTABLE
+
+    val SUPPORTED_PRODUCE_VALUES = listOf(
+        PRODUCE_EXECUTABLE,
+        PRODUCE_LIBRARY
     )
 }
