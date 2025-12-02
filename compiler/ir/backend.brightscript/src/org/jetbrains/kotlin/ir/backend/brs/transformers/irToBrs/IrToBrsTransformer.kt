@@ -41,6 +41,9 @@ class IrToBrsTransformer(
     private val expressionTransformer = IrExpressionToBrsTransformer(this, context)
     private val inlineCallTransformer = BrsInlineCallTransformer(context)
 
+    // Track enum classes encountered during transformation for initialization
+    private val enumClassNames = mutableListOf<String>()
+
     // ==================== Entry Points ====================
 
     /**
@@ -50,6 +53,9 @@ class IrToBrsTransformer(
         val declarations = mutableListOf<BrsDeclaration>()
         val statements = mutableListOf<BrsStatement>()
 
+        // Clear tracked enums from any previous transformation
+        enumClassNames.clear()
+
         for (declaration in irFile.declarations) {
             when (declaration) {
                 is IrFunction -> {
@@ -57,6 +63,7 @@ class IrToBrsTransformer(
                 }
                 is IrClass -> {
                     // Classes are expanded into functions and statements
+                    // (enums are tracked during transformClassDeclarations)
                     transformClassDeclarations(declaration, declarations, statements)
                 }
                 is IrProperty -> {
@@ -67,6 +74,16 @@ class IrToBrsTransformer(
                     // Other declarations (type aliases, etc.) are typically not emitted
                 }
             }
+        }
+
+        // Add enum initialization calls at module level
+        // These run after variable declarations but before other code
+        for (enumName in enumClassNames) {
+            statements.add(
+                BrsExpressionStatement(
+                    BrsFunctionCall(BrsIdentifier("${enumName}_initEntries"), mutableListOf())
+                )
+            )
         }
 
         return BrsProgram(declarations, statements)
@@ -135,6 +152,7 @@ class IrToBrsTransformer(
 
         // Handle enum classes specially
         if (irClass.kind == ClassKind.ENUM_CLASS) {
+            enumClassNames.add(context.getBrsName(irClass))
             transformEnumDeclaration(irClass, declarations, statements)
             return
         }
@@ -1006,16 +1024,19 @@ class IrToBrsTransformer(
             )
         }
 
-        // Update __type to current class (for both inherited and base classes)
-        bodyStatements.add(
-            BrsExpressionStatement(
-                BrsBinaryOp(
-                    BrsDotAccess(BrsIdentifier("this"), "__type"),
-                    BrsBinaryOperator.EQ,
-                    BrsStringLiteral(className)
+        // Update __type to current class for inherited classes
+        // (base classes already set __type above in the else branch)
+        if (superClass != null) {
+            bodyStatements.add(
+                BrsExpressionStatement(
+                    BrsBinaryOp(
+                        BrsDotAccess(BrsIdentifier("this"), "__type"),
+                        BrsBinaryOperator.EQ,
+                        BrsStringLiteral(className)
+                    )
                 )
             )
-        )
+        }
 
         // For inner classes, store the outer reference
         if (irClass.isInner) {
@@ -1030,9 +1051,11 @@ class IrToBrsTransformer(
             )
         }
 
-        // Initialize fields
+        // Initialize fields (direct field declarations)
+        val initializedFields = mutableSetOf<String>()
         for (field in irClass.declarations.filterIsInstance<IrField>()) {
             field.initializer?.expression?.let { initializer ->
+                initializedFields.add(field.name.asString())
                 bodyStatements.add(
                     BrsExpressionStatement(
                         BrsBinaryOp(
@@ -1042,6 +1065,24 @@ class IrToBrsTransformer(
                         )
                     )
                 )
+            }
+        }
+
+        // Also initialize property backing fields (may not be direct members of declarations)
+        for (property in irClass.declarations.filterIsInstance<IrProperty>()) {
+            val fieldName = property.name.asString()
+            if (fieldName !in initializedFields) {
+                property.backingField?.initializer?.expression?.let { initializer ->
+                    bodyStatements.add(
+                        BrsExpressionStatement(
+                            BrsBinaryOp(
+                                BrsDotAccess(BrsIdentifier("this"), fieldName),
+                                BrsBinaryOperator.EQ,
+                                transformExpression(initializer)
+                            )
+                        )
+                    )
+                }
             }
         }
 
@@ -1106,10 +1147,15 @@ class IrToBrsTransformer(
 
     /**
      * Check if a statement is a delegating constructor call (super() or this()).
+     * These calls generate BrsFunctionCall to ParentClass_create() functions.
      */
     private fun isDelegatingConstructorCall(stmt: BrsStatement): Boolean {
-        // This is a simplified check - in practice we'd track which IR statements map to which BRS statements
-        return false
+        if (stmt !is BrsExpressionStatement) return false
+        val expr = stmt.expression
+        if (expr !is BrsFunctionCall) return false
+        val target = expr.target
+        if (target !is BrsIdentifier) return false
+        return target.name.endsWith("_create")
     }
 
     /**
@@ -1182,6 +1228,13 @@ class IrToBrsTransformer(
         // First try the statement transformer
         val result = statement.accept(statementTransformer, Unit)
         if (result != null) return result
+
+        // Skip constructor-related IR nodes - handled during class/enum transformation
+        if (statement is IrDelegatingConstructorCall ||
+            statement is IrInstanceInitializerCall ||
+            statement is IrEnumConstructorCall) {
+            return null
+        }
 
         // If the statement is actually an expression, wrap it in an expression statement
         if (statement is IrExpression) {
@@ -1400,8 +1453,20 @@ class IrStatementToBrsTransformer(
 
         for (branch in expression.branches) {
             val condition = parent.transformExpression(branch.condition)
-            val body = parent.transformExpression(branch.result)
-            val bodyStatement = BrsExpressionStatement(body)
+
+            // Handle branch result - IrReturn needs statement transformation
+            val bodyStatement: BrsStatement = when (val branchResult = branch.result) {
+                is IrReturn -> parent.transformStatement(branchResult) ?: BrsEmpty()
+                is IrBlock -> {
+                    // Transform block which may contain returns
+                    val transformed = transformBlockOrStatement(branchResult)
+                    transformed
+                }
+                else -> {
+                    val body = parent.transformExpression(branchResult)
+                    BrsExpressionStatement(body)
+                }
+            }
 
             val ifStmt = BrsIf(
                 condition = condition,
@@ -1466,6 +1531,13 @@ class IrStatementToBrsTransformer(
 
         val statements = expression.statements.mapNotNull { stmt ->
             when (stmt) {
+                // Route IrReturn to statement transformer (has visitReturn handler)
+                // IrReturn extends IrExpression but needs statement-level handling
+                is IrReturn -> parent.transformStatement(stmt)
+                // These are handled during constructor/enum transformation, skip here
+                is IrDelegatingConstructorCall -> null
+                is IrInstanceInitializerCall -> null
+                is IrEnumConstructorCall -> null
                 is IrExpression -> BrsExpressionStatement(parent.transformExpression(stmt))
                 else -> parent.transformStatement(stmt)
             }
@@ -2177,6 +2249,42 @@ class IrExpressionToBrsTransformer(
         return BrsFunctionCall(
             BrsIdentifier("${className}_create"),
             arguments
+        )
+    }
+
+    override fun visitDelegatingConstructorCall(expression: IrDelegatingConstructorCall, data: Unit): BrsExpression {
+        val constructor = expression.symbol.owner
+        val parentClass = constructor.parentAsClass
+        val parentClassName = context.getBrsName(parentClass)
+
+        val arguments = (0 until expression.valueArgumentsCount).mapNotNull { i ->
+            expression.getValueArgument(i)?.let { it.accept(this, data) }
+        }
+
+        return BrsFunctionCall(
+            BrsIdentifier("${parentClassName}_create"),
+            arguments.toMutableList()
+        )
+    }
+
+    override fun visitInstanceInitializerCall(expression: IrInstanceInitializerCall, data: Unit): BrsExpression {
+        // Instance initializers are handled during constructor generation
+        // Return invalid as a no-op placeholder
+        return BrsInvalidLiteral()
+    }
+
+    override fun visitEnumConstructorCall(expression: IrEnumConstructorCall, data: Unit): BrsExpression {
+        val constructor = expression.symbol.owner
+        val enumClass = constructor.parentAsClass
+        val enumClassName = context.getBrsName(enumClass)
+
+        val arguments = (0 until expression.valueArgumentsCount).mapNotNull { i ->
+            expression.getValueArgument(i)?.let { it.accept(this, data) }
+        }
+
+        return BrsFunctionCall(
+            BrsIdentifier("${enumClassName}_create"),
+            arguments.toMutableList()
         )
     }
 
