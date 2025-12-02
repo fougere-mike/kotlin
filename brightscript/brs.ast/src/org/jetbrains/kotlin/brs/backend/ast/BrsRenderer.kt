@@ -110,7 +110,11 @@ class BrsRenderer(
 
     override fun visitParameter(parameter: BrsParameter, data: Unit) {
         builder.append(parameter.name)
-        parameter.type?.let { builder.append(" as ${it.typeName}") }
+        // BrightScript doesn't allow both type annotation AND default value
+        // Only emit type if there's no default value
+        if (parameter.defaultValue == null) {
+            parameter.type?.let { builder.append(" as ${it.typeName}") }
+        }
         parameter.defaultValue?.let {
             builder.append(" = ")
             it.accept(this, data)
