@@ -49,7 +49,10 @@ internal val KotlinCreateBrsCompileTasksSideEffect = KotlinCompilationSideEffect
         task.sources.from(compilation.defaultSourceSet.kotlin.sourceDirectories)
 
         // Wire compiler classpath from compilerJar for configuration cache compatibility
-        task.compilerClasspath.from(task.compilerJar)
+        // Use a provider to avoid eagerly querying the optional compilerJar property
+        task.compilerClasspath.from(
+            task.compilerJar.map { listOf(it) }.orElse(emptyList())
+        )
 
         // Note: compilerJar is not configured by default.
         // Users must configure it manually if they want to generate BrightScript output.
