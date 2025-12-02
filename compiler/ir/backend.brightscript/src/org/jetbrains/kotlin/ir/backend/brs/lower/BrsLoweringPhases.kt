@@ -66,7 +66,12 @@ object BrsLoweringPhases {
             // Phase 11: String concatenation
             StringConcatenationLowering(context),
 
-            // Phase 12: Control flow simplification
+            // Phase 12: When expression lowering
+            // BrightScript doesn't support inline if-then-else, so when expressions
+            // are transformed to blocks with temp variables
+            BrsWhenExpressionLowering(context),
+
+            // Phase 13: Control flow simplification
             ControlFlowLowering(context),
 
             // Phase 13: Final cleanup
