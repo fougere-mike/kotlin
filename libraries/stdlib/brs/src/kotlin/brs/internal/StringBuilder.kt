@@ -11,7 +11,7 @@ package kotlin.brs.internal
  *
  * In generated BrightScript, this maps to roString operations.
  */
-internal class StringBuilder {
+public class StringBuilder {
     private var value: String = ""
 
     fun append(obj: Any?): StringBuilder {
@@ -26,6 +26,21 @@ internal class StringBuilder {
 
     fun append(c: Char): StringBuilder {
         value += c
+        return this
+    }
+
+    fun insert(index: Int, obj: Any?): StringBuilder {
+        value = value.substring(0, index) + obj.toString() + value.substring(index)
+        return this
+    }
+
+    fun insert(index: Int, str: String?): StringBuilder {
+        value = value.substring(0, index) + (str ?: "null") + value.substring(index)
+        return this
+    }
+
+    fun insert(index: Int, c: Char): StringBuilder {
+        value = value.substring(0, index) + c + value.substring(index)
         return this
     }
 
