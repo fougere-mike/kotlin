@@ -27,3 +27,6 @@ internal interface KotlinNativeCompileTask : KotlinCompile<KotlinCommonOptions>,
 interface KotlinCommonCompile : KotlinCompile<KotlinMultiplatformCommonOptions>,
     KotlinCompilationTask<KotlinMultiplatformCommonCompilerOptions>
 
+@Suppress("DEPRECATION")
+interface KotlinBrsCompile : KotlinCompile<KotlinCommonOptions>,
+    KotlinCompilationTask<KotlinBrsCompilerOptions>

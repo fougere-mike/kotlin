@@ -14,13 +14,13 @@ package kotlin
  * @param message the detail message string.
  * @param cause the cause of this throwable.
  */
-public actual open class Throwable actual constructor(
-    public actual open val message: String?,
-    public actual open val cause: Throwable?
+public open class Throwable(
+    public open val message: String?,
+    public open val cause: Throwable?
 ) {
-    public actual constructor(message: String?) : this(message, null)
-    public actual constructor(cause: Throwable?) : this(cause?.toString(), cause)
-    public actual constructor() : this(null, null)
+    public constructor(message: String?) : this(message, null)
+    public constructor(cause: Throwable?) : this(cause?.toString(), cause)
+    public constructor() : this(null, null)
 
     private var _stack: String? = null
 

@@ -10,48 +10,48 @@ package kotlin.text
  *
  * String builder can be used to efficiently perform multiple string manipulation operations.
  */
-public actual class StringBuilder actual constructor(content: String) : Appendable, CharSequence {
+public class StringBuilder constructor(content: String) : Appendable, CharSequence {
     /**
      * Constructs an empty string builder with the specified initial [capacity].
      *
      * In Kotlin/BrightScript implementation of StringBuilder the initial capacity has no effect on the further performance of operations.
      */
-    public actual constructor(capacity: Int) : this() {
+    public constructor(capacity: Int) : this() {
     }
 
     /** Constructs a string builder that contains the same characters as the specified [content] char sequence. */
-    public actual constructor(content: CharSequence) : this(content.toString()) {}
+    public constructor(content: CharSequence) : this(content.toString()) {}
 
     /** Constructs an empty string builder. */
-    public actual constructor() : this("")
+    public constructor() : this("")
 
     private var string: String = content
 
-    actual override val length: Int
+    override val length: Int
         get() = string.length
 
-    actual override fun get(index: Int): Char =
+    override fun get(index: Int): Char =
         string.getOrElse(index) { throw IndexOutOfBoundsException("index: $index, length: $length}") }
 
-    actual override fun subSequence(startIndex: Int, endIndex: Int): CharSequence = string.substring(startIndex, endIndex)
+    override fun subSequence(startIndex: Int, endIndex: Int): CharSequence = string.substring(startIndex, endIndex)
 
-    actual override fun append(value: Char): StringBuilder {
+    override fun append(value: Char): StringBuilder {
         string += value
         return this
     }
 
-    actual override fun append(value: CharSequence?): StringBuilder {
+    override fun append(value: CharSequence?): StringBuilder {
         string += value.toString()
         return this
     }
 
-    actual override fun append(value: CharSequence?, startIndex: Int, endIndex: Int): StringBuilder =
+    override fun append(value: CharSequence?, startIndex: Int, endIndex: Int): StringBuilder =
         this.appendRange(value ?: "null", startIndex, endIndex)
 
     /**
      * Reverses the contents of this string builder and returns this instance.
      */
-    public actual fun reverse(): StringBuilder {
+    public fun reverse(): StringBuilder {
         var reversed = ""
         var index = string.length - 1
         while (index >= 0) {
@@ -74,7 +74,7 @@ public actual class StringBuilder actual constructor(content: String) : Appendab
     /**
      * Appends the string representation of the specified object [value] to this string builder and returns this instance.
      */
-    public actual fun append(value: Any?): StringBuilder {
+    public fun append(value: Any?): StringBuilder {
         string += value.toString()
         return this
     }
@@ -83,7 +83,7 @@ public actual class StringBuilder actual constructor(content: String) : Appendab
      * Appends the string representation of the specified boolean [value] to this string builder and returns this instance.
      */
     @SinceKotlin("1.3")
-    public actual fun append(value: Boolean): StringBuilder {
+    public fun append(value: Boolean): StringBuilder {
         string += value
         return this
     }
@@ -95,54 +95,54 @@ public actual class StringBuilder actual constructor(content: String) : Appendab
     public fun append(value: Short): StringBuilder = append(value.toString())
 
     @SinceKotlin("1.9")
-    public actual fun append(value: Int): StringBuilder = append(value.toString())
+    public fun append(value: Int): StringBuilder = append(value.toString())
 
     @SinceKotlin("1.9")
-    public actual fun append(value: Long): StringBuilder = append(value.toString())
+    public fun append(value: Long): StringBuilder = append(value.toString())
 
     @SinceKotlin("1.9")
-    public actual fun append(value: Float): StringBuilder = append(value.toString())
+    public fun append(value: Float): StringBuilder = append(value.toString())
 
     @SinceKotlin("1.9")
-    public actual fun append(value: Double): StringBuilder = append(value.toString())
+    public fun append(value: Double): StringBuilder = append(value.toString())
 
     @SinceKotlin("1.4")
-    public actual fun append(value: CharArray): StringBuilder {
+    public fun append(value: CharArray): StringBuilder {
         string += value.concatToString()
         return this
     }
 
     @SinceKotlin("1.3")
-    public actual fun append(value: String?): StringBuilder {
+    public fun append(value: String?): StringBuilder {
         this.string += value ?: "null"
         return this
     }
 
     @SinceKotlin("1.3")
     @Deprecated("Obtaining StringBuilder capacity is not supported in BrightScript and common code.", level = DeprecationLevel.WARNING)
-    public actual fun capacity(): Int = length
+    public fun capacity(): Int = length
 
     @SinceKotlin("1.4")
-    public actual fun ensureCapacity(minimumCapacity: Int) {
+    public fun ensureCapacity(minimumCapacity: Int) {
     }
 
     @SinceKotlin("1.4")
-    public actual fun indexOf(string: String): Int = this.string.indexOf(string)
+    public fun indexOf(string: String): Int = this.string.indexOf(string)
 
     @SinceKotlin("1.4")
-    public actual fun indexOf(string: String, startIndex: Int): Int = this.string.indexOf(string, startIndex)
+    public fun indexOf(string: String, startIndex: Int): Int = this.string.indexOf(string, startIndex)
 
     @SinceKotlin("1.4")
-    public actual fun lastIndexOf(string: String): Int = this.string.lastIndexOf(string)
+    public fun lastIndexOf(string: String): Int = this.string.lastIndexOf(string)
 
     @SinceKotlin("1.4")
-    public actual fun lastIndexOf(string: String, startIndex: Int): Int {
+    public fun lastIndexOf(string: String, startIndex: Int): Int {
         if (string.isEmpty() && startIndex < 0) return -1
         return this.string.lastIndexOf(string, startIndex)
     }
 
     @SinceKotlin("1.4")
-    public actual fun insert(index: Int, value: Boolean): StringBuilder {
+    public fun insert(index: Int, value: Boolean): StringBuilder {
         checkPositionIndex(index, length)
         string = string.substring(0, index) + value + string.substring(index)
         return this
@@ -155,47 +155,47 @@ public actual class StringBuilder actual constructor(content: String) : Appendab
     public fun insert(index: Int, value: Short): StringBuilder = insert(index, value.toString())
 
     @SinceKotlin("1.9")
-    public actual fun insert(index: Int, value: Int): StringBuilder = insert(index, value.toString())
+    public fun insert(index: Int, value: Int): StringBuilder = insert(index, value.toString())
 
     @SinceKotlin("1.9")
-    public actual fun insert(index: Int, value: Long): StringBuilder = insert(index, value.toString())
+    public fun insert(index: Int, value: Long): StringBuilder = insert(index, value.toString())
 
     @SinceKotlin("1.9")
-    public actual fun insert(index: Int, value: Float): StringBuilder = insert(index, value.toString())
+    public fun insert(index: Int, value: Float): StringBuilder = insert(index, value.toString())
 
     @SinceKotlin("1.9")
-    public actual fun insert(index: Int, value: Double): StringBuilder = insert(index, value.toString())
+    public fun insert(index: Int, value: Double): StringBuilder = insert(index, value.toString())
 
     @SinceKotlin("1.4")
-    public actual fun insert(index: Int, value: Char): StringBuilder {
+    public fun insert(index: Int, value: Char): StringBuilder {
         checkPositionIndex(index, length)
         string = string.substring(0, index) + value + string.substring(index)
         return this
     }
 
     @SinceKotlin("1.4")
-    public actual fun insert(index: Int, value: CharArray): StringBuilder {
+    public fun insert(index: Int, value: CharArray): StringBuilder {
         checkPositionIndex(index, length)
         string = string.substring(0, index) + value.concatToString() + string.substring(index)
         return this
     }
 
     @SinceKotlin("1.4")
-    public actual fun insert(index: Int, value: CharSequence?): StringBuilder {
+    public fun insert(index: Int, value: CharSequence?): StringBuilder {
         checkPositionIndex(index, length)
         string = string.substring(0, index) + value.toString() + string.substring(index)
         return this
     }
 
     @SinceKotlin("1.4")
-    public actual fun insert(index: Int, value: Any?): StringBuilder {
+    public fun insert(index: Int, value: Any?): StringBuilder {
         checkPositionIndex(index, length)
         string = string.substring(0, index) + value.toString() + string.substring(index)
         return this
     }
 
     @SinceKotlin("1.4")
-    public actual fun insert(index: Int, value: String?): StringBuilder {
+    public fun insert(index: Int, value: String?): StringBuilder {
         checkPositionIndex(index, length)
         val toInsert = value ?: "null"
         this.string = this.string.substring(0, index) + toInsert + this.string.substring(index)
@@ -203,7 +203,7 @@ public actual class StringBuilder actual constructor(content: String) : Appendab
     }
 
     @SinceKotlin("1.4")
-    public actual fun setLength(newLength: Int) {
+    public fun setLength(newLength: Int) {
         if (newLength < 0) {
             throw IllegalArgumentException("Negative new length: $newLength.")
         }
@@ -217,19 +217,19 @@ public actual class StringBuilder actual constructor(content: String) : Appendab
     }
 
     @SinceKotlin("1.4")
-    public actual fun substring(startIndex: Int): String {
+    public fun substring(startIndex: Int): String {
         checkPositionIndex(startIndex, length)
         return string.substring(startIndex)
     }
 
     @SinceKotlin("1.4")
-    public actual fun substring(startIndex: Int, endIndex: Int): String {
+    public fun substring(startIndex: Int, endIndex: Int): String {
         checkBoundsIndexes(startIndex, endIndex, length)
         return string.substring(startIndex, endIndex)
     }
 
     @SinceKotlin("1.4")
-    public actual fun trimToSize() {
+    public fun trimToSize() {
     }
 
     override fun toString(): String = string
@@ -379,86 +379,80 @@ private fun checkBoundsIndexes(startIndex: Int, endIndex: Int, length: Int) {
 
 @Suppress("NOTHING_TO_INLINE")
 @SinceKotlin("1.9")
-public actual inline fun StringBuilder.append(value: Byte): StringBuilder = this.append(value)
+public inline fun StringBuilder.append(value: Byte): StringBuilder = this.append(value)
 
 @Suppress("NOTHING_TO_INLINE")
 @SinceKotlin("1.9")
-public actual inline fun StringBuilder.append(value: Short): StringBuilder = this.append(value)
+public inline fun StringBuilder.append(value: Short): StringBuilder = this.append(value)
 
 @Suppress("NOTHING_TO_INLINE")
 @SinceKotlin("1.9")
-public actual inline fun StringBuilder.insert(index: Int, value: Byte): StringBuilder = this.insert(index, value)
+public inline fun StringBuilder.insert(index: Int, value: Byte): StringBuilder = this.insert(index, value)
 
 @Suppress("NOTHING_TO_INLINE")
 @SinceKotlin("1.9")
-public actual inline fun StringBuilder.insert(index: Int, value: Short): StringBuilder = this.insert(index, value)
+public inline fun StringBuilder.insert(index: Int, value: Short): StringBuilder = this.insert(index, value)
 
 @SinceKotlin("1.3")
 @Suppress("NOTHING_TO_INLINE")
-public actual inline fun StringBuilder.clear(): StringBuilder = this.clear()
+public inline fun StringBuilder.clear(): StringBuilder = this.clear()
 
 @SinceKotlin("1.4")
 @Suppress("NOTHING_TO_INLINE")
-public actual inline operator fun StringBuilder.set(index: Int, value: Char): Unit = this.set(index, value)
+public inline operator fun StringBuilder.set(index: Int, value: Char): Unit = this.set(index, value)
 
 @SinceKotlin("1.4")
 @Suppress("NOTHING_TO_INLINE")
-public actual inline fun StringBuilder.setRange(startIndex: Int, endIndex: Int, value: String): StringBuilder =
+public inline fun StringBuilder.setRange(startIndex: Int, endIndex: Int, value: String): StringBuilder =
     this.setRange(startIndex, endIndex, value)
 
 @SinceKotlin("1.4")
 @Suppress("NOTHING_TO_INLINE")
-public actual inline fun StringBuilder.deleteAt(index: Int): StringBuilder = this.deleteAt(index)
+public inline fun StringBuilder.deleteAt(index: Int): StringBuilder = this.deleteAt(index)
 
 @SinceKotlin("1.4")
 @Suppress("NOTHING_TO_INLINE")
-public actual inline fun StringBuilder.deleteRange(startIndex: Int, endIndex: Int): StringBuilder = this.deleteRange(startIndex, endIndex)
+public inline fun StringBuilder.deleteRange(startIndex: Int, endIndex: Int): StringBuilder = this.deleteRange(startIndex, endIndex)
 
 @SinceKotlin("1.4")
 @Suppress("NOTHING_TO_INLINE", "ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
-public actual inline fun StringBuilder.toCharArray(destination: CharArray, destinationOffset: Int = 0, startIndex: Int = 0, endIndex: Int = this.length): Unit =
+public inline fun StringBuilder.toCharArray(destination: CharArray, destinationOffset: Int = 0, startIndex: Int = 0, endIndex: Int = this.length): Unit =
     this.toCharArray(destination, destinationOffset, startIndex, endIndex)
 
 @SinceKotlin("1.4")
 @Suppress("NOTHING_TO_INLINE")
-public actual inline fun StringBuilder.appendRange(value: CharArray, startIndex: Int, endIndex: Int): StringBuilder =
+public inline fun StringBuilder.appendRange(value: CharArray, startIndex: Int, endIndex: Int): StringBuilder =
     this.appendRange(value, startIndex, endIndex)
 
 @SinceKotlin("1.4")
 @Suppress("NOTHING_TO_INLINE")
-public actual inline fun StringBuilder.appendRange(value: CharSequence, startIndex: Int, endIndex: Int): StringBuilder =
+public inline fun StringBuilder.appendRange(value: CharSequence, startIndex: Int, endIndex: Int): StringBuilder =
     this.appendRange(value, startIndex, endIndex)
 
 @SinceKotlin("1.4")
 @Suppress("NOTHING_TO_INLINE")
-public actual inline fun StringBuilder.insertRange(index: Int, value: CharArray, startIndex: Int, endIndex: Int): StringBuilder =
+public inline fun StringBuilder.insertRange(index: Int, value: CharArray, startIndex: Int, endIndex: Int): StringBuilder =
     this.insertRange(index, value, startIndex, endIndex)
 
 @SinceKotlin("1.4")
 @Suppress("NOTHING_TO_INLINE")
-public actual inline fun StringBuilder.insertRange(index: Int, value: CharSequence, startIndex: Int, endIndex: Int): StringBuilder =
+public inline fun StringBuilder.insertRange(index: Int, value: CharSequence, startIndex: Int, endIndex: Int): StringBuilder =
     this.insertRange(index, value, startIndex, endIndex)
 
 @SinceKotlin("1.9")
-@kotlin.internal.InlineOnly
-public actual inline fun StringBuilder.appendLine(value: Int): StringBuilder = append(value).appendLine()
+public inline fun StringBuilder.appendLine(value: Int): StringBuilder = append(value).appendLine()
 
 @SinceKotlin("1.9")
-@kotlin.internal.InlineOnly
-public actual inline fun StringBuilder.appendLine(value: Short): StringBuilder = append(value.toInt()).appendLine()
+public inline fun StringBuilder.appendLine(value: Short): StringBuilder = append(value.toInt()).appendLine()
 
 @SinceKotlin("1.9")
-@kotlin.internal.InlineOnly
-public actual inline fun StringBuilder.appendLine(value: Byte): StringBuilder = append(value.toInt()).appendLine()
+public inline fun StringBuilder.appendLine(value: Byte): StringBuilder = append(value.toInt()).appendLine()
 
 @SinceKotlin("1.9")
-@kotlin.internal.InlineOnly
-public actual inline fun StringBuilder.appendLine(value: Long): StringBuilder = append(value).appendLine()
+public inline fun StringBuilder.appendLine(value: Long): StringBuilder = append(value).appendLine()
 
 @SinceKotlin("1.9")
-@kotlin.internal.InlineOnly
-public actual inline fun StringBuilder.appendLine(value: Float): StringBuilder = append(value).appendLine()
+public inline fun StringBuilder.appendLine(value: Float): StringBuilder = append(value).appendLine()
 
 @SinceKotlin("1.9")
-@kotlin.internal.InlineOnly
-public actual inline fun StringBuilder.appendLine(value: Double): StringBuilder = append(value).appendLine()
+public inline fun StringBuilder.appendLine(value: Double): StringBuilder = append(value).appendLine()

@@ -297,34 +297,26 @@ kotlin {
 
     // BrightScript (Roku) target
     // Note: Requires Kotlin Gradle Plugin with BRS support (already present in current development version)
-    // BOOTSTRAP CONSTRAINT: The stdlib uses the bootstrap Kotlin Gradle Plugin which doesn't have BRS support.
-    // For stdlib BRS compilation, use libraries/stdlib/brs/ with JS IR fallback instead.
-    // The brs {} target can only be used in external projects that use the development Gradle plugin.
-    /*
+    //
+    // BOOTSTRAP OPTIONS:
+    // 1. Pre-compiled klib: Use libraries/stdlib/brs-prebuilt/kotlin-stdlib-brs.klib
+    //    - Regenerate with: ./gradlew :kotlin-stdlib-brs-prebuilt:regenerateKlib
+    // 2. JS IR fallback: Use libraries/stdlib/brs/ which uses JS backend to produce klib format
+    // 3. Native BRS target: Uncomment brs {} below when using a bootstrap with BRS support
+    //
+    // To enable first-class BRS support:
+    // - Publish local Kotlin with BRS: ./gradlew publish -Prepository=$PWD/build/repo
+    // - Update gradle.properties to use local bootstrap
+    // - Uncomment the brs {} block below
     brs {
-        compilations {
-            all {
-                @Suppress("DEPRECATION")
-                kotlinOptions {
-                    freeCompilerArgs += listOfNotNull(
-                        "-Xallow-kotlin-package",
-                        "-Xexpect-actual-classes",
-                        diagnosticNamesArg
-                    )
-                }
-            }
-            val main by getting {
-                @Suppress("DEPRECATION")
-                kotlinOptions {
-                    freeCompilerArgs += "-Xir-module-name=kotlin-stdlib-brs"
-                }
-                compileTaskProvider.configure {
-                    compilerOptions.mainCompilationOptions()
-                }
+        compilations.all {
+            // Configure the BRS compiler JAR path and stdlib mode
+            (this as org.jetbrains.kotlin.gradle.targets.brs.KotlinBrsIrCompilation).brsCompileTaskProvider.configure {
+                compilerJar.set(rootDir.resolve("compiler/cli/cli-brs/build/libs/kotlinc-brs-${project.version}.jar"))
+                stdlibCompilation.set(true)
             }
         }
     }
-    */
 
     if (kotlinBuildProperties.isInIdeaSync) {
         val hostOs = System.getProperty("os.name")
@@ -569,12 +561,12 @@ kotlin {
         }
 
         // BrightScript (Roku) source sets
-        // BOOTSTRAP CONSTRAINT: See note above about bootstrap Gradle plugin limitation
-        /*
+        // Note: BRS does not depend on commonMain yet because not all common sources are compatible.
+        // Once unsigned types and other missing primitives are implemented, we can add that dependency.
         val brsDir = "${projectDir}/brs"
         val brsActualDir = "${projectDir}/brs-actual"
         val brsMain by getting {
-            dependsOn(commonMain.get())
+            // Don't depend on commonMain for now - BRS needs its own minimal stdlib
             kotlin {
                 srcDir("$brsDir/builtins")
                 srcDir("$brsDir/runtime")
@@ -588,7 +580,6 @@ kotlin {
                 srcDir("$brsDir/test")
             }
         }
-        */
 
         if (kotlinBuildProperties.isInIdeaSync) {
             val nativeKotlinTestCommon by creating {

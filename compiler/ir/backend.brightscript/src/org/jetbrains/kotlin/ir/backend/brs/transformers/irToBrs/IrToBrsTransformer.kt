@@ -2051,6 +2051,20 @@ class IrExpressionToBrsTransformer(
      * Returns null if the origin is not an operator origin.
      */
     private fun transformOperator(expression: IrCall, origin: IrStatementOrigin): BrsExpression? {
+        val function = expression.symbol.owner
+
+        // Special case: EXCLEQ on Boolean.not() call - this means `!= ` was lowered to `(a == b).not()`
+        // Handle it as a NOT of the dispatch receiver.
+        // The call to Boolean.not() has no actual value arguments but may have 1 slot due to IR structure,
+        // so check by function name and dispatch receiver presence rather than argument count.
+        if (origin == IrStatementOrigin.EXCLEQ && function.name.asString() == "not") {
+            val dispatchReceiver = expression.dispatchReceiver
+            if (dispatchReceiver != null && function.valueParameters.isEmpty()) {
+                val operand = dispatchReceiver.accept(this, Unit)
+                return BrsUnaryOp(BrsUnaryOperator.NOT, operand)
+            }
+        }
+
         // Binary operators
         val binaryOp = when (origin) {
             IrStatementOrigin.PLUS -> BrsBinaryOperator.ADD
@@ -2072,6 +2086,14 @@ class IrExpressionToBrsTransformer(
             // 1. If dispatchReceiver exists: left = dispatchReceiver, right = valueArgument(0)
             // 2. If extensionReceiver exists: left = extensionReceiver, right = valueArgument(0)
             // 3. Otherwise: left = valueArgument(0), right = valueArgument(1)
+            //
+            // Special case: If this is EXCLEQ but valueArgumentsCount is 0, it means the
+            // != was converted to (a == b).not() and we're on the outer call. Skip binary handling.
+            if (binaryOp == BrsBinaryOperator.NE && expression.valueArgumentsCount == 0) {
+                // This case is handled above in the special EXCLEQ handling, but just in case
+                return null
+            }
+
             val (left, right) = when {
                 expression.dispatchReceiver != null -> {
                     val l = expression.dispatchReceiver!!.accept(this, Unit)

@@ -7,13 +7,12 @@ package org.jetbrains.kotlin.gradle.targets.brs
 
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.language.base.plugins.LifecycleBasePlugin
+import org.jetbrains.kotlin.gradle.dsl.KotlinBrsCompilerOptionsDefault
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilationInfo
-import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
 import org.jetbrains.kotlin.gradle.plugin.mpp.compilationImpl.KotlinCompilationSideEffect
 import org.jetbrains.kotlin.gradle.tasks.dependsOn
 import org.jetbrains.kotlin.gradle.tasks.registerTask
-
-private const val BRS_COMPILER_CONFIGURATION_NAME = "kotlinBrsCompiler"
+import org.jetbrains.kotlin.gradle.utils.newInstance
 
 /**
  * Registers and configures the [KotlinBrsCompile] task for [KotlinBrsIrCompilation].
@@ -25,21 +24,13 @@ internal val KotlinCreateBrsCompileTasksSideEffect = KotlinCompilationSideEffect
     val project = compilation.project
     val compilationInfo = KotlinCompilationInfo(compilation)
 
-    // Create or get the BRS compiler configuration for auto-resolving the compiler JAR
-    val brsCompilerConfig = project.configurations.findByName(BRS_COMPILER_CONFIGURATION_NAME)
-        ?: project.configurations.create(BRS_COMPILER_CONFIGURATION_NAME) {
-            it.isCanBeConsumed = false
-            it.isCanBeResolved = true
-            it.isVisible = false
-        }.also { config ->
-            project.dependencies.add(
-                config.name,
-                "org.jetbrains.kotlin:kotlin-compiler-brs:${project.getKotlinPluginVersion()}"
-            )
-        }
+    // Create compiler options for this compilation
+    val compilerOptions = project.objects.newInstance<KotlinBrsCompilerOptionsDefault>()
 
-    val kotlinBrsCompile = project.registerTask<KotlinBrsCompile>(
-        compilation.compileKotlinTaskName
+    val kotlinBrsCompile = project.registerTask(
+        compilation.compileKotlinTaskName,
+        KotlinBrsCompile::class.java,
+        constructorArgs = listOf(compilerOptions)
     ) { task ->
         task.group = BasePlugin.BUILD_GROUP
         task.description = "Compiles Kotlin sources to BrightScript for the '${compilationInfo.compilationName}' " +
@@ -51,21 +42,18 @@ internal val KotlinCreateBrsCompileTasksSideEffect = KotlinCompilationSideEffect
         )
 
         // Configure module name from compilation
-        task.moduleName.set(compilationInfo.moduleName)
+        task.compilerOptions.moduleName.set(compilationInfo.moduleName)
 
-        // Wire sources from the compilation's default source set
-        task.sources.from(compilation.allKotlinSourceSets.map { sourceSet ->
-            sourceSet.kotlin.sourceDirectories
-        })
+        // Wire sources only from the compilation's own source set (not transitive commonMain)
+        // This is intentionally different from other targets - BRS doesn't support all common sources yet
+        task.sources.from(compilation.defaultSourceSet.kotlin.sourceDirectories)
 
-        // Auto-wire compiler JAR from configuration (convention allows user override)
-        task.compilerJar.convention(
-            project.provider {
-                brsCompilerConfig.files.firstOrNull()?.let { file ->
-                    project.layout.projectDirectory.file(file.absolutePath)
-                }
-            }
-        )
+        // Wire compiler classpath from compilerJar for configuration cache compatibility
+        task.compilerClasspath.from(task.compilerJar)
+
+        // Note: compilerJar is not configured by default.
+        // Users must configure it manually if they want to generate BrightScript output.
+        // If not configured, the task will skip with a warning.
     }
 
     // Wire the compile task output to the compilation's classes directories

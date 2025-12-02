@@ -11,6 +11,7 @@ package kotlin
  */
 
 @PublishedApi
+@Suppress("DEPRECATION_ERROR")
 internal fun throwUninitializedPropertyAccessException(name: String): Nothing =
     throw UninitializedPropertyAccessException("lateinit property $name has not been initialized")
 
@@ -18,6 +19,7 @@ internal fun throwUninitializedPropertyAccessException(name: String): Nothing =
 internal fun throwKotlinNothingValueException(): Nothing =
     throw KotlinNothingValueException()
 
+@Suppress("DEPRECATION_ERROR")
 internal fun noWhenBranchMatchedException(): Nothing =
     throw NoWhenBranchMatchedException()
 

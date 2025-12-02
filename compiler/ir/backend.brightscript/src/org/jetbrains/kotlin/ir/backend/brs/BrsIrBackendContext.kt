@@ -30,6 +30,8 @@ import org.jetbrains.kotlin.ir.types.IrTypeSystemContext
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
 import org.jetbrains.kotlin.ir.types.classifierOrNull
 import org.jetbrains.kotlin.ir.util.SymbolTable
+import org.jetbrains.kotlin.ir.expressions.IrConst
+import org.jetbrains.kotlin.ir.util.getAnnotation
 import org.jetbrains.kotlin.name.BrsStandardClassIds
 import org.jetbrains.kotlin.name.FqName
 import java.util.*
@@ -84,6 +86,11 @@ class BrsIrBackendContext(
     // ==================== Internal Package ====================
 
     val internalPackageFqn: FqName = BrsStandardClassIds.BASE_BRS_PACKAGE
+
+    // ==================== Annotation FqNames ====================
+
+    private val brsNameFqn = FqName("kotlin.brs.BrsName")
+    private val brsExternalFqn = FqName("kotlin.brs.BrsExternal")
 
     // ==================== Exception Handling ====================
 
@@ -205,12 +212,16 @@ class BrsIrBackendContext(
     }
 
     private fun generateBrsClassName(irClass: IrClass): String {
-        // Check for @BrsName annotation - simplified check by annotation class name
-        val annotation = irClass.annotations.find { ann ->
-            (ann.type.classifierOrNull?.owner as? IrClass)?.name?.asString() == "BrsName"
+        // Check for @BrsName annotation and extract its value
+        val brsNameAnnotation = irClass.getAnnotation(brsNameFqn)
+        if (brsNameAnnotation != null) {
+            val nameArg = brsNameAnnotation.getValueArgument(0)
+            if (nameArg is IrConst) {
+                return nameArg.value.toString()
+            }
         }
 
-        // For now, just use the simple name with proper mangling
+        // Fallback: use the simple name with proper mangling
         val baseName = irClass.name.asString()
         val parent = irClass.parent
 
@@ -222,6 +233,15 @@ class BrsIrBackendContext(
     }
 
     private fun generateBrsFunctionName(irFunction: IrFunction): String {
+        // Check for @BrsName annotation and extract its value
+        val brsNameAnnotation = irFunction.getAnnotation(brsNameFqn)
+        if (brsNameAnnotation != null) {
+            val nameArg = brsNameAnnotation.getValueArgument(0)
+            if (nameArg is IrConst) {
+                return nameArg.value.toString()
+            }
+        }
+
         val rawName = irFunction.name.asString()
         // Sanitize property accessor names: <get-foo> -> get_foo, <set-foo> -> set_foo
         val baseName = when {

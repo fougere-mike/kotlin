@@ -4,6 +4,12 @@
     "isPublishedAsRoot": "true",
     "variants": [
       {
+        "name": "brsApiElements",
+        "sourceSet": [
+          "commonMain"
+        ]
+      },
+      {
         "name": "jsApiElements",
         "sourceSet": [
           "webMain",
