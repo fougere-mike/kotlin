@@ -138,16 +138,16 @@ end function
 
 function outerFunction(x as Integer) as Integer
     captured = x
-    inner = function(y as Integer) as Integer
-        return captured + y
-    end function
-    return inner(10)
+    inner = {captured: {value: captured}, invoke: function(y as Integer) as Integer
+        return m.captured.value + y
+    end function}
+    return inner.invoke(10)
 end function
 
 function lambdaExample(multiplier as Integer) as Function
-    return function(value as Integer) as Integer
-        return value * multiplier
-    end function
+    return {multiplier: multiplier, invoke: function(value as Integer) as Integer
+        return value * m.multiplier
+    end function}
 end function
 
 function Outer_create(value as Integer) as Object
@@ -190,10 +190,10 @@ function double(x as Integer) as Integer
 end function
 
 sub testFunctionReference()
-    ref = function(x as Integer) as Integer
+    ref = {invoke: function(x as Integer) as Integer
         return double(x)
-    end function
-    result = ref(5)
+    end function}
+    result = ref.invoke(5)
 end sub
 
 sub testTryCatch()
@@ -232,6 +232,59 @@ end sub
 
 function testComparison(x as Integer) as Boolean
     return x >= 0
+end function
+
+function testMutableCapture() as Integer
+    counter = 0
+    increment = {counter: {value: counter}, invoke: function() as Void
+        m.counter.value = (m.counter.value + 1)
+    end function}
+    increment.invoke()
+    increment.invoke()
+    return counter
+end function
+
+function testReadOnlyCapture() as Integer
+    multiplier = 5
+    multiply = {multiplier: multiplier, invoke: function(x as Integer) as Integer
+        return x * m.multiplier
+    end function}
+    return multiply.invoke(10)
+end function
+
+function testMultipleCaptures() as Integer
+    a = 10
+    b = 20
+    compute = {a: {value: a}, b: b, invoke: function() as Integer
+        m.a.value = (m.a.value + m.b)
+        return m.a.value
+    end function}
+    compute.invoke()
+    return a
+end function
+
+function makeCounter() as Function
+    count = 0
+    return {count: {value: count}, invoke: function() as Integer
+        m.count.value = (m.count.value + 1)
+        return m.count.value
+    end function}
+end function
+
+function testReturnedClosure() as Integer
+    counter = makeCounter()
+    counter.invoke()
+    counter.invoke()
+    return counter.invoke()
+end function
+
+function testClosureWithParams() as Integer
+    base = 100
+    addToBase = {base: {value: base}, invoke: function(x as Integer, y as Integer) as Integer
+        m.base.value = ((m.base.value + x) + y)
+        return m.base.value
+    end function}
+    return addToBase.invoke(5, 10)
 end function
 
 AppConfig_instance = invalid

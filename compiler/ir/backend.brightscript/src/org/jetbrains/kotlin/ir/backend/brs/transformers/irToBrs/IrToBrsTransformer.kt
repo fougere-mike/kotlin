@@ -24,7 +24,11 @@ import org.jetbrains.kotlin.ir.util.isFunction
 import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.ir.util.isNullable
 import org.jetbrains.kotlin.ir.util.parentAsClass
+import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitor
+import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
+import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
+import org.jetbrains.kotlin.ir.visitors.acceptVoid
 
 /**
  * Transforms Kotlin IR to BrightScript AST.
@@ -43,6 +47,91 @@ class IrToBrsTransformer(
 
     // Track enum classes encountered during transformation for initialization
     private val enumClassNames = mutableListOf<String>()
+
+    /**
+     * Tracks captured variables when transforming a closure.
+     * Maps IR variable symbols to their capture info (name and mutability).
+     */
+    data class CapturedVariable(
+        val symbol: IrValueSymbol,
+        val name: String,
+        val isMutable: Boolean
+    )
+
+    /**
+     * Current closure context for variable access rewriting.
+     * When non-null, we're inside a closure and need to rewrite captured variable accesses.
+     * Internal visibility so expression/statement transformers can access it.
+     */
+    internal var currentClosureContext: List<CapturedVariable>? = null
+
+    /**
+     * Detect variables captured by a function expression.
+     * Returns a list of variables that are referenced but not declared within the function.
+     */
+    fun detectCapturedVariables(function: IrSimpleFunction): List<CapturedVariable> {
+        val declaredSymbols = mutableSetOf<IrValueSymbol>()
+        val referencedSymbols = mutableMapOf<IrValueSymbol, Boolean>() // symbol -> isMutated
+
+        // Collect function parameters as declared
+        function.valueParameters.forEach { declaredSymbols.add(it.symbol) }
+
+        // Walk the function body to find declared and referenced variables
+        function.body?.acceptVoid(object : IrElementVisitorVoid {
+            override fun visitElement(element: IrElement) {
+                element.acceptChildrenVoid(this)
+            }
+
+            override fun visitVariable(declaration: IrVariable) {
+                declaredSymbols.add(declaration.symbol)
+                declaration.acceptChildrenVoid(this)
+            }
+
+            override fun visitGetValue(expression: IrGetValue) {
+                val symbol = expression.symbol
+                if (symbol !in declaredSymbols) {
+                    // Only track variables and value parameters from outer scope
+                    val owner = symbol.owner
+                    if (owner is IrVariable || owner is IrValueParameter) {
+                        if (symbol !in referencedSymbols) {
+                            referencedSymbols[symbol] = false
+                        }
+                    }
+                }
+                expression.acceptChildrenVoid(this)
+            }
+
+            override fun visitSetValue(expression: IrSetValue) {
+                val symbol = expression.symbol
+                if (symbol !in declaredSymbols) {
+                    // Mark as mutated
+                    referencedSymbols[symbol] = true
+                }
+                expression.acceptChildrenVoid(this)
+            }
+        })
+
+        // Build the captured variables list
+        return referencedSymbols.map { (symbol, isMutated) ->
+            val owner = symbol.owner
+            val isMutable = when (owner) {
+                is IrVariable -> owner.isVar || isMutated
+                else -> isMutated
+            }
+            CapturedVariable(
+                symbol = symbol,
+                name = owner.name.asString(),
+                isMutable = isMutable
+            )
+        }
+    }
+
+    /**
+     * Check if a variable symbol is captured in the current closure context.
+     */
+    fun getCapturedVariable(symbol: IrValueSymbol): CapturedVariable? {
+        return currentClosureContext?.find { it.symbol == symbol }
+    }
 
     // ==================== Entry Points ====================
 
@@ -1334,9 +1423,9 @@ class IrStatementToBrsTransformer(
     /**
      * Handle local function declarations.
      *
-     * Local functions are transformed into anonymous functions stored in variables.
-     * Captured variables from the outer scope are handled by BrightScript's native
-     * closure mechanism for inline usage, or via closure objects for deferred execution.
+     * Local functions are transformed into closure objects when they capture variables
+     * from the outer scope. BrightScript anonymous functions cannot access outer scope
+     * variables, so we create an object with captured variable fields and an invoke method.
      */
     override fun visitFunction(declaration: IrFunction, data: Unit): BrsStatement {
         if (declaration is IrSimpleFunction && declaration.isFakeOverride) return BrsEmpty()
@@ -1349,22 +1438,61 @@ class IrStatementToBrsTransformer(
             )
         }
 
-        val body = declaration.body?.let { parent.transformBody(it) } ?: BrsBlock()
         val returnType = parent.mapTypeToBrs(declaration.returnType)
 
-        // Create an anonymous function and assign it to a local variable
         // For subs (void return), use VOID return type
         val effectiveReturnType = if (declaration.returnType.isUnit() || declaration.returnType.isNothing()) {
             BrsType.VOID
         } else {
             returnType
         }
-        val anonymousFunction = BrsAnonymousFunction(parameters.toMutableList(), effectiveReturnType, body)
+
+        // Detect captured variables for local functions
+        val capturedVars = if (declaration is IrSimpleFunction) {
+            parent.detectCapturedVariables(declaration)
+        } else {
+            emptyList()
+        }
+
+        // Save previous closure context
+        val previousContext = parent.currentClosureContext
+
+        // Set closure context for body transformation (if there are captures)
+        if (capturedVars.isNotEmpty()) {
+            parent.currentClosureContext = capturedVars
+        }
+
+        // Transform body with closure context active
+        val body = declaration.body?.let { parent.transformBody(it) } ?: BrsBlock()
+
+        // Restore previous context
+        parent.currentClosureContext = previousContext
+
+        // Build closure object for local function (always, for consistent .invoke() usage)
+        val entries = mutableListOf<BrsAAEntry>()
+
+        for (capturedVar in capturedVars) {
+            val varValue = BrsIdentifier(capturedVar.name)
+            val fieldValue = if (capturedVar.isMutable) {
+                // Wrap mutable captures in { value: x } for mutation to propagate
+                BrsAALiteral(mutableListOf(BrsAAEntry("value", varValue)))
+            } else {
+                // Read-only captures can be stored directly
+                varValue
+            }
+            entries.add(BrsAAEntry(capturedVar.name, fieldValue))
+        }
+
+        // Add the invoke method
+        val invokeFunction = BrsAnonymousFunction(parameters.toMutableList(), effectiveReturnType, body)
+        entries.add(BrsAAEntry("invoke", invokeFunction))
+
+        val closureObject = BrsAALiteral(entries)
 
         return BrsVariable(
             name = name,
-            type = BrsType.FUNCTION,
-            initializer = anonymousFunction
+            type = BrsType.OBJECT,
+            initializer = closureObject
         )
     }
 
@@ -1607,6 +1735,20 @@ class IrStatementToBrsTransformer(
 
     override fun visitSetValue(expression: IrSetValue, data: Unit): BrsStatement {
         val rawName = expression.symbol.owner.name.asString()
+
+        // Check if this variable is captured in a closure
+        val capturedVar = parent.getCapturedVariable(expression.symbol)
+        if (capturedVar != null && capturedVar.isMutable) {
+            // Rewrite to assign via m (the closure object): m.varName.value = newValue
+            return BrsExpressionStatement(
+                BrsBinaryOp(
+                    BrsDotAccess(BrsDotAccess(BrsMRef(), capturedVar.name), "value"),
+                    BrsBinaryOperator.EQ,
+                    parent.transformExpression(expression.value)
+                )
+            )
+        }
+
         val sanitizedName = when {
             rawName.startsWith("<set-") && rawName.endsWith(">") -> "value"
             rawName.startsWith("<") && rawName.endsWith(">") ->
@@ -1679,6 +1821,20 @@ class IrExpressionToBrsTransformer(
 
     override fun visitGetValue(expression: IrGetValue, data: Unit): BrsExpression {
         val rawName = expression.symbol.owner.name.asString()
+
+        // Check if this variable is captured in a closure
+        val capturedVar = parent.getCapturedVariable(expression.symbol)
+        if (capturedVar != null) {
+            // Rewrite to access via m (the closure object)
+            return if (capturedVar.isMutable) {
+                // Mutable captures: m.varName.value
+                BrsDotAccess(BrsDotAccess(BrsMRef(), capturedVar.name), "value")
+            } else {
+                // Read-only captures: m.varName
+                BrsDotAccess(BrsMRef(), capturedVar.name)
+            }
+        }
+
         return when {
             rawName == "<this>" -> BrsMRef()
             // Sanitize setter parameter names
@@ -1758,7 +1914,7 @@ class IrExpressionToBrsTransformer(
 
         // Handle invoke calls on function-typed variables
         // In Kotlin, calling a function-typed variable like `ref(5)` generates an invoke call.
-        // In BrightScript, we call the function directly: ref(5)
+        // In BrightScript, lambdas are closure objects with an invoke method, so we call .invoke()
         if (function.name.asString() == "invoke") {
             val receiver = expression.dispatchReceiver ?: expression.extensionReceiver
             if (receiver != null) {
@@ -1772,9 +1928,22 @@ class IrExpressionToBrsTransformer(
                     val args = (0 until expression.valueArgumentsCount).mapNotNull { i ->
                         expression.getValueArgument(i)?.accept(this, data)
                     }
-                    return BrsFunctionCall(receiverExpr, args.toMutableList())
+                    // Call .invoke() method on the closure object
+                    return BrsMethodCall(receiverExpr, "invoke", args.toMutableList())
                 }
             }
+        }
+
+        // Handle calls to local functions (parent is another function, not a class or file)
+        // Local functions are now closure objects, so we need to call .invoke()
+        val isLocalFunction = function.parent is IrFunction
+        if (isLocalFunction) {
+            val localFunctionName = function.name.asString()
+            val args = (0 until expression.valueArgumentsCount).mapNotNull { i ->
+                expression.getValueArgument(i)?.accept(this, data)
+            }
+            // Call .invoke() method on the local function closure object
+            return BrsMethodCall(BrsIdentifier(localFunctionName), "invoke", args.toMutableList())
         }
 
         val functionName = context.getBrsName(function)
@@ -2484,6 +2653,9 @@ class IrExpressionToBrsTransformer(
     override fun visitFunctionExpression(expression: IrFunctionExpression, data: Unit): BrsExpression {
         val function = expression.function
 
+        // Detect captured variables from outer scope
+        val capturedVars = parent.detectCapturedVariables(function)
+
         val parameters = function.valueParameters.map { param ->
             BrsParameter(
                 name = param.name.asString(),
@@ -2491,19 +2663,60 @@ class IrExpressionToBrsTransformer(
             )
         }
 
-        val body = function.body?.let { parent.transformBody(it) } ?: BrsBlock()
         val returnType = parent.mapTypeToBrs(function.returnType)
 
-        return BrsAnonymousFunction(parameters.toMutableList(), returnType, body)
+        // Generate closure object for ALL function expressions
+        // BrightScript anonymous functions cannot access outer scope variables,
+        // so we create an object with captured variable fields and an invoke method.
+        // The invoke method accesses captured variables via m.fieldName
+        // For consistency, even lambdas without captures use this pattern so that
+        // all lambdas can be invoked uniformly with .invoke()
+
+        // Save previous closure context
+        val previousContext = parent.currentClosureContext
+
+        // Set closure context for body transformation (if there are captures)
+        if (capturedVars.isNotEmpty()) {
+            parent.currentClosureContext = capturedVars
+        }
+
+        // Transform body with closure context active (variable accesses will be rewritten)
+        val body = function.body?.let { parent.transformBody(it) } ?: BrsBlock()
+
+        // Restore previous context
+        parent.currentClosureContext = previousContext
+
+        // Build closure object fields for captured variables
+        val entries = mutableListOf<BrsAAEntry>()
+
+        for (capturedVar in capturedVars) {
+            val varValue = BrsIdentifier(capturedVar.name)
+            val fieldValue = if (capturedVar.isMutable) {
+                // Wrap mutable captures in { value: x } for mutation to propagate
+                BrsAALiteral(mutableListOf(BrsAAEntry("value", varValue)))
+            } else {
+                // Read-only captures can be stored directly
+                varValue
+            }
+            entries.add(BrsAAEntry(capturedVar.name, fieldValue))
+        }
+
+        // Add the invoke method
+        val invokeFunction = BrsAnonymousFunction(parameters.toMutableList(), returnType, body)
+        entries.add(BrsAAEntry("invoke", invokeFunction))
+
+        return BrsAALiteral(entries)
     }
 
     // ==================== Function References ====================
 
     /**
-     * Transform a function reference (::functionName) to a BrightScript anonymous function wrapper.
+     * Transform a function reference (::functionName) to a BrightScript closure object.
      *
      * Kotlin: ::myFunction
-     * BrightScript: function(a, b) return myFunction(a, b) end function
+     * BrightScript: { invoke: function(a, b) return myFunction(a, b) end function }
+     *
+     * All function references use closure objects for consistent .invoke() calling convention.
      */
     override fun visitFunctionReference(expression: IrFunctionReference, data: Unit): BrsExpression {
         val function = expression.symbol.owner
@@ -2548,7 +2761,11 @@ class IrExpressionToBrsTransformer(
             BrsBlock(mutableListOf(BrsReturn(call)))
         }
 
-        return BrsAnonymousFunction(parameters.toMutableList(), returnType, body)
+        // Build closure object with invoke method
+        val invokeFunction = BrsAnonymousFunction(parameters.toMutableList(), returnType, body)
+        val entries = mutableListOf(BrsAAEntry("invoke", invokeFunction))
+
+        return BrsAALiteral(entries)
     }
 
     /**
