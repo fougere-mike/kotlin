@@ -51,6 +51,7 @@ kotlin {
             kotlin.srcDir("builtins")
             kotlin.srcDir("runtime")
             kotlin.srcDir("src")
+            kotlin.srcDir("../brs-actual/src")  // Include BRS-specific actual implementations
 
             // Exclude files that conflict with JS stdlib or need more work
             // These exclusions are needed because bootstrap approach depends on JS stdlib
@@ -67,7 +68,7 @@ kotlin {
                 "kotlin/text/utf8Encoding.kt",
                 "kotlin/text/CharacterCodingExceptionBrs.kt",
                 // Other files with conflicts
-                "kotlin/sequences/**",
+                // NOTE: sequences/ is now included - removed from exclusion list
                 "kotlin/concurrent.kt",
                 "kotlin/enums/**",
                 "kotlin/coroutines/**",
