@@ -48,6 +48,12 @@ internal val KotlinCreateBrsCompileTasksSideEffect = KotlinCompilationSideEffect
         // This is intentionally different from other targets - BRS doesn't support all common sources yet
         task.sources.from(compilation.defaultSourceSet.kotlin.sourceDirectories)
 
+        // Wire library dependencies from the compilation configuration
+        // This allows the BRS compiler to resolve symbols from kotlin-stdlib and other dependencies
+        task.libraries.from(
+            compilation.configurations.compileDependencyConfiguration
+        )
+
         // Wire compiler classpath from compilerJar for configuration cache compatibility
         // Use a provider to avoid eagerly querying the optional compilerJar property
         task.compilerClasspath.from(
