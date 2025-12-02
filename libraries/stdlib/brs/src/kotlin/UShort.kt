@@ -10,7 +10,7 @@ package kotlin
  * On BrightScript, a UShort is represented as a regular class with a Short backing field.
  */
 @SinceKotlin("1.5")
-public class UShort @PublishedApi internal constructor(@PublishedApi internal val data: Short) : Comparable<UShort> {
+public class UShort public constructor(public val data: Short) : Comparable<UShort> {
 
     companion object {
         /**

@@ -10,7 +10,7 @@ package kotlin
  * On BrightScript, a UInt is represented as a regular class with an Int backing field.
  */
 @SinceKotlin("1.5")
-public class UInt @PublishedApi internal constructor(@PublishedApi internal val data: Int) : Comparable<UInt> {
+public class UInt public constructor(public val data: Int) : Comparable<UInt> {
 
     companion object {
         /**
