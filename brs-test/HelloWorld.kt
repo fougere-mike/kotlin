@@ -92,3 +92,59 @@ class Counter {
 fun testComparison(x: Int): Boolean {
     return x >= 0
 }
+
+// ==================== Closure Tests ====================
+
+// Test 1: Simple mutable capture - counter should be modified by closure
+fun testMutableCapture(): Int {
+    var counter = 0
+    val increment = { counter = counter + 1 }
+    increment()
+    increment()
+    return counter // Should return 2
+}
+
+// Test 2: Read-only capture - value should be accessible
+fun testReadOnlyCapture(): Int {
+    val multiplier = 5
+    val multiply = { x: Int -> x * multiplier }
+    return multiply(10) // Should return 50
+}
+
+// Test 3: Multiple captured variables
+fun testMultipleCaptures(): Int {
+    var a = 10
+    val b = 20
+    val compute = {
+        a = a + b
+        a
+    }
+    compute()
+    return a // Should return 30
+}
+
+// Test 4: Closure returned from function
+fun makeCounter(): () -> Int {
+    var count = 0
+    return {
+        count = count + 1
+        count
+    }
+}
+
+fun testReturnedClosure(): Int {
+    val counter = makeCounter()
+    counter()
+    counter()
+    return counter() // Should return 3
+}
+
+// Test 5: Closure with both parameters and captures
+fun testClosureWithParams(): Int {
+    var base = 100
+    val addToBase = { x: Int, y: Int ->
+        base = base + x + y
+        base
+    }
+    return addToBase(5, 10) // Should return 115
+}
