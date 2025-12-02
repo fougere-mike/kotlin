@@ -10,7 +10,7 @@ package kotlin
  * On BrightScript, a ULong is represented as a regular class with a Long backing field.
  */
 @SinceKotlin("1.5")
-public class ULong @PublishedApi internal constructor(@PublishedApi internal val data: Long) : Comparable<ULong> {
+public class ULong public constructor(public val data: Long) : Comparable<ULong> {
 
     companion object {
         /**

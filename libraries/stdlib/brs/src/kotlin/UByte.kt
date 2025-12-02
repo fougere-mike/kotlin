@@ -10,7 +10,7 @@ package kotlin
  * On BrightScript, a UByte is represented as a regular class with a Byte backing field.
  */
 @SinceKotlin("1.5")
-public class UByte @PublishedApi internal constructor(@PublishedApi internal val data: Byte) : Comparable<UByte> {
+public class UByte public constructor(public val data: Byte) : Comparable<UByte> {
 
     companion object {
         /**
