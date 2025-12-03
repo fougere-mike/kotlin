@@ -25,16 +25,15 @@ import org.jetbrains.kotlin.ir.linkage.partial.partialLinkageConfig
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.impl.DescriptorlessExternalPackageFragmentSymbol
-import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.types.IrTypeSystemContext
-import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
-import org.jetbrains.kotlin.ir.types.classifierOrNull
+import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.ir.expressions.IrConst
 import org.jetbrains.kotlin.ir.util.getAnnotation
+import org.jetbrains.kotlin.ir.util.isNullable
 import org.jetbrains.kotlin.name.BrsStandardClassIds
 import org.jetbrains.kotlin.name.FqName
 import java.util.*
+import kotlin.math.abs
 
 /**
  * Backend context for BrightScript code generation.
@@ -96,6 +95,13 @@ class BrsIrBackendContext(
 
     private val brsNameFqn = FqName("kotlin.brs.BrsName")
     private val brsExternalFqn = FqName("kotlin.brs.BrsExternal")
+
+    // ==================== Name Mangling ====================
+
+    /**
+     * Suffix for mangled function names to prevent conflicts with user-defined names.
+     */
+    private val MANGLED_NAME_SUFFIX = "_k$"
 
     // ==================== Exception Handling ====================
 
@@ -237,8 +243,76 @@ class BrsIrBackendContext(
         }
     }
 
+    /**
+     * Convert an IrType to a short string suitable for name mangling.
+     * Uses JVM-style type descriptors for primitives with readable names for classes.
+     */
+    private fun IrType.toMangledString(): String = when {
+        isUnit() -> "V"
+        isBoolean() -> "Z"
+        isByte() -> "B"
+        isShort() -> "S"
+        isInt() -> "I"
+        isLong() -> "J"
+        isFloat() -> "F"
+        isDouble() -> "D"
+        isChar() -> "C"
+        isString() -> "Str"
+        isNullable() -> makeNotNull().toMangledString() + "N"
+        isArray() -> "Arr"
+        else -> {
+            val classifier = classifierOrNull?.owner
+            when (classifier) {
+                is IrClass -> classifier.name.asString()
+                else -> "Any"
+            }
+        }
+    }
+
+    /**
+     * Calculate the mangled function signature.
+     * Functions with parameters or extension receivers get type info appended to prevent overload conflicts.
+     *
+     * @param irFunction The function to calculate signature for
+     * @param baseName The base name (e.g., "ClassName_functionName" or "ClassName_create")
+     * @return The mangled name, or baseName if no parameters/extension receiver
+     */
+    private fun calculateBrsFunctionSignature(irFunction: IrFunction, baseName: String): String {
+        val signatureParts = mutableListOf<String>()
+
+        // Include extension receiver type if present (for extension functions)
+        if (irFunction is IrSimpleFunction) {
+            irFunction.extensionReceiverParameter?.let { receiver ->
+                signatureParts.add("r" + receiver.type.toMangledString())
+            }
+        }
+
+        // Include value parameter types
+        irFunction.valueParameters.forEach { param ->
+            signatureParts.add(param.type.toMangledString())
+        }
+
+        // No parameters or extension receiver = no mangling needed
+        if (signatureParts.isEmpty()) {
+            return baseName
+        }
+
+        // Build parameter type string
+        val paramTypes = signatureParts.joinToString("_")
+
+        // Check if the resulting name would be too long (keep under 100 chars for readability)
+        val fullName = "${baseName}_${paramTypes}${MANGLED_NAME_SUFFIX}"
+        return if (fullName.length > 100) {
+            // Use hash for very long signatures
+            val hash = abs(paramTypes.hashCode()).toString(Character.MAX_RADIX)
+            "${baseName}_${hash}${MANGLED_NAME_SUFFIX}"
+        } else {
+            fullName
+        }
+    }
+
     private fun generateBrsFunctionName(irFunction: IrFunction): String {
-        // Check for @BrsName annotation and extract its value
+        // 1. @BrsName annotation takes precedence - no mangling
         val brsNameAnnotation = irFunction.getAnnotation(brsNameFqn)
         if (brsNameAnnotation != null) {
             val nameArg = brsNameAnnotation.getValueArgument(0)
@@ -247,9 +321,17 @@ class BrsIrBackendContext(
             }
         }
 
+        // 2. Handle constructors - generate ClassName_create with mangling
+        if (irFunction is IrConstructor) {
+            val irClass = irFunction.parent as IrClass
+            val className = getBrsName(irClass)
+            return calculateBrsFunctionSignature(irFunction, "${className}_create")
+        }
+
+        // 3. Regular functions - calculate base name then apply mangling
         val rawName = irFunction.name.asString()
         // Sanitize property accessor names: <get-foo> -> get_foo, <set-foo> -> set_foo
-        val baseName = when {
+        val sanitizedName = when {
             rawName.startsWith("<get-") && rawName.endsWith(">") -> {
                 "get_" + rawName.removePrefix("<get-").removeSuffix(">")
             }
@@ -258,13 +340,14 @@ class BrsIrBackendContext(
             }
             else -> rawName
         }
-        val parent = irFunction.parent
 
-        return when (parent) {
-            is IrClass -> "${getBrsName(parent)}_${baseName}"
-            is IrPackageFragment -> baseName
-            else -> baseName
+        val baseName = when (val parent = irFunction.parent) {
+            is IrClass -> "${getBrsName(parent)}_${sanitizedName}"
+            is IrPackageFragment -> sanitizedName
+            else -> sanitizedName
         }
+
+        return calculateBrsFunctionSignature(irFunction, baseName)
     }
 
     /**
