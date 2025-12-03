@@ -7,15 +7,23 @@ echo "=== Building and publishing Kotlin BRS artifacts to Maven Local ==="
 FLAGS="--no-configuration-cache --dependency-verification=off"
 
 echo ""
-echo "1. Publishing BRS compiler..."
+echo "1. Building BRS compiler fat JAR..."
+./gradlew :compiler:cli-brs:fatJar $FLAGS
+
+echo ""
+echo "2. Regenerating BRS stdlib klib..."
+./gradlew :kotlin-stdlib-brs-prebuilt:regenerateKlib $FLAGS
+
+echo ""
+echo "3. Publishing BRS compiler..."
 ./gradlew :compiler:cli-brs:publishToMavenLocal $FLAGS
 
 echo ""
-echo "2. Publishing Kotlin Gradle Plugin..."
+echo "4. Publishing Kotlin Gradle Plugin..."
 ./gradlew :kotlin-gradle-plugin:publishToMavenLocal $FLAGS
 
 echo ""
-echo "3. Publishing stdlib (including BRS runtime)..."
+echo "5. Publishing stdlib (including BRS runtime)..."
 ./gradlew :kotlin-stdlib:publishBrsModulePublicationToMavenLocal $FLAGS
 
 echo ""

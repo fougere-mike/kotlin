@@ -28,8 +28,8 @@ import org.jetbrains.kotlin.fir.scopes.FirDefaultImportProviderHolder
 import org.jetbrains.kotlin.fir.scopes.FirKotlinScopeProvider
 import org.jetbrains.kotlin.fir.types.typeContext
 import org.jetbrains.kotlin.incremental.components.LookupTracker
-import org.jetbrains.kotlin.js.resolve.JsPlatformAnalyzerServices
-import org.jetbrains.kotlin.js.resolve.JsTypeSpecificityComparatorWithoutDelegate
+import org.jetbrains.kotlin.brs.resolve.BrsPlatformAnalyzerServices
+import org.jetbrains.kotlin.brs.resolve.BrsTypeSpecificityComparatorWithoutDelegate
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.name.Name
 
@@ -38,9 +38,6 @@ import org.jetbrains.kotlin.name.Name
  *
  * This follows the pattern established by FirJsSessionFactory, creating
  * library sessions for dependencies and module-based sessions for source compilation.
- *
- * For MVP, we reuse many JS components since both BrightScript and JavaScript
- * are dynamically-typed scripting languages with similar characteristics.
  */
 @OptIn(SessionConfiguration::class)
 object FirBrsSessionFactory : FirAbstractSessionFactory<FirBrsSessionFactory.Context, FirBrsSessionFactory.Context>() {
@@ -76,7 +73,7 @@ object FirBrsSessionFactory : FirAbstractSessionFactory<FirBrsSessionFactory.Con
                     if (resolvedLibraries.isNotEmpty()) {
                         KlibBasedSymbolProvider(
                             session, moduleDataProvider, kotlinScopeProvider, resolvedLibraries,
-                            flexibleTypeFactory = JsFlexibleTypeFactory(session), // Reuse JS flexible type factory
+                            flexibleTypeFactory = BrsFlexibleTypeFactory(session),
                         )
                     } else null,
                     FirBuiltinSyntheticFunctionInterfaceProvider(session, builtinsModuleData, kotlinScopeProvider),
@@ -131,7 +128,7 @@ object FirBrsSessionFactory : FirAbstractSessionFactory<FirBrsSessionFactory.Con
                             SingleModuleDataProvider(moduleData),
                             kotlinScopeProvider,
                             it,
-                            flexibleTypeFactory = JsFlexibleTypeFactory(session), // Reuse JS flexible type factory
+                            flexibleTypeFactory = BrsFlexibleTypeFactory(session),
                         )
                     },
                     *dependencies.toTypedArray(),
@@ -164,18 +161,15 @@ object FirBrsSessionFactory : FirAbstractSessionFactory<FirBrsSessionFactory.Con
 
     /**
      * Register BrightScript-specific session components.
-     *
-     * For MVP, we reuse some JS components for call resolution since BrightScript
-     * and JavaScript have similar dynamic typing characteristics.
      */
     fun FirSession.registerBrsComponents() {
-        // Use the JS call conflict resolver (similar dynamic typing behavior)
-        register(ConeCallConflictResolverFactory::class, JsCallConflictResolverFactory)
+        // Use BrightScript-specific call conflict resolver
+        register(ConeCallConflictResolverFactory::class, BrsCallConflictResolverFactory)
 
-        // Use JS type specificity comparator (similar type system behavior)
+        // Use BrightScript-specific type specificity comparator
         register(
             FirTypeSpecificityComparatorProvider::class,
-            FirTypeSpecificityComparatorProvider(JsTypeSpecificityComparatorWithoutDelegate(typeContext))
+            FirTypeSpecificityComparatorProvider(BrsTypeSpecificityComparatorWithoutDelegate(typeContext))
         )
 
         // Use BrightScript-specific platform diagnostic suppressor
@@ -184,9 +178,8 @@ object FirBrsSessionFactory : FirAbstractSessionFactory<FirBrsSessionFactory.Con
         // Use BrightScript-specific identity-less platform determiner
         register(FirIdentityLessPlatformDeterminer::class, FirBrsIdentityLessPlatformDeterminer)
 
-        // Use JS platform analyzer services for default imports
-        // TODO: Create BrsPlatformAnalyzerServices in a proper brs.frontend module
-        register(FirDefaultImportProviderHolder::class, FirDefaultImportProviderHolder(JsPlatformAnalyzerServices))
+        // Use BrightScript-specific platform analyzer services for default imports
+        register(FirDefaultImportProviderHolder::class, FirDefaultImportProviderHolder(BrsPlatformAnalyzerServices))
     }
 
     // ==================================== Utilities ====================================

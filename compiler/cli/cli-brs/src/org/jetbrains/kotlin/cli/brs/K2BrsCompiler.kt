@@ -95,11 +95,10 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
         )
 
         // Create compilation environment
-        // Use JS_CONFIG_FILES as a starting point since BRS is similar (scripting language)
         val environment = KotlinCoreEnvironment.createForProduction(
             rootDisposable,
             configuration,
-            EnvironmentConfigFiles.JS_CONFIG_FILES
+            EnvironmentConfigFiles.BRS_CONFIG_FILES
         )
 
         // Get source files
