@@ -119,13 +119,10 @@ kotlin {
 
     brs {
         compilations.all {
-            // Configure the BRS compiler JAR path and libraries
+            // Configure the BRS compiler JAR path
             (this as org.jetbrains.kotlin.gradle.targets.brs.KotlinBrsIrCompilation).brsCompileTaskProvider.configure {
                 compilerJar.set(rootDir.resolve("compiler/cli/cli-brs/build/libs/kotlinc-brs-${project.version}.jar"))
-                // Manually wire the bootstrap stdlib klib
-                libraries.from(files("${rootDir}/libraries/stdlib/brs-bootstrap/build/libs/kotlin-stdlib-brs-bootstrap-js-${project.version}.klib"))
-                // Ensure bootstrap stdlib is built before compiling
-                dependsOn(":kotlin-stdlib-brs-bootstrap:jsJar")
+                // No longer need bootstrap stdlib - will use normal stdlib dependency
             }
         }
         compilations["main"].compileTaskProvider.configure {
@@ -243,11 +240,7 @@ kotlin {
             dependsOn(assertionsCommonMain)
             dependsOn(annotationsCommonMain)
             kotlin.setSrcDirs(listOf("brs/src/main/kotlin"))
-            dependencies {
-                // Use bootstrap stdlib klib - reference the file directly to bypass attribute matching
-                // The bootstrap stdlib is built using JS IR backend but needs to be consumed by BRS target
-                api(files("${rootDir}/libraries/stdlib/brs-bootstrap/build/libs/kotlin-stdlib-brs-bootstrap-js-${project.version}.klib"))
-            }
+            // Stdlib dependency is inherited from commonMain
         }
     }
 }

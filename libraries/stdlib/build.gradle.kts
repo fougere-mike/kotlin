@@ -298,22 +298,21 @@ kotlin {
     // BrightScript (Roku) target
     // Note: Requires Kotlin Gradle Plugin with BRS support (already present in current development version)
     //
-    // BOOTSTRAP OPTIONS:
-    // 1. Pre-compiled klib: Use libraries/stdlib/brs-prebuilt/kotlin-stdlib-brs.klib
-    //    - Regenerate with: ./gradlew :kotlin-stdlib-brs-prebuilt:regenerateKlib
-    // 2. JS IR fallback: Use libraries/stdlib/brs/ which uses JS backend to produce klib format
-    // 3. Native BRS target: Uncomment brs {} below when using a bootstrap with BRS support
-    //
-    // To enable first-class BRS support:
-    // - Publish local Kotlin with BRS: ./gradlew publish -Prepository=$PWD/build/repo
-    // - Update gradle.properties to use local bootstrap
-    // - Uncomment the brs {} block below
+    // BOOTSTRAP:
+    // Uses pre-compiled stdlib klib for bootstrapping: libraries/stdlib/brs-prebuilt/kotlin-stdlib-brs.klib
+    // - This solves the circular dependency problem (stdlib needs compiler, compiler needs stdlib)
+    // - Regenerate the pre-compiled klib with: ./gradlew :kotlin-stdlib-brs-prebuilt:regenerateKlib
+    // - The pre-compiled klib is checked into git for reproducible builds
     brs {
         compilations.all {
             // Configure the BRS compiler JAR path and stdlib mode
             (this as org.jetbrains.kotlin.gradle.targets.brs.KotlinBrsIrCompilation).brsCompileTaskProvider.configure {
                 compilerJar.set(rootDir.resolve("compiler/cli/cli-brs/build/libs/kotlinc-brs-${project.version}.jar"))
                 stdlibCompilation.set(true)
+
+                // Use pre-compiled stdlib klib for bootstrapping
+                // This solves the circular dependency: stdlib needs compiler, compiler needs stdlib
+                libraries.from(files("${rootDir}/libraries/stdlib/brs-prebuilt/kotlin-stdlib-brs.klib"))
             }
         }
     }
@@ -560,24 +559,29 @@ kotlin {
             }
         }
 
-        // BrightScript (Roku) source sets
+        // BrightScript (Roku) source sets - using native BRS compiler
         val brsDir = "${projectDir}/brs"
         val brsActualDir = "${projectDir}/brs-actual"
         val brsMain by getting {
-            // BRS now depends on commonMain - unsigned types have been implemented
+            // BRS now uses native compiler with actual implementations
             dependsOn(commonMain.get())
             kotlin {
+                // Bootstrap base implementations
                 srcDir("$brsDir/builtins")
                 srcDir("$brsDir/runtime")
                 srcDir("$brsDir/src")
-                srcDir("$brsActualDir/src")  // First-class actual implementations
+                // Native BRS actual implementations (these override bootstrap where they exist)
+                srcDir("$brsActualDir/builtins")
+                srcDir("$brsActualDir/runtime")
+                srcDir("$brsActualDir/src")
+                // Exclude bootstrap files that conflict with brs-actual implementations
+                exclude("kotlin/collections/ArraySorting.kt")
+                exclude("kotlin/brs/internal/StringBuilder.kt")
             }
         }
         val brsTest by getting {
             dependsOn(commonTest.get())
-            kotlin {
-                srcDir("$brsDir/test")
-            }
+            // No test sources yet in brs-actual
         }
 
         if (kotlinBuildProperties.isInIdeaSync) {
@@ -989,8 +993,18 @@ publishing {
             variant("wasmWasiSourcesElements")
         }
 
+        val brs = module("brsModule") {
+            mavenPublication {
+                artifactId = "$artifactBaseName-brs"
+                configureKotlinPomAttributes(project, "Kotlin Standard Library for BrightScript", packaging = "klib")
+            }
+            variant("brsApiElements")
+            variant("brsRuntimeElements")
+            variant("brsSourcesElements")
+        }
+
         // Makes all variants from accompanying artifacts visible through `available-at`
-        rootModule.include(js, wasmJs, wasmWasi)
+        rootModule.include(js, wasmJs, wasmWasi, brs)
     }
 
     publications {
@@ -1001,8 +1015,10 @@ publishing {
 
         val wasmJsModule by existing(MavenPublication::class)
         val wasmWasiModule by existing(MavenPublication::class)
+        val brsModule by existing(MavenPublication::class)
         configureSbom("Wasm-Js", "kotlin-stdlib-wasm-js", setOf("wasmJsRuntimeClasspath"), wasmJsModule)
         configureSbom("Wasm-Wasi", "kotlin-stdlib-wasm-wasi", setOf("wasmWasiRuntimeClasspath"), wasmWasiModule)
+        configureSbom("Brs", "kotlin-stdlib-brs", setOf("brsRuntimeClasspath"), brsModule)
     }
 }
 

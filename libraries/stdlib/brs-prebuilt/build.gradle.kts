@@ -38,6 +38,8 @@ val regenerateKlib by tasks.registering(JavaExec::class) {
     mainClass.set("org.jetbrains.kotlin.cli.brs.K2BrsCompiler")
 
     // Collect all source directories
+    // Note: Only includes brs (base implementation), not brs-actual
+    // brs-actual is an overlay that gets included during normal stdlib compilation
     val sourceDirs = listOf(
         file("${brsStdlibDir}/builtins"),
         file("${brsStdlibDir}/runtime"),
