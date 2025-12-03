@@ -19,6 +19,7 @@ dependencies {
     api(project(":compiler:fir:checkers:checkers.wasm"))
     api(project(":wasm:wasm.frontend"))
     api(project(":native:frontend.native"))
+    api(project(":brs:brs.frontend"))
     api(project(":compiler:ir.actualization"))
 
     implementation(project(":core:compiler.common.native"))

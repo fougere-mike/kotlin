@@ -171,6 +171,7 @@ include ":benchmarks",
         ":js:js.tests",
         ":js:js.tests:klib-compatibility",
         ":brightscript:brs.ast",
+        ":brs:brs.frontend",
         ":core:compiler.common.brightscript",
         ":compiler:backend.brightscript",
         ":native:kotlin-native-utils",
@@ -744,7 +745,6 @@ if (!buildProperties.inJpsBuildIdeaSync) {
             ":kotlin-stdlib-jdk8",
             ":kotlin-stdlib:samples",
             ":kotlin-stdlib-jvm-minimal-for-test",
-            ":kotlin-stdlib-brs",
             ":kotlin-stdlib-brs-prebuilt",
             ":tools:binary-compatibility-validator",
             ":tools:jdk-api-validator",
@@ -769,7 +769,6 @@ if (!buildProperties.inJpsBuildIdeaSync) {
     project(':kotlin-stdlib-jdk8').projectDir = "$rootDir/libraries/stdlib/jdk8" as File
     project(':kotlin-stdlib:samples').projectDir = "$rootDir/libraries/stdlib/samples" as File
     project(":kotlin-stdlib-jvm-minimal-for-test").projectDir = "$rootDir/libraries/stdlib/jvm-minimal-for-test" as File
-    project(":kotlin-stdlib-brs").projectDir = "$rootDir/libraries/stdlib/brs" as File
     project(":kotlin-stdlib-brs-prebuilt").projectDir = "$rootDir/libraries/stdlib/brs-prebuilt" as File
 
     project(':tools').projectDir = "$rootDir/libraries/tools" as File
@@ -834,6 +833,7 @@ project(':kotlin-util-klib-metadata').projectDir = "$rootDir/compiler/util-klib-
 project(':kotlin-util-klib-abi').projectDir = "$rootDir/compiler/util-klib-abi" as File
 project(':native:kotlin-native-utils').projectDir = "$rootDir/native/utils" as File
 project(':native:frontend.native').projectDir = "$rootDir/native/frontend" as File
+project(':brs:brs.frontend').projectDir = "$rootDir/brs/brs.frontend" as File
 project(':native:kotlin-klib-commonizer').projectDir = "$rootDir/native/commonizer" as File
 project(":native:kotlin-klib-commonizer-api").projectDir = "$rootDir/native/commonizer-api" as File
 project(':native:kotlin-klib-commonizer-embeddable').projectDir = "$rootDir/native/commonizer-embeddable" as File

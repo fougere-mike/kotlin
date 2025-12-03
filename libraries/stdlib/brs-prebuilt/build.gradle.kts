@@ -10,6 +10,7 @@ plugins {
 description = "Pre-compiled BrightScript stdlib klib for bootstrapping"
 
 val brsStdlibDir = file("../brs")
+val brsActualDir = file("../brs-actual")
 val outputKlib = file("kotlin-stdlib-brs.klib")
 
 // The BRS compiler CLI can be found in multiple locations:
@@ -37,13 +38,14 @@ val regenerateKlib by tasks.registering(JavaExec::class) {
     classpath = files(compilerJar)
     mainClass.set("org.jetbrains.kotlin.cli.brs.K2BrsCompiler")
 
-    // Collect all source directories
-    // Note: Only includes brs (base implementation), not brs-actual
-    // brs-actual is an overlay that gets included during normal stdlib compilation
+    // Collect all source directories from brs/ and brs-actual/
+    // Both are needed - brs/ has base implementations, brs-actual/ has platform-specific ones
+    // Note: brs-actual/builtins is excluded (duplicates brs/builtins)
     val sourceDirs = listOf(
         file("${brsStdlibDir}/builtins"),
         file("${brsStdlibDir}/runtime"),
         file("${brsStdlibDir}/src"),
+        file("${brsActualDir}/src"),
     ).filter { it.exists() }
 
     doFirst {
@@ -74,6 +76,7 @@ val regenerateKlib by tasks.registering(JavaExec::class) {
     )
 
     inputs.dir(brsStdlibDir)
+    inputs.dir(brsActualDir)
     outputs.file(outputKlib)
 }
 
