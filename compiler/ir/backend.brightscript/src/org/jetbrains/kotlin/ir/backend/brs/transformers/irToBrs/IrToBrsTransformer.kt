@@ -1013,8 +1013,10 @@ class IrToBrsTransformer(
      * - `__type` tracks class name, `__proto` tracks inheritance chain
      */
     private fun transformConstructor(irClass: IrClass, constructor: IrConstructor): BrsFunction? {
+        // Use mangled constructor name to support overloading
+        val name = context.getBrsName(constructor)
+        // Class name is used for __type and __proto metadata (not mangled)
         val className = context.getBrsName(irClass)
-        val name = "${className}_create"
 
         val parametersList = mutableListOf<BrsParameter>()
 
@@ -1043,10 +1045,19 @@ class IrToBrsTransformer(
             .firstOrNull { !it.isInterface && it.name.asString() != "Any" }
 
         if (superClass != null) {
-            // Call parent constructor: this = ParentClass_create(...)
-            val superClassName = context.getBrsName(superClass)
+            // Find the delegating constructor call to get the super constructor
+            val delegatingCall = findDelegatingConstructorCall(constructor)
+            val superConstructor = delegatingCall?.symbol?.owner
+
+            // Call parent constructor: this = ParentClass_create_ParamTypes_k$(...)
+            val superConstructorName = if (superConstructor != null) {
+                context.getBrsName(superConstructor)
+            } else {
+                // Fallback: use class name + _create for no-arg constructor
+                "${context.getBrsName(superClass)}_create"
+            }
             val superConstructorCall = BrsFunctionCall(
-                BrsIdentifier("${superClassName}_create"),
+                BrsIdentifier(superConstructorName),
                 getSuperConstructorArgs(constructor)
             )
             bodyStatements.add(
@@ -1226,16 +1237,22 @@ class IrToBrsTransformer(
     }
 
     /**
-     * Get arguments for super constructor call from the delegating constructor call in the body.
+     * Find the delegating constructor call (super() or this()) in a constructor body.
      */
-    private fun getSuperConstructorArgs(constructor: IrConstructor): MutableList<BrsExpression> {
-        // Find the delegating constructor call in the body
-        val delegatingCall = constructor.body?.let { body ->
+    private fun findDelegatingConstructorCall(constructor: IrConstructor): IrDelegatingConstructorCall? {
+        return constructor.body?.let { body ->
             when (body) {
                 is IrBlockBody -> body.statements.filterIsInstance<IrDelegatingConstructorCall>().firstOrNull()
                 else -> null
             }
         }
+    }
+
+    /**
+     * Get arguments for super constructor call from the delegating constructor call in the body.
+     */
+    private fun getSuperConstructorArgs(constructor: IrConstructor): MutableList<BrsExpression> {
+        val delegatingCall = findDelegatingConstructorCall(constructor)
 
         return if (delegatingCall != null) {
             (0 until delegatingCall.valueArgumentsCount).mapNotNull { i ->
@@ -2606,7 +2623,6 @@ class IrExpressionToBrsTransformer(
     override fun visitConstructorCall(expression: IrConstructorCall, data: Unit): BrsExpression {
         val constructor = expression.symbol.owner
         val irClass = constructor.parentAsClass
-        val className = context.getBrsName(irClass)
 
         val arguments = mutableListOf<BrsExpression>()
 
@@ -2632,23 +2648,23 @@ class IrExpressionToBrsTransformer(
             return BrsCreateObject(brsTypeName, arguments.toMutableList())
         }
 
+        // Use mangled constructor name to support overloading
         return BrsFunctionCall(
-            BrsIdentifier("${className}_create"),
+            BrsIdentifier(context.getBrsName(constructor)),
             arguments
         )
     }
 
     override fun visitDelegatingConstructorCall(expression: IrDelegatingConstructorCall, data: Unit): BrsExpression {
         val constructor = expression.symbol.owner
-        val parentClass = constructor.parentAsClass
-        val parentClassName = context.getBrsName(parentClass)
 
         val arguments = (0 until expression.valueArgumentsCount).mapNotNull { i ->
             expression.getValueArgument(i)?.let { it.accept(this, data) }
         }
 
+        // Use mangled constructor name to support overloading
         return BrsFunctionCall(
-            BrsIdentifier("${parentClassName}_create"),
+            BrsIdentifier(context.getBrsName(constructor)),
             arguments.toMutableList()
         )
     }
@@ -2661,15 +2677,14 @@ class IrExpressionToBrsTransformer(
 
     override fun visitEnumConstructorCall(expression: IrEnumConstructorCall, data: Unit): BrsExpression {
         val constructor = expression.symbol.owner
-        val enumClass = constructor.parentAsClass
-        val enumClassName = context.getBrsName(enumClass)
 
         val arguments = (0 until expression.valueArgumentsCount).mapNotNull { i ->
             expression.getValueArgument(i)?.let { it.accept(this, data) }
         }
 
+        // Use mangled constructor name to support overloading
         return BrsFunctionCall(
-            BrsIdentifier("${enumClassName}_create"),
+            BrsIdentifier(context.getBrsName(constructor)),
             arguments.toMutableList()
         )
     }
