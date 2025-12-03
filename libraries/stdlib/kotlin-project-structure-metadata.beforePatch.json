@@ -10,6 +10,12 @@
         ]
       },
       {
+        "name": "brsRuntimeElements",
+        "sourceSet": [
+          "commonMain"
+        ]
+      },
+      {
         "name": "jsApiElements",
         "sourceSet": [
           "webMain",

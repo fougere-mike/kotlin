@@ -4,6 +4,22 @@
     "isPublishedAsRoot": "true",
     "variants": [
       {
+        "name": "brsApiElements",
+        "sourceSet": [
+          "assertionsCommonMain",
+          "commonMain",
+          "annotationsCommonMain"
+        ]
+      },
+      {
+        "name": "brsRuntimeElements",
+        "sourceSet": [
+          "assertionsCommonMain",
+          "commonMain",
+          "annotationsCommonMain"
+        ]
+      },
+      {
         "name": "jsApiElements",
         "sourceSet": [
           "assertionsCommonMain",
