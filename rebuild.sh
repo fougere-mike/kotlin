@@ -1,2 +1,2 @@
 #!/bin/bash
-./gradlew :compiler:cli-brs:publishToMavenLocal --no-build-cache
+./gradlew :compiler:cli-brs:publishToMavenLocal --no-build-cache --no-configuration-cache
