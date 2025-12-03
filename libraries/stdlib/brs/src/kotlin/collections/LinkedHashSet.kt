@@ -118,7 +118,7 @@ public open class LinkedHashSet<E> : MutableSet<E> {
         if (other === this) return true
         if (other !is Set<*>) return false
         if (other.size != size) return false
-        return containsAll(other)
+        return other.all { it in this }
     }
 
     override fun hashCode(): Int {
