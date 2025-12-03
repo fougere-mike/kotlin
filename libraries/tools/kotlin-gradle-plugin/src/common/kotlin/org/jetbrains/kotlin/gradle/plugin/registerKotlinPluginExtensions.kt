@@ -148,6 +148,7 @@ internal fun Project.registerKotlinPluginExtensions() {
         register(project, KotlinJvmJarArtifact)
         register(project, KotlinJsKlibArtifact)
         register(project, KotlinNativeKlibArtifact)
+        register(project, KotlinBrsKlibArtifact)
         register(project, KotlinNativeHostSpecificMetadataArtifact)
     }
 

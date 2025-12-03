@@ -339,6 +339,39 @@ kotlin {
         }
     }
 
+    // Add prebuilt klib artifact to BRS configurations for publishing
+    // The prebuilt klib is used by downstream projects that depend on kotlin-stdlib-brs
+    val prebuiltKlib = file("brs-prebuilt/kotlin-stdlib-brs.klib")
+    if (prebuiltKlib.exists()) {
+        artifacts {
+            add("brsApiElements", prebuiltKlib) {
+                type = "klib"
+                extension = "klib"
+                classifier = null
+            }
+            add("brsRuntimeElements", prebuiltKlib) {
+                type = "klib"
+                extension = "klib"
+                classifier = null
+            }
+        }
+    }
+
+    // Create a JAR containing the compiled .brs runtime files for packaging
+    // This is used by the kotlin-roku plugin to include stdlib in the final Roku app
+    val brsBrsJar by tasks.registering(Jar::class) {
+        archiveClassifier.set("brs-runtime")
+        from(layout.buildDirectory.dir("brs/brs/main/source"))
+        dependsOn("compileKotlinBrs")
+    }
+
+    // Add the runtime JAR to brsRuntimeElements for resolution by downstream projects
+    artifacts {
+        add("brsRuntimeElements", brsBrsJar) {
+            classifier = "brs-runtime"
+        }
+    }
+
     if (kotlinBuildProperties.isInIdeaSync) {
         val hostOs = System.getProperty("os.name")
         val isMingwX64 = hostOs.startsWith("Windows")
