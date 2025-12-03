@@ -138,6 +138,7 @@ kotlin {
         }
     }
 
+    // BRS target
     brs {
         compilations.all {
             // Configure the BRS compiler JAR path
@@ -257,6 +258,7 @@ kotlin {
             dependsOn(wasmCommonMain)
             kotlin.srcDir("wasm/wasi/src/main/kotlin")
         }
+        // BRS source set
         val brsMain by getting {
             dependsOn(assertionsCommonMain)
             dependsOn(annotationsCommonMain)

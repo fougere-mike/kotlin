@@ -84,6 +84,14 @@ abstract class KotlinBrsCompile @Inject constructor(
     @get:Optional
     abstract val stdlibCompilation: Property<Boolean>
 
+    /**
+     * File name patterns to exclude from compilation.
+     * Patterns are matched against the file name only (not the full path).
+     */
+    @get:Input
+    @get:Optional
+    abstract val excludePatterns: org.gradle.api.provider.SetProperty<String>
+
     init {
         group = "brightscript"
         description = "Compiles Kotlin sources to BrightScript"
@@ -103,9 +111,24 @@ abstract class KotlinBrsCompile @Inject constructor(
 
         val args = mutableListOf<String>()
 
-        // Add source files
+        // Get exclude patterns
+        val excludes = excludePatterns.orNull ?: emptySet()
+
+        // Helper to check if file should be excluded
+        fun shouldExclude(file: java.io.File): Boolean {
+            return excludes.any { pattern -> file.name == pattern }
+        }
+
+        // Add source files - expand directories into individual .kt files
         sources.files.forEach { sourceFile ->
-            args.add(sourceFile.absolutePath)
+            if (sourceFile.isDirectory) {
+                // Recursively find all .kt files in directory
+                sourceFile.walkTopDown()
+                    .filter { it.isFile && it.extension == "kt" && !shouldExclude(it) }
+                    .forEach { ktFile -> args.add(ktFile.absolutePath) }
+            } else if (!shouldExclude(sourceFile)) {
+                args.add(sourceFile.absolutePath)
+            }
         }
 
         // Add output directory

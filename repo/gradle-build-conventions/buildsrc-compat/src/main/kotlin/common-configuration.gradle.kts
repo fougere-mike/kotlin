@@ -6,6 +6,11 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompileCommon
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
+// Helper to check for BRS compile task type
+val isBrsCompileTask: (Any) -> Boolean = { task ->
+    task is KotlinBrsCompile
+}
+
 // Contains common configuration that should be applied to all projects
 
 // Common Group and version
@@ -164,7 +169,7 @@ fun Project.configureKotlinCompilationOptions() {
                 !project.path.startsWith(":native:analysis-api-klib-reader")
             ) {
                 doFirst {
-                    if (!useAbsolutePathsInKlib && this !is KotlinJvmCompile && this !is KotlinCompileCommon && this !is KotlinBrsCompile) {
+                    if (!useAbsolutePathsInKlib && this !is KotlinJvmCompile && this !is KotlinCompileCommon && !isBrsCompileTask(this)) {
                         @Suppress("DEPRECATION")
                         (this as KotlinCompile<*>).kotlinOptions.freeCompilerArgs +=
                             "-Xklib-relative-path-base=${layout.buildDirectory.get().asFile},${layout.projectDirectory.asFile},$rootDir"

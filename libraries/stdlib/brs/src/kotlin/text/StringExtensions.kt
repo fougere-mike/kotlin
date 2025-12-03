@@ -5,6 +5,9 @@
 
 package kotlin.text
 
+// CharSequence extension functions for BrightScript
+// Note: String-specific versions are in stringBrs.kt in brs-actual
+
 /**
  * Returns `true` if this char sequence is not empty.
  */
@@ -22,15 +25,3 @@ public inline fun CharSequence?.isNullOrEmpty(): Boolean = this == null || this.
  */
 @kotlin.internal.InlineOnly
 public inline fun CharSequence.isEmpty(): Boolean = length == 0
-
-/**
- * Returns `true` if this string is not empty and contains some characters.
- */
-@kotlin.internal.InlineOnly
-public inline fun String.isNotEmpty(): Boolean = length > 0
-
-/**
- * Returns `true` if this nullable string is either `null` or empty.
- */
-@kotlin.internal.InlineOnly
-public inline fun String?.isNullOrEmpty(): Boolean = this == null || this.length == 0
