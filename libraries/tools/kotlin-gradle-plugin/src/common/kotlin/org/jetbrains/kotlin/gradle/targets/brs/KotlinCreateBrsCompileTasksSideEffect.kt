@@ -46,7 +46,8 @@ internal val KotlinCreateBrsCompileTasksSideEffect = KotlinCompilationSideEffect
 
         // Wire sources only from the compilation's own source set (not transitive commonMain)
         // This is intentionally different from other targets - BRS doesn't support all common sources yet
-        task.sources.from(compilation.defaultSourceSet.kotlin.sourceDirectories)
+        // Use asFileTree to get individual files with exclude patterns applied
+        task.sources.from(compilation.defaultSourceSet.kotlin.asFileTree)
 
         // Wire library dependencies from the compilation configuration
         // This allows the BRS compiler to resolve symbols from kotlin-stdlib and other dependencies

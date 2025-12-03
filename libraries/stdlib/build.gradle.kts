@@ -296,23 +296,29 @@ kotlin {
     }
 
     // BrightScript (Roku) target
-    // Note: Requires Kotlin Gradle Plugin with BRS support (already present in current development version)
+    // Note: Requires Kotlin Gradle Plugin with BRS support (only available after local bootstrap)
     //
-    // BOOTSTRAP:
-    // Uses pre-compiled stdlib klib for bootstrapping: libraries/stdlib/brs-prebuilt/kotlin-stdlib-brs.klib
-    // - This solves the circular dependency problem (stdlib needs compiler, compiler needs stdlib)
-    // - Regenerate the pre-compiled klib with: ./gradlew :kotlin-stdlib-brs-prebuilt:regenerateKlib
-    // - The pre-compiled klib is checked into git for reproducible builds
+    // BOOTSTRAP NOTE: The BRS target configuration below is temporarily commented out while
+    // using remote bootstrap. After rebuilding local bootstrap with BRS support, uncomment this section.
+    //
+    // BrightScript target - compiles stdlib from source using the BRS compiler
+    // Note: We do NOT use brs-prebuilt/kotlin-stdlib-brs.klib as a library here because
+    // we're compiling all the stdlib sources from scratch. Using it would cause duplicate
+    // symbol errors since the prebuilt klib contains the same symbols we're compiling.
+    // The prebuilt klib is only used for:
+    // 1. User projects that need stdlib as a dependency
+    // 2. Regenerating itself via :kotlin-stdlib-brs-prebuilt:regenerateKlib
     brs {
         compilations.all {
             // Configure the BRS compiler JAR path and stdlib mode
             (this as org.jetbrains.kotlin.gradle.targets.brs.KotlinBrsIrCompilation).brsCompileTaskProvider.configure {
+                // Ensure compiler JAR is built before stdlib compilation
+                dependsOn(":compiler:cli-brs:fatJar")
                 compilerJar.set(rootDir.resolve("compiler/cli/cli-brs/build/libs/kotlinc-brs-${project.version}.jar"))
                 stdlibCompilation.set(true)
+                // No libraries needed - compiling stdlib from source
 
-                // Use pre-compiled stdlib klib for bootstrapping
-                // This solves the circular dependency: stdlib needs compiler, compiler needs stdlib
-                libraries.from(files("${rootDir}/libraries/stdlib/brs-prebuilt/kotlin-stdlib-brs.klib"))
+                // No additional configuration needed - conflicting files removed from brs/
             }
         }
     }
@@ -566,17 +572,14 @@ kotlin {
             // BRS now uses native compiler with actual implementations
             dependsOn(commonMain.get())
             kotlin {
-                // Bootstrap base implementations
-                srcDir("$brsDir/builtins")
+                // Bootstrap base implementations (builtins removed - identical to brs-actual)
                 srcDir("$brsDir/runtime")
                 srcDir("$brsDir/src")
-                // Native BRS actual implementations (these override bootstrap where they exist)
+                // Native BRS actual implementations
                 srcDir("$brsActualDir/builtins")
-                srcDir("$brsActualDir/runtime")
+                // Note: brs-actual/runtime is empty, so not included
                 srcDir("$brsActualDir/src")
-                // Exclude bootstrap files that conflict with brs-actual implementations
-                exclude("kotlin/collections/ArraySorting.kt")
-                exclude("kotlin/brs/internal/StringBuilder.kt")
+                // Note: Conflicting files (ArraySorting.kt, StringBuilder.kt) were deleted from brs/
             }
         }
         val brsTest by getting {

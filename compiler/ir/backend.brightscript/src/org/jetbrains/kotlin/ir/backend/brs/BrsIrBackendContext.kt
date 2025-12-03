@@ -41,6 +41,10 @@ import java.util.*
  *
  * This class provides access to all the infrastructure needed for lowering
  * Kotlin IR to BrightScript AST.
+ *
+ * @param isStdlibCompilation When true, the compiler is compiling the stdlib itself.
+ *        This affects symbol resolution - missing stdlib symbols are handled gracefully
+ *        instead of throwing errors, since they're being defined rather than linked.
  */
 @OptIn(ObsoleteDescriptorBasedAPI::class)
 class BrsIrBackendContext(
@@ -48,7 +52,8 @@ class BrsIrBackendContext(
     override val irBuiltIns: IrBuiltIns,
     val symbolTable: SymbolTable,
     override val configuration: CompilerConfiguration,
-    val targetConfig: BrsTargetConfig = BrsTargetConfig.DEFAULT
+    val targetConfig: BrsTargetConfig = BrsTargetConfig.DEFAULT,
+    val isStdlibCompilation: Boolean = false
 ) : CommonBackendContext {
 
     // ==================== Type System ====================
@@ -65,7 +70,7 @@ class BrsIrBackendContext(
 
     val intrinsics: BrsIntrinsics = BrsIntrinsics(irBuiltIns)
 
-    val symbols: BrsSymbols = BrsSymbols(irBuiltIns, intrinsics)
+    val symbols: BrsSymbols = BrsSymbols(irBuiltIns, intrinsics, isStdlibCompilation)
 
     override val ir = object : Ir() {
         override val symbols = this@BrsIrBackendContext.symbols

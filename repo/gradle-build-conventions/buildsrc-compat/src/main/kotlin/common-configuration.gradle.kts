@@ -6,6 +6,11 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompileCommon
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
+// Helper to check for BRS compile task type
+val isBrsCompileTask: (Any) -> Boolean = { task ->
+    task is KotlinBrsCompile
+}
+
 // Contains common configuration that should be applied to all projects
 
 // Common Group and version

@@ -718,7 +718,7 @@ public inline fun <T> Sequence<T>.sumOf(selector: (T) -> ULong): ULong {
 /**
  * Returns the largest element or throws [NoSuchElementException] if there are no elements.
  */
-@Deprecated("Use maxOrNull instead.", ReplaceWith("this.maxOrNull()"), level = DeprecationLevel.WARNING)
+@Deprecated("Use maxOrNull instead.", ReplaceWith("this.maxOrNull()"))
 @DeprecatedSinceKotlin(warningSince = "1.4")
 public fun <T : Comparable<T>> Sequence<T>.max(): T {
     return maxOrNull() ?: throw NoSuchElementException()
@@ -741,7 +741,7 @@ public fun <T : Comparable<T>> Sequence<T>.maxOrNull(): T? {
 /**
  * Returns the smallest element or throws [NoSuchElementException] if there are no elements.
  */
-@Deprecated("Use minOrNull instead.", ReplaceWith("this.minOrNull()"), level = DeprecationLevel.WARNING)
+@Deprecated("Use minOrNull instead.", ReplaceWith("this.minOrNull()"))
 @DeprecatedSinceKotlin(warningSince = "1.4")
 public fun <T : Comparable<T>> Sequence<T>.min(): T {
     return minOrNull() ?: throw NoSuchElementException()

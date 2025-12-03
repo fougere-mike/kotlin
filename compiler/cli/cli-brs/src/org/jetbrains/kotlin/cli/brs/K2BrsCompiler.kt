@@ -18,10 +18,12 @@ import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
+import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.config.Services
+import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.ir.backend.brs.BrsCompiler
 import org.jetbrains.kotlin.backend.common.CommonKLibResolver
 import org.jetbrains.kotlin.cli.common.messages.getLogger
@@ -248,13 +250,23 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
         // Step 3: Run BrightScript backend compilation
         messageCollector.report(CompilerMessageSeverity.INFO, "Transforming IR to BrightScript...")
 
+        // Check if we're compiling the stdlib itself
+        val isStdlibCompilation = configuration.languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation)
+        if (isStdlibCompilation) {
+            messageCollector.report(
+                CompilerMessageSeverity.INFO,
+                "Stdlib compilation mode enabled - missing stdlib symbols will be handled gracefully"
+            )
+        }
+
         val moduleDescriptor = irResult.irModuleFragment.descriptor
         val brsCompiler = BrsCompiler(
             module = moduleDescriptor,
             irBuiltIns = irResult.irBuiltIns,
             symbolTable = irResult.symbolTable,
             configuration = configuration,
-            targetConfig = targetConfig
+            targetConfig = targetConfig,
+            isStdlibCompilation = isStdlibCompilation
         )
 
         val compilationResult = brsCompiler.compile(irResult.irModuleFragment)

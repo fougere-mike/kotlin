@@ -6,23 +6,6 @@
 package kotlin
 
 /**
- * Specifies that the corresponding member has internal visibility (visible only within the module).
- * For BrightScript, this is a marker annotation with no runtime effect.
- */
-@Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY, AnnotationTarget.CLASS)
-@Retention(AnnotationRetention.SOURCE)
-public annotation class InlineOnly
-
-/**
- * When applied to a type parameter, requires the corresponding type argument to be only input to methods.
- * For BrightScript, this is a marker annotation with no runtime effect.
- */
-@Target(AnnotationTarget.TYPE_PARAMETER)
-@Retention(AnnotationRetention.SOURCE)
-@SinceKotlin("1.9")
-public annotation class OnlyInputTypes
-
-/**
  * Marks a variable as thread-local. For BrightScript (single-threaded), this is a no-op marker.
  */
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.FIELD)

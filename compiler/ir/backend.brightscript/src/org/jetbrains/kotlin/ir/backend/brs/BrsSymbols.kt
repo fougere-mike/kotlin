@@ -30,11 +30,16 @@ import org.jetbrains.kotlin.builtins.StandardNames.COLLECTIONS_PACKAGE_FQ_NAME
  *
  * Note: Many symbols are lazily evaluated and handle missing symbols gracefully,
  * since the bootstrap stdlib may not have all required functions.
+ *
+ * @param isStdlibCompilation When true, missing stdlib symbols will return null
+ *        instead of throwing errors. This is used during stdlib compilation itself,
+ *        where the symbols being looked up are being defined, not linked.
  */
 @OptIn(ObsoleteDescriptorBasedAPI::class, InternalSymbolFinderAPI::class)
 class BrsSymbols(
     irBuiltIns: IrBuiltIns,
-    private val intrinsics: BrsIntrinsics
+    private val intrinsics: BrsIntrinsics,
+    private val isStdlibCompilation: Boolean = false
 ) : Symbols(irBuiltIns) {
 
     // Helper to find optional functions that may not exist in bootstrap stdlib
@@ -47,50 +52,94 @@ class BrsSymbols(
 
     // ==================== Exception Handling ====================
     // These are lazily evaluated to avoid failures during context initialization.
-    // If the stdlib doesn't have these functions, the backend will generate inline errors.
+    // In stdlib compilation mode, missing symbols return null and the backend generates inline code.
+    // For user code compilation, the stdlib must be linked.
 
-    override val throwNullPointerException: IrSimpleFunctionSymbol by lazy {
+    // Nullable versions for use in lowering phases that need to handle stdlib compilation mode
+    val throwNullPointerExceptionOrNull: IrSimpleFunctionSymbol? by lazy {
         findOptionalFunction(kotlinPackageFqn, "THROW_NPE")
-            ?: error("THROW_NPE not found - ensure stdlib is linked")
+    }
+
+    val throwTypeCastExceptionOrNull: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(kotlinPackageFqn, "THROW_CCE")
+    }
+
+    val throwUninitializedPropertyAccessExceptionOrNull: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(kotlinPackageFqn, "throwUninitializedPropertyAccessException")
+    }
+
+    val throwKotlinNothingValueExceptionOrNull: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(kotlinPackageFqn, "throwKotlinNothingValueException")
+    }
+
+    val throwISEOrNull: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(kotlinPackageFqn, "THROW_ISE")
+    }
+
+    val throwIAEOrNull: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(kotlinPackageFqn, "THROW_IAE")
+    }
+
+    // Required overrides - will error if used when symbols are not available
+    // Lowering phases should check the OrNull versions first in stdlib compilation mode
+    override val throwNullPointerException: IrSimpleFunctionSymbol by lazy {
+        throwNullPointerExceptionOrNull
+            ?: if (isStdlibCompilation) error("THROW_NPE accessed during stdlib compilation - use throwNullPointerExceptionOrNull")
+            else error("THROW_NPE not found - ensure stdlib is linked")
     }
 
     override val throwTypeCastException: IrSimpleFunctionSymbol by lazy {
-        findOptionalFunction(kotlinPackageFqn, "THROW_CCE")
-            ?: error("THROW_CCE not found - ensure stdlib is linked")
+        throwTypeCastExceptionOrNull
+            ?: if (isStdlibCompilation) error("THROW_CCE accessed during stdlib compilation - use throwTypeCastExceptionOrNull")
+            else error("THROW_CCE not found - ensure stdlib is linked")
     }
 
     override val throwUninitializedPropertyAccessException: IrSimpleFunctionSymbol by lazy {
-        findOptionalFunction(kotlinPackageFqn, "throwUninitializedPropertyAccessException")
-            ?: error("throwUninitializedPropertyAccessException not found - ensure stdlib is linked")
+        throwUninitializedPropertyAccessExceptionOrNull
+            ?: if (isStdlibCompilation) error("throwUninitializedPropertyAccessException accessed during stdlib compilation - use throwUninitializedPropertyAccessExceptionOrNull")
+            else error("throwUninitializedPropertyAccessException not found - ensure stdlib is linked")
     }
 
     override val throwKotlinNothingValueException: IrSimpleFunctionSymbol by lazy {
-        findOptionalFunction(kotlinPackageFqn, "throwKotlinNothingValueException")
-            ?: error("throwKotlinNothingValueException not found - ensure stdlib is linked")
+        throwKotlinNothingValueExceptionOrNull
+            ?: if (isStdlibCompilation) error("throwKotlinNothingValueException accessed during stdlib compilation - use throwKotlinNothingValueExceptionOrNull")
+            else error("throwKotlinNothingValueException not found - ensure stdlib is linked")
     }
 
     override val throwISE: IrSimpleFunctionSymbol by lazy {
-        findOptionalFunction(kotlinPackageFqn, "THROW_ISE")
-            ?: error("THROW_ISE not found - ensure stdlib is linked")
+        throwISEOrNull
+            ?: if (isStdlibCompilation) error("THROW_ISE accessed during stdlib compilation - use throwISEOrNull")
+            else error("THROW_ISE not found - ensure stdlib is linked")
     }
 
     override val throwIAE: IrSimpleFunctionSymbol by lazy {
-        findOptionalFunction(kotlinPackageFqn, "THROW_IAE")
-            ?: error("THROW_IAE not found - ensure stdlib is linked")
+        throwIAEOrNull
+            ?: if (isStdlibCompilation) error("THROW_IAE accessed during stdlib compilation - use throwIAEOrNull")
+            else error("THROW_IAE not found - ensure stdlib is linked")
     }
 
     // ==================== Default Constructor Marker ====================
 
-    override val defaultConstructorMarker: IrClassSymbol by lazy {
+    val defaultConstructorMarkerOrNull: IrClassSymbol? by lazy {
         findOptionalClass(BrsStandardClassIds.BASE_BRS_PACKAGE, "DefaultConstructorMarker")
-            ?: error("DefaultConstructorMarker not found - ensure stdlib is linked")
+    }
+
+    override val defaultConstructorMarker: IrClassSymbol by lazy {
+        defaultConstructorMarkerOrNull
+            ?: if (isStdlibCompilation) error("DefaultConstructorMarker accessed during stdlib compilation - use defaultConstructorMarkerOrNull")
+            else error("DefaultConstructorMarker not found - ensure stdlib is linked")
     }
 
     // ==================== String Builder ====================
 
-    override val stringBuilder: IrClassSymbol by lazy {
+    val stringBuilderOrNull: IrClassSymbol? by lazy {
         findOptionalClass(BrsStandardClassIds.BASE_BRS_INTERNAL_PACKAGE, "StringBuilder")
-            ?: error("StringBuilder not found - ensure stdlib is linked")
+    }
+
+    override val stringBuilder: IrClassSymbol by lazy {
+        stringBuilderOrNull
+            ?: if (isStdlibCompilation) error("StringBuilder accessed during stdlib compilation - use stringBuilderOrNull")
+            else error("StringBuilder not found - ensure stdlib is linked")
     }
 
     // ==================== Coroutines (Not supported in BrightScript) ====================
@@ -121,9 +170,14 @@ class BrsSymbols(
 
     // ==================== Function Adapter ====================
 
-    override val functionAdapter: IrClassSymbol by lazy {
+    val functionAdapterOrNull: IrClassSymbol? by lazy {
         findOptionalClass(BrsStandardClassIds.BASE_BRS_INTERNAL_PACKAGE, "FunctionAdapter")
-            ?: error("FunctionAdapter not found - ensure stdlib is linked")
+    }
+
+    override val functionAdapter: IrClassSymbol by lazy {
+        functionAdapterOrNull
+            ?: if (isStdlibCompilation) error("FunctionAdapter accessed during stdlib compilation - use functionAdapterOrNull")
+            else error("FunctionAdapter not found - ensure stdlib is linked")
     }
 
     // ==================== Array Content Equals ====================

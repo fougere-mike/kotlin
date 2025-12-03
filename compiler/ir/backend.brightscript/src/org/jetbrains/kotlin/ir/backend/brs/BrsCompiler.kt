@@ -69,13 +69,17 @@ data class BrsModuleCompilationResult(
  * Main entry point for BrightScript compilation.
  *
  * This class orchestrates the compilation pipeline from Kotlin IR to BrightScript.
+ *
+ * @param isStdlibCompilation When true, the compiler is compiling the stdlib itself.
+ *        This affects how missing stdlib symbols are handled during code generation.
  */
 class BrsCompiler(
     private val module: ModuleDescriptor,
     private val irBuiltIns: IrBuiltIns,
     private val symbolTable: SymbolTable,
     private val configuration: CompilerConfiguration,
-    private val targetConfig: BrsTargetConfig = BrsTargetConfig.DEFAULT
+    private val targetConfig: BrsTargetConfig = BrsTargetConfig.DEFAULT,
+    private val isStdlibCompilation: Boolean = false
 ) {
     /**
      * Compile a Kotlin IR module to BrightScript.
@@ -86,7 +90,8 @@ class BrsCompiler(
             irBuiltIns = irBuiltIns,
             symbolTable = symbolTable,
             configuration = configuration,
-            targetConfig = targetConfig
+            targetConfig = targetConfig,
+            isStdlibCompilation = isStdlibCompilation
         )
 
         // Create component extractor
@@ -127,7 +132,7 @@ class BrsCompiler(
 
         // Add runtime helpers to the first file only (they're shared)
         if (context.needsRuntimeHelpers) {
-            addRuntimeHelpers(program)
+            addRuntimeHelpers(program, context)
             context.needsRuntimeHelpers = false
         }
 
@@ -147,10 +152,149 @@ class BrsCompiler(
     /**
      * Add runtime helper functions needed by the generated code.
      */
-    private fun addRuntimeHelpers(program: BrsProgram) {
+    private fun addRuntimeHelpers(program: BrsProgram, context: BrsIrBackendContext) {
         // Add isInstanceOf helper function for type checking
         val isInstanceOfFunction = createIsInstanceOfHelper()
         program.declarations.add(0, isInstanceOfFunction)
+
+        // In stdlib compilation mode, add inline exception throwing helpers
+        // since the stdlib functions are being defined, not linked
+        if (context.isStdlibCompilation) {
+            addExceptionHelpers(program)
+        }
+    }
+
+    /**
+     * Add exception helper functions for stdlib compilation mode.
+     * These are inline implementations that throw BrightScript exceptions.
+     */
+    private fun addExceptionHelpers(program: BrsProgram) {
+        // THROW_NPE - NullPointerException
+        program.declarations.add(createExceptionHelper("THROW_NPE", "NullPointerException", "Null pointer access"))
+
+        // THROW_CCE - ClassCastException
+        program.declarations.add(createExceptionHelper("THROW_CCE", "ClassCastException", "Invalid type cast"))
+
+        // THROW_ISE - IllegalStateException
+        program.declarations.add(createExceptionHelper("THROW_ISE", "IllegalStateException", "Illegal state"))
+
+        // THROW_IAE - IllegalArgumentException
+        program.declarations.add(createExceptionHelper("THROW_IAE", "IllegalArgumentException", "Illegal argument"))
+
+        // throwUninitializedPropertyAccessException
+        program.declarations.add(createPropertyAccessExceptionHelper())
+
+        // throwKotlinNothingValueException
+        program.declarations.add(createNothingValueExceptionHelper())
+    }
+
+    /**
+     * Create a simple exception throwing helper function.
+     *
+     * Generated BrightScript:
+     * ```
+     * sub THROW_NPE()
+     *     exc = {
+     *         type: "NullPointerException",
+     *         message: "Null pointer access"
+     *     }
+     *     throw exc
+     * end sub
+     * ```
+     */
+    private fun createExceptionHelper(name: String, exceptionType: String, message: String): BrsSub {
+        val body = BrsBlock(mutableListOf(
+            // exc = { type: "...", message: "..." }
+            BrsVariable(
+                name = "exc",
+                initializer = BrsAALiteral(mutableListOf(
+                    BrsAAEntry("type", BrsStringLiteral(exceptionType)),
+                    BrsAAEntry("message", BrsStringLiteral(message))
+                ))
+            ),
+            // throw exc
+            BrsThrow(BrsIdentifier("exc"))
+        ))
+
+        return BrsSub(
+            name = name,
+            parameters = mutableListOf(),
+            body = body
+        )
+    }
+
+    /**
+     * Create the throwUninitializedPropertyAccessException helper.
+     *
+     * Generated BrightScript:
+     * ```
+     * sub throwUninitializedPropertyAccessException(propertyName as String)
+     *     exc = {
+     *         type: "UninitializedPropertyAccessException",
+     *         message: "lateinit property " + propertyName + " has not been initialized"
+     *     }
+     *     throw exc
+     * end sub
+     * ```
+     */
+    private fun createPropertyAccessExceptionHelper(): BrsSub {
+        val body = BrsBlock(mutableListOf(
+            BrsVariable(
+                name = "exc",
+                initializer = BrsAALiteral(mutableListOf(
+                    BrsAAEntry("type", BrsStringLiteral("UninitializedPropertyAccessException")),
+                    BrsAAEntry("message", BrsBinaryOp(
+                        BrsBinaryOp(
+                            BrsStringLiteral("lateinit property "),
+                            BrsBinaryOperator.ADD,
+                            BrsIdentifier("propertyName")
+                        ),
+                        BrsBinaryOperator.ADD,
+                        BrsStringLiteral(" has not been initialized")
+                    ))
+                ))
+            ),
+            BrsThrow(BrsIdentifier("exc"))
+        ))
+
+        return BrsSub(
+            name = "throwUninitializedPropertyAccessException",
+            parameters = mutableListOf(BrsParameter("propertyName", BrsType.STRING)),
+            body = body
+        )
+    }
+
+    /**
+     * Create the throwKotlinNothingValueException helper.
+     *
+     * Generated BrightScript:
+     * ```
+     * sub throwKotlinNothingValueException()
+     *     exc = {
+     *         type: "KotlinNothingValueException",
+     *         message: "This function has a Nothing return type and should never return"
+     *     }
+     *     throw exc
+     * end sub
+     * ```
+     */
+    private fun createNothingValueExceptionHelper(): BrsSub {
+        val body = BrsBlock(mutableListOf(
+            BrsVariable(
+                name = "exc",
+                initializer = BrsAALiteral(mutableListOf(
+                    BrsAAEntry("type", BrsStringLiteral("KotlinNothingValueException")),
+                    BrsAAEntry("message", BrsStringLiteral("This function has a Nothing return type and should never return"))
+                ))
+            ),
+            BrsThrow(BrsIdentifier("exc"))
+        ))
+
+        return BrsSub(
+            name = "throwKotlinNothingValueException",
+            parameters = mutableListOf(),
+            body = body
+        )
     }
 
     /**
