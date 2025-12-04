@@ -60,7 +60,12 @@ object BrsLoweringPhases {
             // BrightScript doesn't have ++ or -- operators, so transform to + 1 or - 1
             IncrementDecrementLowering(context),
 
-            // Phase 10: Exception handling (if needed)
+            // Phase 10: Assignment extraction
+            // BrightScript doesn't support assignment expressions (assignments are statements only)
+            // Extract assignments from expression contexts like: if ((count = count + 1) > 1)
+            AssignmentExtractionLowering(context),
+
+            // Phase 11: Exception handling (if needed)
             TryCatchLowering(context),
 
             // Phase 11: String concatenation
