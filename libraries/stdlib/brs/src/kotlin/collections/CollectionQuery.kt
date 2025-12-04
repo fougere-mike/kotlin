@@ -11,53 +11,5 @@ package kotlin.collections
 @kotlin.internal.InlineOnly
 public inline fun <T> Collection<T>.isNotEmpty(): Boolean = !isEmpty()
 
-/**
- * Returns the first element.
- * @throws NoSuchElementException if the collection is empty.
- */
-public fun <T> Iterable<T>.first(): T {
-    when (this) {
-        is List -> return this[0]
-        else -> {
-            val iterator = iterator()
-            if (!iterator.hasNext())
-                throw NoSuchElementException("Collection is empty.")
-            return iterator.next()
-        }
-    }
-}
-
-/**
- * Returns the first element, or `null` if the collection is empty.
- */
-public fun <T> Iterable<T>.firstOrNull(): T? {
-    when (this) {
-        is List -> {
-            if (isEmpty()) return null
-            return this[0]
-        }
-        else -> {
-            val iterator = iterator()
-            if (!iterator.hasNext())
-                return null
-            return iterator.next()
-        }
-    }
-}
-
-/**
- * Returns the last element.
- * @throws NoSuchElementException if the collection is empty.
- */
-public fun <T> List<T>.last(): T {
-    if (isEmpty())
-        throw NoSuchElementException("List is empty.")
-    return this[size - 1]
-}
-
-/**
- * Returns the last element, or `null` if the list is empty.
- */
-public fun <T> List<T>.lastOrNull(): T? {
-    return if (isEmpty()) null else this[size - 1]
-}
+// Note: first(), firstOrNull(), last(), lastOrNull() are defined in CollectionExtensions.kt
+// to avoid duplicate function definitions in the compiled BrightScript output.

@@ -407,9 +407,33 @@ class BrsRenderer(
     }
 
     override fun visitStringLiteral(literal: BrsStringLiteral, data: Unit) {
-        // Escape quotes in strings by doubling them
-        val escaped = literal.value.replace("\"", "\"\"")
-        builder.append("\"$escaped\"")
+        // BrightScript doesn't support multi-line strings, so newlines must use chr(10)
+        val value = literal.value
+        if (value.contains('\n') || value.contains('\r')) {
+            // Split by newline and join with chr(10)
+            val parts = value.split(Regex("\\r?\\n"))
+            val renderedParts = parts.mapIndexed { index, part ->
+                val escaped = part.replace("\"", "\"\"")
+                if (index < parts.size - 1) {
+                    // Not the last part - add chr(10) after
+                    if (escaped.isEmpty()) "chr(10)" else "\"$escaped\" + chr(10)"
+                } else {
+                    // Last part - no chr(10) after
+                    if (escaped.isEmpty()) "" else "\"$escaped\""
+                }
+            }.filter { it.isNotEmpty() }
+
+            if (renderedParts.isEmpty()) {
+                // String was just newlines
+                builder.append("\"\"")
+            } else {
+                builder.append(renderedParts.joinToString(" + "))
+            }
+        } else {
+            // Escape quotes in strings by doubling them
+            val escaped = value.replace("\"", "\"\"")
+            builder.append("\"$escaped\"")
+        }
     }
 
     override fun visitBooleanLiteral(literal: BrsBooleanLiteral, data: Unit) {

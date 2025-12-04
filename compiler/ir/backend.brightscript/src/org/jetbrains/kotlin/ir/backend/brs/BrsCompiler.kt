@@ -157,11 +157,9 @@ class BrsCompiler(
         val isInstanceOfFunction = createIsInstanceOfHelper()
         program.declarations.add(0, isInstanceOfFunction)
 
-        // In stdlib compilation mode, add inline exception throwing helpers
-        // since the stdlib functions are being defined, not linked
-        if (context.isStdlibCompilation) {
-            addExceptionHelpers(program)
-        }
+        // Note: Exception helpers (THROW_NPE, THROW_CCE, etc.) are defined in
+        // libraries/stdlib/brs/src/kotlin/ExceptionHelpers.kt - do NOT add them here
+        // as that would create duplicate definitions.
     }
 
     /**

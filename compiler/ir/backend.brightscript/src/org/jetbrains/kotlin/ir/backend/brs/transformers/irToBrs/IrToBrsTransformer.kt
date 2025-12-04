@@ -139,7 +139,7 @@ class IrToBrsTransformer(
             }
             CapturedVariable(
                 symbol = symbol,
-                name = owner.name.asString(),
+                name = sanitizeParameterName(owner.name.asString()),
                 isMutable = isMutable
             )
         }
@@ -210,13 +210,13 @@ class IrToBrsTransformer(
         if (irFunction.isExternal) return null
 
         val name = context.getBrsName(irFunction)
-        val parameters = irFunction.valueParameters.map { param ->
+        val parameters = normalizeParametersForBrs(irFunction.valueParameters.map { param ->
             BrsParameter(
                 name = sanitizeParameterName(param.name.asString()),
                 type = mapTypeToBrs(param.type),
                 defaultValue = param.defaultValue?.expression?.let { transformExpression(it) }
             )
-        }
+        })
 
         // Check if this function has @BrsInline - use parsed code instead of IR body
         val inlineInfo = context.inlineFunctionInfo[irFunction.symbol] as? BrsCodeOutliningLowering.BrsInlineInfo
@@ -645,7 +645,7 @@ class IrToBrsTransformer(
 
         return BrsFunction(
             name = name,
-            parameters = parameters,
+            parameters = normalizeParametersForBrs(parameters).toMutableList(),
             returnType = BrsType.OBJECT,
             body = BrsBlock(bodyStatements)
         )
@@ -719,13 +719,13 @@ class IrToBrsTransformer(
         val className = context.getBrsName(irClass)
         val name = "${className}_create"
 
-        val parameters = constructor.valueParameters.map { param ->
+        val parameters = normalizeParametersForBrs(constructor.valueParameters.map { param ->
             BrsParameter(
                 name = param.name.asString(),
                 type = mapTypeToBrs(param.type),
                 defaultValue = param.defaultValue?.expression?.let { transformExpression(it) }
             )
-        }
+        })
 
         val bodyStatements = mutableListOf<BrsStatement>()
 
@@ -1034,7 +1034,7 @@ class IrToBrsTransformer(
             )
         })
 
-        val parameters = parametersList
+        val parameters = normalizeParametersForBrs(parametersList)
 
         // Build constructor body
         val bodyStatements = mutableListOf<BrsStatement>()
@@ -1399,6 +1399,34 @@ class IrToBrsTransformer(
             name.startsWith("<") && name.endsWith(">") ->
                 name.removePrefix("<").removeSuffix(">").replace("-", "_")
             else -> name
+        }
+    }
+
+    /**
+     * Ensure parameters satisfy BrightScript's constraint:
+     * Once a parameter has a default value, all subsequent parameters must also have defaults.
+     *
+     * In BrightScript, this is invalid:
+     *   function foo(a = 1, b as String)  ' Error: b has no default after a has default
+     *
+     * This is valid:
+     *   function foo(a = 1, b = invalid)  ' OK: both have defaults
+     *
+     * This function adds `= invalid` to any parameter without a default that follows
+     * a parameter with a default.
+     */
+    internal fun normalizeParametersForBrs(parameters: List<BrsParameter>): List<BrsParameter> {
+        var sawDefault = false
+        return parameters.map { param ->
+            if (param.defaultValue != null) {
+                sawDefault = true
+                param
+            } else if (sawDefault) {
+                // Parameter after a default - must add default value
+                BrsParameter(param.name, param.type, BrsInvalidLiteral())
+            } else {
+                param
+            }
         }
     }
 
@@ -3293,12 +3321,12 @@ class IrExpressionToBrsTransformer(
         // Detect captured variables from outer scope
         val capturedVars = parent.detectCapturedVariables(function)
 
-        val parameters = function.valueParameters.map { param ->
+        val parameters = parent.normalizeParametersForBrs(function.valueParameters.map { param ->
             BrsParameter(
                 name = param.name.asString(),
                 type = parent.mapTypeToBrs(param.type)
             )
-        }
+        })
 
         val returnType = parent.mapTypeToBrs(function.returnType)
 
@@ -3360,12 +3388,12 @@ class IrExpressionToBrsTransformer(
         val functionName = context.getBrsName(function)
 
         // Create wrapper function parameters matching the referenced function
-        val parameters = function.valueParameters.map { param ->
+        val parameters = parent.normalizeParametersForBrs(function.valueParameters.map { param ->
             BrsParameter(
                 name = param.name.asString(),
                 type = parent.mapTypeToBrs(param.type)
             )
-        }
+        })
 
         // Build the call arguments from the wrapper parameters
         val callArgs: MutableList<BrsExpression> = parameters.map { BrsIdentifier(it.name) as BrsExpression }.toMutableList()
