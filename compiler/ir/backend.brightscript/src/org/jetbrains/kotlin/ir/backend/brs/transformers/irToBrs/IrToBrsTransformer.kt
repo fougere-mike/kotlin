@@ -1947,7 +1947,24 @@ class IrStatementToBrsTransformer(
         // Transform the remaining body statements (skip the loop variable declaration)
         val actualBody = bodyStatements.drop(1).mapNotNull { stmt ->
             when (stmt) {
-                is IrExpression -> BrsExpressionStatement(parent.transformExpression(stmt))
+                // IrWhen (if statements) should use visitWhen directly to handle returns properly
+                is IrWhen -> visitWhen(stmt, Unit)
+                // IrBlock containing a when (if statement) should unwrap
+                is IrBlock -> {
+                    // Check if block contains a single IrWhen statement
+                    val singleWhen = stmt.statements.singleOrNull() as? IrWhen
+                    if (singleWhen != null) {
+                        visitWhen(singleWhen, Unit)
+                    } else {
+                        transformBlockOrStatement(stmt)
+                    }
+                }
+                // Unit-returning expressions should be treated as statements
+                is IrExpression -> if (stmt.type.isUnit()) {
+                    parent.transformStatement(stmt)
+                } else {
+                    BrsExpressionStatement(parent.transformExpression(stmt))
+                }
                 else -> parent.transformStatement(stmt)
             }
         }
