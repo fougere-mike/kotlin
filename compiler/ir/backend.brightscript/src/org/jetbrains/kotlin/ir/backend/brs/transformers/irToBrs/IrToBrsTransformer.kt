@@ -1416,7 +1416,8 @@ class IrToBrsTransformer(
             type.isBoolean() -> BrsType.BOOLEAN
             type.isString() -> BrsType.STRING
             type.isUnit() -> BrsType.VOID
-            type.isNothing() -> BrsType.VOID
+            // Nothing maps to Dynamic for parameters (Void only valid for return types)
+            type.isNothing() -> BrsType.DYNAMIC
             type.isNullable() -> BrsType.DYNAMIC
             type.isFunction() -> BrsType.FUNCTION
             else -> BrsType.OBJECT
@@ -1721,12 +1722,32 @@ class IrStatementToBrsTransformer(
             // Handle branch result - certain IR nodes need statement transformation
             val bodyStatement: BrsStatement = when (val branchResult = branch.result) {
                 is IrReturn -> parent.transformStatement(branchResult) ?: BrsEmpty()
+                is IrThrow -> visitThrow(branchResult, data)
+                is IrBreak -> visitBreak(branchResult, data)
+                is IrContinue -> visitContinue(branchResult, data)
                 is IrSetValue -> visitSetValue(branchResult, data)
                 is IrSetField -> visitSetField(branchResult, data)
                 is IrBlock -> {
                     // Transform block which may contain returns
                     val transformed = transformBlockOrStatement(branchResult)
                     transformed
+                }
+                // IrTypeOperatorCall with IMPLICIT_COERCION_TO_UNIT wraps expressions used as statements
+                is IrTypeOperatorCall -> {
+                    if (branchResult.operator == IrTypeOperator.IMPLICIT_COERCION_TO_UNIT) {
+                        val innerArg = branchResult.argument
+                        when (innerArg) {
+                            is IrBlock -> transformBlockOrStatement(innerArg)
+                            is IrCall -> BrsExpressionStatement(parent.transformExpression(innerArg))
+                            else -> {
+                                val body = parent.transformExpression(branchResult)
+                                BrsExpressionStatement(body)
+                            }
+                        }
+                    } else {
+                        val body = parent.transformExpression(branchResult)
+                        BrsExpressionStatement(body)
+                    }
                 }
                 else -> {
                     val body = parent.transformExpression(branchResult)
@@ -1770,12 +1791,25 @@ class IrStatementToBrsTransformer(
     }
 
     override fun visitBreak(jump: IrBreak, data: Unit): BrsStatement {
-        return BrsExit(BrsExitKind.WHILE) // or FOR depending on context
+        // Determine exit kind based on the loop type
+        // FOR_LOOP origin indicates a for or for-each loop
+        val exitKind = when (jump.loop.origin) {
+            IrStatementOrigin.FOR_LOOP,
+            IrStatementOrigin.FOR_LOOP_INNER_WHILE -> BrsExitKind.FOR
+            else -> BrsExitKind.WHILE
+        }
+        return BrsExit(exitKind)
     }
 
     override fun visitContinue(jump: IrContinue, data: Unit): BrsStatement {
+        // Determine continue kind based on the loop type
+        val continueKind = when (jump.loop.origin) {
+            IrStatementOrigin.FOR_LOOP,
+            IrStatementOrigin.FOR_LOOP_INNER_WHILE -> BrsContinueKind.FOR
+            else -> BrsContinueKind.WHILE
+        }
         return if (context.supportsContinue) {
-            BrsContinue(BrsContinueKind.WHILE)
+            BrsContinue(continueKind)
         } else {
             // For older Roku OS, we'd need to restructure the loop
             BrsComment("continue not supported on target Roku OS")
@@ -1818,11 +1852,13 @@ class IrStatementToBrsTransformer(
                 is IrInstanceInitializerCall -> emptyList()
                 is IrEnumConstructorCall -> emptyList()
                 // Skip temp variable REFERENCES (IrGetValue) from increment/decrement blocks
-                // These are the return values at the end of the block that shouldn't be statements
+                // and when-lowering blocks. These are return values that shouldn't be statements.
                 is IrGetValue -> {
                     val varName = stmt.symbol.owner.name.asString()
                     if (varName.startsWith("<") && varName.endsWith(">")) {
                         emptyList()  // Skip temp variable returns like <unary>
+                    } else if (varName.startsWith("__when_tmp")) {
+                        emptyList()  // Skip when-lowering temp variable returns
                     } else {
                         listOf(BrsExpressionStatement(parent.transformExpression(stmt)))
                     }
@@ -1862,6 +1898,10 @@ class IrStatementToBrsTransformer(
                             is IrDoWhileLoop -> listOf(visitDoWhileLoop(nestedStmt, Unit))
                             // IrWhen (if/when) should be transformed as statements
                             is IrWhen -> listOf(visitWhen(nestedStmt, Unit))
+                            // Control flow must be handled as statements, not expressions
+                            is IrThrow -> listOf(visitThrow(nestedStmt, Unit))
+                            is IrBreak -> listOf(visitBreak(nestedStmt, Unit))
+                            is IrContinue -> listOf(visitContinue(nestedStmt, Unit))
                             is IrExpression -> listOf(BrsExpressionStatement(parent.transformExpression(nestedStmt)))
                             else -> listOfNotNull(parent.transformStatement(nestedStmt))
                         }
@@ -1872,6 +1912,10 @@ class IrStatementToBrsTransformer(
                 is IrDoWhileLoop -> listOf(visitDoWhileLoop(stmt, Unit))
                 // IrWhen (if/when) with Unit type should be transformed as statements, not expressions
                 is IrWhen -> listOf(visitWhen(stmt, Unit))
+                // Control flow must be handled as statements, not expressions
+                is IrThrow -> listOf(visitThrow(stmt, Unit))
+                is IrBreak -> listOf(visitBreak(stmt, Unit))
+                is IrContinue -> listOf(visitContinue(stmt, Unit))
                 is IrExpression -> listOf(BrsExpressionStatement(parent.transformExpression(stmt)))
                 else -> listOfNotNull(parent.transformStatement(stmt))
             }
@@ -1942,6 +1986,9 @@ class IrStatementToBrsTransformer(
      * Try to transform a lowered FOR loop back to a BrightScript for/forEach loop.
      * Returns null if the pattern doesn't match and we should fall back to while loop.
      */
+    // Track current function for debugging
+    private var currentFunctionName: String = ""
+
     private fun tryTransformForLoop(block: IrBlock): BrsStatement? {
         // Structure of a lowered FOR loop:
         // IrBlock(origin=FOR_LOOP) {
@@ -1990,12 +2037,34 @@ class IrStatementToBrsTransformer(
                 // IrWhileLoop and IrDoWhileLoop need explicit handling
                 is IrWhileLoop -> visitWhileLoop(stmt, Unit)
                 is IrDoWhileLoop -> visitDoWhileLoop(stmt, Unit)
-                // IrBlock containing a when (if statement) should unwrap
+                // IrBlock handling - check if it's a wrapper around a single IrWhen
                 is IrBlock -> {
-                    // Check if block contains a single IrWhen statement
-                    val singleWhen = stmt.statements.singleOrNull() as? IrWhen
-                    if (singleWhen != null) {
-                        visitWhen(singleWhen, Unit)
+                    // Unwrap single-statement blocks that contain IrWhen
+                    // These wrappers are created by various lowering passes
+                    val innerStatements = stmt.statements
+                    if (innerStatements.size == 1 && innerStatements[0] is IrWhen) {
+                        visitWhen(innerStatements[0] as IrWhen, Unit)
+                    } else {
+                        transformBlockOrStatement(stmt)
+                    }
+                }
+                // IrTypeOperatorCall with IMPLICIT_COERCION_TO_UNIT wraps expressions used as statements
+                // Unwrap to get to the inner when/block
+                is IrTypeOperatorCall -> {
+                    if (stmt.operator == IrTypeOperator.IMPLICIT_COERCION_TO_UNIT) {
+                        val innerArg = stmt.argument
+                        when (innerArg) {
+                            is IrWhen -> visitWhen(innerArg, Unit)
+                            is IrBlock -> {
+                                // Check if the block contains a single IrWhen
+                                if (innerArg.statements.size == 1 && innerArg.statements[0] is IrWhen) {
+                                    visitWhen(innerArg.statements[0] as IrWhen, Unit)
+                                } else {
+                                    transformBlockOrStatement(innerArg)
+                                }
+                            }
+                            else -> transformBlockOrStatement(stmt)
+                        }
                     } else {
                         transformBlockOrStatement(stmt)
                     }
@@ -2273,6 +2342,10 @@ class IrStatementToBrsTransformer(
             is IrDoWhileLoop -> visitDoWhileLoop(element, Unit)
             // IrWhen (if/when) needs explicit handling for proper statement transformation
             is IrWhen -> visitWhen(element, Unit)
+            // Control flow must be handled as statements, not expressions
+            is IrThrow -> visitThrow(element, Unit)
+            is IrBreak -> visitBreak(element, Unit)
+            is IrContinue -> visitContinue(element, Unit)
             is IrExpression -> BrsExpressionStatement(parent.transformExpression(element))
             is IrStatement -> parent.transformStatement(element) ?: BrsEmpty()
             else -> BrsEmpty()

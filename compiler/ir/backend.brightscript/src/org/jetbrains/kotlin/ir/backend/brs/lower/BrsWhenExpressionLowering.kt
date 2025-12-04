@@ -284,22 +284,33 @@ class BrsWhenExpressionLowering(
                 initializer = IrConstImpl.constNull(startOffset, endOffset, resultType.makeNullable())
             }
 
-            // Transform each branch to assign to temp var
+            // Transform each branch to assign to temp var, but keep control flow as-is
             val transformedBranches = whenExpr.branches.map { branch ->
-                val assignExpr = IrSetValueImpl(
-                    startOffset = branch.result.startOffset,
-                    endOffset = branch.result.endOffset,
-                    type = context.irBuiltIns.unitType,
-                    symbol = tempVar.symbol,
-                    value = branch.result,
-                    origin = null
-                )
+                // Control flow statements (break, continue, return, throw) shouldn't be wrapped
+                // in assignments - they don't produce a value
+                val newResult: IrExpression = when (branch.result) {
+                    is IrBreak, is IrContinue, is IrReturn, is IrThrow -> {
+                        // Keep control flow statements as-is
+                        branch.result
+                    }
+                    else -> {
+                        // Normal expressions get assigned to temp var
+                        IrSetValueImpl(
+                            startOffset = branch.result.startOffset,
+                            endOffset = branch.result.endOffset,
+                            type = context.irBuiltIns.unitType,
+                            symbol = tempVar.symbol,
+                            value = branch.result,
+                            origin = null
+                        )
+                    }
+                }
 
                 IrBranchImpl(
                     startOffset = branch.startOffset,
                     endOffset = branch.endOffset,
                     condition = branch.condition,
-                    result = assignExpr
+                    result = newResult
                 )
             }
 

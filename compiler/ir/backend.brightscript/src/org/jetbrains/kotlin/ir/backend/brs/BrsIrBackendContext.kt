@@ -271,11 +271,12 @@ class BrsIrBackendContext(
 
     /**
      * Calculate the mangled function signature.
-     * Functions with parameters or extension receivers get type info appended to prevent overload conflicts.
+     * Functions with parameters, extension receivers, or non-Unit return types get type info appended
+     * to prevent overload conflicts.
      *
      * @param irFunction The function to calculate signature for
      * @param baseName The base name (e.g., "ClassName_functionName" or "ClassName_create")
-     * @return The mangled name, or baseName if no parameters/extension receiver
+     * @return The mangled name, or baseName if no mangling is needed
      */
     private fun calculateBrsFunctionSignature(irFunction: IrFunction, baseName: String): String {
         val signatureParts = mutableListOf<String>()
@@ -292,19 +293,33 @@ class BrsIrBackendContext(
             signatureParts.add(param.type.toMangledString())
         }
 
-        // No parameters or extension receiver = no mangling needed
-        if (signatureParts.isEmpty()) {
+        // Include return type for non-Unit functions to distinguish overloads that differ only by return type
+        // (e.g., Iterable<Int>.sum(): Int vs Iterable<Long>.sum(): Long after type erasure)
+        val returnType = irFunction.returnType
+        val returnTypeStr = if (!returnType.isUnit() && !returnType.isNothing()) {
+            returnType.toMangledString()
+        } else {
+            null
+        }
+
+        // No parameters, extension receiver, or return type = no mangling needed
+        if (signatureParts.isEmpty() && returnTypeStr == null) {
             return baseName
         }
 
-        // Build parameter type string
+        // Build signature string
         val paramTypes = signatureParts.joinToString("_")
+        val fullSignature = if (returnTypeStr != null) {
+            if (paramTypes.isEmpty()) returnTypeStr else "${paramTypes}_$returnTypeStr"
+        } else {
+            paramTypes
+        }
 
         // Check if the resulting name would be too long (keep under 100 chars for readability)
-        val fullName = "${baseName}_${paramTypes}${MANGLED_NAME_SUFFIX}"
+        val fullName = "${baseName}_${fullSignature}${MANGLED_NAME_SUFFIX}"
         return if (fullName.length > 100) {
             // Use hash for very long signatures
-            val hash = abs(paramTypes.hashCode()).toString(Character.MAX_RADIX)
+            val hash = abs(fullSignature.hashCode()).toString(Character.MAX_RADIX)
             "${baseName}_${hash}${MANGLED_NAME_SUFFIX}"
         } else {
             fullName
