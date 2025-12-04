@@ -535,15 +535,23 @@ class BrsRenderer(
     }
 
     override fun visitConditional(conditional: BrsConditional, data: Unit) {
-        // BrightScript doesn't have a ternary operator, so we use inline if
-        // This works in expression context in some BrightScript versions
-        builder.append("(if ")
-        conditional.condition.accept(this, data)
-        builder.append(" then ")
-        conditional.thenExpr.accept(this, data)
-        builder.append(" else ")
-        conditional.elseExpr.accept(this, data)
-        builder.append(")")
+        // BrightScript doesn't reliably support inline if-then-else expressions.
+        // Use IIFE (Immediately Invoked Function Expression) pattern to wrap the conditional
+        // in an anonymous function that returns the appropriate value.
+        builder.append("(function()")
+        newline()
+        withIndent {
+            indent()
+            builder.append("if ")
+            conditional.condition.accept(this, data)
+            builder.append(" then return ")
+            conditional.thenExpr.accept(this, data)
+            builder.append(" else return ")
+            conditional.elseExpr.accept(this, data)
+        }
+        newline()
+        indent()
+        builder.append("end function)()")
     }
 
     override fun visitTypeOf(typeOf: BrsTypeOf, data: Unit) {
