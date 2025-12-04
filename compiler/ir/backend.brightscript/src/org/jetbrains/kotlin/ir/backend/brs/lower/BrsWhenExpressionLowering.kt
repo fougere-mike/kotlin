@@ -170,6 +170,57 @@ class BrsWhenExpressionLowering(
             return result
         }
 
+        override fun visitWhileLoop(loop: IrWhileLoop): IrExpression {
+            val wasInExpression = insideExpressionContext
+            // Condition IS in expression context (used as boolean)
+            insideExpressionContext = true
+            loop.condition = loop.condition.transform(this, null)
+            // Body is NOT in expression context (executed for side effects)
+            insideExpressionContext = false
+            loop.body = loop.body?.transform(this, null)
+            insideExpressionContext = wasInExpression
+            return loop
+        }
+
+        override fun visitDoWhileLoop(loop: IrDoWhileLoop): IrExpression {
+            val wasInExpression = insideExpressionContext
+            // Body is NOT in expression context
+            insideExpressionContext = false
+            loop.body = loop.body?.transform(this, null)
+            // Condition IS in expression context
+            insideExpressionContext = true
+            loop.condition = loop.condition.transform(this, null)
+            insideExpressionContext = wasInExpression
+            return loop
+        }
+
+        override fun visitStringConcatenation(expression: IrStringConcatenation): IrExpression {
+            // String template parts are expression context
+            val wasInExpression = insideExpressionContext
+            insideExpressionContext = true
+            val result = super.visitStringConcatenation(expression)
+            insideExpressionContext = wasInExpression
+            return result
+        }
+
+        override fun visitConstructorCall(expression: IrConstructorCall): IrExpression {
+            // Constructor arguments are expression context
+            val wasInExpression = insideExpressionContext
+            insideExpressionContext = true
+            val result = super.visitConstructorCall(expression)
+            insideExpressionContext = wasInExpression
+            return result
+        }
+
+        override fun visitTypeOperator(expression: IrTypeOperatorCall): IrExpression {
+            // Type operator argument is expression context (e.g., x as T, x is T)
+            val wasInExpression = insideExpressionContext
+            insideExpressionContext = true
+            val result = super.visitTypeOperator(expression)
+            insideExpressionContext = wasInExpression
+            return result
+        }
+
         override fun visitWhen(expression: IrWhen): IrExpression {
             // First, transform children (nested when expressions)
             val transformedWhen = super.visitWhen(expression) as IrWhen
