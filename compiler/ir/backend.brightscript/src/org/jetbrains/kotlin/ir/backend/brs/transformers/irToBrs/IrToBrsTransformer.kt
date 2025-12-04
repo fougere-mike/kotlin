@@ -2545,13 +2545,34 @@ class IrExpressionToBrsTransformer(
     private fun transformOperator(expression: IrCall, origin: IrStatementOrigin): BrsExpression? {
         val function = expression.symbol.owner
 
-        // Special case: EXCLEQ on Boolean.not() call - this means `!= ` was lowered to `(a == b).not()`
-        // Handle it as a NOT of the dispatch receiver.
-        // The call to Boolean.not() has no actual value arguments but may have 1 slot due to IR structure,
-        // so check by function name and dispatch receiver presence rather than argument count.
+        // Special case: EXCLEQ on Boolean.not() call - this means `!=` was lowered to `(a == b).not()`
+        // The inner equality call also has EXCLEQ origin, so we must extract operands directly
+        // and generate NE to avoid double-negation (NOT of <> would give =).
         if (origin == IrStatementOrigin.EXCLEQ && function.name.asString() == "not") {
             val dispatchReceiver = expression.dispatchReceiver
             if (dispatchReceiver != null && function.valueParameters.isEmpty()) {
+                if (dispatchReceiver is IrCall) {
+                    val innerCall = dispatchReceiver
+                    val (left, right) = when {
+                        innerCall.dispatchReceiver != null -> {
+                            val l = innerCall.dispatchReceiver!!.accept(this, Unit)
+                            val r = innerCall.getValueArgument(0)?.accept(this, Unit) ?: return null
+                            Pair(l, r)
+                        }
+                        innerCall.extensionReceiver != null -> {
+                            val l = innerCall.extensionReceiver!!.accept(this, Unit)
+                            val r = innerCall.getValueArgument(0)?.accept(this, Unit) ?: return null
+                            Pair(l, r)
+                        }
+                        else -> {
+                            val l = innerCall.getValueArgument(0)?.accept(this, Unit) ?: return null
+                            val r = innerCall.getValueArgument(1)?.accept(this, Unit) ?: return null
+                            Pair(l, r)
+                        }
+                    }
+                    return BrsBinaryOp(left, BrsBinaryOperator.NE, right)
+                }
+                // Fallback for non-call receivers
                 val operand = dispatchReceiver.accept(this, Unit)
                 return BrsUnaryOp(BrsUnaryOperator.NOT, operand)
             }
