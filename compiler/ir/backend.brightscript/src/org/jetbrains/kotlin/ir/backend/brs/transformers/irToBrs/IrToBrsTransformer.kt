@@ -1829,11 +1829,21 @@ class IrStatementToBrsTransformer(
                                 val nested = visitBlock(nestedStmt, Unit)
                                 if (nested is BrsBlock) nested.statements else listOf(nested)
                             }
+                            // Loops are expressions (extend IrExpression) but should be transformed as statements
+                            is IrWhileLoop -> listOf(visitWhileLoop(nestedStmt, Unit))
+                            is IrDoWhileLoop -> listOf(visitDoWhileLoop(nestedStmt, Unit))
+                            // IrWhen (if/when) should be transformed as statements
+                            is IrWhen -> listOf(visitWhen(nestedStmt, Unit))
                             is IrExpression -> listOf(BrsExpressionStatement(parent.transformExpression(nestedStmt)))
                             else -> listOfNotNull(parent.transformStatement(nestedStmt))
                         }
                     }
                 }
+                // Loops are expressions (extend IrExpression) but should be transformed as statements
+                is IrWhileLoop -> listOf(visitWhileLoop(stmt, Unit))
+                is IrDoWhileLoop -> listOf(visitDoWhileLoop(stmt, Unit))
+                // IrWhen (if/when) with Unit type should be transformed as statements, not expressions
+                is IrWhen -> listOf(visitWhen(stmt, Unit))
                 is IrExpression -> listOf(BrsExpressionStatement(parent.transformExpression(stmt)))
                 else -> listOfNotNull(parent.transformStatement(stmt))
             }
@@ -1949,6 +1959,9 @@ class IrStatementToBrsTransformer(
             when (stmt) {
                 // IrWhen (if statements) should use visitWhen directly to handle returns properly
                 is IrWhen -> visitWhen(stmt, Unit)
+                // IrWhileLoop and IrDoWhileLoop need explicit handling
+                is IrWhileLoop -> visitWhileLoop(stmt, Unit)
+                is IrDoWhileLoop -> visitDoWhileLoop(stmt, Unit)
                 // IrBlock containing a when (if statement) should unwrap
                 is IrBlock -> {
                     // Check if block contains a single IrWhen statement
@@ -2025,6 +2038,11 @@ class IrStatementToBrsTransformer(
         return when (element) {
             is IrBlock -> visitBlock(element, Unit)
             is IrBlockBody -> visitBlockBody(element, Unit)
+            // Loops need explicit handling since they're IrExpressions but should be transformed as statements
+            is IrWhileLoop -> visitWhileLoop(element, Unit)
+            is IrDoWhileLoop -> visitDoWhileLoop(element, Unit)
+            // IrWhen (if/when) needs explicit handling for proper statement transformation
+            is IrWhen -> visitWhen(element, Unit)
             is IrExpression -> BrsExpressionStatement(parent.transformExpression(element))
             is IrStatement -> parent.transformStatement(element) ?: BrsEmpty()
             else -> BrsEmpty()
@@ -2129,6 +2147,35 @@ class IrExpressionToBrsTransformer(
         // Generate assignment expression: receiver.field = value
         return BrsBinaryOp(
             BrsDotAccess(receiver, field.name.asString()),
+            BrsBinaryOperator.EQ,
+            expression.value.accept(this, data)
+        )
+    }
+
+    override fun visitSetValue(expression: IrSetValue, data: Unit): BrsExpression {
+        val rawName = expression.symbol.owner.name.asString()
+
+        // Check if this variable is captured in a closure
+        val capturedVar = parent.getCapturedVariable(expression.symbol)
+        if (capturedVar != null && capturedVar.isMutable) {
+            // Rewrite to assign via m (the closure object): m.varName.value = newValue
+            return BrsBinaryOp(
+                BrsDotAccess(BrsDotAccess(BrsMRef(), capturedVar.name), "value"),
+                BrsBinaryOperator.EQ,
+                expression.value.accept(this, data)
+            )
+        }
+
+        val sanitizedName = when {
+            rawName.startsWith("<set-") && rawName.endsWith(">") -> "value"
+            rawName.startsWith("<") && rawName.endsWith(">") ->
+                rawName.removePrefix("<").removeSuffix(">").replace("-", "_")
+            else -> rawName
+        }
+
+        // Generate assignment expression: varName = value
+        return BrsBinaryOp(
+            BrsIdentifier(sanitizedName),
             BrsBinaryOperator.EQ,
             expression.value.accept(this, data)
         )
