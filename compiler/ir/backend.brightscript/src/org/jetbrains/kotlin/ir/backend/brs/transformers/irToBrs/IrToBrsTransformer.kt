@@ -1071,6 +1071,14 @@ class IrToBrsTransformer(
             val delegatingCall = findDelegatingConstructorCall(constructor)
             val superConstructor = delegatingCall?.symbol?.owner
 
+            // Get super constructor arguments with any hoisted statements
+            // This handles cases like super(message?.toString()) where the safe call
+            // creates a block with temp variables that need to be extracted
+            val (hoistedStatements, superArgs) = getSuperConstructorArgsWithHoisting(constructor)
+
+            // Add hoisted statements before the super call
+            bodyStatements.addAll(hoistedStatements)
+
             // Call parent constructor: this = ParentClass_create_ParamTypes_k$(...)
             val superConstructorName = if (superConstructor != null) {
                 context.getBrsName(superConstructor)
@@ -1080,7 +1088,7 @@ class IrToBrsTransformer(
             }
             val superConstructorCall = BrsFunctionCall(
                 BrsIdentifier(superConstructorName),
-                getSuperConstructorArgs(constructor)
+                superArgs
             )
             bodyStatements.add(
                 BrsVariable(name = "this", initializer = superConstructorCall)
@@ -1272,17 +1280,93 @@ class IrToBrsTransformer(
 
     /**
      * Get arguments for super constructor call from the delegating constructor call in the body.
+     * Returns a pair of (hoisted statements, argument expressions).
+     * Hoisted statements should be inserted before the super call.
+     *
+     * This handles cases where arguments contain blocks (e.g., from safe calls like `message?.toString()`)
+     * that need their prefix statements hoisted before the super call.
+     */
+    private fun getSuperConstructorArgsWithHoisting(constructor: IrConstructor): Pair<List<BrsStatement>, MutableList<BrsExpression>> {
+        val delegatingCall = findDelegatingConstructorCall(constructor) ?: return Pair(emptyList(), mutableListOf())
+
+        val hoistedStatements = mutableListOf<BrsStatement>()
+        val arguments = mutableListOf<BrsExpression>()
+
+        for (i in 0 until delegatingCall.valueArgumentsCount) {
+            val arg = delegatingCall.getValueArgument(i) ?: continue
+
+            // Flatten nested blocks and extract the final expression value
+            val (stmts, valueExpr) = flattenBlockForHoisting(arg)
+            stmts.forEach { stmt ->
+                val transformed = when (stmt) {
+                    is IrVariable -> {
+                        val varName = stmt.name.asString()
+                        // Sanitize variable names that contain angle brackets (like <tmp0_safe_receiver>)
+                        val sanitizedVarName = if (varName.startsWith("<") && varName.endsWith(">")) {
+                            varName.removePrefix("<").removeSuffix(">").replace("-", "_")
+                        } else varName
+                        val init = stmt.initializer?.let { transformExpression(it) }
+                        if (init != null) BrsVariable(sanitizedVarName, mapTypeToBrs(stmt.type), init) else null
+                    }
+                    is IrWhen -> statementTransformer.visitWhen(stmt, Unit)
+                    else -> transformStatement(stmt)
+                }
+                transformed?.let { hoistedStatements.add(it) }
+            }
+
+            if (valueExpr != null) {
+                arguments.add(transformExpression(valueExpr))
+            } else {
+                arguments.add(BrsInvalidLiteral())
+            }
+        }
+
+        return Pair(hoistedStatements, arguments)
+    }
+
+    /**
+     * Recursively flatten nested blocks, extracting all prefix statements and the final value expression.
+     * This handles patterns like:
+     *   Block { val x = ..., Block { var tmp = null, When { ... }, GetValue(tmp) } }
+     * Returns a pair of (all prefix statements to hoist, final value expression).
+     */
+    private fun flattenBlockForHoisting(expr: IrExpression): Pair<List<IrStatement>, IrExpression?> {
+        if (expr !is IrBlock || expr.statements.isEmpty()) {
+            return Pair(emptyList(), expr)
+        }
+
+        val allStatements = mutableListOf<IrStatement>()
+        val blockStatements = expr.statements
+
+        // Process all statements except the last
+        for (i in 0 until blockStatements.size - 1) {
+            allStatements.add(blockStatements[i])
+        }
+
+        // Check if the last statement is itself a block that needs flattening
+        val lastStmt = blockStatements.lastOrNull()
+        return when {
+            lastStmt is IrBlock -> {
+                // Recursively flatten the nested block
+                val (nestedStmts, nestedValue) = flattenBlockForHoisting(lastStmt)
+                allStatements.addAll(nestedStmts)
+                Pair(allStatements, nestedValue)
+            }
+            lastStmt is IrExpression -> {
+                Pair(allStatements, lastStmt)
+            }
+            else -> {
+                Pair(allStatements, null)
+            }
+        }
+    }
+
+    /**
+     * Get arguments for super constructor call from the delegating constructor call in the body.
+     * This is a backward-compatible wrapper around getSuperConstructorArgsWithHoisting.
      */
     private fun getSuperConstructorArgs(constructor: IrConstructor): MutableList<BrsExpression> {
-        val delegatingCall = findDelegatingConstructorCall(constructor)
-
-        return if (delegatingCall != null) {
-            (0 until delegatingCall.valueArgumentsCount).mapNotNull { i ->
-                delegatingCall.getValueArgument(i)?.let { transformExpression(it) }
-            }.toMutableList()
-        } else {
-            mutableListOf()
-        }
+        return getSuperConstructorArgsWithHoisting(constructor).second
     }
 
     /**

@@ -212,6 +212,15 @@ class BrsWhenExpressionLowering(
             return result
         }
 
+        override fun visitDelegatingConstructorCall(expression: IrDelegatingConstructorCall): IrExpression {
+            // Delegating constructor arguments (super() or this()) are expression context
+            val wasInExpression = insideExpressionContext
+            insideExpressionContext = true
+            val result = super.visitDelegatingConstructorCall(expression)
+            insideExpressionContext = wasInExpression
+            return result
+        }
+
         override fun visitTypeOperator(expression: IrTypeOperatorCall): IrExpression {
             // Type operator argument is expression context (e.g., x as T, x is T)
             // EXCEPT for IMPLICIT_COERCION_TO_UNIT which wraps expressions used as statements
