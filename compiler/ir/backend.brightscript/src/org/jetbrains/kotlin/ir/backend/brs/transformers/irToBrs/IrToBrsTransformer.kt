@@ -500,6 +500,32 @@ class IrToBrsTransformer(
 
         // Initialize each entry: m.Color_RED = Color_create("RED", 0, ...)
         enumEntries.forEachIndexed { ordinal, entry ->
+            // Store enum metadata for constant inlining optimization
+            context.mapping.enumEntryOrdinals[entry] = ordinal
+            context.mapping.enumEntryNames[entry] = entry.name.asString()
+
+            // Extract constant property values for inlining
+            entry.initializerExpression?.let { init ->
+                val initExpr = init.expression
+                if (initExpr is IrEnumConstructorCall) {
+                    val constantProps = mutableMapOf<String, Any?>()
+                    val constructor = initExpr.symbol.owner
+                    for (i in 0 until initExpr.valueArgumentsCount) {
+                        initExpr.getValueArgument(i)?.let { arg ->
+                            if (arg is IrConst) {
+                                val paramName = constructor.valueParameters.getOrNull(i)?.name?.asString()
+                                if (paramName != null) {
+                                    constantProps[paramName] = arg.value
+                                }
+                            }
+                        }
+                    }
+                    if (constantProps.isNotEmpty()) {
+                        context.mapping.enumEntryConstantProperties[entry] = constantProps
+                    }
+                }
+            }
+
             val entryVarName = "${className}_${entry.name.asString()}"
             val args = mutableListOf<BrsExpression>(
                 BrsStringLiteral(entry.name.asString()),  // name
@@ -1552,9 +1578,36 @@ class IrToBrsTransformer(
 
     /**
      * Check if an IR expression is a compile-time constant that can be inlined.
+     * Recognizes:
+     * - Primitive constants (IrConst)
+     * - Enum value references (IrGetEnumValue)
+     * - Property accesses on enum values for ordinal, name, and constant properties
      */
     fun isConstantExpression(expression: IrExpression): Boolean {
-        return expression is IrConst
+        return when (expression) {
+            is IrConst -> true
+            is IrGetEnumValue -> true  // Enum constants are always statically known
+            is IrCall -> {
+                // Check for property access on constant enum value
+                val receiver = expression.dispatchReceiver
+                if (receiver is IrGetEnumValue) {
+                    val entry = receiver.symbol.owner
+                    val functionName = expression.symbol.owner.name.asString()
+                    when {
+                        functionName == "<get-ordinal>" || functionName == "ordinal" -> true
+                        functionName == "<get-name>" || functionName == "name" -> true
+                        functionName.startsWith("<get-") -> {
+                            val propName = functionName.removePrefix("<get-").removeSuffix(">")
+                            context.getEnumConstantProperties(entry)?.containsKey(propName) == true
+                        }
+                        else -> false
+                    }
+                } else {
+                    false
+                }
+            }
+            else -> false
+        }
     }
 
     /**
@@ -2980,6 +3033,49 @@ class IrExpressionToBrsTransformer(
             if (operatorResult != null) return operatorResult
         }
 
+        // ==================== Enum Property Inlining Optimization ====================
+        // When accessing ordinal, name, or constant properties on a compile-time-known
+        // enum value, inline the value directly to avoid runtime lookup overhead.
+        val dispatchReceiver = expression.dispatchReceiver
+        if (dispatchReceiver is IrGetEnumValue) {
+            val entry = dispatchReceiver.symbol.owner
+            val functionName = function.name.asString()
+
+            when {
+                // Inline .ordinal -> integer literal
+                functionName == "<get-ordinal>" || functionName == "ordinal" -> {
+                    context.getEnumOrdinal(entry)?.let { ordinal ->
+                        return BrsIntLiteral(ordinal)
+                    }
+                }
+                // Inline .name -> string literal
+                functionName == "<get-name>" || functionName == "name" -> {
+                    context.getEnumName(entry)?.let { name ->
+                        return BrsStringLiteral(name)
+                    }
+                }
+                // Inline custom val properties with constant values
+                functionName.startsWith("<get-") -> {
+                    val propName = functionName.removePrefix("<get-").removeSuffix(">")
+                    context.getEnumConstantProperties(entry)?.get(propName)?.let { value ->
+                        when (value) {
+                            is Int -> return BrsIntLiteral(value)
+                            is Long -> return BrsLongIntLiteral(value)
+                            is String -> return BrsStringLiteral(value)
+                            is Boolean -> return BrsBooleanLiteral(value)
+                            is Double -> return BrsDoubleLiteral(value)
+                            is Float -> return BrsFloatLiteral(value)
+                            is Byte -> return BrsIntLiteral(value.toInt())
+                            is Short -> return BrsIntLiteral(value.toInt())
+                            is Char -> return BrsStringLiteral(value.toString())
+                            // Fall through to default handling for other types
+                        }
+                    }
+                }
+            }
+        }
+        // ==================== End Enum Property Inlining ====================
+
         // Handle primitive type conversion methods and unary operators
         // These are Kotlin methods that don't exist in BrightScript - we need to transform them
         val methodName = function.name.asString()
@@ -3459,6 +3555,61 @@ class IrExpressionToBrsTransformer(
                 // This case is handled above in the special EXCLEQ handling, but just in case
                 return null
             }
+
+            // ==================== Enum Comparison Optimization ====================
+            // When comparing enum values of the same type, use ordinal comparison for performance.
+            // This avoids object comparison overhead and is semantically equivalent since
+            // enum entries are singletons with unique ordinals.
+            if (binaryOp == BrsBinaryOperator.EQ || binaryOp == BrsBinaryOperator.NE) {
+                val (leftIr, rightIr) = when {
+                    expression.dispatchReceiver != null -> Pair(expression.dispatchReceiver!!, expression.getValueArgument(0))
+                    expression.extensionReceiver != null -> Pair(expression.extensionReceiver!!, expression.getValueArgument(0))
+                    else -> Pair(expression.getValueArgument(0), expression.getValueArgument(1))
+                }
+
+                if (leftIr != null && rightIr != null) {
+                    val leftType = leftIr.type
+                    val rightType = rightIr.type
+
+                    // Check if both are the same enum type (non-nullable)
+                    val leftClass = leftType.classifierOrNull?.owner as? IrClass
+                    val rightClass = rightType.classifierOrNull?.owner as? IrClass
+
+                    if (leftClass != null && rightClass != null &&
+                        leftClass == rightClass &&
+                        leftClass.kind == ClassKind.ENUM_CLASS &&
+                        !leftType.isNullable() && !rightType.isNullable()) {
+
+                        // At least one side should be a compile-time constant for optimization benefit
+                        val leftIsConst = leftIr is IrGetEnumValue
+                        val rightIsConst = rightIr is IrGetEnumValue
+
+                        if (leftIsConst || rightIsConst) {
+                            // Transform to ordinal comparison
+                            val leftOrdinal = if (leftIsConst) {
+                                val entry = (leftIr as IrGetEnumValue).symbol.owner
+                                context.getEnumOrdinal(entry)?.let { BrsIntLiteral(it) }
+                            } else {
+                                // Access .ordinal on the dynamic enum value
+                                BrsDotAccess(leftIr.accept(this, Unit), "ordinal")
+                            }
+
+                            val rightOrdinal = if (rightIsConst) {
+                                val entry = (rightIr as IrGetEnumValue).symbol.owner
+                                context.getEnumOrdinal(entry)?.let { BrsIntLiteral(it) }
+                            } else {
+                                // Access .ordinal on the dynamic enum value
+                                BrsDotAccess(rightIr.accept(this, Unit), "ordinal")
+                            }
+
+                            if (leftOrdinal != null && rightOrdinal != null) {
+                                return BrsBinaryOp(leftOrdinal, binaryOp, rightOrdinal)
+                            }
+                        }
+                    }
+                }
+            }
+            // ==================== End Enum Comparison Optimization ====================
 
             val (left, right) = when {
                 expression.dispatchReceiver != null -> {
