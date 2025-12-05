@@ -20,36 +20,28 @@ package kotlin.brs.runtime
  * Lowered to: Sin(x)
  */
 @PublishedApi
-internal fun brsIntrinsicSin(x: Double): Double {
-    error("brsIntrinsicSin should be lowered by the backend")
-}
+internal external fun brsIntrinsicSin(x: Double): Double
 
 /**
  * Computes the cosine of an angle in radians.
  * Lowered to: Cos(x)
  */
 @PublishedApi
-internal fun brsIntrinsicCos(x: Double): Double {
-    error("brsIntrinsicCos should be lowered by the backend")
-}
+internal external fun brsIntrinsicCos(x: Double): Double
 
 /**
  * Computes the tangent of an angle in radians.
  * Lowered to: Tan(x)
  */
 @PublishedApi
-internal fun brsIntrinsicTan(x: Double): Double {
-    error("brsIntrinsicTan should be lowered by the backend")
-}
+internal external fun brsIntrinsicTan(x: Double): Double
 
 /**
  * Computes the arctangent of a value.
  * Lowered to: Atn(x)
  */
 @PublishedApi
-internal fun brsIntrinsicAtan(x: Double): Double {
-    error("brsIntrinsicAtan should be lowered by the backend")
-}
+internal external fun brsIntrinsicAtan(x: Double): Double
 
 // ============================================
 // Exponential and Logarithmic Functions
@@ -60,27 +52,21 @@ internal fun brsIntrinsicAtan(x: Double): Double {
  * Lowered to: Exp(x)
  */
 @PublishedApi
-internal fun brsIntrinsicExp(x: Double): Double {
-    error("brsIntrinsicExp should be lowered by the backend")
-}
+internal external fun brsIntrinsicExp(x: Double): Double
 
 /**
  * Computes the natural logarithm of a value.
  * Lowered to: Log(x)
  */
 @PublishedApi
-internal fun brsIntrinsicLog(x: Double): Double {
-    error("brsIntrinsicLog should be lowered by the backend")
-}
+internal external fun brsIntrinsicLog(x: Double): Double
 
 /**
  * Computes the square root of a value.
  * Lowered to: Sqr(x)
  */
 @PublishedApi
-internal fun brsIntrinsicSqrt(x: Double): Double {
-    error("brsIntrinsicSqrt should be lowered by the backend")
-}
+internal external fun brsIntrinsicSqrt(x: Double): Double
 
 // ============================================
 // Rounding and Absolute Value Functions
@@ -91,36 +77,28 @@ internal fun brsIntrinsicSqrt(x: Double): Double {
  * Lowered to: Abs(x)
  */
 @PublishedApi
-internal fun brsIntrinsicAbs(x: Double): Double {
-    error("brsIntrinsicAbs should be lowered by the backend")
-}
+internal external fun brsIntrinsicAbs(x: Double): Double
 
 /**
  * Computes the absolute value of an integer.
  * Lowered to: Abs(x)
  */
 @PublishedApi
-internal fun brsIntrinsicAbsInt(x: Int): Int {
-    error("brsIntrinsicAbsInt should be lowered by the backend")
-}
+internal external fun brsIntrinsicAbsInt(x: Int): Int
 
 /**
  * Truncates a floating-point number to an integer.
  * Lowered to: Int(x)
  */
 @PublishedApi
-internal fun brsIntrinsicTrunc(x: Double): Int {
-    error("brsIntrinsicTrunc should be lowered by the backend")
-}
+internal external fun brsIntrinsicTrunc(x: Double): Int
 
 /**
  * Computes the floor of a value (largest integer <= x).
  * Lowered to: Int(x) for positive, Int(x) - 1 for negative non-integers
  */
 @PublishedApi
-internal fun brsIntrinsicFloor(x: Double): Double {
-    error("brsIntrinsicFloor should be lowered by the backend")
-}
+internal external fun brsIntrinsicFloor(x: Double): Double
 
 /**
  * Computes the ceiling of a value (smallest integer >= x).
@@ -128,18 +106,14 @@ internal fun brsIntrinsicFloor(x: Double): Double {
  * Lowered to: -Int(-x) or Int(x) + 1 for non-integers
  */
 @PublishedApi
-internal fun brsIntrinsicCeil(x: Double): Double {
-    error("brsIntrinsicCeil should be lowered by the backend")
-}
+internal external fun brsIntrinsicCeil(x: Double): Double
 
 /**
  * Rounds a value to the nearest integer.
  * Lowered to: Int(x + 0.5) for positive, Int(x - 0.5) for negative
  */
 @PublishedApi
-internal fun brsIntrinsicRound(x: Double): Long {
-    error("brsIntrinsicRound should be lowered by the backend")
-}
+internal external fun brsIntrinsicRound(x: Double): Long
 
 // ============================================
 // Power and Modulo Functions
@@ -150,9 +124,7 @@ internal fun brsIntrinsicRound(x: Double): Long {
  * Lowered to: base ^ exponent
  */
 @PublishedApi
-internal fun brsIntrinsicPow(base: Double, exponent: Double): Double {
-    error("brsIntrinsicPow should be lowered by the backend")
-}
+internal external fun brsIntrinsicPow(base: Double, exponent: Double): Double
 
 // ============================================
 // Min/Max Functions
@@ -238,15 +210,11 @@ internal fun brsIntrinsicIsInfiniteFloat(x: Float): Boolean {
  * Lowered to: Rnd(range) or Rnd(0) for seeding
  */
 @PublishedApi
-internal fun brsIntrinsicRandom(range: Int): Int {
-    error("brsIntrinsicRandom should be lowered by the backend")
-}
+internal external fun brsIntrinsicRandom(range: Int): Int
 
 /**
  * Seeds the random number generator.
  * Lowered to: Rnd(0)
  */
 @PublishedApi
-internal fun brsIntrinsicRandomSeed() {
-    error("brsIntrinsicRandomSeed should be lowered by the backend")
-}
+internal external fun brsIntrinsicRandomSeed()

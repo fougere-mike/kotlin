@@ -145,6 +145,8 @@ class BrsIntrinsics(
         "brsIntrinsicFloor" to StdlibIntrinsic.Floor,             // Int(x)
         "brsIntrinsicRound" to StdlibIntrinsic.Round,             // Int(x + 0.5)
         "brsIntrinsicAbs" to StdlibIntrinsic.SimpleCall("Abs"),
+        "brsIntrinsicAbsInt" to StdlibIntrinsic.SimpleCall("Abs"),
+        "brsIntrinsicTrunc" to StdlibIntrinsic.Floor,            // Int(x) truncates toward zero
         "brsIntrinsicPow" to StdlibIntrinsic.Pow,                 // x ^ y
         "brsIntrinsicSinh" to StdlibIntrinsic.Sinh,               // (Exp(x) - Exp(-x)) / 2
         "brsIntrinsicCosh" to StdlibIntrinsic.Cosh,               // (Exp(x) + Exp(-x)) / 2
@@ -159,6 +161,7 @@ class BrsIntrinsics(
         "brsIntrinsicRight" to StdlibIntrinsic.SimpleCall("Right"),
         "brsIntrinsicMid" to StdlibIntrinsic.SimpleCall("Mid"),
         "brsIntrinsicAsc" to StdlibIntrinsic.SimpleCall("Asc"),
+        "brsIntrinsicCharCode" to StdlibIntrinsic.SimpleCall("Asc"),
         "brsIntrinsicChr" to StdlibIntrinsic.SimpleCall("Chr"),
         "brsIntrinsicVal" to StdlibIntrinsic.SimpleCall("Val"),
         "brsIntrinsicStr" to StdlibIntrinsic.SimpleCall("Str"),
@@ -174,6 +177,7 @@ class BrsIntrinsics(
 
         // Random intrinsics
         "brsIntrinsicRnd" to StdlibIntrinsic.SimpleCall("Rnd"),
+        "brsIntrinsicRandom" to StdlibIntrinsic.SimpleCall("Rnd"),
         "brsIntrinsicRandomSeed" to StdlibIntrinsic.RandomSeed,
 
         // JSON intrinsics
