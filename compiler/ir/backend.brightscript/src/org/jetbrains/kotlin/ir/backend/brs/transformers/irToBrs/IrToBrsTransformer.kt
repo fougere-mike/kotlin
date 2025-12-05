@@ -1193,7 +1193,8 @@ class IrToBrsTransformer(
             // Copy overridden methods to _super before overriding
             for (function in irClass.declarations.filterIsInstance<IrSimpleFunction>()) {
                 if (!function.isFakeOverride && function.overriddenSymbols.isNotEmpty()) {
-                    val methodName = function.name.asString()
+                    val fullMethodName = context.getBrsName(function)
+                    val methodName = fullMethodName.removePrefix("${className}_")
                     bodyStatements.add(
                         BrsExpressionStatement(
                             BrsBinaryOp(
@@ -1316,8 +1317,8 @@ class IrToBrsTransformer(
         // Add methods to the instance
         for (function in irClass.declarations.filterIsInstance<IrSimpleFunction>()) {
             if (!function.isFakeOverride && !function.isExternal) {
-                val methodName = function.name.asString()
-                val fullMethodName = "${className}_${methodName}"
+                val fullMethodName = context.getBrsName(function)
+                val methodName = fullMethodName.removePrefix("${className}_")
                 bodyStatements.add(
                     BrsExpressionStatement(
                         BrsBinaryOp(
