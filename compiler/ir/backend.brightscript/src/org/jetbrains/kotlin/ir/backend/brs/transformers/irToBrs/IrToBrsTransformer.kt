@@ -91,19 +91,44 @@ class IrToBrsTransformer(
      * Hoisted statements from when-expression lowered blocks.
      * These need to be emitted before the expression that uses them.
      */
-    private val hoistedStatements = mutableListOf<BrsStatement>()
+    // Stack of hoisted statement scopes for proper nesting of when-lowered blocks
+    private val hoistedScopes = mutableListOf<MutableList<BrsStatement>>()
+
+    init {
+        hoistedScopes.add(mutableListOf()) // Global scope
+    }
+
+    fun pushHoistedScope() {
+        hoistedScopes.add(mutableListOf())
+    }
+
+    fun popHoistedScope(): List<BrsStatement> {
+        if (hoistedScopes.size <= 1) {
+            // Don't pop the global scope - just return and clear it
+            val result = hoistedScopes.last().toList()
+            hoistedScopes.last().clear()
+            return result
+        }
+        return hoistedScopes.removeAt(hoistedScopes.lastIndex)
+    }
 
     fun addHoistedStatement(stmt: BrsStatement) {
-        hoistedStatements.add(stmt)
+        hoistedScopes.last().add(stmt)
     }
 
     fun takeHoistedStatements(): List<BrsStatement> {
-        val result = hoistedStatements.toList()
-        hoistedStatements.clear()
+        val scope = hoistedScopes.last()
+        val result = scope.toList()
+        scope.clear()
         return result
     }
 
-    fun hasHoistedStatements(): Boolean = hoistedStatements.isNotEmpty()
+    fun hasHoistedStatements(): Boolean = hoistedScopes.last().isNotEmpty()
+
+    fun clearHoistedScopes() {
+        hoistedScopes.clear()
+        hoistedScopes.add(mutableListOf()) // Reset to global scope
+    }
 
     /**
      * Detect variables captured by a function expression.
@@ -230,6 +255,9 @@ class IrToBrsTransformer(
         if (irFunction is IrSimpleFunction && irFunction.isFakeOverride) return null
         if (irFunction.isExternal) return null
 
+        // Clear any leftover hoisted statements from previous function transformations
+        clearHoistedScopes()
+
         val name = context.getBrsName(irFunction)
         val rawParameters = irFunction.valueParameters.map { param ->
             BrsParameter(
@@ -242,11 +270,19 @@ class IrToBrsTransformer(
 
         // Check if this function has @BrsInline - use parsed code instead of IR body
         val inlineInfo = context.inlineFunctionInfo[irFunction.symbol] as? BrsCodeOutliningLowering.BrsInlineInfo
-        val body = if (inlineInfo != null) {
+        var body = if (inlineInfo != null) {
             // Use the parsed @BrsInline code
             BrsBlock(inlineInfo.parsedStatements.toMutableList())
         } else {
             irFunction.body?.let { transformBody(it) } ?: BrsBlock()
+        }
+
+        // Check for any remaining hoisted statements and prepend them to the body
+        val remainingHoisted = takeHoistedStatements()
+        if (remainingHoisted.isNotEmpty()) {
+            val combinedStatements = remainingHoisted.toMutableList()
+            combinedStatements.addAll(body.statements)
+            body = BrsBlock(combinedStatements)
         }
 
         val returnType = mapTypeToBrs(irFunction.returnType)
@@ -1638,35 +1674,7 @@ class IrStatementToBrsTransformer(
             return BrsBlock(statements)
         }
 
-        // Check if the initializer contains blocks that need hoisting
-        // (e.g., from when-expression lowering of ?: operator)
-        if (initializer != null) {
-            val blocksToHoist = collectBlocksFromExpression(initializer)
-            if (blocksToHoist.isNotEmpty()) {
-                val precedingStatements = mutableListOf<BrsStatement>()
-
-                // Hoist all blocks
-                for (block in blocksToHoist) {
-                    hoistBlockStatements(block, precedingStatements)
-                }
-
-                // Transform the initializer (blocks will be simplified to their final values)
-                val transformedInit = parent.transformExpression(initializer)
-                precedingStatements.add(BrsVariable(
-                    name = declaration.name.asString(),
-                    type = parent.mapTypeToBrs(declaration.type),
-                    initializer = transformedInit
-                ))
-
-                return if (precedingStatements.size == 1) {
-                    precedingStatements.first()
-                } else {
-                    BrsBlock(precedingStatements.toMutableList())
-                }
-            }
-        }
-
-        // Simple case - no block or single-expression block
+        // Simple case - the expression transformer handles when-lowered blocks via hoisting
         // Transform the initializer, which may add hoisted statements
         val transformedInit = initializer?.let { parent.transformExpression(it) }
 
@@ -1815,30 +1823,17 @@ class IrStatementToBrsTransformer(
             return BrsReturn(value = null)
         }
 
-        // Collect all blocks from the expression tree that need hoisting
-        val value = expression.value
-        val blocksToHoist = collectBlocksFromExpression(value)
+        // Transform the expression - hoisted statements from when-lowered blocks go to current scope
+        val transformedValue = parent.transformExpression(expression.value)
+        val hoisted = parent.takeHoistedStatements()
 
-        if (blocksToHoist.isNotEmpty()) {
-            val precedingStatements = mutableListOf<BrsStatement>()
-
-            // Hoist all blocks
-            for (block in blocksToHoist) {
-                hoistBlockStatements(block, precedingStatements)
-            }
-
-            // Now transform the expression - blocks will now be simplified to their final values
-            val transformedValue = parent.transformExpression(value)
-            precedingStatements.add(BrsReturn(value = transformedValue))
-
-            return if (precedingStatements.size == 1) {
-                precedingStatements.first()
-            } else {
-                BrsBlock(precedingStatements.toMutableList())
-            }
+        return if (hoisted.isNotEmpty()) {
+            val allStatements = hoisted.toMutableList()
+            allStatements.add(BrsReturn(value = transformedValue))
+            BrsBlock(allStatements)
+        } else {
+            BrsReturn(value = transformedValue)
         }
-
-        return BrsReturn(value = parent.transformExpression(value))
     }
 
     override fun visitThrow(expression: IrThrow, data: Unit): BrsStatement {
@@ -1956,6 +1951,8 @@ class IrStatementToBrsTransformer(
                 }
             }
 
+            // Hoisted statements should be consumed within transformBlockOrStatement/visitBlock
+            // during branch body transformation. No need to consume again here.
             val ifStmt = BrsIf(
                 condition = condition,
                 thenBranch = bodyStatement
@@ -2043,11 +2040,112 @@ class IrStatementToBrsTransformer(
             }
         }
 
+        // Check for when-lowered blocks in statement context
+        // Structure: { var __when_tmp; if/when { ... -> __when_tmp = ... }; __when_tmp }
+        // Or: { var __when_tmp; if/when { ... -> __when_tmp = ... }; var result = __when_tmp }
+        // We need to properly flatten these into their component statements
+        val blockStatements = expression.statements
+        if (blockStatements.size >= 3) {
+            val firstStmt = blockStatements.firstOrNull()
+            val lastStmt = blockStatements.lastOrNull()
+
+            // Detect when-lowered block by checking for __when_tmp variable
+            val firstIsWhenTmp = firstStmt is IrVariable &&
+                firstStmt.name.asString().startsWith("__when_tmp")
+
+            // Last can be either:
+            // 1. IrGetValue(__when_tmp) - when used as expression
+            // 2. IrVariable whose initializer is IrGetValue(__when_tmp) - when result is assigned to a variable
+            val lastIsWhenTmpRef = lastStmt is IrGetValue &&
+                lastStmt.symbol.owner.name.asString().startsWith("__when_tmp")
+            val lastIsVarWithWhenTmpInit = lastStmt is IrVariable &&
+                (lastStmt.initializer as? IrGetValue)?.symbol?.owner?.name?.asString()?.startsWith("__when_tmp") == true
+
+            val isWhenLoweredBlock = firstIsWhenTmp && (lastIsWhenTmpRef || lastIsVarWithWhenTmpInit)
+
+            if (isWhenLoweredBlock) {
+                // Transform all statements
+                // - Skip the last if it's just IrGetValue(__when_tmp) (return value, not needed)
+                // - Include the last if it's IrVariable (the result variable assignment)
+                //
+                // We push a new hoisting scope so nested transformations don't interfere with
+                // outer scopes. This block directly returns its statements (not hoisted).
+                parent.pushHoistedScope()
+                val resultStatements = mutableListOf<BrsStatement>()
+                val lastIndex = if (lastIsWhenTmpRef) blockStatements.size - 1 else blockStatements.size
+
+                for (i in 0 until lastIndex) {
+                    val stmt = blockStatements[i]
+                    val transformed: BrsStatement? = when (stmt) {
+                        is IrVariable -> {
+                            val init = stmt.initializer?.let { parent.transformExpression(it) }
+                            // Consume any hoisted statements from nested when-lowered blocks in the initializer
+                            val hoisted = parent.takeHoistedStatements()
+                            resultStatements.addAll(hoisted)
+                            BrsVariable(stmt.name.asString(), parent.mapTypeToBrs(stmt.type), init)
+                        }
+                        is IrWhen -> {
+                            val whenStmt = visitWhen(stmt, Unit)
+                            resultStatements.addAll(parent.takeHoistedStatements())
+                            whenStmt
+                        }
+                        is IrWhileLoop -> {
+                            val loopStmt = visitWhileLoop(stmt, Unit)
+                            resultStatements.addAll(parent.takeHoistedStatements())
+                            loopStmt
+                        }
+                        is IrDoWhileLoop -> {
+                            val loopStmt = visitDoWhileLoop(stmt, Unit)
+                            resultStatements.addAll(parent.takeHoistedStatements())
+                            loopStmt
+                        }
+                        is IrBlock -> {
+                            val blockStmt = visitBlock(stmt, Unit)
+                            resultStatements.addAll(parent.takeHoistedStatements())
+                            blockStmt
+                        }
+                        is IrSetValue -> {
+                            val setStmt = visitSetValue(stmt, Unit)
+                            resultStatements.addAll(parent.takeHoistedStatements())
+                            setStmt
+                        }
+                        is IrSetField -> {
+                            val setStmt = visitSetField(stmt, Unit)
+                            resultStatements.addAll(parent.takeHoistedStatements())
+                            setStmt
+                        }
+                        else -> {
+                            val transformed = parent.transformStatement(stmt)
+                            resultStatements.addAll(parent.takeHoistedStatements())
+                            transformed
+                        }
+                    }
+                    if (transformed != null) {
+                        resultStatements.add(transformed)
+                    }
+                }
+
+                // Pop our scope (should be empty now) and discard
+                parent.popHoistedScope()
+
+                return BrsBlock(resultStatements.toMutableList())
+            }
+        }
+
         val statements = expression.statements.flatMap { stmt ->
+            // Helper to consume and prepend hoisted statements
+            fun prependHoisted(stmts: List<BrsStatement>): List<BrsStatement> {
+                val hoisted = parent.takeHoistedStatements()
+                return if (hoisted.isNotEmpty()) hoisted + stmts else stmts
+            }
+
             when (stmt) {
                 // Route IrReturn to statement transformer (has visitReturn handler)
                 // IrReturn extends IrExpression but needs statement-level handling
-                is IrReturn -> listOfNotNull(parent.transformStatement(stmt))
+                is IrReturn -> {
+                    val transformed = parent.transformStatement(stmt)
+                    prependHoisted(listOfNotNull(transformed))
+                }
                 // These are handled during constructor/enum transformation, skip here
                 is IrDelegatingConstructorCall -> emptyList()
                 is IrInstanceInitializerCall -> emptyList()
@@ -2061,7 +2159,8 @@ class IrStatementToBrsTransformer(
                     } else if (varName.startsWith("__when_tmp")) {
                         emptyList()  // Skip when-lowering temp variable returns
                     } else {
-                        listOf(BrsExpressionStatement(parent.transformExpression(stmt)))
+                        val expr = parent.transformExpression(stmt)
+                        prependHoisted(listOf(BrsExpressionStatement(expr)))
                     }
                 }
                 // Keep temp variable DECLARATIONS - they're needed by the setter call
@@ -2074,21 +2173,27 @@ class IrStatementToBrsTransformer(
                         varName
                     }
                     val init = stmt.initializer?.let { parent.transformExpression(it) }
-                    if (init != null) {
-                        listOf(BrsVariable(sanitizedName, parent.mapTypeToBrs(stmt.type), init))
+                    // Check for hoisted statements from when-lowered blocks in the initializer
+                    val hoisted = parent.takeHoistedStatements()
+                    // Always create the variable declaration (use invalid for uninitialized vars)
+                    val varDecl = BrsVariable(sanitizedName, parent.mapTypeToBrs(stmt.type), init ?: BrsInvalidLiteral())
+                    if (hoisted.isNotEmpty()) {
+                        // Prepend hoisted statements before the variable declaration
+                        hoisted + varDecl
                     } else {
-                        emptyList()
+                        listOf(varDecl)
                     }
                 }
                 // For nested blocks/composites, flatten them to extract all statements
                 // This is important for postfix increment/decrement which use blocks
                 is IrBlock -> {
                     val nested = visitBlock(stmt, Unit)
-                    if (nested is BrsBlock) nested.statements else listOf(nested)
+                    val stmts = if (nested is BrsBlock) nested.statements else listOf(nested)
+                    prependHoisted(stmts)
                 }
                 is IrComposite -> {
                     // Process each statement in the composite
-                    stmt.statements.flatMap { nestedStmt ->
+                    val compositeStmts = stmt.statements.flatMap { nestedStmt ->
                         when (nestedStmt) {
                             is IrBlock -> {
                                 val nested = visitBlock(nestedStmt, Unit)
@@ -2107,21 +2212,52 @@ class IrStatementToBrsTransformer(
                             else -> listOfNotNull(parent.transformStatement(nestedStmt))
                         }
                     }
+                    prependHoisted(compositeStmts)
                 }
                 // Loops are expressions (extend IrExpression) but should be transformed as statements
-                is IrWhileLoop -> listOf(visitWhileLoop(stmt, Unit))
-                is IrDoWhileLoop -> listOf(visitDoWhileLoop(stmt, Unit))
+                is IrWhileLoop -> {
+                    val transformed = visitWhileLoop(stmt, Unit)
+                    prependHoisted(listOf(transformed))
+                }
+                is IrDoWhileLoop -> {
+                    val transformed = visitDoWhileLoop(stmt, Unit)
+                    prependHoisted(listOf(transformed))
+                }
                 // IrWhen (if/when) with Unit type should be transformed as statements, not expressions
-                is IrWhen -> listOf(visitWhen(stmt, Unit))
+                is IrWhen -> {
+                    val transformed = visitWhen(stmt, Unit)
+                    prependHoisted(listOf(transformed))
+                }
                 // Control flow must be handled as statements, not expressions
-                is IrThrow -> listOf(visitThrow(stmt, Unit))
-                is IrBreak -> listOf(visitBreak(stmt, Unit))
-                is IrContinue -> listOf(visitContinue(stmt, Unit))
-                is IrExpression -> listOf(BrsExpressionStatement(parent.transformExpression(stmt)))
-                else -> listOfNotNull(parent.transformStatement(stmt))
+                is IrThrow -> {
+                    val transformed = visitThrow(stmt, Unit)
+                    prependHoisted(listOf(transformed))
+                }
+                is IrBreak -> {
+                    val transformed = visitBreak(stmt, Unit)
+                    prependHoisted(listOf(transformed))
+                }
+                is IrContinue -> {
+                    val transformed = visitContinue(stmt, Unit)
+                    prependHoisted(listOf(transformed))
+                }
+                is IrExpression -> {
+                    val expr = parent.transformExpression(stmt)
+                    prependHoisted(listOf(BrsExpressionStatement(expr)))
+                }
+                else -> {
+                    val transformed = parent.transformStatement(stmt)
+                    prependHoisted(listOfNotNull(transformed))
+                }
             }
         }
-        return BrsBlock(statements.toMutableList())
+        // Consume any remaining hoisted statements and prepend them to the block
+        val remainingHoisted = parent.takeHoistedStatements()
+        return if (remainingHoisted.isNotEmpty()) {
+            BrsBlock((remainingHoisted + statements).toMutableList())
+        } else {
+            BrsBlock(statements.toMutableList())
+        }
     }
 
     /**
@@ -2187,9 +2323,6 @@ class IrStatementToBrsTransformer(
      * Try to transform a lowered FOR loop back to a BrightScript for/forEach loop.
      * Returns null if the pattern doesn't match and we should fall back to while loop.
      */
-    // Track current function for debugging
-    private var currentFunctionName: String = ""
-
     private fun tryTransformForLoop(block: IrBlock): BrsStatement? {
         // Structure of a lowered FOR loop:
         // IrBlock(origin=FOR_LOOP) {
@@ -2270,35 +2403,9 @@ class IrStatementToBrsTransformer(
                         transformBlockOrStatement(stmt)
                     }
                 }
-                // Expressions need block hoisting if they contain when-lowered blocks
+                // Expressions - transform and check for hoisted when-lowered blocks
                 is IrExpression -> {
-                    val blocksToHoist = collectBlocksFromExpression(stmt)
-                    if (blocksToHoist.isNotEmpty()) {
-                        // Hoist all blocks - the hoisted statements contain the side effects
-                        val precedingStatements = mutableListOf<BrsStatement>()
-                        for (block in blocksToHoist) {
-                            hoistBlockStatements(block, precedingStatements)
-                        }
-                        // In statement context, we only care about side effects.
-                        // After hoisting, if the expression is just a temp variable reference, skip it.
-                        // Otherwise, emit the expression for its side effects.
-                        val transformedExpr = parent.transformExpression(stmt)
-                        // Check for hoisted statements from expression visitor (when expressions)
-                        val hoisted = parent.takeHoistedStatements()
-                        precedingStatements.addAll(hoisted)
-                        val skipFinalExpr = transformedExpr is BrsIdentifier &&
-                            transformedExpr.name.startsWith("__when_tmp")
-                        if (!skipFinalExpr && transformedExpr !is BrsInvalidLiteral) {
-                            precedingStatements.add(BrsExpressionStatement(transformedExpr))
-                        }
-                        if (precedingStatements.isEmpty()) {
-                            null
-                        } else if (precedingStatements.size == 1) {
-                            precedingStatements.first()
-                        } else {
-                            BrsBlock(precedingStatements.toMutableList())
-                        }
-                    } else if (stmt.type.isUnit()) {
+                    if (stmt.type.isUnit()) {
                         parent.transformStatement(stmt)
                     } else if (stmt is IrWhen) {
                         // When expressions should always be statements in for loop body,
@@ -2308,18 +2415,23 @@ class IrStatementToBrsTransformer(
                         // Unwrap type operators around when expressions
                         visitWhen(stmt.argument as IrWhen, Unit)
                     } else {
-                        // Transform expression and check for hoisted statements
+                        // Transform expression - when-lowered blocks add to hoisted queue
                         val expr = parent.transformExpression(stmt)
                         val hoisted = parent.takeHoistedStatements()
+                        // In statement context, skip __when_tmp references (just temp var values)
+                        val skipFinalExpr = expr is BrsIdentifier && expr.name.startsWith("__when_tmp")
                         if (hoisted.isNotEmpty()) {
-                            // Return the hoisted statements (the expression was for side effects only)
-                            if (hoisted.size == 1) {
-                                hoisted.first()
-                            } else {
-                                BrsBlock(hoisted.toMutableList())
+                            val stmts = hoisted.toMutableList()
+                            if (!skipFinalExpr && expr !is BrsInvalidLiteral) {
+                                stmts.add(BrsExpressionStatement(expr))
                             }
-                        } else {
+                            if (stmts.isEmpty()) null
+                            else if (stmts.size == 1) stmts.first()
+                            else BrsBlock(stmts)
+                        } else if (!skipFinalExpr) {
                             BrsExpressionStatement(expr)
+                        } else {
+                            null
                         }
                     }
                 }
@@ -2361,6 +2473,8 @@ class IrStatementToBrsTransformer(
                     if (stmt is IrExpression) {
                         collectBlocksRecursive(stmt, blocks)
                     }
+                    // Note: IrVariable initializers are handled by hoistBlockStatements which
+                    // consumes hoisted statements from transformExpression calls
                 }
             }
             is IrCall -> {
@@ -2376,9 +2490,12 @@ class IrStatementToBrsTransformer(
                 }
             }
             is IrWhen -> {
+                // Only recurse into conditions, NOT branch results
+                // Branch result blocks should stay as branch bodies and be handled by visitWhen
+                // They don't need hoisting - only blocks in true expression context do
                 for (branch in expr.branches) {
                     collectBlocksRecursive(branch.condition, blocks)
-                    collectBlocksRecursive(branch.result, blocks)
+                    // Don't recurse into branch.result - it's a branch body, not a hoistable block
                 }
             }
             is IrTypeOperatorCall -> {
@@ -2416,6 +2533,9 @@ class IrStatementToBrsTransformer(
                         varName.removePrefix("<").removeSuffix(">").replace("-", "_")
                     } else varName
                     val init = stmt.initializer?.let { parent.transformExpression(it) }
+                    // Consume any hoisted statements from nested when-lowered blocks in the initializer
+                    val hoisted = parent.takeHoistedStatements()
+                    precedingStatements.addAll(hoisted)
                     if (init != null) BrsVariable(sanitizedVarName, parent.mapTypeToBrs(stmt.type), init) else null
                 }
                 is IrWhen -> visitWhen(stmt, Unit)
@@ -2451,36 +2571,20 @@ class IrStatementToBrsTransformer(
             BrsIdentifier(sanitizedName)
         }
 
-        // Collect all blocks from the expression tree that need hoisting
-        val value = expression.value
-        val blocksToHoist = collectBlocksFromExpression(value)
+        // Transform the expression - when-lowered blocks will add to hoisted queue
+        val transformedValue = parent.transformExpression(expression.value)
+        // Take any hoisted statements from nested when-lowered blocks
+        val hoisted = parent.takeHoistedStatements()
 
-        if (blocksToHoist.isNotEmpty()) {
-            val precedingStatements = mutableListOf<BrsStatement>()
-
-            // Hoist all blocks
-            for (block in blocksToHoist) {
-                hoistBlockStatements(block, precedingStatements)
-            }
-
-            // Now transform the expression - blocks will now be simplified to their final values
-            val transformedValue = parent.transformExpression(value)
-            val assignment = BrsExpressionStatement(
-                BrsBinaryOp(target, BrsBinaryOperator.EQ, transformedValue)
-            )
-            precedingStatements.add(assignment)
-
-            return if (precedingStatements.size == 1) {
-                precedingStatements.first()
-            } else {
-                BrsBlock(precedingStatements.toMutableList())
-            }
-        }
-
-        // Simple case: no blocks to hoist
-        return BrsExpressionStatement(
-            BrsBinaryOp(target, BrsBinaryOperator.EQ, parent.transformExpression(value))
+        val assignment = BrsExpressionStatement(
+            BrsBinaryOp(target, BrsBinaryOperator.EQ, transformedValue)
         )
+
+        return if (hoisted.isNotEmpty()) {
+            BrsBlock((hoisted + assignment).toMutableList())
+        } else {
+            assignment
+        }
     }
 
     override fun visitSetField(expression: IrSetField, data: Unit): BrsStatement {
@@ -2490,36 +2594,20 @@ class IrStatementToBrsTransformer(
         val fieldName = expression.symbol.owner.name.asString()
         val target = BrsDotAccess(receiver, fieldName)
 
-        // Collect all blocks from the expression tree that need hoisting
-        val value = expression.value
-        val blocksToHoist = collectBlocksFromExpression(value)
+        // Transform the expression - when-lowered blocks will add to hoisted queue
+        val transformedValue = parent.transformExpression(expression.value)
+        // Take any hoisted statements from nested when-lowered blocks
+        val hoisted = parent.takeHoistedStatements()
 
-        if (blocksToHoist.isNotEmpty()) {
-            val precedingStatements = mutableListOf<BrsStatement>()
-
-            // Hoist all blocks
-            for (block in blocksToHoist) {
-                hoistBlockStatements(block, precedingStatements)
-            }
-
-            // Now transform the expression - blocks will now be simplified to their final values
-            val transformedValue = parent.transformExpression(value)
-            val assignment = BrsExpressionStatement(
-                BrsBinaryOp(target, BrsBinaryOperator.EQ, transformedValue)
-            )
-            precedingStatements.add(assignment)
-
-            return if (precedingStatements.size == 1) {
-                precedingStatements.first()
-            } else {
-                BrsBlock(precedingStatements.toMutableList())
-            }
-        }
-
-        // Simple case: no blocks to hoist
-        return BrsExpressionStatement(
-            BrsBinaryOp(target, BrsBinaryOperator.EQ, parent.transformExpression(value))
+        val assignment = BrsExpressionStatement(
+            BrsBinaryOp(target, BrsBinaryOperator.EQ, transformedValue)
         )
+
+        return if (hoisted.isNotEmpty()) {
+            BrsBlock((hoisted + assignment).toMutableList())
+        } else {
+            assignment
+        }
     }
 
     /**
@@ -2530,29 +2618,17 @@ class IrStatementToBrsTransformer(
      * 2. Replace the block argument with just the final value (the temp variable)
      */
     fun visitCallAsStatement(expression: IrCall): BrsStatement {
-        // Recursively collect all blocks that need hoisting from the entire call expression
-        val blocksToHoist = collectBlocksFromExpression(expression)
+        // Transform the expression - when-lowered blocks will add to hoisted queue
+        val transformedCall = parent.transformExpression(expression)
+        // Take any hoisted statements from nested when-lowered blocks
+        val hoisted = parent.takeHoistedStatements()
 
-        if (blocksToHoist.isEmpty()) {
-            // No block arguments - transform normally as expression statement
-            return BrsExpressionStatement(parent.transformExpression(expression))
-        }
+        val callStmt = BrsExpressionStatement(transformedCall)
 
-        // We have blocks that need hoisting
-        val precedingStatements = mutableListOf<BrsStatement>()
-
-        // Hoist all blocks
-        for (block in blocksToHoist) {
-            hoistBlockStatements(block, precedingStatements)
-        }
-
-        // Now transform the call - blocks will now be simplified to their final values
-        precedingStatements.add(BrsExpressionStatement(parent.transformExpression(expression)))
-
-        return if (precedingStatements.size == 1) {
-            precedingStatements.first()
+        return if (hoisted.isNotEmpty()) {
+            BrsBlock((hoisted + callStmt).toMutableList())
         } else {
-            BrsBlock(precedingStatements.toMutableList())
+            callStmt
         }
     }
 
@@ -2636,6 +2712,21 @@ class IrExpressionToBrsTransformer(
 
     override fun visitElement(element: IrElement, data: Unit): BrsExpression {
         return BrsStringLiteral("/* Unsupported: ${element::class.simpleName} */")
+    }
+
+    // ==================== Loops in Expression Context ====================
+
+    override fun visitWhileLoop(loop: IrWhileLoop, data: Unit): BrsExpression {
+        // While loops in expression context - wrap in BrsStatementAsExpression
+        // so they render as statements inline rather than being treated as expressions
+        val whileStmt = parent.statementVisitor.visitWhileLoop(loop, Unit)
+        return BrsStatementAsExpression(whileStmt)
+    }
+
+    override fun visitDoWhileLoop(loop: IrDoWhileLoop, data: Unit): BrsExpression {
+        // Do-while loops in expression context - wrap in BrsStatementAsExpression
+        val doWhileStmt = parent.statementVisitor.visitDoWhileLoop(loop, Unit)
+        return BrsStatementAsExpression(doWhileStmt)
     }
 
     // ==================== Literals ====================
@@ -3780,10 +3871,18 @@ class IrExpressionToBrsTransformer(
             }
         }
 
+        // Handle for-loop blocks in expression context
+        // For-loop blocks need to be transformed as statements and wrapped
+        if (expression.origin == IrStatementOrigin.FOR_LOOP) {
+            val forLoopStmt = parent.statementVisitor.visitBlock(expression, Unit)
+            return BrsStatementAsExpression(forLoopStmt)
+        }
+
         // Check for when-lowered blocks: { var __when_tmp; when { ... -> __when_tmp = ... }; __when_tmp }
+        // Or simpler: { var __when_tmp = if (...) a else b; __when_tmp }
         // These need special handling because preceding statements must be hoisted
         val statements = expression.statements
-        if (statements.size >= 3) {
+        if (statements.size >= 2) {
             val firstStmt = statements.firstOrNull()
             val lastStmt = statements.lastOrNull()
 
@@ -3794,20 +3893,68 @@ class IrExpressionToBrsTransformer(
                 lastStmt.symbol.owner.name.asString().startsWith("__when_tmp")
 
             if (isWhenLoweredBlock) {
-                // Store statements to hoist in a thread-local or context
-                // For now, add them to a hoisting queue that visitVariable/statement handlers will check
+                // When-lowered blocks transform to: hoist all statements except last, return last as expression.
+                // The hoisted statements will be consumed by the caller (e.g., flatMap for IrVariable).
+                //
+                // We push a new hoisting scope so nested transformations don't interfere with
+                // outer scopes. After processing, we pop and add our statements to the parent scope.
+
+                parent.pushHoistedScope()
+
                 for (i in 0 until statements.size - 1) {
                     val stmt = statements[i]
-                    val transformed = when (stmt) {
+                    when (stmt) {
                         is IrVariable -> {
+                            // Transform the initializer - if it's a when-lowered block, its statements
+                            // will be added to the current hoisted scope
                             val init = stmt.initializer?.let { parent.transformExpression(it) }
-                            BrsVariable(stmt.name.asString(), parent.mapTypeToBrs(stmt.type), init)
+                            // Add the variable declaration after any hoisted statements from the initializer
+                            parent.addHoistedStatement(BrsVariable(stmt.name.asString(), parent.mapTypeToBrs(stmt.type), init))
                         }
-                        is IrWhen -> parent.statementVisitor.visitWhen(stmt, Unit)
-                        else -> parent.transformStatement(stmt) ?: BrsEmpty()
+                        is IrWhen -> {
+                            // Push a scope to capture any nested when-lowered block hoisting
+                            parent.pushHoistedScope()
+                            val whenStmt = parent.statementVisitor.visitWhen(stmt, Unit)
+                            // Take any statements added during transformation and add to our scope
+                            val nestedHoisted = parent.popHoistedScope()
+                            nestedHoisted.forEach { parent.addHoistedStatement(it) }
+                            parent.addHoistedStatement(whenStmt)
+                        }
+                        is IrWhileLoop -> {
+                            parent.pushHoistedScope()
+                            val loopStmt = parent.statementVisitor.visitWhileLoop(stmt, Unit)
+                            val nestedHoisted = parent.popHoistedScope()
+                            nestedHoisted.forEach { parent.addHoistedStatement(it) }
+                            parent.addHoistedStatement(loopStmt)
+                        }
+                        is IrDoWhileLoop -> {
+                            parent.pushHoistedScope()
+                            val loopStmt = parent.statementVisitor.visitDoWhileLoop(stmt, Unit)
+                            val nestedHoisted = parent.popHoistedScope()
+                            nestedHoisted.forEach { parent.addHoistedStatement(it) }
+                            parent.addHoistedStatement(loopStmt)
+                        }
+                        is IrBlock -> {
+                            parent.pushHoistedScope()
+                            val blockStmt = parent.statementVisitor.visitBlock(stmt, Unit)
+                            val nestedHoisted = parent.popHoistedScope()
+                            nestedHoisted.forEach { parent.addHoistedStatement(it) }
+                            parent.addHoistedStatement(blockStmt)
+                        }
+                        else -> {
+                            parent.pushHoistedScope()
+                            val transformed = parent.transformStatement(stmt)
+                            val nestedHoisted = parent.popHoistedScope()
+                            nestedHoisted.forEach { parent.addHoistedStatement(it) }
+                            transformed?.let { parent.addHoistedStatement(it) }
+                        }
                     }
-                    parent.addHoistedStatement(transformed)
                 }
+
+                // Pop our scope and add all statements to the parent scope
+                val blockStatements = parent.popHoistedScope()
+                blockStatements.forEach { parent.addHoistedStatement(it) }
+
                 // Return just the temp var reference
                 return (lastStmt as IrExpression).accept(this, data)
             }
