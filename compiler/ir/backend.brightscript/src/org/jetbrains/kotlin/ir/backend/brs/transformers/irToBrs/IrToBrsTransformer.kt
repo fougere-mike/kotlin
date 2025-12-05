@@ -43,6 +43,9 @@ class IrToBrsTransformer(
 
     private val statementTransformer = IrStatementToBrsTransformer(this, context)
     private val expressionTransformer = IrExpressionToBrsTransformer(this, context)
+
+    // Expose statement visitor for when-lowered block handling
+    val statementVisitor: IrStatementToBrsTransformer get() = statementTransformer
     private val inlineCallTransformer = BrsInlineCallTransformer(context)
 
     // Track enum classes encountered during transformation for initialization
@@ -83,6 +86,24 @@ class IrToBrsTransformer(
     fun getTempVarSubstitution(symbol: IrValueSymbol): IrExpression? {
         return tempVarSubstitutions[symbol]
     }
+
+    /**
+     * Hoisted statements from when-expression lowered blocks.
+     * These need to be emitted before the expression that uses them.
+     */
+    private val hoistedStatements = mutableListOf<BrsStatement>()
+
+    fun addHoistedStatement(stmt: BrsStatement) {
+        hoistedStatements.add(stmt)
+    }
+
+    fun takeHoistedStatements(): List<BrsStatement> {
+        val result = hoistedStatements.toList()
+        hoistedStatements.clear()
+        return result
+    }
+
+    fun hasHoistedStatements(): Boolean = hoistedStatements.isNotEmpty()
 
     /**
      * Detect variables captured by a function expression.
@@ -210,13 +231,14 @@ class IrToBrsTransformer(
         if (irFunction.isExternal) return null
 
         val name = context.getBrsName(irFunction)
-        val parameters = normalizeParametersForBrs(irFunction.valueParameters.map { param ->
+        val rawParameters = irFunction.valueParameters.map { param ->
             BrsParameter(
                 name = sanitizeParameterName(param.name.asString()),
                 type = mapTypeToBrs(param.type),
                 defaultValue = param.defaultValue?.expression?.let { transformExpression(it) }
             )
-        })
+        }
+        val parameters = normalizeParametersForBrs(deduplicateParameterNames(rawParameters))
 
         // Check if this function has @BrsInline - use parsed code instead of IR body
         val inlineInfo = context.inlineFunctionInfo[irFunction.symbol] as? BrsCodeOutliningLowering.BrsInlineInfo
@@ -1389,16 +1411,38 @@ class IrToBrsTransformer(
 
     /**
      * Sanitize parameter names for BrightScript.
-     * Kotlin IR uses special names like <set-?> for setter parameters.
+     * Kotlin IR uses special names like <set-?> for setter parameters,
+     * <unused var> for underscore placeholders in lambdas, etc.
      */
     fun sanitizeParameterName(name: String): String {
         return when {
             // Setter parameter: <set-?> -> value
             name.startsWith("<set-") && name.endsWith(">") -> "value"
-            // Any other special name: strip angle brackets
+            // Unused parameter placeholder (from _ in lambdas): <unused var> -> _unused
+            name == "<unused var>" -> "_unused"
+            // Any other special name: strip angle brackets and sanitize
             name.startsWith("<") && name.endsWith(">") ->
-                name.removePrefix("<").removeSuffix(">").replace("-", "_")
+                name.removePrefix("<").removeSuffix(">")
+                    .replace("-", "_")
+                    .replace(" ", "_")
             else -> name
+        }
+    }
+
+    /**
+     * Deduplicate parameter names by adding numeric suffixes.
+     * This handles cases like multiple `_unused` parameters from lambdas with multiple _ placeholders.
+     */
+    fun deduplicateParameterNames(parameters: List<BrsParameter>): List<BrsParameter> {
+        val nameCounts = mutableMapOf<String, Int>()
+        return parameters.map { param ->
+            val count = nameCounts.getOrDefault(param.name, 0)
+            nameCounts[param.name] = count + 1
+            if (count > 0) {
+                BrsParameter("${param.name}$count", param.type, param.defaultValue)
+            } else {
+                param
+            }
         }
     }
 
@@ -1510,12 +1554,56 @@ class IrStatementToBrsTransformer(
             return BrsBlock(statements)
         }
 
+        // Check if the initializer contains blocks that need hoisting
+        // (e.g., from when-expression lowering of ?: operator)
+        if (initializer != null) {
+            val blocksToHoist = collectBlocksFromExpression(initializer)
+            if (blocksToHoist.isNotEmpty()) {
+                val precedingStatements = mutableListOf<BrsStatement>()
+
+                // Hoist all blocks
+                for (block in blocksToHoist) {
+                    hoistBlockStatements(block, precedingStatements)
+                }
+
+                // Transform the initializer (blocks will be simplified to their final values)
+                val transformedInit = parent.transformExpression(initializer)
+                precedingStatements.add(BrsVariable(
+                    name = declaration.name.asString(),
+                    type = parent.mapTypeToBrs(declaration.type),
+                    initializer = transformedInit
+                ))
+
+                return if (precedingStatements.size == 1) {
+                    precedingStatements.first()
+                } else {
+                    BrsBlock(precedingStatements.toMutableList())
+                }
+            }
+        }
+
         // Simple case - no block or single-expression block
-        return BrsVariable(
-            name = declaration.name.asString(),
-            type = parent.mapTypeToBrs(declaration.type),
-            initializer = initializer?.let { parent.transformExpression(it) }
-        )
+        // Transform the initializer, which may add hoisted statements
+        val transformedInit = initializer?.let { parent.transformExpression(it) }
+
+        // Check for hoisted statements from when-lowered blocks
+        val hoisted = parent.takeHoistedStatements()
+        return if (hoisted.isEmpty()) {
+            BrsVariable(
+                name = declaration.name.asString(),
+                type = parent.mapTypeToBrs(declaration.type),
+                initializer = transformedInit
+            )
+        } else {
+            // Prepend hoisted statements before the variable declaration
+            val allStatements = hoisted.toMutableList()
+            allStatements.add(BrsVariable(
+                name = declaration.name.asString(),
+                type = parent.mapTypeToBrs(declaration.type),
+                initializer = transformedInit
+            ))
+            BrsBlock(allStatements)
+        }
     }
 
     /**
@@ -1572,12 +1660,13 @@ class IrStatementToBrsTransformer(
         if (declaration is IrSimpleFunction && declaration.isFakeOverride) return BrsEmpty()
 
         val name = declaration.name.asString()
-        val parameters = declaration.valueParameters.map { param ->
+        val rawParameters = declaration.valueParameters.map { param ->
             BrsParameter(
-                name = param.name.asString(),
+                name = parent.sanitizeParameterName(param.name.asString()),
                 type = parent.mapTypeToBrs(param.type)
             )
         }
+        val parameters = parent.deduplicateParameterNames(rawParameters)
 
         val returnType = parent.mapTypeToBrs(declaration.returnType)
 
@@ -2110,9 +2199,12 @@ class IrStatementToBrsTransformer(
                         // After hoisting, if the expression is just a temp variable reference, skip it.
                         // Otherwise, emit the expression for its side effects.
                         val transformedExpr = parent.transformExpression(stmt)
+                        // Check for hoisted statements from expression visitor (when expressions)
+                        val hoisted = parent.takeHoistedStatements()
+                        precedingStatements.addAll(hoisted)
                         val skipFinalExpr = transformedExpr is BrsIdentifier &&
                             transformedExpr.name.startsWith("__when_tmp")
-                        if (!skipFinalExpr) {
+                        if (!skipFinalExpr && transformedExpr !is BrsInvalidLiteral) {
                             precedingStatements.add(BrsExpressionStatement(transformedExpr))
                         }
                         if (precedingStatements.isEmpty()) {
@@ -2124,8 +2216,27 @@ class IrStatementToBrsTransformer(
                         }
                     } else if (stmt.type.isUnit()) {
                         parent.transformStatement(stmt)
+                    } else if (stmt is IrWhen) {
+                        // When expressions should always be statements in for loop body,
+                        // even if they have a non-Unit type (e.g., StringBuilder.append())
+                        visitWhen(stmt, Unit)
+                    } else if (stmt is IrTypeOperatorCall && stmt.argument is IrWhen) {
+                        // Unwrap type operators around when expressions
+                        visitWhen(stmt.argument as IrWhen, Unit)
                     } else {
-                        BrsExpressionStatement(parent.transformExpression(stmt))
+                        // Transform expression and check for hoisted statements
+                        val expr = parent.transformExpression(stmt)
+                        val hoisted = parent.takeHoistedStatements()
+                        if (hoisted.isNotEmpty()) {
+                            // Return the hoisted statements (the expression was for side effects only)
+                            if (hoisted.size == 1) {
+                                hoisted.first()
+                            } else {
+                                BrsBlock(hoisted.toMutableList())
+                            }
+                        } else {
+                            BrsExpressionStatement(expr)
+                        }
                     }
                 }
                 else -> parent.transformStatement(stmt)
@@ -2374,7 +2485,57 @@ class IrStatementToBrsTransformer(
             is IrThrow -> visitThrow(element, Unit)
             is IrBreak -> visitBreak(element, Unit)
             is IrContinue -> visitContinue(element, Unit)
-            is IrExpression -> BrsExpressionStatement(parent.transformExpression(element))
+            // Type operators (like IMPLICIT_COERCION_TO_UNIT) - recursively unwrap to find the inner statement
+            is IrTypeOperatorCall -> {
+                val innerArg = element.argument
+                when (innerArg) {
+                    is IrWhen -> visitWhen(innerArg, Unit)
+                    is IrBlock -> visitBlock(innerArg, Unit)
+                    is IrTypeOperatorCall -> transformBlockOrStatement(innerArg)  // Recursive unwrap
+                    is IrComposite -> {
+                        // Composite might wrap a when - process statements individually
+                        val compositeStmts = innerArg.statements
+                        if (compositeStmts.size == 1 && compositeStmts[0] is IrWhen) {
+                            visitWhen(compositeStmts[0] as IrWhen, Unit)
+                        } else {
+                            // Transform all statements and wrap in block
+                            val brsStatements = compositeStmts.mapNotNull { transformBlockOrStatement(it) }
+                            BrsBlock(brsStatements.toMutableList())
+                        }
+                    }
+                    else -> {
+                        // Transform and check for hoisted statements (from when expressions)
+                        val expr = parent.transformExpression(element)
+                        val hoisted = parent.takeHoistedStatements()
+                        if (hoisted.isNotEmpty()) {
+                            if (hoisted.size == 1) hoisted.first() else BrsBlock(hoisted.toMutableList())
+                        } else {
+                            BrsExpressionStatement(expr)
+                        }
+                    }
+                }
+            }
+            // Composite expressions might contain when statements
+            is IrComposite -> {
+                val compositeStmts = element.statements
+                if (compositeStmts.size == 1 && compositeStmts[0] is IrWhen) {
+                    visitWhen(compositeStmts[0] as IrWhen, Unit)
+                } else {
+                    // Transform all statements and wrap in block
+                    val brsStatements = compositeStmts.mapNotNull { transformBlockOrStatement(it) }
+                    BrsBlock(brsStatements.toMutableList())
+                }
+            }
+            is IrExpression -> {
+                // Transform and check for hoisted statements (from when expressions)
+                val expr = parent.transformExpression(element)
+                val hoisted = parent.takeHoistedStatements()
+                if (hoisted.isNotEmpty()) {
+                    if (hoisted.size == 1) hoisted.first() else BrsBlock(hoisted.toMutableList())
+                } else {
+                    BrsExpressionStatement(expr)
+                }
+            }
             is IrStatement -> parent.transformStatement(element) ?: BrsEmpty()
             else -> BrsEmpty()
         }
@@ -3146,6 +3307,21 @@ class IrExpressionToBrsTransformer(
     // ==================== Operators ====================
 
     override fun visitTypeOperator(expression: IrTypeOperatorCall, data: Unit): BrsExpression {
+        // Handle IMPLICIT_COERCION_TO_UNIT specially - the inner expression's value is discarded
+        // For IrWhen inside IMPLICIT_COERCION_TO_UNIT, use the statement transformer to generate
+        // proper if-then-else blocks instead of trying to treat it as an expression
+        if (expression.operator == IrTypeOperator.IMPLICIT_COERCION_TO_UNIT) {
+            val innerArg = expression.argument
+            if (innerArg is IrWhen) {
+                // Use statement transformer to generate BrsIf
+                val brsIf = parent.statementVisitor.visitWhen(innerArg, data)
+                return BrsStatementAsExpression(brsIf)
+            }
+            // For other inner expressions wrapped in IMPLICIT_COERCION_TO_UNIT,
+            // just process the inner expression - its value is discarded anyway
+            return innerArg.accept(this, data)
+        }
+
         val argument = expression.argument.accept(this, data)
 
         return when (expression.operator) {
@@ -3279,34 +3455,18 @@ class IrExpressionToBrsTransformer(
         }
 
         // For non-Unit when expressions that weren't lowered, we need to handle them.
-        // This can happen in certain edge cases. Use a fallback that works:
-        // Generate the if-chain as statements and return invalid (caller should handle)
-        // OR: we can still generate BrsConditional and hope for the best (some BRS versions support it)
+        // This happens when a when expression in statement context (value discarded) has
+        // a non-Unit result type (e.g., StringBuilder.append() which returns StringBuilder).
+        // Instead of generating an IIFE pattern (which BrightScript doesn't support),
+        // delegate to the statement transformer to generate proper if-then-else,
+        // and wrap it in BrsStatementAsExpression so it renders as a statement.
 
-        // Fallback: Generate BrsConditional (legacy behavior)
-        // Note: This may fail on Roku if the when is used in expression context
-        val branches = expression.branches
+        // Use the statement transformer to generate a proper BrsIf
+        val brsIf = parent.statementVisitor.visitWhen(expression, data)
 
-        if (branches.isEmpty()) {
-            return BrsInvalidLiteral()
-        }
-
-        // Build from the end
-        var result: BrsExpression = BrsInvalidLiteral()
-
-        for (i in branches.indices.reversed()) {
-            val branch = branches[i]
-            val condition = branch.condition.accept(this, data)
-            val value = branch.result.accept(this, data)
-
-            result = if (i == branches.lastIndex && branch.isElse()) {
-                value
-            } else {
-                BrsConditional(condition, value, result)
-            }
-        }
-
-        return result
+        // Wrap the if statement in BrsStatementAsExpression so it renders as a statement
+        // rather than attempting to use it as a value
+        return BrsStatementAsExpression(brsIf)
     }
 
     private fun IrBranch.isElse(): Boolean {
@@ -3321,12 +3481,13 @@ class IrExpressionToBrsTransformer(
         // Detect captured variables from outer scope
         val capturedVars = parent.detectCapturedVariables(function)
 
-        val parameters = parent.normalizeParametersForBrs(function.valueParameters.map { param ->
+        val rawParameters = function.valueParameters.map { param ->
             BrsParameter(
-                name = param.name.asString(),
+                name = parent.sanitizeParameterName(param.name.asString()),
                 type = parent.mapTypeToBrs(param.type)
             )
-        })
+        }
+        val parameters = parent.normalizeParametersForBrs(parent.deduplicateParameterNames(rawParameters))
 
         val returnType = parent.mapTypeToBrs(function.returnType)
 
@@ -3388,12 +3549,13 @@ class IrExpressionToBrsTransformer(
         val functionName = context.getBrsName(function)
 
         // Create wrapper function parameters matching the referenced function
-        val parameters = parent.normalizeParametersForBrs(function.valueParameters.map { param ->
+        val rawParameters = function.valueParameters.map { param ->
             BrsParameter(
-                name = param.name.asString(),
+                name = parent.sanitizeParameterName(param.name.asString()),
                 type = parent.mapTypeToBrs(param.type)
             )
-        })
+        }
+        val parameters = parent.normalizeParametersForBrs(parent.deduplicateParameterNames(rawParameters))
 
         // Build the call arguments from the wrapper parameters
         val callArgs: MutableList<BrsExpression> = parameters.map { BrsIdentifier(it.name) as BrsExpression }.toMutableList()
@@ -3534,8 +3696,40 @@ class IrExpressionToBrsTransformer(
             }
         }
 
-        // Default: Block expressions return the last statement's value
+        // Check for when-lowered blocks: { var __when_tmp; when { ... -> __when_tmp = ... }; __when_tmp }
+        // These need special handling because preceding statements must be hoisted
         val statements = expression.statements
+        if (statements.size >= 3) {
+            val firstStmt = statements.firstOrNull()
+            val lastStmt = statements.lastOrNull()
+
+            // Detect when-lowered block by checking for __when_tmp variable and get
+            val isWhenLoweredBlock = firstStmt is IrVariable &&
+                firstStmt.name.asString().startsWith("__when_tmp") &&
+                lastStmt is IrGetValue &&
+                lastStmt.symbol.owner.name.asString().startsWith("__when_tmp")
+
+            if (isWhenLoweredBlock) {
+                // Store statements to hoist in a thread-local or context
+                // For now, add them to a hoisting queue that visitVariable/statement handlers will check
+                for (i in 0 until statements.size - 1) {
+                    val stmt = statements[i]
+                    val transformed = when (stmt) {
+                        is IrVariable -> {
+                            val init = stmt.initializer?.let { parent.transformExpression(it) }
+                            BrsVariable(stmt.name.asString(), parent.mapTypeToBrs(stmt.type), init)
+                        }
+                        is IrWhen -> parent.statementVisitor.visitWhen(stmt, Unit)
+                        else -> parent.transformStatement(stmt) ?: BrsEmpty()
+                    }
+                    parent.addHoistedStatement(transformed)
+                }
+                // Return just the temp var reference
+                return (lastStmt as IrExpression).accept(this, data)
+            }
+        }
+
+        // Default: Block expressions return the last statement's value
         return if (statements.isEmpty()) {
             BrsInvalidLiteral()
         } else {

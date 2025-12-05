@@ -527,3 +527,23 @@ class BrsPrintNoNewline(
 
     override fun deepCopy(): BrsPrintNoNewline = BrsPrintNoNewline(value.deepCopy()).also { it.source = source }
 }
+
+/**
+ * Represents a statement used in expression context.
+ *
+ * This is used when a when expression with side effects needs to be emitted
+ * but its value is discarded. The statement is rendered directly.
+ * This is a workaround for BrightScript not supporting inline if-then-else expressions.
+ */
+class BrsStatementAsExpression(
+    var statement: BrsStatement
+) : BrsNodeBase(), BrsExpression {
+
+    override fun <R, D> accept(visitor: BrsVisitor<R, D>, data: D): R = visitor.visitStatementAsExpression(this, data)
+
+    override fun <R, D> acceptChildren(visitor: BrsVisitor<R, D>, data: D) {
+        statement.accept(visitor, data)
+    }
+
+    override fun deepCopy(): BrsStatementAsExpression = BrsStatementAsExpression(statement.deepCopy()).also { it.source = source }
+}

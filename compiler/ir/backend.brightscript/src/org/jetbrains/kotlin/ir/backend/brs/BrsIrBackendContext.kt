@@ -233,7 +233,16 @@ class BrsIrBackendContext(
         }
 
         // Fallback: use the simple name with proper mangling
-        val baseName = irClass.name.asString()
+        val rawName = irClass.name.asString()
+
+        // Handle anonymous classes (e.g., "<no name provided>" from object expressions)
+        val baseName = if (rawName.startsWith("<") && rawName.endsWith(">")) {
+            // Generate unique name using hash code
+            "Anon_${kotlin.math.abs(irClass.hashCode()).toString(16)}"
+        } else {
+            rawName
+        }
+
         val parent = irClass.parent
 
         return when (parent) {
@@ -263,7 +272,15 @@ class BrsIrBackendContext(
         else -> {
             val classifier = classifierOrNull?.owner
             when (classifier) {
-                is IrClass -> classifier.name.asString()
+                is IrClass -> {
+                    val name = classifier.name.asString()
+                    // Handle anonymous class names like "<no name provided>"
+                    if (name.startsWith("<") && name.endsWith(">")) {
+                        "Anon"
+                    } else {
+                        name
+                    }
+                }
                 else -> "Any"
             }
         }
