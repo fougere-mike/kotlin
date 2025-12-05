@@ -415,6 +415,27 @@ class BrsIrBackendContext(
     fun registerComponent(irClass: IrClass) {
         componentClasses.add(irClass)
     }
+
+    // ==================== Enum Constant Optimization ====================
+
+    /**
+     * Get the ordinal value for an enum entry if known.
+     * Returns null if the entry has not been processed yet.
+     */
+    fun getEnumOrdinal(entry: IrEnumEntry): Int? = mapping.enumEntryOrdinals[entry]
+
+    /**
+     * Get the name for an enum entry if known.
+     * Returns null if the entry has not been processed yet.
+     */
+    fun getEnumName(entry: IrEnumEntry): String? = mapping.enumEntryNames[entry]
+
+    /**
+     * Get constant property values for an enum entry if known.
+     * Returns null if the entry has no constant properties or hasn't been processed.
+     */
+    fun getEnumConstantProperties(entry: IrEnumEntry): Map<String, Any?>? =
+        mapping.enumEntryConstantProperties[entry]
 }
 
 /**
@@ -445,4 +466,25 @@ class BrsMapping : org.jetbrains.kotlin.backend.common.Mapping() {
      * Map from original properties to their backing fields.
      */
     val backingFields = WeakHashMap<IrProperty, IrField>()
+
+    // ==================== Enum Constant Optimization ====================
+
+    /**
+     * Map from enum entries to their ordinal values.
+     * Populated during enum class transformation for constant inlining.
+     */
+    val enumEntryOrdinals = WeakHashMap<IrEnumEntry, Int>()
+
+    /**
+     * Map from enum entries to their name strings.
+     * Populated during enum class transformation for constant inlining.
+     */
+    val enumEntryNames = WeakHashMap<IrEnumEntry, String>()
+
+    /**
+     * Map from enum entries to their constant property values.
+     * Only populated for val properties with IrConst initializers.
+     * Key is property name, value is the constant value.
+     */
+    val enumEntryConstantProperties = WeakHashMap<IrEnumEntry, Map<String, Any?>>()
 }
