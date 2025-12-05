@@ -745,6 +745,9 @@ class IrToBrsTransformer(
             }
         }
 
+        // Add methods and property accessors to the instance
+        addMethodAttachments(irClass, className, bodyStatements)
+
         // return this
         bodyStatements.add(BrsReturn(BrsIdentifier("this")))
 
@@ -873,6 +876,36 @@ class IrToBrsTransformer(
                         BrsDotAccess(BrsIdentifier("this"), param.name.asString()),
                         BrsBinaryOperator.EQ,
                         BrsIdentifier(sanitizeParameterName(param.name.asString()))
+                    )
+                )
+            )
+        }
+
+        // Add any additional methods and property accessors to the instance
+        addMethodAttachments(irClass, className, bodyStatements)
+
+        // Attach synthetic data class methods (equals, hashCode, toString, copy)
+        val syntheticMethods = listOf("equals", "hashCode", "toString", "copy")
+        syntheticMethods.forEach { methodName ->
+            bodyStatements.add(
+                BrsExpressionStatement(
+                    BrsBinaryOp(
+                        BrsDotAccess(BrsIdentifier("this"), methodName),
+                        BrsBinaryOperator.EQ,
+                        BrsIdentifier("${className}_$methodName")
+                    )
+                )
+            )
+        }
+
+        // Attach componentN methods
+        properties.forEachIndexed { index, _ ->
+            bodyStatements.add(
+                BrsExpressionStatement(
+                    BrsBinaryOp(
+                        BrsDotAccess(BrsIdentifier("this"), "component${index + 1}"),
+                        BrsBinaryOperator.EQ,
+                        BrsIdentifier("${className}_component${index + 1}")
                     )
                 )
             )
@@ -1314,22 +1347,8 @@ class IrToBrsTransformer(
             }
         }
 
-        // Add methods to the instance
-        for (function in irClass.declarations.filterIsInstance<IrSimpleFunction>()) {
-            if (!function.isFakeOverride && !function.isExternal) {
-                val fullMethodName = context.getBrsName(function)
-                val methodName = fullMethodName.removePrefix("${className}_")
-                bodyStatements.add(
-                    BrsExpressionStatement(
-                        BrsBinaryOp(
-                            BrsDotAccess(BrsIdentifier("this"), methodName),
-                            BrsBinaryOperator.EQ,
-                            BrsIdentifier(fullMethodName)
-                        )
-                    )
-                )
-            }
-        }
+        // Add methods and property accessors to the instance
+        addMethodAttachments(irClass, className, bodyStatements)
 
         // Execute constructor body (handles property initialization from parameters, etc.)
         constructor.body?.let { body ->
@@ -1350,6 +1369,72 @@ class IrToBrsTransformer(
             BrsType.OBJECT,
             BrsBlock(bodyStatements)
         )
+    }
+
+    /**
+     * Add method and property accessor attachments to a class instance.
+     * This attaches both IrSimpleFunction methods and property getter/setters.
+     *
+     * Important: Regular methods use mangled names (with type signatures) to support overloading.
+     * Property accessors use simple names (via sanitizeMethodName) to match call sites.
+     */
+    private fun addMethodAttachments(
+        irClass: IrClass,
+        className: String,
+        bodyStatements: MutableList<BrsStatement>
+    ) {
+        // Add regular methods (IrSimpleFunction)
+        // Use mangled names (fullMethodName minus class prefix) to support overloading
+        for (function in irClass.declarations.filterIsInstance<IrSimpleFunction>()) {
+            if (!function.isFakeOverride && !function.isExternal) {
+                val fullMethodName = context.getBrsName(function)
+                val methodName = fullMethodName.removePrefix("${className}_")
+                bodyStatements.add(
+                    BrsExpressionStatement(
+                        BrsBinaryOp(
+                            BrsDotAccess(BrsIdentifier("this"), methodName),
+                            BrsBinaryOperator.EQ,
+                            BrsIdentifier(fullMethodName)
+                        )
+                    )
+                )
+            }
+        }
+
+        // Add property accessor methods (getter/setter)
+        // Use sanitizeMethodName to match call site naming convention
+        for (property in irClass.declarations.filterIsInstance<IrProperty>()) {
+            property.getter?.let { getter ->
+                if (!getter.isFakeOverride && !getter.isExternal) {
+                    val fullMethodName = context.getBrsName(getter)
+                    val methodName = sanitizeMethodName(getter.name.asString())
+                    bodyStatements.add(
+                        BrsExpressionStatement(
+                            BrsBinaryOp(
+                                BrsDotAccess(BrsIdentifier("this"), methodName),
+                                BrsBinaryOperator.EQ,
+                                BrsIdentifier(fullMethodName)
+                            )
+                        )
+                    )
+                }
+            }
+            property.setter?.let { setter ->
+                if (!setter.isFakeOverride && !setter.isExternal) {
+                    val fullMethodName = context.getBrsName(setter)
+                    val methodName = sanitizeMethodName(setter.name.asString())
+                    bodyStatements.add(
+                        BrsExpressionStatement(
+                            BrsBinaryOp(
+                                BrsDotAccess(BrsIdentifier("this"), methodName),
+                                BrsBinaryOperator.EQ,
+                                BrsIdentifier(fullMethodName)
+                            )
+                        )
+                    )
+                }
+            }
+        }
     }
 
     /**
