@@ -214,8 +214,12 @@ class BrsWhenExpressionLowering(
 
         override fun visitTypeOperator(expression: IrTypeOperatorCall): IrExpression {
             // Type operator argument is expression context (e.g., x as T, x is T)
+            // EXCEPT for IMPLICIT_COERCION_TO_UNIT which wraps expressions used as statements
+            // (value is discarded, so not really expression context for when-lowering purposes)
             val wasInExpression = insideExpressionContext
-            insideExpressionContext = true
+            if (expression.operator != IrTypeOperator.IMPLICIT_COERCION_TO_UNIT) {
+                insideExpressionContext = true
+            }
             val result = super.visitTypeOperator(expression)
             insideExpressionContext = wasInExpression
             return result

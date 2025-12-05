@@ -589,6 +589,12 @@ class BrsRenderer(
         builder.append(";")
     }
 
+    override fun visitStatementAsExpression(stmtExpr: BrsStatementAsExpression, data: Unit) {
+        // Render the wrapped statement directly - this is used when a when expression
+        // with side effects needs to be emitted in statement context
+        stmtExpr.statement.accept(this, data)
+    }
+
     companion object {
         /**
          * Render a BrightScript AST node to a string.
