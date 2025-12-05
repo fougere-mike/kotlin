@@ -713,22 +713,7 @@ public inline fun <T> Iterable<T>.indexOfLast(predicate: (T) -> Boolean): Int {
 
 // ==================== reversed / sorted ====================
 
-/**
- * Returns a list with elements in reversed order.
- */
-public fun <T> Iterable<T>.reversed(): List<T> {
-    if (this is Collection && size <= 1) return toList()
-    val list = toMutableList()
-    val n = list.size
-    var i = 0
-    while (i < n / 2) {
-        val temp = list[i]
-        list[i] = list[n - 1 - i]
-        list[n - 1 - i] = temp
-        i++
-    }
-    return list
-}
+// Note: reversed() is defined in SortingBrs.kt
 
 // ==================== single ====================
 

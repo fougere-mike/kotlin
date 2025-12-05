@@ -131,7 +131,8 @@ class BrsCompiler(
         val program = transformer.transformFile(irFile)
 
         // Add runtime helpers to the first file only (they're shared)
-        if (context.needsRuntimeHelpers) {
+        // Only generate during stdlib compilation - user code uses stdlib's version
+        if (context.needsRuntimeHelpers && context.isStdlibCompilation) {
             addRuntimeHelpers(program, context)
             context.needsRuntimeHelpers = false
         }
@@ -371,7 +372,7 @@ class BrsCompiler(
         ))
 
         return BrsFunction(
-            name = "isInstanceOf",
+            name = "__kotlin_isInstanceOf",
             parameters = mutableListOf(
                 BrsParameter("obj", BrsType.OBJECT),
                 BrsParameter("typeName", BrsType.STRING)

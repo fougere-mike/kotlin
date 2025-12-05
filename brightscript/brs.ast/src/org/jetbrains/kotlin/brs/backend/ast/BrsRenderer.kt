@@ -403,31 +403,77 @@ class BrsRenderer(
     }
 
     override fun visitDoubleLiteral(literal: BrsDoubleLiteral, data: Unit) {
-        builder.append("${literal.value}#")
+        val value = literal.value
+        when {
+            value.isNaN() -> {
+                // BrightScript doesn't have NaN literal - use (0.0# / 0.0#) to generate NaN
+                builder.append("(0.0# / 0.0#)")
+            }
+            value.isInfinite() -> {
+                if (value > 0) {
+                    // Positive infinity: use a very large exponent that overflows to infinity
+                    builder.append("(1.0E+309#)")
+                } else {
+                    // Negative infinity
+                    builder.append("(-1.0E+309#)")
+                }
+            }
+            else -> {
+                builder.append("${value}#")
+            }
+        }
     }
 
     override fun visitStringLiteral(literal: BrsStringLiteral, data: Unit) {
-        // BrightScript doesn't support multi-line strings, so newlines must use chr(10)
+        // BrightScript doesn't support escape sequences like \n or \r in strings
+        // We need to use chr(10) for newline and chr(13) for carriage return
         val value = literal.value
-        if (value.contains('\n') || value.contains('\r')) {
-            // Split by newline and join with chr(10)
-            val parts = value.split(Regex("\\r?\\n"))
-            val renderedParts = parts.mapIndexed { index, part ->
-                val escaped = part.replace("\"", "\"\"")
-                if (index < parts.size - 1) {
-                    // Not the last part - add chr(10) after
-                    if (escaped.isEmpty()) "chr(10)" else "\"$escaped\" + chr(10)"
-                } else {
-                    // Last part - no chr(10) after
-                    if (escaped.isEmpty()) "" else "\"$escaped\""
-                }
-            }.filter { it.isNotEmpty() }
+        if (value.contains('\n') || value.contains('\r') || value.contains('\t') || value.contains('\u0000')) {
+            // Build string by concatenating parts with chr() calls for control characters
+            val parts = mutableListOf<String>()
+            val currentPart = StringBuilder()
 
-            if (renderedParts.isEmpty()) {
-                // String was just newlines
+            for (char in value) {
+                when (char) {
+                    '\n' -> {
+                        if (currentPart.isNotEmpty()) {
+                            parts.add("\"${currentPart.toString().replace("\"", "\"\"")}\"")
+                            currentPart.clear()
+                        }
+                        parts.add("chr(10)")
+                    }
+                    '\r' -> {
+                        if (currentPart.isNotEmpty()) {
+                            parts.add("\"${currentPart.toString().replace("\"", "\"\"")}\"")
+                            currentPart.clear()
+                        }
+                        parts.add("chr(13)")
+                    }
+                    '\t' -> {
+                        if (currentPart.isNotEmpty()) {
+                            parts.add("\"${currentPart.toString().replace("\"", "\"\"")}\"")
+                            currentPart.clear()
+                        }
+                        parts.add("chr(9)")
+                    }
+                    '\u0000' -> {
+                        // Null character - skip it as BrightScript can't handle it
+                        // (or could use chr(0) but that might cause issues)
+                    }
+                    else -> currentPart.append(char)
+                }
+            }
+
+            // Add any remaining text
+            if (currentPart.isNotEmpty()) {
+                parts.add("\"${currentPart.toString().replace("\"", "\"\"")}\"")
+            }
+
+            if (parts.isEmpty()) {
+                // String was only null characters
                 builder.append("\"\"")
             } else {
-                builder.append(renderedParts.joinToString(" + "))
+                builder.append(parts.joinToString(" + "))
             }
         } else {
             // Escape quotes in strings by doubling them
