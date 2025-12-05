@@ -259,6 +259,25 @@ class IrToBrsTransformer(
         clearHoistedScopes()
 
         val name = context.getBrsName(irFunction)
+
+        // Build parameter list, starting with extension receiver if present
+        val allParameters = mutableListOf<BrsParameter>()
+
+        // Add extension receiver as first parameter if this is an extension function
+        // This is needed because in BrightScript there's no receiver concept - extension
+        // functions are compiled as regular functions with the receiver as first argument.
+        // The name "m" matches what visitGetValue outputs for <this> references.
+        if (irFunction is IrSimpleFunction) {
+            irFunction.extensionReceiverParameter?.let { receiver ->
+                allParameters.add(BrsParameter(
+                    name = "m",
+                    type = mapTypeToBrs(receiver.type),
+                    defaultValue = null
+                ))
+            }
+        }
+
+        // Add value parameters
         val rawParameters = irFunction.valueParameters.map { param ->
             BrsParameter(
                 name = sanitizeParameterName(param.name.asString()),
@@ -266,7 +285,9 @@ class IrToBrsTransformer(
                 defaultValue = param.defaultValue?.expression?.let { transformExpression(it) }
             )
         }
-        val parameters = normalizeParametersForBrs(deduplicateParameterNames(rawParameters))
+        allParameters.addAll(rawParameters)
+
+        val parameters = normalizeParametersForBrs(deduplicateParameterNames(allParameters))
 
         // Check if this function has @BrsInline - use parsed code instead of IR body
         val inlineInfo = context.inlineFunctionInfo[irFunction.symbol] as? BrsCodeOutliningLowering.BrsInlineInfo
@@ -618,7 +639,7 @@ class IrToBrsTransformer(
         constructor.valueParameters.forEach { param ->
             parameters.add(
                 BrsParameter(
-                    name = param.name.asString(),
+                    name = sanitizeParameterName(param.name.asString()),
                     type = mapTypeToBrs(param.type),
                     defaultValue = param.defaultValue?.expression?.let { transformExpression(it) }
                 )
@@ -677,7 +698,7 @@ class IrToBrsTransformer(
                     BrsBinaryOp(
                         BrsDotAccess(BrsIdentifier("this"), param.name.asString()),
                         BrsBinaryOperator.EQ,
-                        BrsIdentifier(param.name.asString())
+                        BrsIdentifier(sanitizeParameterName(param.name.asString()))
                     )
                 )
             )
@@ -779,7 +800,7 @@ class IrToBrsTransformer(
 
         val parameters = normalizeParametersForBrs(constructor.valueParameters.map { param ->
             BrsParameter(
-                name = param.name.asString(),
+                name = sanitizeParameterName(param.name.asString()),
                 type = mapTypeToBrs(param.type),
                 defaultValue = param.defaultValue?.expression?.let { transformExpression(it) }
             )
@@ -825,7 +846,7 @@ class IrToBrsTransformer(
                     BrsBinaryOp(
                         BrsDotAccess(BrsIdentifier("this"), param.name.asString()),
                         BrsBinaryOperator.EQ,
-                        BrsIdentifier(param.name.asString())
+                        BrsIdentifier(sanitizeParameterName(param.name.asString()))
                     )
                 )
             )
@@ -993,8 +1014,9 @@ class IrToBrsTransformer(
         // Parameters with invalid as default (BrightScript doesn't allow m.property as default)
         val parameters = properties.map { param ->
             val propName = param.name.asString()
+            val sanitizedName = sanitizeParameterName(propName)
             BrsParameter(
-                name = propName,
+                name = sanitizedName,
                 type = null,  // Untyped to allow invalid
                 defaultValue = BrsIdentifier("invalid")
             )
@@ -1003,18 +1025,19 @@ class IrToBrsTransformer(
         // Add runtime checks: if param = invalid then param = m.param
         properties.forEach { param ->
             val propName = param.name.asString()
+            val sanitizedName = sanitizeParameterName(propName)
             bodyStatements.add(
                 BrsIf(
                     condition = BrsBinaryOp(
-                        BrsIdentifier(propName),
+                        BrsIdentifier(sanitizedName),
                         BrsBinaryOperator.EQ,
                         BrsIdentifier("invalid")
                     ),
                     thenBranch = BrsExpressionStatement(
                         BrsBinaryOp(
-                            BrsIdentifier(propName),
+                            BrsIdentifier(sanitizedName),
                             BrsBinaryOperator.EQ,
-                            BrsDotAccess(BrsIdentifier("m"), propName)
+                            BrsDotAccess(BrsIdentifier("m"), propName)  // Property access uses original name
                         )
                     ),
                     elseBranch = null
@@ -1024,7 +1047,7 @@ class IrToBrsTransformer(
 
         // return ClassName_create(name, age, ...)
         val args = properties.map { param ->
-            BrsIdentifier(param.name.asString())
+            BrsIdentifier(sanitizeParameterName(param.name.asString()))
         }
         bodyStatements.add(
             BrsReturn(BrsFunctionCall(BrsIdentifier("${className}_create"), args.toMutableList()))
@@ -1086,7 +1109,7 @@ class IrToBrsTransformer(
         // Add regular constructor parameters
         parametersList.addAll(constructor.valueParameters.map { param ->
             BrsParameter(
-                name = param.name.asString(),
+                name = sanitizeParameterName(param.name.asString()),
                 type = mapTypeToBrs(param.type),
                 defaultValue = param.defaultValue?.expression?.let { transformExpression(it) }
             )
@@ -1441,16 +1464,28 @@ class IrToBrsTransformer(
         }
 
         // For top-level properties with backing fields, generate initialization
+        // using GetGlobalAA() for module-level storage.
+        // Skip constant initializers since they are inlined in visitGetField.
         property.backingField?.let { field ->
             if (field.parent is IrFile) {
                 field.initializer?.expression?.let { initializer ->
-                    statements.add(
-                        BrsVariable(
-                            name = property.name.asString(),
-                            type = mapTypeToBrs(field.type),
-                            initializer = transformExpression(initializer)
+                    // Skip constant expressions - they will be inlined in the getter
+                    if (!isConstantExpression(initializer)) {
+                        val propName = property.name.asString()
+                        // Use GetGlobalAA().propName = value for module-level property initialization
+                        statements.add(
+                            BrsExpressionStatement(
+                                BrsBinaryOp(
+                                    BrsDotAccess(
+                                        BrsFunctionCall(BrsIdentifier("GetGlobalAA"), mutableListOf()),
+                                        propName
+                                    ),
+                                    BrsBinaryOperator.EQ,
+                                    transformExpression(initializer)
+                                )
+                            )
                         )
-                    )
+                    }
                 }
             }
         }
@@ -1516,6 +1551,13 @@ class IrToBrsTransformer(
     // ==================== Helpers ====================
 
     /**
+     * Check if an IR expression is a compile-time constant that can be inlined.
+     */
+    fun isConstantExpression(expression: IrExpression): Boolean {
+        return expression is IrConst
+    }
+
+    /**
      * Sanitize property accessor names for BrightScript.
      * Kotlin IR uses names like <get-foo> and <set-foo> for property accessors.
      */
@@ -1529,13 +1571,25 @@ class IrToBrsTransformer(
         }
     }
 
+    // BrightScript reserved keywords that cannot be used as identifiers
+    private val brsReservedKeywords = setOf(
+        "and", "as", "boolean", "box", "catch", "class", "dim", "double", "dynamic",
+        "each", "else", "elseif", "end", "endfor", "endif", "endsub", "endwhile",
+        "exit", "extends", "false", "float", "for", "function", "goto", "if", "in",
+        "integer", "interface", "invalid", "let", "library", "line_num", "longinteger",
+        "mod", "next", "not", "object", "or", "override", "print", "private", "protected",
+        "public", "rem", "return", "run", "step", "stop", "string", "sub", "then",
+        "throw", "to", "true", "try", "type", "while"
+    )
+
     /**
      * Sanitize parameter names for BrightScript.
      * Kotlin IR uses special names like <set-?> for setter parameters,
      * <unused var> for underscore placeholders in lambdas, etc.
+     * Also escapes BrightScript reserved keywords.
      */
     fun sanitizeParameterName(name: String): String {
-        return when {
+        val sanitized = when {
             // Setter parameter: <set-?> -> value
             name.startsWith("<set-") && name.endsWith(">") -> "value"
             // Unused parameter placeholder (from _ in lambdas): <unused var> -> _unused
@@ -1546,6 +1600,12 @@ class IrToBrsTransformer(
                     .replace("-", "_")
                     .replace(" ", "_")
             else -> name
+        }
+        // Escape reserved keywords by adding underscore suffix
+        return if (sanitized.lowercase() in brsReservedKeywords) {
+            "${sanitized}_"
+        } else {
+            sanitized
         }
     }
 
@@ -2729,6 +2789,33 @@ class IrExpressionToBrsTransformer(
         return BrsStatementAsExpression(doWhileStmt)
     }
 
+    // ==================== Control Flow in Expression Context ====================
+
+    override fun visitReturn(expression: IrReturn, data: Unit): BrsExpression {
+        // Return statements in expression context (e.g., from inlined functions)
+        // Route to statement transformer and wrap as statement-in-expression
+        val returnStmt = parent.statementVisitor.visitReturn(expression, Unit)
+        return BrsStatementAsExpression(returnStmt)
+    }
+
+    override fun visitThrow(expression: IrThrow, data: Unit): BrsExpression {
+        // Throw statements in expression context
+        val throwStmt = parent.statementVisitor.visitThrow(expression, Unit)
+        return BrsStatementAsExpression(throwStmt)
+    }
+
+    override fun visitBreak(jump: IrBreak, data: Unit): BrsExpression {
+        // Break statements in expression context
+        val breakStmt = parent.statementVisitor.visitBreak(jump, Unit)
+        return BrsStatementAsExpression(breakStmt)
+    }
+
+    override fun visitContinue(jump: IrContinue, data: Unit): BrsExpression {
+        // Continue statements in expression context
+        val continueStmt = parent.statementVisitor.visitContinue(jump, Unit)
+        return BrsStatementAsExpression(continueStmt)
+    }
+
     // ==================== Literals ====================
 
     override fun visitConst(expression: IrConst, data: Unit): BrsExpression {
@@ -2778,14 +2865,30 @@ class IrExpressionToBrsTransformer(
             // Sanitize other special names
             rawName.startsWith("<") && rawName.endsWith(">") ->
                 BrsIdentifier(rawName.removePrefix("<").removeSuffix(">").replace("-", "_"))
-            else -> BrsIdentifier(rawName)
+            // Apply full sanitization including reserved keyword escaping
+            else -> BrsIdentifier(parent.sanitizeParameterName(rawName))
         }
     }
 
     override fun visitGetField(expression: IrGetField, data: Unit): BrsExpression {
         val field = expression.symbol.owner
-        val receiver = expression.receiver?.let { it.accept(this, data) }
-            ?: BrsMRef()
+
+        // For top-level fields with constant initializers, inline the value directly
+        // This avoids the need for initialization statements that can't appear at file level
+        if (field.parent is IrFile && field.isFinal) {
+            field.initializer?.expression?.let { initializer ->
+                if (parent.isConstantExpression(initializer)) {
+                    return parent.transformExpression(initializer)
+                }
+            }
+        }
+
+        // For top-level fields (parent is IrFile), use GetGlobalAA()
+        val receiver = if (field.parent is IrFile) {
+            BrsFunctionCall(BrsIdentifier("GetGlobalAA"), mutableListOf())
+        } else {
+            expression.receiver?.let { it.accept(this, data) } ?: BrsMRef()
+        }
 
         // Check if accessing outer class field from inner class
         // The receiver will be the outer class reference
@@ -2808,8 +2911,13 @@ class IrExpressionToBrsTransformer(
 
     override fun visitSetField(expression: IrSetField, data: Unit): BrsExpression {
         val field = expression.symbol.owner
-        val receiver = expression.receiver?.let { it.accept(this, data) }
-            ?: BrsMRef()
+
+        // For top-level fields (parent is IrFile), use GetGlobalAA()
+        val receiver = if (field.parent is IrFile) {
+            BrsFunctionCall(BrsIdentifier("GetGlobalAA"), mutableListOf())
+        } else {
+            expression.receiver?.let { it.accept(this, data) } ?: BrsMRef()
+        }
 
         // Generate assignment expression: receiver.field = value
         return BrsBinaryOp(
@@ -2870,6 +2978,37 @@ class IrExpressionToBrsTransformer(
         expression.origin?.let { origin ->
             val operatorResult = transformOperator(expression, origin)
             if (operatorResult != null) return operatorResult
+        }
+
+        // Handle primitive type conversion methods and unary operators
+        // These are Kotlin methods that don't exist in BrightScript - we need to transform them
+        val methodName = function.name.asString()
+        val receiver = expression.dispatchReceiver ?: expression.extensionReceiver
+        if (receiver != null) {
+            when (methodName) {
+                // Type conversions - BrightScript handles these implicitly
+                "toDouble", "toFloat", "toInt", "toLong", "toShort", "toByte", "toChar" -> {
+                    return receiver.accept(this, data)
+                }
+                // Unary minus/plus as method calls (when they don't have UMINUS/UPLUS origin)
+                "unaryMinus" -> {
+                    return BrsUnaryOp(BrsUnaryOperator.NEG, receiver.accept(this, data))
+                }
+                "unaryPlus" -> {
+                    return receiver.accept(this, data)  // No-op
+                }
+                // Binary plus as method call (String.plus, etc.)
+                "plus" -> {
+                    val arg = expression.getValueArgument(0)
+                    if (arg != null) {
+                        return BrsBinaryOp(
+                            receiver.accept(this, data),
+                            BrsBinaryOperator.ADD,
+                            arg.accept(this, data)
+                        )
+                    }
+                }
+            }
         }
 
         // Check for intrinsics
@@ -3555,10 +3694,10 @@ class IrExpressionToBrsTransformer(
             targetType.classFqName?.shortName()?.asString() ?: "Object"
         }
 
-        // Generate: isInstanceOf(argument, "ClassName")
-        // This requires the isInstanceOf helper function to be generated
+        // Generate: __kotlin_isInstanceOf(argument, "ClassName")
+        // This requires the __kotlin_isInstanceOf helper function to be generated
         return BrsFunctionCall(
-            BrsIdentifier("isInstanceOf"),
+            BrsIdentifier("__kotlin_isInstanceOf"),
             mutableListOf(argument, BrsStringLiteral(className))
         )
     }

@@ -44,26 +44,8 @@ public fun Int.toChar(): Char = brsIntrinsicChr(this)
 // String Extensions
 // ============================================
 
-/**
- * Returns a substring of this string starting at the specified [startIndex] and ending at the specified [endIndex] (exclusive).
- * Lowered to: Mid(string, startIndex + 1, endIndex - startIndex) in BrightScript (1-based indexing)
- */
-public fun String.substring(startIndex: Int, endIndex: Int): String =
-    brsIntrinsicSubstring(this, startIndex, endIndex)
-
-/**
- * Returns a substring of this string starting at the specified [startIndex] and extending to the end of the string.
- * Lowered to: Mid(string, startIndex + 1) in BrightScript (1-based indexing)
- */
-public fun String.substring(startIndex: Int): String =
-    brsIntrinsicSubstring(this, startIndex, this.length)
-
-/**
- * Intrinsic function to get a substring.
- * Lowered to: Mid(string, startIndex + 1, length)
- */
-@PublishedApi
-internal external fun brsIntrinsicSubstring(string: String, startIndex: Int, endIndex: Int): String
+// Note: String.substring functions are defined in stringBrs.kt
+// Do not duplicate them here.
 
 // ============================================
 // Range Utilities
@@ -131,35 +113,8 @@ public val ByteArray.indices: IntRange
 // Math Utilities
 // ============================================
 
-/**
- * Returns the smaller of two values.
- */
-public fun minOf(a: Int, b: Int): Int = if (a <= b) a else b
-
-/**
- * Returns the smaller of two values.
- */
-public fun minOf(a: Long, b: Long): Long = if (a <= b) a else b
-
-/**
- * Returns the smaller of two values.
- */
-public fun minOf(a: Double, b: Double): Double = if (a <= b) a else b
-
-/**
- * Returns the larger of two values.
- */
-public fun maxOf(a: Int, b: Int): Int = if (a >= b) a else b
-
-/**
- * Returns the larger of two values.
- */
-public fun maxOf(a: Long, b: Long): Long = if (a >= b) a else b
-
-/**
- * Returns the larger of two values.
- */
-public fun maxOf(a: Double, b: Double): Double = if (a >= b) a else b
+// Note: minOf and maxOf functions are defined in ComparisonsActualBrs.kt
+// Do not duplicate them here.
 
 /**
  * Coerces this value to be at least the specified minimum value.

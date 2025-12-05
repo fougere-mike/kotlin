@@ -5,12 +5,8 @@
 
 package kotlin
 
-public open class UninitializedPropertyAccessException : RuntimeException {
-    public constructor() : super()
-    public constructor(message: String?) : super(message)
-    public constructor(message: String?, cause: Throwable?) : super(message, cause)
-    public constructor(cause: Throwable?) : super(cause)
-}
+// Note: UninitializedPropertyAccessException and NoWhenBranchMatchedException
+// are defined in builtins/kotlin/Exceptions.kt - do not duplicate here.
 
 /**
  * Exception thrown when a `Nothing` value is returned from a function.
@@ -21,14 +17,4 @@ internal class KotlinNothingValueException : RuntimeException {
     constructor(message: String?) : super(message)
     constructor(message: String?, cause: Throwable?) : super(message, cause)
     constructor(cause: Throwable?) : super(cause)
-}
-
-/**
- * Exception thrown when a `when` expression does not have any matching branch.
- */
-public class NoWhenBranchMatchedException : RuntimeException {
-    public constructor() : super()
-    public constructor(message: String?) : super(message)
-    public constructor(message: String?, cause: Throwable?) : super(message, cause)
-    public constructor(cause: Throwable?) : super(cause)
 }

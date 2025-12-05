@@ -98,13 +98,13 @@ internal fun <T> Sequence(iterator: () -> Iterator<T>): Sequence<T> = object : S
 
 // Empty sequence singleton
 private object EmptySequence : Sequence<Nothing>, DropTakeSequence<Nothing> {
-    override fun iterator(): Iterator<Nothing> = EmptyIterator
+    override fun iterator(): Iterator<Nothing> = SequenceEmptyIterator
     override fun drop(n: Int): Sequence<Nothing> = EmptySequence
     override fun take(n: Int): Sequence<Nothing> = EmptySequence
 }
 
-// Empty iterator singleton
-private object EmptyIterator : Iterator<Nothing> {
+// Empty iterator singleton (renamed to avoid collision with ArrayList's EmptyIterator)
+private object SequenceEmptyIterator : Iterator<Nothing> {
     override fun hasNext(): Boolean = false
     override fun next(): Nothing = throw NoSuchElementException()
 }

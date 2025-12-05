@@ -5,6 +5,10 @@
 
 package kotlin.text
 
+import kotlin.util.checkPositionIndex
+import kotlin.util.checkElementIndex
+import kotlin.util.checkBoundsIndexes
+
 /**
  * A mutable sequence of characters.
  *
@@ -210,8 +214,10 @@ public class StringBuilder constructor(content: String) : Appendable, CharSequen
         if (newLength <= length) {
             string = string.substring(0, newLength)
         } else {
+            // Note: BrightScript doesn't support null characters in strings,
+            // so we use spaces instead of '\u0000' which Java uses
             for (i in length until newLength) {
-                string += '\u0000'
+                string += ' '
             }
         }
     }
@@ -353,27 +359,8 @@ public class StringBuilder constructor(content: String) : Appendable, CharSequen
     public fun appendLine(value: Double): StringBuilder = append(value).appendLine()
 }
 
-// Helper functions
-private fun checkPositionIndex(index: Int, length: Int) {
-    if (index < 0 || index > length) {
-        throw IndexOutOfBoundsException("index: $index, length: $length")
-    }
-}
-
-private fun checkElementIndex(index: Int, length: Int) {
-    if (index < 0 || index >= length) {
-        throw IndexOutOfBoundsException("index: $index, length: $length")
-    }
-}
-
-private fun checkBoundsIndexes(startIndex: Int, endIndex: Int, length: Int) {
-    if (startIndex < 0 || endIndex > length) {
-        throw IndexOutOfBoundsException("startIndex: $startIndex, endIndex: $endIndex, length: $length")
-    }
-    if (startIndex > endIndex) {
-        throw IllegalArgumentException("startIndex: $startIndex > endIndex: $endIndex")
-    }
-}
+// Note: Using helper functions from kotlin.util.Preconditions
+// (checkPositionIndex, checkElementIndex, checkBoundsIndexes)
 
 // Extension functions for StringBuilder (expect actuals)
 

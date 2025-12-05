@@ -275,10 +275,25 @@ class BrsIrBackendContext(
                 is IrClass -> {
                     val name = classifier.name.asString()
                     // Handle anonymous class names like "<no name provided>"
-                    if (name.startsWith("<") && name.endsWith(">")) {
+                    val baseName = if (name.startsWith("<") && name.endsWith(">")) {
                         "Anon"
                     } else {
                         name
+                    }
+
+                    // Include type arguments to distinguish e.g. Sequence<Sequence<T>> from Sequence<Iterable<T>>
+                    val simpleType = this as? org.jetbrains.kotlin.ir.types.IrSimpleType
+                    val typeArgs = simpleType?.arguments?.map { arg ->
+                        when (arg) {
+                            is org.jetbrains.kotlin.ir.types.IrTypeProjection -> arg.type.toMangledString()
+                            is org.jetbrains.kotlin.ir.types.IrStarProjection -> "Star"
+                        }
+                    } ?: emptyList()
+
+                    if (typeArgs.isNotEmpty()) {
+                        "$baseName${typeArgs.joinToString("")}"
+                    } else {
+                        baseName
                     }
                 }
                 else -> "Any"
