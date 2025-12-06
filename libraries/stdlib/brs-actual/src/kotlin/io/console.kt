@@ -18,14 +18,14 @@ public fun println() {
 
 /** Prints the given [message] and the line separator to the standard output stream. */
 public fun println(message: Any?) {
-    brsIntrinsicPrint(message?.toString() ?: "null")
+    brsIntrinsicPrint(brsIntrinsicToString(message))
 }
 
 /** Prints the given [message] to the standard output stream. */
 public fun print(message: Any?) {
     // BrightScript doesn't have a print without newline, but we can use semicolon
     // to suppress the newline in code generation
-    brsIntrinsicPrintNoNewline(message?.toString() ?: "null")
+    brsIntrinsicPrintNoNewline(brsIntrinsicToString(message))
 }
 
 @SinceKotlin("1.6")
@@ -49,3 +49,11 @@ internal external fun brsIntrinsicPrint(message: String)
  */
 @PublishedApi
 internal external fun brsIntrinsicPrintNoNewline(message: String)
+
+/**
+ * Intrinsic function to convert any value to a string.
+ * Handles primitives, objects, and null appropriately for BrightScript.
+ * This will be lowered by the backend to type-aware string conversion.
+ */
+@PublishedApi
+internal external fun brsIntrinsicToString(value: Any?): String

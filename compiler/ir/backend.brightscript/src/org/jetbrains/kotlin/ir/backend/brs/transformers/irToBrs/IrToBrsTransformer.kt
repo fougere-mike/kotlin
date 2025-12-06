@@ -1815,6 +1815,102 @@ class IrToBrsTransformer(
         }
     }
 
+    // ==================== ToString Transformation ====================
+
+    /**
+     * Transform a toString() call to appropriate BrightScript code.
+     * BrightScript primitives don't have methods, so we need to handle each type specially.
+     */
+    fun transformToString(receiverExpr: BrsExpression, receiverType: IrType): BrsExpression {
+        return when {
+            // String: just return the string itself (pass-through)
+            receiverType.isString() -> receiverExpr
+
+            // Numeric types: use Str() function
+            receiverType.isInt() || receiverType.isShort() || receiverType.isByte() ||
+            receiverType.isLong() || receiverType.isFloat() || receiverType.isDouble() -> {
+                BrsFunctionCall(BrsIdentifier("Str"), mutableListOf(receiverExpr))
+            }
+
+            // Boolean: use conditional to return "true" or "false"
+            receiverType.isBoolean() -> {
+                BrsConditional(
+                    receiverExpr,
+                    BrsStringLiteral("true"),
+                    BrsStringLiteral("false")
+                )
+            }
+
+            // Objects (including nullable types): call toString method if available
+            // For objects with custom toString(), they should have it defined
+            else -> {
+                BrsMethodCall(receiverExpr, "toString", mutableListOf())
+            }
+        }
+    }
+
+    /**
+     * Generate runtime type-checking toString logic for Any? types.
+     * This is used by brsIntrinsicToString when the type is not known at compile time.
+     */
+    fun generateRuntimeToString(valueExpr: BrsExpression): BrsExpression {
+        // Generate nested conditionals:
+        // if value = invalid then "null"
+        // else if Type(value) = "String" or Type(value) = "roString" then value
+        // else if Type(value) = "Integer" or ... then Str(value)
+        // else if Type(value) = "Boolean" or Type(value) = "roBoolean" then (if value then "true" else "false")
+        // else value.toString()  ' for objects
+
+        val typeCheck = BrsTypeOf(valueExpr.deepCopy())
+
+        // null check: value = invalid
+        val nullCheck = BrsBinaryOp(valueExpr.deepCopy(), BrsBinaryOperator.EQ, BrsInvalidLiteral())
+
+        // string check: Type(value) = "String" or Type(value) = "roString"
+        val stringCheck = BrsBinaryOp(
+            BrsBinaryOp(typeCheck.deepCopy(), BrsBinaryOperator.EQ, BrsStringLiteral("String")),
+            BrsBinaryOperator.OR,
+            BrsBinaryOp(typeCheck.deepCopy(), BrsBinaryOperator.EQ, BrsStringLiteral("roString"))
+        )
+
+        // numeric check: Type(value) in ["Integer", "LongInteger", "Float", "Double", "roInt", "roFloat", "roDouble"]
+        val numericTypes = listOf("Integer", "LongInteger", "Float", "Double", "roInt", "roFloat", "roDouble")
+        val numericCheck = numericTypes.map { typeName ->
+            BrsBinaryOp(typeCheck.deepCopy(), BrsBinaryOperator.EQ, BrsStringLiteral(typeName))
+        }.reduce { acc, check -> BrsBinaryOp(acc, BrsBinaryOperator.OR, check) }
+
+        // boolean check
+        val booleanCheck = BrsBinaryOp(
+            BrsBinaryOp(typeCheck.deepCopy(), BrsBinaryOperator.EQ, BrsStringLiteral("Boolean")),
+            BrsBinaryOperator.OR,
+            BrsBinaryOp(typeCheck.deepCopy(), BrsBinaryOperator.EQ, BrsStringLiteral("roBoolean"))
+        )
+
+        // Build result expressions
+        val objectToString = BrsMethodCall(valueExpr.deepCopy(), "toString", mutableListOf())
+        val booleanToString = BrsConditional(valueExpr.deepCopy(), BrsStringLiteral("true"), BrsStringLiteral("false"))
+        val numericToString = BrsFunctionCall(BrsIdentifier("Str"), mutableListOf(valueExpr.deepCopy()))
+
+        // Build nested conditional chain
+        return BrsConditional(
+            nullCheck,
+            BrsStringLiteral("null"),
+            BrsConditional(
+                stringCheck,
+                valueExpr.deepCopy(),
+                BrsConditional(
+                    numericCheck,
+                    numericToString,
+                    BrsConditional(
+                        booleanCheck,
+                        booleanToString,
+                        objectToString
+                    )
+                )
+            )
+        )
+    }
+
     // ==================== Visitor Implementation ====================
 
     override fun visitElement(element: IrElement, data: Unit): BrsNode? {
@@ -3211,6 +3307,12 @@ class IrExpressionToBrsTransformer(
                         )
                     }
                 }
+                // toString - handle primitives specially since BrightScript primitives don't have methods
+                "toString" -> {
+                    val receiverType = receiver.type
+                    val receiverExpr = receiver.accept(this, data)
+                    return parent.transformToString(receiverExpr, receiverType)
+                }
             }
         }
 
@@ -3634,6 +3736,16 @@ class IrExpressionToBrsTransformer(
                     BrsCreateObject(objectType, args.drop(1).toMutableList())
                 } else {
                     BrsInvalidLiteral()
+                }
+            }
+
+            is BrsIntrinsics.StdlibIntrinsic.ToString -> {
+                // Type-aware toString for Any? values
+                // Generate runtime type checking to handle primitives properly
+                if (args.isNotEmpty()) {
+                    parent.generateRuntimeToString(args[0])
+                } else {
+                    BrsStringLiteral("null")
                 }
             }
 
