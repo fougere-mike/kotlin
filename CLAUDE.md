@@ -102,3 +102,77 @@ rm -rf ~/.m2/repository/com/example/kotlin-roku
 | Both | `./rebuild.sh` |
 | Everything + test app | `cd ../roku-test-app && ./rebuild-all.sh --all` |
 | Plugin only (no compiler changes) | `cd ../roku-test-app && ./rebuild-all.sh --plugin --clean` |
+
+## Running Tests
+
+### Compiler Tests (Golden File Tests)
+
+Golden file tests verify that Kotlin code compiles to the expected BrightScript output. No Roku device required.
+
+```bash
+# Run all compiler tests
+./run-compiler-tests.sh
+
+# Or with Gradle directly
+./gradlew :compiler:backend.brightscript:test --tests "*GoldenFile*" --no-configuration-cache -Dorg.gradle.dependency.verification=off
+```
+
+### Updating Golden Files
+
+After making intentional changes to the compiler's output:
+
+```bash
+# Update golden files with current compiler output
+./run-compiler-tests.sh --update
+
+# Or with Gradle
+./gradlew :compiler:backend.brightscript:test --tests "*GoldenFile*" -PupdateGoldenFiles=true --no-configuration-cache -Dorg.gradle.dependency.verification=off
+```
+
+### E2E Device Tests
+
+Run tests on a physical Roku device. Requires device IP and password.
+
+```bash
+# Set device credentials
+export ROKU_DEVICE_IP=192.168.1.xxx
+export ROKU_PASSWORD=your_password
+
+# Run E2E tests (from roku-test-app directory)
+cd ../roku-test-app && ./run-device-tests.sh
+
+# Or with Gradle
+cd ../roku-test-app && ./gradlew rokuTest
+```
+
+### Run All Tests
+
+```bash
+# Run compiler tests, then E2E if device is configured
+./run-all-tests.sh
+```
+
+### View Test Results
+
+```bash
+# Display summary of most recent test results
+./test-report.sh
+```
+
+### Test Locations
+
+| Test Type | Location |
+|-----------|----------|
+| Golden file tests | `compiler/ir/backend.brightscript/test/.../BrsGoldenFileTests.kt` |
+| Golden file test data | `compiler/testData/codegen/brs/` |
+| E2E test framework | `roku-test-app/src/brsMain/kotlin/tests/TestFramework.kt` |
+| E2E test suites | `roku-test-app/src/brsMain/kotlin/tests/TestMain.kt` |
+
+### Test Output
+
+| Test Type | Report Location |
+|-----------|-----------------|
+| Compiler tests (HTML) | `compiler/ir/backend.brightscript/build/reports/tests/test/index.html` |
+| Compiler tests (XML) | `compiler/ir/backend.brightscript/build/test-results/test/*.xml` |
+| E2E tests (JSON) | `roku-test-app/build/test-results/roku/results.json` |
+| E2E tests (XML) | `roku-test-app/build/test-results/roku/results.xml` |

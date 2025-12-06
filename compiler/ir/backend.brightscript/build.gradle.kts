@@ -39,3 +39,33 @@ tasks.test {
         project.findProperty("updateGoldenFiles")?.toString() ?: "false"
     )
 }
+
+// Convenience task: Run all BRS compiler tests (golden files)
+tasks.register("brsTest") {
+    group = "verification"
+    description = "Run all BrightScript compiler tests (golden file tests)"
+    dependsOn("test")
+}
+
+// Convenience task: Run only golden file tests
+tasks.register("goldenFileTest") {
+    group = "verification"
+    description = "Run golden file tests for BrightScript code generation"
+    doFirst {
+        tasks.test.get().filter {
+            includeTestsMatching("*GoldenFile*")
+        }
+    }
+    finalizedBy("test")
+}
+
+// Convenience task: Update golden files with current compiler output
+tasks.register("updateGoldenFiles") {
+    group = "verification"
+    description = "Update golden files with current BrightScript compiler output"
+    doFirst {
+        // Set the property before test runs
+        project.extra.set("updateGoldenFiles", "true")
+    }
+    finalizedBy("test")
+}
