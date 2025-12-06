@@ -582,22 +582,57 @@ class BrsRenderer(
 
     override fun visitConditional(conditional: BrsConditional, data: Unit) {
         // BrightScript doesn't reliably support inline if-then-else expressions.
-        // Use IIFE (Immediately Invoked Function Expression) pattern to wrap the conditional
-        // in an anonymous function that returns the appropriate value.
-        builder.append("(function()")
-        newline()
-        withIndent {
-            indent()
-            builder.append("if ")
-            conditional.condition.accept(this, data)
-            builder.append(" then return ")
-            conditional.thenExpr.accept(this, data)
-            builder.append(" else return ")
-            conditional.elseExpr.accept(this, data)
+        // Use IIFE (Immediately Invoked Function Expression) pattern to wrap the conditional.
+        // We pass variables used in the conditional as arguments to avoid closure capture issues
+        // since BrightScript anonymous functions don't capture outer scope variables.
+
+        // Collect identifiers used in the conditional
+        val identifiers = mutableSetOf<String>()
+        val collector = object : BrsVisitorVoid() {
+            override fun visitIdentifier(identifier: BrsIdentifier, data: Unit) {
+                identifiers.add(identifier.name)
+            }
         }
-        newline()
-        indent()
-        builder.append("end function)()")
+        conditional.condition.accept(collector, Unit)
+        conditional.thenExpr.accept(collector, Unit)
+        conditional.elseExpr.accept(collector, Unit)
+
+        // Filter to only include simple variable names (not m, not containing dots)
+        val params = identifiers.filter { it != "m" && !it.contains(".") }.sorted()
+
+        if (params.isEmpty()) {
+            // No variables to capture - use simple IIFE
+            builder.append("(function()")
+            newline()
+            withIndent {
+                indent()
+                builder.append("if ")
+                conditional.condition.accept(this, data)
+                builder.append(" then return ")
+                conditional.thenExpr.accept(this, data)
+                builder.append(" else return ")
+                conditional.elseExpr.accept(this, data)
+            }
+            newline()
+            indent()
+            builder.append("end function)()")
+        } else {
+            // Pass captured variables as function parameters
+            builder.append("(function(${params.joinToString(", ")})")
+            newline()
+            withIndent {
+                indent()
+                builder.append("if ")
+                conditional.condition.accept(this, data)
+                builder.append(" then return ")
+                conditional.thenExpr.accept(this, data)
+                builder.append(" else return ")
+                conditional.elseExpr.accept(this, data)
+            }
+            newline()
+            indent()
+            builder.append("end function)(${params.joinToString(", ")})")
+        }
     }
 
     override fun visitTypeOf(typeOf: BrsTypeOf, data: Unit) {

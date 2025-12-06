@@ -189,7 +189,10 @@ class BrsIntrinsics(
         "brsIntrinsicGetGlobalAA" to StdlibIntrinsic.SimpleCall("GetGlobalAA"),
 
         // Node intrinsics
-        "brsIntrinsicCreateObject" to StdlibIntrinsic.CreateObject
+        "brsIntrinsicCreateObject" to StdlibIntrinsic.CreateObject,
+
+        // Conversion intrinsics
+        "brsIntrinsicToString" to StdlibIntrinsic.ToString
     )
 
     /**
@@ -240,6 +243,9 @@ class BrsIntrinsics(
 
         /** CreateObject with type and optional args */
         data object CreateObject : StdlibIntrinsic()
+
+        /** Type-aware toString conversion for Any? */
+        data object ToString : StdlibIntrinsic()
     }
 
     /**
