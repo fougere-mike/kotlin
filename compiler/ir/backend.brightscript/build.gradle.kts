@@ -14,11 +14,14 @@ dependencies {
     api(project(":core:compiler.common.brightscript"))
 
     compileOnly(intellijCore())
+
+    testImplementation(kotlinTest("junit"))
+    testImplementation(projectTests(":compiler:tests-common-new"))
 }
 
 optInToUnsafeDuringIrConstructionAPI()
 
 sourceSets {
     "main" { projectDefault() }
-    "test" {}
+    "test" { projectDefault() }
 }

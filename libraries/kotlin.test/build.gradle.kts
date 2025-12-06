@@ -262,8 +262,7 @@ kotlin {
         val brsMain by getting {
             dependsOn(assertionsCommonMain)
             dependsOn(annotationsCommonMain)
-            kotlin.setSrcDirs(listOf("brs/src/main/kotlin"))
-            // Stdlib dependency is inherited from commonMain
+            kotlin.srcDir("brs/src/main/kotlin")
         }
     }
 }
@@ -553,6 +552,16 @@ publishing {
             variant("wasmWasiSourcesElements")
         }
 
+        val brs = module("brsModule") {
+            mavenPublication {
+                artifactId = "$artifactBaseName-brs"
+                configureKotlinPomAttributes(project, "Kotlin Test library for BrightScript platform", packaging = "klib")
+            }
+            variant("brsApiElements")
+            variant("brsRuntimeElements")
+            variant("brsSourcesElements")
+        }
+
         module("testCommonModule") {
             mavenPublication {
                 artifactId = "$artifactBaseName-common"
@@ -571,7 +580,7 @@ publishing {
         }
 
         // Makes all variants from accompanying artifacts visible through `available-at`
-        rootModule.include(js, *frameworkModules.toTypedArray(), wasmJs, wasmWasi)
+        rootModule.include(js, *frameworkModules.toTypedArray(), wasmJs, wasmWasi, brs)
     }
 
     publications {
@@ -580,6 +589,7 @@ publishing {
             listOf("jsModule", "Js", "kotlin-test-js", "jsRuntimeClasspath"),
             listOf("wasmJsModule", "Wasm-Js", "kotlin-test-wasm-js", "wasmJsRuntimeClasspath"),
             listOf("wasmWasiModule", "Wasm-Wasi", "kotlin-test-wasm-wasi", "wasmWasiRuntimeClasspath"),
+            listOf("brsModule", "Brs", "kotlin-test-brs", "brsRuntimeClasspath"),
             listOf("testCommonModule", "Common", "kotlin-test-common", "kotlinTestCommonDependencies"),
             listOf("testAnnotationsCommonModule", "AnnotationsCommon", "kotlin-test-annotations-common", "kotlinTestAnnotationsCommonDependencies"),
         ) + jvmTestFrameworks.map { framework ->
