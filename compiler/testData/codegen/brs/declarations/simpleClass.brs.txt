@@ -1,0 +1,38 @@
+// --- File: simpleClass.brs ---
+function Person_create_Str_I_Person_k$(name as String, age as Integer) as Object
+    this = {}
+    this.__type = "Person"
+    this.__proto = ["Person"]
+    this.name = name
+    this.age = age
+    this.greet_Str_k$ = Person_greet_Str_k$
+    this.isAdult_Z_k$ = Person_isAdult_Z_k$
+    this.get_name = Person_get_name_Str_k$
+    this.get_age = Person_get_age_I_k$
+    return this
+end function
+
+function Person_greet_Str_k$() as String
+    return "Hello, my name is " + m.name
+end function
+
+function Person_isAdult_Z_k$() as Boolean
+    return m.age >= 18
+end function
+
+function Person_get_name_Str_k$() as String
+    return m.name
+end function
+
+function Person_get_age_I_k$() as Integer
+    return m.age
+end function
+
+function createPerson_Person_k$() as Object
+    return Person_create_Str_I_Person_k$("Alice", 30)
+end function
+
+function testPerson_Str_k$() as String
+    person = Person_create_Str_I_Person_k$("Bob", 25)
+    return person.greet()
+end function

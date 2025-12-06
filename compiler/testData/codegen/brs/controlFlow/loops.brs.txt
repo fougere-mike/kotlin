@@ -1,0 +1,34 @@
+// --- File: loops.brs ---
+function forLoopSum_I_k$() as Integer
+    sum = 0
+    for each i in 1.rangeTo(10)
+        sum = (sum + i)
+
+    end for
+    return sum
+end function
+
+function whileLoopSum_I_k$() as Integer
+    sum = 0
+    i = 0
+    while i < 10
+        sum = (sum + i)
+        i = (i + 1)
+    end while
+    return sum
+end function
+
+function breakContinueSum_I_k$() as Integer
+    sum = 0
+    for each i in 1.rangeTo(10)
+        if i = 3 then
+            ' continue not supported on target Roku OS
+        end if
+        if i = 7 then
+            exit for
+        end if
+        sum = (sum + i)
+
+    end for
+    return sum
+end function

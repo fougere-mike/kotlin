@@ -1,0 +1,45 @@
+// --- File: whenExpression.brs ---
+function describeNumber_I_Str_k$(x as Integer) as String
+    __when_tmp0 = invalid
+    if tmp0_subject = 0 then
+        __when_tmp0 = "zero"
+    else if tmp0_subject = 1 then
+        __when_tmp0 = "one"
+    else if tmp0_subject = 2 then
+        __when_tmp0 = "two"
+    else if true then
+        __when_tmp0 = "many"
+    end if
+    return __when_tmp0
+
+end function
+
+function getGrade_I_Str_k$(score as Integer) as String
+    __when_tmp1 = invalid
+    if score >= 90 then
+        __when_tmp1 = "A"
+    else if score >= 80 then
+        __when_tmp1 = "B"
+    else if score >= 70 then
+        __when_tmp1 = "C"
+    else if score >= 60 then
+        __when_tmp1 = "D"
+    else if true then
+        __when_tmp1 = "F"
+    end if
+    return __when_tmp1
+
+end function
+
+function categorize_I_Str_k$(x as Integer) as String
+    __when_tmp2 = invalid
+    if (tmp0_subject = 1) or ((tmp0_subject = 2) or (tmp0_subject = 3)) then
+        __when_tmp2 = "small"
+    else if (tmp0_subject = 4) or ((tmp0_subject = 5) or (tmp0_subject = 6)) then
+        __when_tmp2 = "medium"
+    else if true then
+        __when_tmp2 = "large"
+    end if
+    return __when_tmp2
+
+end function

@@ -1,0 +1,13 @@
+// --- File: simpleFunction.brs ---
+function add_I_I_I_k$(a as Integer, b as Integer) as Integer
+    return a + b
+end function
+
+function subtract_I_I_I_k$(a as Integer, b as Integer) as Integer
+    return a - b
+end function
+
+function multiply_I_I_I_k$(a as Integer, b as Integer) as Integer
+    result = a * b
+    return result
+end function

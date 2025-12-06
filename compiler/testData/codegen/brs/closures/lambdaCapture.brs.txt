@@ -1,0 +1,36 @@
+// --- File: lambdaCapture.brs ---
+function simpleCapture_I_k$() as Integer
+    multiplier = 5
+    multiply = {multiplier: multiplier, invoke: function(x as Integer) as Integer
+        return x * m.multiplier
+    end function}
+    return multiply.invoke(10)
+end function
+
+function mutableCapture_I_k$() as Integer
+    counter = 0
+    increment = {counter: {value: counter}, invoke: function() as Void
+        m.counter.value = (m.counter.value + 1)
+    end function}
+    increment.invoke()
+    increment.invoke()
+    return counter
+end function
+
+function returnedClosure_Function0I_k$() as Function
+    count = 0
+    return {count: {value: count}, invoke: function() as Integer
+        m.count.value = (m.count.value + 1)
+        return m.count.value
+    end function}
+end function
+
+function higherOrderFunction_I_Function1II_I_k$(value as Integer, transform as Function) as Integer
+    return transform.invoke(value)
+end function
+
+function testHigherOrder_I_k$() as Integer
+    return higherOrderFunction_I_Function1II_I_k$(5, {invoke: function(it as Integer) as Integer
+        return it * 2
+    end function})
+end function

@@ -1,0 +1,154 @@
+// --- File: dataClass.brs ---
+function Point_create(x as Integer, y as Integer) as Object
+    this = {}
+    this.__type = "Point"
+    this.__proto = ["Point"]
+    this.x = x
+    this.y = y
+    this.component1_I_k$ = Point_component1_I_k$
+    this.component2_I_k$ = Point_component2_I_k$
+    this.copy_I_I_Point_k$ = Point_copy_I_I_Point_k$
+    this.toString_Str_k$ = Point_toString_Str_k$
+    this.hashCode_I_k$ = Point_hashCode_I_k$
+    this.equals_AnyN_Z_k$ = Point_equals_AnyN_Z_k$
+    this.get_x = Point_get_x_I_k$
+    this.get_y = Point_get_y_I_k$
+    this.equals = Point_equals
+    this.hashCode = Point_hashCode
+    this.toString = Point_toString
+    this.copy = Point_copy
+    this.component1 = Point_component1
+    this.component2 = Point_component2
+    return this
+end function
+
+function Point_equals(other as Object) as Boolean
+    if Type(other) <> "roAssociativeArray" then
+        return false
+    end if
+    if other.__type <> "Point" then
+        return false
+    end if
+    if m.x <> other.x then
+        return false
+    end if
+    if m.y <> other.y then
+        return false
+    end if
+    return true
+end function
+
+function Point_hashCode() as Integer
+    result = 1
+    result = ((result * 31) + m.x)
+    result = ((result * 31) + m.y)
+    return result
+end function
+
+function Point_toString() as String
+    return ((("Point(x=" + m.x) + ", y=") + m.y) + ")"
+end function
+
+function Point_copy(x = invalid, y = invalid) as Object
+    if x = invalid then
+        x = m.x
+    end if
+    if y = invalid then
+        y = m.y
+    end if
+    return Point_create(x, y)
+end function
+
+function Point_component1() as Integer
+    return m.x
+end function
+
+function Point_component2() as Integer
+    return m.y
+end function
+
+function User_create(name as String, age as Integer) as Object
+    this = {}
+    this.__type = "User"
+    this.__proto = ["User"]
+    this.name = name
+    this.age = age
+    this.component1_Str_k$ = User_component1_Str_k$
+    this.component2_I_k$ = User_component2_I_k$
+    this.copy_Str_I_User_k$ = User_copy_Str_I_User_k$
+    this.toString_Str_k$ = User_toString_Str_k$
+    this.hashCode_I_k$ = User_hashCode_I_k$
+    this.equals_AnyN_Z_k$ = User_equals_AnyN_Z_k$
+    this.get_name = User_get_name_Str_k$
+    this.get_age = User_get_age_I_k$
+    this.equals = User_equals
+    this.hashCode = User_hashCode
+    this.toString = User_toString
+    this.copy = User_copy
+    this.component1 = User_component1
+    this.component2 = User_component2
+    return this
+end function
+
+function User_equals(other as Object) as Boolean
+    if Type(other) <> "roAssociativeArray" then
+        return false
+    end if
+    if other.__type <> "User" then
+        return false
+    end if
+    if m.name <> other.name then
+        return false
+    end if
+    if m.age <> other.age then
+        return false
+    end if
+    return true
+end function
+
+function User_hashCode() as Integer
+    result = 1
+    result = ((result * 31) + m.name)
+    result = ((result * 31) + m.age)
+    return result
+end function
+
+function User_toString() as String
+    return ((("User(name=" + m.name) + ", age=") + m.age) + ")"
+end function
+
+function User_copy(name = invalid, age = invalid) as Object
+    if name = invalid then
+        name = m.name
+    end if
+    if age = invalid then
+        age = m.age
+    end if
+    return User_create(name, age)
+end function
+
+function User_component1() as String
+    return m.name
+end function
+
+function User_component2() as Integer
+    return m.age
+end function
+
+function createPoint_Point_k$() as Object
+    return Point_create_I_I_Point_k$(1, 2)
+end function
+
+function copyPoint_Point_Point_k$(p as Object) as Object
+    return p.copy(10)
+end function
+
+function comparePoints_Z_k$() as Boolean
+    p1 = Point_create_I_I_Point_k$(1, 2)
+    p2 = Point_create_I_I_Point_k$(1, 2)
+    return p1 = p2
+end function
+
+function createUser_User_k$() as Object
+    return User_create_Str_I_User_k$("Alice", 30)
+end function
