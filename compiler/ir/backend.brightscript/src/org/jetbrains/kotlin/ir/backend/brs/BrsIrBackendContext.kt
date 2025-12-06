@@ -100,8 +100,9 @@ class BrsIrBackendContext(
 
     /**
      * Suffix for mangled function names to prevent conflicts with user-defined names.
+     * Note: BrightScript does not allow $ in identifiers, so we use _ instead.
      */
-    private val MANGLED_NAME_SUFFIX = "_k$"
+    private val MANGLED_NAME_SUFFIX = "_k_"
 
     // ==================== Exception Handling ====================
 
