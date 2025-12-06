@@ -136,8 +136,9 @@ internal fun brsParseJson(jsonString: String): Any? {
 /**
  * Formats an object as a JSON string.
  * Lowered to: FormatJson(obj)
+ *
+ * This is useful for creating JSON output for debugging or test results.
  */
-@PublishedApi
-internal fun brsFormatJson(obj: Any?): String {
+public fun brsFormatJson(obj: Any?): String {
     error("brsFormatJson should be lowered by the backend")
 }

@@ -27,9 +27,14 @@ echo "5. Publishing stdlib (including BRS runtime)..."
 ./gradlew :kotlin-stdlib:publishBrsModulePublicationToMavenLocal $FLAGS
 
 echo ""
+echo "6. Publishing kotlin.test-brs..."
+./gradlew :kotlin-test:publishBrsModulePublicationToMavenLocal $FLAGS
+
+echo ""
 echo "=== All artifacts published to Maven Local ==="
 echo ""
 echo "Published artifacts:"
 echo "  - org.jetbrains.kotlin:kotlin-compiler-brs"
 echo "  - org.jetbrains.kotlin:kotlin-gradle-plugin"
 echo "  - org.jetbrains.kotlin:kotlin-stdlib-brs (klib + brs-runtime)"
+echo "  - org.jetbrains.kotlin:kotlin-test-brs"
