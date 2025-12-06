@@ -39,7 +39,7 @@ public class ArrayList<E> : MutableList<E>, RandomAccess {
      */
     public constructor(initialCapacity: Int) {
         require(initialCapacity >= 0) { "Negative initial capacity: $initialCapacity" }
-        array = brsCreateArray()
+        array = brsCreateArrayWithCapacity(initialCapacity)
     }
 
     /**
@@ -240,6 +240,9 @@ public class ArrayList<E> : MutableList<E>, RandomAccess {
 
     @BrsInline("return CreateObject(\"roArray\", 0, true)")
     private external fun brsCreateArray(): Dynamic
+
+    @BrsInline("return CreateObject(\"roArray\", capacity, true)")
+    private external fun brsCreateArrayWithCapacity(capacity: Int): Dynamic
 
     @BrsInline("return arr.Count()")
     private external fun brsArrayCount(arr: Dynamic): Int
