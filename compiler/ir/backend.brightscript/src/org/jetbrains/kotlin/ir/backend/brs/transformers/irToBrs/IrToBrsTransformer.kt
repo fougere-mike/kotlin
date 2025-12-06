@@ -1740,11 +1740,13 @@ class IrToBrsTransformer(
                     .replace(" ", "_")
             else -> name
         }
+        // Sanitize invalid BrightScript identifier characters ($ is not valid in BrightScript)
+        val cleaned = sanitized.replace("$", "_")
         // Escape reserved keywords by adding underscore suffix
-        return if (sanitized.lowercase() in brsReservedKeywords) {
-            "${sanitized}_"
+        return if (cleaned.lowercase() in brsReservedKeywords) {
+            "${cleaned}_"
         } else {
-            sanitized
+            cleaned
         }
     }
 
