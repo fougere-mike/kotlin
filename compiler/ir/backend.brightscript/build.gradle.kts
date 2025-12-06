@@ -17,6 +17,9 @@ dependencies {
 
     testImplementation(kotlinTest("junit"))
     testImplementation(projectTests(":compiler:tests-common-new"))
+    testImplementation(project(":compiler:cli-brs"))
+    testRuntimeOnly(project(":compiler:cli-common"))
+    testRuntimeOnly(intellijCore())
 }
 
 optInToUnsafeDuringIrConstructionAPI()
@@ -24,4 +27,15 @@ optInToUnsafeDuringIrConstructionAPI()
 sourceSets {
     "main" { projectDefault() }
     "test" { projectDefault() }
+}
+
+tasks.test {
+    // Run tests from the repo root so the compiler can find its resources
+    workingDir = rootDir
+
+    // Pass the golden file update flag to tests
+    systemProperty(
+        "kotlin.test.update.golden.files",
+        project.findProperty("updateGoldenFiles")?.toString() ?: "false"
+    )
 }
