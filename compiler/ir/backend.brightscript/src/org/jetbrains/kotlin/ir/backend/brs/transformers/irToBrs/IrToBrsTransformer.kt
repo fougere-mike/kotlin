@@ -46,7 +46,7 @@ class IrToBrsTransformer(
 
     // Expose statement visitor for when-lowered block handling
     val statementVisitor: IrStatementToBrsTransformer get() = statementTransformer
-    private val inlineCallTransformer = BrsInlineCallTransformer(context)
+    internal val inlineCallTransformer = BrsInlineCallTransformer(context)
 
     // Track enum classes encountered during transformation for initialization
     private val enumClassNames = mutableListOf<String>()
@@ -3135,6 +3135,11 @@ class IrExpressionToBrsTransformer(
             if (operatorResult != null) return operatorResult
         }
 
+        // Check for @BrsInline functions - inline at call site
+        if (parent.inlineCallTransformer.shouldInline(expression)) {
+            return transformBrsInlineCall(expression)
+        }
+
         // ==================== Enum Property Inlining Optimization ====================
         // When accessing ordinal, name, or constant properties on a compile-time-known
         // enum value, inline the value directly to avoid runtime lookup overhead.
@@ -3314,6 +3319,24 @@ class IrExpressionToBrsTransformer(
                     return BrsFunctionCall(BrsIdentifier(functionName), args.toMutableList())
                 }
 
+                // Inline property getters to direct field access (avoids function call overhead)
+                val rawName = function.name.asString()
+                if (rawName.startsWith("<get-") && rawName.endsWith(">")) {
+                    val fieldName = rawName.removePrefix("<get-").removeSuffix(">")
+                    return BrsDotAccess(receiverExpr, fieldName)
+                }
+
+                // Inline property setters to direct field assignment (avoids function call overhead)
+                if (rawName.startsWith("<set-") && rawName.endsWith(">")) {
+                    val fieldName = rawName.removePrefix("<set-").removeSuffix(">")
+                    val value = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                    return BrsBinaryOp(
+                        BrsDotAccess(receiverExpr, fieldName),
+                        BrsBinaryOperator.EQ,
+                        value
+                    )
+                }
+
                 // For regular method calls, sanitize the method name
                 val methodName = parent.sanitizeMethodName(function.name.asString())
                 val args = (0 until expression.valueArgumentsCount).mapNotNull { i ->
@@ -3337,6 +3360,39 @@ class IrExpressionToBrsTransformer(
         }
 
         return BrsFunctionCall(BrsIdentifier(functionName), arguments)
+    }
+
+    /**
+     * Transform a call to a @BrsInline function by inlining the parsed BrightScript code.
+     */
+    private fun transformBrsInlineCall(expression: IrCall): BrsExpression {
+        val info = parent.inlineCallTransformer.getInlineInfo(expression)
+            ?: return BrsInvalidLiteral()
+
+        // Build argument map: parameter name -> BrsExpression
+        val function = expression.symbol.owner
+        val arguments = mutableMapOf<String, BrsExpression>()
+        function.valueParameters.forEachIndexed { index, param ->
+            expression.getValueArgument(index)?.let { arg ->
+                arguments[param.name.asString()] = arg.accept(this, Unit)
+            }
+        }
+
+        // Transform inline code with substitutions
+        val statements = parent.inlineCallTransformer.transformInlineCode(info, arguments)
+
+        // Extract expression from statements (most @BrsInline is "return expr")
+        return when {
+            statements.size == 1 && statements[0] is BrsReturn ->
+                (statements[0] as BrsReturn).value ?: BrsInvalidLiteral()
+            statements.size == 1 && statements[0] is BrsExpressionStatement ->
+                (statements[0] as BrsExpressionStatement).expression
+            else -> {
+                val lastStmt = statements.lastOrNull()
+                if (lastStmt is BrsReturn) lastStmt.value ?: BrsInvalidLiteral()
+                else BrsInvalidLiteral()
+            }
+        }
     }
 
     private fun transformIntrinsic(expression: IrCall): BrsExpression {
