@@ -490,7 +490,9 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
     ) {
         // Configure BrightScript-specific services
         arguments.outputDir?.let { configuration.put(BrsConfigurationKeys.OUTPUT_DIR, it) }
-        configuration.put(BrsConfigurationKeys.MODULE_NAME, arguments.moduleName ?: "main")
+        val moduleName = arguments.moduleName ?: "main"
+        configuration.put(BrsConfigurationKeys.MODULE_NAME, moduleName)
+        configuration.put(CommonConfigurationKeys.MODULE_NAME, moduleName)
         configuration.put(BrsConfigurationKeys.MIN_ROKU_OS, arguments.minRokuOS ?: K2BrsArgumentConstants.DEFAULT_MIN_ROKU_OS)
         configuration.put(BrsConfigurationKeys.DEBUG_MODE, arguments.debugMode)
         configuration.put(BrsConfigurationKeys.GENERATE_XML, arguments.generateXml)

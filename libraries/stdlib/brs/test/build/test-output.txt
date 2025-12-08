@@ -1,0 +1,93 @@
+r_set_anyn_k_' in pkg:/source/Iterator.brs(22)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'mutablelistiterator_add_anyn_k_' in pkg:/source/Iterator.brs(25)
+BRIGHTSCRIPT: WARNING: unused variable 'm' in function 'frombits_rcompanion_j_d_k_' in pkg:/source/Kotlin.brs(55)
+BRIGHTSCRIPT: WARNING: unused variable 'm' in function 'frombits_rcompanion_i_f_k_' in pkg:/source/Kotlin.brs(128)
+BRIGHTSCRIPT: WARNING: unused variable 'mode' in function 'lazy_lazythreadsafetymode_function0anyn_lazyanyn_k_' in pkg:/source/Kotlin.brs(175)
+BRIGHTSCRIPT: WARNING: unused variable 'lock' in function 'lazy_anyn_function0anyn_lazyanyn_k_' in pkg:/source/Kotlin.brs(179)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'linkedhashmap_linkedkeyset_add_anyn_z_k_' in pkg:/source/LinkedHashMap.brs(346)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'linkedhashmap_linkedkeyset_addall_collectionanyn_z_k_' in pkg:/source/LinkedHashMap.brs(350)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'linkedhashmap_linkedvaluecollection_add_anyn_z_k_' in pkg:/source/LinkedHashMap.brs(437)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'linkedhashmap_linkedvaluecollection_addall_collectionanyn_z_k_' in pkg:/source/LinkedHashMap.brs(441)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'linkedhashmap_linkedentryset_add_mutableentryanynanyn_z_k_' in pkg:/source/LinkedHashMap.brs(533)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'linkedhashmap_linkedentryset_addall_collectionmutableentryanynanyn_z_k_' in pkg:/source/LinkedHashMap.brs(537)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'list_contains_anyn_z_k_' in pkg:/source/List.brs(4)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'list_containsall_collectionanyn_z_k_' in pkg:/source/List.brs(10)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'list_get_i_anyn_k_' in pkg:/source/List.brs(13)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'list_indexof_anyn_i_k_' in pkg:/source/List.brs(16)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'list_lastindexof_anyn_i_k_' in pkg:/source/List.brs(19)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'list_listiterator_i_listiteratoranyn_k_' in pkg:/source/List.brs(25)
+BRIGHTSCRIPT: WARNING: unused variable 'fromindex' in function 'list_sublist_i_i_listanyn_k_' in pkg:/source/List.brs(28)
+BRIGHTSCRIPT: WARNING: unused variable 'toindex' in function 'list_sublist_i_i_listanyn_k_' in pkg:/source/List.brs(28)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'mutablelist_add_anyn_z_k_' in pkg:/source/List.brs(34)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'mutablelist_remove_anyn_z_k_' in pkg:/source/List.brs(37)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'mutablelist_addall_collectionanyn_z_k_' in pkg:/source/List.brs(40)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'mutablelist_addall_i_collectionanyn_z_k_' in pkg:/source/List.brs(43)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'mutablelist_addall_i_collectionanyn_z_k_' in pkg:/source/List.brs(43)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'mutablelist_removeall_collectionanyn_z_k_' in pkg:/source/List.brs(46)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'mutablelist_retainall_collectionanyn_z_k_' in pkg:/source/List.brs(49)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'mutablelist_set_i_anyn_anyn_k_' in pkg:/source/List.brs(55)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'mutablelist_set_i_anyn_anyn_k_' in pkg:/source/List.brs(55)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'mutablelist_add_i_anyn_k_' in pkg:/source/List.brs(58)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'mutablelist_add_i_anyn_k_' in pkg:/source/List.brs(58)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'mutablelist_removeat_i_anyn_k_' in pkg:/source/List.brs(61)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'mutablelist_listiterator_i_mutablelistiteratoranyn_k_' in pkg:/source/List.brs(67)
+BRIGHTSCRIPT: WARNING: unused variable 'fromindex' in function 'mutablelist_sublist_i_i_mutablelistanyn_k_' in pkg:/source/List.brs(70)
+BRIGHTSCRIPT: WARNING: unused variable 'toindex' in function 'mutablelist_sublist_i_i_mutablelistanyn_k_' in pkg:/source/List.brs(70)
+BRIGHTSCRIPT: WARNING: unused variable 'logmsg' in function 'logger_log_str_k_' in pkg:/source/Main.brs(145)
+BRIGHTSCRIPT: WARNING: unused variable 'key' in function 'map_containskey_anyn_z_k_' in pkg:/source/Map.brs(4)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'map_containsvalue_anyn_z_k_' in pkg:/source/Map.brs(7)
+BRIGHTSCRIPT: WARNING: unused variable 'key' in function 'map_get_anyn_anyn_k_' in pkg:/source/Map.brs(10)
+BRIGHTSCRIPT: WARNING: unused variable 'key' in function 'mutablemap_put_anyn_anyn_anyn_k_' in pkg:/source/Map.brs(31)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'mutablemap_put_anyn_anyn_anyn_k_' in pkg:/source/Map.brs(31)
+Displayed 100 of 194 warnings
+12-08 17:08:55.343 [scrpt.ctx.cmpl.time] Compiled 'RokuTestApp', id 'dev' in 277 milliseconds (BCVer:0)
+12-08 17:08:55.348 [beacon.signal] |AppCompileComplete --------> Duration(292 ms)
+12-08 17:56:40.985 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
+12-08 17:56:40.985 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
+12-08 17:56:40.986 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
+
+------ Compiling dev 'KotlinStdlibTests' ------
+*** ERROR compiling pkg:/source/ArrayListTest.brs:
+Syntax Error. (compile error &h02) in pkg:/source/ArrayListTest.brs(102)
+12-08 18:08:18.222 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
+12-08 18:08:18.222 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
+12-08 18:08:18.224 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
+
+------ Compiling dev 'KotlinStdlibTests' ------
+*** ERROR compiling pkg:/source/ArrayListTest.brs:
+Syntax Error. (compile error &h02) in pkg:/source/ArrayListTest.brs(102)
+12-08 18:12:47.580 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
+12-08 18:12:47.580 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
+12-08 18:12:47.582 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
+
+------ Compiling dev 'KotlinStdlibTests' ------
+*** ERROR compiling pkg:/source/ArrayListTest.brs:
+Syntax Error. (compile error &h02) in pkg:/source/ArrayListTest.brs(102)
+12-08 18:16:38.084 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
+12-08 18:16:38.084 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
+12-08 18:16:38.086 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
+
+------ Compiling dev 'KotlinStdlibTests' ------
+*** ERROR compiling pkg:/source/Assertions.brs:
+Syntax Error. (compile error &h02) in pkg:/source/Assertions.brs(137)
+12-08 18:18:57.145 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
+12-08 18:18:57.145 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
+12-08 18:18:57.147 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
+
+------ Compiling dev 'KotlinStdlibTests' ------
+*** ERROR compiling pkg:/source/Assertions.brs:
+Syntax Error. (compile error &h02) in pkg:/source/Assertions.brs(137)
+12-08 18:21:53.950 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
+12-08 18:21:53.950 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
+12-08 18:21:53.952 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
+
+------ Compiling dev 'KotlinStdlibTests' ------
+*** ERROR compiling pkg:/source/BareAdapter.brs:
+Syntax Error. (compile error &h02) in pkg:/source/BareAdapter.brs(46)
+12-08 18:25:51.790 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
+12-08 18:25:51.790 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
+12-08 18:25:51.793 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
+
+------ Compiling dev 'KotlinStdlibTests' ------
+*** ERROR compiling pkg:/source/BareAdapter.brs:
+Syntax Error. (compile error &h02) in pkg:/source/BareAdapter.brs(46)
