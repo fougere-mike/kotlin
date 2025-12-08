@@ -1,14 +1,4 @@
- variable 'element' in function 'list_indexof_anyn_i_k_' in pkg:/source/List.brs(16)
-BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'list_lastindexof_anyn_i_k_' in pkg:/source/List.brs(19)
-BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'list_listiterator_i_listiteratoranyn_k_' in pkg:/source/List.brs(25)
-BRIGHTSCRIPT: WARNING: unused variable 'fromindex' in function 'list_sublist_i_i_listanyn_k_' in pkg:/source/List.brs(28)
-BRIGHTSCRIPT: WARNING: unused variable 'toindex' in function 'list_sublist_i_i_listanyn_k_' in pkg:/source/List.brs(28)
-BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'mutablelist_add_anyn_z_k_' in pkg:/source/List.brs(34)
-BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'mutablelist_remove_anyn_z_k_' in pkg:/source/List.brs(37)
-BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'mutablelist_addall_collectionanyn_z_k_' in pkg:/source/List.brs(40)
-BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'mutablelist_addall_i_collectionanyn_z_k_' in pkg:/source/List.brs(43)
-BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'mutablelist_addall_i_collectionanyn_z_k_' in pkg:/source/List.brs(43)
-BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'mutablelist_removeall_collectionanyn_z_k_' in pkg:/source/List.brs(46)
+(46)
 BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'mutablelist_retainall_collectionanyn_z_k_' in pkg:/source/List.brs(49)
 BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'mutablelist_set_i_anyn_anyn_k_' in pkg:/source/List.brs(55)
 BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'mutablelist_set_i_anyn_anyn_k_' in pkg:/source/List.brs(55)
@@ -97,6 +87,24 @@ Syntax Error. (compile error &h02) in pkg:/source/CollectionExtensionsTest.brs(2
 12-08 18:37:29.857 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
 12-08 18:37:29.857 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
 12-08 18:37:29.859 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
+
+------ Compiling dev 'KotlinStdlibTests' ------
+*** ERROR compiling pkg:/source/CollectionExtensionsTest.brs:
+Syntax Error. (compile error &h02) in pkg:/source/CollectionExtensionsTest.brs(157)
+Return can not have a return-value if inside a Sub or Function with Void return type. (compile error &haa) in pkg:/source/CollectionExtensionsTest.brs(158)
+Syntax Error. (compile error &h02) in pkg:/source/CollectionExtensionsTest.brs(280)
+12-08 18:54:08.735 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
+12-08 18:54:08.735 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
+12-08 18:54:08.737 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
+
+------ Compiling dev 'KotlinStdlibTests' ------
+*** ERROR compiling pkg:/source/CollectionExtensionsTest.brs:
+Syntax Error. (compile error &h02) in pkg:/source/CollectionExtensionsTest.brs(157)
+Return can not have a return-value if inside a Sub or Function with Void return type. (compile error &haa) in pkg:/source/CollectionExtensionsTest.brs(158)
+Syntax Error. (compile error &h02) in pkg:/source/CollectionExtensionsTest.brs(280)
+12-08 18:59:24.694 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
+12-08 18:59:24.694 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
+12-08 18:59:24.695 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
 
 ------ Compiling dev 'KotlinStdlibTests' ------
 *** ERROR compiling pkg:/source/CollectionExtensionsTest.brs:

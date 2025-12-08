@@ -175,11 +175,11 @@ sub sequenceTests_rTestRunner_k_(m as Object)
         end function})
         m._this_suite.test("partition", {it: it, invoke: function() as Void
             list = listOf_Arr_ListAnyN_k_([1, 2, 3, 4, 5, 6])
-            <destruct> = partition_rSequenceAnyN_Function1AnyNZ_PairListAnyNListAnyN_k_(asSequence_rIterableAnyN_SequenceAnyN_k_(list), {invoke: function(it as Integer) as Boolean
+            __destruct_1 = partition_rSequenceAnyN_Function1AnyNZ_PairListAnyNListAnyN_k_(asSequence_rIterableAnyN_SequenceAnyN_k_(list), {invoke: function(it as Integer) as Boolean
                 return (m.it mod 2) = 0
             end function})
-            evens = destruct.component1()
-            odds = destruct.component2()
+            evens = __destruct_1.component1()
+            odds = __destruct_1.component2()
             assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_ListAnyN_k_([2, 4, 6]), evens)
             assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_ListAnyN_k_([1, 3, 5]), odds)
         end function})

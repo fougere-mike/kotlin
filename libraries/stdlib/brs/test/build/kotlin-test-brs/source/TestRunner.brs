@@ -47,9 +47,9 @@ end sub
 sub TestRunner_run_Function1TestRunnerV_k_(block as Function)
     m.adapter.startRun()
     block.invoke(m)
-    for each <destruct> in m.directSuites
-        name = destruct.component1()
-        suiteFn = destruct.component2()
+    for each __destruct_0 in m.directSuites
+        name = __destruct_0.component1()
+        suiteFn = __destruct_0.component2()
         m.adapter.suite(name, false, suiteFn)
 
     end for

@@ -12,7 +12,7 @@ function TransformingSequence_create_SequenceAnyN_Function1AnyNAnyN_Transforming
 end function
 
 function TransformingSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_4ed665fc_create_AnonAnyNAnyN_k_()
+    return Anon_73439017_create_AnonAnyNAnyN_k_()
 end function
 
 function TransformingSequence_flatten_Function1AnyNIteratorAnyN_SequenceAnyN_k_(iterator as Function) as Object
@@ -40,7 +40,7 @@ function TransformingIndexedSequence_create_obcj3k_k_(sequence as Object, transf
 end function
 
 function TransformingIndexedSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_209235e6_create_AnonAnyNAnyN_k_()
+    return Anon_6422aaf6_create_AnonAnyNAnyN_k_()
 end function
 
 function TransformingIndexedSequence_get_sequence_SequenceAnyN_k_() as Object
@@ -66,7 +66,7 @@ function FilteringSequence_create_SequenceAnyN_Z_Function1AnyNZ_FilteringSequenc
 end function
 
 function FilteringSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_6f5bbb45_create_AnonAnyN_k_()
+    return Anon_6f4a6c56_create_AnonAnyN_k_()
 end function
 
 function FilteringSequence_get_sequence_SequenceAnyN_k_() as Object
@@ -96,7 +96,7 @@ function FilteringIndexedSequence_create_SequenceAnyN_Z_Function2IAnyNZ_Filterin
 end function
 
 function FilteringIndexedSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_4125fa08_create_AnonAnyN_k_()
+    return Anon_d82824d_create_AnonAnyN_k_()
 end function
 
 function FilteringIndexedSequence_get_sequence_SequenceAnyN_k_() as Object
@@ -126,7 +126,7 @@ function FlatteningSequence_create_hoq5fb_k_(sequence as Object, transformer as 
 end function
 
 function FlatteningSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_a786232_create_AnonAnyNAnyNAnyN_k_()
+    return Anon_5487a6a_create_AnonAnyNAnyNAnyN_k_()
 end function
 
 function FlatteningSequence_get_sequence_SequenceAnyN_k_() as Object
@@ -178,7 +178,7 @@ function TakingSequence_take_I_SequenceAnyN_k_(n as Integer) as Object
 end function
 
 function TakingSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_6c299dcd_create_AnonAnyN_k_()
+    return Anon_723eb328_create_AnonAnyN_k_()
 end function
 
 function TakingSequence_get_sequence_SequenceAnyN_k_() as Object
@@ -202,7 +202,7 @@ function TakingWhileSequence_create_SequenceAnyN_Function1AnyNZ_TakingWhileSeque
 end function
 
 function TakingWhileSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_2eaf7e77_create_AnonAnyN_k_()
+    return Anon_2b5da15d_create_AnonAnyN_k_()
 end function
 
 function TakingWhileSequence_get_sequence_SequenceAnyN_k_() as Object
@@ -236,7 +236,7 @@ function DroppingSequence_take_I_SequenceAnyN_k_(n as Integer) as Object
 end function
 
 function DroppingSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_6bbc669_create_AnonAnyN_k_()
+    return Anon_6df705df_create_AnonAnyN_k_()
 end function
 
 function DroppingSequence_get_sequence_SequenceAnyN_k_() as Object
@@ -260,7 +260,7 @@ function DroppingWhileSequence_create_SequenceAnyN_Function1AnyNZ_DroppingWhileS
 end function
 
 function DroppingWhileSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_71ed0b5e_create_AnonAnyN_k_()
+    return Anon_5c4429e7_create_AnonAnyN_k_()
 end function
 
 function DroppingWhileSequence_get_sequence_SequenceAnyN_k_() as Object
@@ -311,7 +311,7 @@ function SubSequence_take_I_SequenceAnyN_k_(n as Integer) as Object
 end function
 
 function SubSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_1d386850_create_AnonAnyN_k_()
+    return Anon_1cc2f888_create_AnonAnyN_k_()
 end function
 
 function SubSequence_get_sequence_SequenceAnyN_k_() as Object
@@ -343,7 +343,7 @@ function DistinctSequence_create_SequenceAnyN_Function1AnyNAnyN_DistinctSequence
 end function
 
 function DistinctSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_7646dfd9_create_AnonAnyNAnyN_k_()
+    return Anon_73ec23a2_create_AnonAnyNAnyN_k_()
 end function
 
 function DistinctSequence_get_source_SequenceAnyN_k_() as Object
@@ -369,7 +369,7 @@ function MergingSequence_create_efuchp_k_(sequence1 as Object, sequence2 as Obje
 end function
 
 function MergingSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_704e7490_create_AnonAnyNAnyNAnyN_k_()
+    return Anon_6c171b61_create_AnonAnyNAnyNAnyN_k_()
 end function
 
 function MergingSequence_get_sequence1_SequenceAnyN_k_() as Object

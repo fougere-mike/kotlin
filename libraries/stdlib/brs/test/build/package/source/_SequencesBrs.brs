@@ -406,11 +406,11 @@ function reduceOrNull_rSequenceAnyN_Function2AnyNAnyNAnyN_AnyN_k_(m as Object, o
 end function
 
 function scan_rSequenceAnyN_AnyN_Function2AnyNAnyNAnyN_SequenceAnyN_k_(m as Object, initial as Dynamic, operation as Function) as Object
-    return Anon_2b20e1ea_create_AnonAnyNAnyN_k_()
+    return Anon_2517634b_create_AnonAnyNAnyN_k_()
 end function
 
 function scanIndexed_rSequenceAnyN_AnyN_Function3IAnyNAnyNAnyN_SequenceAnyN_k_(m as Object, initial as Dynamic, operation as Function) as Object
-    return Anon_1766ab92_create_AnonAnyNAnyN_k_()
+    return Anon_41f24cc6_create_AnonAnyNAnyN_k_()
 end function
 
 function sum_rSequenceB_I_k_(m as Object) as Integer

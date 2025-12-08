@@ -190,11 +190,11 @@ function zip_rSequenceAnyN_SequenceAnyN_Function2AnyNAnyNAnyN_SequenceAnyN_k_(m 
 end function
 
 function sorted_rSequenceAny_SequenceAny_k_(m as Object) as Object
-    return Anon_789e7ca_create_AnonAny_k_()
+    return Anon_58308f24_create_AnonAny_k_()
 end function
 
 function sortedWith_rSequenceAnyN_ComparatorAnyN_SequenceAnyN_k_(m as Object, comparator as Object) as Object
-    return Anon_286ced2a_create_AnonAnyN_k_()
+    return Anon_41604b98_create_AnonAnyN_k_()
 end function
 
 function sortedDescending_rSequenceAny_SequenceAny_k_(m as Object) as Object
@@ -210,5 +210,5 @@ function sortedByDescending_rSequenceAnyN_Function1AnyNAnyN_SequenceAnyN_k_(m as
 end function
 
 function ifEmpty_rSequenceAnyN_Function0SequenceAnyN_SequenceAnyN_k_(m as Object, defaultValue as Function) as Object
-    return Anon_77b71acd_create_AnonAnyN_k_()
+    return Anon_57dea250_create_AnonAnyN_k_()
 end function
