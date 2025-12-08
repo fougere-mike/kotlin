@@ -26,12 +26,10 @@ internal class BareAdapter : FrameworkAdapter {
         currentSuite = name
         println("[SUITE START] $name")
 
-        try {
-            suiteFn()
-            println("[SUITE PASS] $name")
-        } catch (e: Throwable) {
-            println("[SUITE FAIL] $name: ${e.message}")
-        }
+        // Note: try-catch disabled due to compiler code generation issues.
+        // Suite exceptions will propagate and crash the test run.
+        suiteFn()
+        println("[SUITE PASS] $name")
     }
 
     override fun test(name: String, ignored: Boolean, testFn: () -> Unit) {
@@ -45,14 +43,11 @@ internal class BareAdapter : FrameworkAdapter {
 
         println("[TEST START] $fullName")
 
-        try {
-            testFn()
-            println("[TEST PASS] $fullName")
-            results.add(TestResult(currentSuite, name, "PASS", null))
-        } catch (e: Throwable) {
-            println("[TEST FAIL] $fullName: ${e.message}")
-            results.add(TestResult(currentSuite, name, "FAIL", e.message))
-        }
+        // Note: try-catch disabled due to compiler code generation issues.
+        // Test exceptions will propagate and crash the test run.
+        testFn()
+        println("[TEST PASS] $fullName")
+        results.add(TestResult(currentSuite, name, "PASS", null))
     }
 
     /**

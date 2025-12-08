@@ -9,7 +9,7 @@ package kotlin.test
  * Marks a function or class as a test.
  */
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
-public actual annotation class Test
+public annotation class Test
 
 /**
  * Marks a test or test class as ignored.
@@ -17,16 +17,16 @@ public actual annotation class Test
  * @param reason the reason why the test is ignored
  */
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
-public actual annotation class Ignore(actual val reason: String)
+public annotation class Ignore(val reason: String = "")
 
 /**
  * Marks a function to be invoked before each test.
  */
 @Target(AnnotationTarget.FUNCTION)
-public actual annotation class BeforeTest
+public annotation class BeforeTest
 
 /**
  * Marks a function to be invoked after each test.
  */
 @Target(AnnotationTarget.FUNCTION)
-public actual annotation class AfterTest
+public annotation class AfterTest

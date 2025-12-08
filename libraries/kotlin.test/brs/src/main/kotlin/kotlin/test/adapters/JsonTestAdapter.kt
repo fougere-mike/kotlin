@@ -110,16 +110,9 @@ public class JsonTestAdapter : FrameworkAdapter {
             "timestamp" to currentTimeMillis()
         ))
 
-        try {
-            suiteFn()
-        } catch (e: Throwable) {
-            emitJson(mapOf(
-                "type" to "suite_error",
-                "suite" to name,
-                "error" to (e::class.simpleName ?: "Unknown"),
-                "message" to (e.message ?: "")
-            ))
-        }
+        // Note: try-catch disabled due to compiler code generation issues.
+        // Suite exceptions will propagate and crash the test run.
+        suiteFn()
 
         val duration = suiteTimer.totalMilliseconds()
         emitJson(mapOf(
@@ -154,41 +147,19 @@ public class JsonTestAdapter : FrameworkAdapter {
             "timestamp" to currentTimeMillis()
         ))
 
-        try {
-            testFn()
-            val duration = testTimer.totalMilliseconds()
-            suitePassed++
-            totalPassed++
-            emitJson(mapOf(
-                "type" to "test_pass",
-                "suite" to currentSuite,
-                "test" to name,
-                "duration_ms" to duration
-            ))
-        } catch (e: AssertionError) {
-            val duration = testTimer.totalMilliseconds()
-            suiteFailed++
-            totalFailed++
-            emitJson(mapOf(
-                "type" to "test_fail",
-                "suite" to currentSuite,
-                "test" to name,
-                "message" to (e.message ?: "Assertion failed"),
-                "duration_ms" to duration
-            ))
-        } catch (e: Throwable) {
-            val duration = testTimer.totalMilliseconds()
-            suiteFailed++
-            totalFailed++
-            emitJson(mapOf(
-                "type" to "test_error",
-                "suite" to currentSuite,
-                "test" to name,
-                "error" to (e::class.simpleName ?: "Unknown"),
-                "message" to (e.message ?: ""),
-                "duration_ms" to duration
-            ))
-        }
+        // Note: try-catch disabled due to compiler code generation issues.
+        // Test exceptions will propagate and crash the test run.
+        // Failures will show which test crashed.
+        testFn()
+        val duration = testTimer.totalMilliseconds()
+        suitePassed++
+        totalPassed++
+        emitJson(mapOf(
+            "type" to "test_pass",
+            "suite" to currentSuite,
+            "test" to name,
+            "duration_ms" to duration
+        ))
     }
 
     /**

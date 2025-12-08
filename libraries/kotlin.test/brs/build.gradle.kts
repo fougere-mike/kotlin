@@ -44,7 +44,7 @@ val buildKlib by tasks.registering(JavaExec::class) {
     args(
         "-Xproduce=library",
         "-Xallow-kotlin-package",
-        "-Xir-module-name=kotlin-test",
+        "-module-name", "kotlin.test",
         "-libraries", stdlibKlib.absolutePath,
         "-output", outputKlib.absolutePath,
         brsSrc.absolutePath
