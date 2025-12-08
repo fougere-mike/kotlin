@@ -20,11 +20,30 @@ function contentEquals_rUByteArrayN_UByteArrayN_Z_k_(m as Dynamic, other as Dyna
     if m.size <> other.size then
         return false
     end if
-    for each i in until_rI_I_IntRange_k_(0, m.size)
+    progression = until_rI_I_IntRange_k_(0, m.size)
+    inductionVariable = progression.first
+    last = progression.last
+    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
         if m[i] <> other[i] then
             return false
         end if
-    end for
+
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            if m[i] <> other[i] then
+                return false
+            end if
+
+        end while
+
+    end if
+
     return true
 end function
 
@@ -50,11 +69,30 @@ function contentEquals_rUShortArrayN_UShortArrayN_Z_k_(m as Dynamic, other as Dy
     if m.size <> other.size then
         return false
     end if
-    for each i in until_rI_I_IntRange_k_(0, m.size)
+    progression = until_rI_I_IntRange_k_(0, m.size)
+    inductionVariable = progression.first
+    last = progression.last
+    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
         if m[i] <> other[i] then
             return false
         end if
-    end for
+
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            if m[i] <> other[i] then
+                return false
+            end if
+
+        end while
+
+    end if
+
     return true
 end function
 
@@ -80,11 +118,30 @@ function contentEquals_rUIntArrayN_UIntArrayN_Z_k_(m as Dynamic, other as Dynami
     if m.size <> other.size then
         return false
     end if
-    for each i in until_rI_I_IntRange_k_(0, m.size)
+    progression = until_rI_I_IntRange_k_(0, m.size)
+    inductionVariable = progression.first
+    last = progression.last
+    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
         if m[i] <> other[i] then
             return false
         end if
-    end for
+
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            if m[i] <> other[i] then
+                return false
+            end if
+
+        end while
+
+    end if
+
     return true
 end function
 
@@ -110,10 +167,29 @@ function contentEquals_rULongArrayN_ULongArrayN_Z_k_(m as Dynamic, other as Dyna
     if m.size <> other.size then
         return false
     end if
-    for each i in until_rI_I_IntRange_k_(0, m.size)
+    progression = until_rI_I_IntRange_k_(0, m.size)
+    inductionVariable = progression.first
+    last = progression.last
+    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
         if m[i] <> other[i] then
             return false
         end if
-    end for
+
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            if m[i] <> other[i] then
+                return false
+            end if
+
+        end while
+
+    end if
+
     return true
 end function

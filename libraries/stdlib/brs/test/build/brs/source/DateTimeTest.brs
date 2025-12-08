@@ -50,10 +50,24 @@ sub dateTimeTests_rTestRunner_k_(m as Object)
             ts = RoTimespan_create_RoTimespan_k_()
             ts.mark()
             sum = 0
-            for each i in 1.rangeTo(1000)
+            inductionVariable = 1
+            if lessOrEqual_I_I_Z_k_(inductionVariable, 1000) then
+                                i = inductionVariable
+                inductionVariable = (inductionVariable + 1)
+
                 sum = (sum + i)
 
-            end for
+
+                while lessOrEqual_I_I_Z_k_(inductionVariable, 1000)
+                    i = inductionVariable
+                    inductionVariable = (inductionVariable + 1)
+
+                    sum = (sum + i)
+
+                end while
+
+            end if
+
             elapsed = ts.totalMilliseconds()
             assertTrue_Z_StrN_k_(elapsed >= 0)
         end function})
@@ -68,10 +82,24 @@ sub dateTimeTests_rTestRunner_k_(m as Object)
             ts2 = RoTimespan_create_RoTimespan_k_()
             ts1.mark()
             sum = 0
-            for each i in 1.rangeTo(1000)
+            inductionVariable = 1
+            if lessOrEqual_I_I_Z_k_(inductionVariable, 1000) then
+                                i = inductionVariable
+                inductionVariable = (inductionVariable + 1)
+
                 sum = (sum + i)
 
-            end for
+
+                while lessOrEqual_I_I_Z_k_(inductionVariable, 1000)
+                    i = inductionVariable
+                    inductionVariable = (inductionVariable + 1)
+
+                    sum = (sum + i)
+
+                end while
+
+            end if
+
             ts2.mark()
             elapsed1 = ts1.totalMilliseconds()
             elapsed2 = ts2.totalMilliseconds()

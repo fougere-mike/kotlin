@@ -1,19 +1,4 @@
-r_set_anyn_k_' in pkg:/source/Iterator.brs(22)
-BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'mutablelistiterator_add_anyn_k_' in pkg:/source/Iterator.brs(25)
-BRIGHTSCRIPT: WARNING: unused variable 'm' in function 'frombits_rcompanion_j_d_k_' in pkg:/source/Kotlin.brs(55)
-BRIGHTSCRIPT: WARNING: unused variable 'm' in function 'frombits_rcompanion_i_f_k_' in pkg:/source/Kotlin.brs(128)
-BRIGHTSCRIPT: WARNING: unused variable 'mode' in function 'lazy_lazythreadsafetymode_function0anyn_lazyanyn_k_' in pkg:/source/Kotlin.brs(175)
-BRIGHTSCRIPT: WARNING: unused variable 'lock' in function 'lazy_anyn_function0anyn_lazyanyn_k_' in pkg:/source/Kotlin.brs(179)
-BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'linkedhashmap_linkedkeyset_add_anyn_z_k_' in pkg:/source/LinkedHashMap.brs(346)
-BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'linkedhashmap_linkedkeyset_addall_collectionanyn_z_k_' in pkg:/source/LinkedHashMap.brs(350)
-BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'linkedhashmap_linkedvaluecollection_add_anyn_z_k_' in pkg:/source/LinkedHashMap.brs(437)
-BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'linkedhashmap_linkedvaluecollection_addall_collectionanyn_z_k_' in pkg:/source/LinkedHashMap.brs(441)
-BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'linkedhashmap_linkedentryset_add_mutableentryanynanyn_z_k_' in pkg:/source/LinkedHashMap.brs(533)
-BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'linkedhashmap_linkedentryset_addall_collectionmutableentryanynanyn_z_k_' in pkg:/source/LinkedHashMap.brs(537)
-BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'list_contains_anyn_z_k_' in pkg:/source/List.brs(4)
-BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'list_containsall_collectionanyn_z_k_' in pkg:/source/List.brs(10)
-BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'list_get_i_anyn_k_' in pkg:/source/List.brs(13)
-BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'list_indexof_anyn_i_k_' in pkg:/source/List.brs(16)
+ variable 'element' in function 'list_indexof_anyn_i_k_' in pkg:/source/List.brs(16)
 BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'list_lastindexof_anyn_i_k_' in pkg:/source/List.brs(19)
 BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'list_listiterator_i_listiteratoranyn_k_' in pkg:/source/List.brs(25)
 BRIGHTSCRIPT: WARNING: unused variable 'fromindex' in function 'list_sublist_i_i_listanyn_k_' in pkg:/source/List.brs(28)
@@ -91,3 +76,30 @@ Syntax Error. (compile error &h02) in pkg:/source/BareAdapter.brs(46)
 ------ Compiling dev 'KotlinStdlibTests' ------
 *** ERROR compiling pkg:/source/BareAdapter.brs:
 Syntax Error. (compile error &h02) in pkg:/source/BareAdapter.brs(46)
+12-08 18:31:42.898 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
+12-08 18:31:42.898 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
+12-08 18:31:42.900 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
+
+------ Compiling dev 'KotlinStdlibTests' ------
+*** ERROR compiling pkg:/source/CollectionExtensionsTest.brs:
+Syntax Error. (compile error &h02) in pkg:/source/CollectionExtensionsTest.brs(157)
+Return can not have a return-value if inside a Sub or Function with Void return type. (compile error &haa) in pkg:/source/CollectionExtensionsTest.brs(158)
+Syntax Error. (compile error &h02) in pkg:/source/CollectionExtensionsTest.brs(280)
+12-08 18:35:00.401 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
+12-08 18:35:00.401 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
+12-08 18:35:00.403 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
+
+------ Compiling dev 'KotlinStdlibTests' ------
+*** ERROR compiling pkg:/source/CollectionExtensionsTest.brs:
+Syntax Error. (compile error &h02) in pkg:/source/CollectionExtensionsTest.brs(157)
+Return can not have a return-value if inside a Sub or Function with Void return type. (compile error &haa) in pkg:/source/CollectionExtensionsTest.brs(158)
+Syntax Error. (compile error &h02) in pkg:/source/CollectionExtensionsTest.brs(280)
+12-08 18:37:29.857 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
+12-08 18:37:29.857 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
+12-08 18:37:29.859 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
+
+------ Compiling dev 'KotlinStdlibTests' ------
+*** ERROR compiling pkg:/source/CollectionExtensionsTest.brs:
+Syntax Error. (compile error &h02) in pkg:/source/CollectionExtensionsTest.brs(157)
+Return can not have a return-value if inside a Sub or Function with Void return type. (compile error &haa) in pkg:/source/CollectionExtensionsTest.brs(158)
+Syntax Error. (compile error &h02) in pkg:/source/CollectionExtensionsTest.brs(280)

@@ -496,10 +496,25 @@ sub StringBuilder_setLength_I_k_(newLength as Integer)
     if newLength <= m.length then
         m.string = substring_rStr_I_I_Str_k_(m.string, 0, newLength)
     else if true then
-        for each i in until_rI_I_IntRange_k_(m.length, newLength)
+        progression = until_rI_I_IntRange_k_(m.length, newLength)
+        inductionVariable = progression.first
+        last = progression.last
+        if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+                        i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
             m.string = (m.string + " ")
 
-        end for
+
+            while i <> last
+                i = inductionVariable
+                inductionVariable = (inductionVariable + 1)
+
+                m.string = (m.string + " ")
+
+            end while
+
+        end if
     end if
 end sub
 
@@ -561,10 +576,26 @@ sub StringBuilder_toCharArray_CharArray_I_I_I_k_(destination as Object, destinat
     checkBoundsIndexes_I_I_I_k_(startIndex, endIndex, m.length)
     checkBoundsIndexes_I_I_I_k_(destinationOffset, (destinationOffset + endIndex) - startIndex, destination.size)
     dstIndex = destinationOffset
-    for each index in until_rI_I_IntRange_k_(startIndex, endIndex)
+    progression = until_rI_I_IntRange_k_(startIndex, endIndex)
+    inductionVariable = progression.first
+    last = progression.last
+    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+                index = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
         destination.set(dstIndex = (dstIndex + 1), m.string[index])
 
-    end for
+
+        while index <> last
+            index = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            destination.set(dstIndex = (dstIndex + 1), m.string[index])
+
+        end while
+
+    end if
+
 end sub
 
 function StringBuilder_appendRange_CharArray_I_I_StringBuilder_k_(value as Object, startIndex as Integer, endIndex as Integer) as Object

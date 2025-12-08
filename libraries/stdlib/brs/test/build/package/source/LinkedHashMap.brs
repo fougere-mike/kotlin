@@ -340,7 +340,7 @@ function LinkedHashMap_LinkedKeySet_containsAll_CollectionAnyN_Z_k_(elements as 
 end function
 
 function LinkedHashMap_LinkedKeySet_iterator_MutableIteratorAnyN_k_() as Object
-    return Anon_5ee16a6d_create_AnonAnyNAnyN_k_()
+    return Anon_3f38cb2d_create_AnonAnyNAnyN_k_()
 end function
 
 function LinkedHashMap_LinkedKeySet_add_AnyN_Z_k_(element as Dynamic) as Boolean
@@ -431,7 +431,7 @@ function LinkedHashMap_LinkedValueCollection_containsAll_CollectionAnyN_Z_k_(ele
 end function
 
 function LinkedHashMap_LinkedValueCollection_iterator_MutableIteratorAnyN_k_() as Object
-    return Anon_190db09c_create_AnonAnyNAnyN_k_()
+    return Anon_6262770e_create_AnonAnyNAnyN_k_()
 end function
 
 function LinkedHashMap_LinkedValueCollection_add_AnyN_Z_k_(element as Dynamic) as Boolean
@@ -527,7 +527,7 @@ function LinkedHashMap_LinkedEntrySet_containsAll_CollectionMutableEntryAnyNAnyN
 end function
 
 function LinkedHashMap_LinkedEntrySet_iterator_MutableIteratorMutableEntryAnyNAnyN_k_() as Object
-    return Anon_72afaee3_create_AnonAnyNAnyN_k_()
+    return Anon_33a95758_create_AnonAnyNAnyN_k_()
 end function
 
 function LinkedHashMap_LinkedEntrySet_add_MutableEntryAnyNAnyN_Z_k_(element as Object) as Boolean

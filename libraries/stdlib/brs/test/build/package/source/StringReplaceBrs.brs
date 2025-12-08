@@ -2,11 +2,27 @@ function replace_rStr_Str_Str_Z_Str_k_(m as String, oldValue as String, newValue
     if isEmpty_rStr_Z_k_(oldValue) then
         result = StringBuilder_create_StringBuilder_k_()
         result.append(newValue)
-        for each i in until_rI_I_IntRange_k_(0, m.length)
+        progression = until_rI_I_IntRange_k_(0, m.length)
+        inductionVariable = progression.first
+        last = progression.last
+        if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+                        i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
             result.append(m[i])
             result.append(newValue)
 
-        end for
+
+            while i <> last
+                i = inductionVariable
+                inductionVariable = (inductionVariable + 1)
+
+                result.append(m[i])
+                result.append(newValue)
+
+            end while
+
+        end if
         return result.toString()
     end if
     currentIndex = 0

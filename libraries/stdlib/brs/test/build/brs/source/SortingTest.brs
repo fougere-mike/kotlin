@@ -90,15 +90,45 @@ sub sortingTests_rTestRunner_k_(m as Object)
         end function})
         m._this_suite.test("sort large list", {invoke: function() as Void
             list = mutableListOf_MutableListAnyN_k_()
-            for each i in downTo_rI_I_IntProgression_k_(100, 1)
+            inductionVariable = 100
+            if lessOrEqual_I_I_Z_k_(1, inductionVariable) then
+                                i = inductionVariable
+                inductionVariable = (inductionVariable + -1)
+
                 list.add(i)
 
-            end for
+
+                while lessOrEqual_I_I_Z_k_(1, inductionVariable)
+                    i = inductionVariable
+                    inductionVariable = (inductionVariable + -1)
+
+                    list.add(i)
+
+                end while
+
+            end if
+
             sort_rMutableListAny_k_(list)
-            for each i in until_rI_I_IntRange_k_(0, 100)
+            progression = until_rI_I_IntRange_k_(0, 100)
+            inductionVariable = progression.first
+            last = progression.last
+            if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+                                i = inductionVariable
+                inductionVariable = (inductionVariable + 1)
+
                 assertEquals_AnyN_AnyN_StrN_k_(i + 1, list[i])
 
-            end for
+
+                while i <> last
+                    i = inductionVariable
+                    inductionVariable = (inductionVariable + 1)
+
+                    assertEquals_AnyN_AnyN_StrN_k_(i + 1, list[i])
+
+                end while
+
+            end if
+
         end function})
         m._this_suite.test("compareBy", {name: name, this: this, age: age, this: this, this: this, this: this, this: this, name: name, age: age, this: this, this: this, this: this, other: other, it: it, invoke: function() as Void
             list = mutableListOf_Arr_MutableListAnyN_k_([Person_create_Str_I_Person_k_("Alice", 30), Person_create_Str_I_Person_k_("Bob", 25), Person_create_Str_I_Person_k_("Charlie", 30)])

@@ -72,11 +72,30 @@ function fromBits_rCompanion_J_D_k_(m as Object, bits as LongInteger) as Double
     negative = bits < 0
     biasedExp = exp - 1023
     mantissa = 1.0#
-    for each i in until_rI_I_IntRange_k_(0, 52)
+    progression = until_rI_I_IntRange_k_(0, 52)
+    inductionVariable = progression.first
+    last = progression.last
+    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
         if mantissaBits.and(1&.shl(51 - i)) <> 0& then
             mantissa = (mantissa + (1.0# / 1&.shl(i + 1)))
         end if
-    end for
+
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            if mantissaBits.and(1&.shl(51 - i)) <> 0& then
+                mantissa = (mantissa + (1.0# / 1&.shl(i + 1)))
+            end if
+
+        end while
+
+    end if
+
     __when_tmp4 = invalid
     if biasedExp >= 0 then
         __when_tmp4 = (mantissa * 1&.shl(coerceAtMost_rI_I_I_k_(biasedExp, 62)))
@@ -145,11 +164,30 @@ function fromBits_rCompanion_I_F_k_(m as Object, bits as Integer) as Float
     negative = bits < 0
     biasedExp = exp - 127
     mantissa = 1.0#
-    for each i in until_rI_I_IntRange_k_(0, 23)
+    progression = until_rI_I_IntRange_k_(0, 23)
+    inductionVariable = progression.first
+    last = progression.last
+    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
         if mantissaBits.and(1.shl(22 - i)) <> 0 then
             mantissa = (mantissa + (1.0# / 1.shl(i + 1)))
         end if
-    end for
+
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            if mantissaBits.and(1.shl(22 - i)) <> 0 then
+                mantissa = (mantissa + (1.0# / 1.shl(i + 1)))
+            end if
+
+        end while
+
+    end if
+
     __when_tmp10 = invalid
     if biasedExp >= 0 then
         __when_tmp10 = (mantissa * 1.shl(coerceAtMost_rI_I_I_k_(biasedExp, 30)))

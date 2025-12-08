@@ -1,38 +1,38 @@
 // --- File: simpleClass.brs ---
-function Person_create_Str_I_Person_k$(name as String, age as Integer) as Object
+function Person_create_Str_I_Person_k_(name as String, age as Integer) as Object
     this = {}
     this.__type = "Person"
     this.__proto = ["Person"]
     this.name = name
     this.age = age
-    this.greet_Str_k$ = Person_greet_Str_k$
-    this.isAdult_Z_k$ = Person_isAdult_Z_k$
-    this.get_name = Person_get_name_Str_k$
-    this.get_age = Person_get_age_I_k$
+    this.greet_Str_k_ = Person_greet_Str_k_
+    this.isAdult_Z_k_ = Person_isAdult_Z_k_
+    this.get_name = Person_get_name_Str_k_
+    this.get_age = Person_get_age_I_k_
     return this
 end function
 
-function Person_greet_Str_k$() as String
+function Person_greet_Str_k_() as String
     return "Hello, my name is " + m.name
 end function
 
-function Person_isAdult_Z_k$() as Boolean
+function Person_isAdult_Z_k_() as Boolean
     return m.age >= 18
 end function
 
-function Person_get_name_Str_k$() as String
+function Person_get_name_Str_k_() as String
     return m.name
 end function
 
-function Person_get_age_I_k$() as Integer
+function Person_get_age_I_k_() as Integer
     return m.age
 end function
 
-function createPerson_Person_k$() as Object
-    return Person_create_Str_I_Person_k$("Alice", 30)
+function createPerson_Person_k_() as Object
+    return Person_create_Str_I_Person_k_("Alice", 30)
 end function
 
-function testPerson_Str_k$() as String
-    person = Person_create_Str_I_Person_k$("Bob", 25)
+function testPerson_Str_k_() as String
+    person = Person_create_Str_I_Person_k_("Bob", 25)
     return person.greet()
 end function

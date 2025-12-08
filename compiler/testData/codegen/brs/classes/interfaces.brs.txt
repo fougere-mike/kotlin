@@ -1,67 +1,67 @@
 // --- File: interfaces.brs ---
-function Describable_describe_Str_k$() as String
+function Describable_describe_Str_k_() as String
 end function
 
-function Named_getName_Str_k$() as String
+function Named_getName_Str_k_() as String
 end function
 
-function Product_create_Str_I_Product_k$(name as String, price as Integer) as Object
+function Product_create_Str_I_Product_k_(name as String, price as Integer) as Object
     this = {}
     this.__type = "Product"
     this.__proto = ["Product"]
     this.name = name
     this.price = price
-    this.describe_Str_k$ = Product_describe_Str_k$
-    this.get_name = Product_get_name_Str_k$
-    this.get_price = Product_get_price_I_k$
+    this.describe_Str_k_ = Product_describe_Str_k_
+    this.get_name = Product_get_name_Str_k_
+    this.get_price = Product_get_price_I_k_
     return this
 end function
 
-function Product_describe_Str_k$() as String
+function Product_describe_Str_k_() as String
     return (m.name + " costs ") + m.price
 end function
 
-function Product_get_name_Str_k$() as String
+function Product_get_name_Str_k_() as String
     return m.name
 end function
 
-function Product_get_price_I_k$() as Integer
+function Product_get_price_I_k_() as Integer
     return m.price
 end function
 
-function Item_create_Str_I_Item_k$(title as String, value as Integer) as Object
+function Item_create_Str_I_Item_k_(title as String, value as Integer) as Object
     this = {}
     this.__type = "Item"
     this.__proto = ["Item"]
     this.title = title
     this.value = value
-    this.describe_Str_k$ = Item_describe_Str_k$
-    this.getName_Str_k$ = Item_getName_Str_k$
-    this.get_title = Item_get_title_Str_k$
-    this.get_value = Item_get_value_I_k$
+    this.describe_Str_k_ = Item_describe_Str_k_
+    this.getName_Str_k_ = Item_getName_Str_k_
+    this.get_title = Item_get_title_Str_k_
+    this.get_value = Item_get_value_I_k_
     return this
 end function
 
-function Item_describe_Str_k$() as String
+function Item_describe_Str_k_() as String
     return "Item: " + m.title
 end function
 
-function Item_getName_Str_k$() as String
+function Item_getName_Str_k_() as String
     return m.title
 end function
 
-function Item_get_title_Str_k$() as String
+function Item_get_title_Str_k_() as String
     return m.title
 end function
 
-function Item_get_value_I_k$() as Integer
+function Item_get_value_I_k_() as Integer
     return m.value
 end function
 
-function getDescription_Describable_Str_k$(item as Object) as String
+function getDescription_Describable_Str_k_(item as Object) as String
     return item.describe()
 end function
 
-function createProduct_Product_k$() as Object
-    return Product_create_Str_I_Product_k$("Widget", 100)
+function createProduct_Product_k_() as Object
+    return Product_create_Str_I_Product_k_("Widget", 100)
 end function

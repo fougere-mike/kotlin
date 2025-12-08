@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.ir.backend.brs.lower
 
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.lower.*
+import org.jetbrains.kotlin.backend.common.lower.loops.ForLoopsLowering
 import org.jetbrains.kotlin.backend.common.phaser.*
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
@@ -75,6 +76,11 @@ object BrsLoweringPhases {
             // BrightScript doesn't support inline if-then-else, so when expressions
             // are transformed to blocks with temp variables
             BrsWhenExpressionLowering(context),
+
+            // Phase 12.5: For loop optimization and destructuring
+            // Transforms destructuring declarations in for loops (e.g., for ((a, b) in list))
+            // and optimizes iteration over progressions and arrays
+            ForLoopsLowering(context),
 
             // Phase 13: Control flow simplification
             ControlFlowLowering(context),

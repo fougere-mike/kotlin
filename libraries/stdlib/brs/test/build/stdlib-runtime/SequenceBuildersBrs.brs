@@ -3,7 +3,7 @@ function emptySequence_SequenceAnyN_k_() as Object
 end function
 
 function sequenceOf_AnyN_SequenceAnyN_k_(element as Dynamic) as Object
-    return Anon_77720a3d_create_AnonAnyN_k_()
+    return Anon_11e88710_create_AnonAnyN_k_()
 end function
 
 function sequenceOf_Arr_SequenceAnyN_k_(elements as Object) as Object
@@ -18,7 +18,7 @@ function sequenceOf_Arr_SequenceAnyN_k_(elements as Object) as Object
 end function
 
 function sequenceOf_IteratorAnyN_SequenceAnyN_k_(iterator as Object) as Object
-    return Anon_40bd544_create_AnonAnyN_k_()
+    return Anon_c5d249d_create_AnonAnyN_k_()
 end function
 
 function sequence_SequenceAnyN_k_() as Object
@@ -66,7 +66,7 @@ function asSequence_rIteratorAnyN_SequenceAnyN_k_(m as Object) as Object
 end function
 
 function Sequence_Function0IteratorAnyN_SequenceAnyN_k_(iterator as Function) as Object
-    return Anon_3faabf8c_create_AnonAnyN_k_()
+    return Anon_7209f69b_create_AnonAnyN_k_()
 end function
 
 function EmptySequence_create_EmptySequence_k_() as Object
@@ -135,7 +135,7 @@ function GeneratorSequence_create_Function0AnyN_Function1AnyAnyN_GeneratorSequen
 end function
 
 function GeneratorSequence_iterator_IteratorAny_k_() as Object
-    return Anon_4d509a1f_create_AnonAny_k_()
+    return Anon_ddd108b_create_AnonAny_k_()
 end function
 
 function GeneratorSequence_get_getInitialValue_Function0AnyN_k_() as Function

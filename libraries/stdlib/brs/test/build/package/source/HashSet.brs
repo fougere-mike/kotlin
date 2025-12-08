@@ -247,10 +247,17 @@ end function
 
 function hashSetOf_Arr_HashSetAnyN_k_(elements as Object) as Object
     set = HashSet_create_I_HashSetAnyN_k_(elements.size)
-    for each element in elements
+    indexedObject = elements
+    inductionVariable = 0
+    last = indexedObject.size
+    while less_I_I_Z_k_(inductionVariable, last)
+        element = indexedObject.get(inductionVariable)
+        inductionVariable = (inductionVariable + 1)
+
         set.add(element)
 
-    end for
+    end while
+
     return set
 end function
 

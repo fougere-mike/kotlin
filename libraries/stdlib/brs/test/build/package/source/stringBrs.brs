@@ -46,11 +46,30 @@ function contentEquals_rCharSequenceN_CharSequenceN_Z_k_(m as Dynamic, other as 
     if m.length <> other.length then
         return false
     end if
-    for each i in until_rI_I_IntRange_k_(0, m.length)
+    progression = until_rI_I_IntRange_k_(0, m.length)
+    inductionVariable = progression.first
+    last = progression.last
+    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
         if m[i] <> other[i] then
             return false
         end if
-    end for
+
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            if m[i] <> other[i] then
+                return false
+            end if
+
+        end while
+
+    end if
+
     return true
 end function
 
@@ -65,17 +84,53 @@ function contentEquals_rCharSequenceN_CharSequenceN_Z_Z_k_(m as Dynamic, other a
         return false
     end if
     if ignoreCase.not() then
-        for each i in until_rI_I_IntRange_k_(0, m.length)
+        progression = until_rI_I_IntRange_k_(0, m.length)
+        inductionVariable = progression.first
+        last = progression.last
+        if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+                        i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
             if m[i] <> other[i] then
                 return false
             end if
-        end for
+
+
+            while i <> last
+                i = inductionVariable
+                inductionVariable = (inductionVariable + 1)
+
+                if m[i] <> other[i] then
+                    return false
+                end if
+
+            end while
+
+        end if
     else if true then
-        for each i in until_rI_I_IntRange_k_(0, m.length)
+        progression = until_rI_I_IntRange_k_(0, m.length)
+        inductionVariable = progression.first
+        last = progression.last
+        if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+                        i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
             if equals_rC_C_Z_Z_k_(m[i], other[i], true).not() then
                 return false
             end if
-        end for
+
+
+            while i <> last
+                i = inductionVariable
+                inductionVariable = (inductionVariable + 1)
+
+                if equals_rC_C_Z_Z_k_(m[i], other[i], true).not() then
+                    return false
+                end if
+
+            end while
+
+        end if
     end if
     return true
 end function
@@ -160,11 +215,30 @@ function isBlank_rStr_Z_k_(m as String) as Boolean
     if isEmpty_rStr_Z_k_(m) then
         return true
     end if
-    for each i in until_rI_I_IntRange_k_(0, m.length)
+    progression = until_rI_I_IntRange_k_(0, m.length)
+    inductionVariable = progression.first
+    last = progression.last
+    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
         if isWhitespace_rC_Z_k_(m[i]).not() then
             return false
         end if
-    end for
+
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            if isWhitespace_rC_Z_k_(m[i]).not() then
+                return false
+            end if
+
+        end while
+
+    end if
+
     return true
 end function
 
@@ -284,9 +358,16 @@ end function
 
 function concatToString_rCharArray_Str_k_(m as Object) as String
     sb = StringBuilder_create_I_StringBuilder_k_(m.size)
-    for each c in m
+    indexedObject = m
+    inductionVariable = 0
+    last = indexedObject.size
+    while less_I_I_Z_k_(inductionVariable, last)
+        c = indexedObject.get(inductionVariable)
+        inductionVariable = (inductionVariable + 1)
+
         sb.append(c)
-    end for
+    end while
+
     return sb.toString()
 end function
 
@@ -298,8 +379,23 @@ function concatToString_rCharArray_I_I_Str_k_(m as Object, startIndex = 0, endIn
         throw IllegalArgumentException_create_StrN_IllegalArgumentException_k_((("startIndex: " + startIndex) + " > endIndex: ") + endIndex)
     end if
     sb = StringBuilder_create_I_StringBuilder_k_(endIndex - startIndex)
-    for each i in until_rI_I_IntRange_k_(startIndex, endIndex)
+    progression = until_rI_I_IntRange_k_(startIndex, endIndex)
+    inductionVariable = progression.first
+    last = progression.last
+    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
         sb.append(m[i])
-    end for
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            sb.append(m[i])
+        end while
+
+    end if
+
     return sb.toString()
 end function
