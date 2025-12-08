@@ -1,64 +1,64 @@
 // --- File: inheritance.brs ---
-function Animal_create_Str_Animal_k$(name as String) as Object
+function Animal_create_Str_Animal_k_(name as String) as Object
     this = {}
     this.__type = "Animal"
     this.__proto = ["Animal"]
     this.name = name
-    this.speak_Str_k$ = Animal_speak_Str_k$
-    this.introduce_Str_k$ = Animal_introduce_Str_k$
-    this.get_name = Animal_get_name_Str_k$
+    this.speak_Str_k_ = Animal_speak_Str_k_
+    this.introduce_Str_k_ = Animal_introduce_Str_k_
+    this.get_name = Animal_get_name_Str_k_
     return this
 end function
 
-function Animal_speak_Str_k$() as String
+function Animal_speak_Str_k_() as String
     return "..."
 end function
 
-function Animal_introduce_Str_k$() as String
+function Animal_introduce_Str_k_() as String
     return "I am " + m.name
 end function
 
-function Animal_get_name_Str_k$() as String
+function Animal_get_name_Str_k_() as String
     return m.name
 end function
 
-function Dog_create_Str_Dog_k$(name as String) as Object
-    this = Animal_create_Str_Animal_k$(name)
+function Dog_create_Str_Dog_k_(name as String) as Object
+    this = Animal_create_Str_Animal_k_(name)
     this._super = {}
-    this._super.speak_Str_k$ = this.speak_Str_k$
+    this._super.speak_Str_k_ = this.speak_Str_k_
     this.__proto = ["Dog", this.__proto]
     this.__type = "Dog"
-    this.speak_Str_k$ = Dog_speak_Str_k$
+    this.speak_Str_k_ = Dog_speak_Str_k_
     return this
 end function
 
-function Dog_speak_Str_k$() as String
+function Dog_speak_Str_k_() as String
     return "Woof!"
 end function
 
-function Cat_create_Str_Cat_k$(name as String) as Object
-    this = Animal_create_Str_Animal_k$(name)
+function Cat_create_Str_Cat_k_(name as String) as Object
+    this = Animal_create_Str_Animal_k_(name)
     this._super = {}
-    this._super.speak_Str_k$ = this.speak_Str_k$
+    this._super.speak_Str_k_ = this.speak_Str_k_
     this.__proto = ["Cat", this.__proto]
     this.__type = "Cat"
-    this.speak_Str_k$ = Cat_speak_Str_k$
+    this.speak_Str_k_ = Cat_speak_Str_k_
     return this
 end function
 
-function Cat_speak_Str_k$() as String
+function Cat_speak_Str_k_() as String
     return "Meow!"
 end function
 
-function createDog_Dog_k$() as Object
-    return Dog_create_Str_Dog_k$("Buddy")
+function createDog_Dog_k_() as Object
+    return Dog_create_Str_Dog_k_("Buddy")
 end function
 
-function createCat_Cat_k$() as Object
-    return Cat_create_Str_Cat_k$("Whiskers")
+function createCat_Cat_k_() as Object
+    return Cat_create_Str_Cat_k_("Whiskers")
 end function
 
-function testDogSpeak_Str_k$() as String
-    dog = Dog_create_Str_Dog_k$("Rex")
+function testDogSpeak_Str_k_() as String
+    dog = Dog_create_Str_Dog_k_("Rex")
     return dog.speak()
 end function

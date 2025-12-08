@@ -1,14 +1,28 @@
 // --- File: loops.brs ---
-function forLoopSum_I_k$() as Integer
+function forLoopSum_I_k_() as Integer
     sum = 0
-    for each i in 1.rangeTo(10)
+    inductionVariable = 1
+    if lessOrEqual_I_I_Z_k_(inductionVariable, 10) then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
         sum = (sum + i)
 
-    end for
+
+        while lessOrEqual_I_I_Z_k_(inductionVariable, 10)
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            sum = (sum + i)
+
+        end while
+
+    end if
+
     return sum
 end function
 
-function whileLoopSum_I_k$() as Integer
+function whileLoopSum_I_k_() as Integer
     sum = 0
     i = 0
     while i < 10
@@ -18,9 +32,13 @@ function whileLoopSum_I_k$() as Integer
     return sum
 end function
 
-function breakContinueSum_I_k$() as Integer
+function breakContinueSum_I_k_() as Integer
     sum = 0
-    for each i in 1.rangeTo(10)
+    inductionVariable = 1
+    if lessOrEqual_I_I_Z_k_(inductionVariable, 10) then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
         if i = 3 then
             ' continue not supported on target Roku OS
         end if
@@ -29,6 +47,22 @@ function breakContinueSum_I_k$() as Integer
         end if
         sum = (sum + i)
 
-    end for
+
+        while lessOrEqual_I_I_Z_k_(inductionVariable, 10)
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            if i = 3 then
+                ' continue not supported on target Roku OS
+            end if
+            if i = 7 then
+                exit for
+            end if
+            sum = (sum + i)
+
+        end while
+
+    end if
+
     return sum
 end function

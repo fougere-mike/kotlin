@@ -219,11 +219,30 @@ sub ArrayList_clear()
 end sub
 
 function ArrayList_indexOf_AnyN_I_k_(element as Dynamic) as Integer
-    for each i in until_rI_I_IntRange_k_(0, m.size)
+    progression = until_rI_I_IntRange_k_(0, m.size)
+    inductionVariable = progression.first
+    last = progression.last
+    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
         if m.array[i] = element then
             return i
         end if
-    end for
+
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            if m.array[i] = element then
+                return i
+            end if
+
+        end while
+
+    end if
+
     return -1
 end function
 
@@ -279,7 +298,13 @@ end function
 
 function ArrayList_hashCode_I_k_() as Integer
     hashCode = 1
-    for each i in until_rI_I_IntRange_k_(0, m.size)
+    progression = until_rI_I_IntRange_k_(0, m.size)
+    inductionVariable = progression.first
+    last = progression.last
+    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
         element = m.get(i)
         tmp0_safe_receiver = element
         __when_tmp0 = invalid
@@ -297,7 +322,32 @@ function ArrayList_hashCode_I_k_() as Integer
         end if
         hashCode = ((31 * hashCode) + __when_tmp1)
 
-    end for
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            element = m.get(i)
+            tmp0_safe_receiver = element
+            __when_tmp0 = invalid
+            if tmp0_safe_receiver = invalid then
+                __when_tmp0 = invalid
+            else if true then
+                __when_tmp0 = tmp0_safe_receiver.hashCode()
+            end if
+            tmp1_elvis_lhs = __when_tmp0
+            __when_tmp1 = invalid
+            if tmp1_elvis_lhs = invalid then
+                __when_tmp1 = 0
+            else if true then
+                __when_tmp1 = tmp1_elvis_lhs
+            end if
+            hashCode = ((31 * hashCode) + __when_tmp1)
+
+        end while
+
+    end if
+
     return hashCode
 end function
 
@@ -307,7 +357,13 @@ function ArrayList_toString_Str_k_() as String
     end if
     sb = StringBuilder_create_StringBuilder_k_()
     sb.append("[")
-    for each i in until_rI_I_IntRange_k_(0, m.size)
+    progression = until_rI_I_IntRange_k_(0, m.size)
+    inductionVariable = progression.first
+    last = progression.last
+    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
         if i > 0 then
             sb.append(", ")
         end if
@@ -318,7 +374,25 @@ function ArrayList_toString_Str_k_() as String
             sb.append(element.toString())
         end if
 
-    end for
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            if i > 0 then
+                sb.append(", ")
+            end if
+            element = m.get(i)
+            if EQEQEQ_AnyN_AnyN_Z_k_(element, m) then
+                sb.append("(this Collection)")
+            else if true then
+                sb.append(element.toString())
+            end if
+
+        end while
+
+    end if
+
     sb.append("]")
     return sb.toString()
 end function
@@ -579,11 +653,30 @@ sub SubList_clear()
 end sub
 
 function SubList_indexOf_AnyN_I_k_(element as Dynamic) as Integer
-    for each i in until_rI_I_IntRange_k_(0, m.size)
+    progression = until_rI_I_IntRange_k_(0, m.size)
+    inductionVariable = progression.first
+    last = progression.last
+    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
         if m.get(i) = element then
             return i
         end if
-    end for
+
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            if m.get(i) = element then
+                return i
+            end if
+
+        end while
+
+    end if
+
     return -1
 end function
 
@@ -741,10 +834,17 @@ end function
 
 function arrayListOf_Arr_ArrayListAnyN_k_(elements as Object) as Object
     list = ArrayList_create_I_ArrayListAnyN_k_(elements.size)
-    for each element in elements
+    indexedObject = elements
+    inductionVariable = 0
+    last = indexedObject.size
+    while less_I_I_Z_k_(inductionVariable, last)
+        element = indexedObject.get(inductionVariable)
+        inductionVariable = (inductionVariable + 1)
+
         list.add(element)
 
-    end for
+    end while
+
     return list
 end function
 

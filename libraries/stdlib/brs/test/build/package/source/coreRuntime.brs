@@ -24,10 +24,26 @@ end function
 
 function getStringHashCode_Str_I_k_(str as String) as Integer
     hash = 0
-    for each i in until_rI_I_IntRange_k_(0, str.length)
+    progression = until_rI_I_IntRange_k_(0, str.length)
+    inductionVariable = progression.first
+    last = progression.last
+    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
         hash = ((31 * hash) + get_code_rC_I_k_(str[i]))
 
-    end for
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            hash = ((31 * hash) + get_code_rC_I_k_(str[i]))
+
+        end while
+
+    end if
+
     return hash
 end function
 

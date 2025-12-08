@@ -12,10 +12,25 @@ function split_rCharSequence_Str_Z_I_ListStr_k_(m as Object, delimiter as String
             __when_tmp0 = limit
         end if
         maxChars = __when_tmp0
-        for each i in until_rI_I_IntRange_k_(0, maxChars - 1)
+        progression = until_rI_I_IntRange_k_(0, maxChars - 1)
+        inductionVariable = progression.first
+        last = progression.last
+        if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+                        i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
             result.add(str[i].toString())
 
-        end for
+
+            while i <> last
+                i = inductionVariable
+                inductionVariable = (inductionVariable + 1)
+
+                result.add(str[i].toString())
+
+            end while
+
+        end if
         if (maxChars > 0) and (maxChars <= str.length) then
             result.add(substring_rStr_I_Str_k_(str, maxChars - 1))
         end if

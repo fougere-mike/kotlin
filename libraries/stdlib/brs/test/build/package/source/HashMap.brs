@@ -762,10 +762,17 @@ end function
 
 function hashMapOf_Arr_HashMapAnyNAnyN_k_(pairs as Object) as Object
     map = HashMap_create_I_HashMapAnyNAnyN_k_(pairs.size)
-    for each pair in pairs
+    indexedObject = pairs
+    inductionVariable = 0
+    last = indexedObject.size
+    while less_I_I_Z_k_(inductionVariable, last)
+        pair = indexedObject.get(inductionVariable)
+        inductionVariable = (inductionVariable + 1)
+
         map.put(pair.first, pair.second)
 
-    end for
+    end while
+
     return map
 end function
 

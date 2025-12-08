@@ -5,14 +5,14 @@ function Point_create(x as Integer, y as Integer) as Object
     this.__proto = ["Point"]
     this.x = x
     this.y = y
-    this.component1_I_k$ = Point_component1_I_k$
-    this.component2_I_k$ = Point_component2_I_k$
-    this.copy_I_I_Point_k$ = Point_copy_I_I_Point_k$
-    this.toString_Str_k$ = Point_toString_Str_k$
-    this.hashCode_I_k$ = Point_hashCode_I_k$
-    this.equals_AnyN_Z_k$ = Point_equals_AnyN_Z_k$
-    this.get_x = Point_get_x_I_k$
-    this.get_y = Point_get_y_I_k$
+    this.component1_I_k_ = Point_component1_I_k_
+    this.component2_I_k_ = Point_component2_I_k_
+    this.copy_I_I_Point_k_ = Point_copy_I_I_Point_k_
+    this.toString_Str_k_ = Point_toString_Str_k_
+    this.hashCode_I_k_ = Point_hashCode_I_k_
+    this.equals_AnyN_Z_k_ = Point_equals_AnyN_Z_k_
+    this.get_x = Point_get_x_I_k_
+    this.get_y = Point_get_y_I_k_
     this.equals = Point_equals
     this.hashCode = Point_hashCode
     this.toString = Point_toString
@@ -73,14 +73,14 @@ function User_create(name as String, age as Integer) as Object
     this.__proto = ["User"]
     this.name = name
     this.age = age
-    this.component1_Str_k$ = User_component1_Str_k$
-    this.component2_I_k$ = User_component2_I_k$
-    this.copy_Str_I_User_k$ = User_copy_Str_I_User_k$
-    this.toString_Str_k$ = User_toString_Str_k$
-    this.hashCode_I_k$ = User_hashCode_I_k$
-    this.equals_AnyN_Z_k$ = User_equals_AnyN_Z_k$
-    this.get_name = User_get_name_Str_k$
-    this.get_age = User_get_age_I_k$
+    this.component1_Str_k_ = User_component1_Str_k_
+    this.component2_I_k_ = User_component2_I_k_
+    this.copy_Str_I_User_k_ = User_copy_Str_I_User_k_
+    this.toString_Str_k_ = User_toString_Str_k_
+    this.hashCode_I_k_ = User_hashCode_I_k_
+    this.equals_AnyN_Z_k_ = User_equals_AnyN_Z_k_
+    this.get_name = User_get_name_Str_k_
+    this.get_age = User_get_age_I_k_
     this.equals = User_equals
     this.hashCode = User_hashCode
     this.toString = User_toString
@@ -135,20 +135,20 @@ function User_component2() as Integer
     return m.age
 end function
 
-function createPoint_Point_k$() as Object
-    return Point_create_I_I_Point_k$(1, 2)
+function createPoint_Point_k_() as Object
+    return Point_create_I_I_Point_k_(1, 2)
 end function
 
-function copyPoint_Point_Point_k$(p as Object) as Object
+function copyPoint_Point_Point_k_(p as Object) as Object
     return p.copy(10)
 end function
 
-function comparePoints_Z_k$() as Boolean
-    p1 = Point_create_I_I_Point_k$(1, 2)
-    p2 = Point_create_I_I_Point_k$(1, 2)
+function comparePoints_Z_k_() as Boolean
+    p1 = Point_create_I_I_Point_k_(1, 2)
+    p2 = Point_create_I_I_Point_k_(1, 2)
     return p1 = p2
 end function
 
-function createUser_User_k$() as Object
-    return User_create_Str_I_User_k$("Alice", 30)
+function createUser_User_k_() as Object
+    return User_create_Str_I_User_k_("Alice", 30)
 end function

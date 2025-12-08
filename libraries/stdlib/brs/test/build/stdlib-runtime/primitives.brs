@@ -168,9 +168,9 @@ function copyOf_rCharArray_I_CharArray_k_(m as Object, newSize as Integer) as Ob
 end function
 
 function iterator_rStr_CharIterator_k_(m as String) as Object
-    return Anon_700af8ff_create_Anon_k_()
+    return Anon_b081816_create_Anon_k_()
 end function
 
 function iterator_rCharArray_CharIterator_k_(m as Object) as Object
-    return Anon_50d6c88_create_Anon_k_()
+    return Anon_3f23f106_create_Anon_k_()
 end function

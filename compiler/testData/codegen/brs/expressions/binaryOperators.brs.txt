@@ -1,5 +1,5 @@
 // --- File: binaryOperators.brs ---
-sub arithmeticOps_I_I_k$(a as Integer, b as Integer)
+sub arithmeticOps_I_I_k_(a as Integer, b as Integer)
     sum = a + b
     diff = a - b
     product = a * b
@@ -7,7 +7,7 @@ sub arithmeticOps_I_I_k$(a as Integer, b as Integer)
     remainder = a mod b
 end sub
 
-sub comparisonOps_I_I_k$(a as Integer, b as Integer)
+sub comparisonOps_I_I_k_(a as Integer, b as Integer)
     lt = a < b
     gt = a > b
     le = a <= b
@@ -16,7 +16,7 @@ sub comparisonOps_I_I_k$(a as Integer, b as Integer)
     ne = a <> b
 end sub
 
-sub logicalOps_Z_Z_k$(a as Boolean, b as Boolean)
+sub logicalOps_Z_Z_k_(a as Boolean, b as Boolean)
     and = a and b
     or = a or b
     not = a.not()
