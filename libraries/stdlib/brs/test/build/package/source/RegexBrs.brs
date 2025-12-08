@@ -345,7 +345,7 @@ end function
 function Regex_splitToSequence_CharSequence_I_SequenceStr_k_(input as Object, limit = 0) as Object
     requireNonNegativeLimit_I_k_(limit)
     return Sequence_Function0IteratorAnyN_SequenceAnyN_k_({this: this, input: input, this: this, this: this, value: value, this: this, this: this, this: this, this: this, value: value, this: this, this: this, value: value, this: this, this: this, value: value, this: this, limit: limit, this: this, invoke: function() as Object
-        return Anon_7ddacab3_create_Anon_k_()
+        return Anon_3f83ec3_create_Anon_k_()
     end function})
 end function
 
@@ -354,7 +354,7 @@ function Regex_toString_Str_k_() as String
 end function
 
 function Regex_createMatchResult_Str_Arr_I_MatchResult_k_(input as String, matchArray as Object, matchIndex as Integer) as Object
-    return Anon_418e39d2_create_Anon_k_()
+    return Anon_3ad9bce6_create_Anon_k_()
 end function
 
 function Regex_get_pattern_Str_k_() as String

@@ -129,9 +129,49 @@ After making intentional changes to the compiler's output:
 ./gradlew :compiler:backend.brightscript:test --tests "*GoldenFile*" -PupdateGoldenFiles=true --no-configuration-cache -Dorg.gradle.dependency.verification=off
 ```
 
-### E2E Device Tests
+### Stdlib Tests (Device Tests)
 
-Run tests on a physical Roku device. Requires device IP and password.
+Run stdlib unit tests on a physical Roku device. Requires device IP and password.
+
+```bash
+# Set device credentials
+export ROKU_DEVICE_IP=192.168.1.xxx
+export ROKU_PASSWORD=your_password
+
+# Run stdlib tests
+./run-stdlib-tests.sh
+
+# Build only (no device required) - useful for checking compilation
+./run-stdlib-tests.sh --build-only
+```
+
+**Important: Stale Device Logs**
+
+The test script reads from the Roku's debug console (port 8085), which accumulates logs across multiple runs. If you see errors in test output that don't match the current generated code:
+
+1. **Check the generated .brs files directly** - they are the source of truth:
+   ```bash
+   # View generated test files
+   ls libraries/stdlib/brs/test/build/brs/source/
+
+   # Search for specific issues
+   grep -n "pattern" libraries/stdlib/brs/test/build/brs/source/*.brs
+   ```
+
+2. **Verify file timestamps** - ensure files were regenerated after your changes:
+   ```bash
+   ls -la libraries/stdlib/brs/test/build/brs/source/*.brs
+   ```
+
+3. **Reboot the Roku device** to clear accumulated logs, then re-run tests
+
+4. **Check test-output.txt timestamps** - log entries have timestamps like `12-08 17:08:55`. Compare these to when you made changes to determine if logs are stale.
+
+The test output file is saved to: `libraries/stdlib/brs/test/build/test-output.txt`
+
+### E2E Device Tests (roku-test-app)
+
+Run E2E tests from the roku-test-app project on a physical Roku device.
 
 ```bash
 # Set device credentials
@@ -165,6 +205,8 @@ cd ../roku-test-app && ./gradlew rokuTest
 |-----------|----------|
 | Golden file tests | `compiler/ir/backend.brightscript/test/.../BrsGoldenFileTests.kt` |
 | Golden file test data | `compiler/testData/codegen/brs/` |
+| Stdlib tests (source) | `libraries/stdlib/brs/test/kotlin/` |
+| Stdlib tests (generated) | `libraries/stdlib/brs/test/build/brs/source/` |
 | E2E test framework | `roku-test-app/src/brsMain/kotlin/tests/TestFramework.kt` |
 | E2E test suites | `roku-test-app/src/brsMain/kotlin/tests/TestMain.kt` |
 
@@ -174,5 +216,7 @@ cd ../roku-test-app && ./gradlew rokuTest
 |-----------|-----------------|
 | Compiler tests (HTML) | `compiler/ir/backend.brightscript/build/reports/tests/test/index.html` |
 | Compiler tests (XML) | `compiler/ir/backend.brightscript/build/test-results/test/*.xml` |
+| Stdlib tests (raw log) | `libraries/stdlib/brs/test/build/test-output.txt` |
+| Stdlib tests (JSON) | `libraries/stdlib/brs/test/build/results.json` |
 | E2E tests (JSON) | `roku-test-app/build/test-results/roku/results.json` |
 | E2E tests (XML) | `roku-test-app/build/test-results/roku/results.xml` |

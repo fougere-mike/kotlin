@@ -77,7 +77,12 @@ object BrsLoweringPhases {
             // are transformed to blocks with temp variables
             BrsWhenExpressionLowering(context),
 
-            // Phase 12.5: For loop optimization and destructuring
+            // Phase 12.5: Destructuring declarations
+            // Renames <destruct> placeholder variables to proper temp names
+            // This must run before ForLoopsLowering to handle all destructuring cases
+            DestructuringDeclarationLowering(context),
+
+            // Phase 13: For loop optimization and destructuring
             // Transforms destructuring declarations in for loops (e.g., for ((a, b) in list))
             // and optimizes iteration over progressions and arrays
             ForLoopsLowering(context),
