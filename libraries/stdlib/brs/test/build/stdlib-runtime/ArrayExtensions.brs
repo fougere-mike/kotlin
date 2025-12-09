@@ -35,7 +35,7 @@ function contentToString_rArrN_Str_k_(m as Dynamic) as String
 end function
 
 function contentEquals_rArrN_ArrN_Z_k_(m as Dynamic, other as Dynamic) as Boolean
-    if EQEQEQ_AnyN_AnyN_Z_k_(m, other) then
+    if __kotlin_identityEquals(m, other) then
         return true
     end if
     if (m = invalid) or (other = invalid) then
@@ -83,7 +83,7 @@ function contentToString_rByteArrayN_Str_k_(m as Dynamic) as String
         item = indexedObject.get_I_B_k_(inductionVariable)
         inductionVariable = (inductionVariable + 1)
 
-        list.add_AnyN_Z_k_(Str(item))
+        list.add_AnyN_Z_k_(__kotlin_numToStr_I_Str_k_(item))
 
     end while
 
@@ -91,7 +91,7 @@ function contentToString_rByteArrayN_Str_k_(m as Dynamic) as String
 end function
 
 function contentEquals_rByteArrayN_ByteArrayN_Z_k_(m as Dynamic, other as Dynamic) as Boolean
-    if EQEQEQ_AnyN_AnyN_Z_k_(m, other) then
+    if __kotlin_identityEquals(m, other) then
         return true
     end if
     if (m = invalid) or (other = invalid) then
@@ -139,7 +139,7 @@ function contentToString_rShortArrayN_Str_k_(m as Dynamic) as String
         item = indexedObject.get_I_S_k_(inductionVariable)
         inductionVariable = (inductionVariable + 1)
 
-        list.add_AnyN_Z_k_(Str(item))
+        list.add_AnyN_Z_k_(__kotlin_numToStr_I_Str_k_(item))
 
     end while
 
@@ -147,7 +147,7 @@ function contentToString_rShortArrayN_Str_k_(m as Dynamic) as String
 end function
 
 function contentEquals_rShortArrayN_ShortArrayN_Z_k_(m as Dynamic, other as Dynamic) as Boolean
-    if EQEQEQ_AnyN_AnyN_Z_k_(m, other) then
+    if __kotlin_identityEquals(m, other) then
         return true
     end if
     if (m = invalid) or (other = invalid) then
@@ -195,7 +195,7 @@ function contentToString_rIntArrayN_Str_k_(m as Dynamic) as String
         item = indexedObject.get_I_I_k_(inductionVariable)
         inductionVariable = (inductionVariable + 1)
 
-        list.add_AnyN_Z_k_(Str(item))
+        list.add_AnyN_Z_k_(__kotlin_numToStr_I_Str_k_(item))
 
     end while
 
@@ -203,7 +203,7 @@ function contentToString_rIntArrayN_Str_k_(m as Dynamic) as String
 end function
 
 function contentEquals_rIntArrayN_IntArrayN_Z_k_(m as Dynamic, other as Dynamic) as Boolean
-    if EQEQEQ_AnyN_AnyN_Z_k_(m, other) then
+    if __kotlin_identityEquals(m, other) then
         return true
     end if
     if (m = invalid) or (other = invalid) then
@@ -251,7 +251,7 @@ function contentToString_rLongArrayN_Str_k_(m as Dynamic) as String
         item = indexedObject.get_I_J_k_(inductionVariable)
         inductionVariable = (inductionVariable + 1)
 
-        list.add_AnyN_Z_k_(Str(item))
+        list.add_AnyN_Z_k_(__kotlin_numToStr_J_Str_k_(item))
 
     end while
 
@@ -259,7 +259,7 @@ function contentToString_rLongArrayN_Str_k_(m as Dynamic) as String
 end function
 
 function contentEquals_rLongArrayN_LongArrayN_Z_k_(m as Dynamic, other as Dynamic) as Boolean
-    if EQEQEQ_AnyN_AnyN_Z_k_(m, other) then
+    if __kotlin_identityEquals(m, other) then
         return true
     end if
     if (m = invalid) or (other = invalid) then
@@ -307,7 +307,7 @@ function contentToString_rFloatArrayN_Str_k_(m as Dynamic) as String
         item = indexedObject.get_I_F_k_(inductionVariable)
         inductionVariable = (inductionVariable + 1)
 
-        list.add_AnyN_Z_k_(Str(item))
+        list.add_AnyN_Z_k_(__kotlin_numToStr_F_Str_k_(item))
 
     end while
 
@@ -315,7 +315,7 @@ function contentToString_rFloatArrayN_Str_k_(m as Dynamic) as String
 end function
 
 function contentEquals_rFloatArrayN_FloatArrayN_Z_k_(m as Dynamic, other as Dynamic) as Boolean
-    if EQEQEQ_AnyN_AnyN_Z_k_(m, other) then
+    if __kotlin_identityEquals(m, other) then
         return true
     end if
     if (m = invalid) or (other = invalid) then
@@ -363,7 +363,7 @@ function contentToString_rDoubleArrayN_Str_k_(m as Dynamic) as String
         item = indexedObject.get_I_D_k_(inductionVariable)
         inductionVariable = (inductionVariable + 1)
 
-        list.add_AnyN_Z_k_(Str(item))
+        list.add_AnyN_Z_k_(__kotlin_numToStr_D_Str_k_(item))
 
     end while
 
@@ -371,7 +371,7 @@ function contentToString_rDoubleArrayN_Str_k_(m as Dynamic) as String
 end function
 
 function contentEquals_rDoubleArrayN_DoubleArrayN_Z_k_(m as Dynamic, other as Dynamic) as Boolean
-    if EQEQEQ_AnyN_AnyN_Z_k_(m, other) then
+    if __kotlin_identityEquals(m, other) then
         return true
     end if
     if (m = invalid) or (other = invalid) then
@@ -429,7 +429,7 @@ function contentToString_rBooleanArrayN_Str_k_(m as Dynamic) as String
 end function
 
 function contentEquals_rBooleanArrayN_BooleanArrayN_Z_k_(m as Dynamic, other as Dynamic) as Boolean
-    if EQEQEQ_AnyN_AnyN_Z_k_(m, other) then
+    if __kotlin_identityEquals(m, other) then
         return true
     end if
     if (m = invalid) or (other = invalid) then
@@ -485,7 +485,7 @@ function contentToString_rCharArrayN_Str_k_(m as Dynamic) as String
 end function
 
 function contentEquals_rCharArrayN_CharArrayN_Z_k_(m as Dynamic, other as Dynamic) as Boolean
-    if EQEQEQ_AnyN_AnyN_Z_k_(m, other) then
+    if __kotlin_identityEquals(m, other) then
         return true
     end if
     if (m = invalid) or (other = invalid) then

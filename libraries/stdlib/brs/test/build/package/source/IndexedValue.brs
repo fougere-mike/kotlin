@@ -2,6 +2,7 @@ function IndexedValue_create_I_AnyN_IndexedValueAnyN_k_(index as Integer, value 
     this = {}
     this.__type = "IndexedValue"
     this.__proto = ["IndexedValue"]
+    this.__id = __kotlin_nextObjectId()
     this.index = index
     this.value = value
     this.equals = IndexedValue_equals

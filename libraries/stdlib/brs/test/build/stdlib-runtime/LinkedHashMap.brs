@@ -1,8 +1,8 @@
 function LinkedHashMap_create_LinkedHashMapAnyNAnyN_k_() as Object
     this = {}
     this.__type = "LinkedHashMap"
-    this.__proto = ["LinkedHashMap"]
-    this._size = 0
+    this.__proto = ["LinkedHashMap", "MutableMap", "Map"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = LinkedHashMap_isEmpty_Z_k_
     this.containsKey_AnyN_Z_k_ = LinkedHashMap_containsKey_AnyN_Z_k_
     this.containsValue_AnyN_Z_k_ = LinkedHashMap_containsValue_AnyN_Z_k_
@@ -12,8 +12,11 @@ function LinkedHashMap_create_LinkedHashMapAnyNAnyN_k_() as Object
     this.putAll_MapAnyNAnyN_k_ = LinkedHashMap_putAll_MapAnyNAnyN_k_
     this.clear = LinkedHashMap_clear
     this.equals_AnyN_Z_k_ = LinkedHashMap_equals_AnyN_Z_k_
+    this.equals = LinkedHashMap_equals_AnyN_Z_k_
     this.hashCode_I_k_ = LinkedHashMap_hashCode_I_k_
+    this.hashCode = LinkedHashMap_hashCode_I_k_
     this.toString_Str_k_ = LinkedHashMap_toString_Str_k_
+    this.toString = LinkedHashMap_toString_Str_k_
     this.keyToString_AnyN_Str_k_ = LinkedHashMap_keyToString_AnyN_Str_k_
     this.get_map = LinkedHashMap_get_map_Dynamic_k_
     this.set_map = LinkedHashMap_set_map_Dynamic_k_
@@ -25,6 +28,7 @@ function LinkedHashMap_create_LinkedHashMapAnyNAnyN_k_() as Object
     this.get_keys = LinkedHashMap_get_keys_MutableSetAnyN_k_
     this.get_values = LinkedHashMap_get_values_MutableCollectionAnyN_k_
     this.get_entries = LinkedHashMap_get_entries_MutableSetMutableEntryAnyNAnyN_k_
+    this._size = 0
     this.set_map(CreateObject("roAssociativeArray"))
     this.set_keyOrder(CreateObject("roArray", 0, true))
     this.set__size(0)
@@ -34,8 +38,8 @@ end function
 function LinkedHashMap_create_I_LinkedHashMapAnyNAnyN_k_(initialCapacity as Integer) as Object
     this = {}
     this.__type = "LinkedHashMap"
-    this.__proto = ["LinkedHashMap"]
-    this._size = 0
+    this.__proto = ["LinkedHashMap", "MutableMap", "Map"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = LinkedHashMap_isEmpty_Z_k_
     this.containsKey_AnyN_Z_k_ = LinkedHashMap_containsKey_AnyN_Z_k_
     this.containsValue_AnyN_Z_k_ = LinkedHashMap_containsValue_AnyN_Z_k_
@@ -45,8 +49,11 @@ function LinkedHashMap_create_I_LinkedHashMapAnyNAnyN_k_(initialCapacity as Inte
     this.putAll_MapAnyNAnyN_k_ = LinkedHashMap_putAll_MapAnyNAnyN_k_
     this.clear = LinkedHashMap_clear
     this.equals_AnyN_Z_k_ = LinkedHashMap_equals_AnyN_Z_k_
+    this.equals = LinkedHashMap_equals_AnyN_Z_k_
     this.hashCode_I_k_ = LinkedHashMap_hashCode_I_k_
+    this.hashCode = LinkedHashMap_hashCode_I_k_
     this.toString_Str_k_ = LinkedHashMap_toString_Str_k_
+    this.toString = LinkedHashMap_toString_Str_k_
     this.keyToString_AnyN_Str_k_ = LinkedHashMap_keyToString_AnyN_Str_k_
     this.get_map = LinkedHashMap_get_map_Dynamic_k_
     this.set_map = LinkedHashMap_set_map_Dynamic_k_
@@ -58,6 +65,7 @@ function LinkedHashMap_create_I_LinkedHashMapAnyNAnyN_k_(initialCapacity as Inte
     this.get_keys = LinkedHashMap_get_keys_MutableSetAnyN_k_
     this.get_values = LinkedHashMap_get_values_MutableCollectionAnyN_k_
     this.get_entries = LinkedHashMap_get_entries_MutableSetMutableEntryAnyNAnyN_k_
+    this._size = 0
     require_Z_Function0Any_k_(initialCapacity >= 0, {initialCapacity: initialCapacity, invoke: function() as Object
         return "Negative initial capacity: " + m.initialCapacity
     end function})
@@ -70,8 +78,8 @@ end function
 function LinkedHashMap_create_I_F_LinkedHashMapAnyNAnyN_k_(initialCapacity as Integer, loadFactor as Float) as Object
     this = {}
     this.__type = "LinkedHashMap"
-    this.__proto = ["LinkedHashMap"]
-    this._size = 0
+    this.__proto = ["LinkedHashMap", "MutableMap", "Map"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = LinkedHashMap_isEmpty_Z_k_
     this.containsKey_AnyN_Z_k_ = LinkedHashMap_containsKey_AnyN_Z_k_
     this.containsValue_AnyN_Z_k_ = LinkedHashMap_containsValue_AnyN_Z_k_
@@ -81,8 +89,11 @@ function LinkedHashMap_create_I_F_LinkedHashMapAnyNAnyN_k_(initialCapacity as In
     this.putAll_MapAnyNAnyN_k_ = LinkedHashMap_putAll_MapAnyNAnyN_k_
     this.clear = LinkedHashMap_clear
     this.equals_AnyN_Z_k_ = LinkedHashMap_equals_AnyN_Z_k_
+    this.equals = LinkedHashMap_equals_AnyN_Z_k_
     this.hashCode_I_k_ = LinkedHashMap_hashCode_I_k_
+    this.hashCode = LinkedHashMap_hashCode_I_k_
     this.toString_Str_k_ = LinkedHashMap_toString_Str_k_
+    this.toString = LinkedHashMap_toString_Str_k_
     this.keyToString_AnyN_Str_k_ = LinkedHashMap_keyToString_AnyN_Str_k_
     this.get_map = LinkedHashMap_get_map_Dynamic_k_
     this.set_map = LinkedHashMap_set_map_Dynamic_k_
@@ -94,6 +105,7 @@ function LinkedHashMap_create_I_F_LinkedHashMapAnyNAnyN_k_(initialCapacity as In
     this.get_keys = LinkedHashMap_get_keys_MutableSetAnyN_k_
     this.get_values = LinkedHashMap_get_values_MutableCollectionAnyN_k_
     this.get_entries = LinkedHashMap_get_entries_MutableSetMutableEntryAnyNAnyN_k_
+    this._size = 0
     require_Z_Function0Any_k_(initialCapacity >= 0, {initialCapacity: initialCapacity, invoke: function() as Object
         return "Negative initial capacity: " + m.initialCapacity
     end function})
@@ -109,8 +121,8 @@ end function
 function LinkedHashMap_create_MapAnyNAnyN_LinkedHashMapAnyNAnyN_k_(original as Object) as Object
     this = {}
     this.__type = "LinkedHashMap"
-    this.__proto = ["LinkedHashMap"]
-    this._size = 0
+    this.__proto = ["LinkedHashMap", "MutableMap", "Map"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = LinkedHashMap_isEmpty_Z_k_
     this.containsKey_AnyN_Z_k_ = LinkedHashMap_containsKey_AnyN_Z_k_
     this.containsValue_AnyN_Z_k_ = LinkedHashMap_containsValue_AnyN_Z_k_
@@ -120,8 +132,11 @@ function LinkedHashMap_create_MapAnyNAnyN_LinkedHashMapAnyNAnyN_k_(original as O
     this.putAll_MapAnyNAnyN_k_ = LinkedHashMap_putAll_MapAnyNAnyN_k_
     this.clear = LinkedHashMap_clear
     this.equals_AnyN_Z_k_ = LinkedHashMap_equals_AnyN_Z_k_
+    this.equals = LinkedHashMap_equals_AnyN_Z_k_
     this.hashCode_I_k_ = LinkedHashMap_hashCode_I_k_
+    this.hashCode = LinkedHashMap_hashCode_I_k_
     this.toString_Str_k_ = LinkedHashMap_toString_Str_k_
+    this.toString = LinkedHashMap_toString_Str_k_
     this.keyToString_AnyN_Str_k_ = LinkedHashMap_keyToString_AnyN_Str_k_
     this.get_map = LinkedHashMap_get_map_Dynamic_k_
     this.set_map = LinkedHashMap_set_map_Dynamic_k_
@@ -133,6 +148,7 @@ function LinkedHashMap_create_MapAnyNAnyN_LinkedHashMapAnyNAnyN_k_(original as O
     this.get_keys = LinkedHashMap_get_keys_MutableSetAnyN_k_
     this.get_values = LinkedHashMap_get_values_MutableCollectionAnyN_k_
     this.get_entries = LinkedHashMap_get_entries_MutableSetMutableEntryAnyNAnyN_k_
+    this._size = 0
     this.set_map(CreateObject("roAssociativeArray"))
     this.set_keyOrder(CreateObject("roArray", 0, true))
     this.set__size(0)
@@ -177,6 +193,8 @@ function LinkedHashMap_put_AnyN_AnyN_AnyN_k_(key as Dynamic, value as Dynamic) a
     if m.get_map().DoesExist(keyStr) then
         __when_tmp0 = m.get_map()[keyStr]
     else if true then
+        m.get_keyOrder().Push(keyStr)
+        m.set__size(m.get__size() + 1)
         __when_tmp0 = invalid
     end if
     oldValue = __when_tmp0
@@ -206,7 +224,7 @@ function LinkedHashMap_remove_AnyN_AnyN_k_(key as Dynamic) as Dynamic
 end function
 
 sub LinkedHashMap_putAll_MapAnyNAnyN_k_(from as Object)
-    for each entry in from.get_entries().array
+    for each entry in from.get_entries()
         m.put_AnyN_AnyN_AnyN_k_(entry.get_key(), entry.get_value())
 
     end for
@@ -219,7 +237,7 @@ sub LinkedHashMap_clear()
 end sub
 
 function LinkedHashMap_equals_AnyN_Z_k_(other as Dynamic) as Boolean
-    if EQEQEQ_AnyN_AnyN_Z_k_(other, m) then
+    if __kotlin_identityEquals(other, m) then
         return true
     end if
     if not __kotlin_isInstanceOf(other, "Map") then
@@ -228,7 +246,7 @@ function LinkedHashMap_equals_AnyN_Z_k_(other as Dynamic) as Boolean
     if other.get_size() <> m.get_size() then
         return false
     end if
-    for each entry in m.get_entries().array
+    for each entry in m.get_entries()
         otherMap = other
         otherValue = otherMap.get_AnyN_AnyN_k_(entry.get_key())
         if entry.get_value() <> otherValue then
@@ -244,7 +262,7 @@ end function
 
 function LinkedHashMap_hashCode_I_k_() as Integer
     result = 0
-    for each entry in m.get_entries().array
+    for each entry in m.get_entries()
         result = (result + entry.hashCode())
 
     end for
@@ -259,17 +277,7 @@ function LinkedHashMap_toString_Str_k_() as String
 end function
 
 function LinkedHashMap_keyToString_AnyN_Str_k_(key as Dynamic) as String
-    return (function(Str, key)
-        if key = invalid then return "null" else return (function(Str, key)
-            if (Type(key) = "String") or (Type(key) = "roString") then return key else return (function(Str, key)
-                if ((((((Type(key) = "Integer") or (Type(key) = "LongInteger")) or (Type(key) = "Float")) or (Type(key) = "Double")) or (Type(key) = "roInt")) or (Type(key) = "roFloat")) or (Type(key) = "roDouble") then return Str(key) else return (function(key)
-                    if (Type(key) = "Boolean") or (Type(key) = "roBoolean") then return (function(key)
-                        if key then return "true" else return "false"
-                    end function)(key) else return key.toString()
-                end function)(key)
-            end function)(Str, key)
-        end function)(Str, key)
-    end function)(Str, key)
+    return toString_AnyN_Str_k_(key)
 end function
 
 function LinkedHashMap_get_map_Dynamic_k_() as Object
@@ -315,8 +323,8 @@ end function
 function LinkedHashMap_LinkedKeySet_create_LinkedHashMapAnyNAnyN_LinkedKeySetAnyNAnyN_k_(map as Object) as Object
     this = {}
     this.__type = "LinkedHashMap_LinkedKeySet"
-    this.__proto = ["LinkedHashMap_LinkedKeySet"]
-    this.map = map
+    this.__proto = ["LinkedHashMap_LinkedKeySet", "MutableSet", "Set", "Collection", "Iterable", "MutableCollection", "MutableIterable"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = LinkedHashMap_LinkedKeySet_isEmpty_Z_k_
     this.contains_AnyN_Z_k_ = LinkedHashMap_LinkedKeySet_contains_AnyN_Z_k_
     this.containsAll_CollectionAnyN_Z_k_ = LinkedHashMap_LinkedKeySet_containsAll_CollectionAnyN_Z_k_
@@ -328,7 +336,9 @@ function LinkedHashMap_LinkedKeySet_create_LinkedHashMapAnyNAnyN_LinkedKeySetAny
     this.retainAll_CollectionAnyN_Z_k_ = LinkedHashMap_LinkedKeySet_retainAll_CollectionAnyN_Z_k_
     this.clear = LinkedHashMap_LinkedKeySet_clear
     this.get_map = LinkedHashMap_LinkedKeySet_get_map_LinkedHashMapAnyNAnyN_k_
+    this.get_array = LinkedHashMap_LinkedKeySet_get_array_Dynamic_k_
     this.get_size = LinkedHashMap_LinkedKeySet_get_size_I_k_
+    this.map = map
     return this
 end function
 
@@ -341,7 +351,7 @@ function LinkedHashMap_LinkedKeySet_contains_AnyN_Z_k_(element as Dynamic) as Bo
 end function
 
 function LinkedHashMap_LinkedKeySet_containsAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
-    for each element in elements.array
+    for each element in elements
         if not m.contains_AnyN_Z_k_(element) then
             return false
         end if
@@ -350,7 +360,7 @@ function LinkedHashMap_LinkedKeySet_containsAll_CollectionAnyN_Z_k_(elements as 
 end function
 
 function LinkedHashMap_LinkedKeySet_iterator_MutableIteratorAnyN_k_() as Object
-    return Anon_2df6f170_create_AnonAnyNAnyN_k_()
+    return LinkedHashMap_LinkedKeyIterator_create_LinkedHashMapAnyNAnyN_LinkedKeyIteratorAnyNAnyN_k_(m.get_map())
 end function
 
 function LinkedHashMap_LinkedKeySet_add_AnyN_Z_k_(element as Dynamic) as Boolean
@@ -371,7 +381,7 @@ end function
 
 function LinkedHashMap_LinkedKeySet_removeAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
     modified = false
-    for each element in elements.array
+    for each element in elements
         if m.remove_AnyN_Z_k_(element) then
             modified = true
         end if
@@ -399,6 +409,10 @@ function LinkedHashMap_LinkedKeySet_get_map_LinkedHashMapAnyNAnyN_k_() as Object
     return m.map
 end function
 
+function LinkedHashMap_LinkedKeySet_get_array_Dynamic_k_() as Object
+    return m.get_map().get_keyOrder()
+end function
+
 function LinkedHashMap_LinkedKeySet_get_size_I_k_() as Integer
     return m.get_map().get_size()
 end function
@@ -406,8 +420,8 @@ end function
 function LinkedHashMap_LinkedValueCollection_create_LinkedHashMapAnyNAnyN_LinkedValueCollectionAnyNAnyN_k_(map as Object) as Object
     this = {}
     this.__type = "LinkedHashMap_LinkedValueCollection"
-    this.__proto = ["LinkedHashMap_LinkedValueCollection"]
-    this.map = map
+    this.__proto = ["LinkedHashMap_LinkedValueCollection", "MutableCollection", "Collection", "Iterable", "MutableIterable"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = LinkedHashMap_LinkedValueCollection_isEmpty_Z_k_
     this.contains_AnyN_Z_k_ = LinkedHashMap_LinkedValueCollection_contains_AnyN_Z_k_
     this.containsAll_CollectionAnyN_Z_k_ = LinkedHashMap_LinkedValueCollection_containsAll_CollectionAnyN_Z_k_
@@ -419,7 +433,9 @@ function LinkedHashMap_LinkedValueCollection_create_LinkedHashMapAnyNAnyN_Linked
     this.retainAll_CollectionAnyN_Z_k_ = LinkedHashMap_LinkedValueCollection_retainAll_CollectionAnyN_Z_k_
     this.clear = LinkedHashMap_LinkedValueCollection_clear
     this.get_map = LinkedHashMap_LinkedValueCollection_get_map_LinkedHashMapAnyNAnyN_k_
+    this.get_array = LinkedHashMap_LinkedValueCollection_get_array_Dynamic_k_
     this.get_size = LinkedHashMap_LinkedValueCollection_get_size_I_k_
+    this.map = map
     return this
 end function
 
@@ -432,7 +448,7 @@ function LinkedHashMap_LinkedValueCollection_contains_AnyN_Z_k_(element as Dynam
 end function
 
 function LinkedHashMap_LinkedValueCollection_containsAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
-    for each element in elements.array
+    for each element in elements
         if not m.contains_AnyN_Z_k_(element) then
             return false
         end if
@@ -441,7 +457,7 @@ function LinkedHashMap_LinkedValueCollection_containsAll_CollectionAnyN_Z_k_(ele
 end function
 
 function LinkedHashMap_LinkedValueCollection_iterator_MutableIteratorAnyN_k_() as Object
-    return Anon_36b9420a_create_AnonAnyNAnyN_k_()
+    return LinkedHashMap_LinkedValueIterator_create_LinkedHashMapAnyNAnyN_LinkedValueIteratorAnyNAnyN_k_(m.get_map())
 end function
 
 function LinkedHashMap_LinkedValueCollection_add_AnyN_Z_k_(element as Dynamic) as Boolean
@@ -465,7 +481,7 @@ end function
 
 function LinkedHashMap_LinkedValueCollection_removeAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
     modified = false
-    for each element in elements.array
+    for each element in elements
         while m.remove_AnyN_Z_k_(element)
             modified = true
         end while
@@ -494,6 +510,19 @@ function LinkedHashMap_LinkedValueCollection_get_map_LinkedHashMapAnyNAnyN_k_() 
     return m.map
 end function
 
+function LinkedHashMap_LinkedValueCollection_get_array_Dynamic_k_() as Object
+    result = CreateObject("roArray", 0, true)
+    keyCount = m.get_map().get_keyOrder().Count()
+    i = 0
+    while i < keyCount
+        keyStr = m.get_map().get_keyOrder()[i]
+        value = m.get_map().get_map()[keyStr]
+        result.Push(value)
+        i = (i + 1)
+    end while
+    return result
+end function
+
 function LinkedHashMap_LinkedValueCollection_get_size_I_k_() as Integer
     return m.get_map().get_size()
 end function
@@ -501,8 +530,8 @@ end function
 function LinkedHashMap_LinkedEntrySet_create_LinkedHashMapAnyNAnyN_LinkedEntrySetAnyNAnyN_k_(map as Object) as Object
     this = {}
     this.__type = "LinkedHashMap_LinkedEntrySet"
-    this.__proto = ["LinkedHashMap_LinkedEntrySet"]
-    this.map = map
+    this.__proto = ["LinkedHashMap_LinkedEntrySet", "MutableSet", "Set", "Collection", "Iterable", "MutableCollection", "MutableIterable"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = LinkedHashMap_LinkedEntrySet_isEmpty_Z_k_
     this.contains_MutableEntryAnyNAnyN_Z_k_ = LinkedHashMap_LinkedEntrySet_contains_MutableEntryAnyNAnyN_Z_k_
     this.containsAll_CollectionMutableEntryAnyNAnyN_Z_k_ = LinkedHashMap_LinkedEntrySet_containsAll_CollectionMutableEntryAnyNAnyN_Z_k_
@@ -514,7 +543,9 @@ function LinkedHashMap_LinkedEntrySet_create_LinkedHashMapAnyNAnyN_LinkedEntrySe
     this.retainAll_CollectionMutableEntryAnyNAnyN_Z_k_ = LinkedHashMap_LinkedEntrySet_retainAll_CollectionMutableEntryAnyNAnyN_Z_k_
     this.clear = LinkedHashMap_LinkedEntrySet_clear
     this.get_map = LinkedHashMap_LinkedEntrySet_get_map_LinkedHashMapAnyNAnyN_k_
+    this.get_array = LinkedHashMap_LinkedEntrySet_get_array_Dynamic_k_
     this.get_size = LinkedHashMap_LinkedEntrySet_get_size_I_k_
+    this.map = map
     return this
 end function
 
@@ -528,7 +559,7 @@ function LinkedHashMap_LinkedEntrySet_contains_MutableEntryAnyNAnyN_Z_k_(element
 end function
 
 function LinkedHashMap_LinkedEntrySet_containsAll_CollectionMutableEntryAnyNAnyN_Z_k_(elements as Object) as Boolean
-    for each element in elements.array
+    for each element in elements
         if not m.contains_MutableEntryAnyNAnyN_Z_k_(element) then
             return false
         end if
@@ -537,7 +568,7 @@ function LinkedHashMap_LinkedEntrySet_containsAll_CollectionMutableEntryAnyNAnyN
 end function
 
 function LinkedHashMap_LinkedEntrySet_iterator_MutableIteratorMutableEntryAnyNAnyN_k_() as Object
-    return Anon_314f7301_create_AnonAnyNAnyN_k_()
+    return LinkedHashMap_LinkedEntryIterator_create_LinkedHashMapAnyNAnyN_LinkedEntryIteratorAnyNAnyN_k_(m.get_map())
 end function
 
 function LinkedHashMap_LinkedEntrySet_add_MutableEntryAnyNAnyN_Z_k_(element as Object) as Boolean
@@ -558,7 +589,7 @@ end function
 
 function LinkedHashMap_LinkedEntrySet_removeAll_CollectionMutableEntryAnyNAnyN_Z_k_(elements as Object) as Boolean
     modified = false
-    for each element in elements.array
+    for each element in elements
         if m.remove_MutableEntryAnyNAnyN_Z_k_(element) then
             modified = true
         end if
@@ -586,23 +617,327 @@ function LinkedHashMap_LinkedEntrySet_get_map_LinkedHashMapAnyNAnyN_k_() as Obje
     return m.map
 end function
 
+function LinkedHashMap_LinkedEntrySet_get_array_Dynamic_k_() as Object
+    result = CreateObject("roArray", 0, true)
+    keyCount = m.get_map().get_keyOrder().Count()
+    i = 0
+    while i < keyCount
+        keyStr = m.get_map().get_keyOrder()[i]
+        value = m.get_map().get_map()[keyStr]
+        result.Push(LinkedHashMap_SimpleEntry_create_AnyN_AnyN_SimpleEntryAnyNAnyN_k_(keyStr, value))
+        i = (i + 1)
+    end while
+    return result
+end function
+
 function LinkedHashMap_LinkedEntrySet_get_size_I_k_() as Integer
     return m.get_map().get_size()
 end function
 
+function LinkedHashMap_LinkedKeyIterator_create_LinkedHashMapAnyNAnyN_LinkedKeyIteratorAnyNAnyN_k_(map as Object) as Object
+    this = {}
+    this.__type = "LinkedHashMap_LinkedKeyIterator"
+    this.__proto = ["LinkedHashMap_LinkedKeyIterator", "MutableIterator", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.hasNext_Z_k_ = LinkedHashMap_LinkedKeyIterator_hasNext_Z_k_
+    this.next_AnyN_k_ = LinkedHashMap_LinkedKeyIterator_next_AnyN_k_
+    this.remove = LinkedHashMap_LinkedKeyIterator_remove
+    this.get_map = LinkedHashMap_LinkedKeyIterator_get_map_LinkedHashMapAnyNAnyN_k_
+    this.get_currentIndex = LinkedHashMap_LinkedKeyIterator_get_currentIndex_I_k_
+    this.set_currentIndex = LinkedHashMap_LinkedKeyIterator_set_currentIndex_I_k_
+    this.get_orderCount = LinkedHashMap_LinkedKeyIterator_get_orderCount_I_k_
+    this.set_orderCount = LinkedHashMap_LinkedKeyIterator_set_orderCount_I_k_
+    this.get_lastReturnedKey = LinkedHashMap_LinkedKeyIterator_get_lastReturnedKey_StrN_k_
+    this.set_lastReturnedKey = LinkedHashMap_LinkedKeyIterator_set_lastReturnedKey_StrN_k_
+    this.get_canRemove = LinkedHashMap_LinkedKeyIterator_get_canRemove_Z_k_
+    this.set_canRemove = LinkedHashMap_LinkedKeyIterator_set_canRemove_Z_k_
+    this.map = map
+    this.currentIndex = 0
+    this.orderCount = this.get_map().get_keyOrder().Count()
+    this.lastReturnedKey = invalid
+    this.canRemove = false
+    return this
+end function
+
+function LinkedHashMap_LinkedKeyIterator_hasNext_Z_k_() as Boolean
+    return m.get_currentIndex() < m.get_orderCount()
+end function
+
+function LinkedHashMap_LinkedKeyIterator_next_AnyN_k_() as Dynamic
+    if not m.hasNext_Z_k_() then
+        throw NoSuchElementException_create_NoSuchElementException_k_()
+    end if
+    keyStr = m.get_map().get_keyOrder()[m.get_currentIndex()]
+    m.set_lastReturnedKey(keyStr)
+    m.set_currentIndex(m.get_currentIndex() + 1)
+    m.set_canRemove(true)
+    return keyStr
+end function
+
+sub LinkedHashMap_LinkedKeyIterator_remove()
+    check_Z_Function0Any_k_(m.get_canRemove(), {invoke: function() as Object
+        return "Call next() before removing element"
+    end function})
+    tmp0_elvis_lhs = m.get_lastReturnedKey()
+    __when_tmp1 = invalid
+    if tmp0_elvis_lhs = invalid then
+        throw IllegalStateException_create_IllegalStateException_k_()
+    else if true then
+        __when_tmp1 = tmp0_elvis_lhs
+    end if
+    keyStr = __when_tmp1
+
+    m.get_map().remove_AnyN_AnyN_k_(keyStr)
+    m.set_currentIndex(m.get_currentIndex() - 1)
+    m.set_canRemove(false)
+end sub
+
+function LinkedHashMap_LinkedKeyIterator_get_map_LinkedHashMapAnyNAnyN_k_() as Object
+    return m.map
+end function
+
+function LinkedHashMap_LinkedKeyIterator_get_currentIndex_I_k_() as Integer
+    return m.currentIndex
+end function
+
+sub LinkedHashMap_LinkedKeyIterator_set_currentIndex_I_k_(value as Integer)
+    m.currentIndex = value
+end sub
+
+function LinkedHashMap_LinkedKeyIterator_get_orderCount_I_k_() as Integer
+    return m.orderCount
+end function
+
+sub LinkedHashMap_LinkedKeyIterator_set_orderCount_I_k_(value as Integer)
+    m.orderCount = value
+end sub
+
+function LinkedHashMap_LinkedKeyIterator_get_lastReturnedKey_StrN_k_() as Dynamic
+    return m.lastReturnedKey
+end function
+
+sub LinkedHashMap_LinkedKeyIterator_set_lastReturnedKey_StrN_k_(value as Dynamic)
+    m.lastReturnedKey = value
+end sub
+
+function LinkedHashMap_LinkedKeyIterator_get_canRemove_Z_k_() as Boolean
+    return m.canRemove
+end function
+
+sub LinkedHashMap_LinkedKeyIterator_set_canRemove_Z_k_(value as Boolean)
+    m.canRemove = value
+end sub
+
+function LinkedHashMap_LinkedValueIterator_create_LinkedHashMapAnyNAnyN_LinkedValueIteratorAnyNAnyN_k_(map as Object) as Object
+    this = {}
+    this.__type = "LinkedHashMap_LinkedValueIterator"
+    this.__proto = ["LinkedHashMap_LinkedValueIterator", "MutableIterator", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.hasNext_Z_k_ = LinkedHashMap_LinkedValueIterator_hasNext_Z_k_
+    this.next_AnyN_k_ = LinkedHashMap_LinkedValueIterator_next_AnyN_k_
+    this.remove = LinkedHashMap_LinkedValueIterator_remove
+    this.get_map = LinkedHashMap_LinkedValueIterator_get_map_LinkedHashMapAnyNAnyN_k_
+    this.get_currentIndex = LinkedHashMap_LinkedValueIterator_get_currentIndex_I_k_
+    this.set_currentIndex = LinkedHashMap_LinkedValueIterator_set_currentIndex_I_k_
+    this.get_orderCount = LinkedHashMap_LinkedValueIterator_get_orderCount_I_k_
+    this.set_orderCount = LinkedHashMap_LinkedValueIterator_set_orderCount_I_k_
+    this.get_lastReturnedKey = LinkedHashMap_LinkedValueIterator_get_lastReturnedKey_StrN_k_
+    this.set_lastReturnedKey = LinkedHashMap_LinkedValueIterator_set_lastReturnedKey_StrN_k_
+    this.get_canRemove = LinkedHashMap_LinkedValueIterator_get_canRemove_Z_k_
+    this.set_canRemove = LinkedHashMap_LinkedValueIterator_set_canRemove_Z_k_
+    this.map = map
+    this.currentIndex = 0
+    this.orderCount = this.get_map().get_keyOrder().Count()
+    this.lastReturnedKey = invalid
+    this.canRemove = false
+    return this
+end function
+
+function LinkedHashMap_LinkedValueIterator_hasNext_Z_k_() as Boolean
+    return m.get_currentIndex() < m.get_orderCount()
+end function
+
+function LinkedHashMap_LinkedValueIterator_next_AnyN_k_() as Dynamic
+    if not m.hasNext_Z_k_() then
+        throw NoSuchElementException_create_NoSuchElementException_k_()
+    end if
+    keyStr = m.get_map().get_keyOrder()[m.get_currentIndex()]
+    m.set_lastReturnedKey(keyStr)
+    m.set_currentIndex(m.get_currentIndex() + 1)
+    m.set_canRemove(true)
+    return m.get_map().get_map()[keyStr]
+end function
+
+sub LinkedHashMap_LinkedValueIterator_remove()
+    check_Z_Function0Any_k_(m.get_canRemove(), {invoke: function() as Object
+        return "Call next() before removing element"
+    end function})
+    tmp0_elvis_lhs = m.get_lastReturnedKey()
+    __when_tmp2 = invalid
+    if tmp0_elvis_lhs = invalid then
+        throw IllegalStateException_create_IllegalStateException_k_()
+    else if true then
+        __when_tmp2 = tmp0_elvis_lhs
+    end if
+    keyStr = __when_tmp2
+
+    m.get_map().get_map().Delete(keyStr)
+    m.get_map().get_keyOrder().Delete(m.get_currentIndex() - 1)
+    m.get_map().set__size(unary - 1)
+    m.set_currentIndex(m.get_currentIndex() - 1)
+    m.set_canRemove(false)
+end sub
+
+function LinkedHashMap_LinkedValueIterator_get_map_LinkedHashMapAnyNAnyN_k_() as Object
+    return m.map
+end function
+
+function LinkedHashMap_LinkedValueIterator_get_currentIndex_I_k_() as Integer
+    return m.currentIndex
+end function
+
+sub LinkedHashMap_LinkedValueIterator_set_currentIndex_I_k_(value as Integer)
+    m.currentIndex = value
+end sub
+
+function LinkedHashMap_LinkedValueIterator_get_orderCount_I_k_() as Integer
+    return m.orderCount
+end function
+
+sub LinkedHashMap_LinkedValueIterator_set_orderCount_I_k_(value as Integer)
+    m.orderCount = value
+end sub
+
+function LinkedHashMap_LinkedValueIterator_get_lastReturnedKey_StrN_k_() as Dynamic
+    return m.lastReturnedKey
+end function
+
+sub LinkedHashMap_LinkedValueIterator_set_lastReturnedKey_StrN_k_(value as Dynamic)
+    m.lastReturnedKey = value
+end sub
+
+function LinkedHashMap_LinkedValueIterator_get_canRemove_Z_k_() as Boolean
+    return m.canRemove
+end function
+
+sub LinkedHashMap_LinkedValueIterator_set_canRemove_Z_k_(value as Boolean)
+    m.canRemove = value
+end sub
+
+function LinkedHashMap_LinkedEntryIterator_create_LinkedHashMapAnyNAnyN_LinkedEntryIteratorAnyNAnyN_k_(map as Object) as Object
+    this = {}
+    this.__type = "LinkedHashMap_LinkedEntryIterator"
+    this.__proto = ["LinkedHashMap_LinkedEntryIterator", "MutableIterator", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.hasNext_Z_k_ = LinkedHashMap_LinkedEntryIterator_hasNext_Z_k_
+    this.next_MutableEntryAnyNAnyN_k_ = LinkedHashMap_LinkedEntryIterator_next_MutableEntryAnyNAnyN_k_
+    this.remove = LinkedHashMap_LinkedEntryIterator_remove
+    this.get_map = LinkedHashMap_LinkedEntryIterator_get_map_LinkedHashMapAnyNAnyN_k_
+    this.get_currentIndex = LinkedHashMap_LinkedEntryIterator_get_currentIndex_I_k_
+    this.set_currentIndex = LinkedHashMap_LinkedEntryIterator_set_currentIndex_I_k_
+    this.get_orderCount = LinkedHashMap_LinkedEntryIterator_get_orderCount_I_k_
+    this.set_orderCount = LinkedHashMap_LinkedEntryIterator_set_orderCount_I_k_
+    this.get_lastReturnedKey = LinkedHashMap_LinkedEntryIterator_get_lastReturnedKey_StrN_k_
+    this.set_lastReturnedKey = LinkedHashMap_LinkedEntryIterator_set_lastReturnedKey_StrN_k_
+    this.get_canRemove = LinkedHashMap_LinkedEntryIterator_get_canRemove_Z_k_
+    this.set_canRemove = LinkedHashMap_LinkedEntryIterator_set_canRemove_Z_k_
+    this.map = map
+    this.currentIndex = 0
+    this.orderCount = this.get_map().get_keyOrder().Count()
+    this.lastReturnedKey = invalid
+    this.canRemove = false
+    return this
+end function
+
+function LinkedHashMap_LinkedEntryIterator_hasNext_Z_k_() as Boolean
+    return m.get_currentIndex() < m.get_orderCount()
+end function
+
+function LinkedHashMap_LinkedEntryIterator_next_MutableEntryAnyNAnyN_k_() as Object
+    if not m.hasNext_Z_k_() then
+        throw NoSuchElementException_create_NoSuchElementException_k_()
+    end if
+    keyStr = m.get_map().get_keyOrder()[m.get_currentIndex()]
+    value = m.get_map().get_map()[keyStr]
+    m.set_lastReturnedKey(keyStr)
+    m.set_currentIndex(m.get_currentIndex() + 1)
+    m.set_canRemove(true)
+    return LinkedHashMap_SimpleEntry_create_AnyN_AnyN_SimpleEntryAnyNAnyN_k_(keyStr, value)
+end function
+
+sub LinkedHashMap_LinkedEntryIterator_remove()
+    check_Z_Function0Any_k_(m.get_canRemove(), {invoke: function() as Object
+        return "Call next() before removing element"
+    end function})
+    tmp0_elvis_lhs = m.get_lastReturnedKey()
+    __when_tmp3 = invalid
+    if tmp0_elvis_lhs = invalid then
+        throw IllegalStateException_create_IllegalStateException_k_()
+    else if true then
+        __when_tmp3 = tmp0_elvis_lhs
+    end if
+    keyStr = __when_tmp3
+
+    m.get_map().get_map().Delete(keyStr)
+    m.get_map().get_keyOrder().Delete(m.get_currentIndex() - 1)
+    m.get_map().set__size(unary - 1)
+    m.set_currentIndex(m.get_currentIndex() - 1)
+    m.set_canRemove(false)
+end sub
+
+function LinkedHashMap_LinkedEntryIterator_get_map_LinkedHashMapAnyNAnyN_k_() as Object
+    return m.map
+end function
+
+function LinkedHashMap_LinkedEntryIterator_get_currentIndex_I_k_() as Integer
+    return m.currentIndex
+end function
+
+sub LinkedHashMap_LinkedEntryIterator_set_currentIndex_I_k_(value as Integer)
+    m.currentIndex = value
+end sub
+
+function LinkedHashMap_LinkedEntryIterator_get_orderCount_I_k_() as Integer
+    return m.orderCount
+end function
+
+sub LinkedHashMap_LinkedEntryIterator_set_orderCount_I_k_(value as Integer)
+    m.orderCount = value
+end sub
+
+function LinkedHashMap_LinkedEntryIterator_get_lastReturnedKey_StrN_k_() as Dynamic
+    return m.lastReturnedKey
+end function
+
+sub LinkedHashMap_LinkedEntryIterator_set_lastReturnedKey_StrN_k_(value as Dynamic)
+    m.lastReturnedKey = value
+end sub
+
+function LinkedHashMap_LinkedEntryIterator_get_canRemove_Z_k_() as Boolean
+    return m.canRemove
+end function
+
+sub LinkedHashMap_LinkedEntryIterator_set_canRemove_Z_k_(value as Boolean)
+    m.canRemove = value
+end sub
+
 function LinkedHashMap_SimpleEntry_create_AnyN_AnyN_SimpleEntryAnyNAnyN_k_(key as Dynamic, value as Dynamic) as Object
     this = {}
     this.__type = "LinkedHashMap_SimpleEntry"
-    this.__proto = ["LinkedHashMap_SimpleEntry"]
-    this.key = key
-    this.value = value
+    this.__proto = ["LinkedHashMap_SimpleEntry", "MutableMap_MutableEntry", "Map_Entry"]
+    this.__id = __kotlin_nextObjectId()
     this.setValue_AnyN_AnyN_k_ = LinkedHashMap_SimpleEntry_setValue_AnyN_AnyN_k_
     this.equals_AnyN_Z_k_ = LinkedHashMap_SimpleEntry_equals_AnyN_Z_k_
+    this.equals = LinkedHashMap_SimpleEntry_equals_AnyN_Z_k_
     this.hashCode_I_k_ = LinkedHashMap_SimpleEntry_hashCode_I_k_
+    this.hashCode = LinkedHashMap_SimpleEntry_hashCode_I_k_
     this.toString_Str_k_ = LinkedHashMap_SimpleEntry_toString_Str_k_
+    this.toString = LinkedHashMap_SimpleEntry_toString_Str_k_
     this.get_key = LinkedHashMap_SimpleEntry_get_key_AnyN_k_
     this.get_value = LinkedHashMap_SimpleEntry_get_value_AnyN_k_
     this.set_value = LinkedHashMap_SimpleEntry_set_value_AnyN_k_
+    this.key = key
+    this.value = value
     return this
 end function
 
@@ -648,7 +983,7 @@ function LinkedHashMap_SimpleEntry_hashCode_I_k_() as Integer
     else if true then
         __when_tmp7 = tmp3_elvis_lhs
     end if
-    return __when_tmp5.xor_I_I_k_(__when_tmp7)
+    return xor_rI_I_I_k_(__when_tmp5, __when_tmp7)
 
 end function
 

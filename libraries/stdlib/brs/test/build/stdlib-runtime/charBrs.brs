@@ -17,7 +17,7 @@ end function
 function uppercaseChar_rC_C_k_(m as Object) as Object
     uppercase = uppercase_rC_Str_k_(m)
     __when_tmp0 = invalid
-    if uppercase.get_length() > 1 then
+    if Len(uppercase) > 1 then
         __when_tmp0 = m
     else if true then
         __when_tmp0 = uppercase.get_I_C_k_(0)
@@ -36,15 +36,15 @@ end function
 
 function get_category_rC_CharCategory_k_(m as Object) as Object
     __when_tmp1 = invalid
-    if "A".rangeTo_C_CharRange_k_("Z").contains_C_Z_k_(m) then
+    if rangeTo_rC_C_CharRange_k_("A", "Z").contains_C_Z_k_(m) then
         __when_tmp1 = CharCategory_UPPERCASE_LETTER
-    else if "a".rangeTo_C_CharRange_k_("z").contains_C_Z_k_(m) then
+    else if rangeTo_rC_C_CharRange_k_("a", "z").contains_C_Z_k_(m) then
         __when_tmp1 = CharCategory_LOWERCASE_LETTER
-    else if "0".rangeTo_C_CharRange_k_("9").contains_C_Z_k_(m) then
+    else if rangeTo_rC_C_CharRange_k_("0", "9").contains_C_Z_k_(m) then
         __when_tmp1 = CharCategory_DECIMAL_DIGIT_NUMBER
     else if (m = " ") or (m = chr(9)) then
         __when_tmp1 = CharCategory_SPACE_SEPARATOR
-    else if "".rangeTo_C_CharRange_k_("").contains_C_Z_k_(m) or "".rangeTo_C_CharRange_k_("").contains_C_Z_k_(m) then
+    else if rangeTo_rC_C_CharRange_k_("", "").contains_C_Z_k_(m) or rangeTo_rC_C_CharRange_k_("", "").contains_C_Z_k_(m) then
         __when_tmp1 = CharCategory_CONTROL
     else if true then
         __when_tmp1 = CharCategory_OTHER_SYMBOL
@@ -58,7 +58,7 @@ function isDefined_rC_Z_k_(m as Object) as Boolean
 end function
 
 function isLetter_rC_Z_k_(m as Object) as Boolean
-    return "a".rangeTo_C_CharRange_k_("z").contains_C_Z_k_(m) or "A".rangeTo_C_CharRange_k_("Z").contains_C_Z_k_(m)
+    return rangeTo_rC_C_CharRange_k_("a", "z").contains_C_Z_k_(m) or rangeTo_rC_C_CharRange_k_("A", "Z").contains_C_Z_k_(m)
 end function
 
 function isLetterOrDigit_rC_Z_k_(m as Object) as Boolean
@@ -66,15 +66,15 @@ function isLetterOrDigit_rC_Z_k_(m as Object) as Boolean
 end function
 
 function isDigit_rC_Z_k_(m as Object) as Boolean
-    return "0".rangeTo_C_CharRange_k_("9").contains_C_Z_k_(m)
+    return rangeTo_rC_C_CharRange_k_("0", "9").contains_C_Z_k_(m)
 end function
 
 function isUpperCase_rC_Z_k_(m as Object) as Boolean
-    return "A".rangeTo_C_CharRange_k_("Z").contains_C_Z_k_(m)
+    return rangeTo_rC_C_CharRange_k_("A", "Z").contains_C_Z_k_(m)
 end function
 
 function isLowerCase_rC_Z_k_(m as Object) as Boolean
-    return "a".rangeTo_C_CharRange_k_("z").contains_C_Z_k_(m)
+    return rangeTo_rC_C_CharRange_k_("a", "z").contains_C_Z_k_(m)
 end function
 
 function isTitleCase_rC_Z_k_(m as Object) as Boolean
@@ -82,7 +82,7 @@ function isTitleCase_rC_Z_k_(m as Object) as Boolean
 end function
 
 function isISOControl_rC_Z_k_(m as Object) as Boolean
-    return ((m <= "") <= 0) or "".rangeTo_C_CharRange_k_("").contains_C_Z_k_(m)
+    return ((m <= "") <= 0) or rangeTo_rC_C_CharRange_k_("", "").contains_C_Z_k_(m)
 end function
 
 function isWhitespace_rC_Z_k_(m as Object) as Boolean
@@ -90,11 +90,11 @@ function isWhitespace_rC_Z_k_(m as Object) as Boolean
 end function
 
 function isHighSurrogate_rC_Z_k_(m as Object) as Boolean
-    return "?".rangeTo_C_CharRange_k_("?").contains_C_Z_k_(m)
+    return rangeTo_rC_C_CharRange_k_("?", "?").contains_C_Z_k_(m)
 end function
 
 function isLowSurrogate_rC_Z_k_(m as Object) as Boolean
-    return "?".rangeTo_C_CharRange_k_("?").contains_C_Z_k_(m)
+    return rangeTo_rC_C_CharRange_k_("?", "?").contains_C_Z_k_(m)
 end function
 
 function isSurrogate_rC_Z_k_(m as Object) as Boolean

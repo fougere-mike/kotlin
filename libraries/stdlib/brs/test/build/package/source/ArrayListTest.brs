@@ -124,7 +124,7 @@ sub arrayListTests_rTestRunner_k_(m as Object)
         m.test_Str_Function0V_k_("for-each loop", {invoke: function() as Void
             list = arrayListOf_Arr_ArrayListAnyN_k_([1, 2, 3])
             collected = mutableListOf_MutableListAnyN_k_()
-            for each item in list.array
+            for each item in list.get_array()
                 collected.add_AnyN_Z_k_(item)
 
             end for

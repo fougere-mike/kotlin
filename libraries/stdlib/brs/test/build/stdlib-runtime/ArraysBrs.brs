@@ -1,8 +1,11 @@
 function toTypedArray_rCollectionAnyN_Arr_k_(m as Object) as Object
     result = arrayOfNulls_I_Arr_k_(m.get_size())
     index = 0
-    for each element in m.array
-        result[index = (index + 1)] = element
+    for each element in m
+        __incr_tmp_0 = index
+        index = (__incr_tmp_0 + 1)
+
+        result[__incr_tmp_0] = element
 
     end for
     return result
@@ -11,8 +14,11 @@ end function
 function plus_rArr_CollectionAnyN_Arr_k_(m as Object, elements as Object) as Object
     result = copyOf_rArr_I_Arr_k_(m, m.count() + elements.get_size())
     index = m.count()
-    for each element in elements.array
-        result[index = (index + 1)] = element
+    for each element in elements
+        __incr_tmp_1 = index
+        index = (__incr_tmp_1 + 1)
+
+        result[__incr_tmp_1] = element
 
     end for
     return result
@@ -34,7 +40,10 @@ function plus_rArr_Arr_Arr_k_(m as Object, elements as Object) as Object
         element = indexedObject[inductionVariable]
         inductionVariable = (inductionVariable + 1)
 
-        result[index = (index + 1)] = element
+        __incr_tmp_2 = index
+        index = (__incr_tmp_2 + 1)
+
+        result[__incr_tmp_2] = element
 
     end while
 
@@ -126,14 +135,20 @@ function copyOfRange_rArr_I_I_Arr_k_(m as Object, fromIndex as Integer, toIndex 
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        result[resultIndex = (resultIndex + 1)] = m[i]
+        __incr_tmp_3 = resultIndex
+        resultIndex = (__incr_tmp_3 + 1)
+
+        result[__incr_tmp_3] = m[i]
 
 
         while i <> last
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            result[resultIndex = (resultIndex + 1)] = m[i]
+            __incr_tmp_3 = resultIndex
+            resultIndex = (__incr_tmp_3 + 1)
+
+            result[__incr_tmp_3] = m[i]
 
         end while
 

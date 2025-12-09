@@ -82,7 +82,7 @@ sub collectionExtensionsTests_rTestRunner_k_(m as Object)
         m.test_Str_Function0V_k_("sumOf", {invoke: function() as Void
             list = listOf_Arr_ListAnyN_k_(["a", "bb", "ccc"])
             assertEquals_AnyN_AnyN_StrN_k_(6, sumOf_rIterableAnyN_Function1AnyNI_I_k_(list, {invoke: function(it as String) as Integer
-                return it.get_length()
+                return Len(it)
             end function}))
         end function})
         m.test_Str_Function0V_k_("count", {invoke: function() as Void
@@ -165,7 +165,7 @@ sub collectionExtensionsTests_rTestRunner_k_(m as Object)
         m.test_Str_Function0V_k_("associate", {invoke: function() as Void
             list = listOf_Arr_ListAnyN_k_(["a", "bb", "ccc"])
             map = associate_rIterableAnyN_Function1AnyNPairAnyNAnyN_MapAnyNAnyN_k_(list, {invoke: function(it as String) as Object
-                return to_rAnyN_AnyN_PairAnyNAnyN_k_(it, it.get_length())
+                return to_rAnyN_AnyN_PairAnyNAnyN_k_(it, Len(it))
             end function})
             assertEquals_AnyN_AnyN_StrN_k_(1, map.get_AnyN_AnyN_k_("a"))
             assertEquals_AnyN_AnyN_StrN_k_(2, map.get_AnyN_AnyN_k_("bb"))
@@ -174,7 +174,7 @@ sub collectionExtensionsTests_rTestRunner_k_(m as Object)
         m.test_Str_Function0V_k_("associateWith", {invoke: function() as Void
             list = listOf_Arr_ListAnyN_k_(["a", "bb", "ccc"])
             map = associateWith_rIterableAnyN_Function1AnyNAnyN_MapAnyNAnyN_k_(list, {invoke: function(it as String) as Integer
-                return it.get_length()
+                return Len(it)
             end function})
             assertEquals_AnyN_AnyN_StrN_k_(1, map.get_AnyN_AnyN_k_("a"))
             assertEquals_AnyN_AnyN_StrN_k_(2, map.get_AnyN_AnyN_k_("bb"))
@@ -182,7 +182,7 @@ sub collectionExtensionsTests_rTestRunner_k_(m as Object)
         m.test_Str_Function0V_k_("associateBy", {invoke: function() as Void
             list = listOf_Arr_ListAnyN_k_(["a", "bb", "ccc"])
             map = associateBy_rIterableAnyN_Function1AnyNAnyN_MapAnyNAnyN_k_(list, {invoke: function(it as String) as Integer
-                return it.get_length()
+                return Len(it)
             end function})
             assertEquals_AnyN_AnyN_StrN_k_("a", map.get_AnyN_AnyN_k_(1))
             assertEquals_AnyN_AnyN_StrN_k_("bb", map.get_AnyN_AnyN_k_(2))
@@ -243,7 +243,7 @@ sub collectionExtensionsTests_rTestRunner_k_(m as Object)
         m.test_Str_Function0V_k_("distinctBy", {invoke: function() as Void
             list = listOf_Arr_ListAnyN_k_(["a", "bb", "c", "dd"])
             result = distinctBy_rIterableAnyN_Function1AnyNAnyN_ListAnyN_k_(list, {invoke: function(it as String) as Integer
-                return it.get_length()
+                return Len(it)
             end function})
             assertEquals_AnyN_AnyN_StrN_k_(2, result.get_size())
         end function})

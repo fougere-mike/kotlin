@@ -74,7 +74,7 @@ function groupBy_rIterableAnyN_Function1AnyNAnyN_Function1AnyNAnyN_MapAnyNListAn
 end function
 
 function groupByTo_rIterableAnyN_Any_Function1AnyNAnyN_Any_k_(m as Object, destination as Object, keySelector as Object) as Object
-    for each element in m.array
+    for each element in m
         key = keySelector.invoke(element)
         list = getOrPut_rMutableMapAnyNAnyN_AnyN_Function0AnyN_AnyN_k_(destination, key, {invoke: function() as Object
             return ArrayList_create_ArrayListAnyN_k_()
@@ -86,7 +86,7 @@ function groupByTo_rIterableAnyN_Any_Function1AnyNAnyN_Any_k_(m as Object, desti
 end function
 
 function groupByTo_rIterableAnyN_Any_Function1AnyNAnyN_Function1AnyNAnyN_Any_k_(m as Object, destination as Object, keySelector as Object, valueTransform as Object) as Object
-    for each element in m.array
+    for each element in m
         key = keySelector.invoke(element)
         list = getOrPut_rMutableMapAnyNAnyN_AnyN_Function0AnyN_AnyN_k_(destination, key, {invoke: function() as Object
             return ArrayList_create_ArrayListAnyN_k_()
@@ -98,12 +98,12 @@ function groupByTo_rIterableAnyN_Any_Function1AnyNAnyN_Function1AnyNAnyN_Any_k_(
 end function
 
 function groupingBy_rIterableAnyN_Function1AnyNAnyN_GroupingAnyNAnyN_k_(m as Object, keySelector as Object) as Object
-    return Anon_d498f9b_create_AnonAnyNAnyN_k_()
+    return Anon_40e8c117_create_AnonAnyNAnyN_k_()
 end function
 
 function associate_rIterableAnyN_Function1AnyNPairAnyNAnyN_MapAnyNAnyN_k_(m as Object, transform as Object) as Object
     result = HashMap_create_HashMapAnyNAnyN_k_()
-    for each element in m.array
+    for each element in m
         pair = transform.invoke(element)
         set_rMutableMapAnyNAnyN_AnyN_AnyN_k_(result, pair.first, pair.second)
 
@@ -113,7 +113,7 @@ end function
 
 function associateBy_rIterableAnyN_Function1AnyNAnyN_MapAnyNAnyN_k_(m as Object, keySelector as Object) as Object
     result = HashMap_create_HashMapAnyNAnyN_k_()
-    for each element in m.array
+    for each element in m
         set_rMutableMapAnyNAnyN_AnyN_AnyN_k_(result, keySelector.invoke(element), element)
 
     end for
@@ -122,7 +122,7 @@ end function
 
 function associateBy_rIterableAnyN_Function1AnyNAnyN_Function1AnyNAnyN_MapAnyNAnyN_k_(m as Object, keySelector as Object, valueTransform as Object) as Object
     result = HashMap_create_HashMapAnyNAnyN_k_()
-    for each element in m.array
+    for each element in m
         set_rMutableMapAnyNAnyN_AnyN_AnyN_k_(result, keySelector.invoke(element), valueTransform.invoke(element))
 
     end for
@@ -130,7 +130,7 @@ function associateBy_rIterableAnyN_Function1AnyNAnyN_Function1AnyNAnyN_MapAnyNAn
 end function
 
 function associateByTo_rIterableAnyN_Any_Function1AnyNAnyN_Any_k_(m as Object, destination as Object, keySelector as Object) as Object
-    for each element in m.array
+    for each element in m
         set_rMutableMapAnyNAnyN_AnyN_AnyN_k_(destination, keySelector.invoke(element), element)
 
     end for
@@ -138,7 +138,7 @@ function associateByTo_rIterableAnyN_Any_Function1AnyNAnyN_Any_k_(m as Object, d
 end function
 
 function associateByTo_rIterableAnyN_Any_Function1AnyNAnyN_Function1AnyNAnyN_Any_k_(m as Object, destination as Object, keySelector as Object, valueTransform as Object) as Object
-    for each element in m.array
+    for each element in m
         set_rMutableMapAnyNAnyN_AnyN_AnyN_k_(destination, keySelector.invoke(element), valueTransform.invoke(element))
 
     end for
@@ -147,7 +147,7 @@ end function
 
 function associateWith_rIterableAnyN_Function1AnyNAnyN_MapAnyNAnyN_k_(m as Object, valueSelector as Object) as Object
     result = HashMap_create_HashMapAnyNAnyN_k_()
-    for each element in m.array
+    for each element in m
         set_rMutableMapAnyNAnyN_AnyN_AnyN_k_(result, element, valueSelector.invoke(element))
 
     end for
@@ -155,7 +155,7 @@ function associateWith_rIterableAnyN_Function1AnyNAnyN_MapAnyNAnyN_k_(m as Objec
 end function
 
 function associateWithTo_rIterableAnyN_Any_Function1AnyNAnyN_Any_k_(m as Object, destination as Object, valueSelector as Object) as Object
-    for each element in m.array
+    for each element in m
         set_rMutableMapAnyNAnyN_AnyN_AnyN_k_(destination, element, valueSelector.invoke(element))
 
     end for

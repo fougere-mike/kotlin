@@ -1,8 +1,8 @@
 function ULong_create_J_ULong_k_(data as LongInteger) as Object
     this = {}
     this.__type = "ULong"
-    this.__proto = ["ULong"]
-    this.data = data
+    this.__proto = ["ULong", "Comparable"]
+    this.__id = __kotlin_nextObjectId()
     this.compareTo_UByte_I_k_ = ULong_compareTo_UByte_I_k_
     this.compareTo_UShort_I_k_ = ULong_compareTo_UShort_I_k_
     this.compareTo_UInt_I_k_ = ULong_compareTo_UInt_I_k_
@@ -56,9 +56,13 @@ function ULong_create_J_ULong_k_(data as LongInteger) as Object
     this.toFloat_F_k_ = ULong_toFloat_F_k_
     this.toDouble_D_k_ = ULong_toDouble_D_k_
     this.toString_Str_k_ = ULong_toString_Str_k_
+    this.toString = ULong_toString_Str_k_
     this.equals_AnyN_Z_k_ = ULong_equals_AnyN_Z_k_
+    this.equals = ULong_equals_AnyN_Z_k_
     this.hashCode_I_k_ = ULong_hashCode_I_k_
+    this.hashCode = ULong_hashCode_I_k_
     this.get_data = ULong_get_data_J_k_
+    this.data = data
     return this
 end function
 
@@ -107,7 +111,7 @@ function ULong_minus_UInt_ULong_k_(other as Object) as Object
 end function
 
 function ULong_minus_ULong_ULong_k_(other as Object) as Object
-    return ULong_create_J_ULong_k_(m.get_data().minus_J_J_k_(other.get_data()))
+    return ULong_create_J_ULong_k_(minus_rJ_J_J_k_(m.get_data(), other.get_data()))
 end function
 
 function ULong_times_UByte_ULong_k_(other as Object) as Object
@@ -123,7 +127,7 @@ function ULong_times_UInt_ULong_k_(other as Object) as Object
 end function
 
 function ULong_times_ULong_ULong_k_(other as Object) as Object
-    return ULong_create_J_ULong_k_(m.get_data().times_J_J_k_(other.get_data()))
+    return ULong_create_J_ULong_k_(times_rJ_J_J_k_(m.get_data(), other.get_data()))
 end function
 
 function ULong_div_UByte_ULong_k_(other as Object) as Object
@@ -207,27 +211,27 @@ function ULong_rangeUntil_ULong_ULongRange_k_(other as Object) as Object
 end function
 
 function ULong_shl_I_ULong_k_(bitCount as Integer) as Object
-    return ULong_create_J_ULong_k_(m.get_data().shl_I_J_k_(bitCount))
+    return ULong_create_J_ULong_k_(shl_rJ_I_J_k_(m.get_data(), bitCount))
 end function
 
 function ULong_shr_I_ULong_k_(bitCount as Integer) as Object
-    return ULong_create_J_ULong_k_(m.get_data().ushr_I_J_k_(bitCount))
+    return ULong_create_J_ULong_k_(ushr_rJ_I_J_k_(m.get_data(), bitCount))
 end function
 
 function ULong_and_ULong_ULong_k_(other as Object) as Object
-    return ULong_create_J_ULong_k_(m.get_data().and_J_J_k_(other.get_data()))
+    return ULong_create_J_ULong_k_(and_rJ_J_J_k_(m.get_data(), other.get_data()))
 end function
 
 function ULong_or_ULong_ULong_k_(other as Object) as Object
-    return ULong_create_J_ULong_k_(m.get_data().or_J_J_k_(other.get_data()))
+    return ULong_create_J_ULong_k_(or_rJ_J_J_k_(m.get_data(), other.get_data()))
 end function
 
 function ULong_xor_ULong_ULong_k_(other as Object) as Object
-    return ULong_create_J_ULong_k_(m.get_data().xor_J_J_k_(other.get_data()))
+    return ULong_create_J_ULong_k_(xor_rJ_J_J_k_(m.get_data(), other.get_data()))
 end function
 
 function ULong_inv_ULong_k_() as Object
-    return ULong_create_J_ULong_k_(m.get_data().inv_J_k_())
+    return ULong_create_J_ULong_k_(inv_rJ_J_k_(m.get_data()))
 end function
 
 function ULong_toByte_B_k_() as Integer
@@ -279,7 +283,7 @@ function ULong_equals_AnyN_Z_k_(other as Dynamic) as Boolean
 end function
 
 function ULong_hashCode_I_k_() as Integer
-    return m.get_data().hashCode()
+    return hashCode_rJ_I_k_(m.get_data())
 end function
 
 function ULong_get_data_J_k_() as LongInteger
@@ -290,14 +294,15 @@ function ULong_Companion_create_Companion_k_() as Object
     this = {}
     this.__type = "ULong_Companion"
     this.__proto = ["ULong_Companion"]
-    this.MIN_VALUE = ULong_create_J_ULong_k_(0&)
-    this.MAX_VALUE = ULong_create_J_ULong_k_(-1&)
-    this.SIZE_BYTES = 8
-    this.SIZE_BITS = 64
+    this.__id = __kotlin_nextObjectId()
     this.get_MIN_VALUE = ULong_Companion_get_MIN_VALUE_ULong_k_
     this.get_MAX_VALUE = ULong_Companion_get_MAX_VALUE_ULong_k_
     this.get_SIZE_BYTES = ULong_Companion_get_SIZE_BYTES_I_k_
     this.get_SIZE_BITS = ULong_Companion_get_SIZE_BITS_I_k_
+    this.MIN_VALUE = ULong_create_J_ULong_k_(0&)
+    this.MAX_VALUE = ULong_create_J_ULong_k_(-1&)
+    this.SIZE_BYTES = 8
+    this.SIZE_BITS = 64
     return this
 end function
 

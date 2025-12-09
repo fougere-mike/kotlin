@@ -25,14 +25,17 @@ public inline fun <K, V> Map<K, V>.getOrElse(key: K, defaultValue: () -> V): V {
  */
 public inline fun <K, V> MutableMap<K, V>.getOrPut(key: K, defaultValue: () -> V): V {
     val value = get(key)
-    return if (value == null && !containsKey(key)) {
-        val answer = defaultValue()
-        put(key, answer)
-        answer
-    } else {
+    // Workaround: Check for existing key first to handle the common case
+    // If value is not null OR key exists (even with null value), return existing
+    if (value != null || containsKey(key)) {
         @Suppress("UNCHECKED_CAST")
-        value as V
+        return value as V
     }
+    // Key doesn't exist - compute, store, and return the default value
+    val answer = defaultValue()
+    put(key, answer)
+    @Suppress("UNCHECKED_CAST")
+    return answer as V
 }
 
 /**

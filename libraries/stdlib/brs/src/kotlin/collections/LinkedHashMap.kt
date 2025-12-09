@@ -217,6 +217,13 @@ public open class LinkedHashMap<K, V> : MutableMap<K, V> {
      * KeySet that maintains insertion order.
      */
     private class LinkedKeySet<K, V>(private val map: LinkedHashMap<K, V>) : MutableSet<K> {
+
+        /**
+         * Returns the underlying key array for BrightScript for-each iteration.
+         */
+        internal val array: Dynamic
+            get() = map.keyOrder
+
         override val size: Int get() = map.size
         override fun isEmpty(): Boolean = map.isEmpty()
         override fun contains(element: K): Boolean = map.containsKey(element)
@@ -227,40 +234,7 @@ public open class LinkedHashMap<K, V> : MutableMap<K, V> {
             return true
         }
 
-        override fun iterator(): MutableIterator<K> = object : MutableIterator<K> {
-            private var currentIndex = 0
-            private val orderCount = brsArrayCount(map.keyOrder)
-            private var lastReturnedKey: String? = null
-            private var canRemove = false
-
-            override fun hasNext(): Boolean = currentIndex < orderCount
-
-            override fun next(): K {
-                if (!hasNext()) throw NoSuchElementException()
-                val keyStr = brsArrayGet<String>(map.keyOrder, currentIndex)
-                lastReturnedKey = keyStr
-                currentIndex++
-                canRemove = true
-                @Suppress("UNCHECKED_CAST")
-                return stringToKey(keyStr) as K
-            }
-
-            override fun remove() {
-                check(canRemove) { "Call next() before removing element" }
-                val keyStr = lastReturnedKey ?: throw IllegalStateException()
-                @Suppress("UNCHECKED_CAST")
-                map.remove(stringToKey(keyStr) as K)
-                currentIndex-- // Adjust index after removal
-                canRemove = false
-            }
-
-            // Helper to reconstruct key from string (simplified - assumes toString() is reversible)
-            private fun stringToKey(keyStr: String): Any? {
-                // Note: This is a limitation - we can't perfectly reconstruct the original key
-                // For now, return the string representation
-                return keyStr
-            }
-        }
+        override fun iterator(): MutableIterator<K> = LinkedKeyIterator(map)
 
         override fun add(element: K): Boolean =
             throw UnsupportedOperationException("Add not supported on key set")
@@ -303,6 +277,30 @@ public open class LinkedHashMap<K, V> : MutableMap<K, V> {
      * ValueCollection that maintains insertion order.
      */
     private class LinkedValueCollection<K, V>(private val map: LinkedHashMap<K, V>) : MutableCollection<V> {
+
+        @BrsInline("return CreateObject(\"roArray\", 0, true)")
+        private external fun brsCreateArray(): Dynamic
+
+        @BrsInline("arr.Push(value)")
+        private external fun brsArrayPush(arr: Dynamic, value: Any?): Unit
+
+        /**
+         * Returns an array of values for BrightScript for-each iteration.
+         */
+        internal val array: Dynamic
+            get() {
+                val result = brsCreateArray()
+                val keyCount = brsArrayCount(map.keyOrder)
+                var i = 0
+                while (i < keyCount) {
+                    val keyStr = brsArrayGet<String>(map.keyOrder, i)
+                    val value = brsLookup<V>(map.map, keyStr)
+                    brsArrayPush(result, value)
+                    i++
+                }
+                return result
+            }
+
         override val size: Int get() = map.size
         override fun isEmpty(): Boolean = map.isEmpty()
         override fun contains(element: V): Boolean = map.containsValue(element)
@@ -313,33 +311,7 @@ public open class LinkedHashMap<K, V> : MutableMap<K, V> {
             return true
         }
 
-        override fun iterator(): MutableIterator<V> = object : MutableIterator<V> {
-            private var currentIndex = 0
-            private val orderCount = brsArrayCount(map.keyOrder)
-            private var lastReturnedKey: String? = null
-            private var canRemove = false
-
-            override fun hasNext(): Boolean = currentIndex < orderCount
-
-            override fun next(): V {
-                if (!hasNext()) throw NoSuchElementException()
-                val keyStr = brsArrayGet<String>(map.keyOrder, currentIndex)
-                lastReturnedKey = keyStr
-                currentIndex++
-                canRemove = true
-                return brsLookup(map.map, keyStr)
-            }
-
-            override fun remove() {
-                check(canRemove) { "Call next() before removing element" }
-                val keyStr = lastReturnedKey ?: throw IllegalStateException()
-                brsDelete(map.map, keyStr)
-                brsArrayDelete(map.keyOrder, currentIndex - 1)
-                map._size--
-                currentIndex--
-                canRemove = false
-            }
-        }
+        override fun iterator(): MutableIterator<V> = LinkedValueIterator(map)
 
         override fun add(element: V): Boolean =
             throw UnsupportedOperationException("Add not supported on value collection")
@@ -390,6 +362,31 @@ public open class LinkedHashMap<K, V> : MutableMap<K, V> {
      */
     private class LinkedEntrySet<K, V>(private val map: LinkedHashMap<K, V>) :
         MutableSet<MutableMap.MutableEntry<K, V>> {
+
+        @BrsInline("return CreateObject(\"roArray\", 0, true)")
+        private external fun brsCreateArray(): Dynamic
+
+        @BrsInline("arr.Push(value)")
+        private external fun brsArrayPush(arr: Dynamic, value: Any?): Unit
+
+        /**
+         * Returns an array of entries for BrightScript for-each iteration.
+         */
+        internal val array: Dynamic
+            get() {
+                val result = brsCreateArray()
+                val keyCount = brsArrayCount(map.keyOrder)
+                var i = 0
+                while (i < keyCount) {
+                    val keyStr = brsArrayGet<String>(map.keyOrder, i)
+                    val value = brsLookup<V>(map.map, keyStr)
+                    @Suppress("UNCHECKED_CAST")
+                    brsArrayPush(result, SimpleEntry(keyStr as K, value))
+                    i++
+                }
+                return result
+            }
+
         override val size: Int get() = map.size
         override fun isEmpty(): Boolean = map.isEmpty()
         override fun contains(element: MutableMap.MutableEntry<K, V>): Boolean {
@@ -405,36 +402,7 @@ public open class LinkedHashMap<K, V> : MutableMap<K, V> {
         }
 
         override fun iterator(): MutableIterator<MutableMap.MutableEntry<K, V>> =
-            object : MutableIterator<MutableMap.MutableEntry<K, V>> {
-                private var currentIndex = 0
-                private val orderCount = brsArrayCount(map.keyOrder)
-                private var lastReturnedKey: String? = null
-                private var canRemove = false
-
-                override fun hasNext(): Boolean = currentIndex < orderCount
-
-                override fun next(): MutableMap.MutableEntry<K, V> {
-                    if (!hasNext()) throw NoSuchElementException()
-                    val keyStr = brsArrayGet<String>(map.keyOrder, currentIndex)
-                    val value = brsLookup<V>(map.map, keyStr)
-                    lastReturnedKey = keyStr
-                    currentIndex++
-                    canRemove = true
-
-                    @Suppress("UNCHECKED_CAST")
-                    return SimpleEntry(keyStr as K, value)
-                }
-
-                override fun remove() {
-                    check(canRemove) { "Call next() before removing element" }
-                    val keyStr = lastReturnedKey ?: throw IllegalStateException()
-                    brsDelete(map.map, keyStr)
-                    brsArrayDelete(map.keyOrder, currentIndex - 1)
-                    map._size--
-                    currentIndex--
-                    canRemove = false
-                }
-            }
+            LinkedEntryIterator(map)
 
         override fun add(element: MutableMap.MutableEntry<K, V>): Boolean =
             throw UnsupportedOperationException("Add not supported on entry set")
@@ -470,6 +438,102 @@ public open class LinkedHashMap<K, V> : MutableMap<K, V> {
 
         override fun clear() {
             map.clear()
+        }
+    }
+
+    /**
+     * Key iterator that maintains insertion order.
+     */
+    private class LinkedKeyIterator<K, V>(private val map: LinkedHashMap<K, V>) : MutableIterator<K> {
+        private var currentIndex = 0
+        private var orderCount = brsArrayCount(map.keyOrder)
+        private var lastReturnedKey: String? = null
+        private var canRemove = false
+
+        override fun hasNext(): Boolean = currentIndex < orderCount
+
+        override fun next(): K {
+            if (!hasNext()) throw NoSuchElementException()
+            val keyStr = brsArrayGet<String>(map.keyOrder, currentIndex)
+            lastReturnedKey = keyStr
+            currentIndex++
+            canRemove = true
+            @Suppress("UNCHECKED_CAST")
+            return keyStr as K
+        }
+
+        override fun remove() {
+            check(canRemove) { "Call next() before removing element" }
+            val keyStr = lastReturnedKey ?: throw IllegalStateException()
+            @Suppress("UNCHECKED_CAST")
+            map.remove(keyStr as K)
+            currentIndex-- // Adjust index after removal
+            canRemove = false
+        }
+    }
+
+    /**
+     * Value iterator that maintains insertion order.
+     */
+    private class LinkedValueIterator<K, V>(private val map: LinkedHashMap<K, V>) : MutableIterator<V> {
+        private var currentIndex = 0
+        private var orderCount = brsArrayCount(map.keyOrder)
+        private var lastReturnedKey: String? = null
+        private var canRemove = false
+
+        override fun hasNext(): Boolean = currentIndex < orderCount
+
+        override fun next(): V {
+            if (!hasNext()) throw NoSuchElementException()
+            val keyStr = brsArrayGet<String>(map.keyOrder, currentIndex)
+            lastReturnedKey = keyStr
+            currentIndex++
+            canRemove = true
+            return brsLookup(map.map, keyStr)
+        }
+
+        override fun remove() {
+            check(canRemove) { "Call next() before removing element" }
+            val keyStr = lastReturnedKey ?: throw IllegalStateException()
+            brsDelete(map.map, keyStr)
+            brsArrayDelete(map.keyOrder, currentIndex - 1)
+            map._size--
+            currentIndex--
+            canRemove = false
+        }
+    }
+
+    /**
+     * Entry iterator that maintains insertion order.
+     */
+    private class LinkedEntryIterator<K, V>(private val map: LinkedHashMap<K, V>) : MutableIterator<MutableMap.MutableEntry<K, V>> {
+        private var currentIndex = 0
+        private var orderCount = brsArrayCount(map.keyOrder)
+        private var lastReturnedKey: String? = null
+        private var canRemove = false
+
+        override fun hasNext(): Boolean = currentIndex < orderCount
+
+        override fun next(): MutableMap.MutableEntry<K, V> {
+            if (!hasNext()) throw NoSuchElementException()
+            val keyStr = brsArrayGet<String>(map.keyOrder, currentIndex)
+            val value = brsLookup<V>(map.map, keyStr)
+            lastReturnedKey = keyStr
+            currentIndex++
+            canRemove = true
+
+            @Suppress("UNCHECKED_CAST")
+            return SimpleEntry(keyStr as K, value)
+        }
+
+        override fun remove() {
+            check(canRemove) { "Call next() before removing element" }
+            val keyStr = lastReturnedKey ?: throw IllegalStateException()
+            brsDelete(map.map, keyStr)
+            brsArrayDelete(map.keyOrder, currentIndex - 1)
+            map._size--
+            currentIndex--
+            canRemove = false
         }
     }
 

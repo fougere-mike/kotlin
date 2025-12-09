@@ -1,8 +1,8 @@
 function UByteArray_create_ByteArray_UByteArray_k_(storage as Object) as Object
     this = {}
     this.__type = "UByteArray"
-    this.__proto = ["UByteArray"]
-    this.storage = storage
+    this.__proto = ["UByteArray", "Collection", "Iterable"]
+    this.__id = __kotlin_nextObjectId()
     this.get_I_UByte_k_ = UByteArray_get_I_UByte_k_
     this.set_I_UByte_k_ = UByteArray_set_I_UByte_k_
     this.iterator_IteratorUByte_k_ = UByteArray_iterator_IteratorUByte_k_
@@ -10,10 +10,14 @@ function UByteArray_create_ByteArray_UByteArray_k_(storage as Object) as Object
     this.containsAll_CollectionUByte_Z_k_ = UByteArray_containsAll_CollectionUByte_Z_k_
     this.isEmpty_Z_k_ = UByteArray_isEmpty_Z_k_
     this.equals_AnyN_Z_k_ = UByteArray_equals_AnyN_Z_k_
+    this.equals = UByteArray_equals_AnyN_Z_k_
     this.hashCode_I_k_ = UByteArray_hashCode_I_k_
+    this.hashCode = UByteArray_hashCode_I_k_
     this.toString_Str_k_ = UByteArray_toString_Str_k_
+    this.toString = UByteArray_toString_Str_k_
     this.get_storage = UByteArray_get_storage_ByteArray_k_
     this.get_size = UByteArray_get_size_I_k_
+    this.storage = storage
     return this
 end function
 
@@ -63,7 +67,7 @@ function UByteArray_contains_UByte_Z_k_(element as Object) as Boolean
 end function
 
 function UByteArray_containsAll_CollectionUByte_Z_k_(elements as Object) as Boolean
-    for each element in elements.array
+    for each element in elements
         if not m.contains_UByte_Z_k_(element) then
             return false
         end if
@@ -178,14 +182,15 @@ end function
 function UByteArray_Iterator_create_ByteArray_Iterator_k_(array as Object) as Object
     this = {}
     this.__type = "UByteArray_Iterator"
-    this.__proto = ["UByteArray_Iterator"]
-    this.array = array
-    this.index = 0
+    this.__proto = ["UByteArray_Iterator", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
     this.hasNext_Z_k_ = UByteArray_Iterator_hasNext_Z_k_
     this.next_UByte_k_ = UByteArray_Iterator_next_UByte_k_
     this.get_array = UByteArray_Iterator_get_array_ByteArray_k_
     this.get_index = UByteArray_Iterator_get_index_I_k_
     this.set_index = UByteArray_Iterator_set_index_I_k_
+    this.array = array
+    this.index = 0
     return this
 end function
 
@@ -196,9 +201,11 @@ end function
 function UByteArray_Iterator_next_UByte_k_() as Object
     __when_tmp0 = invalid
     if m.get_index() < m.get_array().get_size() then
-        __when_tmp0 = toUByte_rB_UByte_k_(m.get_array().get_I_B_k_(m.set_index(m.get_index() + 1)))
+        __incr_tmp_13 = m.get_index()
+        m.set_index(__incr_tmp_13 + 1)
+        __when_tmp0 = toUByte_rB_UByte_k_(m.get_array().get_I_B_k_(__incr_tmp_13))
     else if true then
-        throw NoSuchElementException_create_StrN_NoSuchElementException_k_(Str(m.get_index()))
+        throw NoSuchElementException_create_StrN_NoSuchElementException_k_(__kotlin_numToStr_I_Str_k_(m.get_index()))
     end if
     return __when_tmp0
 

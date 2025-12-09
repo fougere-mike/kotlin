@@ -1,7 +1,8 @@
 function HashSet_create_HashSetAnyN_k_() as Object
     this = {}
     this.__type = "HashSet"
-    this.__proto = ["HashSet"]
+    this.__proto = ["HashSet", "MutableSet", "Set", "Collection", "Iterable", "MutableCollection", "MutableIterable"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = HashSet_isEmpty_Z_k_
     this.contains_AnyN_Z_k_ = HashSet_contains_AnyN_Z_k_
     this.containsAll_CollectionAnyN_Z_k_ = HashSet_containsAll_CollectionAnyN_Z_k_
@@ -13,8 +14,12 @@ function HashSet_create_HashSetAnyN_k_() as Object
     this.retainAll_CollectionAnyN_Z_k_ = HashSet_retainAll_CollectionAnyN_Z_k_
     this.clear = HashSet_clear
     this.equals_AnyN_Z_k_ = HashSet_equals_AnyN_Z_k_
+    this.equals = HashSet_equals_AnyN_Z_k_
     this.hashCode_I_k_ = HashSet_hashCode_I_k_
+    this.hashCode = HashSet_hashCode_I_k_
     this.toString_Str_k_ = HashSet_toString_Str_k_
+    this.toString = HashSet_toString_Str_k_
+    this.get_array = HashSet_get_array_Dynamic_k_
     this.get_map = HashSet_get_map_HashMapAnyNZ_k_
     this.get_size = HashSet_get_size_I_k_
     this.map = HashMap_create_HashMapAnyNAnyN_k_()
@@ -24,7 +29,8 @@ end function
 function HashSet_create_I_HashSetAnyN_k_(initialCapacity as Integer) as Object
     this = {}
     this.__type = "HashSet"
-    this.__proto = ["HashSet"]
+    this.__proto = ["HashSet", "MutableSet", "Set", "Collection", "Iterable", "MutableCollection", "MutableIterable"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = HashSet_isEmpty_Z_k_
     this.contains_AnyN_Z_k_ = HashSet_contains_AnyN_Z_k_
     this.containsAll_CollectionAnyN_Z_k_ = HashSet_containsAll_CollectionAnyN_Z_k_
@@ -36,8 +42,12 @@ function HashSet_create_I_HashSetAnyN_k_(initialCapacity as Integer) as Object
     this.retainAll_CollectionAnyN_Z_k_ = HashSet_retainAll_CollectionAnyN_Z_k_
     this.clear = HashSet_clear
     this.equals_AnyN_Z_k_ = HashSet_equals_AnyN_Z_k_
+    this.equals = HashSet_equals_AnyN_Z_k_
     this.hashCode_I_k_ = HashSet_hashCode_I_k_
+    this.hashCode = HashSet_hashCode_I_k_
     this.toString_Str_k_ = HashSet_toString_Str_k_
+    this.toString = HashSet_toString_Str_k_
+    this.get_array = HashSet_get_array_Dynamic_k_
     this.get_map = HashSet_get_map_HashMapAnyNZ_k_
     this.get_size = HashSet_get_size_I_k_
     this.map = HashMap_create_I_HashMapAnyNAnyN_k_(initialCapacity)
@@ -47,7 +57,8 @@ end function
 function HashSet_create_CollectionAnyN_HashSetAnyN_k_(elements as Object) as Object
     this = {}
     this.__type = "HashSet"
-    this.__proto = ["HashSet"]
+    this.__proto = ["HashSet", "MutableSet", "Set", "Collection", "Iterable", "MutableCollection", "MutableIterable"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = HashSet_isEmpty_Z_k_
     this.contains_AnyN_Z_k_ = HashSet_contains_AnyN_Z_k_
     this.containsAll_CollectionAnyN_Z_k_ = HashSet_containsAll_CollectionAnyN_Z_k_
@@ -59,8 +70,12 @@ function HashSet_create_CollectionAnyN_HashSetAnyN_k_(elements as Object) as Obj
     this.retainAll_CollectionAnyN_Z_k_ = HashSet_retainAll_CollectionAnyN_Z_k_
     this.clear = HashSet_clear
     this.equals_AnyN_Z_k_ = HashSet_equals_AnyN_Z_k_
+    this.equals = HashSet_equals_AnyN_Z_k_
     this.hashCode_I_k_ = HashSet_hashCode_I_k_
+    this.hashCode = HashSet_hashCode_I_k_
     this.toString_Str_k_ = HashSet_toString_Str_k_
+    this.toString = HashSet_toString_Str_k_
+    this.get_array = HashSet_get_array_Dynamic_k_
     this.get_map = HashSet_get_map_HashMapAnyNZ_k_
     this.get_size = HashSet_get_size_I_k_
     this.map = HashMap_create_I_HashMapAnyNAnyN_k_(elements.get_size())
@@ -77,7 +92,7 @@ function HashSet_contains_AnyN_Z_k_(element as Dynamic) as Boolean
 end function
 
 function HashSet_containsAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
-    for each element in elements.array
+    for each element in elements
         if not m.contains_AnyN_Z_k_(element) then
             return false
         end if
@@ -107,7 +122,7 @@ end function
 
 function HashSet_addAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
     modified = false
-    for each element in elements.array
+    for each element in elements
         if m.add_AnyN_Z_k_(element) then
             modified = true
         end if
@@ -117,7 +132,7 @@ end function
 
 function HashSet_removeAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
     modified = false
-    for each element in elements.array
+    for each element in elements
         if m.remove_AnyN_Z_k_(element) then
             modified = true
         end if
@@ -142,7 +157,7 @@ sub HashSet_clear()
 end sub
 
 function HashSet_equals_AnyN_Z_k_(other as Dynamic) as Boolean
-    if EQEQEQ_AnyN_AnyN_Z_k_(other, m) then
+    if __kotlin_identityEquals(other, m) then
         return true
     end if
     if not __kotlin_isInstanceOf(other, "Set") then
@@ -151,7 +166,7 @@ function HashSet_equals_AnyN_Z_k_(other as Dynamic) as Boolean
     if other.get_size() <> m.get_size() then
         return false
     end if
-    for each element in m.array
+    for each element in m
         if not other.contains_AnyN_Z_k_(element) then
             return false
         end if
@@ -161,7 +176,7 @@ end function
 
 function HashSet_hashCode_I_k_() as Integer
     h = 0
-    for each element in m.array
+    for each element in m
         tmp0_safe_receiver = element
         __when_tmp0 = invalid
         if tmp0_safe_receiver = invalid then
@@ -189,30 +204,29 @@ function HashSet_toString_Str_k_() as String
     sb = StringBuilder_create_StringBuilder_k_()
     sb.append_StrN_StringBuilder_k_("[")
     first = true
-    for each element in m.array
+    for each element in m
         if not first then
             sb.append_StrN_StringBuilder_k_(", ")
         end if
         first = false
-        if EQEQEQ_AnyN_AnyN_Z_k_(element, m) then
+        if __kotlin_identityEquals(element, m) then
             sb.append_StrN_StringBuilder_k_("(this Collection)")
         else if true then
-            sb.append_StrN_StringBuilder_k_((function(Str, element)
-                if element = invalid then return "null" else return (function(Str, element)
-                    if (Type(element) = "String") or (Type(element) = "roString") then return element else return (function(Str, element)
-                        if ((((((Type(element) = "Integer") or (Type(element) = "LongInteger")) or (Type(element) = "Float")) or (Type(element) = "Double")) or (Type(element) = "roInt")) or (Type(element) = "roFloat")) or (Type(element) = "roDouble") then return Str(element) else return (function(element)
-                            if (Type(element) = "Boolean") or (Type(element) = "roBoolean") then return (function(element)
-                                if element then return "true" else return "false"
-                            end function)(element) else return element.toString()
-                        end function)(element)
-                    end function)(Str, element)
-                end function)(Str, element)
-            end function)(Str, element))
+            sb.append_StrN_StringBuilder_k_(toString_AnyN_Str_k_(element))
         end if
 
     end for
     sb.append_StrN_StringBuilder_k_("]")
     return sb.toString()
+end function
+
+function HashSet_get_array_Dynamic_k_() as Object
+    result = CreateObject("roArray", 0, true)
+    iter = m.get_map().get_keys().iterator_MutableIteratorAnyN_k_()
+    while iter.hasNext_Z_k_()
+        result.Push(iter.next_AnyN_k_())
+    end while
+    return result
 end function
 
 function HashSet_get_map_HashMapAnyNZ_k_() as Object
@@ -226,12 +240,13 @@ end function
 function HashSet_SetIterator_create_MutableIteratorAnyN_SetIteratorAnyN_k_(keyIterator as Object) as Object
     this = {}
     this.__type = "HashSet_SetIterator"
-    this.__proto = ["HashSet_SetIterator"]
-    this.keyIterator = keyIterator
+    this.__proto = ["HashSet_SetIterator", "MutableIterator", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
     this.hasNext_Z_k_ = HashSet_SetIterator_hasNext_Z_k_
     this.next_AnyN_k_ = HashSet_SetIterator_next_AnyN_k_
     this.remove = HashSet_SetIterator_remove
     this.get_keyIterator = HashSet_SetIterator_get_keyIterator_MutableIteratorAnyN_k_
+    this.keyIterator = keyIterator
     return this
 end function
 
@@ -244,7 +259,7 @@ function HashSet_SetIterator_next_AnyN_k_() as Dynamic
 end function
 
 sub HashSet_SetIterator_remove()
-    return
+    m.get_keyIterator().remove()
 end sub
 
 function HashSet_SetIterator_get_keyIterator_MutableIteratorAnyN_k_() as Object
@@ -301,14 +316,19 @@ end function
 function EmptyHashSet_create_EmptyHashSet_k_() as Object
     this = {}
     this.__type = "EmptyHashSet"
-    this.__proto = ["EmptyHashSet"]
+    this.__proto = ["EmptyHashSet", "Set", "Collection", "Iterable"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = EmptyHashSet_isEmpty_Z_k_
     this.contains_AnyN_Z_k_ = EmptyHashSet_contains_AnyN_Z_k_
     this.containsAll_CollectionAnyN_Z_k_ = EmptyHashSet_containsAll_CollectionAnyN_Z_k_
     this.iterator_IteratorAnyN_k_ = EmptyHashSet_iterator_IteratorAnyN_k_
     this.equals_AnyN_Z_k_ = EmptyHashSet_equals_AnyN_Z_k_
+    this.equals = EmptyHashSet_equals_AnyN_Z_k_
     this.hashCode_I_k_ = EmptyHashSet_hashCode_I_k_
+    this.hashCode = EmptyHashSet_hashCode_I_k_
     this.toString_Str_k_ = EmptyHashSet_toString_Str_k_
+    this.toString = EmptyHashSet_toString_Str_k_
+    this.get_array = EmptyHashSet_get_array_Dynamic_k_
     this.get_size = EmptyHashSet_get_size_I_k_
     return this
 end function
@@ -348,6 +368,10 @@ function EmptyHashSet_toString_Str_k_() as String
     return "[]"
 end function
 
+function EmptyHashSet_get_array_Dynamic_k_() as Object
+    return CreateObject("roArray", 0, true)
+end function
+
 function EmptyHashSet_get_size_I_k_() as Integer
     return 0
 end function
@@ -355,7 +379,8 @@ end function
 function EmptySetIterator_create_EmptySetIterator_k_() as Object
     this = {}
     this.__type = "EmptySetIterator"
-    this.__proto = ["EmptySetIterator"]
+    this.__proto = ["EmptySetIterator", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
     this.hasNext_Z_k_ = EmptySetIterator_hasNext_Z_k_
     this.next_AnyN_k_ = EmptySetIterator_next_AnyN_k_
     return this

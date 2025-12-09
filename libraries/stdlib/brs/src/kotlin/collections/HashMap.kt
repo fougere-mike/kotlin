@@ -65,16 +65,17 @@ public class HashMap<K, V> : MutableMap<K, V> {
 
     override fun containsKey(key: K): Boolean {
         val keyStr = keyToString(key)
-        return brsDoesExist(map, keyStr)
+        return brsDoesExist(keyStr)
     }
 
     override fun containsValue(value: V): Boolean {
-        val keysArray = brsKeys(map)
+        val keysArray = brsKeys()
         val count = brsArrayCount(keysArray)
         var i = 0
         while (i < count) {
             val keyStr = brsArrayGet<String>(keysArray, i)
-            val v = brsLookup<V>(map, keyStr)
+            val entry = brsLookup<Dynamic>(keyStr)
+            val v = brsEntryGetValue<V>(entry)
             if (v == value) return true
             i++
         }
@@ -83,29 +84,34 @@ public class HashMap<K, V> : MutableMap<K, V> {
 
     override operator fun get(key: K): V? {
         val keyStr = keyToString(key)
-        if (!brsDoesExist(map, keyStr)) return null
-        return brsLookup(map, keyStr)
+        if (!brsDoesExist(keyStr)) return null
+        val entry = brsLookup<Dynamic>(keyStr)
+        return brsEntryGetValue(entry)
     }
 
     // ==================== Modification Operations ====================
 
     override fun put(key: K, value: V): V? {
         val keyStr = keyToString(key)
-        val oldValue: V? = if (brsDoesExist(map, keyStr)) {
-            brsLookup(map, keyStr)
+        var oldValue: V? = null
+        if (brsDoesExist(keyStr)) {
+            val oldEntry = brsLookup<Dynamic>(keyStr)
+            oldValue = brsEntryGetValue(oldEntry)
         } else {
             _size++
-            null
         }
-        brsAddReplace(map, keyStr, value)
+        // Store entry with original key and value for type preservation during iteration
+        val entry = brsCreateEntry(key, value)
+        brsAddReplace(keyStr, entry)
         return oldValue
     }
 
     override fun remove(key: K): V? {
         val keyStr = keyToString(key)
-        if (!brsDoesExist(map, keyStr)) return null
-        val oldValue = brsLookup<V>(map, keyStr)
-        brsDelete(map, keyStr)
+        if (!brsDoesExist(keyStr)) return null
+        val oldEntry = brsLookup<Dynamic>(keyStr)
+        val oldValue = brsEntryGetValue<V>(oldEntry)
+        brsDelete(keyStr)
         _size--
         return oldValue
     }
@@ -113,13 +119,19 @@ public class HashMap<K, V> : MutableMap<K, V> {
     // ==================== Bulk Operations ====================
 
     override fun putAll(from: Map<out K, V>) {
-        for (entry in from.entries) {
-            put(entry.key, entry.value)
+        // Use explicit key iteration to avoid iterator method name mismatch issues
+        // when iterating over generic Map<K, V> parameter
+        for (key in from.keys) {
+            val value = from[key]
+            if (value != null || from.containsKey(key)) {
+                @Suppress("UNCHECKED_CAST")
+                put(key as K, value as V)
+            }
         }
     }
 
     override fun clear() {
-        brsClear(map)
+        brsClear()
         _size = 0
     }
 
@@ -190,37 +202,49 @@ public class HashMap<K, V> : MutableMap<K, V> {
         return key.toString()
     }
 
-    internal fun getKeysArray(): Dynamic = brsKeys(map)
+    internal fun getKeysArray(): Dynamic = brsKeys()
     internal fun getMap(): Dynamic = map
 
     // ==================== BrightScript Intrinsics ====================
+    // Note: These use m.get_map() to access the internal storage because @BrsInline
+    // doesn't substitute parameters - 'm' in templates refers to the BrightScript implicit 'this'.
 
     @BrsInline("return CreateObject(\"roAssociativeArray\")")
     private external fun brsCreateAssociativeArray(): Dynamic
 
-    @BrsInline("return m.DoesExist(key)")
-    private external fun brsDoesExist(m: Dynamic, key: String): Boolean
+    @BrsInline("return m.get_map().DoesExist(key)")
+    private external fun brsDoesExist(key: String): Boolean
 
-    @BrsInline("return m.Lookup(key)")
-    private external fun <T> brsLookup(m: Dynamic, key: String): T
+    @BrsInline("return m.get_map().Lookup(key)")
+    private external fun <T> brsLookup(key: String): T
 
-    @BrsInline("m.AddReplace(key, value)")
-    private external fun brsAddReplace(m: Dynamic, key: String, value: Any?): Unit
+    @BrsInline("m.get_map().AddReplace(key, value)")
+    private external fun brsAddReplace(key: String, value: Any?): Unit
 
-    @BrsInline("return m.Delete(key)")
-    private external fun brsDelete(m: Dynamic, key: String): Boolean
+    @BrsInline("return m.get_map().Delete(key)")
+    private external fun brsDelete(key: String): Boolean
 
-    @BrsInline("m.Clear()")
-    private external fun brsClear(m: Dynamic): Unit
+    @BrsInline("m.get_map().Clear()")
+    private external fun brsClear(): Unit
 
-    @BrsInline("return m.Keys()")
-    private external fun brsKeys(m: Dynamic): Dynamic
+    @BrsInline("return m.get_map().Keys()")
+    private external fun brsKeys(): Dynamic
 
     @BrsInline("return arr.Count()")
     private external fun brsArrayCount(arr: Dynamic): Int
 
     @BrsInline("return arr[index]")
     private external fun <T> brsArrayGet(arr: Dynamic, index: Int): T
+
+    // Entry storage intrinsics - store {k: originalKey, v: value} to preserve key types
+    @BrsInline("return {k: key, v: value}")
+    private external fun brsCreateEntry(key: Any?, value: Any?): Dynamic
+
+    @BrsInline("return entry.k")
+    private external fun <T> brsEntryGetKey(entry: Dynamic): T
+
+    @BrsInline("return entry.v")
+    private external fun <T> brsEntryGetValue(entry: Dynamic): T
 }
 
 /**
@@ -257,6 +281,43 @@ private class HashMapEntry<K, V>(
 private class KeySet<K, V>(
     private val map: HashMap<K, V>
 ) : MutableSet<K> {
+
+    @BrsInline("return CreateObject(\"roArray\", 0, true)")
+    private external fun brsCreateArray(): Dynamic
+
+    @BrsInline("arr.Push(value)")
+    private external fun brsArrayPush(arr: Dynamic, value: Any?): Unit
+
+    @BrsInline("return arr.Count()")
+    private external fun brsArrayCount(arr: Dynamic): Int
+
+    @BrsInline("return arr[index]")
+    private external fun <T> brsArrayGet(arr: Dynamic, index: Int): T
+
+    @BrsInline("return mapObj.Lookup(keyStr)")
+    private external fun <T> brsMapLookup(mapObj: Dynamic, keyStr: String): T
+
+    @BrsInline("return entry.k")
+    private external fun <T> brsEntryKey(entry: Dynamic): T
+
+    /**
+     * Returns an array containing the keys for BrightScript for-each iteration.
+     */
+    internal val array: Dynamic
+        get() {
+            val keysArray = map.getKeysArray()
+            val mapObj = map.getMap()
+            val count = brsArrayCount(keysArray)
+            val result = brsCreateArray()
+            var i = 0
+            while (i < count) {
+                val keyStr = brsArrayGet<String>(keysArray, i)
+                val entry = brsMapLookup<Dynamic>(mapObj, keyStr)
+                brsArrayPush(result, brsEntryKey<K>(entry))
+                i++
+            }
+            return result
+        }
 
     override val size: Int get() = map.size
 
@@ -318,6 +379,43 @@ private class KeySet<K, V>(
 private class ValueCollection<K, V>(
     private val map: HashMap<K, V>
 ) : MutableCollection<V> {
+
+    @BrsInline("return CreateObject(\"roArray\", 0, true)")
+    private external fun brsCreateArray(): Dynamic
+
+    @BrsInline("arr.Push(value)")
+    private external fun brsArrayPush(arr: Dynamic, value: Any?): Unit
+
+    @BrsInline("return arr.Count()")
+    private external fun brsArrayCount(arr: Dynamic): Int
+
+    @BrsInline("return arr[index]")
+    private external fun <T> brsArrayGet(arr: Dynamic, index: Int): T
+
+    @BrsInline("return mapObj.Lookup(keyStr)")
+    private external fun <T> brsMapLookup(mapObj: Dynamic, keyStr: String): T
+
+    @BrsInline("return entry.v")
+    private external fun <T> brsEntryValue(entry: Dynamic): T
+
+    /**
+     * Returns an array containing the values for BrightScript for-each iteration.
+     */
+    internal val array: Dynamic
+        get() {
+            val keysArray = map.getKeysArray()
+            val mapObj = map.getMap()
+            val count = brsArrayCount(keysArray)
+            val result = brsCreateArray()
+            var i = 0
+            while (i < count) {
+                val keyStr = brsArrayGet<String>(keysArray, i)
+                val entry = brsMapLookup<Dynamic>(mapObj, keyStr)
+                brsArrayPush(result, brsEntryValue<V>(entry))
+                i++
+            }
+            return result
+        }
 
     override val size: Int get() = map.size
 
@@ -388,6 +486,45 @@ private class ValueCollection<K, V>(
 private class EntrySet<K, V>(
     private val map: HashMap<K, V>
 ) : MutableSet<MutableMap.MutableEntry<K, V>> {
+
+    @BrsInline("return CreateObject(\"roArray\", 0, true)")
+    private external fun brsCreateArray(): Dynamic
+
+    @BrsInline("arr.Push(value)")
+    private external fun brsArrayPush(arr: Dynamic, value: Any?): Unit
+
+    @BrsInline("return arr.Count()")
+    private external fun brsArrayCount(arr: Dynamic): Int
+
+    @BrsInline("return arr[index]")
+    private external fun <T> brsArrayGet(arr: Dynamic, index: Int): T
+
+    @BrsInline("return mapObj.Lookup(keyStr)")
+    private external fun <T> brsMapLookup(mapObj: Dynamic, keyStr: String): T
+
+    @BrsInline("return entry.k")
+    private external fun <T> brsEntryKey(entry: Dynamic): T
+
+    /**
+     * Returns an array containing the entries for BrightScript for-each iteration.
+     */
+    internal val array: Dynamic
+        get() {
+            val keysArray = map.getKeysArray()
+            val mapObj = map.getMap()
+            val count = brsArrayCount(keysArray)
+            val result = brsCreateArray()
+            var i = 0
+            while (i < count) {
+                val keyStr = brsArrayGet<String>(keysArray, i)
+                val entry = brsMapLookup<Dynamic>(mapObj, keyStr)
+                @Suppress("UNCHECKED_CAST")
+                val key = brsEntryKey<K>(entry)
+                brsArrayPush(result, HashMapEntry(map, key))
+                i++
+            }
+            return result
+        }
 
     override val size: Int get() = map.size
 
@@ -465,17 +602,49 @@ private abstract class HashMapIterator<K, V, T>(
     @BrsInline("return arr[index]")
     private external fun <R> brsArrayGet(arr: Dynamic, index: Int): R
 
-    private val keysArray: Dynamic = map.getKeysArray()
-    private val keyCount: Int = brsArrayCount(keysArray)
+    // Workaround: Use nullable backing field with lazy initialization
+    // because init blocks aren't generated for abstract classes and
+    // property initializers referencing constructor params generate wrong code
+    private var _keysArray: Dynamic? = null
+    private var _keyCount: Int = -1
     private var index: Int = 0
     private var lastKey: K? = null
 
-    override fun hasNext(): Boolean = index < keyCount
+    // Lazily initialize on first access
+    private fun getKeysArrayCached(): Dynamic {
+        var arr = _keysArray
+        if (arr == null) {
+            arr = map.getKeysArray()
+            _keysArray = arr
+        }
+        return arr!!
+    }
+
+    private fun getKeyCountCached(): Int {
+        var count = _keyCount
+        if (count < 0) {
+            count = brsArrayCount(getKeysArrayCached())
+            _keyCount = count
+        }
+        return count
+    }
+
+    @BrsInline("return m.get_map().get_map().Lookup(keyStr)")
+    private external fun <T> lookupEntry(keyStr: String): T
+
+    @BrsInline("return entry.k")
+    private external fun <T> getEntryKey(entry: Dynamic): T
+
+    override fun hasNext(): Boolean = index < getKeyCountCached()
 
     protected fun nextKey(): K {
         if (!hasNext()) throw NoSuchElementException()
+        // Get the string key from keys array
+        val keyStr = brsArrayGet<String>(getKeysArrayCached(), index)
+        // Look up the entry to get the original key type
+        val entry = lookupEntry<Dynamic>(keyStr)
         @Suppress("UNCHECKED_CAST")
-        val key = brsArrayGet<K>(keysArray, index)
+        val key = getEntryKey<K>(entry)
         index++
         lastKey = key
         return key
@@ -566,6 +735,15 @@ private object EmptyMap : Map<Any?, Any?> {
  * Singleton empty set for map keys.
  */
 private object EmptySet : Set<Any?> {
+    @BrsInline("return CreateObject(\"roArray\", 0, true)")
+    private external fun brsCreateArray(): Dynamic
+
+    /**
+     * Returns an empty array for BrightScript for-each iteration.
+     */
+    internal val array: Dynamic
+        get() = brsCreateArray()
+
     override val size: Int get() = 0
     override fun isEmpty(): Boolean = true
     override fun contains(element: Any?): Boolean = false
@@ -582,6 +760,15 @@ private object EmptyMapIterator : Iterator<Any?> {
  * Singleton empty entry set for map entries.
  */
 private object EmptyEntrySet : Set<Map.Entry<Any?, Any?>> {
+    @BrsInline("return CreateObject(\"roArray\", 0, true)")
+    private external fun brsCreateArray(): Dynamic
+
+    /**
+     * Returns an empty array for BrightScript for-each iteration.
+     */
+    internal val array: Dynamic
+        get() = brsCreateArray()
+
     override val size: Int get() = 0
     override fun isEmpty(): Boolean = true
     override fun contains(element: Map.Entry<Any?, Any?>): Boolean = false

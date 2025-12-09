@@ -27,7 +27,7 @@ function MatchResult_Destructured_create_MatchResult_Destructured_k_(match as Ob
     this = {}
     this.__type = "MatchResult_Destructured"
     this.__proto = ["MatchResult_Destructured"]
-    this.match = match
+    this.__id = __kotlin_nextObjectId()
     this.component1_Str_k_ = MatchResult_Destructured_component1_Str_k_
     this.component2_Str_k_ = MatchResult_Destructured_component2_Str_k_
     this.component3_Str_k_ = MatchResult_Destructured_component3_Str_k_
@@ -40,6 +40,7 @@ function MatchResult_Destructured_create_MatchResult_Destructured_k_(match as Ob
     this.component10_Str_k_ = MatchResult_Destructured_component10_Str_k_
     this.toList_ListStr_k_ = MatchResult_Destructured_toList_ListStr_k_
     this.get_match = MatchResult_Destructured_get_match_MatchResult_k_
+    this.match = match
     return this
 end function
 

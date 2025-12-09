@@ -2,6 +2,7 @@ function RoDateTime_create_RoDateTime_k_() as Object
     this = {}
     this.__type = "RoDateTime"
     this.__proto = ["RoDateTime"]
+    this.__id = __kotlin_nextObjectId()
     this.mark = RoDateTime_mark
     this.asSeconds_J_k_ = RoDateTime_asSeconds_J_k_
     this.fromSeconds_J_k_ = RoDateTime_fromSeconds_J_k_
@@ -26,6 +27,7 @@ function RoDateTime_create_RoDateTime_k_() as Object
     this.getWeekday_Str_k_ = RoDateTime_getWeekday_Str_k_
     this.getLastDayOfMonth_I_k_ = RoDateTime_getLastDayOfMonth_I_k_
     this.toString_Str_k_ = RoDateTime_toString_Str_k_
+    this.toString = RoDateTime_toString_Str_k_
     this.get_native = RoDateTime_get_native_Dynamic_k_
     this.native = CreateObject("roDateTime")
     return this
@@ -135,6 +137,7 @@ function RoTimespan_create_RoTimespan_k_() as Object
     this = {}
     this.__type = "RoTimespan"
     this.__proto = ["RoTimespan"]
+    this.__id = __kotlin_nextObjectId()
     this.mark = RoTimespan_mark
     this.totalMilliseconds_I_k_ = RoTimespan_totalMilliseconds_I_k_
     this.totalSeconds_I_k_ = RoTimespan_totalSeconds_I_k_

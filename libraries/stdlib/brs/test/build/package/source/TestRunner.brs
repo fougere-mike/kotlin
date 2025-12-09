@@ -7,9 +7,7 @@ function TestRunner_create_TestRunner_k_() as Object
     this = {}
     this.__type = "TestRunner"
     this.__proto = ["TestRunner"]
-    this.adapter = JsonTestAdapter_create_JsonTestAdapter_k_()
-    this.testClasses = mutableListOf_MutableListAnyN_k_()
-    this.directSuites = mutableListOf_MutableListAnyN_k_()
+    this.__id = __kotlin_nextObjectId()
     this.testClass_Any_k_ = TestRunner_testClass_Any_k_
     this.suite_Str_Function1TestRunnerV_k_ = TestRunner_suite_Str_Function1TestRunnerV_k_
     this.test_Str_Function0V_k_ = TestRunner_test_Str_Function0V_k_
@@ -23,6 +21,9 @@ function TestRunner_create_TestRunner_k_() as Object
     this.get_adapter = TestRunner_get_adapter_JsonTestAdapter_k_
     this.get_testClasses = TestRunner_get_testClasses_MutableListAny_k_
     this.get_directSuites = TestRunner_get_directSuites_MutableListPairStrFunction0V_k_
+    this.adapter = JsonTestAdapter_create_JsonTestAdapter_k_()
+    this.testClasses = mutableListOf_MutableListAnyN_k_()
+    this.directSuites = mutableListOf_MutableListAnyN_k_()
     return this
 end function
 
@@ -47,13 +48,13 @@ end sub
 sub TestRunner_run_Function1TestRunnerV_k_(block as Object)
     m.get_adapter().startRun()
     block.invoke(m)
-    for each __destruct_0 in m.get_directSuites().array
+    for each __destruct_0 in m.get_directSuites()
         name = __destruct_0.component1()
         suiteFn = __destruct_0.component2()
         m.get_adapter().suite_Str_Z_Function0V_k_(name, false, suiteFn)
 
     end for
-    for each instance in m.get_testClasses().array
+    for each instance in m.get_testClasses()
         m.executeTestClass_Any_k_(instance)
 
     end for
@@ -70,7 +71,7 @@ sub TestRunner_executeTestClass_Any_k_(instance as Object)
         return
     end if
     m.get_adapter().suite_Str_Z_Function0V_k_(className, false, {testMethods: testMethods, this: m, invoke: function() as Void
-        for each method in m.testMethods.array
+        for each method in m.testMethods
             methodName = method.first
             methodFn = method.second
             m.this.get_adapter().test_Str_Z_Function0V_k_(methodName, false, {methodFn: methodFn, invoke: function() as Void
@@ -128,6 +129,7 @@ function TestMethodInfo_create_Str_Z_Str_TestMethodInfo_k_(name as String, ignor
     this = {}
     this.__type = "TestMethodInfo"
     this.__proto = ["TestMethodInfo"]
+    this.__id = __kotlin_nextObjectId()
     this.name = name
     this.ignored = ignored
     this.ignoreReason = ignoreReason

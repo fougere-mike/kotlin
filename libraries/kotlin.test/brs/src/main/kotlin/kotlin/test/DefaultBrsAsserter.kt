@@ -13,14 +13,19 @@ internal class DefaultBrsAsserter : Asserter {
     override fun assertEquals(message: String?, expected: Any?, actual: Any?) {
         // Use structural equality via brsStructuralEquals which handles all types properly
         if (!brsStructuralEquals(expected, actual)) {
-            fail(message ?: "Expected <$expected>, actual <$actual>.")
+            // Explicitly convert to string for BrightScript compatibility
+            val expectedStr = if (expected != null) expected.toString() else "null"
+            val actualStr = if (actual != null) actual.toString() else "null"
+            fail(message ?: "Expected <$expectedStr>, actual <$actualStr>.")
         }
     }
 
     override fun assertNotEquals(message: String?, illegal: Any?, actual: Any?) {
         // Use structural equality via brsStructuralEquals which handles all types properly
         if (brsStructuralEquals(illegal, actual)) {
-            fail(message ?: "Values should be different. Actual: <$actual>.")
+            // Explicitly convert to string for BrightScript compatibility
+            val actualStr = if (actual != null) actual.toString() else "null"
+            fail(message ?: "Values should be different. Actual: <$actualStr>.")
         }
     }
 

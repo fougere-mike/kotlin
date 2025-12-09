@@ -1,7 +1,8 @@
 function RoInput_create_RoInput_k_() as Object
     this = {}
     this.__type = "RoInput"
-    this.__proto = ["RoInput"]
+    this.__proto = ["RoInput", "ISetMessagePort", "IGetMessagePort"]
+    this.__id = __kotlin_nextObjectId()
     this.setMessagePort_RoMessagePort_k_ = RoInput_setMessagePort_RoMessagePort_k_
     this.getMessagePort_RoMessagePortN_k_ = RoInput_getMessagePort_RoMessagePortN_k_
     this.markAsHandled = RoInput_markAsHandled
@@ -43,11 +44,12 @@ function RoInputEvent_create_Dynamic_RoInputEvent_k_(event as Object) as Object
     this = {}
     this.__type = "RoInputEvent"
     this.__proto = ["RoInputEvent"]
-    this.event = event
+    this.__id = __kotlin_nextObjectId()
     this.isInput_Z_k_ = RoInputEvent_isInput_Z_k_
     this.isScreenSaverExitedEvent_Z_k_ = RoInputEvent_isScreenSaverExitedEvent_Z_k_
     this.getInfo_Dynamic_k_ = RoInputEvent_getInfo_Dynamic_k_
     this.get_event = RoInputEvent_get_event_Dynamic_k_
+    this.event = event
     return this
 end function
 

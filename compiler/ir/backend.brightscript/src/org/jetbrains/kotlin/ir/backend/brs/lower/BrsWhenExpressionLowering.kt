@@ -301,19 +301,58 @@ class BrsWhenExpressionLowering(
             val transformedBranches = whenExpr.branches.map { branch ->
                 // Control flow statements (break, continue, return, throw) shouldn't be wrapped
                 // in assignments - they don't produce a value
-                val newResult: IrExpression = when (branch.result) {
+                val newResult: IrExpression = when (val branchResult = branch.result) {
                     is IrBreak, is IrContinue, is IrReturn, is IrThrow -> {
                         // Keep control flow statements as-is
-                        branch.result
+                        branchResult
+                    }
+                    is IrBlock -> {
+                        // Block with multiple statements: extract side effects and assign only the final value
+                        // e.g., { sideEffect1; sideEffect2; value } becomes { sideEffect1; sideEffect2; __tmp = value }
+                        val statements = branchResult.statements.toMutableList()
+                        if (statements.isEmpty()) {
+                            // Empty block - just assign unit/null
+                            IrSetValueImpl(
+                                startOffset = branchResult.startOffset,
+                                endOffset = branchResult.endOffset,
+                                type = context.irBuiltIns.unitType,
+                                symbol = tempVar.symbol,
+                                value = IrConstImpl.constNull(branchResult.startOffset, branchResult.endOffset, resultType.makeNullable()),
+                                origin = null
+                            )
+                        } else {
+                            // Replace last statement with assignment of its value to temp var
+                            val lastStmt = statements.removeLast()
+                            val assignStmt = when (lastStmt) {
+                                is IrBreak, is IrContinue, is IrReturn, is IrThrow -> lastStmt
+                                is IrExpression -> IrSetValueImpl(
+                                    startOffset = lastStmt.startOffset,
+                                    endOffset = lastStmt.endOffset,
+                                    type = context.irBuiltIns.unitType,
+                                    symbol = tempVar.symbol,
+                                    value = lastStmt,
+                                    origin = null
+                                )
+                                else -> lastStmt // Shouldn't happen, but preserve as-is
+                            }
+                            statements.add(assignStmt)
+                            IrBlockImpl(
+                                startOffset = branchResult.startOffset,
+                                endOffset = branchResult.endOffset,
+                                type = context.irBuiltIns.unitType,
+                                origin = branchResult.origin,
+                                statements = statements
+                            )
+                        }
                     }
                     else -> {
                         // Normal expressions get assigned to temp var
                         IrSetValueImpl(
-                            startOffset = branch.result.startOffset,
-                            endOffset = branch.result.endOffset,
+                            startOffset = branchResult.startOffset,
+                            endOffset = branchResult.endOffset,
                             type = context.irBuiltIns.unitType,
                             symbol = tempVar.symbol,
-                            value = branch.result,
+                            value = branchResult,
                             origin = null
                         )
                     }

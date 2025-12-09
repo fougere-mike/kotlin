@@ -1,7 +1,8 @@
 function ArrayList_create_ArrayListAnyN_k_() as Object
     this = {}
     this.__type = "ArrayList"
-    this.__proto = ["ArrayList"]
+    this.__proto = ["ArrayList", "MutableList", "List", "Collection", "Iterable", "MutableCollection", "MutableIterable", "RandomAccess"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = ArrayList_isEmpty_Z_k_
     this.contains_AnyN_Z_k_ = ArrayList_contains_AnyN_Z_k_
     this.containsAll_CollectionAnyN_Z_k_ = ArrayList_containsAll_CollectionAnyN_Z_k_
@@ -23,8 +24,11 @@ function ArrayList_create_ArrayListAnyN_k_() as Object
     this.listIterator_I_MutableListIteratorAnyN_k_ = ArrayList_listIterator_I_MutableListIteratorAnyN_k_
     this.subList_I_I_MutableListAnyN_k_ = ArrayList_subList_I_I_MutableListAnyN_k_
     this.equals_AnyN_Z_k_ = ArrayList_equals_AnyN_Z_k_
+    this.equals = ArrayList_equals_AnyN_Z_k_
     this.hashCode_I_k_ = ArrayList_hashCode_I_k_
+    this.hashCode = ArrayList_hashCode_I_k_
     this.toString_Str_k_ = ArrayList_toString_Str_k_
+    this.toString = ArrayList_toString_Str_k_
     this.brsArrayInsertAt_Dynamic_I_AnyN_k_ = ArrayList_brsArrayInsertAt_Dynamic_I_AnyN_k_
     this.get_array = ArrayList_get_array_Dynamic_k_
     this.set_array = ArrayList_set_array_Dynamic_k_
@@ -36,7 +40,8 @@ end function
 function ArrayList_create_I_ArrayListAnyN_k_(initialCapacity as Integer) as Object
     this = {}
     this.__type = "ArrayList"
-    this.__proto = ["ArrayList"]
+    this.__proto = ["ArrayList", "MutableList", "List", "Collection", "Iterable", "MutableCollection", "MutableIterable", "RandomAccess"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = ArrayList_isEmpty_Z_k_
     this.contains_AnyN_Z_k_ = ArrayList_contains_AnyN_Z_k_
     this.containsAll_CollectionAnyN_Z_k_ = ArrayList_containsAll_CollectionAnyN_Z_k_
@@ -58,8 +63,11 @@ function ArrayList_create_I_ArrayListAnyN_k_(initialCapacity as Integer) as Obje
     this.listIterator_I_MutableListIteratorAnyN_k_ = ArrayList_listIterator_I_MutableListIteratorAnyN_k_
     this.subList_I_I_MutableListAnyN_k_ = ArrayList_subList_I_I_MutableListAnyN_k_
     this.equals_AnyN_Z_k_ = ArrayList_equals_AnyN_Z_k_
+    this.equals = ArrayList_equals_AnyN_Z_k_
     this.hashCode_I_k_ = ArrayList_hashCode_I_k_
+    this.hashCode = ArrayList_hashCode_I_k_
     this.toString_Str_k_ = ArrayList_toString_Str_k_
+    this.toString = ArrayList_toString_Str_k_
     this.brsArrayInsertAt_Dynamic_I_AnyN_k_ = ArrayList_brsArrayInsertAt_Dynamic_I_AnyN_k_
     this.get_array = ArrayList_get_array_Dynamic_k_
     this.set_array = ArrayList_set_array_Dynamic_k_
@@ -74,7 +82,8 @@ end function
 function ArrayList_create_CollectionAnyN_ArrayListAnyN_k_(elements as Object) as Object
     this = {}
     this.__type = "ArrayList"
-    this.__proto = ["ArrayList"]
+    this.__proto = ["ArrayList", "MutableList", "List", "Collection", "Iterable", "MutableCollection", "MutableIterable", "RandomAccess"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = ArrayList_isEmpty_Z_k_
     this.contains_AnyN_Z_k_ = ArrayList_contains_AnyN_Z_k_
     this.containsAll_CollectionAnyN_Z_k_ = ArrayList_containsAll_CollectionAnyN_Z_k_
@@ -96,8 +105,11 @@ function ArrayList_create_CollectionAnyN_ArrayListAnyN_k_(elements as Object) as
     this.listIterator_I_MutableListIteratorAnyN_k_ = ArrayList_listIterator_I_MutableListIteratorAnyN_k_
     this.subList_I_I_MutableListAnyN_k_ = ArrayList_subList_I_I_MutableListAnyN_k_
     this.equals_AnyN_Z_k_ = ArrayList_equals_AnyN_Z_k_
+    this.equals = ArrayList_equals_AnyN_Z_k_
     this.hashCode_I_k_ = ArrayList_hashCode_I_k_
+    this.hashCode = ArrayList_hashCode_I_k_
     this.toString_Str_k_ = ArrayList_toString_Str_k_
+    this.toString = ArrayList_toString_Str_k_
     this.brsArrayInsertAt_Dynamic_I_AnyN_k_ = ArrayList_brsArrayInsertAt_Dynamic_I_AnyN_k_
     this.get_array = ArrayList_get_array_Dynamic_k_
     this.set_array = ArrayList_set_array_Dynamic_k_
@@ -116,7 +128,7 @@ function ArrayList_contains_AnyN_Z_k_(element as Dynamic) as Boolean
 end function
 
 function ArrayList_containsAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
-    for each element in elements.array
+    for each element in elements
         if not m.contains_AnyN_Z_k_(element) then
             return false
         end if
@@ -170,7 +182,7 @@ function ArrayList_addAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
     if elements.isEmpty_Z_k_() then
         return false
     end if
-    for each element in elements.array
+    for each element in elements
         m.get_array().Push(element)
 
     end for
@@ -183,9 +195,9 @@ function ArrayList_addAll_I_CollectionAnyN_Z_k_(index as Integer, elements as Ob
         return false
     end if
     currentIndex = index
-    for each element in elements.array
+    for each element in elements
         m.add_I_AnyN_k_(currentIndex, element)
-        currentIndex = (unary + 1)
+        currentIndex = (currentIndex + 1)
 
     end for
     return true
@@ -193,7 +205,7 @@ end function
 
 function ArrayList_removeAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
     modified = false
-    for each element in elements.array
+    for each element in elements
         while m.remove_AnyN_Z_k_(element)
             modified = true
         end while
@@ -276,7 +288,7 @@ function ArrayList_subList_I_I_MutableListAnyN_k_(fromIndex as Integer, toIndex 
 end function
 
 function ArrayList_equals_AnyN_Z_k_(other as Dynamic) as Boolean
-    if EQEQEQ_AnyN_AnyN_Z_k_(other, m) then
+    if __kotlin_identityEquals(other, m) then
         return true
     end if
     if not __kotlin_isInstanceOf(other, "List") then
@@ -286,11 +298,11 @@ function ArrayList_equals_AnyN_Z_k_(other as Dynamic) as Boolean
         return false
     end if
     i = 0
-    for each element in other.array
+    for each element in other
         if m.get_I_AnyN_k_(i) <> element then
             return false
         end if
-        i = (unary + 1)
+        i = (i + 1)
 
     end for
     return true
@@ -368,20 +380,10 @@ function ArrayList_toString_Str_k_() as String
             sb.append_StrN_StringBuilder_k_(", ")
         end if
         element = m.get_I_AnyN_k_(i)
-        if EQEQEQ_AnyN_AnyN_Z_k_(element, m) then
+        if __kotlin_identityEquals(element, m) then
             sb.append_StrN_StringBuilder_k_("(this Collection)")
         else if true then
-            sb.append_StrN_StringBuilder_k_((function(Str, element)
-                if element = invalid then return "null" else return (function(Str, element)
-                    if (Type(element) = "String") or (Type(element) = "roString") then return element else return (function(Str, element)
-                        if ((((((Type(element) = "Integer") or (Type(element) = "LongInteger")) or (Type(element) = "Float")) or (Type(element) = "Double")) or (Type(element) = "roInt")) or (Type(element) = "roFloat")) or (Type(element) = "roDouble") then return Str(element) else return (function(element)
-                            if (Type(element) = "Boolean") or (Type(element) = "roBoolean") then return (function(element)
-                                if element then return "true" else return "false"
-                            end function)(element) else return element.toString()
-                        end function)(element)
-                    end function)(Str, element)
-                end function)(Str, element)
-            end function)(Str, element))
+            sb.append_StrN_StringBuilder_k_(toString_AnyN_Str_k_(element))
         end if
 
 
@@ -393,20 +395,10 @@ function ArrayList_toString_Str_k_() as String
                 sb.append_StrN_StringBuilder_k_(", ")
             end if
             element = m.get_I_AnyN_k_(i)
-            if EQEQEQ_AnyN_AnyN_Z_k_(element, m) then
+            if __kotlin_identityEquals(element, m) then
                 sb.append_StrN_StringBuilder_k_("(this Collection)")
             else if true then
-                sb.append_StrN_StringBuilder_k_((function(Str, element)
-                    if element = invalid then return "null" else return (function(Str, element)
-                        if (Type(element) = "String") or (Type(element) = "roString") then return element else return (function(Str, element)
-                            if ((((((Type(element) = "Integer") or (Type(element) = "LongInteger")) or (Type(element) = "Float")) or (Type(element) = "Double")) or (Type(element) = "roInt")) or (Type(element) = "roFloat")) or (Type(element) = "roDouble") then return Str(element) else return (function(element)
-                                if (Type(element) = "Boolean") or (Type(element) = "roBoolean") then return (function(element)
-                                    if element then return "true" else return "false"
-                                end function)(element) else return element.toString()
-                            end function)(element)
-                        end function)(Str, element)
-                    end function)(Str, element)
-                end function)(Str, element))
+                sb.append_StrN_StringBuilder_k_(toString_AnyN_Str_k_(element))
             end if
 
         end while
@@ -442,10 +434,8 @@ end function
 function ArrayListIterator_create_ArrayListAnyN_I_ArrayListIteratorAnyN_k_(list as Object, index as Integer) as Object
     this = {}
     this.__type = "ArrayListIterator"
-    this.__proto = ["ArrayListIterator"]
-    this.list = list
-    this.index = index
-    this.lastReturned = -1
+    this.__proto = ["ArrayListIterator", "MutableListIterator", "ListIterator", "Iterator", "MutableIterator"]
+    this.__id = __kotlin_nextObjectId()
     this.hasNext_Z_k_ = ArrayListIterator_hasNext_Z_k_
     this.next_AnyN_k_ = ArrayListIterator_next_AnyN_k_
     this.hasPrevious_Z_k_ = ArrayListIterator_hasPrevious_Z_k_
@@ -460,6 +450,9 @@ function ArrayListIterator_create_ArrayListAnyN_I_ArrayListIteratorAnyN_k_(list 
     this.set_index = ArrayListIterator_set_index_I_k_
     this.get_lastReturned = ArrayListIterator_get_lastReturned_I_k_
     this.set_lastReturned = ArrayListIterator_set_lastReturned_I_k_
+    this.list = list
+    this.index = index
+    this.lastReturned = -1
     return this
 end function
 
@@ -472,7 +465,10 @@ function ArrayListIterator_next_AnyN_k_() as Dynamic
         throw NoSuchElementException_create_NoSuchElementException_k_()
     end if
     m.set_lastReturned(m.get_index())
-    return m.get_list().get_I_AnyN_k_(m.set_index(m.get_index() + 1))
+    __incr_tmp_17 = m.get_index()
+    m.set_index(__incr_tmp_17 + 1)
+    return m.get_list().get_I_AnyN_k_(__incr_tmp_17)
+
 end function
 
 function ArrayListIterator_hasPrevious_Z_k_() as Boolean
@@ -483,7 +479,7 @@ function ArrayListIterator_previous_AnyN_k_() as Dynamic
     if not m.hasPrevious_Z_k_() then
         throw NoSuchElementException_create_NoSuchElementException_k_()
     end if
-    m.set_lastReturned(m.set_index(m.get_index() - 1))
+    m.set_lastReturned(m.get_index())
     return m.get_list().get_I_AnyN_k_(m.get_index())
 end function
 
@@ -501,7 +497,7 @@ sub ArrayListIterator_remove()
     end function})
     m.get_list().removeAt_I_AnyN_k_(m.get_lastReturned())
     if m.get_lastReturned() < m.get_index() then
-        m.set_index(unary - 1)
+        m.set_index(m.get_index() - 1)
     end if
     m.set_lastReturned(-1)
 end sub
@@ -514,7 +510,10 @@ sub ArrayListIterator_set_AnyN_k_(element as Dynamic)
 end sub
 
 sub ArrayListIterator_add_AnyN_k_(element as Dynamic)
-    m.get_list().add_I_AnyN_k_(m.set_index(m.get_index() + 1), element)
+    __incr_tmp_18 = m.get_index()
+    m.set_index(__incr_tmp_18 + 1)
+    m.get_list().add_I_AnyN_k_(__incr_tmp_18, element)
+
     m.set_lastReturned(-1)
 end sub
 
@@ -541,10 +540,8 @@ end sub
 function SubList_create_ArrayListAnyN_I_I_SubListAnyN_k_(parent as Object, fromIndex as Integer, toIndex as Integer) as Object
     this = {}
     this.__type = "SubList"
-    this.__proto = ["SubList"]
-    this.parent = parent
-    this.fromIndex = fromIndex
-    this.toIndex = toIndex
+    this.__proto = ["SubList", "MutableList", "List", "Collection", "Iterable", "MutableCollection", "MutableIterable"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = SubList_isEmpty_Z_k_
     this.contains_AnyN_Z_k_ = SubList_contains_AnyN_Z_k_
     this.containsAll_CollectionAnyN_Z_k_ = SubList_containsAll_CollectionAnyN_Z_k_
@@ -570,6 +567,10 @@ function SubList_create_ArrayListAnyN_I_I_SubListAnyN_k_(parent as Object, fromI
     this.get_toIndex = SubList_get_toIndex_I_k_
     this.set_toIndex = SubList_set_toIndex_I_k_
     this.get_size = SubList_get_size_I_k_
+    this.get_array = SubList_get_array_Dynamic_k_
+    this.parent = parent
+    this.fromIndex = fromIndex
+    this.toIndex = toIndex
     return this
 end function
 
@@ -582,7 +583,7 @@ function SubList_contains_AnyN_Z_k_(element as Dynamic) as Boolean
 end function
 
 function SubList_containsAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
-    for each element in elements.array
+    for each element in elements
         if not m.contains_AnyN_Z_k_(element) then
             return false
         end if
@@ -749,13 +750,36 @@ function SubList_get_size_I_k_() as Integer
     return m.get_toIndex() - m.get_fromIndex()
 end function
 
+function SubList_get_array_Dynamic_k_() as Object
+    result = ArrayList_create_I_ArrayListAnyN_k_(m.get_size())
+    progression = until_rI_I_IntRange_k_(0, m.get_size())
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
+        result.add_AnyN_Z_k_(m.get_parent().get_I_AnyN_k_(m.get_fromIndex() + i))
+
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            result.add_AnyN_Z_k_(m.get_parent().get_I_AnyN_k_(m.get_fromIndex() + i))
+
+        end while
+
+    end if
+
+    return result.get_array()
+end function
+
 function SubListIterator_create_SubListAnyN_I_SubListIteratorAnyN_k_(list as Object, index as Integer) as Object
     this = {}
     this.__type = "SubListIterator"
-    this.__proto = ["SubListIterator"]
-    this.list = list
-    this.index = index
-    this.lastReturned = -1
+    this.__proto = ["SubListIterator", "MutableListIterator", "ListIterator", "Iterator", "MutableIterator"]
+    this.__id = __kotlin_nextObjectId()
     this.hasNext_Z_k_ = SubListIterator_hasNext_Z_k_
     this.next_AnyN_k_ = SubListIterator_next_AnyN_k_
     this.hasPrevious_Z_k_ = SubListIterator_hasPrevious_Z_k_
@@ -770,6 +794,9 @@ function SubListIterator_create_SubListAnyN_I_SubListIteratorAnyN_k_(list as Obj
     this.set_index = SubListIterator_set_index_I_k_
     this.get_lastReturned = SubListIterator_get_lastReturned_I_k_
     this.set_lastReturned = SubListIterator_set_lastReturned_I_k_
+    this.list = list
+    this.index = index
+    this.lastReturned = -1
     return this
 end function
 
@@ -782,7 +809,10 @@ function SubListIterator_next_AnyN_k_() as Dynamic
         throw NoSuchElementException_create_NoSuchElementException_k_()
     end if
     m.set_lastReturned(m.get_index())
-    return m.get_list().get_I_AnyN_k_(m.set_index(m.get_index() + 1))
+    __incr_tmp_19 = m.get_index()
+    m.set_index(__incr_tmp_19 + 1)
+    return m.get_list().get_I_AnyN_k_(__incr_tmp_19)
+
 end function
 
 function SubListIterator_hasPrevious_Z_k_() as Boolean
@@ -793,7 +823,7 @@ function SubListIterator_previous_AnyN_k_() as Dynamic
     if not m.hasPrevious_Z_k_() then
         throw NoSuchElementException_create_NoSuchElementException_k_()
     end if
-    m.set_lastReturned(m.set_index(m.get_index() - 1))
+    m.set_lastReturned(m.get_index())
     return m.get_list().get_I_AnyN_k_(m.get_index())
 end function
 
@@ -811,7 +841,7 @@ sub SubListIterator_remove()
     end function})
     m.get_list().removeAt_I_AnyN_k_(m.get_lastReturned())
     if m.get_lastReturned() < m.get_index() then
-        m.set_index(unary - 1)
+        m.set_index(m.get_index() - 1)
     end if
     m.set_lastReturned(-1)
 end sub
@@ -824,7 +854,10 @@ sub SubListIterator_set_AnyN_k_(element as Dynamic)
 end sub
 
 sub SubListIterator_add_AnyN_k_(element as Dynamic)
-    m.get_list().add_I_AnyN_k_(m.set_index(m.get_index() + 1), element)
+    __incr_tmp_20 = m.get_index()
+    m.set_index(__incr_tmp_20 + 1)
+    m.get_list().add_I_AnyN_k_(__incr_tmp_20, element)
+
     m.set_lastReturned(-1)
 end sub
 
@@ -898,7 +931,8 @@ end function
 function EmptyList_create_EmptyList_k_() as Object
     this = {}
     this.__type = "EmptyList"
-    this.__proto = ["EmptyList"]
+    this.__proto = ["EmptyList", "List", "Collection", "Iterable", "RandomAccess"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = EmptyList_isEmpty_Z_k_
     this.contains_Nothing_Z_k_ = EmptyList_contains_Nothing_Z_k_
     this.containsAll_CollectionNothing_Z_k_ = EmptyList_containsAll_CollectionNothing_Z_k_
@@ -910,8 +944,12 @@ function EmptyList_create_EmptyList_k_() as Object
     this.listIterator_I_ListIteratorNothing_k_ = EmptyList_listIterator_I_ListIteratorNothing_k_
     this.subList_I_I_ListNothing_k_ = EmptyList_subList_I_I_ListNothing_k_
     this.equals_AnyN_Z_k_ = EmptyList_equals_AnyN_Z_k_
+    this.equals = EmptyList_equals_AnyN_Z_k_
     this.hashCode_I_k_ = EmptyList_hashCode_I_k_
+    this.hashCode = EmptyList_hashCode_I_k_
     this.toString_Str_k_ = EmptyList_toString_Str_k_
+    this.toString = EmptyList_toString_Str_k_
+    this.get_array = EmptyList_get_array_Dynamic_k_
     this.get_size = EmptyList_get_size_I_k_
     return this
 end function
@@ -981,6 +1019,10 @@ function EmptyList_toString_Str_k_() as String
     return "[]"
 end function
 
+function EmptyList_get_array_Dynamic_k_() as Object
+    return CreateObject("roArray", 0, true)
+end function
+
 function EmptyList_get_size_I_k_() as Integer
     return 0
 end function
@@ -988,7 +1030,8 @@ end function
 function EmptyIterator_create_EmptyIterator_k_() as Object
     this = {}
     this.__type = "EmptyIterator"
-    this.__proto = ["EmptyIterator"]
+    this.__proto = ["EmptyIterator", "ListIterator", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
     this.hasNext_Z_k_ = EmptyIterator_hasNext_Z_k_
     this.next = EmptyIterator_next
     this.hasPrevious_Z_k_ = EmptyIterator_hasPrevious_Z_k_

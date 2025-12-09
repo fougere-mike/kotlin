@@ -2,6 +2,7 @@ function Pair_create_AnyN_AnyN_PairAnyNAnyN_k_(first as Dynamic, second as Dynam
     this = {}
     this.__type = "Pair"
     this.__proto = ["Pair"]
+    this.__id = __kotlin_nextObjectId()
     this.first = first
     this.second = second
     this.equals = Pair_equals

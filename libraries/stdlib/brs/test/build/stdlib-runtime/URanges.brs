@@ -82,13 +82,16 @@ function UIntRange_create_UInt_UInt_UIntRange_k_(start as Object, endInclusive a
     this._super.equals_AnyN_Z_k_ = this.equals_AnyN_Z_k_
     this._super.hashCode_I_k_ = this.hashCode_I_k_
     this._super.toString_Str_k_ = this.toString_Str_k_
-    this.__proto = ["UIntRange", this.__proto]
+    this.__proto = ["UIntRange", "ClosedRange", "OpenEndRange", this.__proto]
     this.__type = "UIntRange"
     this.contains_UInt_Z_k_ = UIntRange_contains_UInt_Z_k_
     this.isEmpty_Z_k_ = UIntRange_isEmpty_Z_k_
     this.equals_AnyN_Z_k_ = UIntRange_equals_AnyN_Z_k_
+    this.equals = UIntRange_equals_AnyN_Z_k_
     this.hashCode_I_k_ = UIntRange_hashCode_I_k_
+    this.hashCode = UIntRange_hashCode_I_k_
     this.toString_Str_k_ = UIntRange_toString_Str_k_
+    this.toString = UIntRange_toString_Str_k_
     this.get_start = UIntRange_get_start_UInt_k_
     this.get_endInclusive = UIntRange_get_endInclusive_UInt_k_
     this.get_endExclusive = UIntRange_get_endExclusive_UInt_k_
@@ -141,8 +144,9 @@ function UIntRange_Companion_create_Companion_k_() as Object
     this = {}
     this.__type = "UIntRange_Companion"
     this.__proto = ["UIntRange_Companion"]
-    this.EMPTY = UIntRange_create_UInt_UInt_UIntRange_k_(UInt_Companion_get_MAX_VALUE_UInt_k_(), UInt_Companion_get_MIN_VALUE_UInt_k_())
+    this.__id = __kotlin_nextObjectId()
     this.get_EMPTY = UIntRange_Companion_get_EMPTY_UIntRange_k_
+    this.EMPTY = UIntRange_create_UInt_UInt_UIntRange_k_(UInt_Companion_get_MAX_VALUE_UInt_k_(), UInt_Companion_get_MIN_VALUE_UInt_k_())
     return this
 end function
 
@@ -160,18 +164,22 @@ end function
 function UIntProgression_create_UInt_UInt_I_UIntProgression_k_(start as Object, endInclusive as Object, step_ as Integer) as Object
     this = {}
     this.__type = "UIntProgression"
-    this.__proto = ["UIntProgression"]
-    this.first = start
-    this.last = getProgressionLastElement_UInt_UInt_I_UInt_k_(start, endInclusive, step_)
-    this.step = step_
+    this.__proto = ["UIntProgression", "Iterable"]
+    this.__id = __kotlin_nextObjectId()
     this.iterator_IteratorUInt_k_ = UIntProgression_iterator_IteratorUInt_k_
     this.isEmpty_Z_k_ = UIntProgression_isEmpty_Z_k_
     this.equals_AnyN_Z_k_ = UIntProgression_equals_AnyN_Z_k_
+    this.equals = UIntProgression_equals_AnyN_Z_k_
     this.hashCode_I_k_ = UIntProgression_hashCode_I_k_
+    this.hashCode = UIntProgression_hashCode_I_k_
     this.toString_Str_k_ = UIntProgression_toString_Str_k_
+    this.toString = UIntProgression_toString_Str_k_
     this.get_first = UIntProgression_get_first_UInt_k_
     this.get_last = UIntProgression_get_last_UInt_k_
     this.get_step = UIntProgression_get_step_I_k_
+    this.first = start
+    this.last = getProgressionLastElement_UInt_UInt_I_UInt_k_(start, endInclusive, step_)
+    this.step = step_
     return this
 end function
 
@@ -232,6 +240,7 @@ function UIntProgression_Companion_create_Companion_k_() as Object
     this = {}
     this.__type = "UIntProgression_Companion"
     this.__proto = ["UIntProgression_Companion"]
+    this.__id = __kotlin_nextObjectId()
     this.fromClosedRange_UInt_UInt_I_UIntProgression_k_ = UIntProgression_Companion_fromClosedRange_UInt_UInt_I_UIntProgression_k_
     return this
 end function
@@ -250,11 +259,8 @@ end function
 function UIntProgressionIterator_create_UInt_UInt_I_UIntProgressionIterator_k_(first as Object, last as Object, step_ as Integer) as Object
     this = {}
     this.__type = "UIntProgressionIterator"
-    this.__proto = ["UIntProgressionIterator"]
-    this.finalElement = last
-    this.hasNext = __when_tmp12
-    this.step = toUInt_rI_UInt_k_(step_)
-    this.next = __when_tmp13
+    this.__proto = ["UIntProgressionIterator", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
     this.hasNext_Z_k_ = UIntProgressionIterator_hasNext_Z_k_
     this.next_UInt_k_ = UIntProgressionIterator_next_UInt_k_
     this.get_finalElement = UIntProgressionIterator_get_finalElement_UInt_k_
@@ -263,6 +269,10 @@ function UIntProgressionIterator_create_UInt_UInt_I_UIntProgressionIterator_k_(f
     this.get_step = UIntProgressionIterator_get_step_UInt_k_
     this.get_next = UIntProgressionIterator_get_next_UInt_k_
     this.set_next = UIntProgressionIterator_set_next_UInt_k_
+    this.finalElement = last
+    this.hasNext = __when_tmp12
+    this.step = toUInt_rI_UInt_k_(step_)
+    this.next = __when_tmp13
     return this
 end function
 
@@ -315,13 +325,16 @@ function ULongRange_create_ULong_ULong_ULongRange_k_(start as Object, endInclusi
     this._super.equals_AnyN_Z_k_ = this.equals_AnyN_Z_k_
     this._super.hashCode_I_k_ = this.hashCode_I_k_
     this._super.toString_Str_k_ = this.toString_Str_k_
-    this.__proto = ["ULongRange", this.__proto]
+    this.__proto = ["ULongRange", "ClosedRange", "OpenEndRange", this.__proto]
     this.__type = "ULongRange"
     this.contains_ULong_Z_k_ = ULongRange_contains_ULong_Z_k_
     this.isEmpty_Z_k_ = ULongRange_isEmpty_Z_k_
     this.equals_AnyN_Z_k_ = ULongRange_equals_AnyN_Z_k_
+    this.equals = ULongRange_equals_AnyN_Z_k_
     this.hashCode_I_k_ = ULongRange_hashCode_I_k_
+    this.hashCode = ULongRange_hashCode_I_k_
     this.toString_Str_k_ = ULongRange_toString_Str_k_
+    this.toString = ULongRange_toString_Str_k_
     this.get_start = ULongRange_get_start_ULong_k_
     this.get_endInclusive = ULongRange_get_endInclusive_ULong_k_
     this.get_endExclusive = ULongRange_get_endExclusive_ULong_k_
@@ -374,8 +387,9 @@ function ULongRange_Companion_create_Companion_k_() as Object
     this = {}
     this.__type = "ULongRange_Companion"
     this.__proto = ["ULongRange_Companion"]
-    this.EMPTY = ULongRange_create_ULong_ULong_ULongRange_k_(ULong_Companion_get_MAX_VALUE_ULong_k_(), ULong_Companion_get_MIN_VALUE_ULong_k_())
+    this.__id = __kotlin_nextObjectId()
     this.get_EMPTY = ULongRange_Companion_get_EMPTY_ULongRange_k_
+    this.EMPTY = ULongRange_create_ULong_ULong_ULongRange_k_(ULong_Companion_get_MAX_VALUE_ULong_k_(), ULong_Companion_get_MIN_VALUE_ULong_k_())
     return this
 end function
 
@@ -393,18 +407,22 @@ end function
 function ULongProgression_create_ULong_ULong_J_ULongProgression_k_(start as Object, endInclusive as Object, step_ as LongInteger) as Object
     this = {}
     this.__type = "ULongProgression"
-    this.__proto = ["ULongProgression"]
-    this.first = start
-    this.last = getProgressionLastElement_ULong_ULong_J_ULong_k_(start, endInclusive, step_)
-    this.step = step_
+    this.__proto = ["ULongProgression", "Iterable"]
+    this.__id = __kotlin_nextObjectId()
     this.iterator_IteratorULong_k_ = ULongProgression_iterator_IteratorULong_k_
     this.isEmpty_Z_k_ = ULongProgression_isEmpty_Z_k_
     this.equals_AnyN_Z_k_ = ULongProgression_equals_AnyN_Z_k_
+    this.equals = ULongProgression_equals_AnyN_Z_k_
     this.hashCode_I_k_ = ULongProgression_hashCode_I_k_
+    this.hashCode = ULongProgression_hashCode_I_k_
     this.toString_Str_k_ = ULongProgression_toString_Str_k_
+    this.toString = ULongProgression_toString_Str_k_
     this.get_first = ULongProgression_get_first_ULong_k_
     this.get_last = ULongProgression_get_last_ULong_k_
     this.get_step = ULongProgression_get_step_J_k_
+    this.first = start
+    this.last = getProgressionLastElement_ULong_ULong_J_ULong_k_(start, endInclusive, step_)
+    this.step = step_
     return this
 end function
 
@@ -432,7 +450,7 @@ function ULongProgression_hashCode_I_k_() as Integer
     if m.isEmpty_Z_k_() then
         __when_tmp16 = -1
     else if true then
-        __when_tmp16 = ((31 * ((31 * m.get_first().xor_ULong_ULong_k_(m.get_first().shr_I_ULong_k_(32))) + m.get_last().xor_ULong_ULong_k_(m.get_last().shr_I_ULong_k_(32)))) + m.get_step().xor_J_J_k_(m.get_step().ushr_I_J_k_(32)))
+        __when_tmp16 = ((31 * ((31 * m.get_first().xor_ULong_ULong_k_(m.get_first().shr_I_ULong_k_(32))) + m.get_last().xor_ULong_ULong_k_(m.get_last().shr_I_ULong_k_(32)))) + xor_rJ_J_J_k_(m.get_step(), ushr_rJ_I_J_k_(m.get_step(), 32)))
     end if
     return __when_tmp16
 
@@ -465,6 +483,7 @@ function ULongProgression_Companion_create_Companion_k_() as Object
     this = {}
     this.__type = "ULongProgression_Companion"
     this.__proto = ["ULongProgression_Companion"]
+    this.__id = __kotlin_nextObjectId()
     this.fromClosedRange_ULong_ULong_J_ULongProgression_k_ = ULongProgression_Companion_fromClosedRange_ULong_ULong_J_ULongProgression_k_
     return this
 end function
@@ -483,11 +502,8 @@ end function
 function ULongProgressionIterator_create_ULong_ULong_J_ULongProgressionIterator_k_(first as Object, last as Object, step_ as LongInteger) as Object
     this = {}
     this.__type = "ULongProgressionIterator"
-    this.__proto = ["ULongProgressionIterator"]
-    this.finalElement = last
-    this.hasNext = __when_tmp18
-    this.step = toULong_rJ_ULong_k_(step_)
-    this.next = __when_tmp19
+    this.__proto = ["ULongProgressionIterator", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
     this.hasNext_Z_k_ = ULongProgressionIterator_hasNext_Z_k_
     this.next_ULong_k_ = ULongProgressionIterator_next_ULong_k_
     this.get_finalElement = ULongProgressionIterator_get_finalElement_ULong_k_
@@ -496,6 +512,10 @@ function ULongProgressionIterator_create_ULong_ULong_J_ULongProgressionIterator_
     this.get_step = ULongProgressionIterator_get_step_ULong_k_
     this.get_next = ULongProgressionIterator_get_next_ULong_k_
     this.set_next = ULongProgressionIterator_set_next_ULong_k_
+    this.finalElement = last
+    this.hasNext = __when_tmp18
+    this.step = toULong_rJ_ULong_k_(step_)
+    this.next = __when_tmp19
     return this
 end function
 

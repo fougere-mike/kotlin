@@ -1,16 +1,18 @@
 function Test_create_Test_k_() as Object
     this = {}
     this.__type = "Test"
-    this.__proto = ["Test"]
+    this.__proto = ["Test", "Annotation"]
+    this.__id = __kotlin_nextObjectId()
     return this
 end function
 
 function Ignore_create_Str_Ignore_k_(reason = "") as Object
     this = {}
     this.__type = "Ignore"
-    this.__proto = ["Ignore"]
-    this.reason = reason
+    this.__proto = ["Ignore", "Annotation"]
+    this.__id = __kotlin_nextObjectId()
     this.get_reason = Ignore_get_reason_Str_k_
+    this.reason = reason
     return this
 end function
 
@@ -21,13 +23,15 @@ end function
 function BeforeTest_create_BeforeTest_k_() as Object
     this = {}
     this.__type = "BeforeTest"
-    this.__proto = ["BeforeTest"]
+    this.__proto = ["BeforeTest", "Annotation"]
+    this.__id = __kotlin_nextObjectId()
     return this
 end function
 
 function AfterTest_create_AfterTest_k_() as Object
     this = {}
     this.__type = "AfterTest"
-    this.__proto = ["AfterTest"]
+    this.__proto = ["AfterTest", "Annotation"]
+    this.__id = __kotlin_nextObjectId()
     return this
 end function

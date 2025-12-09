@@ -1,5 +1,5 @@
 function equals_AnyN_AnyN_Z_k_(obj1 as Dynamic, obj2 as Dynamic) as Boolean
-    if EQEQEQ_AnyN_AnyN_Z_k_(obj1, obj2) then
+    if __kotlin_identityEquals(obj1, obj2) then
         return true
     end if
     if (obj1 = invalid) or (obj2 = invalid) then
@@ -12,17 +12,20 @@ function toString_AnyN_Str_k_(obj as Dynamic) as String
     if obj = invalid then
         return "null"
     end if
-    return (function(Str, obj)
-        if obj = invalid then return "null" else return (function(Str, obj)
-            if (Type(obj) = "String") or (Type(obj) = "roString") then return obj else return (function(Str, obj)
-                if ((((((Type(obj) = "Integer") or (Type(obj) = "LongInteger")) or (Type(obj) = "Float")) or (Type(obj) = "Double")) or (Type(obj) = "roInt")) or (Type(obj) = "roFloat")) or (Type(obj) = "roDouble") then return Str(obj) else return (function(obj)
-                    if (Type(obj) = "Boolean") or (Type(obj) = "roBoolean") then return (function(obj)
-                        if obj then return "true" else return "false"
-                    end function)(obj) else return obj.toString()
-                end function)(obj)
-            end function)(Str, obj)
-        end function)(Str, obj)
-    end function)(Str, obj)
+    t = Type(obj)
+    if (t = "String") or (t = "roString") then
+        return obj
+    end if
+    if ((((((((t = "Integer") or (t = "LongInteger")) or (t = "Float")) or (t = "Double")) or (t = "roInt")) or (t = "roFloat")) or (t = "roDouble")) or (t = "roInteger")) or (t = "roLongInteger") then
+        return __kotlin_numToStr_AnyN_Str_k_(obj)
+    end if
+    if (t = "Boolean") or (t = "roBoolean") then
+        if obj then
+            return "true"
+        end if
+        return "false"
+    end if
+    return obj.toString()
 end function
 
 function hashCode_AnyN_I_k_(obj as Dynamic) as Integer
@@ -34,7 +37,7 @@ end function
 
 function getStringHashCode_Str_I_k_(str as String) as Integer
     hash = 0
-    progression = until_rI_I_IntRange_k_(0, str.get_length())
+    progression = until_rI_I_IntRange_k_(0, Len(str))
     inductionVariable = progression.get_first()
     last = progression.get_last()
     if inductionVariable <= last then
@@ -80,6 +83,7 @@ function identityHashCode_AnyN_I_k_(obj as Dynamic) as Integer
     if obj = invalid then
         return 0
     end if
+    tmp0_subject = obj
     __when_tmp1 = invalid
     if Type(tmp0_subject) = "roString" then
         __when_tmp1 = getStringHashCode_Str_I_k_(obj)
@@ -88,7 +92,8 @@ function identityHashCode_AnyN_I_k_(obj as Dynamic) as Integer
     else if __kotlin_isInstanceOf(tmp0_subject, "Number") then
         __when_tmp1 = obj.hashCode()
     else if true then
-        __when_tmp1 = set_objectHashCodeCounter_I_k_(get_objectHashCodeCounter_I_k_() + 1)
+        set_objectHashCodeCounter_I_k_(get_objectHashCodeCounter_I_k_() + 1)
+        __when_tmp1 = get_objectHashCodeCounter_I_k_()
     end if
     return __when_tmp1
 
@@ -117,4 +122,47 @@ function checkCast_AnyN_Str_AnyN_k_(obj as Dynamic, type_ as String) as Dynamic
         throw ClassCastException_create_StrN_ClassCastException_k_((("Cannot cast " + "/* Unsupported: IrGetClassImpl */".get_simpleName()) + " to ") + type_)
     end if
     return obj
+end function
+
+function __kotlin_numToStr_I_Str_k_(value as Integer) as String
+    s = Str(value)
+    if Left(s, 1) = " " then
+        return Mid(s, 2)
+    end if
+    return s
+end function
+
+function __kotlin_numToStr_J_Str_k_(value as LongInteger) as String
+    s = Str(value)
+    if Left(s, 1) = " " then
+        return Mid(s, 2)
+    end if
+    return s
+end function
+
+function __kotlin_numToStr_F_Str_k_(value as Float) as String
+    s = Str(value)
+    if Left(s, 1) = " " then
+        return Mid(s, 2)
+    end if
+    return s
+end function
+
+function __kotlin_numToStr_D_Str_k_(value as Double) as String
+    s = Str(value)
+    if Left(s, 1) = " " then
+        return Mid(s, 2)
+    end if
+    return s
+end function
+
+function __kotlin_numToStr_AnyN_Str_k_(value as Dynamic) as String
+    if value = invalid then
+        return "null"
+    end if
+    s = Str(value)
+    if Left(s, 1) = " " then
+        return Mid(s, 2)
+    end if
+    return s
 end function

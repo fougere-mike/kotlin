@@ -315,9 +315,17 @@ private object UNINITIALIZED_VALUE
 // ============================================
 
 /**
+ * Checks if a value is a Kotlin object (roAssociativeArray).
+ * BrightScript primitives (strings, numbers, booleans) are not AAs.
+ */
+@kotlin.brs.BrsInline("return type(obj) = \"roAssociativeArray\"")
+private external fun brsIsAssociativeArray(obj: Any?): Boolean
+
+/**
  * Compares two values for structural equality.
  * This is needed because BrightScript's == operator doesn't work for associative arrays (objects).
- * For objects, we delegate to their equals method.
+ * For Kotlin objects (AAs), we delegate to their equals method.
+ * For BrightScript primitives (strings, numbers), we use the native == operator.
  *
  * @param a first value to compare
  * @param b second value to compare
@@ -328,6 +336,11 @@ public fun brsStructuralEquals(a: Any?, b: Any?): Boolean {
     if (a === b) return true
     // Null checks
     if (a == null || b == null) return false
-    // Delegate to equals method for objects
-    return a.equals(b)
+    // For Kotlin objects (roAssociativeArray), delegate to equals method
+    // For BrightScript primitives (strings, numbers, etc.), use native == operator
+    if (brsIsAssociativeArray(a)) {
+        return a.equals(b)
+    } else {
+        return a == b
+    }
 }

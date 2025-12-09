@@ -23,8 +23,9 @@ public class ArrayList<E> : MutableList<E>, RandomAccess {
     /**
      * The backing roArray storage.
      * In BrightScript, this compiles to a native roArray.
+     * Internal access is needed for SubList iteration support.
      */
-    private var array: Dynamic
+    internal var array: Dynamic
 
     /**
      * Creates an empty ArrayList.
@@ -339,6 +340,20 @@ private class SubList<E>(
     override val size: Int
         get() = toIndex - fromIndex
 
+    /**
+     * Returns an array containing the elements of this sublist.
+     * This is used by BrightScript for-each iteration.
+     */
+    val array: Dynamic
+        get() {
+            val result = ArrayList<E>(size)
+            for (i in 0 until size) {
+                result.add(parent[fromIndex + i])
+            }
+            // Return the underlying array for iteration
+            return result.array
+        }
+
     override fun isEmpty(): Boolean = size == 0
 
     override fun contains(element: E): Boolean = indexOf(element) >= 0
@@ -553,6 +568,15 @@ public fun <T> emptyList(): List<T> = EmptyList
  * Singleton empty list implementation.
  */
 private object EmptyList : List<Nothing>, RandomAccess {
+    @BrsInline("return CreateObject(\"roArray\", 0, true)")
+    private external fun brsCreateArray(): Dynamic
+
+    /**
+     * Returns an empty array for BrightScript for-each iteration.
+     */
+    internal val array: Dynamic
+        get() = brsCreateArray()
+
     override val size: Int get() = 0
     override fun isEmpty(): Boolean = true
     override fun contains(element: Nothing): Boolean = false

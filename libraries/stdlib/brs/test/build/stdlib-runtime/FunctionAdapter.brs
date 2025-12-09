@@ -2,6 +2,7 @@ function FunctionAdapter_create_FunctionAdapter_k_() as Object
     this = {}
     this.__type = "FunctionAdapter"
     this.__proto = ["FunctionAdapter"]
+    this.__id = __kotlin_nextObjectId()
     this.invoke_Arr_AnyN_k_ = FunctionAdapter_invoke_Arr_AnyN_k_
     return this
 end function

@@ -1,8 +1,8 @@
 function UShortArray_create_ShortArray_UShortArray_k_(storage as Object) as Object
     this = {}
     this.__type = "UShortArray"
-    this.__proto = ["UShortArray"]
-    this.storage = storage
+    this.__proto = ["UShortArray", "Collection", "Iterable"]
+    this.__id = __kotlin_nextObjectId()
     this.get_I_UShort_k_ = UShortArray_get_I_UShort_k_
     this.set_I_UShort_k_ = UShortArray_set_I_UShort_k_
     this.iterator_IteratorUShort_k_ = UShortArray_iterator_IteratorUShort_k_
@@ -10,10 +10,14 @@ function UShortArray_create_ShortArray_UShortArray_k_(storage as Object) as Obje
     this.containsAll_CollectionUShort_Z_k_ = UShortArray_containsAll_CollectionUShort_Z_k_
     this.isEmpty_Z_k_ = UShortArray_isEmpty_Z_k_
     this.equals_AnyN_Z_k_ = UShortArray_equals_AnyN_Z_k_
+    this.equals = UShortArray_equals_AnyN_Z_k_
     this.hashCode_I_k_ = UShortArray_hashCode_I_k_
+    this.hashCode = UShortArray_hashCode_I_k_
     this.toString_Str_k_ = UShortArray_toString_Str_k_
+    this.toString = UShortArray_toString_Str_k_
     this.get_storage = UShortArray_get_storage_ShortArray_k_
     this.get_size = UShortArray_get_size_I_k_
+    this.storage = storage
     return this
 end function
 
@@ -63,7 +67,7 @@ function UShortArray_contains_UShort_Z_k_(element as Object) as Boolean
 end function
 
 function UShortArray_containsAll_CollectionUShort_Z_k_(elements as Object) as Boolean
-    for each element in elements.array
+    for each element in elements
         if not m.contains_UShort_Z_k_(element) then
             return false
         end if
@@ -178,14 +182,15 @@ end function
 function UShortArray_Iterator_create_ShortArray_Iterator_k_(array as Object) as Object
     this = {}
     this.__type = "UShortArray_Iterator"
-    this.__proto = ["UShortArray_Iterator"]
-    this.array = array
-    this.index = 0
+    this.__proto = ["UShortArray_Iterator", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
     this.hasNext_Z_k_ = UShortArray_Iterator_hasNext_Z_k_
     this.next_UShort_k_ = UShortArray_Iterator_next_UShort_k_
     this.get_array = UShortArray_Iterator_get_array_ShortArray_k_
     this.get_index = UShortArray_Iterator_get_index_I_k_
     this.set_index = UShortArray_Iterator_set_index_I_k_
+    this.array = array
+    this.index = 0
     return this
 end function
 
@@ -196,9 +201,11 @@ end function
 function UShortArray_Iterator_next_UShort_k_() as Object
     __when_tmp0 = invalid
     if m.get_index() < m.get_array().get_size() then
-        __when_tmp0 = toUShort_rS_UShort_k_(m.get_array().get_I_S_k_(m.set_index(m.get_index() + 1)))
+        __incr_tmp_16 = m.get_index()
+        m.set_index(__incr_tmp_16 + 1)
+        __when_tmp0 = toUShort_rS_UShort_k_(m.get_array().get_I_S_k_(__incr_tmp_16))
     else if true then
-        throw NoSuchElementException_create_StrN_NoSuchElementException_k_(Str(m.get_index()))
+        throw NoSuchElementException_create_StrN_NoSuchElementException_k_(__kotlin_numToStr_I_Str_k_(m.get_index()))
     end if
     return __when_tmp0
 

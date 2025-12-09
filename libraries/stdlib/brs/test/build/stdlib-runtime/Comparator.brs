@@ -18,7 +18,7 @@ function compareValuesBy_AnyN_AnyN_Function1AnyNComparableStarN_I_k_(a as Dynami
 end function
 
 function compareValues_AnyN_AnyN_I_k_(a as Dynamic, b as Dynamic) as Integer
-    if EQEQEQ_AnyN_AnyN_Z_k_(a, b) then
+    if __kotlin_identityEquals(a, b) then
         return 0
     end if
     if a = invalid then
@@ -47,7 +47,8 @@ end function
 function NaturalOrderComparator_create_NaturalOrderComparator_k_() as Object
     this = {}
     this.__type = "NaturalOrderComparator"
-    this.__proto = ["NaturalOrderComparator"]
+    this.__proto = ["NaturalOrderComparator", "Comparator"]
+    this.__id = __kotlin_nextObjectId()
     this.compare_ComparableAny_ComparableAny_I_k_ = NaturalOrderComparator_compare_ComparableAny_ComparableAny_I_k_
     return this
 end function
@@ -66,7 +67,8 @@ end function
 function ReverseOrderComparator_create_ReverseOrderComparator_k_() as Object
     this = {}
     this.__type = "ReverseOrderComparator"
-    this.__proto = ["ReverseOrderComparator"]
+    this.__proto = ["ReverseOrderComparator", "Comparator"]
+    this.__id = __kotlin_nextObjectId()
     this.compare_ComparableAny_ComparableAny_I_k_ = ReverseOrderComparator_compare_ComparableAny_ComparableAny_I_k_
     return this
 end function

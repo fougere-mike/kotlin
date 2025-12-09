@@ -9,6 +9,7 @@ function Product_create_Str_I_Product_k_(name as String, price as Integer) as Ob
     this = {}
     this.__type = "Product"
     this.__proto = ["Product"]
+    this.__id = __kotlin_nextObjectId()
     this.name = name
     this.price = price
     this.describe_Str_k_ = Product_describe_Str_k_
@@ -18,7 +19,7 @@ function Product_create_Str_I_Product_k_(name as String, price as Integer) as Ob
 end function
 
 function Product_describe_Str_k_() as String
-    return (m.name + " costs ") + m.price
+    return (m.get_name() + " costs ") + m.get_price()
 end function
 
 function Product_get_name_Str_k_() as String
@@ -33,6 +34,7 @@ function Item_create_Str_I_Item_k_(title as String, value as Integer) as Object
     this = {}
     this.__type = "Item"
     this.__proto = ["Item"]
+    this.__id = __kotlin_nextObjectId()
     this.title = title
     this.value = value
     this.describe_Str_k_ = Item_describe_Str_k_
@@ -43,11 +45,11 @@ function Item_create_Str_I_Item_k_(title as String, value as Integer) as Object
 end function
 
 function Item_describe_Str_k_() as String
-    return "Item: " + m.title
+    return "Item: " + m.get_title()
 end function
 
 function Item_getName_Str_k_() as String
-    return m.title
+    return m.get_title()
 end function
 
 function Item_get_title_Str_k_() as String

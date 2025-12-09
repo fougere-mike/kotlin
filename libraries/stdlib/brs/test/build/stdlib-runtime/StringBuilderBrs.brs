@@ -1,8 +1,8 @@
 function StringBuilder_create_Str_StringBuilder_k_(content as String) as Object
     this = {}
     this.__type = "StringBuilder"
-    this.__proto = ["StringBuilder"]
-    this.string = content
+    this.__proto = ["StringBuilder", "Appendable", "CharSequence"]
+    this.__id = __kotlin_nextObjectId()
     this.get_I_C_k_ = StringBuilder_get_I_C_k_
     this.subSequence_I_I_CharSequence_k_ = StringBuilder_subSequence_I_I_CharSequence_k_
     this.append_C_StringBuilder_k_ = StringBuilder_append_C_StringBuilder_k_
@@ -42,6 +42,7 @@ function StringBuilder_create_Str_StringBuilder_k_(content as String) as Object
     this.substring_I_I_Str_k_ = StringBuilder_substring_I_I_Str_k_
     this.trimToSize = StringBuilder_trimToSize
     this.toString_Str_k_ = StringBuilder_toString_Str_k_
+    this.toString = StringBuilder_toString_Str_k_
     this.clear_StringBuilder_k_ = StringBuilder_clear_StringBuilder_k_
     this.set_I_C_k_ = StringBuilder_set_I_C_k_
     this.setRange_I_I_Str_StringBuilder_k_ = StringBuilder_setRange_I_I_Str_StringBuilder_k_
@@ -68,6 +69,7 @@ function StringBuilder_create_Str_StringBuilder_k_(content as String) as Object
     this.get_string = StringBuilder_get_string_Str_k_
     this.set_string = StringBuilder_set_string_Str_k_
     this.get_length = StringBuilder_get_length_I_k_
+    this.string = content
     return this
 end function
 
@@ -76,17 +78,7 @@ function StringBuilder_create_I_StringBuilder_k_(capacity as Integer) as Object
 end function
 
 function StringBuilder_create_CharSequence_StringBuilder_k_(content as Object) as Object
-    return StringBuilder_create_Str_StringBuilder_k_((function(Str, content)
-        if content = invalid then return "null" else return (function(Str, content)
-            if (Type(content) = "String") or (Type(content) = "roString") then return content else return (function(Str, content)
-                if ((((((Type(content) = "Integer") or (Type(content) = "LongInteger")) or (Type(content) = "Float")) or (Type(content) = "Double")) or (Type(content) = "roInt")) or (Type(content) = "roFloat")) or (Type(content) = "roDouble") then return Str(content) else return (function(content)
-                    if (Type(content) = "Boolean") or (Type(content) = "roBoolean") then return (function(content)
-                        if content then return "true" else return "false"
-                    end function)(content) else return content.toString()
-                end function)(content)
-            end function)(Str, content)
-        end function)(Str, content)
-    end function)(Str, content))
+    return StringBuilder_create_Str_StringBuilder_k_(toString_AnyN_Str_k_(content))
 end function
 
 function StringBuilder_create_StringBuilder_k_() as Object
@@ -109,17 +101,7 @@ function StringBuilder_append_C_StringBuilder_k_(value as Object) as Object
 end function
 
 function StringBuilder_append_CharSequenceN_StringBuilder_k_(value as Dynamic) as Object
-    m.set_string(m.get_string() + ((function(Str, value)
-        if value = invalid then return "null" else return (function(Str, value)
-            if (Type(value) = "String") or (Type(value) = "roString") then return value else return (function(Str, value)
-                if ((((((Type(value) = "Integer") or (Type(value) = "LongInteger")) or (Type(value) = "Float")) or (Type(value) = "Double")) or (Type(value) = "roInt")) or (Type(value) = "roFloat")) or (Type(value) = "roDouble") then return Str(value) else return (function(value)
-                    if (Type(value) = "Boolean") or (Type(value) = "roBoolean") then return (function(value)
-                        if value then return "true" else return "false"
-                    end function)(value) else return value.toString()
-                end function)(value)
-            end function)(Str, value)
-        end function)(Str, value)
-    end function)(Str, value)))
+    m.set_string(m.get_string() + toString_AnyN_Str_k_(value))
     return m
 end function
 
@@ -137,11 +119,17 @@ end function
 
 function StringBuilder_reverse_StringBuilder_k_() as Object
     reversed = ""
-    index = m.get_string().get_length() - 1
+    index = Len(m.get_string()) - 1
     while index >= 0
-        low = m.get_string().get_I_C_k_(index = (index - 1))
+        __incr_tmp_10 = index
+        index = (__incr_tmp_10 - 1)
+
+        low = m.get_string().get_I_C_k_(__incr_tmp_10)
         if isLowSurrogate_rC_Z_k_(low) and (index >= 0) then
-            high = m.get_string().get_I_C_k_(index = (index - 1))
+            __incr_tmp_11 = index
+            index = (__incr_tmp_11 - 1)
+
+            high = m.get_string().get_I_C_k_(__incr_tmp_11)
             if isHighSurrogate_rC_Z_k_(high) then
                 reversed = ((reversed + high) + low)
             else if true then
@@ -156,17 +144,7 @@ function StringBuilder_reverse_StringBuilder_k_() as Object
 end function
 
 function StringBuilder_append_AnyN_StringBuilder_k_(value as Dynamic) as Object
-    m.set_string(m.get_string() + ((function(Str, value)
-        if value = invalid then return "null" else return (function(Str, value)
-            if (Type(value) = "String") or (Type(value) = "roString") then return value else return (function(Str, value)
-                if ((((((Type(value) = "Integer") or (Type(value) = "LongInteger")) or (Type(value) = "Float")) or (Type(value) = "Double")) or (Type(value) = "roInt")) or (Type(value) = "roFloat")) or (Type(value) = "roDouble") then return Str(value) else return (function(value)
-                    if (Type(value) = "Boolean") or (Type(value) = "roBoolean") then return (function(value)
-                        if value then return "true" else return "false"
-                    end function)(value) else return value.toString()
-                end function)(value)
-            end function)(Str, value)
-        end function)(Str, value)
-    end function)(Str, value)))
+    m.set_string(m.get_string() + toString_AnyN_Str_k_(value))
     return m
 end function
 
@@ -176,27 +154,27 @@ function StringBuilder_append_Z_StringBuilder_k_(value as Boolean) as Object
 end function
 
 function StringBuilder_append_B_StringBuilder_k_(value as Integer) as Object
-    return m.append_StrN_StringBuilder_k_(Str(value))
+    return m.append_StrN_StringBuilder_k_(__kotlin_numToStr_I_Str_k_(value))
 end function
 
 function StringBuilder_append_S_StringBuilder_k_(value as Integer) as Object
-    return m.append_StrN_StringBuilder_k_(Str(value))
+    return m.append_StrN_StringBuilder_k_(__kotlin_numToStr_I_Str_k_(value))
 end function
 
 function StringBuilder_append_I_StringBuilder_k_(value as Integer) as Object
-    return m.append_StrN_StringBuilder_k_(Str(value))
+    return m.append_StrN_StringBuilder_k_(__kotlin_numToStr_I_Str_k_(value))
 end function
 
 function StringBuilder_append_J_StringBuilder_k_(value as LongInteger) as Object
-    return m.append_StrN_StringBuilder_k_(Str(value))
+    return m.append_StrN_StringBuilder_k_(__kotlin_numToStr_J_Str_k_(value))
 end function
 
 function StringBuilder_append_F_StringBuilder_k_(value as Float) as Object
-    return m.append_StrN_StringBuilder_k_(Str(value))
+    return m.append_StrN_StringBuilder_k_(__kotlin_numToStr_F_Str_k_(value))
 end function
 
 function StringBuilder_append_D_StringBuilder_k_(value as Double) as Object
-    return m.append_StrN_StringBuilder_k_(Str(value))
+    return m.append_StrN_StringBuilder_k_(__kotlin_numToStr_D_Str_k_(value))
 end function
 
 function StringBuilder_append_CharArray_StringBuilder_k_(value as Object) as Object
@@ -250,27 +228,27 @@ function StringBuilder_insert_I_Z_StringBuilder_k_(index as Integer, value as Bo
 end function
 
 function StringBuilder_insert_I_B_StringBuilder_k_(index as Integer, value as Integer) as Object
-    return m.insert_I_StrN_StringBuilder_k_(index, Str(value))
+    return m.insert_I_StrN_StringBuilder_k_(index, __kotlin_numToStr_I_Str_k_(value))
 end function
 
 function StringBuilder_insert_I_S_StringBuilder_k_(index as Integer, value as Integer) as Object
-    return m.insert_I_StrN_StringBuilder_k_(index, Str(value))
+    return m.insert_I_StrN_StringBuilder_k_(index, __kotlin_numToStr_I_Str_k_(value))
 end function
 
 function StringBuilder_insert_I_I_StringBuilder_k_(index as Integer, value as Integer) as Object
-    return m.insert_I_StrN_StringBuilder_k_(index, Str(value))
+    return m.insert_I_StrN_StringBuilder_k_(index, __kotlin_numToStr_I_Str_k_(value))
 end function
 
 function StringBuilder_insert_I_J_StringBuilder_k_(index as Integer, value as LongInteger) as Object
-    return m.insert_I_StrN_StringBuilder_k_(index, Str(value))
+    return m.insert_I_StrN_StringBuilder_k_(index, __kotlin_numToStr_J_Str_k_(value))
 end function
 
 function StringBuilder_insert_I_F_StringBuilder_k_(index as Integer, value as Float) as Object
-    return m.insert_I_StrN_StringBuilder_k_(index, Str(value))
+    return m.insert_I_StrN_StringBuilder_k_(index, __kotlin_numToStr_F_Str_k_(value))
 end function
 
 function StringBuilder_insert_I_D_StringBuilder_k_(index as Integer, value as Double) as Object
-    return m.insert_I_StrN_StringBuilder_k_(index, Str(value))
+    return m.insert_I_StrN_StringBuilder_k_(index, __kotlin_numToStr_D_Str_k_(value))
 end function
 
 function StringBuilder_insert_I_C_StringBuilder_k_(index as Integer, value as Object) as Object
@@ -287,33 +265,13 @@ end function
 
 function StringBuilder_insert_I_CharSequenceN_StringBuilder_k_(index as Integer, value as Dynamic) as Object
     checkPositionIndex_I_I_k_(index, m.get_length())
-    m.set_string((substring_rStr_I_I_Str_k_(m.get_string(), 0, index) + ((function(Str, value)
-        if value = invalid then return "null" else return (function(Str, value)
-            if (Type(value) = "String") or (Type(value) = "roString") then return value else return (function(Str, value)
-                if ((((((Type(value) = "Integer") or (Type(value) = "LongInteger")) or (Type(value) = "Float")) or (Type(value) = "Double")) or (Type(value) = "roInt")) or (Type(value) = "roFloat")) or (Type(value) = "roDouble") then return Str(value) else return (function(value)
-                    if (Type(value) = "Boolean") or (Type(value) = "roBoolean") then return (function(value)
-                        if value then return "true" else return "false"
-                    end function)(value) else return value.toString()
-                end function)(value)
-            end function)(Str, value)
-        end function)(Str, value)
-    end function)(Str, value))) + substring_rStr_I_Str_k_(m.get_string(), index))
+    m.set_string((substring_rStr_I_I_Str_k_(m.get_string(), 0, index) + toString_AnyN_Str_k_(value)) + substring_rStr_I_Str_k_(m.get_string(), index))
     return m
 end function
 
 function StringBuilder_insert_I_AnyN_StringBuilder_k_(index as Integer, value as Dynamic) as Object
     checkPositionIndex_I_I_k_(index, m.get_length())
-    m.set_string((substring_rStr_I_I_Str_k_(m.get_string(), 0, index) + ((function(Str, value)
-        if value = invalid then return "null" else return (function(Str, value)
-            if (Type(value) = "String") or (Type(value) = "roString") then return value else return (function(Str, value)
-                if ((((((Type(value) = "Integer") or (Type(value) = "LongInteger")) or (Type(value) = "Float")) or (Type(value) = "Double")) or (Type(value) = "roInt")) or (Type(value) = "roFloat")) or (Type(value) = "roDouble") then return Str(value) else return (function(value)
-                    if (Type(value) = "Boolean") or (Type(value) = "roBoolean") then return (function(value)
-                        if value then return "true" else return "false"
-                    end function)(value) else return value.toString()
-                end function)(value)
-            end function)(Str, value)
-        end function)(Str, value)
-    end function)(Str, value))) + substring_rStr_I_Str_k_(m.get_string(), index))
+    m.set_string((substring_rStr_I_I_Str_k_(m.get_string(), 0, index) + toString_AnyN_Str_k_(value)) + substring_rStr_I_Str_k_(m.get_string(), index))
     return m
 end function
 
@@ -426,14 +384,20 @@ sub StringBuilder_toCharArray_CharArray_I_I_I_k_(destination as Object, destinat
                 index = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        destination.set_I_C_k_(dstIndex = (dstIndex + 1), m.get_string().get_I_C_k_(index))
+        __incr_tmp_12 = dstIndex
+        dstIndex = (__incr_tmp_12 + 1)
+
+        destination.set_I_C_k_(__incr_tmp_12, m.get_string().get_I_C_k_(index))
 
 
         while index <> last
             index = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            destination.set_I_C_k_(dstIndex = (dstIndex + 1), m.get_string().get_I_C_k_(index))
+            __incr_tmp_12 = dstIndex
+            dstIndex = (__incr_tmp_12 + 1)
+
+            destination.set_I_C_k_(__incr_tmp_12, m.get_string().get_I_C_k_(index))
 
         end while
 
@@ -447,18 +411,8 @@ function StringBuilder_appendRange_CharArray_I_I_StringBuilder_k_(value as Objec
 end function
 
 function StringBuilder_appendRange_CharSequence_I_I_StringBuilder_k_(value as Object, startIndex as Integer, endIndex as Integer) as Object
-    stringCsq = (function(Str, value)
-        if value = invalid then return "null" else return (function(Str, value)
-            if (Type(value) = "String") or (Type(value) = "roString") then return value else return (function(Str, value)
-                if ((((((Type(value) = "Integer") or (Type(value) = "LongInteger")) or (Type(value) = "Float")) or (Type(value) = "Double")) or (Type(value) = "roInt")) or (Type(value) = "roFloat")) or (Type(value) = "roDouble") then return Str(value) else return (function(value)
-                    if (Type(value) = "Boolean") or (Type(value) = "roBoolean") then return (function(value)
-                        if value then return "true" else return "false"
-                    end function)(value) else return value.toString()
-                end function)(value)
-            end function)(Str, value)
-        end function)(Str, value)
-    end function)(Str, value)
-    checkBoundsIndexes_I_I_I_k_(startIndex, endIndex, stringCsq.get_length())
+    stringCsq = toString_AnyN_Str_k_(value)
+    checkBoundsIndexes_I_I_I_k_(startIndex, endIndex, Len(stringCsq))
     m.set_string(m.get_string() + substring_rStr_I_I_Str_k_(stringCsq, startIndex, endIndex))
     return m
 end function
@@ -471,18 +425,8 @@ end function
 
 function StringBuilder_insertRange_I_CharSequence_I_I_StringBuilder_k_(index as Integer, value as Object, startIndex as Integer, endIndex as Integer) as Object
     checkPositionIndex_I_I_k_(index, m.get_length())
-    stringCsq = (function(Str, value)
-        if value = invalid then return "null" else return (function(Str, value)
-            if (Type(value) = "String") or (Type(value) = "roString") then return value else return (function(Str, value)
-                if ((((((Type(value) = "Integer") or (Type(value) = "LongInteger")) or (Type(value) = "Float")) or (Type(value) = "Double")) or (Type(value) = "roInt")) or (Type(value) = "roFloat")) or (Type(value) = "roDouble") then return Str(value) else return (function(value)
-                    if (Type(value) = "Boolean") or (Type(value) = "roBoolean") then return (function(value)
-                        if value then return "true" else return "false"
-                    end function)(value) else return value.toString()
-                end function)(value)
-            end function)(Str, value)
-        end function)(Str, value)
-    end function)(Str, value)
-    checkBoundsIndexes_I_I_I_k_(startIndex, endIndex, stringCsq.get_length())
+    stringCsq = toString_AnyN_Str_k_(value)
+    checkBoundsIndexes_I_I_I_k_(startIndex, endIndex, Len(stringCsq))
     m.set_string((substring_rStr_I_I_Str_k_(m.get_string(), 0, index) + substring_rStr_I_I_Str_k_(stringCsq, startIndex, endIndex)) + substring_rStr_I_Str_k_(m.get_string(), index))
     return m
 end function
@@ -544,7 +488,7 @@ sub StringBuilder_set_string_Str_k_(value as String)
 end sub
 
 function StringBuilder_get_length_I_k_() as Integer
-    return m.get_string().get_length()
+    return Len(m.get_string())
 end function
 
 function append_rStringBuilder_B_StringBuilder_k_(m as Object, value as Integer) as Object

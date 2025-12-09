@@ -3,6 +3,7 @@ function Point_create_I_I_Point_k_(x as Integer, y as Integer) as Object
     this = {}
     this.__type = "Point"
     this.__proto = ["Point"]
+    this.__id = __kotlin_nextObjectId()
     this.x = x
     this.y = y
     this.equals = Point_equals
@@ -63,6 +64,7 @@ function User_create_Str_I_User_k_(name as String, age as Integer) as Object
     this = {}
     this.__type = "User"
     this.__proto = ["User"]
+    this.__id = __kotlin_nextObjectId()
     this.name = name
     this.age = age
     this.equals = User_equals

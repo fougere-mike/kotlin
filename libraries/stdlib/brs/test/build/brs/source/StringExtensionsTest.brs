@@ -1,8 +1,8 @@
 sub stringExtensionsTests_rTestRunner_k_(m as Object)
     m.suite_Str_Function1TestRunnerV_k_("String Extensions", {invoke: function(m as Object) as Void
         m.test_Str_Function0V_k_("length", {invoke: function() as Void
-            assertEquals_AnyN_AnyN_StrN_k_(5, "hello".get_length())
-            assertEquals_AnyN_AnyN_StrN_k_(0, "".get_length())
+            assertEquals_AnyN_AnyN_StrN_k_(5, Len("hello"))
+            assertEquals_AnyN_AnyN_StrN_k_(0, Len(""))
         end function})
         m.test_Str_Function0V_k_("isEmpty and isNotEmpty", {invoke: function() as Void
             assertTrue_Z_StrN_k_(isEmpty_rStr_Z_k_(""))

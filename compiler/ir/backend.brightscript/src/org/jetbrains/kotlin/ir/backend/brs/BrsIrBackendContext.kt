@@ -254,6 +254,12 @@ class BrsIrBackendContext(
     }
 
     /**
+     * Public wrapper to get a mangled string representation of a type.
+     * Used by transformers for generating function names.
+     */
+    fun typeToMangledString(type: IrType): String = type.toMangledString()
+
+    /**
      * Convert an IrType to a short string suitable for name mangling.
      * Uses JVM-style type descriptors for primitives with readable names for classes.
      */

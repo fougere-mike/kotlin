@@ -87,18 +87,42 @@ class IrToBrsTransformer(
      * When transforming increment blocks, we need to inline the temp variable's
      * initializer instead of outputting a reference to the temp var.
      */
-    private val tempVarSubstitutions = mutableMapOf<IrValueSymbol, IrExpression>()
+    private val tempVarSubstitutions = mutableMapOf<IrValueSymbol, IrExpression?>()
 
-    fun pushTempVarSubstitution(symbol: IrValueSymbol, initializer: IrExpression) {
+    /**
+     * Map from IR temp var symbols to generated BRS variable names.
+     * Used when increment/decrement blocks are used as expressions.
+     */
+    private val tempVarNames = mutableMapOf<IrValueSymbol, String>()
+
+    /**
+     * Counter for generating unique temp variable names.
+     */
+    private var tempIdCounter = 0
+
+    fun nextTempId(): Int {
+        return tempIdCounter++
+    }
+
+    fun pushTempVarSubstitution(symbol: IrValueSymbol, initializer: IrExpression?) {
         tempVarSubstitutions[symbol] = initializer
     }
 
     fun popTempVarSubstitution(symbol: IrValueSymbol) {
         tempVarSubstitutions.remove(symbol)
+        tempVarNames.remove(symbol)
     }
 
     fun getTempVarSubstitution(symbol: IrValueSymbol): IrExpression? {
         return tempVarSubstitutions[symbol]
+    }
+
+    fun setTempVarName(symbol: IrValueSymbol, name: String) {
+        tempVarNames[symbol] = name
+    }
+
+    fun getTempVarName(symbol: IrValueSymbol): String? {
+        return tempVarNames[symbol]
     }
 
     /**
@@ -761,13 +785,16 @@ class IrToBrsTransformer(
             )
         )
 
-        // this.__proto = ["ClassName"]
+        // this.__proto = ["ClassName", ...interfaces]
+        val allInterfaceNames = collectAllInterfaceNames(irClass)
+        val protoElements = mutableListOf<BrsExpression>(BrsStringLiteral(className))
+        allInterfaceNames.forEach { protoElements.add(BrsStringLiteral(it)) }
         bodyStatements.add(
             BrsExpressionStatement(
                 BrsBinaryOp(
                     BrsDotAccess(BrsIdentifier("this"), "__proto"),
                     BrsBinaryOperator.EQ,
-                    BrsArrayLiteral(mutableListOf(BrsStringLiteral(className)))
+                    BrsArrayLiteral(protoElements)
                 )
             )
         )
@@ -925,13 +952,16 @@ class IrToBrsTransformer(
             )
         )
 
-        // this.__proto = ["ClassName"]
+        // this.__proto = ["ClassName", ...interfaces]
+        val allInterfaceNamesDataClass = collectAllInterfaceNames(irClass)
+        val protoElementsDataClass = mutableListOf<BrsExpression>(BrsStringLiteral(className))
+        allInterfaceNamesDataClass.forEach { protoElementsDataClass.add(BrsStringLiteral(it)) }
         bodyStatements.add(
             BrsExpressionStatement(
                 BrsBinaryOp(
                     BrsDotAccess(BrsIdentifier("this"), "__proto"),
                     BrsBinaryOperator.EQ,
-                    BrsArrayLiteral(mutableListOf(BrsStringLiteral(className)))
+                    BrsArrayLiteral(protoElementsDataClass)
                 )
             )
         )
@@ -1347,16 +1377,20 @@ class IrToBrsTransformer(
                 }
             }
 
-            // Update __proto chain
+            // Update __proto chain - include this class and its direct interfaces
+            // (inherited interfaces come from the parent's __proto)
+            val directInterfaceNames = irClass.superTypes
+                .filter { it.classOrNull?.owner?.isInterface == true }
+                .map { context.getBrsName(it.classOrNull!!.owner) }
+            val protoElements = mutableListOf<BrsExpression>(BrsStringLiteral(className))
+            directInterfaceNames.forEach { protoElements.add(BrsStringLiteral(it)) }
+            protoElements.add(BrsDotAccess(BrsIdentifier("this"), "__proto"))
             bodyStatements.add(
                 BrsExpressionStatement(
                     BrsBinaryOp(
                         BrsDotAccess(BrsIdentifier("this"), "__proto"),
                         BrsBinaryOperator.EQ,
-                        BrsArrayLiteral(mutableListOf(
-                            BrsStringLiteral(className),
-                            BrsDotAccess(BrsIdentifier("this"), "__proto")
-                        ))
+                        BrsArrayLiteral(protoElements)
                     )
                 )
             )
@@ -1377,13 +1411,16 @@ class IrToBrsTransformer(
                 )
             )
 
-            // Initialize __proto chain with just this class
+            // Initialize __proto chain with this class and all implemented interfaces
+            val allInterfaceNames = collectAllInterfaceNames(irClass)
+            val protoElements = mutableListOf<BrsExpression>(BrsStringLiteral(className))
+            allInterfaceNames.forEach { protoElements.add(BrsStringLiteral(it)) }
             bodyStatements.add(
                 BrsExpressionStatement(
                     BrsBinaryOp(
                         BrsDotAccess(BrsIdentifier("this"), "__proto"),
                         BrsBinaryOperator.EQ,
-                        BrsArrayLiteral(mutableListOf(BrsStringLiteral(className)))
+                        BrsArrayLiteral(protoElements)
                     )
                 )
             )
@@ -1428,6 +1465,15 @@ class IrToBrsTransformer(
             )
         }
 
+        // Set flag so that '<this>' references map to 'this' instead of 'm'
+        // This must be set BEFORE transforming field/property initializers, as they may
+        // reference constructor parameters via getters on <this>
+        isInConstructorBody = true
+
+        // Add methods and property accessors to the instance BEFORE field/property initializers
+        // because initializers may call methods on 'this' (e.g., this.get_map().get_keyOrder())
+        addMethodAttachments(irClass, className, bodyStatements)
+
         // Initialize fields (direct field declarations)
         val initializedFields = mutableSetOf<String>()
         for (field in irClass.declarations.filterIsInstance<IrField>()) {
@@ -1463,21 +1509,18 @@ class IrToBrsTransformer(
             }
         }
 
-        // Add methods and property accessors to the instance
-        addMethodAttachments(irClass, className, bodyStatements)
-
         // Execute constructor body (handles property initialization from parameters, etc.)
-        // Set flag so that '<this>' references map to 'this' instead of 'm'
         constructor.body?.let { body ->
-            isInConstructorBody = true
             val transformed = transformBody(body)
-            isInConstructorBody = false
             // Filter out delegating constructor calls since we handle them above
             val filteredStatements = transformed.statements.filter { stmt ->
                 !(stmt is BrsExpressionStatement && isDelegatingConstructorCall(stmt))
             }
             bodyStatements.addAll(filteredStatements)
         }
+
+        // Reset constructor context flag
+        isInConstructorBody = false
 
         // Return the constructed object
         bodyStatements.add(BrsReturn(BrsIdentifier("this")))
@@ -1535,6 +1578,20 @@ class IrToBrsTransformer(
                         )
                     )
                 )
+
+                // For Any methods (equals, hashCode, toString), also add simple-named alias
+                // This allows polymorphic calls like a.equals(b) where 'a' is Any
+                if (!isDataClass && methodBaseName in listOf("equals", "hashCode", "toString")) {
+                    bodyStatements.add(
+                        BrsExpressionStatement(
+                            BrsBinaryOp(
+                                BrsDotAccess(BrsIdentifier("this"), methodBaseName),
+                                BrsBinaryOperator.EQ,
+                                BrsIdentifier(fullMethodName)
+                            )
+                        )
+                    )
+                }
             }
         }
 
@@ -1578,6 +1635,31 @@ class IrToBrsTransformer(
     }
 
     /**
+     * Recursively collect all interface names from a class's supertypes.
+     * This is used to populate the __proto chain for instanceof checks.
+     */
+    private fun collectAllInterfaceNames(irClass: IrClass): List<String> {
+        val result = mutableSetOf<String>()
+        val visited = mutableSetOf<IrClass>()
+
+        fun collectInterfaces(type: IrType) {
+            val classifier = type.classOrNull?.owner ?: return
+            if (classifier in visited) return
+            visited.add(classifier)
+
+            if (classifier.isInterface) {
+                result.add(context.getBrsName(classifier))
+            }
+
+            // Recursively collect supertype interfaces
+            classifier.superTypes.forEach { collectInterfaces(it) }
+        }
+
+        irClass.superTypes.forEach { collectInterfaces(it) }
+        return result.toList()
+    }
+
+    /**
      * Find the delegating constructor call (super() or this()) in a constructor body.
      */
     private fun findDelegatingConstructorCall(constructor: IrConstructor): IrDelegatingConstructorCall? {
@@ -1612,10 +1694,8 @@ class IrToBrsTransformer(
                 val transformed = when (stmt) {
                     is IrVariable -> {
                         val varName = stmt.name.asString()
-                        // Sanitize variable names that contain angle brackets (like <tmp0_safe_receiver>)
-                        val sanitizedVarName = if (varName.startsWith("<") && varName.endsWith(">")) {
-                            varName.removePrefix("<").removeSuffix(">").replace("-", "_")
-                        } else varName
+                        // Sanitize variable names - handle special names and escape reserved keywords
+                        val sanitizedVarName = sanitizeParameterName(varName)
                         val init = stmt.initializer?.let { transformExpression(it) }
                         if (init != null) BrsVariable(sanitizedVarName, mapTypeToBrs(stmt.type), init) else null
                     }
@@ -1970,10 +2050,23 @@ class IrToBrsTransformer(
             // String: just return the string itself (pass-through)
             receiverType.isString() -> receiverExpr
 
-            // Numeric types: use Str() function
+            // Numeric types: use __kotlin_numToStr() helper function
+            // BrightScript's Str() adds a leading space for positive numbers
+            // We use a helper function because anonymous functions can't call global built-ins
             receiverType.isInt() || receiverType.isShort() || receiverType.isByte() ||
             receiverType.isLong() || receiverType.isFloat() || receiverType.isDouble() -> {
-                BrsFunctionCall(BrsIdentifier("Str"), mutableListOf(receiverExpr))
+                // Choose the appropriate overload based on type
+                val funcName = when {
+                    receiverType.isInt() || receiverType.isShort() || receiverType.isByte() -> "__kotlin_numToStr_I_Str_k_"
+                    receiverType.isLong() -> "__kotlin_numToStr_J_Str_k_"
+                    receiverType.isFloat() -> "__kotlin_numToStr_F_Str_k_"
+                    receiverType.isDouble() -> "__kotlin_numToStr_D_Str_k_"
+                    else -> "__kotlin_numToStr_AnyN_Str_k_"
+                }
+                BrsFunctionCall(
+                    BrsIdentifier(funcName),
+                    mutableListOf(receiverExpr)
+                )
             }
 
             // Boolean: use conditional to return "true" or "false"
@@ -2001,62 +2094,16 @@ class IrToBrsTransformer(
     /**
      * Generate runtime type-checking toString logic for Any? types.
      * This is used by brsIntrinsicToString when the type is not known at compile time.
+     *
+     * Instead of generating inline nested conditionals (which become IIFEs with scope issues),
+     * we call the stdlib toString_AnyN_Str_k_ function which handles all types properly.
      */
     fun generateRuntimeToString(valueExpr: BrsExpression): BrsExpression {
-        // Generate nested conditionals:
-        // if value = invalid then "null"
-        // else if Type(value) = "String" or Type(value) = "roString" then value
-        // else if Type(value) = "Integer" or ... then Str(value)
-        // else if Type(value) = "Boolean" or Type(value) = "roBoolean" then (if value then "true" else "false")
-        // else value.toString()  ' for objects
-
-        val typeCheck = BrsTypeOf(valueExpr.deepCopy())
-
-        // null check: value = invalid
-        val nullCheck = BrsBinaryOp(valueExpr.deepCopy(), BrsBinaryOperator.EQ, BrsInvalidLiteral())
-
-        // string check: Type(value) = "String" or Type(value) = "roString"
-        val stringCheck = BrsBinaryOp(
-            BrsBinaryOp(typeCheck.deepCopy(), BrsBinaryOperator.EQ, BrsStringLiteral("String")),
-            BrsBinaryOperator.OR,
-            BrsBinaryOp(typeCheck.deepCopy(), BrsBinaryOperator.EQ, BrsStringLiteral("roString"))
-        )
-
-        // numeric check: Type(value) in ["Integer", "LongInteger", "Float", "Double", "roInt", "roFloat", "roDouble"]
-        val numericTypes = listOf("Integer", "LongInteger", "Float", "Double", "roInt", "roFloat", "roDouble")
-        val numericCheck = numericTypes.map { typeName ->
-            BrsBinaryOp(typeCheck.deepCopy(), BrsBinaryOperator.EQ, BrsStringLiteral(typeName))
-        }.reduce { acc, check -> BrsBinaryOp(acc, BrsBinaryOperator.OR, check) }
-
-        // boolean check
-        val booleanCheck = BrsBinaryOp(
-            BrsBinaryOp(typeCheck.deepCopy(), BrsBinaryOperator.EQ, BrsStringLiteral("Boolean")),
-            BrsBinaryOperator.OR,
-            BrsBinaryOp(typeCheck.deepCopy(), BrsBinaryOperator.EQ, BrsStringLiteral("roBoolean"))
-        )
-
-        // Build result expressions
-        val objectToString = BrsMethodCall(valueExpr.deepCopy(), "toString", mutableListOf())
-        val booleanToString = BrsConditional(valueExpr.deepCopy(), BrsStringLiteral("true"), BrsStringLiteral("false"))
-        val numericToString = BrsFunctionCall(BrsIdentifier("Str"), mutableListOf(valueExpr.deepCopy()))
-
-        // Build nested conditional chain
-        return BrsConditional(
-            nullCheck,
-            BrsStringLiteral("null"),
-            BrsConditional(
-                stringCheck,
-                valueExpr.deepCopy(),
-                BrsConditional(
-                    numericCheck,
-                    numericToString,
-                    BrsConditional(
-                        booleanCheck,
-                        booleanToString,
-                        objectToString
-                    )
-                )
-            )
+        // Call the stdlib toString function which handles all type checking
+        // This avoids nested IIFEs that cause scope issues with global built-in functions
+        return BrsFunctionCall(
+            BrsIdentifier("toString_AnyN_Str_k_"),
+            mutableListOf(valueExpr)
         )
     }
 
@@ -2082,6 +2129,31 @@ class IrStatementToBrsTransformer(
         return visitCallAsStatement(expression)
     }
 
+    override fun visitTypeOperator(expression: IrTypeOperatorCall, data: Unit): BrsStatement? {
+        // Handle IMPLICIT_COERCION_TO_UNIT by unwrapping to the inner expression/block
+        // This handles cases like `toIndex++` used as a statement, where the increment block
+        // is wrapped in IMPLICIT_COERCION_TO_UNIT because the Int result is discarded
+        if (expression.operator == IrTypeOperator.IMPLICIT_COERCION_TO_UNIT) {
+            val innerArg = expression.argument
+            return when (innerArg) {
+                is IrBlock -> visitBlock(innerArg, data)
+                is IrWhen -> visitWhen(innerArg, data)
+                is IrCall -> visitCall(innerArg, data)
+                else -> {
+                    // For other expressions, transform and wrap as expression statement
+                    val expr = parent.transformExpression(innerArg)
+                    val hoisted = parent.takeHoistedStatements()
+                    if (hoisted.isNotEmpty()) {
+                        BrsBlock((hoisted + BrsExpressionStatement(expr)).toMutableList())
+                    } else {
+                        BrsExpressionStatement(expr)
+                    }
+                }
+            }
+        }
+        return null
+    }
+
     override fun visitVariable(declaration: IrVariable, data: Unit): BrsStatement {
         val initializer = declaration.initializer
 
@@ -2103,13 +2175,13 @@ class IrStatementToBrsTransformer(
                     else -> BrsInvalidLiteral()
                 }
                 statements.add(BrsVariable(
-                    name = declaration.name.asString(),
+                    name = parent.sanitizeParameterName(declaration.name.asString()),
                     type = parent.mapTypeToBrs(declaration.type),
                     initializer = lastExpr
                 ))
             } else {
                 statements.add(BrsVariable(
-                    name = declaration.name.asString(),
+                    name = parent.sanitizeParameterName(declaration.name.asString()),
                     type = parent.mapTypeToBrs(declaration.type),
                     initializer = BrsInvalidLiteral()
                 ))
@@ -2126,7 +2198,7 @@ class IrStatementToBrsTransformer(
         val hoisted = parent.takeHoistedStatements()
         return if (hoisted.isEmpty()) {
             BrsVariable(
-                name = declaration.name.asString(),
+                name = parent.sanitizeParameterName(declaration.name.asString()),
                 type = parent.mapTypeToBrs(declaration.type),
                 initializer = transformedInit
             )
@@ -2134,7 +2206,7 @@ class IrStatementToBrsTransformer(
             // Prepend hoisted statements before the variable declaration
             val allStatements = hoisted.toMutableList()
             allStatements.add(BrsVariable(
-                name = declaration.name.asString(),
+                name = parent.sanitizeParameterName(declaration.name.asString()),
                 type = parent.mapTypeToBrs(declaration.type),
                 initializer = transformedInit
             ))
@@ -2626,12 +2698,8 @@ class IrStatementToBrsTransformer(
                 // Keep temp variable DECLARATIONS - they're needed by the setter call
                 is IrVariable -> {
                     val varName = stmt.name.asString()
-                    // Sanitize the name for BrightScript (remove < and >)
-                    val sanitizedName = if (varName.startsWith("<") && varName.endsWith(">")) {
-                        varName.removePrefix("<").removeSuffix(">").replace("-", "_")
-                    } else {
-                        varName
-                    }
+                    // Sanitize the name for BrightScript - handle special names and escape reserved keywords
+                    val sanitizedName = parent.sanitizeParameterName(varName)
                     val init = stmt.initializer?.let { parent.transformExpression(it) }
                     // Check for hoisted statements from when-lowered blocks in the initializer
                     val hoisted = parent.takeHoistedStatements()
@@ -2701,6 +2769,17 @@ class IrStatementToBrsTransformer(
                     val transformed = visitContinue(stmt, Unit)
                     prependHoisted(listOf(transformed))
                 }
+                // Handle type operator calls (like IMPLICIT_COERCION_TO_UNIT wrapping increment blocks)
+                is IrTypeOperatorCall -> {
+                    val transformed = visitTypeOperator(stmt, Unit)
+                    if (transformed != null) {
+                        prependHoisted(listOf(transformed))
+                    } else {
+                        // Fallback to expression transformer
+                        val expr = parent.transformExpression(stmt)
+                        prependHoisted(listOf(BrsExpressionStatement(expr)))
+                    }
+                }
                 is IrExpression -> {
                     val expr = parent.transformExpression(stmt)
                     prependHoisted(listOf(BrsExpressionStatement(expr)))
@@ -2744,6 +2823,13 @@ class IrStatementToBrsTransformer(
         // For prefix: [val <unary> = var+1, setter(<unary>), <unary>]
         // We want to output just the setter call, skipping temp var and return value
 
+        // Find the temp variable and its initializer for substitution
+        // This allows us to inline the temp var references in the assignment
+        val tempVar = statements.filterIsInstance<IrVariable>().firstOrNull {
+            it.name.asString().startsWith("<") && it.name.asString().endsWith(">")
+        }
+        val tempVarInitializer = tempVar?.initializer
+
         // Find statements that are NOT just getters (temp var returns)
         // Include setter calls (IrCall to <set-*>), IrSetValue, IrSetField
         val effectfulStatements = statements.filter { stmt ->
@@ -2759,23 +2845,35 @@ class IrStatementToBrsTransformer(
 
         if (effectfulStatements.isEmpty()) return null
 
-        // Transform each effectful statement
-        val brsStatements = effectfulStatements.mapNotNull { stmt ->
-            when (stmt) {
-                is IrSetValue -> visitSetValue(stmt, Unit)
-                is IrSetField -> visitSetField(stmt, Unit)
-                is IrCall -> BrsExpressionStatement(parent.transformExpression(stmt))
-                is IrExpression -> BrsExpressionStatement(parent.transformExpression(stmt))
-                else -> parent.transformStatement(stmt)
-            }
+        // Set up temp var substitution if we found one
+        if (tempVar != null && tempVarInitializer != null) {
+            parent.pushTempVarSubstitution(tempVar.symbol, tempVarInitializer)
         }
 
-        return if (brsStatements.isEmpty()) {
-            null
-        } else if (brsStatements.size == 1) {
-            brsStatements.first()
-        } else {
-            BrsBlock(brsStatements.toMutableList())
+        try {
+            // Transform each effectful statement
+            val brsStatements = effectfulStatements.mapNotNull { stmt ->
+                when (stmt) {
+                    is IrSetValue -> visitSetValue(stmt, Unit)
+                    is IrSetField -> visitSetField(stmt, Unit)
+                    is IrCall -> BrsExpressionStatement(parent.transformExpression(stmt))
+                    is IrExpression -> BrsExpressionStatement(parent.transformExpression(stmt))
+                    else -> parent.transformStatement(stmt)
+                }
+            }
+
+            return if (brsStatements.isEmpty()) {
+                null
+            } else if (brsStatements.size == 1) {
+                brsStatements.first()
+            } else {
+                BrsBlock(brsStatements.toMutableList())
+            }
+        } finally {
+            // Clean up temp var substitution
+            if (tempVar != null) {
+                parent.popTempVarSubstitution(tempVar.symbol)
+            }
         }
     }
 
@@ -2900,26 +2998,41 @@ class IrStatementToBrsTransformer(
         }
 
         // Transform the iterable expression
-        var iterableBrs = parent.transformExpression(iterableExpr)
+        val iterableBrs = parent.transformExpression(iterableExpr)
 
         // For Kotlin collection types (ArrayList, MutableList, etc.), we need to iterate
         // over the underlying array, not the wrapper object. In BrightScript, 'for each'
         // on an AA iterates over keys, not values. Collections store items in .array property.
         val iterableType = iterableExpr.type
         val iterableClassName = iterableType.classOrNull?.owner?.name?.asString() ?: ""
-        val isKotlinCollection = iterableClassName in listOf(
-            "ArrayList", "MutableList", "List",
-            "HashSet", "MutableSet", "Set",
-            "LinkedHashSet", "LinkedHashMap",
-            "ArrayDeque"
-        ) || iterableType.classFqName?.asString()?.startsWith("kotlin.collections.") == true
 
-        if (isKotlinCollection) {
-            // Access .array property for iteration
-            iterableBrs = BrsDotAccess(iterableBrs, "array")
+        // These collection types have get_array() that returns the underlying roArray
+        // Includes both array-backed collections and view collections (KeySet, ValueCollection, EntrySet)
+        // Also includes interface types since at runtime they're always implemented by our stdlib classes
+        val hasGetArray = iterableClassName in listOf(
+            // Array-backed collections
+            "ArrayList", "ArrayDeque", "CharArray", "IntArray", "LongArray",
+            "FloatArray", "DoubleArray", "BooleanArray", "ByteArray", "ShortArray",
+            // HashMap view collections
+            "KeySet", "ValueCollection", "EntrySet",
+            // LinkedHashMap view collections
+            "LinkedKeySet", "LinkedValueCollection", "LinkedEntrySet",
+            // Interface types - at runtime always backed by stdlib classes with get_array()
+            "Set", "MutableSet", "Collection", "MutableCollection",
+            "List", "MutableList", "Iterable", "MutableIterable"
+        )
+
+        if (hasGetArray) {
+            // Call get_array() method for iteration - this works for array-backed collections
+            val arrayIterable = BrsFunctionCall(BrsDotAccess(iterableBrs, "get_array"), mutableListOf())
+            return BrsForEach(
+                variable = loopVarName,
+                iterable = arrayIterable,
+                body = BrsBlock(actualBody.toMutableList())
+            )
         }
 
-        // Generate BrsForEach
+        // For native arrays or other types, use for-each directly
         return BrsForEach(
             variable = loopVarName,
             iterable = iterableBrs,
@@ -3009,9 +3122,8 @@ class IrStatementToBrsTransformer(
             val transformed = when (stmt) {
                 is IrVariable -> {
                     val varName = stmt.name.asString()
-                    val sanitizedVarName = if (varName.startsWith("<") && varName.endsWith(">")) {
-                        varName.removePrefix("<").removeSuffix(">").replace("-", "_")
-                    } else varName
+                    // Sanitize the name for BrightScript - handle special names and escape reserved keywords
+                    val sanitizedVarName = parent.sanitizeParameterName(varName)
                     val init = stmt.initializer?.let { parent.transformExpression(it) }
                     // Consume any hoisted statements from nested when-lowered blocks in the initializer
                     val hoisted = parent.takeHoistedStatements()
@@ -3261,6 +3373,12 @@ class IrExpressionToBrsTransformer(
         if (substitution != null) {
             // Inline the initializer expression instead of outputting the temp var reference
             return substitution.accept(this, data)
+        }
+
+        // Check if there's a temp var name mapping (used when increment is an expression)
+        val tempVarName = parent.getTempVarName(expression.symbol)
+        if (tempVarName != null) {
+            return BrsIdentifier(tempVarName)
         }
 
         val rawName = expression.symbol.owner.name.asString()
@@ -3542,6 +3660,20 @@ class IrExpressionToBrsTransformer(
                 return BrsMethodCall(receiverExpr, "count", mutableListOf())
             }
 
+            // Handle String.length and CharSequence.length - BrightScript strings use Len() function
+            // Native BrightScript strings don't have methods, so str.get_length() won't work.
+            // This applies to String, CharSequence, and any nullable variants.
+            if (methodName == "<get-length>" || methodName == "length") {
+                val receiverTypeFqName = receiver.type.classFqName?.asString() ?: ""
+                val isStringOrCharSequence = receiver.type.isString() ||
+                    receiverTypeFqName == "kotlin.CharSequence" ||
+                    receiverTypeFqName == "kotlin.String"
+                if (isStringOrCharSequence) {
+                    val receiverExpr = receiver.accept(this, data)
+                    return BrsFunctionCall(BrsIdentifier("Len"), mutableListOf(receiverExpr))
+                }
+            }
+
             // Handle Array.get(index) - BrightScript arrays use [] indexing, not .get() method
             if (methodName == "get" && receiver.type.isArray() && expression.valueArgumentsCount == 1) {
                 val receiverExpr = receiver.accept(this, data)
@@ -3692,6 +3824,64 @@ class IrExpressionToBrsTransformer(
             // Use expression.dispatchReceiver to detect dispatch calls (more reliable than
             // function.dispatchReceiverParameter which may be null for interface methods)
             if (expression.dispatchReceiver != null) {
+                // Check if the receiver type is a primitive.
+                // BrightScript primitives don't support method calls, so we must use function calls
+                // with the receiver as the first argument.
+                val actualReceiverType = receiver.type
+                val isPrimitiveReceiver = actualReceiverType.isInt() || actualReceiverType.isLong() ||
+                    actualReceiverType.isFloat() || actualReceiverType.isDouble() ||
+                    actualReceiverType.isShort() || actualReceiverType.isByte() ||
+                    actualReceiverType.isBoolean() || actualReceiverType.isChar()
+
+                // For any call on a primitive receiver, use a function call instead of method call
+                if (isPrimitiveReceiver) {
+                    val args = mutableListOf<BrsExpression>()
+                    args.add(receiverExpr)
+                    for (i in 0 until expression.valueArgumentsCount) {
+                        expression.getValueArgument(i)?.let { arg ->
+                            args.add(arg.accept(this, data))
+                        }
+                    }
+                    // For extension functions on primitives, the function name should NOT have
+                    // a class prefix. Extension functions are defined as top-level functions with
+                    // the receiver type encoded in the signature (e.g., rangeTo_rI_I_IntRange_k_).
+                    // The issue is getBrsName returns a name based on the call-site parent (Int class),
+                    // not the definition-site parent (package). We need to reconstruct the correct name.
+                    // Check if functionName starts with a primitive class prefix that needs stripping
+                    val primitiveClassPrefixes = listOf("Int_", "Long_", "Float_", "Double_", "Short_", "Byte_", "Boolean_", "Char_")
+                    val hasWrongClassPrefix = primitiveClassPrefixes.any { functionName.startsWith(it) }
+
+                    val correctedFunctionName = if (hasWrongClassPrefix) {
+                        // Rebuild the function name with correct format:
+                        // functionName_rReceiverType_ParamTypes_ReturnType_k_
+                        val rawName = function.name.asString()
+
+                        // Build signature parts
+                        val signatureParts = mutableListOf<String>()
+
+                        // Add receiver type with 'r' prefix - use the actual receiver type
+                        signatureParts.add("r" + context.typeToMangledString(actualReceiverType))
+
+                        // Add parameter types
+                        function.valueParameters.forEach { param ->
+                            signatureParts.add(context.typeToMangledString(param.type))
+                        }
+
+                        // Add return type if not Unit
+                        val returnType = function.returnType
+                        if (!returnType.isUnit() && !returnType.isNothing()) {
+                            signatureParts.add(context.typeToMangledString(returnType))
+                        }
+
+                        // Build the full name
+                        val signature = signatureParts.joinToString("_")
+                        "${rawName}_${signature}_k_"
+                    } else {
+                        functionName
+                    }
+                    return BrsFunctionCall(BrsIdentifier(correctedFunctionName), args)
+                }
+
                 // Check if this is a call on a singleton object - use global function instead
                 val parentClass = function.parent as? IrClass
                 if (parentClass?.kind == ClassKind.OBJECT) {
@@ -3775,6 +3965,60 @@ class IrExpressionToBrsTransformer(
 
         // Add extension receiver if present
         expression.extensionReceiver?.let { receiver ->
+            val receiverType = receiver.type
+            // Check if extension receiver is a primitive type
+            val isPrimitiveExtension = receiverType.isInt() || receiverType.isLong() ||
+                receiverType.isFloat() || receiverType.isDouble() ||
+                receiverType.isShort() || receiverType.isByte() ||
+                receiverType.isBoolean() || receiverType.isChar()
+
+            if (isPrimitiveExtension) {
+                // For extension functions on primitives, we need to fix the function name.
+                // When functions are loaded from klib, the parent might be the class (e.g., Int)
+                // instead of the package, causing getBrsName to prepend "Int_" to the name.
+                // The correct format is: functionName_rReceiverType_ParamTypes_ReturnType_k_
+
+                // Check if functionName starts with a primitive class prefix that needs stripping
+                val primitiveClassPrefixes = listOf("Int_", "Long_", "Float_", "Double_", "Short_", "Byte_", "Boolean_", "Char_")
+                val hasWrongClassPrefix = primitiveClassPrefixes.any { functionName.startsWith(it) }
+
+                val correctedName = if (hasWrongClassPrefix) {
+                    // Strip the class prefix and rebuild the correct name
+                    val rawName = function.name.asString()
+                    val signatureParts = mutableListOf<String>()
+
+                    // Add receiver type with 'r' prefix - use the expression's receiver type
+                    signatureParts.add("r" + context.typeToMangledString(receiverType))
+
+                    // Add parameter types
+                    function.valueParameters.forEach { param ->
+                        signatureParts.add(context.typeToMangledString(param.type))
+                    }
+
+                    // Add return type if not Unit
+                    val returnType = function.returnType
+                    if (!returnType.isUnit() && !returnType.isNothing()) {
+                        signatureParts.add(context.typeToMangledString(returnType))
+                    }
+
+                    // Build the full name
+                    val signature = signatureParts.joinToString("_")
+                    "${rawName}_${signature}_k_"
+                } else {
+                    // Name is already correct (e.g., top-level extension function)
+                    functionName
+                }
+
+                val args = mutableListOf<BrsExpression>()
+                args.add(receiver.accept(this, data))
+                for (i in 0 until expression.valueArgumentsCount) {
+                    expression.getValueArgument(i)?.let { arg ->
+                        args.add(arg.accept(this, data))
+                    }
+                }
+                return BrsFunctionCall(BrsIdentifier(correctedName), args)
+            }
+
             arguments.add(receiver.accept(this, data))
         }
 
@@ -4864,8 +5108,8 @@ class IrExpressionToBrsTransformer(
     }
 
     override fun visitBlock(expression: IrBlock, data: Unit): BrsExpression {
-        // Handle increment/decrement blocks - when used as statement (value discarded),
-        // we need to output just the setter/assignment with inlined temp variable
+        // Handle increment/decrement blocks - when used as expression (value needed),
+        // we need to hoist the temp variable and setter, then return the appropriate value
         // Block structure: [IrVariable(<unary>) = getter(), setter(<unary>+1) or IrSetValue, IrGetValue(<unary>)]
         if (expression.origin == IrStatementOrigin.POSTFIX_INCR ||
             expression.origin == IrStatementOrigin.POSTFIX_DECR ||
@@ -4873,6 +5117,8 @@ class IrExpressionToBrsTransformer(
             expression.origin == IrStatementOrigin.PREFIX_DECR) {
 
             val statements = expression.statements
+            val isPostfix = expression.origin == IrStatementOrigin.POSTFIX_INCR ||
+                           expression.origin == IrStatementOrigin.POSTFIX_DECR
 
             // Find the temp variable and its initializer
             val tempVar = statements.filterIsInstance<IrVariable>().firstOrNull {
@@ -4880,37 +5126,76 @@ class IrExpressionToBrsTransformer(
             }
             val tempVarInitializer = tempVar?.initializer
 
-            // For property increment: Find setter call (IrCall that is NOT the last statement)
-            for (stmt in statements) {
-                if (stmt is IrCall && stmt !== statements.last()) {
-                    // This is the setter call - transform it with inlined temp var
-                    if (tempVar != null && tempVarInitializer != null) {
-                        // Register temp var substitution for this transformation
-                        parent.pushTempVarSubstitution(tempVar.symbol, tempVarInitializer)
-                        try {
-                            return stmt.accept(this, data)
-                        } finally {
-                            parent.popTempVarSubstitution(tempVar.symbol)
+            if (tempVar != null && tempVarInitializer != null) {
+                // Generate a unique name for the hoisted temp variable
+                val tempVarName = "__incr_tmp_${parent.nextTempId()}"
+
+                // 1. Hoist the temp variable declaration with the OLD value
+                val hoistedTempVar = BrsVariable(
+                    name = tempVarName,
+                    type = parent.mapTypeToBrs(tempVar.type),
+                    initializer = parent.transformExpression(tempVarInitializer)
+                )
+                parent.addHoistedStatement(hoistedTempVar)
+
+                // 2. Find and hoist the setter/assignment
+                for (stmt in statements) {
+                    if (stmt !== statements.last()) {
+                        when (stmt) {
+                            is IrCall -> {
+                                // Property setter - use temp var in the call
+                                parent.pushTempVarSubstitution(tempVar.symbol, null) // Signal to use tempVarName
+                                parent.setTempVarName(tempVar.symbol, tempVarName)
+                                try {
+                                    val setterCall = stmt.accept(this, data)
+                                    parent.addHoistedStatement(BrsExpressionStatement(setterCall))
+                                } finally {
+                                    parent.popTempVarSubstitution(tempVar.symbol)
+                                }
+                            }
+                            is IrSetValue, is IrSetField -> {
+                                // Local variable assignment - use temp var
+                                parent.pushTempVarSubstitution(tempVar.symbol, null)
+                                parent.setTempVarName(tempVar.symbol, tempVarName)
+                                try {
+                                    val assignment = parent.transformStatement(stmt)
+                                    if (assignment != null) {
+                                        parent.addHoistedStatement(assignment)
+                                    }
+                                } finally {
+                                    parent.popTempVarSubstitution(tempVar.symbol)
+                                }
+                            }
+                            is IrVariable -> {
+                                // Skip the temp variable declaration itself
+                            }
                         }
                     }
-                    return stmt.accept(this, data)
+                }
+
+                // 3. Return the appropriate value
+                // For postfix: return the OLD value (temp var)
+                // For prefix: return the NEW value (temp var +/- 1)
+                return if (isPostfix) {
+                    BrsIdentifier(tempVarName)
+                } else {
+                    // For prefix, the result is the new value, which is what the variable
+                    // was set to. Since we hoisted the assignment, we can read the variable.
+                    // But actually, for prefix, the last statement is also an IrGetValue
+                    // which would give us the OLD value. We need to compute NEW value.
+                    val isIncrement = expression.origin == IrStatementOrigin.PREFIX_INCR
+                    BrsBinaryOp(
+                        BrsIdentifier(tempVarName),
+                        if (isIncrement) BrsBinaryOperator.ADD else BrsBinaryOperator.SUB,
+                        BrsIntLiteral(1)
+                    )
                 }
             }
 
-            // For local var increment: Find IrSetValue or IrSetField
-            for (stmt in statements) {
-                if ((stmt is IrSetValue || stmt is IrSetField) && stmt !== statements.last()) {
-                    // Transform assignment with inlined temp var
-                    if (tempVar != null && tempVarInitializer != null) {
-                        parent.pushTempVarSubstitution(tempVar.symbol, tempVarInitializer)
-                        try {
-                            return parent.transformExpression(stmt)
-                        } finally {
-                            parent.popTempVarSubstitution(tempVar.symbol)
-                        }
-                    }
-                    return parent.transformExpression(stmt)
-                }
+            // Fallback: transform and return the last statement (should be the value)
+            val lastStmt = statements.lastOrNull()
+            if (lastStmt != null && lastStmt is IrExpression) {
+                return lastStmt.accept(this, data)
             }
         }
 
@@ -5042,6 +5327,48 @@ class IrExpressionToBrsTransformer(
 
                 // Return just the temp var reference
                 return (lastStmt as IrExpression).accept(this, data)
+            }
+        }
+
+        // Handle when-with-subject blocks: { val tmp0_subject = expr; when { ... } }
+        // These are generated by FIR2IR for when expressions with subjects like `when (x)`.
+        // The subject variable declaration must be hoisted so it's available in the when conditions.
+        // The second statement can be either:
+        // 1. IrWhen directly (when expression not yet lowered)
+        // 2. IrBlock (when-lowered block containing __when_tmp, when, __when_tmp get)
+        if (statements.size == 2) {
+            val firstStmt = statements[0]
+            val secondStmt = statements[1]
+
+            // Detect when-with-subject block: first is subject variable, second is when or when-lowered block
+            val isSubjectVariable = firstStmt is IrVariable &&
+                firstStmt.name.asString().contains("subject")
+
+            val isWhenOrWhenLoweredBlock = secondStmt is IrWhen ||
+                (secondStmt is IrBlock && secondStmt.statements.firstOrNull()?.let {
+                    it is IrVariable && it.name.asString().startsWith("__when_tmp")
+                } == true)
+
+            if (isSubjectVariable && isWhenOrWhenLoweredBlock) {
+                val subjectVar = firstStmt as IrVariable
+                // Transform and hoist the subject variable declaration
+                val varInit = subjectVar.initializer?.let { parent.transformExpression(it) }
+
+                // Take any hoisted statements from initializer transformation
+                val initHoisted = parent.takeHoistedStatements()
+                initHoisted.forEach { parent.addHoistedStatement(it) }
+
+                // Add the subject variable declaration
+                parent.addHoistedStatement(
+                    BrsVariable(
+                        subjectVar.name.asString(),
+                        parent.mapTypeToBrs(subjectVar.type),
+                        varInit
+                    )
+                )
+
+                // Transform the when expression or when-lowered block - it will use the now-hoisted subject variable
+                return (secondStmt as IrExpression).accept(this, data)
             }
         }
 

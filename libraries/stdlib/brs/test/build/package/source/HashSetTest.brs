@@ -64,7 +64,7 @@ sub hashSetTests_rTestRunner_k_(m as Object)
         m.test_Str_Function0V_k_("iteration", {invoke: function() as Void
             set = hashSetOf_Arr_HashSetAnyN_k_([1, 2, 3])
             collected = mutableListOf_MutableListAnyN_k_()
-            for each item in set.array
+            for each item in set
                 collected.add_AnyN_Z_k_(item)
 
             end for

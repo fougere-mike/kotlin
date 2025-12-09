@@ -46,7 +46,7 @@ sub linkedHashSetTests_rTestRunner_k_(m as Object)
             set.add_AnyN_Z_k_(20)
             set.add_AnyN_Z_k_(30)
             collected = mutableListOf_MutableListAnyN_k_()
-            for each element in set.array
+            for each element in set
                 collected.add_AnyN_Z_k_(element)
 
             end for

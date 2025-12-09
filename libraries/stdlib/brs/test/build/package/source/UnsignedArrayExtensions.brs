@@ -11,7 +11,7 @@ function contentToString_rUByteArrayN_Str_k_(m as Dynamic) as String
 end function
 
 function contentEquals_rUByteArrayN_UByteArrayN_Z_k_(m as Dynamic, other as Dynamic) as Boolean
-    if EQEQEQ_AnyN_AnyN_Z_k_(m, other) then
+    if __kotlin_identityEquals(m, other) then
         return true
     end if
     if (m = invalid) or (other = invalid) then
@@ -60,7 +60,7 @@ function contentToString_rUShortArrayN_Str_k_(m as Dynamic) as String
 end function
 
 function contentEquals_rUShortArrayN_UShortArrayN_Z_k_(m as Dynamic, other as Dynamic) as Boolean
-    if EQEQEQ_AnyN_AnyN_Z_k_(m, other) then
+    if __kotlin_identityEquals(m, other) then
         return true
     end if
     if (m = invalid) or (other = invalid) then
@@ -109,7 +109,7 @@ function contentToString_rUIntArrayN_Str_k_(m as Dynamic) as String
 end function
 
 function contentEquals_rUIntArrayN_UIntArrayN_Z_k_(m as Dynamic, other as Dynamic) as Boolean
-    if EQEQEQ_AnyN_AnyN_Z_k_(m, other) then
+    if __kotlin_identityEquals(m, other) then
         return true
     end if
     if (m = invalid) or (other = invalid) then
@@ -158,7 +158,7 @@ function contentToString_rULongArrayN_Str_k_(m as Dynamic) as String
 end function
 
 function contentEquals_rULongArrayN_ULongArrayN_Z_k_(m as Dynamic, other as Dynamic) as Boolean
-    if EQEQEQ_AnyN_AnyN_Z_k_(m, other) then
+    if __kotlin_identityEquals(m, other) then
         return true
     end if
     if (m = invalid) or (other = invalid) then

@@ -205,9 +205,9 @@ function ln1p_D_D_k_(x as Double) as Double
 end function
 
 function ceil_D_D_k_(x as Double) as Double
-    return (function(Int, x)
+    return (function(x)
         if x > Int(x) then return Int(x) + 1 else return Int(x)
-    end function)(Int, x)
+    end function)(x)
 end function
 
 function floor_D_D_k_(x as Double) as Double

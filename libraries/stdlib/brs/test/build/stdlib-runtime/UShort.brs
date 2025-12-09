@@ -1,8 +1,8 @@
 function UShort_create_S_UShort_k_(data as Integer) as Object
     this = {}
     this.__type = "UShort"
-    this.__proto = ["UShort"]
-    this.data = data
+    this.__proto = ["UShort", "Comparable"]
+    this.__id = __kotlin_nextObjectId()
     this.compareTo_UByte_I_k_ = UShort_compareTo_UByte_I_k_
     this.compareTo_UShort_I_k_ = UShort_compareTo_UShort_I_k_
     this.compareTo_UInt_I_k_ = UShort_compareTo_UInt_I_k_
@@ -54,18 +54,22 @@ function UShort_create_S_UShort_k_(data as Integer) as Object
     this.toFloat_F_k_ = UShort_toFloat_F_k_
     this.toDouble_D_k_ = UShort_toDouble_D_k_
     this.toString_Str_k_ = UShort_toString_Str_k_
+    this.toString = UShort_toString_Str_k_
     this.equals_AnyN_Z_k_ = UShort_equals_AnyN_Z_k_
+    this.equals = UShort_equals_AnyN_Z_k_
     this.hashCode_I_k_ = UShort_hashCode_I_k_
+    this.hashCode = UShort_hashCode_I_k_
     this.get_data = UShort_get_data_S_k_
+    this.data = data
     return this
 end function
 
 function UShort_compareTo_UByte_I_k_(other as Object) as Integer
-    return m.compareTo_I_I_k_(other)
+    return compareTo_rI_I_I_k_(m, other)
 end function
 
 function UShort_compareTo_UShort_I_k_(other as Object) as Integer
-    return m.compareTo_I_I_k_(other)
+    return compareTo_rI_I_I_k_(m, other)
 end function
 
 function UShort_compareTo_UInt_I_k_(other as Object) as Integer
@@ -205,19 +209,19 @@ function UShort_rangeUntil_UShort_UIntRange_k_(other as Object) as Object
 end function
 
 function UShort_and_UShort_UShort_k_(other as Object) as Object
-    return UShort_create_S_UShort_k_(m.and_I_I_k_(other))
+    return UShort_create_S_UShort_k_(and_rI_I_I_k_(m, other))
 end function
 
 function UShort_or_UShort_UShort_k_(other as Object) as Object
-    return UShort_create_S_UShort_k_(m.or_I_I_k_(other))
+    return UShort_create_S_UShort_k_(or_rI_I_I_k_(m, other))
 end function
 
 function UShort_xor_UShort_UShort_k_(other as Object) as Object
-    return UShort_create_S_UShort_k_(m.xor_I_I_k_(other))
+    return UShort_create_S_UShort_k_(xor_rI_I_I_k_(m, other))
 end function
 
 function UShort_inv_UShort_k_() as Object
-    return UShort_create_S_UShort_k_(m.inv_I_k_())
+    return UShort_create_S_UShort_k_(inv_rI_I_k_(m))
 end function
 
 function UShort_toByte_B_k_() as Integer
@@ -229,11 +233,11 @@ function UShort_toShort_S_k_() as Integer
 end function
 
 function UShort_toInt_I_k_() as Integer
-    return m.get_data().and_I_I_k_(65535)
+    return and_rI_I_I_k_(m.get_data(), 65535)
 end function
 
 function UShort_toLong_J_k_() as LongInteger
-    return m.get_data().and_J_J_k_(65535&)
+    return and_rJ_J_J_k_(m.get_data(), 65535&)
 end function
 
 function UShort_toUByte_UByte_k_() as Object
@@ -245,11 +249,11 @@ function UShort_toUShort_UShort_k_() as Object
 end function
 
 function UShort_toUInt_UInt_k_() as Object
-    return UInt_create_I_UInt_k_(m.get_data().and_I_I_k_(65535))
+    return UInt_create_I_UInt_k_(and_rI_I_I_k_(m.get_data(), 65535))
 end function
 
 function UShort_toULong_ULong_k_() as Object
-    return ULong_create_J_ULong_k_(m.get_data().and_J_J_k_(65535&))
+    return ULong_create_J_ULong_k_(and_rJ_J_J_k_(m.get_data(), 65535&))
 end function
 
 function UShort_toFloat_F_k_() as Float
@@ -261,7 +265,7 @@ function UShort_toDouble_D_k_() as Double
 end function
 
 function UShort_toString_Str_k_() as String
-    return Str(m)
+    return __kotlin_numToStr_I_Str_k_(m)
 end function
 
 function UShort_equals_AnyN_Z_k_(other as Dynamic) as Boolean
@@ -280,14 +284,15 @@ function UShort_Companion_create_Companion_k_() as Object
     this = {}
     this.__type = "UShort_Companion"
     this.__proto = ["UShort_Companion"]
-    this.MIN_VALUE = UShort_create_S_UShort_k_(0)
-    this.MAX_VALUE = UShort_create_S_UShort_k_(-1)
-    this.SIZE_BYTES = 2
-    this.SIZE_BITS = 16
+    this.__id = __kotlin_nextObjectId()
     this.get_MIN_VALUE = UShort_Companion_get_MIN_VALUE_UShort_k_
     this.get_MAX_VALUE = UShort_Companion_get_MAX_VALUE_UShort_k_
     this.get_SIZE_BYTES = UShort_Companion_get_SIZE_BYTES_I_k_
     this.get_SIZE_BITS = UShort_Companion_get_SIZE_BITS_I_k_
+    this.MIN_VALUE = UShort_create_S_UShort_k_(0)
+    this.MAX_VALUE = UShort_create_S_UShort_k_(-1)
+    this.SIZE_BYTES = 2
+    this.SIZE_BITS = 16
     return this
 end function
 

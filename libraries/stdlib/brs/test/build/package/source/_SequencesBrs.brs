@@ -113,7 +113,7 @@ function indexOf_rSequenceAnyN_AnyN_I_k_(m as Object, element as Dynamic) as Int
         if element = item then
             return index
         end if
-        index = (unary + 1)
+        index = (index + 1)
 
     end for
     return -1
@@ -125,7 +125,7 @@ function indexOfFirst_rSequenceAnyN_Function1AnyNZ_I_k_(m as Object, predicate a
         if predicate.invoke(item) then
             return index
         end if
-        index = (unary + 1)
+        index = (index + 1)
 
     end for
     return -1
@@ -138,7 +138,7 @@ function indexOfLast_rSequenceAnyN_Function1AnyNZ_I_k_(m as Object, predicate as
         if predicate.invoke(item) then
             lastIndex = index
         end if
-        index = (unary + 1)
+        index = (index + 1)
 
     end for
     return lastIndex
@@ -178,7 +178,7 @@ function lastIndexOf_rSequenceAnyN_AnyN_I_k_(m as Object, element as Dynamic) as
         if element = item then
             lastIndex = index
         end if
-        index = (unary + 1)
+        index = (index + 1)
 
     end for
     return lastIndex
@@ -294,7 +294,7 @@ end function
 function count_rSequenceAnyN_I_k_(m as Object) as Integer
     count = 0
     for each element in m
-        count = (unary + 1)
+        count = (count + 1)
     end for
     return count
 end function
@@ -303,7 +303,7 @@ function count_rSequenceAnyN_Function1AnyNZ_I_k_(m as Object, predicate as Objec
     count = 0
     for each element in m
         if predicate.invoke(element) then
-            count = (unary + 1)
+            count = (count + 1)
         end if
     end for
     return count
@@ -321,7 +321,11 @@ function foldIndexed_rSequenceAnyN_AnyN_Function3IAnyNAnyNAnyN_AnyN_k_(m as Obje
     index = 0
     accumulator = initial
     for each element in m
-        accumulator = operation.invoke(index = (index + 1), accumulator, element)
+        __incr_tmp_4 = index
+        index = (__incr_tmp_4 + 1)
+
+        accumulator = operation.invoke(__incr_tmp_4, accumulator, element)
+
     end for
     return accumulator
 end function
@@ -335,7 +339,11 @@ end sub
 sub forEachIndexed_rSequenceAnyN_Function2IAnyNV_k_(m as Object, action as Object)
     index = 0
     for each item in m
-        action.invoke(index = (index + 1), item)
+        __incr_tmp_5 = index
+        index = (__incr_tmp_5 + 1)
+
+        action.invoke(__incr_tmp_5, item)
+
     end for
 end sub
 
@@ -375,7 +383,10 @@ function reduceIndexed_rSequenceAnyN_Function3IAnyNAnyNAnyN_AnyN_k_(m as Object,
     index = 1
     accumulator = iterator.next_AnyN_k_()
     while iterator.hasNext_Z_k_()
-        accumulator = operation.invoke(index = (index + 1), accumulator, iterator.next_AnyN_k_())
+        __incr_tmp_6 = index
+        index = (__incr_tmp_6 + 1)
+
+        accumulator = operation.invoke(__incr_tmp_6, accumulator, iterator.next_AnyN_k_())
     end while
     return accumulator
 end function
@@ -388,7 +399,10 @@ function reduceIndexedOrNull_rSequenceAnyN_Function3IAnyNAnyNAnyN_AnyN_k_(m as O
     index = 1
     accumulator = iterator.next_AnyN_k_()
     while iterator.hasNext_Z_k_()
-        accumulator = operation.invoke(index = (index + 1), accumulator, iterator.next_AnyN_k_())
+        __incr_tmp_7 = index
+        index = (__incr_tmp_7 + 1)
+
+        accumulator = operation.invoke(__incr_tmp_7, accumulator, iterator.next_AnyN_k_())
     end while
     return accumulator
 end function
@@ -406,11 +420,11 @@ function reduceOrNull_rSequenceAnyN_Function2AnyNAnyNAnyN_AnyN_k_(m as Object, o
 end function
 
 function scan_rSequenceAnyN_AnyN_Function2AnyNAnyNAnyN_SequenceAnyN_k_(m as Object, initial as Dynamic, operation as Object) as Object
-    return Anon_3e3ffea8_create_AnonAnyNAnyN_k_()
+    return Anon_a6e6a5b_create_AnonAnyNAnyN_k_()
 end function
 
 function scanIndexed_rSequenceAnyN_AnyN_Function3IAnyNAnyNAnyN_SequenceAnyN_k_(m as Object, initial as Dynamic, operation as Object) as Object
-    return Anon_6cd3d48c_create_AnonAnyNAnyN_k_()
+    return Anon_cb952f4_create_AnonAnyNAnyN_k_()
 end function
 
 function sum_rSequenceB_I_k_(m as Object) as Integer
@@ -645,17 +659,7 @@ function joinTo_kxums0_k_(m as Object, buffer as Object, separator = ", ", prefi
             else if __kotlin_isInstanceOf(element, "Char") then
                 buffer.append_C_Appendable_k_(element)
             else if true then
-                buffer.append_CharSequenceN_Appendable_k_((function(Str, element)
-                    if element = invalid then return "null" else return (function(Str, element)
-                        if (Type(element) = "String") or (Type(element) = "roString") then return element else return (function(Str, element)
-                            if ((((((Type(element) = "Integer") or (Type(element) = "LongInteger")) or (Type(element) = "Float")) or (Type(element) = "Double")) or (Type(element) = "roInt")) or (Type(element) = "roFloat")) or (Type(element) = "roDouble") then return Str(element) else return (function(element)
-                                if (Type(element) = "Boolean") or (Type(element) = "roBoolean") then return (function(element)
-                                    if element then return "true" else return "false"
-                                end function)(element) else return element.toString()
-                            end function)(element)
-                        end function)(Str, element)
-                    end function)(Str, element)
-                end function)(Str, element))
+                buffer.append_CharSequenceN_Appendable_k_(toString_AnyN_Str_k_(element))
             end if
         else if true then
             exit for

@@ -1,15 +1,16 @@
 function BareAdapter_create_BareAdapter_k_() as Object
     this = {}
     this.__type = "BareAdapter"
-    this.__proto = ["BareAdapter"]
-    this.results = mutableListOf_MutableListAnyN_k_()
-    this.currentSuite = ""
+    this.__proto = ["BareAdapter", "FrameworkAdapter"]
+    this.__id = __kotlin_nextObjectId()
     this.suite_Str_Z_Function0V_k_ = BareAdapter_suite_Str_Z_Function0V_k_
     this.test_Str_Z_Function0V_k_ = BareAdapter_test_Str_Z_Function0V_k_
     this.printSummary = BareAdapter_printSummary
     this.get_results = BareAdapter_get_results_MutableListTestResult_k_
     this.get_currentSuite = BareAdapter_get_currentSuite_Str_k_
     this.set_currentSuite = BareAdapter_set_currentSuite_Str_k_
+    this.results = mutableListOf_MutableListAnyN_k_()
+    this.currentSuite = ""
     return this
 end function
 
@@ -79,6 +80,7 @@ function BareAdapter_TestResult_create_Str_Str_Str_StrN_TestResult_k_(suite as S
     this = {}
     this.__type = "BareAdapter_TestResult"
     this.__proto = ["BareAdapter_TestResult"]
+    this.__id = __kotlin_nextObjectId()
     this.suite = suite
     this.test = test
     this.status = status

@@ -1,8 +1,8 @@
 function HashMap_create_HashMapAnyNAnyN_k_() as Object
     this = {}
     this.__type = "HashMap"
-    this.__proto = ["HashMap"]
-    this._size = 0
+    this.__proto = ["HashMap", "MutableMap", "Map"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = HashMap_isEmpty_Z_k_
     this.containsKey_AnyN_Z_k_ = HashMap_containsKey_AnyN_Z_k_
     this.containsValue_AnyN_Z_k_ = HashMap_containsValue_AnyN_Z_k_
@@ -12,8 +12,11 @@ function HashMap_create_HashMapAnyNAnyN_k_() as Object
     this.putAll_MapAnyNAnyN_k_ = HashMap_putAll_MapAnyNAnyN_k_
     this.clear = HashMap_clear
     this.equals_AnyN_Z_k_ = HashMap_equals_AnyN_Z_k_
+    this.equals = HashMap_equals_AnyN_Z_k_
     this.hashCode_I_k_ = HashMap_hashCode_I_k_
+    this.hashCode = HashMap_hashCode_I_k_
     this.toString_Str_k_ = HashMap_toString_Str_k_
+    this.toString = HashMap_toString_Str_k_
     this.keyToString_AnyN_Str_k_ = HashMap_keyToString_AnyN_Str_k_
     this.getKeysArray_Dynamic_k_ = HashMap_getKeysArray_Dynamic_k_
     this.getMap_Dynamic_k_ = HashMap_getMap_Dynamic_k_
@@ -25,6 +28,7 @@ function HashMap_create_HashMapAnyNAnyN_k_() as Object
     this.get_keys = HashMap_get_keys_MutableSetAnyN_k_
     this.get_values = HashMap_get_values_MutableCollectionAnyN_k_
     this.get_entries = HashMap_get_entries_MutableSetMutableEntryAnyNAnyN_k_
+    this._size = 0
     this.set_map(CreateObject("roAssociativeArray"))
     this.set__size(0)
     return this
@@ -33,8 +37,8 @@ end function
 function HashMap_create_I_HashMapAnyNAnyN_k_(initialCapacity as Integer) as Object
     this = {}
     this.__type = "HashMap"
-    this.__proto = ["HashMap"]
-    this._size = 0
+    this.__proto = ["HashMap", "MutableMap", "Map"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = HashMap_isEmpty_Z_k_
     this.containsKey_AnyN_Z_k_ = HashMap_containsKey_AnyN_Z_k_
     this.containsValue_AnyN_Z_k_ = HashMap_containsValue_AnyN_Z_k_
@@ -44,8 +48,11 @@ function HashMap_create_I_HashMapAnyNAnyN_k_(initialCapacity as Integer) as Obje
     this.putAll_MapAnyNAnyN_k_ = HashMap_putAll_MapAnyNAnyN_k_
     this.clear = HashMap_clear
     this.equals_AnyN_Z_k_ = HashMap_equals_AnyN_Z_k_
+    this.equals = HashMap_equals_AnyN_Z_k_
     this.hashCode_I_k_ = HashMap_hashCode_I_k_
+    this.hashCode = HashMap_hashCode_I_k_
     this.toString_Str_k_ = HashMap_toString_Str_k_
+    this.toString = HashMap_toString_Str_k_
     this.keyToString_AnyN_Str_k_ = HashMap_keyToString_AnyN_Str_k_
     this.getKeysArray_Dynamic_k_ = HashMap_getKeysArray_Dynamic_k_
     this.getMap_Dynamic_k_ = HashMap_getMap_Dynamic_k_
@@ -57,6 +64,7 @@ function HashMap_create_I_HashMapAnyNAnyN_k_(initialCapacity as Integer) as Obje
     this.get_keys = HashMap_get_keys_MutableSetAnyN_k_
     this.get_values = HashMap_get_values_MutableCollectionAnyN_k_
     this.get_entries = HashMap_get_entries_MutableSetMutableEntryAnyNAnyN_k_
+    this._size = 0
     require_Z_Function0Any_k_(initialCapacity >= 0, {initialCapacity: initialCapacity, invoke: function() as Object
         return "Negative initial capacity: " + m.initialCapacity
     end function})
@@ -68,8 +76,8 @@ end function
 function HashMap_create_MapAnyNAnyN_HashMapAnyNAnyN_k_(original as Object) as Object
     this = {}
     this.__type = "HashMap"
-    this.__proto = ["HashMap"]
-    this._size = 0
+    this.__proto = ["HashMap", "MutableMap", "Map"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = HashMap_isEmpty_Z_k_
     this.containsKey_AnyN_Z_k_ = HashMap_containsKey_AnyN_Z_k_
     this.containsValue_AnyN_Z_k_ = HashMap_containsValue_AnyN_Z_k_
@@ -79,8 +87,11 @@ function HashMap_create_MapAnyNAnyN_HashMapAnyNAnyN_k_(original as Object) as Ob
     this.putAll_MapAnyNAnyN_k_ = HashMap_putAll_MapAnyNAnyN_k_
     this.clear = HashMap_clear
     this.equals_AnyN_Z_k_ = HashMap_equals_AnyN_Z_k_
+    this.equals = HashMap_equals_AnyN_Z_k_
     this.hashCode_I_k_ = HashMap_hashCode_I_k_
+    this.hashCode = HashMap_hashCode_I_k_
     this.toString_Str_k_ = HashMap_toString_Str_k_
+    this.toString = HashMap_toString_Str_k_
     this.keyToString_AnyN_Str_k_ = HashMap_keyToString_AnyN_Str_k_
     this.getKeysArray_Dynamic_k_ = HashMap_getKeysArray_Dynamic_k_
     this.getMap_Dynamic_k_ = HashMap_getMap_Dynamic_k_
@@ -92,6 +103,7 @@ function HashMap_create_MapAnyNAnyN_HashMapAnyNAnyN_k_(original as Object) as Ob
     this.get_keys = HashMap_get_keys_MutableSetAnyN_k_
     this.get_values = HashMap_get_values_MutableCollectionAnyN_k_
     this.get_entries = HashMap_get_entries_MutableSetMutableEntryAnyNAnyN_k_
+    this._size = 0
     this.set_map(CreateObject("roAssociativeArray"))
     this.set__size(0)
     this.putAll_MapAnyNAnyN_k_(original)
@@ -104,16 +116,17 @@ end function
 
 function HashMap_containsKey_AnyN_Z_k_(key as Dynamic) as Boolean
     keyStr = m.keyToString_AnyN_Str_k_(key)
-    return m.DoesExist(keyStr)
+    return m.get_map().DoesExist(keyStr)
 end function
 
 function HashMap_containsValue_AnyN_Z_k_(value as Dynamic) as Boolean
-    keysArray = m.Keys()
+    keysArray = m.get_map().Keys()
     count = keysArray.Count()
     i = 0
     while i < count
         keyStr = keysArray[i]
-        v = m.Lookup(keyStr)
+        entry = m.get_map().Lookup(keyStr)
+        v = entry.v
         if v = value then
             return true
         end if
@@ -124,51 +137,53 @@ end function
 
 function HashMap_get_AnyN_AnyN_k_(key as Dynamic) as Dynamic
     keyStr = m.keyToString_AnyN_Str_k_(key)
-    if not m.DoesExist(keyStr) then
+    if not m.get_map().DoesExist(keyStr) then
         return invalid
     end if
-    return m.Lookup(keyStr)
+    entry = m.get_map().Lookup(keyStr)
+    return entry.v
 end function
 
 function HashMap_put_AnyN_AnyN_AnyN_k_(key as Dynamic, value as Dynamic) as Dynamic
     keyStr = m.keyToString_AnyN_Str_k_(key)
-    __when_tmp0 = invalid
-    if m.DoesExist(keyStr) then
-        __when_tmp0 = m.Lookup(keyStr)
+    oldValue = invalid
+    if m.get_map().DoesExist(keyStr) then
+        oldEntry = m.get_map().Lookup(keyStr)
+        oldValue = oldEntry.v
     else if true then
-        __when_tmp0 = invalid
+        m.set__size(m.get__size() + 1)
     end if
-    oldValue = __when_tmp0
-
-    m.AddReplace(keyStr, value)
+    entry = {k: key, v: value}
+    m.get_map().AddReplace(keyStr, entry)
     return oldValue
 end function
 
 function HashMap_remove_AnyN_AnyN_k_(key as Dynamic) as Dynamic
     keyStr = m.keyToString_AnyN_Str_k_(key)
-    if not m.DoesExist(keyStr) then
+    if not m.get_map().DoesExist(keyStr) then
         return invalid
     end if
-    oldValue = m.Lookup(keyStr)
-    m.Delete(keyStr)
+    oldEntry = m.get_map().Lookup(keyStr)
+    oldValue = oldEntry.v
+    m.get_map().Delete(keyStr)
     m.set__size(m.get__size() - 1)
     return oldValue
 end function
 
 sub HashMap_putAll_MapAnyNAnyN_k_(from as Object)
-    for each entry in from.get_entries().array
+    for each entry in from.get_entries()
         m.put_AnyN_AnyN_AnyN_k_(entry.get_key(), entry.get_value())
 
     end for
 end sub
 
 sub HashMap_clear()
-    m.Clear()
+    m.get_map().Clear()
     m.set__size(0)
 end sub
 
 function HashMap_equals_AnyN_Z_k_(other as Dynamic) as Boolean
-    if EQEQEQ_AnyN_AnyN_Z_k_(other, m) then
+    if __kotlin_identityEquals(other, m) then
         return true
     end if
     if not __kotlin_isInstanceOf(other, "Map") then
@@ -177,7 +192,7 @@ function HashMap_equals_AnyN_Z_k_(other as Dynamic) as Boolean
     if other.get_size() <> m.get_size() then
         return false
     end if
-    for each entry in m.get_entries().array
+    for each entry in m.get_entries()
         otherMap = other
         otherValue = otherMap.get_AnyN_AnyN_k_(entry.get_key())
         if entry.get_value() <> otherValue then
@@ -190,7 +205,7 @@ end function
 
 function HashMap_hashCode_I_k_() as Integer
     h = 0
-    for each entry in m.get_entries().array
+    for each entry in m.get_entries()
         h = (h + entry.hashCode())
 
     end for
@@ -204,43 +219,23 @@ function HashMap_toString_Str_k_() as String
     sb = StringBuilder_create_StringBuilder_k_()
     sb.append_StrN_StringBuilder_k_("{")
     first = true
-    for each entry in m.get_entries().array
+    for each entry in m.get_entries()
         if not first then
             sb.append_StrN_StringBuilder_k_(", ")
         end if
         first = false
         k = entry.get_key()
         v = entry.get_value()
-                if EQEQEQ_AnyN_AnyN_Z_k_(k, m) then
+        if __kotlin_identityEquals(k, m) then
             sb.append_StrN_StringBuilder_k_("(this Map)")
         else if true then
-            sb.append_StrN_StringBuilder_k_((function(Str, k)
-                if k = invalid then return "null" else return (function(Str, k)
-                    if (Type(k) = "String") or (Type(k) = "roString") then return k else return (function(Str, k)
-                        if ((((((Type(k) = "Integer") or (Type(k) = "LongInteger")) or (Type(k) = "Float")) or (Type(k) = "Double")) or (Type(k) = "roInt")) or (Type(k) = "roFloat")) or (Type(k) = "roDouble") then return Str(k) else return (function(k)
-                            if (Type(k) = "Boolean") or (Type(k) = "roBoolean") then return (function(k)
-                                if k then return "true" else return "false"
-                            end function)(k) else return k.toString()
-                        end function)(k)
-                    end function)(Str, k)
-                end function)(Str, k)
-            end function)(Str, k))
+            sb.append_StrN_StringBuilder_k_(toString_AnyN_Str_k_(k))
         end if
         sb.append_StrN_StringBuilder_k_("=")
-        if EQEQEQ_AnyN_AnyN_Z_k_(v, m) then
+        if __kotlin_identityEquals(v, m) then
             sb.append_StrN_StringBuilder_k_("(this Map)")
         else if true then
-            sb.append_StrN_StringBuilder_k_((function(Str, v)
-                if v = invalid then return "null" else return (function(Str, v)
-                    if (Type(v) = "String") or (Type(v) = "roString") then return v else return (function(Str, v)
-                        if ((((((Type(v) = "Integer") or (Type(v) = "LongInteger")) or (Type(v) = "Float")) or (Type(v) = "Double")) or (Type(v) = "roInt")) or (Type(v) = "roFloat")) or (Type(v) = "roDouble") then return Str(v) else return (function(v)
-                            if (Type(v) = "Boolean") or (Type(v) = "roBoolean") then return (function(v)
-                                if v then return "true" else return "false"
-                            end function)(v) else return v.toString()
-                        end function)(v)
-                    end function)(Str, v)
-                end function)(Str, v)
-            end function)(Str, v))
+            sb.append_StrN_StringBuilder_k_(toString_AnyN_Str_k_(v))
         end if
 
     end for
@@ -249,21 +244,11 @@ function HashMap_toString_Str_k_() as String
 end function
 
 function HashMap_keyToString_AnyN_Str_k_(key as Dynamic) as String
-    return (function(Str, key)
-        if key = invalid then return "null" else return (function(Str, key)
-            if (Type(key) = "String") or (Type(key) = "roString") then return key else return (function(Str, key)
-                if ((((((Type(key) = "Integer") or (Type(key) = "LongInteger")) or (Type(key) = "Float")) or (Type(key) = "Double")) or (Type(key) = "roInt")) or (Type(key) = "roFloat")) or (Type(key) = "roDouble") then return Str(key) else return (function(key)
-                    if (Type(key) = "Boolean") or (Type(key) = "roBoolean") then return (function(key)
-                        if key then return "true" else return "false"
-                    end function)(key) else return key.toString()
-                end function)(key)
-            end function)(Str, key)
-        end function)(Str, key)
-    end function)(Str, key)
+    return toString_AnyN_Str_k_(key)
 end function
 
 function HashMap_getKeysArray_Dynamic_k_() as Object
-    return m.Keys()
+    return m.get_map().Keys()
 end function
 
 function HashMap_getMap_Dynamic_k_() as Object
@@ -305,16 +290,20 @@ end function
 function HashMapEntry_create_HashMapAnyNAnyN_AnyN_HashMapEntryAnyNAnyN_k_(map as Object, key as Dynamic) as Object
     this = {}
     this.__type = "HashMapEntry"
-    this.__proto = ["HashMapEntry"]
-    this.map = map
-    this.key = key
+    this.__proto = ["HashMapEntry", "MutableMap_MutableEntry", "Map_Entry"]
+    this.__id = __kotlin_nextObjectId()
     this.setValue_AnyN_AnyN_k_ = HashMapEntry_setValue_AnyN_AnyN_k_
     this.equals_AnyN_Z_k_ = HashMapEntry_equals_AnyN_Z_k_
+    this.equals = HashMapEntry_equals_AnyN_Z_k_
     this.hashCode_I_k_ = HashMapEntry_hashCode_I_k_
+    this.hashCode = HashMapEntry_hashCode_I_k_
     this.toString_Str_k_ = HashMapEntry_toString_Str_k_
+    this.toString = HashMapEntry_toString_Str_k_
     this.get_map = HashMapEntry_get_map_HashMapAnyNAnyN_k_
     this.get_key = HashMapEntry_get_key_AnyN_k_
     this.get_value = HashMapEntry_get_value_AnyN_k_
+    this.map = map
+    this.key = key
     return this
 end function
 
@@ -332,34 +321,34 @@ end function
 
 function HashMapEntry_hashCode_I_k_() as Integer
     tmp0_safe_receiver = m.get_key()
-    __when_tmp1 = invalid
+    __when_tmp0 = invalid
     if tmp0_safe_receiver = invalid then
-        __when_tmp1 = invalid
+        __when_tmp0 = invalid
     else if true then
-        __when_tmp1 = tmp0_safe_receiver.hashCode()
+        __when_tmp0 = tmp0_safe_receiver.hashCode()
     end if
-    tmp1_elvis_lhs = __when_tmp1
-    __when_tmp2 = invalid
+    tmp1_elvis_lhs = __when_tmp0
+    __when_tmp1 = invalid
     if tmp1_elvis_lhs = invalid then
-        __when_tmp2 = 0
+        __when_tmp1 = 0
     else if true then
-        __when_tmp2 = tmp1_elvis_lhs
+        __when_tmp1 = tmp1_elvis_lhs
     end if
     tmp2_safe_receiver = m.get_value()
-    __when_tmp3 = invalid
+    __when_tmp2 = invalid
     if tmp2_safe_receiver = invalid then
-        __when_tmp3 = invalid
+        __when_tmp2 = invalid
     else if true then
-        __when_tmp3 = tmp2_safe_receiver.hashCode()
+        __when_tmp2 = tmp2_safe_receiver.hashCode()
     end if
-    tmp3_elvis_lhs = __when_tmp3
-    __when_tmp4 = invalid
+    tmp3_elvis_lhs = __when_tmp2
+    __when_tmp3 = invalid
     if tmp3_elvis_lhs = invalid then
-        __when_tmp4 = 0
+        __when_tmp3 = 0
     else if true then
-        __when_tmp4 = tmp3_elvis_lhs
+        __when_tmp3 = tmp3_elvis_lhs
     end if
-    return __when_tmp2.xor_I_I_k_(__when_tmp4)
+    return xor_rI_I_I_k_(__when_tmp1, __when_tmp3)
 
 end function
 
@@ -382,8 +371,8 @@ end function
 function KeySet_create_HashMapAnyNAnyN_KeySetAnyNAnyN_k_(map as Object) as Object
     this = {}
     this.__type = "KeySet"
-    this.__proto = ["KeySet"]
-    this.map = map
+    this.__proto = ["KeySet", "MutableSet", "Set", "Collection", "Iterable", "MutableCollection", "MutableIterable"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = KeySet_isEmpty_Z_k_
     this.contains_AnyN_Z_k_ = KeySet_contains_AnyN_Z_k_
     this.containsAll_CollectionAnyN_Z_k_ = KeySet_containsAll_CollectionAnyN_Z_k_
@@ -395,7 +384,9 @@ function KeySet_create_HashMapAnyNAnyN_KeySetAnyNAnyN_k_(map as Object) as Objec
     this.retainAll_CollectionAnyN_Z_k_ = KeySet_retainAll_CollectionAnyN_Z_k_
     this.clear = KeySet_clear
     this.get_map = KeySet_get_map_HashMapAnyNAnyN_k_
+    this.get_array = KeySet_get_array_Dynamic_k_
     this.get_size = KeySet_get_size_I_k_
+    this.map = map
     return this
 end function
 
@@ -408,7 +399,7 @@ function KeySet_contains_AnyN_Z_k_(element as Dynamic) as Boolean
 end function
 
 function KeySet_containsAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
-    for each element in elements.array
+    for each element in elements
         if not m.contains_AnyN_Z_k_(element) then
             return false
         end if
@@ -438,7 +429,7 @@ end function
 
 function KeySet_removeAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
     modified = false
-    for each element in elements.array
+    for each element in elements
         if m.remove_AnyN_Z_k_(element) then
             modified = true
         end if
@@ -466,6 +457,21 @@ function KeySet_get_map_HashMapAnyNAnyN_k_() as Object
     return m.map
 end function
 
+function KeySet_get_array_Dynamic_k_() as Object
+    keysArray = m.get_map().getKeysArray_Dynamic_k_()
+    mapObj = m.get_map().getMap_Dynamic_k_()
+    count = keysArray.Count()
+    result = CreateObject("roArray", 0, true)
+    i = 0
+    while i < count
+        keyStr = keysArray[i]
+        entry = mapObj.Lookup(keyStr)
+        result.Push(entry.k)
+        i = (i + 1)
+    end while
+    return result
+end function
+
 function KeySet_get_size_I_k_() as Integer
     return m.get_map().get_size()
 end function
@@ -473,8 +479,8 @@ end function
 function ValueCollection_create_HashMapAnyNAnyN_ValueCollectionAnyNAnyN_k_(map as Object) as Object
     this = {}
     this.__type = "ValueCollection"
-    this.__proto = ["ValueCollection"]
-    this.map = map
+    this.__proto = ["ValueCollection", "MutableCollection", "Collection", "Iterable", "MutableIterable"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = ValueCollection_isEmpty_Z_k_
     this.contains_AnyN_Z_k_ = ValueCollection_contains_AnyN_Z_k_
     this.containsAll_CollectionAnyN_Z_k_ = ValueCollection_containsAll_CollectionAnyN_Z_k_
@@ -486,7 +492,9 @@ function ValueCollection_create_HashMapAnyNAnyN_ValueCollectionAnyNAnyN_k_(map a
     this.retainAll_CollectionAnyN_Z_k_ = ValueCollection_retainAll_CollectionAnyN_Z_k_
     this.clear = ValueCollection_clear
     this.get_map = ValueCollection_get_map_HashMapAnyNAnyN_k_
+    this.get_array = ValueCollection_get_array_Dynamic_k_
     this.get_size = ValueCollection_get_size_I_k_
+    this.map = map
     return this
 end function
 
@@ -499,7 +507,7 @@ function ValueCollection_contains_AnyN_Z_k_(element as Dynamic) as Boolean
 end function
 
 function ValueCollection_containsAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
-    for each element in elements.array
+    for each element in elements
         if not m.contains_AnyN_Z_k_(element) then
             return false
         end if
@@ -562,6 +570,21 @@ function ValueCollection_get_map_HashMapAnyNAnyN_k_() as Object
     return m.map
 end function
 
+function ValueCollection_get_array_Dynamic_k_() as Object
+    keysArray = m.get_map().getKeysArray_Dynamic_k_()
+    mapObj = m.get_map().getMap_Dynamic_k_()
+    count = keysArray.Count()
+    result = CreateObject("roArray", 0, true)
+    i = 0
+    while i < count
+        keyStr = keysArray[i]
+        entry = mapObj.Lookup(keyStr)
+        result.Push(entry.v)
+        i = (i + 1)
+    end while
+    return result
+end function
+
 function ValueCollection_get_size_I_k_() as Integer
     return m.get_map().get_size()
 end function
@@ -569,8 +592,8 @@ end function
 function EntrySet_create_HashMapAnyNAnyN_EntrySetAnyNAnyN_k_(map as Object) as Object
     this = {}
     this.__type = "EntrySet"
-    this.__proto = ["EntrySet"]
-    this.map = map
+    this.__proto = ["EntrySet", "MutableSet", "Set", "Collection", "Iterable", "MutableCollection", "MutableIterable"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = EntrySet_isEmpty_Z_k_
     this.contains_MutableEntryAnyNAnyN_Z_k_ = EntrySet_contains_MutableEntryAnyNAnyN_Z_k_
     this.containsAll_CollectionMutableEntryAnyNAnyN_Z_k_ = EntrySet_containsAll_CollectionMutableEntryAnyNAnyN_Z_k_
@@ -582,7 +605,9 @@ function EntrySet_create_HashMapAnyNAnyN_EntrySetAnyNAnyN_k_(map as Object) as O
     this.retainAll_CollectionMutableEntryAnyNAnyN_Z_k_ = EntrySet_retainAll_CollectionMutableEntryAnyNAnyN_Z_k_
     this.clear = EntrySet_clear
     this.get_map = EntrySet_get_map_HashMapAnyNAnyN_k_
+    this.get_array = EntrySet_get_array_Dynamic_k_
     this.get_size = EntrySet_get_size_I_k_
+    this.map = map
     return this
 end function
 
@@ -596,7 +621,7 @@ function EntrySet_contains_MutableEntryAnyNAnyN_Z_k_(element as Object) as Boole
 end function
 
 function EntrySet_containsAll_CollectionMutableEntryAnyNAnyN_Z_k_(elements as Object) as Boolean
-    for each element in elements.array
+    for each element in elements
         if not m.contains_MutableEntryAnyNAnyN_Z_k_(element) then
             return false
         end if
@@ -624,7 +649,7 @@ end function
 
 function EntrySet_addAll_CollectionMutableEntryAnyNAnyN_Z_k_(elements as Object) as Boolean
     modified = false
-    for each element in elements.array
+    for each element in elements
         if m.add_MutableEntryAnyNAnyN_Z_k_(element) then
             modified = true
         end if
@@ -634,7 +659,7 @@ end function
 
 function EntrySet_removeAll_CollectionMutableEntryAnyNAnyN_Z_k_(elements as Object) as Boolean
     modified = false
-    for each element in elements.array
+    for each element in elements
         if m.remove_MutableEntryAnyNAnyN_Z_k_(element) then
             modified = true
         end if
@@ -662,6 +687,22 @@ function EntrySet_get_map_HashMapAnyNAnyN_k_() as Object
     return m.map
 end function
 
+function EntrySet_get_array_Dynamic_k_() as Object
+    keysArray = m.get_map().getKeysArray_Dynamic_k_()
+    mapObj = m.get_map().getMap_Dynamic_k_()
+    count = keysArray.Count()
+    result = CreateObject("roArray", 0, true)
+    i = 0
+    while i < count
+        keyStr = keysArray[i]
+        entry = mapObj.Lookup(keyStr)
+        key = entry.k
+        result.Push(HashMapEntry_create_HashMapAnyNAnyN_AnyN_HashMapEntryAnyNAnyN_k_(m.get_map(), key))
+        i = (i + 1)
+    end while
+    return result
+end function
+
 function EntrySet_get_size_I_k_() as Integer
     return m.get_map().get_size()
 end function
@@ -669,34 +710,59 @@ end function
 function HashMapIterator_create_HashMapAnyNAnyN_HashMapIteratorAnyNAnyNAnyN_k_(map as Object) as Object
     this = {}
     this.__type = "HashMapIterator"
-    this.__proto = ["HashMapIterator"]
-    this.map = map
-    this.keysArray = m.get_map().getKeysArray_Dynamic_k_()
-    this.keyCount = m.get_keysArray().Count()
-    this.index = 0
-    this.lastKey = invalid
+    this.__proto = ["HashMapIterator", "MutableIterator", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.getKeysArrayCached_Dynamic_k_ = HashMapIterator_getKeysArrayCached_Dynamic_k_
+    this.getKeyCountCached_I_k_ = HashMapIterator_getKeyCountCached_I_k_
     this.hasNext_Z_k_ = HashMapIterator_hasNext_Z_k_
     this.nextKey_AnyN_k_ = HashMapIterator_nextKey_AnyN_k_
     this.remove = HashMapIterator_remove
     this.get_map = HashMapIterator_get_map_HashMapAnyNAnyN_k_
-    this.get_keysArray = HashMapIterator_get_keysArray_Dynamic_k_
-    this.get_keyCount = HashMapIterator_get_keyCount_I_k_
+    this.get__keysArray = HashMapIterator_get__keysArray_DynamicN_k_
+    this.set__keysArray = HashMapIterator_set__keysArray_DynamicN_k_
+    this.get__keyCount = HashMapIterator_get__keyCount_I_k_
+    this.set__keyCount = HashMapIterator_set__keyCount_I_k_
     this.get_index = HashMapIterator_get_index_I_k_
     this.set_index = HashMapIterator_set_index_I_k_
     this.get_lastKey = HashMapIterator_get_lastKey_AnyN_k_
     this.set_lastKey = HashMapIterator_set_lastKey_AnyN_k_
+    this.map = map
+    this._keysArray = invalid
+    this._keyCount = -1
+    this.index = 0
+    this.lastKey = invalid
     return this
 end function
 
+function HashMapIterator_getKeysArrayCached_Dynamic_k_() as Object
+    arr = m.get__keysArray()
+    if arr = invalid then
+        arr = m.get_map().getKeysArray_Dynamic_k_()
+        m.set__keysArray(arr)
+    end if
+    return arr
+end function
+
+function HashMapIterator_getKeyCountCached_I_k_() as Integer
+    count = m.get__keyCount()
+    if count < 0 then
+        count = m.getKeysArrayCached_Dynamic_k_().Count()
+        m.set__keyCount(count)
+    end if
+    return count
+end function
+
 function HashMapIterator_hasNext_Z_k_() as Boolean
-    return m.get_index() < m.get_keyCount()
+    return m.get_index() < m.getKeyCountCached_I_k_()
 end function
 
 function HashMapIterator_nextKey_AnyN_k_() as Dynamic
     if not m.hasNext_Z_k_() then
         throw NoSuchElementException_create_NoSuchElementException_k_()
     end if
-    key = m.get_keysArray()[m.get_index()]
+    keyStr = m.getKeysArrayCached_Dynamic_k_()[m.get_index()]
+    entry = m.get_map().get_map().Lookup(keyStr)
+    key = entry.k
     m.set_index(m.get_index() + 1)
     m.set_lastKey(key)
     return key
@@ -704,13 +770,13 @@ end function
 
 sub HashMapIterator_remove()
     tmp0_elvis_lhs = m.get_lastKey()
-    __when_tmp5 = invalid
+    __when_tmp4 = invalid
     if tmp0_elvis_lhs = invalid then
         throw IllegalStateException_create_StrN_IllegalStateException_k_("Call next() before remove()")
     else if true then
-        __when_tmp5 = tmp0_elvis_lhs
+        __when_tmp4 = tmp0_elvis_lhs
     end if
-    key = __when_tmp5
+    key = __when_tmp4
 
     m.get_map().remove_AnyN_AnyN_k_(key)
     m.set_lastKey(invalid)
@@ -720,13 +786,21 @@ function HashMapIterator_get_map_HashMapAnyNAnyN_k_() as Object
     return m.map
 end function
 
-function HashMapIterator_get_keysArray_Dynamic_k_() as Object
-    return m.keysArray
+function HashMapIterator_get__keysArray_DynamicN_k_() as Dynamic
+    return m._keysArray
 end function
 
-function HashMapIterator_get_keyCount_I_k_() as Integer
-    return m.keyCount
+sub HashMapIterator_set__keysArray_DynamicN_k_(value as Dynamic)
+    m._keysArray = value
+end sub
+
+function HashMapIterator_get__keyCount_I_k_() as Integer
+    return m._keyCount
 end function
+
+sub HashMapIterator_set__keyCount_I_k_(value as Integer)
+    m._keyCount = value
+end sub
 
 function HashMapIterator_get_index_I_k_() as Integer
     return m.index
@@ -819,13 +893,13 @@ function mapOf_MapAnyNAnyN_k_() as Object
 end function
 
 function mapOf_Arr_MapAnyNAnyN_k_(pairs as Object) as Object
-    __when_tmp6 = invalid
+    __when_tmp5 = invalid
     if pairs.count() = 0 then
-        __when_tmp6 = emptyMap_MapAnyNAnyN_k_()
+        __when_tmp5 = emptyMap_MapAnyNAnyN_k_()
     else if true then
-        __when_tmp6 = hashMapOf_Arr_HashMapAnyNAnyN_k_(pairs)
+        __when_tmp5 = hashMapOf_Arr_HashMapAnyNAnyN_k_(pairs)
     end if
-    return __when_tmp6
+    return __when_tmp5
 
 end function
 
@@ -836,14 +910,18 @@ end function
 function EmptyMap_create_EmptyMap_k_() as Object
     this = {}
     this.__type = "EmptyMap"
-    this.__proto = ["EmptyMap"]
+    this.__proto = ["EmptyMap", "Map"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = EmptyMap_isEmpty_Z_k_
     this.containsKey_AnyN_Z_k_ = EmptyMap_containsKey_AnyN_Z_k_
     this.containsValue_AnyN_Z_k_ = EmptyMap_containsValue_AnyN_Z_k_
     this.get_AnyN_AnyN_k_ = EmptyMap_get_AnyN_AnyN_k_
     this.equals_AnyN_Z_k_ = EmptyMap_equals_AnyN_Z_k_
+    this.equals = EmptyMap_equals_AnyN_Z_k_
     this.hashCode_I_k_ = EmptyMap_hashCode_I_k_
+    this.hashCode = EmptyMap_hashCode_I_k_
     this.toString_Str_k_ = EmptyMap_toString_Str_k_
+    this.toString = EmptyMap_toString_Str_k_
     this.get_size = EmptyMap_get_size_I_k_
     this.get_keys = EmptyMap_get_keys_SetAnyN_k_
     this.get_values = EmptyMap_get_values_CollectionAnyN_k_
@@ -905,11 +983,13 @@ end function
 function EmptySet_create_EmptySet_k_() as Object
     this = {}
     this.__type = "EmptySet"
-    this.__proto = ["EmptySet"]
+    this.__proto = ["EmptySet", "Set", "Collection", "Iterable"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = EmptySet_isEmpty_Z_k_
     this.contains_AnyN_Z_k_ = EmptySet_contains_AnyN_Z_k_
     this.containsAll_CollectionAnyN_Z_k_ = EmptySet_containsAll_CollectionAnyN_Z_k_
     this.iterator_IteratorAnyN_k_ = EmptySet_iterator_IteratorAnyN_k_
+    this.get_array = EmptySet_get_array_Dynamic_k_
     this.get_size = EmptySet_get_size_I_k_
     return this
 end function
@@ -937,6 +1017,10 @@ function EmptySet_iterator_IteratorAnyN_k_() as Object
     return EmptyMapIterator_getInstance()
 end function
 
+function EmptySet_get_array_Dynamic_k_() as Object
+    return CreateObject("roArray", 0, true)
+end function
+
 function EmptySet_get_size_I_k_() as Integer
     return 0
 end function
@@ -944,7 +1028,8 @@ end function
 function EmptyMapIterator_create_EmptyMapIterator_k_() as Object
     this = {}
     this.__type = "EmptyMapIterator"
-    this.__proto = ["EmptyMapIterator"]
+    this.__proto = ["EmptyMapIterator", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
     this.hasNext_Z_k_ = EmptyMapIterator_hasNext_Z_k_
     this.next_AnyN_k_ = EmptyMapIterator_next_AnyN_k_
     return this
@@ -968,11 +1053,13 @@ end function
 function EmptyEntrySet_create_EmptyEntrySet_k_() as Object
     this = {}
     this.__type = "EmptyEntrySet"
-    this.__proto = ["EmptyEntrySet"]
+    this.__proto = ["EmptyEntrySet", "Set", "Collection", "Iterable"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = EmptyEntrySet_isEmpty_Z_k_
     this.contains_EntryAnyNAnyN_Z_k_ = EmptyEntrySet_contains_EntryAnyNAnyN_Z_k_
     this.containsAll_CollectionEntryAnyNAnyN_Z_k_ = EmptyEntrySet_containsAll_CollectionEntryAnyNAnyN_Z_k_
     this.iterator_IteratorEntryAnyNAnyN_k_ = EmptyEntrySet_iterator_IteratorEntryAnyNAnyN_k_
+    this.get_array = EmptyEntrySet_get_array_Dynamic_k_
     this.get_size = EmptyEntrySet_get_size_I_k_
     return this
 end function
@@ -1000,6 +1087,10 @@ function EmptyEntrySet_iterator_IteratorEntryAnyNAnyN_k_() as Object
     return EmptyEntryIterator_getInstance()
 end function
 
+function EmptyEntrySet_get_array_Dynamic_k_() as Object
+    return CreateObject("roArray", 0, true)
+end function
+
 function EmptyEntrySet_get_size_I_k_() as Integer
     return 0
 end function
@@ -1007,7 +1098,8 @@ end function
 function EmptyEntryIterator_create_EmptyEntryIterator_k_() as Object
     this = {}
     this.__type = "EmptyEntryIterator"
-    this.__proto = ["EmptyEntryIterator"]
+    this.__proto = ["EmptyEntryIterator", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
     this.hasNext_Z_k_ = EmptyEntryIterator_hasNext_Z_k_
     this.next_EntryAnyNAnyN_k_ = EmptyEntryIterator_next_EntryAnyNAnyN_k_
     return this

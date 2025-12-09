@@ -1,8 +1,8 @@
 function UInt_create_I_UInt_k_(data as Integer) as Object
     this = {}
     this.__type = "UInt"
-    this.__proto = ["UInt"]
-    this.data = data
+    this.__proto = ["UInt", "Comparable"]
+    this.__id = __kotlin_nextObjectId()
     this.compareTo_UByte_I_k_ = UInt_compareTo_UByte_I_k_
     this.compareTo_UShort_I_k_ = UInt_compareTo_UShort_I_k_
     this.compareTo_UInt_I_k_ = UInt_compareTo_UInt_I_k_
@@ -56,9 +56,13 @@ function UInt_create_I_UInt_k_(data as Integer) as Object
     this.toFloat_F_k_ = UInt_toFloat_F_k_
     this.toDouble_D_k_ = UInt_toDouble_D_k_
     this.toString_Str_k_ = UInt_toString_Str_k_
+    this.toString = UInt_toString_Str_k_
     this.equals_AnyN_Z_k_ = UInt_equals_AnyN_Z_k_
+    this.equals = UInt_equals_AnyN_Z_k_
     this.hashCode_I_k_ = UInt_hashCode_I_k_
+    this.hashCode = UInt_hashCode_I_k_
     this.get_data = UInt_get_data_I_k_
+    this.data = data
     return this
 end function
 
@@ -103,7 +107,7 @@ function UInt_minus_UShort_UInt_k_(other as Object) as Object
 end function
 
 function UInt_minus_UInt_UInt_k_(other as Object) as Object
-    return UInt_create_I_UInt_k_(m.get_data().minus_I_I_k_(other.get_data()))
+    return UInt_create_I_UInt_k_(minus_rI_I_I_k_(m.get_data(), other.get_data()))
 end function
 
 function UInt_minus_ULong_ULong_k_(other as Object) as Object
@@ -119,7 +123,7 @@ function UInt_times_UShort_UInt_k_(other as Object) as Object
 end function
 
 function UInt_times_UInt_UInt_k_(other as Object) as Object
-    return UInt_create_I_UInt_k_(m.get_data().times_I_I_k_(other.get_data()))
+    return UInt_create_I_UInt_k_(times_rI_I_I_k_(m.get_data(), other.get_data()))
 end function
 
 function UInt_times_ULong_ULong_k_(other as Object) as Object
@@ -207,27 +211,27 @@ function UInt_rangeUntil_UInt_UIntRange_k_(other as Object) as Object
 end function
 
 function UInt_shl_I_UInt_k_(bitCount as Integer) as Object
-    return UInt_create_I_UInt_k_(m.get_data().shl_I_I_k_(bitCount))
+    return UInt_create_I_UInt_k_(shl_rI_I_I_k_(m.get_data(), bitCount))
 end function
 
 function UInt_shr_I_UInt_k_(bitCount as Integer) as Object
-    return UInt_create_I_UInt_k_(m.get_data().ushr_I_I_k_(bitCount))
+    return UInt_create_I_UInt_k_(ushr_rI_I_I_k_(m.get_data(), bitCount))
 end function
 
 function UInt_and_UInt_UInt_k_(other as Object) as Object
-    return UInt_create_I_UInt_k_(m.get_data().and_I_I_k_(other.get_data()))
+    return UInt_create_I_UInt_k_(and_rI_I_I_k_(m.get_data(), other.get_data()))
 end function
 
 function UInt_or_UInt_UInt_k_(other as Object) as Object
-    return UInt_create_I_UInt_k_(m.get_data().or_I_I_k_(other.get_data()))
+    return UInt_create_I_UInt_k_(or_rI_I_I_k_(m.get_data(), other.get_data()))
 end function
 
 function UInt_xor_UInt_UInt_k_(other as Object) as Object
-    return UInt_create_I_UInt_k_(m.get_data().xor_I_I_k_(other.get_data()))
+    return UInt_create_I_UInt_k_(xor_rI_I_I_k_(m.get_data(), other.get_data()))
 end function
 
 function UInt_inv_UInt_k_() as Object
-    return UInt_create_I_UInt_k_(m.get_data().inv_I_k_())
+    return UInt_create_I_UInt_k_(inv_rI_I_k_(m.get_data()))
 end function
 
 function UInt_toByte_B_k_() as Integer
@@ -290,14 +294,15 @@ function UInt_Companion_create_Companion_k_() as Object
     this = {}
     this.__type = "UInt_Companion"
     this.__proto = ["UInt_Companion"]
-    this.MIN_VALUE = UInt_create_I_UInt_k_(0)
-    this.MAX_VALUE = UInt_create_I_UInt_k_(-1)
-    this.SIZE_BYTES = 4
-    this.SIZE_BITS = 32
+    this.__id = __kotlin_nextObjectId()
     this.get_MIN_VALUE = UInt_Companion_get_MIN_VALUE_UInt_k_
     this.get_MAX_VALUE = UInt_Companion_get_MAX_VALUE_UInt_k_
     this.get_SIZE_BYTES = UInt_Companion_get_SIZE_BYTES_I_k_
     this.get_SIZE_BITS = UInt_Companion_get_SIZE_BITS_I_k_
+    this.MIN_VALUE = UInt_create_I_UInt_k_(0)
+    this.MAX_VALUE = UInt_create_I_UInt_k_(-1)
+    this.SIZE_BYTES = 4
+    this.SIZE_BITS = 32
     return this
 end function
 

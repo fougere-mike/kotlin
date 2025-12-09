@@ -2,6 +2,7 @@ function RoDeviceInfo_create_RoDeviceInfo_k_() as Object
     this = {}
     this.__type = "RoDeviceInfo"
     this.__proto = ["RoDeviceInfo"]
+    this.__id = __kotlin_nextObjectId()
     this.getModel_Str_k_ = RoDeviceInfo_getModel_Str_k_
     this.getModelDisplayName_Str_k_ = RoDeviceInfo_getModelDisplayName_Str_k_
     this.getModelDetails_Dynamic_k_ = RoDeviceInfo_getModelDetails_Dynamic_k_
@@ -206,6 +207,7 @@ function RoAppInfo_create_RoAppInfo_k_() as Object
     this = {}
     this.__type = "RoAppInfo"
     this.__proto = ["RoAppInfo"]
+    this.__id = __kotlin_nextObjectId()
     this.getID_Str_k_ = RoAppInfo_getID_Str_k_
     this.isDev_Z_k_ = RoAppInfo_isDev_Z_k_
     this.getTitle_Str_k_ = RoAppInfo_getTitle_Str_k_

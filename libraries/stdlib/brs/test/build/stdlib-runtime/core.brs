@@ -2,7 +2,9 @@ function Invalid_create_Invalid_k_() as Object
     this = {}
     this.__type = "Invalid"
     this.__proto = ["Invalid"]
+    this.__id = __kotlin_nextObjectId()
     this.toString_Str_k_ = Invalid_toString_Str_k_
+    this.toString = Invalid_toString_Str_k_
     return this
 end function
 

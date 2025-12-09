@@ -32,7 +32,7 @@ sub sequenceTests_rTestRunner_k_(m as Object)
         m.test_Str_Function0V_k_("flatMap", {invoke: function() as Void
             list = listOf_Arr_ListAnyN_k_([1, 2, 3])
             result = toList_rSequenceAnyN_ListAnyN_k_(flatMap_rSequenceAnyN_Function1AnyNIterableAnyN_SequenceAnyN_k_(asSequence_rIterableAnyN_SequenceAnyN_k_(list), {invoke: function(n as Integer) as Object
-                return toList_rIterableAnyN_ListAnyN_k_(1.rangeTo_I_IntRange_k_(n))
+                return toList_rIterableAnyN_ListAnyN_k_(rangeTo_rI_I_IntRange_k_(1, n))
             end function}))
             assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_ListAnyN_k_([1, 1, 2, 1, 2, 3]), result)
         end function})

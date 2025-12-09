@@ -3,6 +3,7 @@ function Animal_create_Str_Animal_k_(name as String) as Object
     this = {}
     this.__type = "Animal"
     this.__proto = ["Animal"]
+    this.__id = __kotlin_nextObjectId()
     this.name = name
     this.speak_Str_k_ = Animal_speak_Str_k_
     this.introduce_Str_k_ = Animal_introduce_Str_k_
@@ -15,7 +16,7 @@ function Animal_speak_Str_k_() as String
 end function
 
 function Animal_introduce_Str_k_() as String
-    return "I am " + m.name
+    return "I am " + m.get_name()
 end function
 
 function Animal_get_name_Str_k_() as String

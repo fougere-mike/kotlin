@@ -5,6 +5,9 @@
 
 package kotlin.collections
 
+import kotlin.brs.BrsInline
+import kotlin.brs.Dynamic
+
 /**
  * Hash table based implementation of [MutableSet].
  *
@@ -12,6 +15,25 @@ package kotlin.collections
  * providing O(1) average time for add, remove, and contains operations.
  */
 public class HashSet<E> : MutableSet<E> {
+
+    @BrsInline("return CreateObject(\"roArray\", 0, true)")
+    private external fun brsCreateArray(): Dynamic
+
+    @BrsInline("arr.Push(value)")
+    private external fun brsArrayPush(arr: Dynamic, value: Any?): Unit
+
+    /**
+     * Returns an array containing the elements for BrightScript for-each iteration.
+     */
+    internal val array: Dynamic
+        get() {
+            val result = brsCreateArray()
+            val iter = map.keys.iterator()
+            while (iter.hasNext()) {
+                brsArrayPush(result, iter.next())
+            }
+            return result
+        }
 
     private val map: HashMap<E, Boolean>
 
@@ -150,7 +172,10 @@ public class HashSet<E> : MutableSet<E> {
     ) : MutableIterator<E> {
         override fun hasNext(): Boolean = keyIterator.hasNext()
         override fun next(): E = keyIterator.next()
-        override fun remove() = keyIterator.remove()
+        // Workaround: Expression function bodies with side effects don't generate correctly
+        override fun remove() {
+            keyIterator.remove()
+        }
     }
 }
 
@@ -203,6 +228,15 @@ public fun <T> emptySet(): Set<T> = EmptyHashSet as Set<T>
  * Singleton empty set implementation.
  */
 private object EmptyHashSet : Set<Any?> {
+    @BrsInline("return CreateObject(\"roArray\", 0, true)")
+    private external fun brsCreateArray(): Dynamic
+
+    /**
+     * Returns an empty array for BrightScript for-each iteration.
+     */
+    internal val array: Dynamic
+        get() = brsCreateArray()
+
     override val size: Int get() = 0
     override fun isEmpty(): Boolean = true
     override fun contains(element: Any?): Boolean = false
