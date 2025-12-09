@@ -24,7 +24,7 @@ function Function0Adapter_invoke_AnyN_k_() as Dynamic
 end function
 
 function Function0Adapter_invoke_Arr_AnyN_k_(args as Object) as Dynamic
-    return m.invoke()
+    return m.invoke_AnyN_k_()
 end function
 
 function Function1Adapter_create_Function1AdapterAnyNAnyN_k_() as Object
@@ -42,7 +42,7 @@ function Function1Adapter_invoke_AnyN_AnyN_k_(p1 as Dynamic) as Dynamic
 end function
 
 function Function1Adapter_invoke_Arr_AnyN_k_(args as Object) as Dynamic
-    return m.invoke(args[0])
+    return m.invoke_AnyN_AnyN_k_(args[0])
 end function
 
 function Function2Adapter_create_Function2AdapterAnyNAnyNAnyN_k_() as Object
@@ -60,7 +60,7 @@ function Function2Adapter_invoke_AnyN_AnyN_AnyN_k_(p1 as Dynamic, p2 as Dynamic)
 end function
 
 function Function2Adapter_invoke_Arr_AnyN_k_(args as Object) as Dynamic
-    return m.invoke(args[0], args[1])
+    return m.invoke_AnyN_AnyN_AnyN_k_(args[0], args[1])
 end function
 
 function Function3Adapter_create_Function3AdapterAnyNAnyNAnyNAnyN_k_() as Object
@@ -78,5 +78,5 @@ function Function3Adapter_invoke_AnyN_AnyN_AnyN_AnyN_k_(p1 as Dynamic, p2 as Dyn
 end function
 
 function Function3Adapter_invoke_Arr_AnyN_k_(args as Object) as Dynamic
-    return m.invoke(args[0], args[1], args[2])
+    return m.invoke_AnyN_AnyN_AnyN_AnyN_k_(args[0], args[1], args[2])
 end function

@@ -335,7 +335,17 @@ function AssertionError_create_AnyN_AssertionError_k_(message as Dynamic) as Obj
     if tmp0_safe_receiver = invalid then
         __when_tmp0 = invalid
     else if true then
-        __when_tmp0 = tmp0_safe_receiver.toString()
+        __when_tmp0 = ((function(Str, tmp0_safe_receiver)
+            if tmp0_safe_receiver = invalid then return "null" else return (function(Str, tmp0_safe_receiver)
+                if (Type(tmp0_safe_receiver) = "String") or (Type(tmp0_safe_receiver) = "roString") then return tmp0_safe_receiver else return (function(Str, tmp0_safe_receiver)
+                    if ((((((Type(tmp0_safe_receiver) = "Integer") or (Type(tmp0_safe_receiver) = "LongInteger")) or (Type(tmp0_safe_receiver) = "Float")) or (Type(tmp0_safe_receiver) = "Double")) or (Type(tmp0_safe_receiver) = "roInt")) or (Type(tmp0_safe_receiver) = "roFloat")) or (Type(tmp0_safe_receiver) = "roDouble") then return Str(tmp0_safe_receiver) else return (function(tmp0_safe_receiver)
+                        if (Type(tmp0_safe_receiver) = "Boolean") or (Type(tmp0_safe_receiver) = "roBoolean") then return (function(tmp0_safe_receiver)
+                            if tmp0_safe_receiver then return "true" else return "false"
+                        end function)(tmp0_safe_receiver) else return tmp0_safe_receiver.toString()
+                    end function)(tmp0_safe_receiver)
+                end function)(Str, tmp0_safe_receiver)
+            end function)(Str, tmp0_safe_receiver)
+        end function)(Str, tmp0_safe_receiver))
     end if
     this = Error_create_StrN_Error_k_(__when_tmp0)
     this._super = {}
@@ -434,8 +444,8 @@ end function
 
 function stackTraceToString_rThrowable_Str_k_(m as Object) as String
     sb = StringBuilder_create_StringBuilder_k_()
-    sb.append(m.toString())
-    sb.append(chr(10))
+    sb.append_StrN_StringBuilder_k_(m.toString())
+    sb.append_StrN_StringBuilder_k_(chr(10))
     tmp0_safe_receiver = (function(__kotlin_isInstanceOf)
         if __kotlin_isInstanceOf(m, "Throwable") then return m else return invalid
     end function)(__kotlin_isInstanceOf)
@@ -443,26 +453,26 @@ function stackTraceToString_rThrowable_Str_k_(m as Object) as String
     if tmp0_safe_receiver = invalid then
         __when_tmp1 = invalid
     else if true then
-        __when_tmp1 = tmp0_safe_receiver.getStack()
+        __when_tmp1 = tmp0_safe_receiver.getStack_StrN_k_()
     end if
     stack = __when_tmp1
 
     if stack <> invalid then
-        sb.append(stack)
+        sb.append_StrN_StringBuilder_k_(stack)
     end if
     suppressed = get_suppressedExceptions_rThrowable_Arr_k_(m)
-    if suppressed.size > 0 then
+    if suppressed.count() > 0 then
         i = 0
-        while i < suppressed.size
-            sb.append(chr(10) + "Suppressed: ")
-            sb.append(stackTraceToString_rThrowable_Str_k_(suppressed[i]))
+        while i < suppressed.count()
+            sb.append_StrN_StringBuilder_k_(chr(10) + "Suppressed: ")
+            sb.append_StrN_StringBuilder_k_(stackTraceToString_rThrowable_Str_k_(suppressed[i]))
             i = (i + 1)
         end while
     end if
-    cause = m.cause
+    cause = m.get_cause()
     if cause <> invalid then
-        sb.append(chr(10) + "Caused by: ")
-        sb.append(stackTraceToString_rThrowable_Str_k_(cause))
+        sb.append_StrN_StringBuilder_k_(chr(10) + "Caused by: ")
+        sb.append_StrN_StringBuilder_k_(stackTraceToString_rThrowable_Str_k_(cause))
     end if
     return sb.toString()
 end function

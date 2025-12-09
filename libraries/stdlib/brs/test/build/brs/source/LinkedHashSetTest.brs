@@ -1,101 +1,101 @@
 sub linkedHashSetTests_rTestRunner_k_(m as Object)
-    m.suite("LinkedHashSet", {_this_suite: _this_suite, invoke: function() as Void
-        m._this_suite.test("insertion order", {invoke: function() as Void
+    m.suite_Str_Function1TestRunnerV_k_("LinkedHashSet", {invoke: function(m as Object) as Void
+        m.test_Str_Function0V_k_("insertion order", {invoke: function() as Void
             set = LinkedHashSet_create_LinkedHashSetAnyN_k_()
-            set.add("three")
-            set.add("one")
-            set.add("two")
+            set.add_AnyN_Z_k_("three")
+            set.add_AnyN_Z_k_("one")
+            set.add_AnyN_Z_k_("two")
             list = toList_rIterableAnyN_ListAnyN_k_(set)
             assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_ListAnyN_k_(["three", "one", "two"]), list)
         end function})
-        m._this_suite.test("no duplicates", {invoke: function() as Void
+        m.test_Str_Function0V_k_("no duplicates", {invoke: function() as Void
             set = LinkedHashSet_create_LinkedHashSetAnyN_k_()
-            assertTrue_Z_StrN_k_(set.add(1))
-            assertTrue_Z_StrN_k_(set.add(2))
-            assertFalse_Z_StrN_k_(set.add(1))
-            assertEquals_AnyN_AnyN_StrN_k_(2, set.size)
+            assertTrue_Z_StrN_k_(set.add_AnyN_Z_k_(1))
+            assertTrue_Z_StrN_k_(set.add_AnyN_Z_k_(2))
+            assertFalse_Z_StrN_k_(set.add_AnyN_Z_k_(1))
+            assertEquals_AnyN_AnyN_StrN_k_(2, set.get_size())
             assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_ListAnyN_k_([1, 2]), toList_rIterableAnyN_ListAnyN_k_(set))
         end function})
-        m._this_suite.test("constructor with collection", {invoke: function() as Void
+        m.test_Str_Function0V_k_("constructor with collection", {invoke: function() as Void
             list = listOf_Arr_ListAnyN_k_([3, 1, 2, 1, 3])
             set = LinkedHashSet_create_CollectionAnyN_LinkedHashSetAnyN_k_(list)
-            assertEquals_AnyN_AnyN_StrN_k_(3, set.size)
+            assertEquals_AnyN_AnyN_StrN_k_(3, set.get_size())
             assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_ListAnyN_k_([3, 1, 2]), toList_rIterableAnyN_ListAnyN_k_(set))
         end function})
-        m._this_suite.test("remove", {invoke: function() as Void
+        m.test_Str_Function0V_k_("remove", {invoke: function() as Void
             set = LinkedHashSet_create_LinkedHashSetAnyN_k_()
-            set.add("one")
-            set.add("two")
-            set.add("three")
-            assertTrue_Z_StrN_k_(set.remove("two"))
-            assertFalse_Z_StrN_k_(set.remove("four"))
-            assertEquals_AnyN_AnyN_StrN_k_(2, set.size)
+            set.add_AnyN_Z_k_("one")
+            set.add_AnyN_Z_k_("two")
+            set.add_AnyN_Z_k_("three")
+            assertTrue_Z_StrN_k_(set.remove_AnyN_Z_k_("two"))
+            assertFalse_Z_StrN_k_(set.remove_AnyN_Z_k_("four"))
+            assertEquals_AnyN_AnyN_StrN_k_(2, set.get_size())
             assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_ListAnyN_k_(["one", "three"]), toList_rIterableAnyN_ListAnyN_k_(set))
         end function})
-        m._this_suite.test("contains", {invoke: function() as Void
+        m.test_Str_Function0V_k_("contains", {invoke: function() as Void
             set = LinkedHashSet_create_LinkedHashSetAnyN_k_()
-            set.add(1)
-            set.add(2)
-            set.add(3)
-            assertTrue_Z_StrN_k_(set.contains(2))
-            assertFalse_Z_StrN_k_(set.contains(5))
+            set.add_AnyN_Z_k_(1)
+            set.add_AnyN_Z_k_(2)
+            set.add_AnyN_Z_k_(3)
+            assertTrue_Z_StrN_k_(set.contains_AnyN_Z_k_(2))
+            assertFalse_Z_StrN_k_(set.contains_AnyN_Z_k_(5))
         end function})
-        m._this_suite.test("iterator", {invoke: function() as Void
+        m.test_Str_Function0V_k_("iterator", {invoke: function() as Void
             set = LinkedHashSet_create_LinkedHashSetAnyN_k_()
-            set.add(10)
-            set.add(20)
-            set.add(30)
+            set.add_AnyN_Z_k_(10)
+            set.add_AnyN_Z_k_(20)
+            set.add_AnyN_Z_k_(30)
             collected = mutableListOf_MutableListAnyN_k_()
-            for each element in set
-                collected.add(element)
+            for each element in set.array
+                collected.add_AnyN_Z_k_(element)
 
             end for
             assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_ListAnyN_k_([10, 20, 30]), collected)
         end function})
-        m._this_suite.test("iterator remove", {invoke: function() as Void
+        m.test_Str_Function0V_k_("iterator remove", {invoke: function() as Void
             set = LinkedHashSet_create_LinkedHashSetAnyN_k_()
-            set.add("a")
-            set.add("b")
-            set.add("c")
-            iter = set.iterator()
-            while iter.hasNext()
-                if iter.next() = "b" then
+            set.add_AnyN_Z_k_("a")
+            set.add_AnyN_Z_k_("b")
+            set.add_AnyN_Z_k_("c")
+            iter = set.iterator_MutableIteratorAnyN_k_()
+            while iter.hasNext_Z_k_()
+                if iter.next_AnyN_k_() = "b" then
                     iter.remove()
                 end if
             end while
-            assertEquals_AnyN_AnyN_StrN_k_(2, set.size)
+            assertEquals_AnyN_AnyN_StrN_k_(2, set.get_size())
             assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_ListAnyN_k_(["a", "c"]), toList_rIterableAnyN_ListAnyN_k_(set))
         end function})
-        m._this_suite.test("addAll", {invoke: function() as Void
+        m.test_Str_Function0V_k_("addAll", {invoke: function() as Void
             set = LinkedHashSet_create_LinkedHashSetAnyN_k_()
-            set.add(1)
-            result = set.addAll(listOf_Arr_ListAnyN_k_([2, 3, 1]))
+            set.add_AnyN_Z_k_(1)
+            result = set.addAll_CollectionAnyN_Z_k_(listOf_Arr_ListAnyN_k_([2, 3, 1]))
             assertTrue_Z_StrN_k_(result)
-            assertEquals_AnyN_AnyN_StrN_k_(3, set.size)
+            assertEquals_AnyN_AnyN_StrN_k_(3, set.get_size())
             assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_ListAnyN_k_([1, 2, 3]), toList_rIterableAnyN_ListAnyN_k_(set))
         end function})
-        m._this_suite.test("removeAll", {invoke: function() as Void
+        m.test_Str_Function0V_k_("removeAll", {invoke: function() as Void
             set = LinkedHashSet_create_LinkedHashSetAnyN_k_()
-            set.addAll(listOf_Arr_ListAnyN_k_([1, 2, 3, 4, 5]))
-            result = set.removeAll(listOf_Arr_ListAnyN_k_([2, 4]))
+            set.addAll_CollectionAnyN_Z_k_(listOf_Arr_ListAnyN_k_([1, 2, 3, 4, 5]))
+            result = set.removeAll_CollectionAnyN_Z_k_(listOf_Arr_ListAnyN_k_([2, 4]))
             assertTrue_Z_StrN_k_(result)
-            assertEquals_AnyN_AnyN_StrN_k_(3, set.size)
+            assertEquals_AnyN_AnyN_StrN_k_(3, set.get_size())
             assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_ListAnyN_k_([1, 3, 5]), toList_rIterableAnyN_ListAnyN_k_(set))
         end function})
-        m._this_suite.test("retainAll", {invoke: function() as Void
+        m.test_Str_Function0V_k_("retainAll", {invoke: function() as Void
             set = LinkedHashSet_create_LinkedHashSetAnyN_k_()
-            set.addAll(listOf_Arr_ListAnyN_k_([1, 2, 3, 4, 5]))
-            result = set.retainAll(listOf_Arr_ListAnyN_k_([2, 3, 6]))
+            set.addAll_CollectionAnyN_Z_k_(listOf_Arr_ListAnyN_k_([1, 2, 3, 4, 5]))
+            result = set.retainAll_CollectionAnyN_Z_k_(listOf_Arr_ListAnyN_k_([2, 3, 6]))
             assertTrue_Z_StrN_k_(result)
-            assertEquals_AnyN_AnyN_StrN_k_(2, set.size)
+            assertEquals_AnyN_AnyN_StrN_k_(2, set.get_size())
             assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_ListAnyN_k_([2, 3]), toList_rIterableAnyN_ListAnyN_k_(set))
         end function})
-        m._this_suite.test("clear", {invoke: function() as Void
+        m.test_Str_Function0V_k_("clear", {invoke: function() as Void
             set = LinkedHashSet_create_LinkedHashSetAnyN_k_()
-            set.addAll(listOf_Arr_ListAnyN_k_(["a", "b", "c"]))
+            set.addAll_CollectionAnyN_Z_k_(listOf_Arr_ListAnyN_k_(["a", "b", "c"]))
             set.clear()
-            assertEquals_AnyN_AnyN_StrN_k_(0, set.size)
-            assertTrue_Z_StrN_k_(set.isEmpty())
+            assertEquals_AnyN_AnyN_StrN_k_(0, set.get_size())
+            assertTrue_Z_StrN_k_(set.isEmpty_Z_k_())
         end function})
     end function})
 end sub

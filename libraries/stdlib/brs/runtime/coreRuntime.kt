@@ -15,6 +15,8 @@ package kotlin.brs.runtime
  * Handles BrightScript-specific comparison semantics.
  */
 internal fun equals(obj1: Any?, obj2: Any?): Boolean {
+    // Identity check first - uses the EQEQEQ intrinsic which will be lowered
+    // by the compiler to __kotlin_identityEquals
     if (obj1 === obj2) return true
     if (obj1 == null || obj2 == null) return false
 

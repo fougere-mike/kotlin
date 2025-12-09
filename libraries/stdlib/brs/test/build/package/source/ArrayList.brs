@@ -29,7 +29,7 @@ function ArrayList_create_ArrayListAnyN_k_() as Object
     this.get_array = ArrayList_get_array_Dynamic_k_
     this.set_array = ArrayList_set_array_Dynamic_k_
     this.get_size = ArrayList_get_size_I_k_
-    m.array = CreateObject("roArray", 0, true)
+    this.set_array(CreateObject("roArray", 0, true))
     return this
 end function
 
@@ -67,7 +67,7 @@ function ArrayList_create_I_ArrayListAnyN_k_(initialCapacity as Integer) as Obje
     require_Z_Function0Any_k_(initialCapacity >= 0, {initialCapacity: initialCapacity, invoke: function() as Object
         return "Negative initial capacity: " + m.initialCapacity
     end function})
-    m.array = CreateObject("roArray", initialCapacity, true)
+    this.set_array(CreateObject("roArray", initialCapacity, true))
     return this
 end function
 
@@ -102,22 +102,22 @@ function ArrayList_create_CollectionAnyN_ArrayListAnyN_k_(elements as Object) as
     this.get_array = ArrayList_get_array_Dynamic_k_
     this.set_array = ArrayList_set_array_Dynamic_k_
     this.get_size = ArrayList_get_size_I_k_
-    m.array = CreateObject("roArray", 0, true)
-    m.addAll(elements)
+    this.set_array(CreateObject("roArray", 0, true))
+    this.addAll_CollectionAnyN_Z_k_(elements)
     return this
 end function
 
 function ArrayList_isEmpty_Z_k_() as Boolean
-    return m.size = 0
+    return m.get_size() = 0
 end function
 
 function ArrayList_contains_AnyN_Z_k_(element as Dynamic) as Boolean
-    return m.indexOf(element) >= 0
+    return m.indexOf_AnyN_I_k_(element) >= 0
 end function
 
 function ArrayList_containsAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
-    for each element in elements
-        if m.contains(element).not() then
+    for each element in elements.array
+        if not m.contains_AnyN_Z_k_(element) then
             return false
         end if
     end for
@@ -125,66 +125,66 @@ function ArrayList_containsAll_CollectionAnyN_Z_k_(elements as Object) as Boolea
 end function
 
 function ArrayList_get_I_AnyN_k_(index as Integer) as Dynamic
-    checkElementIndex_I_I_k_(index, m.size)
-    return m.array[index]
+    checkElementIndex_I_I_k_(index, m.get_size())
+    return m.get_array()[index]
 end function
 
 function ArrayList_set_I_AnyN_AnyN_k_(index as Integer, element as Dynamic) as Dynamic
-    checkElementIndex_I_I_k_(index, m.size)
-    oldValue = m.array[index]
-    m.array[index] = element
+    checkElementIndex_I_I_k_(index, m.get_size())
+    oldValue = m.get_array()[index]
+    m.get_array()[index] = element
     return oldValue
 end function
 
 function ArrayList_add_AnyN_Z_k_(element as Dynamic) as Boolean
-    m.array.Push(element)
+    m.get_array().Push(element)
     return true
 end function
 
 sub ArrayList_add_I_AnyN_k_(index as Integer, element as Dynamic)
-    checkPositionIndex_I_I_k_(index, m.size)
-    if index = m.size then
-        m.array.Push(element)
+    checkPositionIndex_I_I_k_(index, m.get_size())
+    if index = m.get_size() then
+        m.get_array().Push(element)
     else if true then
-        m.brsArrayInsertAt(m.array, index, element)
+        m.brsArrayInsertAt_Dynamic_I_AnyN_k_(m.get_array(), index, element)
     end if
 end sub
 
 function ArrayList_remove_AnyN_Z_k_(element as Dynamic) as Boolean
-    index = m.indexOf(element)
+    index = m.indexOf_AnyN_I_k_(element)
     if index < 0 then
         return false
     end if
-    m.removeAt(index)
+    m.removeAt_I_AnyN_k_(index)
     return true
 end function
 
 function ArrayList_removeAt_I_AnyN_k_(index as Integer) as Dynamic
-    checkElementIndex_I_I_k_(index, m.size)
-    oldValue = m.array[index]
-    m.array.Delete(index)
+    checkElementIndex_I_I_k_(index, m.get_size())
+    oldValue = m.get_array()[index]
+    m.get_array().Delete(index)
     return oldValue
 end function
 
 function ArrayList_addAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
-    if elements.isEmpty() then
+    if elements.isEmpty_Z_k_() then
         return false
     end if
-    for each element in elements
-        m.array.Push(element)
+    for each element in elements.array
+        m.get_array().Push(element)
 
     end for
     return true
 end function
 
 function ArrayList_addAll_I_CollectionAnyN_Z_k_(index as Integer, elements as Object) as Boolean
-    checkPositionIndex_I_I_k_(index, m.size)
-    if elements.isEmpty() then
+    checkPositionIndex_I_I_k_(index, m.get_size())
+    if elements.isEmpty_Z_k_() then
         return false
     end if
     currentIndex = index
-    for each element in elements
-        m.add(currentIndex, element)
+    for each element in elements.array
+        m.add_I_AnyN_k_(currentIndex, element)
         currentIndex = (unary + 1)
 
     end for
@@ -193,8 +193,8 @@ end function
 
 function ArrayList_removeAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
     modified = false
-    for each element in elements
-        while m.remove(element)
+    for each element in elements.array
+        while m.remove_AnyN_Z_k_(element)
             modified = true
         end while
 
@@ -204,9 +204,9 @@ end function
 
 function ArrayList_retainAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
     modified = false
-    iter = m.iterator()
-    while iter.hasNext()
-        if elements.contains(iter.next()).not() then
+    iter = m.iterator_MutableIteratorAnyN_k_()
+    while iter.hasNext_Z_k_()
+        if not elements.contains_AnyN_Z_k_(iter.next_AnyN_k_()) then
             iter.remove()
             modified = true
         end if
@@ -215,18 +215,18 @@ function ArrayList_retainAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
 end function
 
 sub ArrayList_clear()
-    m.array.Clear()
+    m.get_array().Clear()
 end sub
 
 function ArrayList_indexOf_AnyN_I_k_(element as Dynamic) as Integer
-    progression = until_rI_I_IntRange_k_(0, m.size)
-    inductionVariable = progression.first
-    last = progression.last
-    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+    progression = until_rI_I_IntRange_k_(0, m.get_size())
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if m.array[i] = element then
+        if m.get_array()[i] = element then
             return i
         end if
 
@@ -235,7 +235,7 @@ function ArrayList_indexOf_AnyN_I_k_(element as Dynamic) as Integer
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if m.array[i] = element then
+            if m.get_array()[i] = element then
                 return i
             end if
 
@@ -247,9 +247,9 @@ function ArrayList_indexOf_AnyN_I_k_(element as Dynamic) as Integer
 end function
 
 function ArrayList_lastIndexOf_AnyN_I_k_(element as Dynamic) as Integer
-    i = m.size - 1
+    i = m.get_size() - 1
     while i >= 0
-        if m.array[i] = element then
+        if m.get_array()[i] = element then
             return i
         end if
         i = (i - 1)
@@ -266,12 +266,12 @@ function ArrayList_listIterator_MutableListIteratorAnyN_k_() as Object
 end function
 
 function ArrayList_listIterator_I_MutableListIteratorAnyN_k_(index as Integer) as Object
-    checkPositionIndex_I_I_k_(index, m.size)
+    checkPositionIndex_I_I_k_(index, m.get_size())
     return ArrayListIterator_create_ArrayListAnyN_I_ArrayListIteratorAnyN_k_(m, index)
 end function
 
 function ArrayList_subList_I_I_MutableListAnyN_k_(fromIndex as Integer, toIndex as Integer) as Object
-    checkRangeIndexes_I_I_I_k_(fromIndex, toIndex, m.size)
+    checkRangeIndexes_I_I_I_k_(fromIndex, toIndex, m.get_size())
     return SubList_create_ArrayListAnyN_I_I_SubListAnyN_k_(m, fromIndex, toIndex)
 end function
 
@@ -282,12 +282,12 @@ function ArrayList_equals_AnyN_Z_k_(other as Dynamic) as Boolean
     if not __kotlin_isInstanceOf(other, "List") then
         return false
     end if
-    if other.size <> m.size then
+    if other.get_size() <> m.get_size() then
         return false
     end if
     i = 0
-    for each element in other
-        if m.get(i) <> element then
+    for each element in other.array
+        if m.get_I_AnyN_k_(i) <> element then
             return false
         end if
         i = (unary + 1)
@@ -298,14 +298,14 @@ end function
 
 function ArrayList_hashCode_I_k_() as Integer
     hashCode = 1
-    progression = until_rI_I_IntRange_k_(0, m.size)
-    inductionVariable = progression.first
-    last = progression.last
-    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+    progression = until_rI_I_IntRange_k_(0, m.get_size())
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        element = m.get(i)
+        element = m.get_I_AnyN_k_(i)
         tmp0_safe_receiver = element
         __when_tmp0 = invalid
         if tmp0_safe_receiver = invalid then
@@ -327,7 +327,7 @@ function ArrayList_hashCode_I_k_() as Integer
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            element = m.get(i)
+            element = m.get_I_AnyN_k_(i)
             tmp0_safe_receiver = element
             __when_tmp0 = invalid
             if tmp0_safe_receiver = invalid then
@@ -352,26 +352,36 @@ function ArrayList_hashCode_I_k_() as Integer
 end function
 
 function ArrayList_toString_Str_k_() as String
-    if m.isEmpty() then
+    if m.isEmpty_Z_k_() then
         return "[]"
     end if
     sb = StringBuilder_create_StringBuilder_k_()
-    sb.append("[")
-    progression = until_rI_I_IntRange_k_(0, m.size)
-    inductionVariable = progression.first
-    last = progression.last
-    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+    sb.append_StrN_StringBuilder_k_("[")
+    progression = until_rI_I_IntRange_k_(0, m.get_size())
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
         if i > 0 then
-            sb.append(", ")
+            sb.append_StrN_StringBuilder_k_(", ")
         end if
-        element = m.get(i)
+        element = m.get_I_AnyN_k_(i)
         if EQEQEQ_AnyN_AnyN_Z_k_(element, m) then
-            sb.append("(this Collection)")
+            sb.append_StrN_StringBuilder_k_("(this Collection)")
         else if true then
-            sb.append(element.toString())
+            sb.append_StrN_StringBuilder_k_((function(Str, element)
+                if element = invalid then return "null" else return (function(Str, element)
+                    if (Type(element) = "String") or (Type(element) = "roString") then return element else return (function(Str, element)
+                        if ((((((Type(element) = "Integer") or (Type(element) = "LongInteger")) or (Type(element) = "Float")) or (Type(element) = "Double")) or (Type(element) = "roInt")) or (Type(element) = "roFloat")) or (Type(element) = "roDouble") then return Str(element) else return (function(element)
+                            if (Type(element) = "Boolean") or (Type(element) = "roBoolean") then return (function(element)
+                                if element then return "true" else return "false"
+                            end function)(element) else return element.toString()
+                        end function)(element)
+                    end function)(Str, element)
+                end function)(Str, element)
+            end function)(Str, element))
         end if
 
 
@@ -380,26 +390,36 @@ function ArrayList_toString_Str_k_() as String
             inductionVariable = (inductionVariable + 1)
 
             if i > 0 then
-                sb.append(", ")
+                sb.append_StrN_StringBuilder_k_(", ")
             end if
-            element = m.get(i)
+            element = m.get_I_AnyN_k_(i)
             if EQEQEQ_AnyN_AnyN_Z_k_(element, m) then
-                sb.append("(this Collection)")
+                sb.append_StrN_StringBuilder_k_("(this Collection)")
             else if true then
-                sb.append(element.toString())
+                sb.append_StrN_StringBuilder_k_((function(Str, element)
+                    if element = invalid then return "null" else return (function(Str, element)
+                        if (Type(element) = "String") or (Type(element) = "roString") then return element else return (function(Str, element)
+                            if ((((((Type(element) = "Integer") or (Type(element) = "LongInteger")) or (Type(element) = "Float")) or (Type(element) = "Double")) or (Type(element) = "roInt")) or (Type(element) = "roFloat")) or (Type(element) = "roDouble") then return Str(element) else return (function(element)
+                                if (Type(element) = "Boolean") or (Type(element) = "roBoolean") then return (function(element)
+                                    if element then return "true" else return "false"
+                                end function)(element) else return element.toString()
+                            end function)(element)
+                        end function)(Str, element)
+                    end function)(Str, element)
+                end function)(Str, element))
             end if
 
         end while
 
     end if
 
-    sb.append("]")
+    sb.append_StrN_StringBuilder_k_("]")
     return sb.toString()
 end function
 
 sub ArrayList_brsArrayInsertAt_Dynamic_I_AnyN_k_(arr as Object, index as Integer, value as Dynamic)
     arr.Push(value)
-    i = m.size - 1
+    i = m.get_size() - 1
     while i > index
         arr[i] = arr[i - 1]
         i = (i - 1)
@@ -416,7 +436,7 @@ sub ArrayList_set_array_Dynamic_k_(value as Object)
 end sub
 
 function ArrayList_get_size_I_k_() as Integer
-    return m.array.Count()
+    return m.get_array().Count()
 end function
 
 function ArrayListIterator_create_ArrayListAnyN_I_ArrayListIteratorAnyN_k_(list as Object, index as Integer) as Object
@@ -444,58 +464,58 @@ function ArrayListIterator_create_ArrayListAnyN_I_ArrayListIteratorAnyN_k_(list 
 end function
 
 function ArrayListIterator_hasNext_Z_k_() as Boolean
-    return m.index < m.list.size
+    return m.get_index() < m.get_list().get_size()
 end function
 
 function ArrayListIterator_next_AnyN_k_() as Dynamic
-    if m.hasNext().not() then
+    if not m.hasNext_Z_k_() then
         throw NoSuchElementException_create_NoSuchElementException_k_()
     end if
-    m.lastReturned = m.index
-    return m.list[m.index = (m.index + 1)]
+    m.set_lastReturned(m.get_index())
+    return m.get_list().get_I_AnyN_k_(m.set_index(m.get_index() + 1))
 end function
 
 function ArrayListIterator_hasPrevious_Z_k_() as Boolean
-    return m.index > 0
+    return m.get_index() > 0
 end function
 
 function ArrayListIterator_previous_AnyN_k_() as Dynamic
-    if m.hasPrevious().not() then
+    if not m.hasPrevious_Z_k_() then
         throw NoSuchElementException_create_NoSuchElementException_k_()
     end if
-    m.lastReturned = (m.index = (m.index - 1))
-    return m.list[m.index]
+    m.set_lastReturned(m.set_index(m.get_index() - 1))
+    return m.get_list().get_I_AnyN_k_(m.get_index())
 end function
 
 function ArrayListIterator_nextIndex_I_k_() as Integer
-    return m.index
+    return m.get_index()
 end function
 
 function ArrayListIterator_previousIndex_I_k_() as Integer
-    return m.index - 1
+    return m.get_index() - 1
 end function
 
 sub ArrayListIterator_remove()
-    check_Z_Function0Any_k_(m.lastReturned >= 0, {invoke: function() as Object
+    check_Z_Function0Any_k_(m.get_lastReturned() >= 0, {invoke: function() as Object
         return "Call next() or previous() before remove()"
     end function})
-    m.list.removeAt(m.lastReturned)
-    if m.lastReturned < m.index then
-        m.index = (unary - 1)
+    m.get_list().removeAt_I_AnyN_k_(m.get_lastReturned())
+    if m.get_lastReturned() < m.get_index() then
+        m.set_index(unary - 1)
     end if
-    m.lastReturned = -1
+    m.set_lastReturned(-1)
 end sub
 
 sub ArrayListIterator_set_AnyN_k_(element as Dynamic)
-    check_Z_Function0Any_k_(m.lastReturned >= 0, {invoke: function() as Object
+    check_Z_Function0Any_k_(m.get_lastReturned() >= 0, {invoke: function() as Object
         return "Call next() or previous() before set()"
     end function})
-    m.list.set(m.lastReturned, element)
+    m.get_list().set_I_AnyN_AnyN_k_(m.get_lastReturned(), element)
 end sub
 
 sub ArrayListIterator_add_AnyN_k_(element as Dynamic)
-    m.list.add(m.index = (m.index + 1), element)
-    m.lastReturned = -1
+    m.get_list().add_I_AnyN_k_(m.set_index(m.get_index() + 1), element)
+    m.set_lastReturned(-1)
 end sub
 
 function ArrayListIterator_get_list_ArrayListAnyN_k_() as Object
@@ -554,16 +574,16 @@ function SubList_create_ArrayListAnyN_I_I_SubListAnyN_k_(parent as Object, fromI
 end function
 
 function SubList_isEmpty_Z_k_() as Boolean
-    return m.size = 0
+    return m.get_size() = 0
 end function
 
 function SubList_contains_AnyN_Z_k_(element as Dynamic) as Boolean
-    return m.indexOf(element) >= 0
+    return m.indexOf_AnyN_I_k_(element) >= 0
 end function
 
 function SubList_containsAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
-    for each element in elements
-        if m.contains(element).not() then
+    for each element in elements.array
+        if not m.contains_AnyN_Z_k_(element) then
             return false
         end if
     end for
@@ -571,62 +591,62 @@ function SubList_containsAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
 end function
 
 function SubList_get_I_AnyN_k_(index as Integer) as Dynamic
-    checkElementIndex_I_I_k_(index, m.size)
-    return m.parent[m.fromIndex + index]
+    checkElementIndex_I_I_k_(index, m.get_size())
+    return m.get_parent().get_I_AnyN_k_(m.get_fromIndex() + index)
 end function
 
 function SubList_set_I_AnyN_AnyN_k_(index as Integer, element as Dynamic) as Dynamic
-    checkElementIndex_I_I_k_(index, m.size)
-    return m.parent.set(m.fromIndex + index, element)
+    checkElementIndex_I_I_k_(index, m.get_size())
+    return m.get_parent().set_I_AnyN_AnyN_k_(m.get_fromIndex() + index, element)
 end function
 
 function SubList_add_AnyN_Z_k_(element as Dynamic) as Boolean
-    m.parent.add(m.toIndex, element)
-    m.toIndex = (m.toIndex + 1)
+    m.get_parent().add_I_AnyN_k_(m.get_toIndex(), element)
+    m.set_toIndex(m.get_toIndex() + 1)
     return true
 end function
 
 sub SubList_add_I_AnyN_k_(index as Integer, element as Dynamic)
-    checkPositionIndex_I_I_k_(index, m.size)
-    m.parent.add(m.fromIndex + index, element)
-    m.toIndex = (m.toIndex + 1)
+    checkPositionIndex_I_I_k_(index, m.get_size())
+    m.get_parent().add_I_AnyN_k_(m.get_fromIndex() + index, element)
+    m.set_toIndex(m.get_toIndex() + 1)
 end sub
 
 function SubList_remove_AnyN_Z_k_(element as Dynamic) as Boolean
-    index = m.indexOf(element)
+    index = m.indexOf_AnyN_I_k_(element)
     if index < 0 then
         return false
     end if
-    m.removeAt(index)
+    m.removeAt_I_AnyN_k_(index)
     return true
 end function
 
 function SubList_removeAt_I_AnyN_k_(index as Integer) as Dynamic
-    checkElementIndex_I_I_k_(index, m.size)
-    result = m.parent.removeAt(m.fromIndex + index)
-    m.toIndex = (m.toIndex - 1)
+    checkElementIndex_I_I_k_(index, m.get_size())
+    result = m.get_parent().removeAt_I_AnyN_k_(m.get_fromIndex() + index)
+    m.set_toIndex(m.get_toIndex() - 1)
     return result
 end function
 
 function SubList_addAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
-    return m.addAll(m.size, elements)
+    return m.addAll_I_CollectionAnyN_Z_k_(m.get_size(), elements)
 end function
 
 function SubList_addAll_I_CollectionAnyN_Z_k_(index as Integer, elements as Object) as Boolean
-    checkPositionIndex_I_I_k_(index, m.size)
-    if elements.isEmpty() then
+    checkPositionIndex_I_I_k_(index, m.get_size())
+    if elements.isEmpty_Z_k_() then
         return false
     end if
-    m.parent.addAll(m.fromIndex + index, elements)
-    m.toIndex = (m.toIndex + elements.size)
+    m.get_parent().addAll_I_CollectionAnyN_Z_k_(m.get_fromIndex() + index, elements)
+    m.set_toIndex(m.get_toIndex() + elements.get_size())
     return true
 end function
 
 function SubList_removeAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
     modified = false
-    iter = m.iterator()
-    while iter.hasNext()
-        if elements.contains(iter.next()) then
+    iter = m.iterator_MutableIteratorAnyN_k_()
+    while iter.hasNext_Z_k_()
+        if elements.contains_AnyN_Z_k_(iter.next_AnyN_k_()) then
             iter.remove()
             modified = true
         end if
@@ -636,9 +656,9 @@ end function
 
 function SubList_retainAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
     modified = false
-    iter = m.iterator()
-    while iter.hasNext()
-        if elements.contains(iter.next()).not() then
+    iter = m.iterator_MutableIteratorAnyN_k_()
+    while iter.hasNext_Z_k_()
+        if not elements.contains_AnyN_Z_k_(iter.next_AnyN_k_()) then
             iter.remove()
             modified = true
         end if
@@ -647,20 +667,20 @@ function SubList_retainAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
 end function
 
 sub SubList_clear()
-    while m.size > 0
-        m.removeAt(0)
+    while m.get_size() > 0
+        m.removeAt_I_AnyN_k_(0)
     end while
 end sub
 
 function SubList_indexOf_AnyN_I_k_(element as Dynamic) as Integer
-    progression = until_rI_I_IntRange_k_(0, m.size)
-    inductionVariable = progression.first
-    last = progression.last
-    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+    progression = until_rI_I_IntRange_k_(0, m.get_size())
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if m.get(i) = element then
+        if m.get_I_AnyN_k_(i) = element then
             return i
         end if
 
@@ -669,7 +689,7 @@ function SubList_indexOf_AnyN_I_k_(element as Dynamic) as Integer
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if m.get(i) = element then
+            if m.get_I_AnyN_k_(i) = element then
                 return i
             end if
 
@@ -681,9 +701,9 @@ function SubList_indexOf_AnyN_I_k_(element as Dynamic) as Integer
 end function
 
 function SubList_lastIndexOf_AnyN_I_k_(element as Dynamic) as Integer
-    i = m.size - 1
+    i = m.get_size() - 1
     while i >= 0
-        if m.get(i) = element then
+        if m.get_I_AnyN_k_(i) = element then
             return i
         end if
         i = (i - 1)
@@ -692,7 +712,7 @@ function SubList_lastIndexOf_AnyN_I_k_(element as Dynamic) as Integer
 end function
 
 function SubList_iterator_MutableIteratorAnyN_k_() as Object
-    return m.listIterator()
+    return m.listIterator_MutableListIteratorAnyN_k_()
 end function
 
 function SubList_listIterator_MutableListIteratorAnyN_k_() as Object
@@ -700,13 +720,13 @@ function SubList_listIterator_MutableListIteratorAnyN_k_() as Object
 end function
 
 function SubList_listIterator_I_MutableListIteratorAnyN_k_(index as Integer) as Object
-    checkPositionIndex_I_I_k_(index, m.size)
+    checkPositionIndex_I_I_k_(index, m.get_size())
     return SubListIterator_create_SubListAnyN_I_SubListIteratorAnyN_k_(m, index)
 end function
 
 function SubList_subList_I_I_MutableListAnyN_k_(fromIndex as Integer, toIndex as Integer) as Object
-    checkRangeIndexes_I_I_I_k_(fromIndex, toIndex, m.size)
-    return SubList_create_ArrayListAnyN_I_I_SubListAnyN_k_(m.parent, m.fromIndex + fromIndex, m.fromIndex + toIndex)
+    checkRangeIndexes_I_I_I_k_(fromIndex, toIndex, m.get_size())
+    return SubList_create_ArrayListAnyN_I_I_SubListAnyN_k_(m.get_parent(), m.get_fromIndex() + fromIndex, m.get_fromIndex() + toIndex)
 end function
 
 function SubList_get_parent_ArrayListAnyN_k_() as Object
@@ -726,7 +746,7 @@ sub SubList_set_toIndex_I_k_(value as Integer)
 end sub
 
 function SubList_get_size_I_k_() as Integer
-    return m.toIndex - m.fromIndex
+    return m.get_toIndex() - m.get_fromIndex()
 end function
 
 function SubListIterator_create_SubListAnyN_I_SubListIteratorAnyN_k_(list as Object, index as Integer) as Object
@@ -754,58 +774,58 @@ function SubListIterator_create_SubListAnyN_I_SubListIteratorAnyN_k_(list as Obj
 end function
 
 function SubListIterator_hasNext_Z_k_() as Boolean
-    return m.index < m.list.size
+    return m.get_index() < m.get_list().get_size()
 end function
 
 function SubListIterator_next_AnyN_k_() as Dynamic
-    if m.hasNext().not() then
+    if not m.hasNext_Z_k_() then
         throw NoSuchElementException_create_NoSuchElementException_k_()
     end if
-    m.lastReturned = m.index
-    return m.list[m.index = (m.index + 1)]
+    m.set_lastReturned(m.get_index())
+    return m.get_list().get_I_AnyN_k_(m.set_index(m.get_index() + 1))
 end function
 
 function SubListIterator_hasPrevious_Z_k_() as Boolean
-    return m.index > 0
+    return m.get_index() > 0
 end function
 
 function SubListIterator_previous_AnyN_k_() as Dynamic
-    if m.hasPrevious().not() then
+    if not m.hasPrevious_Z_k_() then
         throw NoSuchElementException_create_NoSuchElementException_k_()
     end if
-    m.lastReturned = (m.index = (m.index - 1))
-    return m.list[m.index]
+    m.set_lastReturned(m.set_index(m.get_index() - 1))
+    return m.get_list().get_I_AnyN_k_(m.get_index())
 end function
 
 function SubListIterator_nextIndex_I_k_() as Integer
-    return m.index
+    return m.get_index()
 end function
 
 function SubListIterator_previousIndex_I_k_() as Integer
-    return m.index - 1
+    return m.get_index() - 1
 end function
 
 sub SubListIterator_remove()
-    check_Z_Function0Any_k_(m.lastReturned >= 0, {invoke: function() as Object
+    check_Z_Function0Any_k_(m.get_lastReturned() >= 0, {invoke: function() as Object
         return "Call next() or previous() before remove()"
     end function})
-    m.list.removeAt(m.lastReturned)
-    if m.lastReturned < m.index then
-        m.index = (unary - 1)
+    m.get_list().removeAt_I_AnyN_k_(m.get_lastReturned())
+    if m.get_lastReturned() < m.get_index() then
+        m.set_index(unary - 1)
     end if
-    m.lastReturned = -1
+    m.set_lastReturned(-1)
 end sub
 
 sub SubListIterator_set_AnyN_k_(element as Dynamic)
-    check_Z_Function0Any_k_(m.lastReturned >= 0, {invoke: function() as Object
+    check_Z_Function0Any_k_(m.get_lastReturned() >= 0, {invoke: function() as Object
         return "Call next() or previous() before set()"
     end function})
-    m.list.set(m.lastReturned, element)
+    m.get_list().set_I_AnyN_AnyN_k_(m.get_lastReturned(), element)
 end sub
 
 sub SubListIterator_add_AnyN_k_(element as Dynamic)
-    m.list.add(m.index = (m.index + 1), element)
-    m.lastReturned = -1
+    m.get_list().add_I_AnyN_k_(m.set_index(m.get_index() + 1), element)
+    m.set_lastReturned(-1)
 end sub
 
 function SubListIterator_get_list_SubListAnyN_k_() as Object
@@ -833,15 +853,15 @@ function arrayListOf_ArrayListAnyN_k_() as Object
 end function
 
 function arrayListOf_Arr_ArrayListAnyN_k_(elements as Object) as Object
-    list = ArrayList_create_I_ArrayListAnyN_k_(elements.size)
+    list = ArrayList_create_I_ArrayListAnyN_k_(elements.count())
     indexedObject = elements
     inductionVariable = 0
-    last = indexedObject.size
-    while less_I_I_Z_k_(inductionVariable, last)
-        element = indexedObject.get(inductionVariable)
+    last = indexedObject.count()
+    while inductionVariable < last
+        element = indexedObject[inductionVariable]
         inductionVariable = (inductionVariable + 1)
 
-        list.add(element)
+        list.add_AnyN_Z_k_(element)
 
     end while
 
@@ -853,7 +873,7 @@ function mutableListOf_MutableListAnyN_k_() as Object
 end function
 
 function mutableListOf_Arr_MutableListAnyN_k_(elements as Object) as Object
-    return arrayListOf_Arr_ArrayListAnyN_k_([elements])
+    return arrayListOf_Arr_ArrayListAnyN_k_(elements)
 end function
 
 function listOf_ListAnyN_k_() as Object
@@ -862,10 +882,10 @@ end function
 
 function listOf_Arr_ListAnyN_k_(elements as Object) as Object
     __when_tmp2 = invalid
-    if elements.size = 0 then
+    if elements.count() = 0 then
         __when_tmp2 = emptyList_ListAnyN_k_()
     else if true then
-        __when_tmp2 = arrayListOf_Arr_ArrayListAnyN_k_([elements])
+        __when_tmp2 = arrayListOf_Arr_ArrayListAnyN_k_(elements)
     end if
     return __when_tmp2
 
@@ -898,7 +918,7 @@ end function
 
 function EmptyList_getInstance() as Object
     if m.EmptyList_instance = invalid then
-        m.EmptyList_instance = EmptyList_create()
+        m.EmptyList_instance = EmptyList_create_EmptyList_k_()
     end if
     return m.EmptyList_instance
 end function
@@ -912,7 +932,7 @@ function EmptyList_contains_Nothing_Z_k_(element as Dynamic) as Boolean
 end function
 
 function EmptyList_containsAll_CollectionNothing_Z_k_(elements as Object) as Boolean
-    return elements.isEmpty()
+    return elements.isEmpty_Z_k_()
 end function
 
 sub EmptyList_get_I_k_(index as Integer)
@@ -950,7 +970,7 @@ function EmptyList_subList_I_I_ListNothing_k_(fromIndex as Integer, toIndex as I
 end function
 
 function EmptyList_equals_AnyN_Z_k_(other as Dynamic) as Boolean
-    return __kotlin_isInstanceOf(other, "List") and other.isEmpty()
+    return __kotlin_isInstanceOf(other, "List") and other.isEmpty_Z_k_()
 end function
 
 function EmptyList_hashCode_I_k_() as Integer
@@ -980,7 +1000,7 @@ end function
 
 function EmptyIterator_getInstance() as Object
     if m.EmptyIterator_instance = invalid then
-        m.EmptyIterator_instance = EmptyIterator_create()
+        m.EmptyIterator_instance = EmptyIterator_create_EmptyIterator_k_()
     end if
     return m.EmptyIterator_instance
 end function

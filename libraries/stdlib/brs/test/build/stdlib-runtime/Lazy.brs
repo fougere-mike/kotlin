@@ -4,7 +4,7 @@ end function
 function Lazy_get_value_AnyN_k_() as Dynamic
 end function
 
-function LazyThreadSafetyMode_create(__name as String, __ordinal as Integer) as Object
+function LazyThreadSafetyMode_create_LazyThreadSafetyMode_k_(__name as String, __ordinal as Integer) as Object
     this = {}
     this.__type = "LazyThreadSafetyMode"
     this.name = __name
@@ -20,9 +20,9 @@ sub LazyThreadSafetyMode_initEntries()
         return
     end if
     m.LazyThreadSafetyMode_entriesInitialized = true
-    m.LazyThreadSafetyMode_SYNCHRONIZED = LazyThreadSafetyMode_create("SYNCHRONIZED", 0)
-    m.LazyThreadSafetyMode_PUBLICATION = LazyThreadSafetyMode_create("PUBLICATION", 1)
-    m.LazyThreadSafetyMode_NONE = LazyThreadSafetyMode_create("NONE", 2)
+    m.LazyThreadSafetyMode_SYNCHRONIZED = LazyThreadSafetyMode_create_LazyThreadSafetyMode_k_("SYNCHRONIZED", 0)
+    m.LazyThreadSafetyMode_PUBLICATION = LazyThreadSafetyMode_create_LazyThreadSafetyMode_k_("PUBLICATION", 1)
+    m.LazyThreadSafetyMode_NONE = LazyThreadSafetyMode_create_LazyThreadSafetyMode_k_("NONE", 2)
 end sub
 
 function LazyThreadSafetyMode_values() as Object

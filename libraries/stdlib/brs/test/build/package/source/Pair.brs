@@ -1,17 +1,9 @@
-function Pair_create(first as Dynamic, second as Dynamic) as Object
+function Pair_create_AnyN_AnyN_PairAnyNAnyN_k_(first as Dynamic, second as Dynamic) as Object
     this = {}
     this.__type = "Pair"
     this.__proto = ["Pair"]
     this.first = first
     this.second = second
-    this.toString_Str_k_ = Pair_toString_Str_k_
-    this.component1_AnyN_k_ = Pair_component1_AnyN_k_
-    this.component2_AnyN_k_ = Pair_component2_AnyN_k_
-    this.copy_AnyN_AnyN_PairAnyNAnyN_k_ = Pair_copy_AnyN_AnyN_PairAnyNAnyN_k_
-    this.hashCode_I_k_ = Pair_hashCode_I_k_
-    this.equals_AnyN_Z_k_ = Pair_equals_AnyN_Z_k_
-    this.get_first = Pair_get_first_AnyN_k_
-    this.get_second = Pair_get_second_AnyN_k_
     this.equals = Pair_equals
     this.hashCode = Pair_hashCode
     this.toString = Pair_toString
@@ -55,7 +47,7 @@ function Pair_copy(first = invalid, second = invalid) as Object
     if second = invalid then
         second = m.second
     end if
-    return Pair_create(first, second)
+    return Pair_create_AnyN_AnyN_PairAnyNAnyN_k_(first, second)
 end function
 
 function Pair_component1() as Dynamic

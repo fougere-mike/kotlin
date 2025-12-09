@@ -79,9 +79,9 @@ function maxOf_Any_Arr_Any_k_(a as Object, other as Object) as Object
     max = a
     indexedObject = other
     inductionVariable = 0
-    last = indexedObject.size
-    while less_I_I_Z_k_(inductionVariable, last)
-        e = indexedObject.get(inductionVariable)
+    last = indexedObject.count()
+    while inductionVariable < last
+        e = indexedObject[inductionVariable]
         inductionVariable = (inductionVariable + 1)
 
         if (max < e) < 0 then
@@ -96,9 +96,9 @@ function maxOf_B_ByteArray_B_k_(a as Integer, other as Object) as Integer
     max = a
     indexedObject = other
     inductionVariable = 0
-    last = indexedObject.size
-    while less_I_I_Z_k_(inductionVariable, last)
-        e = indexedObject.get(inductionVariable)
+    last = indexedObject.get_size()
+    while inductionVariable < last
+        e = indexedObject.get_I_B_k_(inductionVariable)
         inductionVariable = (inductionVariable + 1)
 
         if max < e then
@@ -113,9 +113,9 @@ function maxOf_S_ShortArray_S_k_(a as Integer, other as Object) as Integer
     max = a
     indexedObject = other
     inductionVariable = 0
-    last = indexedObject.size
-    while less_I_I_Z_k_(inductionVariable, last)
-        e = indexedObject.get(inductionVariable)
+    last = indexedObject.get_size()
+    while inductionVariable < last
+        e = indexedObject.get_I_S_k_(inductionVariable)
         inductionVariable = (inductionVariable + 1)
 
         if max < e then
@@ -130,9 +130,9 @@ function maxOf_I_IntArray_I_k_(a as Integer, other as Object) as Integer
     max = a
     indexedObject = other
     inductionVariable = 0
-    last = indexedObject.size
-    while less_I_I_Z_k_(inductionVariable, last)
-        e = indexedObject.get(inductionVariable)
+    last = indexedObject.get_size()
+    while inductionVariable < last
+        e = indexedObject.get_I_I_k_(inductionVariable)
         inductionVariable = (inductionVariable + 1)
 
         if max < e then
@@ -147,9 +147,9 @@ function maxOf_J_LongArray_J_k_(a as LongInteger, other as Object) as LongIntege
     max = a
     indexedObject = other
     inductionVariable = 0
-    last = indexedObject.size
-    while less_I_I_Z_k_(inductionVariable, last)
-        e = indexedObject.get(inductionVariable)
+    last = indexedObject.get_size()
+    while inductionVariable < last
+        e = indexedObject.get_I_J_k_(inductionVariable)
         inductionVariable = (inductionVariable + 1)
 
         if max < e then
@@ -164,9 +164,9 @@ function maxOf_F_FloatArray_F_k_(a as Float, other as Object) as Float
     max = a
     indexedObject = other
     inductionVariable = 0
-    last = indexedObject.size
-    while less_I_I_Z_k_(inductionVariable, last)
-        e = indexedObject.get(inductionVariable)
+    last = indexedObject.get_size()
+    while inductionVariable < last
+        e = indexedObject.get_I_F_k_(inductionVariable)
         inductionVariable = (inductionVariable + 1)
 
         if isNaN_rF_Z_k_(max) then
@@ -188,9 +188,9 @@ function maxOf_D_DoubleArray_D_k_(a as Double, other as Object) as Double
     max = a
     indexedObject = other
     inductionVariable = 0
-    last = indexedObject.size
-    while less_I_I_Z_k_(inductionVariable, last)
-        e = indexedObject.get(inductionVariable)
+    last = indexedObject.get_size()
+    while inductionVariable < last
+        e = indexedObject.get_I_D_k_(inductionVariable)
         inductionVariable = (inductionVariable + 1)
 
         if isNaN_rD_Z_k_(max) then
@@ -289,9 +289,9 @@ function minOf_Any_Arr_Any_k_(a as Object, other as Object) as Object
     min = a
     indexedObject = other
     inductionVariable = 0
-    last = indexedObject.size
-    while less_I_I_Z_k_(inductionVariable, last)
-        e = indexedObject.get(inductionVariable)
+    last = indexedObject.count()
+    while inductionVariable < last
+        e = indexedObject[inductionVariable]
         inductionVariable = (inductionVariable + 1)
 
         if (e < min) < 0 then
@@ -306,9 +306,9 @@ function minOf_B_ByteArray_B_k_(a as Integer, other as Object) as Integer
     min = a
     indexedObject = other
     inductionVariable = 0
-    last = indexedObject.size
-    while less_I_I_Z_k_(inductionVariable, last)
-        e = indexedObject.get(inductionVariable)
+    last = indexedObject.get_size()
+    while inductionVariable < last
+        e = indexedObject.get_I_B_k_(inductionVariable)
         inductionVariable = (inductionVariable + 1)
 
         if e < min then
@@ -323,9 +323,9 @@ function minOf_S_ShortArray_S_k_(a as Integer, other as Object) as Integer
     min = a
     indexedObject = other
     inductionVariable = 0
-    last = indexedObject.size
-    while less_I_I_Z_k_(inductionVariable, last)
-        e = indexedObject.get(inductionVariable)
+    last = indexedObject.get_size()
+    while inductionVariable < last
+        e = indexedObject.get_I_S_k_(inductionVariable)
         inductionVariable = (inductionVariable + 1)
 
         if e < min then
@@ -340,9 +340,9 @@ function minOf_I_IntArray_I_k_(a as Integer, other as Object) as Integer
     min = a
     indexedObject = other
     inductionVariable = 0
-    last = indexedObject.size
-    while less_I_I_Z_k_(inductionVariable, last)
-        e = indexedObject.get(inductionVariable)
+    last = indexedObject.get_size()
+    while inductionVariable < last
+        e = indexedObject.get_I_I_k_(inductionVariable)
         inductionVariable = (inductionVariable + 1)
 
         if e < min then
@@ -357,9 +357,9 @@ function minOf_J_LongArray_J_k_(a as LongInteger, other as Object) as LongIntege
     min = a
     indexedObject = other
     inductionVariable = 0
-    last = indexedObject.size
-    while less_I_I_Z_k_(inductionVariable, last)
-        e = indexedObject.get(inductionVariable)
+    last = indexedObject.get_size()
+    while inductionVariable < last
+        e = indexedObject.get_I_J_k_(inductionVariable)
         inductionVariable = (inductionVariable + 1)
 
         if e < min then
@@ -374,9 +374,9 @@ function minOf_F_FloatArray_F_k_(a as Float, other as Object) as Float
     min = a
     indexedObject = other
     inductionVariable = 0
-    last = indexedObject.size
-    while less_I_I_Z_k_(inductionVariable, last)
-        e = indexedObject.get(inductionVariable)
+    last = indexedObject.get_size()
+    while inductionVariable < last
+        e = indexedObject.get_I_F_k_(inductionVariable)
         inductionVariable = (inductionVariable + 1)
 
         if isNaN_rF_Z_k_(min) then
@@ -398,9 +398,9 @@ function minOf_D_DoubleArray_D_k_(a as Double, other as Object) as Double
     min = a
     indexedObject = other
     inductionVariable = 0
-    last = indexedObject.size
-    while less_I_I_Z_k_(inductionVariable, last)
-        e = indexedObject.get(inductionVariable)
+    last = indexedObject.get_size()
+    while inductionVariable < last
+        e = indexedObject.get_I_D_k_(inductionVariable)
         inductionVariable = (inductionVariable + 1)
 
         if isNaN_rD_Z_k_(min) then

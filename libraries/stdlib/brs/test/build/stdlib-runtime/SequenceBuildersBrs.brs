@@ -3,7 +3,7 @@ function emptySequence_SequenceAnyN_k_() as Object
 end function
 
 function sequenceOf_AnyN_SequenceAnyN_k_(element as Dynamic) as Object
-    return Anon_77720a3d_create_AnonAnyN_k_()
+    return Anon_3468192e_create_AnonAnyN_k_()
 end function
 
 function sequenceOf_Arr_SequenceAnyN_k_(elements as Object) as Object
@@ -18,14 +18,14 @@ function sequenceOf_Arr_SequenceAnyN_k_(elements as Object) as Object
 end function
 
 function sequenceOf_IteratorAnyN_SequenceAnyN_k_(iterator as Object) as Object
-    return Anon_40bd544_create_AnonAnyN_k_()
+    return Anon_6bc553d_create_AnonAnyN_k_()
 end function
 
 function sequence_SequenceAnyN_k_() as Object
     throw UnsupportedOperationException_create_StrN_UnsupportedOperationException_k_("Coroutine-based sequence building is not supported for BRS")
 end function
 
-function generateSequence_AnyN_Function1AnyAnyN_SequenceAny_k_(seed as Dynamic, nextFunction as Function) as Object
+function generateSequence_AnyN_Function1AnyAnyN_SequenceAny_k_(seed as Dynamic, nextFunction as Object) as Object
     __when_tmp1 = invalid
     if seed = invalid then
         __when_tmp1 = EmptySequence_getInstance()
@@ -38,7 +38,7 @@ function generateSequence_AnyN_Function1AnyAnyN_SequenceAny_k_(seed as Dynamic, 
 
 end function
 
-function generateSequence_Function0AnyN_Function1AnyAnyN_SequenceAny_k_(seedFunction as Function, nextFunction as Function) as Object
+function generateSequence_Function0AnyN_Function1AnyAnyN_SequenceAny_k_(seedFunction as Object, nextFunction as Object) as Object
     return GeneratorSequence_create_Function0AnyN_Function1AnyAnyN_GeneratorSequenceAny_k_(seedFunction, nextFunction)
 end function
 
@@ -54,19 +54,19 @@ function asSequence_rArr_SequenceAnyN_k_(m as Object) as Object
 end function
 
 function asSequence_rIterableAnyN_SequenceAnyN_k_(m as Object) as Object
-    return Sequence_Function0IteratorAnyN_SequenceAnyN_k_({this: this, invoke: function() as Object
-        return m.this.iterator()
+    return Sequence_Function0IteratorAnyN_SequenceAnyN_k_({this: m, invoke: function() as Object
+        return m.this.iterator_IteratorAnyN_k_()
     end function})
 end function
 
 function asSequence_rIteratorAnyN_SequenceAnyN_k_(m as Object) as Object
-    return Sequence_Function0IteratorAnyN_SequenceAnyN_k_({this: this, invoke: function() as Object
+    return Sequence_Function0IteratorAnyN_SequenceAnyN_k_({this: m, invoke: function() as Object
         return m.this
     end function})
 end function
 
-function Sequence_Function0IteratorAnyN_SequenceAnyN_k_(iterator as Function) as Object
-    return Anon_3faabf8c_create_AnonAnyN_k_()
+function Sequence_Function0IteratorAnyN_SequenceAnyN_k_(iterator as Object) as Object
+    return Anon_2545b920_create_AnonAnyN_k_()
 end function
 
 function EmptySequence_create_EmptySequence_k_() as Object
@@ -81,7 +81,7 @@ end function
 
 function EmptySequence_getInstance() as Object
     if m.EmptySequence_instance = invalid then
-        m.EmptySequence_instance = EmptySequence_create()
+        m.EmptySequence_instance = EmptySequence_create_EmptySequence_k_()
     end if
     return m.EmptySequence_instance
 end function
@@ -109,7 +109,7 @@ end function
 
 function SequenceEmptyIterator_getInstance() as Object
     if m.SequenceEmptyIterator_instance = invalid then
-        m.SequenceEmptyIterator_instance = SequenceEmptyIterator_create()
+        m.SequenceEmptyIterator_instance = SequenceEmptyIterator_create_SequenceEmptyIterator_k_()
     end if
     return m.SequenceEmptyIterator_instance
 end function
@@ -122,7 +122,7 @@ sub SequenceEmptyIterator_next()
     throw NoSuchElementException_create_NoSuchElementException_k_()
 end sub
 
-function GeneratorSequence_create_Function0AnyN_Function1AnyAnyN_GeneratorSequenceAny_k_(getInitialValue as Function, getNextValue as Function) as Object
+function GeneratorSequence_create_Function0AnyN_Function1AnyAnyN_GeneratorSequenceAny_k_(getInitialValue as Object, getNextValue as Object) as Object
     this = {}
     this.__type = "GeneratorSequence"
     this.__proto = ["GeneratorSequence"]
@@ -135,14 +135,14 @@ function GeneratorSequence_create_Function0AnyN_Function1AnyAnyN_GeneratorSequen
 end function
 
 function GeneratorSequence_iterator_IteratorAny_k_() as Object
-    return Anon_4d509a1f_create_AnonAny_k_()
+    return Anon_40ae6e43_create_AnonAny_k_()
 end function
 
-function GeneratorSequence_get_getInitialValue_Function0AnyN_k_() as Function
+function GeneratorSequence_get_getInitialValue_Function0AnyN_k_() as Object
     return m.getInitialValue
 end function
 
-function GeneratorSequence_get_getNextValue_Function1AnyAnyN_k_() as Function
+function GeneratorSequence_get_getNextValue_Function1AnyAnyN_k_() as Object
     return m.getNextValue
 end function
 
@@ -157,7 +157,7 @@ function IndexedSequence_create_Arr_IndexedSequenceAnyN_k_(array as Object) as O
 end function
 
 function IndexedSequence_iterator_IteratorAnyN_k_() as Object
-    return m.array.iterator()
+    return m.get_array().iterator_IteratorAnyN_k_()
 end function
 
 function IndexedSequence_get_array_Arr_k_() as Object

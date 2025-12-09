@@ -48,63 +48,63 @@ function JsonTestAdapter_create_JsonTestAdapter_k_() as Object
 end function
 
 sub JsonTestAdapter_startRun()
-    m.runStarted = true
-    m.runTimer.mark()
+    m.set_runStarted(true)
+    m.get_runTimer().mark()
     println_AnyN_k_("[KOTLINTEST_START]")
-    m.emitJson(mapOf_Arr_MapAnyNAnyN_k_([to_rAnyN_AnyN_PairAnyNAnyN_k_("type", "run_start"), to_rAnyN_AnyN_PairAnyNAnyN_k_("timestamp", m.currentTimeMillis())]))
+    m.emitJson_MapStrAnyN_k_(mapOf_Arr_MapAnyNAnyN_k_([to_rAnyN_AnyN_PairAnyNAnyN_k_("type", "run_start"), to_rAnyN_AnyN_PairAnyNAnyN_k_("timestamp", m.currentTimeMillis_J_k_())]))
 end sub
 
 sub JsonTestAdapter_endRun()
-    duration = m.runTimer.totalMilliseconds()
-    m.emitJson(mapOf_Arr_MapAnyNAnyN_k_([to_rAnyN_AnyN_PairAnyNAnyN_k_("type", "run_complete"), to_rAnyN_AnyN_PairAnyNAnyN_k_("total_suites", m.totalSuites), to_rAnyN_AnyN_PairAnyNAnyN_k_("total_tests", (m.totalPassed + m.totalFailed) + m.totalIgnored), to_rAnyN_AnyN_PairAnyNAnyN_k_("passed", m.totalPassed), to_rAnyN_AnyN_PairAnyNAnyN_k_("failed", m.totalFailed), to_rAnyN_AnyN_PairAnyNAnyN_k_("ignored", m.totalIgnored), to_rAnyN_AnyN_PairAnyNAnyN_k_("duration_ms", duration)]))
+    duration = m.get_runTimer().totalMilliseconds_I_k_()
+    m.emitJson_MapStrAnyN_k_(mapOf_Arr_MapAnyNAnyN_k_([to_rAnyN_AnyN_PairAnyNAnyN_k_("type", "run_complete"), to_rAnyN_AnyN_PairAnyNAnyN_k_("total_suites", m.get_totalSuites()), to_rAnyN_AnyN_PairAnyNAnyN_k_("total_tests", (m.get_totalPassed() + m.get_totalFailed()) + m.get_totalIgnored()), to_rAnyN_AnyN_PairAnyNAnyN_k_("passed", m.get_totalPassed()), to_rAnyN_AnyN_PairAnyNAnyN_k_("failed", m.get_totalFailed()), to_rAnyN_AnyN_PairAnyNAnyN_k_("ignored", m.get_totalIgnored()), to_rAnyN_AnyN_PairAnyNAnyN_k_("duration_ms", duration)]))
     println_AnyN_k_("[KOTLINTEST_END]")
 end sub
 
-sub JsonTestAdapter_suite_Str_Z_Function0V_k_(name as String, ignored as Boolean, suiteFn as Function)
-    if m.runStarted.not() then
+sub JsonTestAdapter_suite_Str_Z_Function0V_k_(name as String, ignored as Boolean, suiteFn as Object)
+    if not m.get_runStarted() then
         m.startRun()
     end if
     if ignored then
-        m.emitJson(mapOf_Arr_MapAnyNAnyN_k_([to_rAnyN_AnyN_PairAnyNAnyN_k_("type", "suite_ignored"), to_rAnyN_AnyN_PairAnyNAnyN_k_("suite", name), to_rAnyN_AnyN_PairAnyNAnyN_k_("reason", "Suite marked as ignored")]))
+        m.emitJson_MapStrAnyN_k_(mapOf_Arr_MapAnyNAnyN_k_([to_rAnyN_AnyN_PairAnyNAnyN_k_("type", "suite_ignored"), to_rAnyN_AnyN_PairAnyNAnyN_k_("suite", name), to_rAnyN_AnyN_PairAnyNAnyN_k_("reason", "Suite marked as ignored")]))
         return
     end if
-    m.currentSuite = name
-    m.suiteTimer.mark()
-    m.suitePassed = 0
-    m.suiteFailed = 0
-    m.suiteIgnored = 0
-    m.totalSuites = (m.totalSuites + 1)
-    m.emitJson(mapOf_Arr_MapAnyNAnyN_k_([to_rAnyN_AnyN_PairAnyNAnyN_k_("type", "suite_start"), to_rAnyN_AnyN_PairAnyNAnyN_k_("suite", name), to_rAnyN_AnyN_PairAnyNAnyN_k_("timestamp", m.currentTimeMillis())]))
+    m.set_currentSuite(name)
+    m.get_suiteTimer().mark()
+    m.set_suitePassed(0)
+    m.set_suiteFailed(0)
+    m.set_suiteIgnored(0)
+    m.set_totalSuites(m.get_totalSuites() + 1)
+    m.emitJson_MapStrAnyN_k_(mapOf_Arr_MapAnyNAnyN_k_([to_rAnyN_AnyN_PairAnyNAnyN_k_("type", "suite_start"), to_rAnyN_AnyN_PairAnyNAnyN_k_("suite", name), to_rAnyN_AnyN_PairAnyNAnyN_k_("timestamp", m.currentTimeMillis_J_k_())]))
     suiteFn.invoke()
-    duration = m.suiteTimer.totalMilliseconds()
-    m.emitJson(mapOf_Arr_MapAnyNAnyN_k_([to_rAnyN_AnyN_PairAnyNAnyN_k_("type", "suite_end"), to_rAnyN_AnyN_PairAnyNAnyN_k_("suite", name), to_rAnyN_AnyN_PairAnyNAnyN_k_("passed", m.suitePassed), to_rAnyN_AnyN_PairAnyNAnyN_k_("failed", m.suiteFailed), to_rAnyN_AnyN_PairAnyNAnyN_k_("ignored", m.suiteIgnored), to_rAnyN_AnyN_PairAnyNAnyN_k_("duration_ms", duration)]))
+    duration = m.get_suiteTimer().totalMilliseconds_I_k_()
+    m.emitJson_MapStrAnyN_k_(mapOf_Arr_MapAnyNAnyN_k_([to_rAnyN_AnyN_PairAnyNAnyN_k_("type", "suite_end"), to_rAnyN_AnyN_PairAnyNAnyN_k_("suite", name), to_rAnyN_AnyN_PairAnyNAnyN_k_("passed", m.get_suitePassed()), to_rAnyN_AnyN_PairAnyNAnyN_k_("failed", m.get_suiteFailed()), to_rAnyN_AnyN_PairAnyNAnyN_k_("ignored", m.get_suiteIgnored()), to_rAnyN_AnyN_PairAnyNAnyN_k_("duration_ms", duration)]))
 end sub
 
-sub JsonTestAdapter_test_Str_Z_Function0V_k_(name as String, ignored as Boolean, testFn as Function)
+sub JsonTestAdapter_test_Str_Z_Function0V_k_(name as String, ignored as Boolean, testFn as Object)
     if ignored then
-        m.suiteIgnored = (m.suiteIgnored + 1)
-        m.totalIgnored = (m.totalIgnored + 1)
-        m.emitJson(mapOf_Arr_MapAnyNAnyN_k_([to_rAnyN_AnyN_PairAnyNAnyN_k_("type", "test_ignored"), to_rAnyN_AnyN_PairAnyNAnyN_k_("suite", m.currentSuite), to_rAnyN_AnyN_PairAnyNAnyN_k_("test", name), to_rAnyN_AnyN_PairAnyNAnyN_k_("reason", "Test marked as ignored")]))
+        m.set_suiteIgnored(m.get_suiteIgnored() + 1)
+        m.set_totalIgnored(m.get_totalIgnored() + 1)
+        m.emitJson_MapStrAnyN_k_(mapOf_Arr_MapAnyNAnyN_k_([to_rAnyN_AnyN_PairAnyNAnyN_k_("type", "test_ignored"), to_rAnyN_AnyN_PairAnyNAnyN_k_("suite", m.get_currentSuite()), to_rAnyN_AnyN_PairAnyNAnyN_k_("test", name), to_rAnyN_AnyN_PairAnyNAnyN_k_("reason", "Test marked as ignored")]))
         return
     end if
-    m.testTimer.mark()
-    m.emitJson(mapOf_Arr_MapAnyNAnyN_k_([to_rAnyN_AnyN_PairAnyNAnyN_k_("type", "test_start"), to_rAnyN_AnyN_PairAnyNAnyN_k_("suite", m.currentSuite), to_rAnyN_AnyN_PairAnyNAnyN_k_("test", name), to_rAnyN_AnyN_PairAnyNAnyN_k_("timestamp", m.currentTimeMillis())]))
+    m.get_testTimer().mark()
+    m.emitJson_MapStrAnyN_k_(mapOf_Arr_MapAnyNAnyN_k_([to_rAnyN_AnyN_PairAnyNAnyN_k_("type", "test_start"), to_rAnyN_AnyN_PairAnyNAnyN_k_("suite", m.get_currentSuite()), to_rAnyN_AnyN_PairAnyNAnyN_k_("test", name), to_rAnyN_AnyN_PairAnyNAnyN_k_("timestamp", m.currentTimeMillis_J_k_())]))
     testFn.invoke()
-    duration = m.testTimer.totalMilliseconds()
-    m.suitePassed = (m.suitePassed + 1)
-    m.totalPassed = (m.totalPassed + 1)
-    m.emitJson(mapOf_Arr_MapAnyNAnyN_k_([to_rAnyN_AnyN_PairAnyNAnyN_k_("type", "test_pass"), to_rAnyN_AnyN_PairAnyNAnyN_k_("suite", m.currentSuite), to_rAnyN_AnyN_PairAnyNAnyN_k_("test", name), to_rAnyN_AnyN_PairAnyNAnyN_k_("duration_ms", duration)]))
+    duration = m.get_testTimer().totalMilliseconds_I_k_()
+    m.set_suitePassed(m.get_suitePassed() + 1)
+    m.set_totalPassed(m.get_totalPassed() + 1)
+    m.emitJson_MapStrAnyN_k_(mapOf_Arr_MapAnyNAnyN_k_([to_rAnyN_AnyN_PairAnyNAnyN_k_("type", "test_pass"), to_rAnyN_AnyN_PairAnyNAnyN_k_("suite", m.get_currentSuite()), to_rAnyN_AnyN_PairAnyNAnyN_k_("test", name), to_rAnyN_AnyN_PairAnyNAnyN_k_("duration_ms", duration)]))
 end sub
 
 sub JsonTestAdapter_emitJson_MapStrAnyN_k_(data as Object)
-    json = brsFormatJson_AnyN_Str_k_(data)
+    json = FormatJson(data)
     println_AnyN_k_(json)
 end sub
 
 function JsonTestAdapter_currentTimeMillis_J_k_() as LongInteger
     dt = RoDateTime_create_RoDateTime_k_()
     dt.mark()
-    return (dt.asSeconds() * 1000&) + dt.getMilliseconds()
+    return (dt.asSeconds_J_k_() * 1000&) + dt.getMilliseconds_I_k_()
 end function
 
 function JsonTestAdapter_get_currentSuite_Str_k_() as String

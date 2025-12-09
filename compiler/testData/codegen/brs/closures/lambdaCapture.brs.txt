@@ -17,7 +17,7 @@ function mutableCapture_I_k_() as Integer
     return counter
 end function
 
-function returnedClosure_Function0I_k_() as Function
+function returnedClosure_Function0I_k_() as Object
     count = 0
     return {count: {value: count}, invoke: function() as Integer
         m.count.value = (m.count.value + 1)
@@ -25,7 +25,7 @@ function returnedClosure_Function0I_k_() as Function
     end function}
 end function
 
-function higherOrderFunction_I_Function1II_I_k_(value as Integer, transform as Function) as Integer
+function higherOrderFunction_I_Function1II_I_k_(value as Integer, transform as Object) as Integer
     return transform.invoke(value)
 end function
 

@@ -2,14 +2,14 @@
 function forLoopSum_I_k_() as Integer
     sum = 0
     inductionVariable = 1
-    if lessOrEqual_I_I_Z_k_(inductionVariable, 10) then
+    if inductionVariable <= 10 then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
         sum = (sum + i)
 
 
-        while lessOrEqual_I_I_Z_k_(inductionVariable, 10)
+        while inductionVariable <= 10
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
@@ -35,7 +35,7 @@ end function
 function breakContinueSum_I_k_() as Integer
     sum = 0
     inductionVariable = 1
-    if lessOrEqual_I_I_Z_k_(inductionVariable, 10) then
+    if inductionVariable <= 10 then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
@@ -48,7 +48,7 @@ function breakContinueSum_I_k_() as Integer
         sum = (sum + i)
 
 
-        while lessOrEqual_I_I_Z_k_(inductionVariable, 10)
+        while inductionVariable <= 10
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 

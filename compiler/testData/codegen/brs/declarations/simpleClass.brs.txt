@@ -34,5 +34,5 @@ end function
 
 function testPerson_Str_k_() as String
     person = Person_create_Str_I_Person_k_("Bob", 25)
-    return person.greet()
+    return person.greet_Str_k_()
 end function

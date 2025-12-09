@@ -44,47 +44,47 @@ function MatchResult_Destructured_create_MatchResult_Destructured_k_(match as Ob
 end function
 
 function MatchResult_Destructured_component1_Str_k_() as String
-    return m.match.groupValues[1]
+    return m.get_match().get_groupValues().get_I_AnyN_k_(1)
 end function
 
 function MatchResult_Destructured_component2_Str_k_() as String
-    return m.match.groupValues[2]
+    return m.get_match().get_groupValues().get_I_AnyN_k_(2)
 end function
 
 function MatchResult_Destructured_component3_Str_k_() as String
-    return m.match.groupValues[3]
+    return m.get_match().get_groupValues().get_I_AnyN_k_(3)
 end function
 
 function MatchResult_Destructured_component4_Str_k_() as String
-    return m.match.groupValues[4]
+    return m.get_match().get_groupValues().get_I_AnyN_k_(4)
 end function
 
 function MatchResult_Destructured_component5_Str_k_() as String
-    return m.match.groupValues[5]
+    return m.get_match().get_groupValues().get_I_AnyN_k_(5)
 end function
 
 function MatchResult_Destructured_component6_Str_k_() as String
-    return m.match.groupValues[6]
+    return m.get_match().get_groupValues().get_I_AnyN_k_(6)
 end function
 
 function MatchResult_Destructured_component7_Str_k_() as String
-    return m.match.groupValues[7]
+    return m.get_match().get_groupValues().get_I_AnyN_k_(7)
 end function
 
 function MatchResult_Destructured_component8_Str_k_() as String
-    return m.match.groupValues[8]
+    return m.get_match().get_groupValues().get_I_AnyN_k_(8)
 end function
 
 function MatchResult_Destructured_component9_Str_k_() as String
-    return m.match.groupValues[9]
+    return m.get_match().get_groupValues().get_I_AnyN_k_(9)
 end function
 
 function MatchResult_Destructured_component10_Str_k_() as String
-    return m.match.groupValues[10]
+    return m.get_match().get_groupValues().get_I_AnyN_k_(10)
 end function
 
 function MatchResult_Destructured_toList_ListStr_k_() as Object
-    return m.match.groupValues.subList(1, m.match.groupValues.size)
+    return m.get_match().get_groupValues().subList_I_I_ListAnyN_k_(1, m.get_match().get_groupValues().get_size())
 end function
 
 function MatchResult_Destructured_get_match_MatchResult_k_() as Object

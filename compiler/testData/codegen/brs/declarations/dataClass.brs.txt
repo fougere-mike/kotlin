@@ -1,18 +1,10 @@
 // --- File: dataClass.brs ---
-function Point_create(x as Integer, y as Integer) as Object
+function Point_create_I_I_Point_k_(x as Integer, y as Integer) as Object
     this = {}
     this.__type = "Point"
     this.__proto = ["Point"]
     this.x = x
     this.y = y
-    this.component1_I_k_ = Point_component1_I_k_
-    this.component2_I_k_ = Point_component2_I_k_
-    this.copy_I_I_Point_k_ = Point_copy_I_I_Point_k_
-    this.toString_Str_k_ = Point_toString_Str_k_
-    this.hashCode_I_k_ = Point_hashCode_I_k_
-    this.equals_AnyN_Z_k_ = Point_equals_AnyN_Z_k_
-    this.get_x = Point_get_x_I_k_
-    this.get_y = Point_get_y_I_k_
     this.equals = Point_equals
     this.hashCode = Point_hashCode
     this.toString = Point_toString
@@ -56,7 +48,7 @@ function Point_copy(x = invalid, y = invalid) as Object
     if y = invalid then
         y = m.y
     end if
-    return Point_create(x, y)
+    return Point_create_I_I_Point_k_(x, y)
 end function
 
 function Point_component1() as Integer
@@ -67,20 +59,12 @@ function Point_component2() as Integer
     return m.y
 end function
 
-function User_create(name as String, age as Integer) as Object
+function User_create_Str_I_User_k_(name as String, age as Integer) as Object
     this = {}
     this.__type = "User"
     this.__proto = ["User"]
     this.name = name
     this.age = age
-    this.component1_Str_k_ = User_component1_Str_k_
-    this.component2_I_k_ = User_component2_I_k_
-    this.copy_Str_I_User_k_ = User_copy_Str_I_User_k_
-    this.toString_Str_k_ = User_toString_Str_k_
-    this.hashCode_I_k_ = User_hashCode_I_k_
-    this.equals_AnyN_Z_k_ = User_equals_AnyN_Z_k_
-    this.get_name = User_get_name_Str_k_
-    this.get_age = User_get_age_I_k_
     this.equals = User_equals
     this.hashCode = User_hashCode
     this.toString = User_toString
@@ -124,7 +108,7 @@ function User_copy(name = invalid, age = invalid) as Object
     if age = invalid then
         age = m.age
     end if
-    return User_create(name, age)
+    return User_create_Str_I_User_k_(name, age)
 end function
 
 function User_component1() as String

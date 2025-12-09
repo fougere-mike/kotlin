@@ -1,13 +1,13 @@
 function reversed_rIntProgression_IntProgression_k_(m as Object) as Object
-    return IntProgression_Companion_fromClosedRange_I_I_I_IntProgression_k_(m.last, m.first, -m.step)
+    return IntProgression_Companion_fromClosedRange_I_I_I_IntProgression_k_(m.get_last(), m.get_first(), -m.get_step())
 end function
 
 function reversed_rLongProgression_LongProgression_k_(m as Object) as Object
-    return LongProgression_Companion_fromClosedRange_J_J_J_LongProgression_k_(m.last, m.first, -m.step)
+    return LongProgression_Companion_fromClosedRange_J_J_J_LongProgression_k_(m.get_last(), m.get_first(), -m.get_step())
 end function
 
 function reversed_rCharProgression_CharProgression_k_(m as Object) as Object
-    return CharProgression_Companion_fromClosedRange_C_C_I_CharProgression_k_(m.last, m.first, -m.step)
+    return CharProgression_Companion_fromClosedRange_C_C_I_CharProgression_k_(m.get_last(), m.get_first(), -m.get_step())
 end function
 
 function coerceIn_rJ_J_J_J_k_(m as LongInteger, minimumValue as LongInteger, maximumValue as LongInteger) as LongInteger
@@ -27,14 +27,14 @@ function coerceIn_rJ_ClosedRangeJ_J_k_(m as LongInteger, range as Object) as Lon
     if __kotlin_isInstanceOf(range, "ClosedFloatingPointRange") then
         return coerceIn_rJ_ClosedFloatingPointRangeJ_J_k_(m, range)
     end if
-    if range.isEmpty() then
+    if range.isEmpty_Z_k_() then
         throw IllegalArgumentException_create_StrN_IllegalArgumentException_k_(("Cannot coerce value to an empty range: " + range) + ".")
     end if
     __when_tmp0 = invalid
-    if m < range.start then
-        __when_tmp0 = range.start
-    else if m > range.endInclusive then
-        __when_tmp0 = range.endInclusive
+    if m < range.get_start() then
+        __when_tmp0 = range.get_start()
+    else if m > range.get_endInclusive() then
+        __when_tmp0 = range.get_endInclusive()
     else if true then
         __when_tmp0 = m
     end if
@@ -43,14 +43,14 @@ function coerceIn_rJ_ClosedRangeJ_J_k_(m as LongInteger, range as Object) as Lon
 end function
 
 function coerceIn_rJ_OpenEndRangeJ_J_k_(m as LongInteger, range as Object) as LongInteger
-    if range.isEmpty() then
+    if range.isEmpty_Z_k_() then
         throw IllegalArgumentException_create_StrN_IllegalArgumentException_k_(("Cannot coerce value to an empty range: " + range) + ".")
     end if
     __when_tmp1 = invalid
-    if m < range.start then
-        __when_tmp1 = range.start
-    else if m >= range.endExclusive then
-        __when_tmp1 = (range.endExclusive - 1)
+    if m < range.get_start() then
+        __when_tmp1 = range.get_start()
+    else if m >= range.get_endExclusive() then
+        __when_tmp1 = (range.get_endExclusive() - 1)
     else if true then
         __when_tmp1 = m
     end if
@@ -72,14 +72,14 @@ function coerceIn_rC_C_C_C_k_(m as Object, minimumValue as Object, maximumValue 
 end function
 
 function coerceIn_rC_ClosedRangeC_C_k_(m as Object, range as Object) as Object
-    if range.isEmpty() then
+    if range.isEmpty_Z_k_() then
         throw IllegalArgumentException_create_StrN_IllegalArgumentException_k_(("Cannot coerce value to an empty range: " + range) + ".")
     end if
     __when_tmp2 = invalid
-    if (m < range.start) < 0 then
-        __when_tmp2 = range.start
-    else if (m > range.endInclusive) > 0 then
-        __when_tmp2 = range.endInclusive
+    if (m < range.get_start()) < 0 then
+        __when_tmp2 = range.get_start()
+    else if (m > range.get_endInclusive()) > 0 then
+        __when_tmp2 = range.get_endInclusive()
     else if true then
         __when_tmp2 = m
     end if
@@ -88,14 +88,14 @@ function coerceIn_rC_ClosedRangeC_C_k_(m as Object, range as Object) as Object
 end function
 
 function coerceIn_rC_OpenEndRangeC_C_k_(m as Object, range as Object) as Object
-    if range.isEmpty() then
+    if range.isEmpty_Z_k_() then
         throw IllegalArgumentException_create_StrN_IllegalArgumentException_k_(("Cannot coerce value to an empty range: " + range) + ".")
     end if
     __when_tmp3 = invalid
-    if (m < range.start) < 0 then
-        __when_tmp3 = range.start
-    else if (m >= range.endExclusive) >= 0 then
-        __when_tmp3 = (get_code_rC_I_k_(range.endExclusive) - 1)
+    if (m < range.get_start()) < 0 then
+        __when_tmp3 = range.get_start()
+    else if (m >= range.get_endExclusive()) >= 0 then
+        __when_tmp3 = (get_code_rC_I_k_(range.get_endExclusive()) - 1)
     else if true then
         __when_tmp3 = m
     end if
@@ -239,18 +239,18 @@ function ClosedFloatingPointRange_lessThanOrEquals_Any_Any_Z_k_(a as Object, b a
 end function
 
 function ClosedFloatingPointRange_contains_Any_Z_k_(value as Object) as Boolean
-    return m.lessThanOrEquals(m.start, value) and m.lessThanOrEquals(value, m.endInclusive)
+    return m.lessThanOrEquals_Any_Any_Z_k_(m.get_start(), value) and m.lessThanOrEquals_Any_Any_Z_k_(value, m.get_endInclusive())
 end function
 
 function coerceIn_rI_ClosedFloatingPointRangeI_I_k_(m as Integer, range as Object) as Integer
-    if range.isEmpty() then
+    if range.isEmpty_Z_k_() then
         throw IllegalArgumentException_create_StrN_IllegalArgumentException_k_(("Cannot coerce value to an empty range: " + range) + ".")
     end if
     __when_tmp16 = invalid
-    if range.lessThanOrEquals(m, range.start) then
-        __when_tmp16 = range.start
-    else if range.lessThanOrEquals(range.endInclusive, m) then
-        __when_tmp16 = range.endInclusive
+    if range.lessThanOrEquals_Any_Any_Z_k_(m, range.get_start()) then
+        __when_tmp16 = range.get_start()
+    else if range.lessThanOrEquals_Any_Any_Z_k_(range.get_endInclusive(), m) then
+        __when_tmp16 = range.get_endInclusive()
     else if true then
         __when_tmp16 = m
     end if
@@ -259,14 +259,14 @@ function coerceIn_rI_ClosedFloatingPointRangeI_I_k_(m as Integer, range as Objec
 end function
 
 function coerceIn_rJ_ClosedFloatingPointRangeJ_J_k_(m as LongInteger, range as Object) as LongInteger
-    if range.isEmpty() then
+    if range.isEmpty_Z_k_() then
         throw IllegalArgumentException_create_StrN_IllegalArgumentException_k_(("Cannot coerce value to an empty range: " + range) + ".")
     end if
     __when_tmp17 = invalid
-    if range.lessThanOrEquals(m, range.start) then
-        __when_tmp17 = range.start
-    else if range.lessThanOrEquals(range.endInclusive, m) then
-        __when_tmp17 = range.endInclusive
+    if range.lessThanOrEquals_Any_Any_Z_k_(m, range.get_start()) then
+        __when_tmp17 = range.get_start()
+    else if range.lessThanOrEquals_Any_Any_Z_k_(range.get_endInclusive(), m) then
+        __when_tmp17 = range.get_endInclusive()
     else if true then
         __when_tmp17 = m
     end if

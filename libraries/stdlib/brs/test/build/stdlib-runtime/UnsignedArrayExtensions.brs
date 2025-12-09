@@ -4,7 +4,7 @@ function contentToString_rUByteArrayN_Str_k_(m as Dynamic) as String
     end if
     list = ArrayList_create_ArrayListAnyN_k_()
     for each item in m
-        list.add(item.toString())
+        list.add_AnyN_Z_k_(item.toString())
 
     end for
     return ("[" + joinToString_rIterableAnyN_CharSequence_CharSequence_CharSequence_I_CharSequence_Str_k_(list, ", ")) + "]"
@@ -17,17 +17,17 @@ function contentEquals_rUByteArrayN_UByteArrayN_Z_k_(m as Dynamic, other as Dyna
     if (m = invalid) or (other = invalid) then
         return false
     end if
-    if m.size <> other.size then
+    if m.get_size() <> other.get_size() then
         return false
     end if
-    progression = until_rI_I_IntRange_k_(0, m.size)
-    inductionVariable = progression.first
-    last = progression.last
-    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+    progression = until_rI_I_IntRange_k_(0, m.get_size())
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if m[i] <> other[i] then
+        if m.get_I_UByte_k_(i) <> other.get_I_UByte_k_(i) then
             return false
         end if
 
@@ -36,7 +36,7 @@ function contentEquals_rUByteArrayN_UByteArrayN_Z_k_(m as Dynamic, other as Dyna
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if m[i] <> other[i] then
+            if m.get_I_UByte_k_(i) <> other.get_I_UByte_k_(i) then
                 return false
             end if
 
@@ -53,7 +53,7 @@ function contentToString_rUShortArrayN_Str_k_(m as Dynamic) as String
     end if
     list = ArrayList_create_ArrayListAnyN_k_()
     for each item in m
-        list.add(item.toString())
+        list.add_AnyN_Z_k_(item.toString())
 
     end for
     return ("[" + joinToString_rIterableAnyN_CharSequence_CharSequence_CharSequence_I_CharSequence_Str_k_(list, ", ")) + "]"
@@ -66,17 +66,17 @@ function contentEquals_rUShortArrayN_UShortArrayN_Z_k_(m as Dynamic, other as Dy
     if (m = invalid) or (other = invalid) then
         return false
     end if
-    if m.size <> other.size then
+    if m.get_size() <> other.get_size() then
         return false
     end if
-    progression = until_rI_I_IntRange_k_(0, m.size)
-    inductionVariable = progression.first
-    last = progression.last
-    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+    progression = until_rI_I_IntRange_k_(0, m.get_size())
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if m[i] <> other[i] then
+        if m.get_I_UShort_k_(i) <> other.get_I_UShort_k_(i) then
             return false
         end if
 
@@ -85,7 +85,7 @@ function contentEquals_rUShortArrayN_UShortArrayN_Z_k_(m as Dynamic, other as Dy
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if m[i] <> other[i] then
+            if m.get_I_UShort_k_(i) <> other.get_I_UShort_k_(i) then
                 return false
             end if
 
@@ -102,7 +102,7 @@ function contentToString_rUIntArrayN_Str_k_(m as Dynamic) as String
     end if
     list = ArrayList_create_ArrayListAnyN_k_()
     for each item in m
-        list.add(item.toString())
+        list.add_AnyN_Z_k_(item.toString())
 
     end for
     return ("[" + joinToString_rIterableAnyN_CharSequence_CharSequence_CharSequence_I_CharSequence_Str_k_(list, ", ")) + "]"
@@ -115,17 +115,17 @@ function contentEquals_rUIntArrayN_UIntArrayN_Z_k_(m as Dynamic, other as Dynami
     if (m = invalid) or (other = invalid) then
         return false
     end if
-    if m.size <> other.size then
+    if m.get_size() <> other.get_size() then
         return false
     end if
-    progression = until_rI_I_IntRange_k_(0, m.size)
-    inductionVariable = progression.first
-    last = progression.last
-    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+    progression = until_rI_I_IntRange_k_(0, m.get_size())
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if m[i] <> other[i] then
+        if m.get_I_UInt_k_(i) <> other.get_I_UInt_k_(i) then
             return false
         end if
 
@@ -134,7 +134,7 @@ function contentEquals_rUIntArrayN_UIntArrayN_Z_k_(m as Dynamic, other as Dynami
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if m[i] <> other[i] then
+            if m.get_I_UInt_k_(i) <> other.get_I_UInt_k_(i) then
                 return false
             end if
 
@@ -151,7 +151,7 @@ function contentToString_rULongArrayN_Str_k_(m as Dynamic) as String
     end if
     list = ArrayList_create_ArrayListAnyN_k_()
     for each item in m
-        list.add(item.toString())
+        list.add_AnyN_Z_k_(item.toString())
 
     end for
     return ("[" + joinToString_rIterableAnyN_CharSequence_CharSequence_CharSequence_I_CharSequence_Str_k_(list, ", ")) + "]"
@@ -164,17 +164,17 @@ function contentEquals_rULongArrayN_ULongArrayN_Z_k_(m as Dynamic, other as Dyna
     if (m = invalid) or (other = invalid) then
         return false
     end if
-    if m.size <> other.size then
+    if m.get_size() <> other.get_size() then
         return false
     end if
-    progression = until_rI_I_IntRange_k_(0, m.size)
-    inductionVariable = progression.first
-    last = progression.last
-    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+    progression = until_rI_I_IntRange_k_(0, m.get_size())
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if m[i] <> other[i] then
+        if m.get_I_ULong_k_(i) <> other.get_I_ULong_k_(i) then
             return false
         end if
 
@@ -183,7 +183,7 @@ function contentEquals_rULongArrayN_ULongArrayN_Z_k_(m as Dynamic, other as Dyna
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if m[i] <> other[i] then
+            if m.get_I_ULong_k_(i) <> other.get_I_ULong_k_(i) then
                 return false
             end if
 

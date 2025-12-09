@@ -17,7 +17,7 @@ function LinkedHashSet_create_LinkedHashSetAnyN_k_() as Object
     this.toString_Str_k_ = LinkedHashSet_toString_Str_k_
     this.get_map = LinkedHashSet_get_map_LinkedHashMapAnyNZ_k_
     this.get_size = LinkedHashSet_get_size_I_k_
-    m.map = LinkedHashMap_create_LinkedHashMapAnyNAnyN_k_()
+    this.map = LinkedHashMap_create_LinkedHashMapAnyNAnyN_k_()
     return this
 end function
 
@@ -40,7 +40,7 @@ function LinkedHashSet_create_I_LinkedHashSetAnyN_k_(initialCapacity as Integer)
     this.toString_Str_k_ = LinkedHashSet_toString_Str_k_
     this.get_map = LinkedHashSet_get_map_LinkedHashMapAnyNZ_k_
     this.get_size = LinkedHashSet_get_size_I_k_
-    m.map = LinkedHashMap_create_I_LinkedHashMapAnyNAnyN_k_(initialCapacity)
+    this.map = LinkedHashMap_create_I_LinkedHashMapAnyNAnyN_k_(initialCapacity)
     return this
 end function
 
@@ -63,7 +63,7 @@ function LinkedHashSet_create_I_F_LinkedHashSetAnyN_k_(initialCapacity as Intege
     this.toString_Str_k_ = LinkedHashSet_toString_Str_k_
     this.get_map = LinkedHashSet_get_map_LinkedHashMapAnyNZ_k_
     this.get_size = LinkedHashSet_get_size_I_k_
-    m.map = LinkedHashMap_create_I_F_LinkedHashMapAnyNAnyN_k_(initialCapacity, loadFactor)
+    this.map = LinkedHashMap_create_I_F_LinkedHashMapAnyNAnyN_k_(initialCapacity, loadFactor)
     return this
 end function
 
@@ -86,22 +86,22 @@ function LinkedHashSet_create_CollectionAnyN_LinkedHashSetAnyN_k_(elements as Ob
     this.toString_Str_k_ = LinkedHashSet_toString_Str_k_
     this.get_map = LinkedHashSet_get_map_LinkedHashMapAnyNZ_k_
     this.get_size = LinkedHashSet_get_size_I_k_
-    m.map = LinkedHashMap_create_I_LinkedHashMapAnyNAnyN_k_(elements.size)
-    m.addAll(elements)
+    this.map = LinkedHashMap_create_I_LinkedHashMapAnyNAnyN_k_(elements.get_size())
+    this.addAll_CollectionAnyN_Z_k_(elements)
     return this
 end function
 
 function LinkedHashSet_isEmpty_Z_k_() as Boolean
-    return m.map.isEmpty()
+    return m.get_map().isEmpty_Z_k_()
 end function
 
 function LinkedHashSet_contains_AnyN_Z_k_(element as Dynamic) as Boolean
-    return m.map.containsKey(element)
+    return m.get_map().containsKey_AnyN_Z_k_(element)
 end function
 
 function LinkedHashSet_containsAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
-    for each element in elements
-        if m.contains(element).not() then
+    for each element in elements.array
+        if not m.contains_AnyN_Z_k_(element) then
             return false
         end if
     end for
@@ -109,29 +109,29 @@ function LinkedHashSet_containsAll_CollectionAnyN_Z_k_(elements as Object) as Bo
 end function
 
 function LinkedHashSet_iterator_MutableIteratorAnyN_k_() as Object
-    return LinkedHashSet_SetIterator_create_MutableIteratorAnyN_SetIteratorAnyN_k_(m.map.keys.iterator())
+    return LinkedHashSet_SetIterator_create_MutableIteratorAnyN_SetIteratorAnyN_k_(m.get_map().get_keys().iterator_MutableIteratorAnyN_k_())
 end function
 
 function LinkedHashSet_add_AnyN_Z_k_(element as Dynamic) as Boolean
-    if m.contains(element) then
+    if m.contains_AnyN_Z_k_(element) then
         return false
     end if
-    m.map.put(element, true)
+    m.get_map().put_AnyN_AnyN_AnyN_k_(element, true)
     return true
 end function
 
 function LinkedHashSet_remove_AnyN_Z_k_(element as Dynamic) as Boolean
-    if m.contains(element).not() then
+    if not m.contains_AnyN_Z_k_(element) then
         return false
     end if
-    m.map.remove(element)
+    m.get_map().remove_AnyN_AnyN_k_(element)
     return true
 end function
 
 function LinkedHashSet_addAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
     modified = false
-    for each element in elements
-        if m.add(element) then
+    for each element in elements.array
+        if m.add_AnyN_Z_k_(element) then
             modified = true
         end if
     end for
@@ -140,8 +140,8 @@ end function
 
 function LinkedHashSet_removeAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
     modified = false
-    for each element in elements
-        if m.remove(element) then
+    for each element in elements.array
+        if m.remove_AnyN_Z_k_(element) then
             modified = true
         end if
     end for
@@ -150,9 +150,9 @@ end function
 
 function LinkedHashSet_retainAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
     modified = false
-    iter = m.iterator()
-    while iter.hasNext()
-        if elements.contains(iter.next()).not() then
+    iter = m.iterator_MutableIteratorAnyN_k_()
+    while iter.hasNext_Z_k_()
+        if not elements.contains_AnyN_Z_k_(iter.next_AnyN_k_()) then
             iter.remove()
             modified = true
         end if
@@ -161,7 +161,7 @@ function LinkedHashSet_retainAll_CollectionAnyN_Z_k_(elements as Object) as Bool
 end function
 
 sub LinkedHashSet_clear()
-    m.map.clear()
+    m.get_map().clear()
 end sub
 
 function LinkedHashSet_equals_AnyN_Z_k_(other as Dynamic) as Boolean
@@ -171,17 +171,17 @@ function LinkedHashSet_equals_AnyN_Z_k_(other as Dynamic) as Boolean
     if not __kotlin_isInstanceOf(other, "Set") then
         return false
     end if
-    if other.size <> m.size then
+    if other.get_size() <> m.get_size() then
         return false
     end if
-    return all_rIterableAnyN_Function1AnyNZ_Z_k_(other, {this: this, invoke: function(it as Dynamic) as Boolean
+    return all_rIterableAnyN_Function1AnyNZ_Z_k_(other, {this: m, invoke: function(it as Dynamic) as Boolean
         return contains_rIterableAnyN_AnyN_Z_k_(m.this, it)
     end function})
 end function
 
 function LinkedHashSet_hashCode_I_k_() as Integer
     result = 0
-    for each element in m
+    for each element in m.array
         tmp0_safe_receiver = element
         __when_tmp0 = invalid
         if tmp0_safe_receiver = invalid then
@@ -211,7 +211,7 @@ function LinkedHashSet_get_map_LinkedHashMapAnyNZ_k_() as Object
 end function
 
 function LinkedHashSet_get_size_I_k_() as Integer
-    return m.map.size
+    return m.get_map().get_size()
 end function
 
 function LinkedHashSet_SetIterator_create_MutableIteratorAnyN_SetIteratorAnyN_k_(keyIterator as Object) as Object
@@ -227,11 +227,11 @@ function LinkedHashSet_SetIterator_create_MutableIteratorAnyN_SetIteratorAnyN_k_
 end function
 
 function LinkedHashSet_SetIterator_hasNext_Z_k_() as Boolean
-    return m.keyIterator.hasNext()
+    return m.get_keyIterator().hasNext_Z_k_()
 end function
 
 function LinkedHashSet_SetIterator_next_AnyN_k_() as Dynamic
-    return m.keyIterator.next()
+    return m.get_keyIterator().next_AnyN_k_()
 end function
 
 sub LinkedHashSet_SetIterator_remove()

@@ -1,68 +1,68 @@
 function toTypedArray_rCollectionAnyN_Arr_k_(m as Object) as Object
-    result = arrayOfNulls_I_Arr_k_(m.size)
+    result = arrayOfNulls_I_Arr_k_(m.get_size())
     index = 0
-    for each element in m
-        result.set(index = (index + 1), element)
+    for each element in m.array
+        result[index = (index + 1)] = element
 
     end for
     return result
 end function
 
 function plus_rArr_CollectionAnyN_Arr_k_(m as Object, elements as Object) as Object
-    result = copyOf_rArr_I_Arr_k_(m, m.size + elements.size)
-    index = m.size
-    for each element in elements
-        result.set(index = (index + 1), element)
+    result = copyOf_rArr_I_Arr_k_(m, m.count() + elements.get_size())
+    index = m.count()
+    for each element in elements.array
+        result[index = (index + 1)] = element
 
     end for
     return result
 end function
 
 function plus_rArr_AnyN_Arr_k_(m as Object, element as Dynamic) as Object
-    result = copyOf_rArr_I_Arr_k_(m, m.size + 1)
-    result.set(m.size, element)
+    result = copyOf_rArr_I_Arr_k_(m, m.count() + 1)
+    result[m.count()] = element
     return result
 end function
 
 function plus_rArr_Arr_Arr_k_(m as Object, elements as Object) as Object
-    result = copyOf_rArr_I_Arr_k_(m, m.size + elements.size)
-    index = m.size
+    result = copyOf_rArr_I_Arr_k_(m, m.count() + elements.count())
+    index = m.count()
     indexedObject = elements
     inductionVariable = 0
-    last = indexedObject.size
-    while less_I_I_Z_k_(inductionVariable, last)
-        element = indexedObject.get(inductionVariable)
+    last = indexedObject.count()
+    while inductionVariable < last
+        element = indexedObject[inductionVariable]
         inductionVariable = (inductionVariable + 1)
 
-        result.set(index = (index + 1), element)
+        result[index = (index + 1)] = element
 
     end while
 
     return result
 end function
 
-sub fill_rArr_AnyN_I_I_k_(m as Object, element as Dynamic, fromIndex = 0, toIndex = m.size)
-    if (fromIndex < 0) or (toIndex > m.size) then
-        throw IndexOutOfBoundsException_create_StrN_IndexOutOfBoundsException_k_((((("fromIndex: " + fromIndex) + ", toIndex: ") + toIndex) + ", size: ") + m.size)
+sub fill_rArr_AnyN_I_I_k_(m as Object, element as Dynamic, fromIndex = 0, toIndex = m.count())
+    if (fromIndex < 0) or (toIndex > m.count()) then
+        throw IndexOutOfBoundsException_create_StrN_IndexOutOfBoundsException_k_((((("fromIndex: " + fromIndex) + ", toIndex: ") + toIndex) + ", size: ") + m.count())
     end if
     if fromIndex > toIndex then
         throw IllegalArgumentException_create_StrN_IllegalArgumentException_k_((("fromIndex: " + fromIndex) + " > toIndex: ") + toIndex)
     end if
     progression = until_rI_I_IntRange_k_(fromIndex, toIndex)
-    inductionVariable = progression.first
-    last = progression.last
-    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        m.set(i, element)
+        m[i] = element
 
 
         while i <> last
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            m.set(i, element)
+            m[i] = element
 
         end while
 
@@ -71,7 +71,7 @@ sub fill_rArr_AnyN_I_I_k_(m as Object, element as Dynamic, fromIndex = 0, toInde
 end sub
 
 function copyOf_rArr_Arr_k_(m as Object) as Object
-    return copyOf_rArr_I_Arr_k_(m, m.size)
+    return copyOf_rArr_I_Arr_k_(m, m.count())
 end function
 
 function copyOf_rArr_I_Arr_k_(m as Object, newSize as Integer) as Object
@@ -80,28 +80,28 @@ function copyOf_rArr_I_Arr_k_(m as Object, newSize as Integer) as Object
     end if
     result = arrayOfNulls_I_Arr_k_(newSize)
     __when_tmp0 = invalid
-    if newSize < m.size then
+    if newSize < m.count() then
         __when_tmp0 = newSize
     else if true then
-        __when_tmp0 = m.size
+        __when_tmp0 = m.count()
     end if
     copySize = __when_tmp0
 
     progression = until_rI_I_IntRange_k_(0, copySize)
-    inductionVariable = progression.first
-    last = progression.last
-    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        result.set(i, m[i])
+        result[i] = m[i]
 
 
         while i <> last
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            result.set(i, m[i])
+            result[i] = m[i]
 
         end while
 
@@ -111,8 +111,8 @@ function copyOf_rArr_I_Arr_k_(m as Object, newSize as Integer) as Object
 end function
 
 function copyOfRange_rArr_I_I_Arr_k_(m as Object, fromIndex as Integer, toIndex as Integer) as Object
-    if (fromIndex < 0) or (toIndex > m.size) then
-        throw IndexOutOfBoundsException_create_StrN_IndexOutOfBoundsException_k_((((("fromIndex: " + fromIndex) + ", toIndex: ") + toIndex) + ", size: ") + m.size)
+    if (fromIndex < 0) or (toIndex > m.count()) then
+        throw IndexOutOfBoundsException_create_StrN_IndexOutOfBoundsException_k_((((("fromIndex: " + fromIndex) + ", toIndex: ") + toIndex) + ", size: ") + m.count())
     end if
     if fromIndex > toIndex then
         throw IllegalArgumentException_create_StrN_IllegalArgumentException_k_((("fromIndex: " + fromIndex) + " > toIndex: ") + toIndex)
@@ -120,20 +120,20 @@ function copyOfRange_rArr_I_I_Arr_k_(m as Object, fromIndex as Integer, toIndex 
     result = arrayOfNulls_I_Arr_k_(toIndex - fromIndex)
     resultIndex = 0
     progression = until_rI_I_IntRange_k_(fromIndex, toIndex)
-    inductionVariable = progression.first
-    last = progression.last
-    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        result.set(resultIndex = (resultIndex + 1), m[i])
+        result[resultIndex = (resultIndex + 1)] = m[i]
 
 
         while i <> last
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            result.set(resultIndex = (resultIndex + 1), m[i])
+            result[resultIndex = (resultIndex + 1)] = m[i]
 
         end while
 
@@ -143,19 +143,19 @@ function copyOfRange_rArr_I_I_Arr_k_(m as Object, fromIndex as Integer, toIndex 
 end function
 
 sub reverse_rArr_k_(m as Object)
-    midPoint = m.size / 2
+    midPoint = m.count() / 2
     i = 0
     while i < midPoint
         tmp = m[i]
-        m.set(i, m[(m.size - i) - 1])
-        m.set((m.size - i) - 1, tmp)
+        m[i] = m[(m.count() - i) - 1]
+        m[(m.count() - i) - 1] = tmp
         i = (i + 1)
     end while
 end sub
 
 sub reverse_rArr_I_I_k_(m as Object, fromIndex as Integer, toIndex as Integer)
-    if (fromIndex < 0) or (toIndex > m.size) then
-        throw IndexOutOfBoundsException_create_StrN_IndexOutOfBoundsException_k_((((("fromIndex: " + fromIndex) + ", toIndex: ") + toIndex) + ", size: ") + m.size)
+    if (fromIndex < 0) or (toIndex > m.count()) then
+        throw IndexOutOfBoundsException_create_StrN_IndexOutOfBoundsException_k_((((("fromIndex: " + fromIndex) + ", toIndex: ") + toIndex) + ", size: ") + m.count())
     end if
     if fromIndex >= toIndex then
         return
@@ -164,22 +164,22 @@ sub reverse_rArr_I_I_k_(m as Object, fromIndex as Integer, toIndex as Integer)
     i = fromIndex
     while i < midPoint
         tmp = m[i]
-        m.set(i, m[((toIndex - i) + fromIndex) - 1])
-        m.set(((toIndex - i) + fromIndex) - 1, tmp)
+        m[i] = m[((toIndex - i) + fromIndex) - 1]
+        m[((toIndex - i) + fromIndex) - 1] = tmp
         i = (i + 1)
     end while
 end sub
 
 function toList_rArr_ListAnyN_k_(m as Object) as Object
-    result = ArrayList_create_I_ArrayListAnyN_k_(m.size)
+    result = ArrayList_create_I_ArrayListAnyN_k_(m.count())
     indexedObject = m
     inductionVariable = 0
-    last = indexedObject.size
-    while less_I_I_Z_k_(inductionVariable, last)
-        element = indexedObject.get(inductionVariable)
+    last = indexedObject.count()
+    while inductionVariable < last
+        element = indexedObject[inductionVariable]
         inductionVariable = (inductionVariable + 1)
 
-        result.add(element)
+        result.add_AnyN_Z_k_(element)
 
     end while
 
@@ -187,15 +187,15 @@ function toList_rArr_ListAnyN_k_(m as Object) as Object
 end function
 
 function toMutableList_rArr_MutableListAnyN_k_(m as Object) as Object
-    result = ArrayList_create_I_ArrayListAnyN_k_(m.size)
+    result = ArrayList_create_I_ArrayListAnyN_k_(m.count())
     indexedObject = m
     inductionVariable = 0
-    last = indexedObject.size
-    while less_I_I_Z_k_(inductionVariable, last)
-        element = indexedObject.get(inductionVariable)
+    last = indexedObject.count()
+    while inductionVariable < last
+        element = indexedObject[inductionVariable]
         inductionVariable = (inductionVariable + 1)
 
-        result.add(element)
+        result.add_AnyN_Z_k_(element)
 
     end while
 
@@ -206,12 +206,12 @@ function toSet_rArr_SetAnyN_k_(m as Object) as Object
     result = HashSet_create_HashSetAnyN_k_()
     indexedObject = m
     inductionVariable = 0
-    last = indexedObject.size
-    while less_I_I_Z_k_(inductionVariable, last)
-        element = indexedObject.get(inductionVariable)
+    last = indexedObject.count()
+    while inductionVariable < last
+        element = indexedObject[inductionVariable]
         inductionVariable = (inductionVariable + 1)
 
-        result.add(element)
+        result.add_AnyN_Z_k_(element)
 
     end while
 
@@ -222,12 +222,12 @@ function toMutableSet_rArr_MutableSetAnyN_k_(m as Object) as Object
     result = HashSet_create_HashSetAnyN_k_()
     indexedObject = m
     inductionVariable = 0
-    last = indexedObject.size
-    while less_I_I_Z_k_(inductionVariable, last)
-        element = indexedObject.get(inductionVariable)
+    last = indexedObject.count()
+    while inductionVariable < last
+        element = indexedObject[inductionVariable]
         inductionVariable = (inductionVariable + 1)
 
-        result.add(element)
+        result.add_AnyN_Z_k_(element)
 
     end while
 
@@ -235,11 +235,11 @@ function toMutableSet_rArr_MutableSetAnyN_k_(m as Object) as Object
 end function
 
 function isNotEmpty_rArr_Z_k_(m as Object) as Boolean
-    return isEmpty_rArr_Z_k_(m).not()
+    return not isEmpty_rArr_Z_k_(m)
 end function
 
 function isEmpty_rArr_Z_k_(m as Object) as Boolean
-    return m.size = 0
+    return m.count() = 0
 end function
 
 function orEmpty_rArrN_Arr_k_(m as Dynamic) as Object

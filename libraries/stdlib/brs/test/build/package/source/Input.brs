@@ -7,16 +7,16 @@ function RoInput_create_RoInput_k_() as Object
     this.markAsHandled = RoInput_markAsHandled
     this.getNative_Dynamic_k_ = RoInput_getNative_Dynamic_k_
     this.get_native = RoInput_get_native_Dynamic_k_
-    m.native = CreateObject("roInput")
+    this.native = CreateObject("roInput")
     return this
 end function
 
 sub RoInput_setMessagePort_RoMessagePort_k_(port as Object)
-    m.native.SetMessagePort(port.getNative())
+    m.get_native().SetMessagePort(port.getNative_Dynamic_k_())
 end sub
 
 function RoInput_getMessagePort_RoMessagePortN_k_() as Dynamic
-    port = m.native.GetMessagePort()
+    port = m.get_native().GetMessagePort()
     __when_tmp0 = invalid
     if port <> invalid then
         __when_tmp0 = RoMessagePort_create_Dynamic_RoMessagePort_k_(port)
@@ -28,11 +28,11 @@ function RoInput_getMessagePort_RoMessagePortN_k_() as Dynamic
 end function
 
 sub RoInput_markAsHandled()
-    m.native.MarkAsHandled()
+    m.get_native().MarkAsHandled()
 end sub
 
 function RoInput_getNative_Dynamic_k_() as Object
-    return m.native
+    return m.get_native()
 end function
 
 function RoInput_get_native_Dynamic_k_() as Object
@@ -52,15 +52,15 @@ function RoInputEvent_create_Dynamic_RoInputEvent_k_(event as Object) as Object
 end function
 
 function RoInputEvent_isInput_Z_k_() as Boolean
-    return m.event.IsInput()
+    return m.get_event().IsInput()
 end function
 
 function RoInputEvent_isScreenSaverExitedEvent_Z_k_() as Boolean
-    return m.event.IsScreenSaverExitedEvent()
+    return m.get_event().IsScreenSaverExitedEvent()
 end function
 
 function RoInputEvent_getInfo_Dynamic_k_() as Object
-    return m.event.GetInfo()
+    return m.get_event().GetInfo()
 end function
 
 function RoInputEvent_get_event_Dynamic_k_() as Object

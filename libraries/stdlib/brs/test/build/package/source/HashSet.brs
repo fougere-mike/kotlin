@@ -17,7 +17,7 @@ function HashSet_create_HashSetAnyN_k_() as Object
     this.toString_Str_k_ = HashSet_toString_Str_k_
     this.get_map = HashSet_get_map_HashMapAnyNZ_k_
     this.get_size = HashSet_get_size_I_k_
-    m.map = HashMap_create_HashMapAnyNAnyN_k_()
+    this.map = HashMap_create_HashMapAnyNAnyN_k_()
     return this
 end function
 
@@ -40,7 +40,7 @@ function HashSet_create_I_HashSetAnyN_k_(initialCapacity as Integer) as Object
     this.toString_Str_k_ = HashSet_toString_Str_k_
     this.get_map = HashSet_get_map_HashMapAnyNZ_k_
     this.get_size = HashSet_get_size_I_k_
-    m.map = HashMap_create_I_HashMapAnyNAnyN_k_(initialCapacity)
+    this.map = HashMap_create_I_HashMapAnyNAnyN_k_(initialCapacity)
     return this
 end function
 
@@ -63,22 +63,22 @@ function HashSet_create_CollectionAnyN_HashSetAnyN_k_(elements as Object) as Obj
     this.toString_Str_k_ = HashSet_toString_Str_k_
     this.get_map = HashSet_get_map_HashMapAnyNZ_k_
     this.get_size = HashSet_get_size_I_k_
-    m.map = HashMap_create_I_HashMapAnyNAnyN_k_(elements.size)
-    m.addAll(elements)
+    this.map = HashMap_create_I_HashMapAnyNAnyN_k_(elements.get_size())
+    this.addAll_CollectionAnyN_Z_k_(elements)
     return this
 end function
 
 function HashSet_isEmpty_Z_k_() as Boolean
-    return m.map.isEmpty()
+    return m.get_map().isEmpty_Z_k_()
 end function
 
 function HashSet_contains_AnyN_Z_k_(element as Dynamic) as Boolean
-    return m.map.containsKey(element)
+    return m.get_map().containsKey_AnyN_Z_k_(element)
 end function
 
 function HashSet_containsAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
-    for each element in elements
-        if m.contains(element).not() then
+    for each element in elements.array
+        if not m.contains_AnyN_Z_k_(element) then
             return false
         end if
     end for
@@ -86,29 +86,29 @@ function HashSet_containsAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
 end function
 
 function HashSet_iterator_MutableIteratorAnyN_k_() as Object
-    return HashSet_SetIterator_create_MutableIteratorAnyN_SetIteratorAnyN_k_(m.map.keys.iterator())
+    return HashSet_SetIterator_create_MutableIteratorAnyN_SetIteratorAnyN_k_(m.get_map().get_keys().iterator_MutableIteratorAnyN_k_())
 end function
 
 function HashSet_add_AnyN_Z_k_(element as Dynamic) as Boolean
-    if m.contains(element) then
+    if m.contains_AnyN_Z_k_(element) then
         return false
     end if
-    m.map.put(element, true)
+    m.get_map().put_AnyN_AnyN_AnyN_k_(element, true)
     return true
 end function
 
 function HashSet_remove_AnyN_Z_k_(element as Dynamic) as Boolean
-    if m.contains(element).not() then
+    if not m.contains_AnyN_Z_k_(element) then
         return false
     end if
-    m.map.remove(element)
+    m.get_map().remove_AnyN_AnyN_k_(element)
     return true
 end function
 
 function HashSet_addAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
     modified = false
-    for each element in elements
-        if m.add(element) then
+    for each element in elements.array
+        if m.add_AnyN_Z_k_(element) then
             modified = true
         end if
     end for
@@ -117,8 +117,8 @@ end function
 
 function HashSet_removeAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
     modified = false
-    for each element in elements
-        if m.remove(element) then
+    for each element in elements.array
+        if m.remove_AnyN_Z_k_(element) then
             modified = true
         end if
     end for
@@ -127,9 +127,9 @@ end function
 
 function HashSet_retainAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
     modified = false
-    iter = m.iterator()
-    while iter.hasNext()
-        if elements.contains(iter.next()).not() then
+    iter = m.iterator_MutableIteratorAnyN_k_()
+    while iter.hasNext_Z_k_()
+        if not elements.contains_AnyN_Z_k_(iter.next_AnyN_k_()) then
             iter.remove()
             modified = true
         end if
@@ -138,7 +138,7 @@ function HashSet_retainAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
 end function
 
 sub HashSet_clear()
-    m.map.clear()
+    m.get_map().clear()
 end sub
 
 function HashSet_equals_AnyN_Z_k_(other as Dynamic) as Boolean
@@ -148,11 +148,11 @@ function HashSet_equals_AnyN_Z_k_(other as Dynamic) as Boolean
     if not __kotlin_isInstanceOf(other, "Set") then
         return false
     end if
-    if other.size <> m.size then
+    if other.get_size() <> m.get_size() then
         return false
     end if
-    for each element in m
-        if other.contains(element).not() then
+    for each element in m.array
+        if not other.contains_AnyN_Z_k_(element) then
             return false
         end if
     end for
@@ -161,7 +161,7 @@ end function
 
 function HashSet_hashCode_I_k_() as Integer
     h = 0
-    for each element in m
+    for each element in m.array
         tmp0_safe_receiver = element
         __when_tmp0 = invalid
         if tmp0_safe_receiver = invalid then
@@ -183,25 +183,35 @@ function HashSet_hashCode_I_k_() as Integer
 end function
 
 function HashSet_toString_Str_k_() as String
-    if m.isEmpty() then
+    if m.isEmpty_Z_k_() then
         return "[]"
     end if
     sb = StringBuilder_create_StringBuilder_k_()
-    sb.append("[")
+    sb.append_StrN_StringBuilder_k_("[")
     first = true
-    for each element in m
-        if first.not() then
-            sb.append(", ")
+    for each element in m.array
+        if not first then
+            sb.append_StrN_StringBuilder_k_(", ")
         end if
         first = false
         if EQEQEQ_AnyN_AnyN_Z_k_(element, m) then
-            sb.append("(this Collection)")
+            sb.append_StrN_StringBuilder_k_("(this Collection)")
         else if true then
-            sb.append(element.toString())
+            sb.append_StrN_StringBuilder_k_((function(Str, element)
+                if element = invalid then return "null" else return (function(Str, element)
+                    if (Type(element) = "String") or (Type(element) = "roString") then return element else return (function(Str, element)
+                        if ((((((Type(element) = "Integer") or (Type(element) = "LongInteger")) or (Type(element) = "Float")) or (Type(element) = "Double")) or (Type(element) = "roInt")) or (Type(element) = "roFloat")) or (Type(element) = "roDouble") then return Str(element) else return (function(element)
+                            if (Type(element) = "Boolean") or (Type(element) = "roBoolean") then return (function(element)
+                                if element then return "true" else return "false"
+                            end function)(element) else return element.toString()
+                        end function)(element)
+                    end function)(Str, element)
+                end function)(Str, element)
+            end function)(Str, element))
         end if
 
     end for
-    sb.append("]")
+    sb.append_StrN_StringBuilder_k_("]")
     return sb.toString()
 end function
 
@@ -210,7 +220,7 @@ function HashSet_get_map_HashMapAnyNZ_k_() as Object
 end function
 
 function HashSet_get_size_I_k_() as Integer
-    return m.map.size
+    return m.get_map().get_size()
 end function
 
 function HashSet_SetIterator_create_MutableIteratorAnyN_SetIteratorAnyN_k_(keyIterator as Object) as Object
@@ -226,11 +236,11 @@ function HashSet_SetIterator_create_MutableIteratorAnyN_SetIteratorAnyN_k_(keyIt
 end function
 
 function HashSet_SetIterator_hasNext_Z_k_() as Boolean
-    return m.keyIterator.hasNext()
+    return m.get_keyIterator().hasNext_Z_k_()
 end function
 
 function HashSet_SetIterator_next_AnyN_k_() as Dynamic
-    return m.keyIterator.next()
+    return m.get_keyIterator().next_AnyN_k_()
 end function
 
 sub HashSet_SetIterator_remove()
@@ -246,15 +256,15 @@ function hashSetOf_HashSetAnyN_k_() as Object
 end function
 
 function hashSetOf_Arr_HashSetAnyN_k_(elements as Object) as Object
-    set = HashSet_create_I_HashSetAnyN_k_(elements.size)
+    set = HashSet_create_I_HashSetAnyN_k_(elements.count())
     indexedObject = elements
     inductionVariable = 0
-    last = indexedObject.size
-    while less_I_I_Z_k_(inductionVariable, last)
-        element = indexedObject.get(inductionVariable)
+    last = indexedObject.count()
+    while inductionVariable < last
+        element = indexedObject[inductionVariable]
         inductionVariable = (inductionVariable + 1)
 
-        set.add(element)
+        set.add_AnyN_Z_k_(element)
 
     end while
 
@@ -266,7 +276,7 @@ function mutableSetOf_MutableSetAnyN_k_() as Object
 end function
 
 function mutableSetOf_Arr_MutableSetAnyN_k_(elements as Object) as Object
-    return hashSetOf_Arr_HashSetAnyN_k_([elements])
+    return hashSetOf_Arr_HashSetAnyN_k_(elements)
 end function
 
 function setOf_SetAnyN_k_() as Object
@@ -275,10 +285,10 @@ end function
 
 function setOf_Arr_SetAnyN_k_(elements as Object) as Object
     __when_tmp2 = invalid
-    if elements.size = 0 then
+    if elements.count() = 0 then
         __when_tmp2 = emptySet_SetAnyN_k_()
     else if true then
-        __when_tmp2 = hashSetOf_Arr_HashSetAnyN_k_([elements])
+        __when_tmp2 = hashSetOf_Arr_HashSetAnyN_k_(elements)
     end if
     return __when_tmp2
 
@@ -305,7 +315,7 @@ end function
 
 function EmptyHashSet_getInstance() as Object
     if m.EmptyHashSet_instance = invalid then
-        m.EmptyHashSet_instance = EmptyHashSet_create()
+        m.EmptyHashSet_instance = EmptyHashSet_create_EmptyHashSet_k_()
     end if
     return m.EmptyHashSet_instance
 end function
@@ -319,7 +329,7 @@ function EmptyHashSet_contains_AnyN_Z_k_(element as Dynamic) as Boolean
 end function
 
 function EmptyHashSet_containsAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
-    return elements.isEmpty()
+    return elements.isEmpty_Z_k_()
 end function
 
 function EmptyHashSet_iterator_IteratorAnyN_k_() as Object
@@ -327,7 +337,7 @@ function EmptyHashSet_iterator_IteratorAnyN_k_() as Object
 end function
 
 function EmptyHashSet_equals_AnyN_Z_k_(other as Dynamic) as Boolean
-    return __kotlin_isInstanceOf(other, "Set") and other.isEmpty()
+    return __kotlin_isInstanceOf(other, "Set") and other.isEmpty_Z_k_()
 end function
 
 function EmptyHashSet_hashCode_I_k_() as Integer
@@ -353,7 +363,7 @@ end function
 
 function EmptySetIterator_getInstance() as Object
     if m.EmptySetIterator_instance = invalid then
-        m.EmptySetIterator_instance = EmptySetIterator_create()
+        m.EmptySetIterator_instance = EmptySetIterator_create_EmptySetIterator_k_()
     end if
     return m.EmptySetIterator_instance
 end function

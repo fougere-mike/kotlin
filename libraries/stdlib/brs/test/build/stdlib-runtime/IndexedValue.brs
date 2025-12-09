@@ -1,17 +1,9 @@
-function IndexedValue_create(index as Integer, value as Dynamic) as Object
+function IndexedValue_create_I_AnyN_IndexedValueAnyN_k_(index as Integer, value as Dynamic) as Object
     this = {}
     this.__type = "IndexedValue"
     this.__proto = ["IndexedValue"]
     this.index = index
     this.value = value
-    this.component1_I_k_ = IndexedValue_component1_I_k_
-    this.component2_AnyN_k_ = IndexedValue_component2_AnyN_k_
-    this.copy_I_AnyN_IndexedValueAnyN_k_ = IndexedValue_copy_I_AnyN_IndexedValueAnyN_k_
-    this.toString_Str_k_ = IndexedValue_toString_Str_k_
-    this.hashCode_I_k_ = IndexedValue_hashCode_I_k_
-    this.equals_AnyN_Z_k_ = IndexedValue_equals_AnyN_Z_k_
-    this.get_index = IndexedValue_get_index_I_k_
-    this.get_value = IndexedValue_get_value_AnyN_k_
     this.equals = IndexedValue_equals
     this.hashCode = IndexedValue_hashCode
     this.toString = IndexedValue_toString
@@ -55,7 +47,7 @@ function IndexedValue_copy(index = invalid, value = invalid) as Object
     if value = invalid then
         value = m.value
     end if
-    return IndexedValue_create(index, value)
+    return IndexedValue_create_I_AnyN_IndexedValueAnyN_k_(index, value)
 end function
 
 function IndexedValue_component1() as Integer

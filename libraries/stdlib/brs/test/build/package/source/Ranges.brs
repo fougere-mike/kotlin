@@ -1,9 +1,9 @@
 function ClosedRange_contains_Any_Z_k_(value as Object) as Boolean
-    return ((value >= m.start) >= 0) and ((value <= m.endInclusive) <= 0)
+    return ((value >= m.get_start()) >= 0) and ((value <= m.get_endInclusive()) <= 0)
 end function
 
 function ClosedRange_isEmpty_Z_k_() as Boolean
-    return (m.start > m.endInclusive) > 0
+    return (m.get_start() > m.get_endInclusive()) > 0
 end function
 
 function ClosedRange_get_start_Any_k_() as Object
@@ -13,11 +13,11 @@ function ClosedRange_get_endInclusive_Any_k_() as Object
 end function
 
 function OpenEndRange_contains_Any_Z_k_(value as Object) as Boolean
-    return ((value >= m.start) >= 0) and ((value < m.endExclusive) < 0)
+    return ((value >= m.get_start()) >= 0) and ((value < m.get_endExclusive()) < 0)
 end function
 
 function OpenEndRange_isEmpty_Z_k_() as Boolean
-    return (m.start >= m.endExclusive) >= 0
+    return (m.get_start() >= m.get_endExclusive()) >= 0
 end function
 
 function OpenEndRange_get_start_Any_k_() as Object
@@ -47,38 +47,38 @@ function IntRange_create_I_I_IntRange_k_(start as Integer, endInclusive as Integ
 end function
 
 function IntRange_contains_I_Z_k_(value as Integer) as Boolean
-    return (m.first <= value) and (value <= m.last)
+    return (m.get_first() <= value) and (value <= m.get_last())
 end function
 
 function IntRange_isEmpty_Z_k_() as Boolean
-    return m.first > m.last
+    return m.get_first() > m.get_last()
 end function
 
 function IntRange_equals_AnyN_Z_k_(other as Dynamic) as Boolean
-    return __kotlin_isInstanceOf(other, "IntRange") and ((m.isEmpty() and other.isEmpty()) or ((m.first = other.first) and (m.last = other.last)))
+    return __kotlin_isInstanceOf(other, "IntRange") and ((m.isEmpty_Z_k_() and other.isEmpty_Z_k_()) or ((m.get_first() = other.get_first()) and (m.get_last() = other.get_last())))
 end function
 
 function IntRange_hashCode_I_k_() as Integer
     __when_tmp0 = invalid
-    if m.isEmpty() then
+    if m.isEmpty_Z_k_() then
         __when_tmp0 = -1
     else if true then
-        __when_tmp0 = ((31 * m.first) + m.last)
+        __when_tmp0 = ((31 * m.get_first()) + m.get_last())
     end if
     return __when_tmp0
 
 end function
 
 function IntRange_toString_Str_k_() as String
-    return (m.first + "..") + m.last
+    return (m.get_first() + "..") + m.get_last()
 end function
 
 function IntRange_get_start_I_k_() as Integer
-    return m.first
+    return m.get_first()
 end function
 
 function IntRange_get_endInclusive_I_k_() as Integer
-    return m.last
+    return m.get_last()
 end function
 
 function IntRange_Companion_create_Companion_k_() as Object
@@ -92,7 +92,7 @@ end function
 
 function IntRange_Companion_getInstance() as Object
     if m.IntRange_Companion_instance = invalid then
-        m.IntRange_Companion_instance = IntRange_Companion_create()
+        m.IntRange_Companion_instance = IntRange_Companion_create_Companion_k_()
     end if
     return m.IntRange_Companion_instance
 end function
@@ -122,38 +122,38 @@ function LongRange_create_J_J_LongRange_k_(start as LongInteger, endInclusive as
 end function
 
 function LongRange_contains_J_Z_k_(value as LongInteger) as Boolean
-    return (m.first <= value) and (value <= m.last)
+    return (m.get_first() <= value) and (value <= m.get_last())
 end function
 
 function LongRange_isEmpty_Z_k_() as Boolean
-    return m.first > m.last
+    return m.get_first() > m.get_last()
 end function
 
 function LongRange_equals_AnyN_Z_k_(other as Dynamic) as Boolean
-    return __kotlin_isInstanceOf(other, "LongRange") and ((m.isEmpty() and other.isEmpty()) or ((m.first = other.first) and (m.last = other.last)))
+    return __kotlin_isInstanceOf(other, "LongRange") and ((m.isEmpty_Z_k_() and other.isEmpty_Z_k_()) or ((m.get_first() = other.get_first()) and (m.get_last() = other.get_last())))
 end function
 
 function LongRange_hashCode_I_k_() as Integer
     __when_tmp1 = invalid
-    if m.isEmpty() then
+    if m.isEmpty_Z_k_() then
         __when_tmp1 = -1
     else if true then
-        __when_tmp1 = ((31 * m.first.xor(m.first.ushr(32))) + m.last.xor(m.last.ushr(32)))
+        __when_tmp1 = ((31 * m.get_first().xor_J_J_k_(m.get_first().ushr_I_J_k_(32))) + m.get_last().xor_J_J_k_(m.get_last().ushr_I_J_k_(32)))
     end if
     return __when_tmp1
 
 end function
 
 function LongRange_toString_Str_k_() as String
-    return (m.first + "..") + m.last
+    return (m.get_first() + "..") + m.get_last()
 end function
 
 function LongRange_get_start_J_k_() as LongInteger
-    return m.first
+    return m.get_first()
 end function
 
 function LongRange_get_endInclusive_J_k_() as LongInteger
-    return m.last
+    return m.get_last()
 end function
 
 function LongRange_Companion_create_Companion_k_() as Object
@@ -167,7 +167,7 @@ end function
 
 function LongRange_Companion_getInstance() as Object
     if m.LongRange_Companion_instance = invalid then
-        m.LongRange_Companion_instance = LongRange_Companion_create()
+        m.LongRange_Companion_instance = LongRange_Companion_create_Companion_k_()
     end if
     return m.LongRange_Companion_instance
 end function
@@ -197,38 +197,38 @@ function CharRange_create_C_C_CharRange_k_(start as Object, endInclusive as Obje
 end function
 
 function CharRange_contains_C_Z_k_(value as Object) as Boolean
-    return ((m.first <= value) <= 0) and ((value <= m.last) <= 0)
+    return ((m.get_first() <= value) <= 0) and ((value <= m.get_last()) <= 0)
 end function
 
 function CharRange_isEmpty_Z_k_() as Boolean
-    return (m.first > m.last) > 0
+    return (m.get_first() > m.get_last()) > 0
 end function
 
 function CharRange_equals_AnyN_Z_k_(other as Dynamic) as Boolean
-    return __kotlin_isInstanceOf(other, "CharRange") and ((m.isEmpty() and other.isEmpty()) or ((m.first = other.first) and (m.last = other.last)))
+    return __kotlin_isInstanceOf(other, "CharRange") and ((m.isEmpty_Z_k_() and other.isEmpty_Z_k_()) or ((m.get_first() = other.get_first()) and (m.get_last() = other.get_last())))
 end function
 
 function CharRange_hashCode_I_k_() as Integer
     __when_tmp2 = invalid
-    if m.isEmpty() then
+    if m.isEmpty_Z_k_() then
         __when_tmp2 = -1
     else if true then
-        __when_tmp2 = ((31 * get_code_rC_I_k_(m.first)) + get_code_rC_I_k_(m.last))
+        __when_tmp2 = ((31 * get_code_rC_I_k_(m.get_first())) + get_code_rC_I_k_(m.get_last()))
     end if
     return __when_tmp2
 
 end function
 
 function CharRange_toString_Str_k_() as String
-    return (m.first + "..") + m.last
+    return (m.get_first() + "..") + m.get_last()
 end function
 
 function CharRange_get_start_C_k_() as Object
-    return m.first
+    return m.get_first()
 end function
 
 function CharRange_get_endInclusive_C_k_() as Object
-    return m.last
+    return m.get_last()
 end function
 
 function CharRange_Companion_create_Companion_k_() as Object
@@ -242,7 +242,7 @@ end function
 
 function CharRange_Companion_getInstance() as Object
     if m.CharRange_Companion_instance = invalid then
-        m.CharRange_Companion_instance = CharRange_Companion_create()
+        m.CharRange_Companion_instance = CharRange_Companion_create_Companion_k_()
     end if
     return m.CharRange_Companion_instance
 end function
@@ -270,30 +270,30 @@ function IntProgression_create_I_I_I_IntProgression_k_(start as Integer, endIncl
 end function
 
 function IntProgression_iterator_IntIterator_k_() as Object
-    return IntProgressionIterator_create_I_I_I_IntProgressionIterator_k_(m.first, m.last, m.step)
+    return IntProgressionIterator_create_I_I_I_IntProgressionIterator_k_(m.get_first(), m.get_last(), m.get_step())
 end function
 
 function IntProgression_isEmpty_Z_k_() as Boolean
     __when_tmp3 = invalid
-    if m.step > 0 then
-        __when_tmp3 = (m.first > m.last)
+    if m.get_step() > 0 then
+        __when_tmp3 = (m.get_first() > m.get_last())
     else if true then
-        __when_tmp3 = (m.first < m.last)
+        __when_tmp3 = (m.get_first() < m.get_last())
     end if
     return __when_tmp3
 
 end function
 
 function IntProgression_equals_AnyN_Z_k_(other as Dynamic) as Boolean
-    return __kotlin_isInstanceOf(other, "IntProgression") and ((m.isEmpty() and other.isEmpty()) or (((m.first = other.first) and (m.last = other.last)) and (m.step = other.step)))
+    return __kotlin_isInstanceOf(other, "IntProgression") and ((m.isEmpty_Z_k_() and other.isEmpty_Z_k_()) or (((m.get_first() = other.get_first()) and (m.get_last() = other.get_last())) and (m.get_step() = other.get_step())))
 end function
 
 function IntProgression_hashCode_I_k_() as Integer
     __when_tmp4 = invalid
-    if m.isEmpty() then
+    if m.isEmpty_Z_k_() then
         __when_tmp4 = -1
     else if true then
-        __when_tmp4 = ((31 * ((31 * m.first) + m.last)) + m.step)
+        __when_tmp4 = ((31 * ((31 * m.get_first()) + m.get_last())) + m.get_step())
     end if
     return __when_tmp4
 
@@ -301,10 +301,10 @@ end function
 
 function IntProgression_toString_Str_k_() as String
     __when_tmp5 = invalid
-    if m.step > 0 then
-        __when_tmp5 = ((((m.first + "..") + m.last) + " step ") + m.step)
+    if m.get_step() > 0 then
+        __when_tmp5 = ((((m.get_first() + "..") + m.get_last()) + " step ") + m.get_step())
     else if true then
-        __when_tmp5 = ((((m.first + " downTo ") + m.last) + " step ") + -m.step)
+        __when_tmp5 = ((((m.get_first() + " downTo ") + m.get_last()) + " step ") + -m.get_step())
     end if
     return __when_tmp5
 
@@ -332,7 +332,7 @@ end function
 
 function IntProgression_Companion_getInstance() as Object
     if m.IntProgression_Companion_instance = invalid then
-        m.IntProgression_Companion_instance = IntProgression_Companion_create()
+        m.IntProgression_Companion_instance = IntProgression_Companion_create_Companion_k_()
     end if
     return m.IntProgression_Companion_instance
 end function
@@ -360,30 +360,30 @@ function LongProgression_create_J_J_J_LongProgression_k_(start as LongInteger, e
 end function
 
 function LongProgression_iterator_LongIterator_k_() as Object
-    return LongProgressionIterator_create_J_J_J_LongProgressionIterator_k_(m.first, m.last, m.step)
+    return LongProgressionIterator_create_J_J_J_LongProgressionIterator_k_(m.get_first(), m.get_last(), m.get_step())
 end function
 
 function LongProgression_isEmpty_Z_k_() as Boolean
     __when_tmp6 = invalid
-    if m.step > 0 then
-        __when_tmp6 = (m.first > m.last)
+    if m.get_step() > 0 then
+        __when_tmp6 = (m.get_first() > m.get_last())
     else if true then
-        __when_tmp6 = (m.first < m.last)
+        __when_tmp6 = (m.get_first() < m.get_last())
     end if
     return __when_tmp6
 
 end function
 
 function LongProgression_equals_AnyN_Z_k_(other as Dynamic) as Boolean
-    return __kotlin_isInstanceOf(other, "LongProgression") and ((m.isEmpty() and other.isEmpty()) or (((m.first = other.first) and (m.last = other.last)) and (m.step = other.step)))
+    return __kotlin_isInstanceOf(other, "LongProgression") and ((m.isEmpty_Z_k_() and other.isEmpty_Z_k_()) or (((m.get_first() = other.get_first()) and (m.get_last() = other.get_last())) and (m.get_step() = other.get_step())))
 end function
 
 function LongProgression_hashCode_I_k_() as Integer
     __when_tmp7 = invalid
-    if m.isEmpty() then
+    if m.isEmpty_Z_k_() then
         __when_tmp7 = -1
     else if true then
-        __when_tmp7 = ((31 * ((31 * m.first.xor(m.first.ushr(32))) + m.last.xor(m.last.ushr(32)))) + m.step.xor(m.step.ushr(32)))
+        __when_tmp7 = ((31 * ((31 * m.get_first().xor_J_J_k_(m.get_first().ushr_I_J_k_(32))) + m.get_last().xor_J_J_k_(m.get_last().ushr_I_J_k_(32)))) + m.get_step().xor_J_J_k_(m.get_step().ushr_I_J_k_(32)))
     end if
     return __when_tmp7
 
@@ -391,10 +391,10 @@ end function
 
 function LongProgression_toString_Str_k_() as String
     __when_tmp8 = invalid
-    if m.step > 0 then
-        __when_tmp8 = ((((m.first + "..") + m.last) + " step ") + m.step)
+    if m.get_step() > 0 then
+        __when_tmp8 = ((((m.get_first() + "..") + m.get_last()) + " step ") + m.get_step())
     else if true then
-        __when_tmp8 = ((((m.first + " downTo ") + m.last) + " step ") + -m.step)
+        __when_tmp8 = ((((m.get_first() + " downTo ") + m.get_last()) + " step ") + -m.get_step())
     end if
     return __when_tmp8
 
@@ -422,7 +422,7 @@ end function
 
 function LongProgression_Companion_getInstance() as Object
     if m.LongProgression_Companion_instance = invalid then
-        m.LongProgression_Companion_instance = LongProgression_Companion_create()
+        m.LongProgression_Companion_instance = LongProgression_Companion_create_Companion_k_()
     end if
     return m.LongProgression_Companion_instance
 end function
@@ -450,30 +450,30 @@ function CharProgression_create_C_C_I_CharProgression_k_(start as Object, endInc
 end function
 
 function CharProgression_iterator_CharIterator_k_() as Object
-    return CharProgressionIterator_create_C_C_I_CharProgressionIterator_k_(m.first, m.last, m.step)
+    return CharProgressionIterator_create_C_C_I_CharProgressionIterator_k_(m.get_first(), m.get_last(), m.get_step())
 end function
 
 function CharProgression_isEmpty_Z_k_() as Boolean
     __when_tmp9 = invalid
-    if m.step > 0 then
-        __when_tmp9 = ((m.first > m.last) > 0)
+    if m.get_step() > 0 then
+        __when_tmp9 = ((m.get_first() > m.get_last()) > 0)
     else if true then
-        __when_tmp9 = ((m.first < m.last) < 0)
+        __when_tmp9 = ((m.get_first() < m.get_last()) < 0)
     end if
     return __when_tmp9
 
 end function
 
 function CharProgression_equals_AnyN_Z_k_(other as Dynamic) as Boolean
-    return __kotlin_isInstanceOf(other, "CharProgression") and ((m.isEmpty() and other.isEmpty()) or (((m.first = other.first) and (m.last = other.last)) and (m.step = other.step)))
+    return __kotlin_isInstanceOf(other, "CharProgression") and ((m.isEmpty_Z_k_() and other.isEmpty_Z_k_()) or (((m.get_first() = other.get_first()) and (m.get_last() = other.get_last())) and (m.get_step() = other.get_step())))
 end function
 
 function CharProgression_hashCode_I_k_() as Integer
     __when_tmp10 = invalid
-    if m.isEmpty() then
+    if m.isEmpty_Z_k_() then
         __when_tmp10 = -1
     else if true then
-        __when_tmp10 = ((31 * ((31 * get_code_rC_I_k_(m.first)) + get_code_rC_I_k_(m.last))) + m.step)
+        __when_tmp10 = ((31 * ((31 * get_code_rC_I_k_(m.get_first())) + get_code_rC_I_k_(m.get_last()))) + m.get_step())
     end if
     return __when_tmp10
 
@@ -481,10 +481,10 @@ end function
 
 function CharProgression_toString_Str_k_() as String
     __when_tmp11 = invalid
-    if m.step > 0 then
-        __when_tmp11 = ((((m.first + "..") + m.last) + " step ") + m.step)
+    if m.get_step() > 0 then
+        __when_tmp11 = ((((m.get_first() + "..") + m.get_last()) + " step ") + m.get_step())
     else if true then
-        __when_tmp11 = ((((m.first + " downTo ") + m.last) + " step ") + -m.step)
+        __when_tmp11 = ((((m.get_first() + " downTo ") + m.get_last()) + " step ") + -m.get_step())
     end if
     return __when_tmp11
 
@@ -512,7 +512,7 @@ end function
 
 function CharProgression_Companion_getInstance() as Object
     if m.CharProgression_Companion_instance = invalid then
-        m.CharProgression_Companion_instance = CharProgression_Companion_create()
+        m.CharProgression_Companion_instance = CharProgression_Companion_create_Companion_k_()
     end if
     return m.CharProgression_Companion_instance
 end function
@@ -544,18 +544,18 @@ function IntProgressionIterator_create_I_I_I_IntProgressionIterator_k_(first as 
 end function
 
 function IntProgressionIterator_hasNext_Z_k_() as Boolean
-    return m.hasNext
+    return m.get_hasNext()
 end function
 
 function IntProgressionIterator_nextInt_I_k_() as Integer
-    value = m.next
-    if value = m.finalElement then
-        if m.hasNext.not() then
+    value = m.get_next()
+    if value = m.get_finalElement() then
+        if not m.get_hasNext() then
             throw NoSuchElementException_create_NoSuchElementException_k_()
         end if
-        m.hasNext = false
+        m.set_hasNext(false)
     else if true then
-        m.next = (m.next + m.step)
+        m.set_next(m.get_next() + m.get_step())
     end if
     return value
 end function
@@ -607,18 +607,18 @@ function LongProgressionIterator_create_J_J_J_LongProgressionIterator_k_(first a
 end function
 
 function LongProgressionIterator_hasNext_Z_k_() as Boolean
-    return m.hasNext
+    return m.get_hasNext()
 end function
 
 function LongProgressionIterator_nextLong_J_k_() as LongInteger
-    value = m.next
-    if value = m.finalElement then
-        if m.hasNext.not() then
+    value = m.get_next()
+    if value = m.get_finalElement() then
+        if not m.get_hasNext() then
             throw NoSuchElementException_create_NoSuchElementException_k_()
         end if
-        m.hasNext = false
+        m.set_hasNext(false)
     else if true then
-        m.next = (m.next + m.step)
+        m.set_next(m.get_next() + m.get_step())
     end if
     return value
 end function
@@ -670,18 +670,18 @@ function CharProgressionIterator_create_C_C_I_CharProgressionIterator_k_(first a
 end function
 
 function CharProgressionIterator_hasNext_Z_k_() as Boolean
-    return m.hasNext
+    return m.get_hasNext()
 end function
 
 function CharProgressionIterator_nextChar_C_k_() as Object
-    value = m.next
-    if value = m.finalElement then
-        if m.hasNext.not() then
+    value = m.get_next()
+    if value = m.get_finalElement() then
+        if not m.get_hasNext() then
             throw NoSuchElementException_create_NoSuchElementException_k_()
         end if
-        m.hasNext = false
+        m.set_hasNext(false)
     else if true then
-        m.next = (m.next + m.step)
+        m.set_next(m.get_next() + m.get_step())
     end if
     return value
 end function

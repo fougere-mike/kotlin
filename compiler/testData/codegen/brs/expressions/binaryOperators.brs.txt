@@ -19,5 +19,5 @@ end sub
 sub logicalOps_Z_Z_k_(a as Boolean, b as Boolean)
     and = a and b
     or = a or b
-    not = a.not()
+    not = not a
 end sub

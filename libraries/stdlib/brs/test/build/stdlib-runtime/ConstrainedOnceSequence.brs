@@ -12,11 +12,11 @@ function ConstrainedOnceSequence_create_SequenceAnyN_ConstrainedOnceSequenceAnyN
 end function
 
 function ConstrainedOnceSequence_iterator_IteratorAnyN_k_() as Object
-    if m.consumed then
+    if m.get_consumed() then
         throw IllegalStateException_create_StrN_IllegalStateException_k_("This sequence can be consumed only once.")
     end if
-    m.consumed = true
-    return m.sequence.iterator()
+    m.set_consumed(true)
+    return m.get_sequence().iterator_IteratorAnyN_k_()
 end function
 
 function ConstrainedOnceSequence_get_sequence_SequenceAnyN_k_() as Object

@@ -1,54 +1,54 @@
 sub sort_rArr_k_(m as Object)
-    if m.size <= 1 then
+    if m.count() <= 1 then
         return
     end if
-    quickSort_Arr_I_I_Function2AnyNAnyNI_k_(m, 0, m.size - 1, {invoke: function(a as Object, b as Object) as Integer
-        return a.compareTo(b)
+    quickSort_Arr_I_I_Function2AnyNAnyNI_k_(m, 0, m.count() - 1, {invoke: function(a as Object, b as Object) as Integer
+        return a.compareTo_AnyN_I_k_(b)
     end function})
 end sub
 
 sub sortWith_rArr_ComparatorAnyN_k_(m as Object, comparator as Object)
-    if m.size <= 1 then
+    if m.count() <= 1 then
         return
     end if
-    quickSort_Arr_I_I_Function2AnyNAnyNI_k_(m, 0, m.size - 1, {comparator: comparator, invoke: function(a as Dynamic, b as Dynamic) as Integer
-        return m.comparator.compare(a, b)
+    quickSort_Arr_I_I_Function2AnyNAnyNI_k_(m, 0, m.count() - 1, {comparator: comparator, invoke: function(a as Dynamic, b as Dynamic) as Integer
+        return m.comparator.compare_AnyN_AnyN_I_k_(a, b)
     end function})
 end sub
 
-sub sortWith_rArr_ComparatorAnyN_I_I_k_(m as Object, comparator as Object, fromIndex = 0, toIndex = m.size)
-    if (fromIndex < 0) or (toIndex > m.size) then
-        throw IndexOutOfBoundsException_create_StrN_IndexOutOfBoundsException_k_((((("fromIndex: " + fromIndex) + ", toIndex: ") + toIndex) + ", size: ") + m.size)
+sub sortWith_rArr_ComparatorAnyN_I_I_k_(m as Object, comparator as Object, fromIndex = 0, toIndex = m.count())
+    if (fromIndex < 0) or (toIndex > m.count()) then
+        throw IndexOutOfBoundsException_create_StrN_IndexOutOfBoundsException_k_((((("fromIndex: " + fromIndex) + ", toIndex: ") + toIndex) + ", size: ") + m.count())
     end if
     if fromIndex >= (toIndex - 1) then
         return
     end if
     quickSort_Arr_I_I_Function2AnyNAnyNI_k_(m, fromIndex, toIndex - 1, {comparator: comparator, invoke: function(a as Dynamic, b as Dynamic) as Integer
-        return m.comparator.compare(a, b)
+        return m.comparator.compare_AnyN_AnyN_I_k_(a, b)
     end function})
 end sub
 
 sub sort_rMutableListAny_k_(m as Object)
-    if m.size <= 1 then
+    if m.get_size() <= 1 then
         return
     end if
-    quickSortList_MutableListAnyN_I_I_Function2AnyNAnyNI_k_(m, 0, m.size - 1, {invoke: function(a as Object, b as Object) as Integer
-        return a.compareTo(b)
+    quickSortList_MutableListAnyN_I_I_Function2AnyNAnyNI_k_(m, 0, m.get_size() - 1, {invoke: function(a as Object, b as Object) as Integer
+        return a.compareTo_AnyN_I_k_(b)
     end function})
 end sub
 
 sub sortWith_rMutableListAnyN_ComparatorAnyN_k_(m as Object, comparator as Object)
-    if m.size <= 1 then
+    if m.get_size() <= 1 then
         return
     end if
-    quickSortList_MutableListAnyN_I_I_Function2AnyNAnyNI_k_(m, 0, m.size - 1, {comparator: comparator, invoke: function(a as Dynamic, b as Dynamic) as Integer
-        return m.comparator.compare(a, b)
+    quickSortList_MutableListAnyN_I_I_Function2AnyNAnyNI_k_(m, 0, m.get_size() - 1, {comparator: comparator, invoke: function(a as Dynamic, b as Dynamic) as Integer
+        return m.comparator.compare_AnyN_AnyN_I_k_(a, b)
     end function})
 end sub
 
 function sorted_rIterableAny_ListAny_k_(m as Object) as Object
     if __kotlin_isInstanceOf(m, "Collection") then
-        if m.size <= 1 then
+        if m.get_size() <= 1 then
             return toList_rIterableAnyN_ListAnyN_k_(m)
         end if
         list = toMutableList_rIterableAnyN_MutableListAnyN_k_(m)
@@ -62,7 +62,7 @@ end function
 
 function sortedWith_rIterableAnyN_ComparatorAnyN_ListAnyN_k_(m as Object, comparator as Object) as Object
     if __kotlin_isInstanceOf(m, "Collection") then
-        if m.size <= 1 then
+        if m.get_size() <= 1 then
             return toList_rIterableAnyN_ListAnyN_k_(m)
         end if
         list = toMutableList_rIterableAnyN_MutableListAnyN_k_(m)
@@ -76,42 +76,42 @@ end function
 
 function sortedDescending_rIterableAny_ListAny_k_(m as Object) as Object
     list = toMutableList_rIterableAnyN_MutableListAnyN_k_(m)
-    quickSortList_MutableListAnyN_I_I_Function2AnyNAnyNI_k_(list, 0, list.size - 1, {invoke: function(a as Object, b as Object) as Integer
-        return b.compareTo(a)
+    quickSortList_MutableListAnyN_I_I_Function2AnyNAnyNI_k_(list, 0, list.get_size() - 1, {invoke: function(a as Object, b as Object) as Integer
+        return b.compareTo_AnyN_I_k_(a)
     end function})
     return list
 end function
 
-function sortedBy_rIterableAnyN_Function1AnyNAnyN_ListAnyN_k_(m as Object, selector as Function) as Object
+function sortedBy_rIterableAnyN_Function1AnyNAnyN_ListAnyN_k_(m as Object, selector as Object) as Object
     return sortedWith_rIterableAnyN_ComparatorAnyN_ListAnyN_k_(m, compareBy_Function1AnyNComparableStarN_ComparatorAnyN_k_(selector))
 end function
 
-function sortedByDescending_rIterableAnyN_Function1AnyNAnyN_ListAnyN_k_(m as Object, selector as Function) as Object
+function sortedByDescending_rIterableAnyN_Function1AnyNAnyN_ListAnyN_k_(m as Object, selector as Object) as Object
     return sortedWith_rIterableAnyN_ComparatorAnyN_ListAnyN_k_(m, compareByDescending_Function1AnyNComparableStarN_ComparatorAnyN_k_(selector))
 end function
 
 sub sortDescending_rMutableListAny_k_(m as Object)
-    if m.size <= 1 then
+    if m.get_size() <= 1 then
         return
     end if
-    quickSortList_MutableListAnyN_I_I_Function2AnyNAnyNI_k_(m, 0, m.size - 1, {invoke: function(a as Object, b as Object) as Integer
-        return b.compareTo(a)
+    quickSortList_MutableListAnyN_I_I_Function2AnyNAnyNI_k_(m, 0, m.get_size() - 1, {invoke: function(a as Object, b as Object) as Integer
+        return b.compareTo_AnyN_I_k_(a)
     end function})
 end sub
 
-sub sortBy_rMutableListAnyN_Function1AnyNAnyN_k_(m as Object, selector as Function)
-    if m.size > 1 then
+sub sortBy_rMutableListAnyN_Function1AnyNAnyN_k_(m as Object, selector as Object)
+    if m.get_size() > 1 then
         sortWith_rMutableListAnyN_ComparatorAnyN_k_(m, compareBy_Function1AnyNComparableStarN_ComparatorAnyN_k_(selector))
     end if
 end sub
 
-sub sortByDescending_rMutableListAnyN_Function1AnyNAnyN_k_(m as Object, selector as Function)
-    if m.size > 1 then
+sub sortByDescending_rMutableListAnyN_Function1AnyNAnyN_k_(m as Object, selector as Object)
+    if m.get_size() > 1 then
         sortWith_rMutableListAnyN_ComparatorAnyN_k_(m, compareByDescending_Function1AnyNComparableStarN_ComparatorAnyN_k_(selector))
     end if
 end sub
 
-sub quickSort_Arr_I_I_Function2AnyNAnyNI_k_(array as Object, low as Integer, high as Integer, compareFn as Function)
+sub quickSort_Arr_I_I_Function2AnyNAnyNI_k_(array as Object, low as Integer, high as Integer, compareFn as Object)
     if low >= high then
         return
     end if
@@ -124,7 +124,7 @@ sub quickSort_Arr_I_I_Function2AnyNAnyNI_k_(array as Object, low as Integer, hig
     quickSort_Arr_I_I_Function2AnyNAnyNI_k_(array, pivotIndex + 1, high, compareFn)
 end sub
 
-function partition_Arr_I_I_Function2AnyNAnyNI_I_k_(array as Object, low as Integer, high as Integer, compareFn as Function) as Integer
+function partition_Arr_I_I_Function2AnyNAnyNI_I_k_(array as Object, low as Integer, high as Integer, compareFn as Object) as Integer
     pivot = array[high]
     i = low - 1
     j = low
@@ -132,32 +132,32 @@ function partition_Arr_I_I_Function2AnyNAnyNI_I_k_(array as Object, low as Integ
         if compareFn.invoke(array[j], pivot) <= 0 then
             i = (i + 1)
             temp = array[i]
-            array.set(i, array[j])
-            array.set(j, temp)
+            array[i] = array[j]
+            array[j] = temp
         end if
         j = (j + 1)
     end while
     temp = array[i + 1]
-    array.set(i + 1, array[high])
-    array.set(high, temp)
+    array[i + 1] = array[high]
+    array[high] = temp
     return i + 1
 end function
 
-sub insertionSort_Arr_I_I_Function2AnyNAnyNI_k_(array as Object, low as Integer, high as Integer, compareFn as Function)
+sub insertionSort_Arr_I_I_Function2AnyNAnyNI_k_(array as Object, low as Integer, high as Integer, compareFn as Object)
     i = low + 1
     while i <= high
         key = array[i]
         j = i - 1
         while (j >= low) and (compareFn.invoke(array[j], key) > 0)
-            array.set(j + 1, array[j])
+            array[j + 1] = array[j]
             j = (j - 1)
         end while
-        array.set(j + 1, key)
+        array[j + 1] = key
         i = (i + 1)
     end while
 end sub
 
-sub quickSortList_MutableListAnyN_I_I_Function2AnyNAnyNI_k_(list as Object, low as Integer, high as Integer, compareFn as Function)
+sub quickSortList_MutableListAnyN_I_I_Function2AnyNAnyNI_k_(list as Object, low as Integer, high as Integer, compareFn as Object)
     if low >= high then
         return
     end if
@@ -170,52 +170,52 @@ sub quickSortList_MutableListAnyN_I_I_Function2AnyNAnyNI_k_(list as Object, low 
     quickSortList_MutableListAnyN_I_I_Function2AnyNAnyNI_k_(list, pivotIndex + 1, high, compareFn)
 end sub
 
-function partitionList_MutableListAnyN_I_I_Function2AnyNAnyNI_I_k_(list as Object, low as Integer, high as Integer, compareFn as Function) as Integer
-    pivot = list[high]
+function partitionList_MutableListAnyN_I_I_Function2AnyNAnyNI_I_k_(list as Object, low as Integer, high as Integer, compareFn as Object) as Integer
+    pivot = list.get_I_AnyN_k_(high)
     i = low - 1
     j = low
     while j < high
-        if compareFn.invoke(list[j], pivot) <= 0 then
+        if compareFn.invoke(list.get_I_AnyN_k_(j), pivot) <= 0 then
             i = (i + 1)
-            temp = list[i]
-            list.set(i, list[j])
-            list.set(j, temp)
+            temp = list.get_I_AnyN_k_(i)
+            list.set_I_AnyN_AnyN_k_(i, list.get_I_AnyN_k_(j))
+            list.set_I_AnyN_AnyN_k_(j, temp)
         end if
         j = (j + 1)
     end while
-    temp = list[i + 1]
-    list.set(i + 1, list[high])
-    list.set(high, temp)
+    temp = list.get_I_AnyN_k_(i + 1)
+    list.set_I_AnyN_AnyN_k_(i + 1, list.get_I_AnyN_k_(high))
+    list.set_I_AnyN_AnyN_k_(high, temp)
     return i + 1
 end function
 
-sub insertionSortList_MutableListAnyN_I_I_Function2AnyNAnyNI_k_(list as Object, low as Integer, high as Integer, compareFn as Function)
+sub insertionSortList_MutableListAnyN_I_I_Function2AnyNAnyNI_k_(list as Object, low as Integer, high as Integer, compareFn as Object)
     i = low + 1
     while i <= high
-        key = list[i]
+        key = list.get_I_AnyN_k_(i)
         j = i - 1
-        while (j >= low) and (compareFn.invoke(list[j], key) > 0)
-            list.set(j + 1, list[j])
+        while (j >= low) and (compareFn.invoke(list.get_I_AnyN_k_(j), key) > 0)
+            list.set_I_AnyN_AnyN_k_(j + 1, list.get_I_AnyN_k_(j))
             j = (j - 1)
         end while
-        list.set(j + 1, key)
+        list.set_I_AnyN_AnyN_k_(j + 1, key)
         i = (i + 1)
     end while
 end sub
 
 sub reverse_rMutableListAnyN_k_(m as Object)
-    midPoint = m.size / 2
+    midPoint = m.get_size() / 2
     i = 0
     while i < midPoint
-        tmp = m[i]
-        m.set(i, m[(m.size - i) - 1])
-        m.set((m.size - i) - 1, tmp)
+        tmp = m.get_I_AnyN_k_(i)
+        m.set_I_AnyN_AnyN_k_(i, m.get_I_AnyN_k_((m.get_size() - i) - 1))
+        m.set_I_AnyN_AnyN_k_((m.get_size() - i) - 1, tmp)
         i = (i + 1)
     end while
 end sub
 
 function reversed_rIterableAnyN_ListAnyN_k_(m as Object) as Object
-    if __kotlin_isInstanceOf(m, "Collection") and (m.size <= 1) then
+    if __kotlin_isInstanceOf(m, "Collection") and (m.get_size() <= 1) then
         return toList_rIterableAnyN_ListAnyN_k_(m)
     end if
     list = toMutableList_rIterableAnyN_MutableListAnyN_k_(m)

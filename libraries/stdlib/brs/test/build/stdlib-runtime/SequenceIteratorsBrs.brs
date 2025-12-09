@@ -1,4 +1,4 @@
-function TransformingSequence_create_SequenceAnyN_Function1AnyNAnyN_TransformingSequenceAnyNAnyN_k_(sequence as Object, transformer as Function) as Object
+function TransformingSequence_create_SequenceAnyN_Function1AnyNAnyN_TransformingSequenceAnyNAnyN_k_(sequence as Object, transformer as Object) as Object
     this = {}
     this.__type = "TransformingSequence"
     this.__proto = ["TransformingSequence"]
@@ -12,22 +12,22 @@ function TransformingSequence_create_SequenceAnyN_Function1AnyNAnyN_Transforming
 end function
 
 function TransformingSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_73439017_create_AnonAnyNAnyN_k_()
+    return Anon_28b3b16a_create_AnonAnyNAnyN_k_()
 end function
 
-function TransformingSequence_flatten_Function1AnyNIteratorAnyN_SequenceAnyN_k_(iterator as Function) as Object
-    return FlatteningSequence_create_hoq5fb_k_(m.sequence, m.transformer, iterator)
+function TransformingSequence_flatten_Function1AnyNIteratorAnyN_SequenceAnyN_k_(iterator as Object) as Object
+    return FlatteningSequence_create_hoq5fb_k_(m.get_sequence(), m.get_transformer(), iterator)
 end function
 
 function TransformingSequence_get_sequence_SequenceAnyN_k_() as Object
     return m.sequence
 end function
 
-function TransformingSequence_get_transformer_Function1AnyNAnyN_k_() as Function
+function TransformingSequence_get_transformer_Function1AnyNAnyN_k_() as Object
     return m.transformer
 end function
 
-function TransformingIndexedSequence_create_obcj3k_k_(sequence as Object, transformer as Function) as Object
+function TransformingIndexedSequence_create_obcj3k_k_(sequence as Object, transformer as Object) as Object
     this = {}
     this.__type = "TransformingIndexedSequence"
     this.__proto = ["TransformingIndexedSequence"]
@@ -40,14 +40,14 @@ function TransformingIndexedSequence_create_obcj3k_k_(sequence as Object, transf
 end function
 
 function TransformingIndexedSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_6422aaf6_create_AnonAnyNAnyN_k_()
+    return Anon_c6cdac0_create_AnonAnyNAnyN_k_()
 end function
 
 function TransformingIndexedSequence_get_sequence_SequenceAnyN_k_() as Object
     return m.sequence
 end function
 
-function TransformingIndexedSequence_get_transformer_Function2IAnyNAnyN_k_() as Function
+function TransformingIndexedSequence_get_transformer_Function2IAnyNAnyN_k_() as Object
     return m.transformer
 end function
 
@@ -66,7 +66,7 @@ function FilteringSequence_create_SequenceAnyN_Z_Function1AnyNZ_FilteringSequenc
 end function
 
 function FilteringSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_6f4a6c56_create_AnonAnyN_k_()
+    return Anon_5ed400e6_create_AnonAnyN_k_()
 end function
 
 function FilteringSequence_get_sequence_SequenceAnyN_k_() as Object
@@ -77,7 +77,7 @@ function FilteringSequence_get_sendWhen_Z_k_() as Boolean
     return m.sendWhen
 end function
 
-function FilteringSequence_get_predicate_Function1AnyNZ_k_() as Function
+function FilteringSequence_get_predicate_Function1AnyNZ_k_() as Object
     return m.predicate
 end function
 
@@ -96,7 +96,7 @@ function FilteringIndexedSequence_create_SequenceAnyN_Z_Function2IAnyNZ_Filterin
 end function
 
 function FilteringIndexedSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_d82824d_create_AnonAnyN_k_()
+    return Anon_52f02cc6_create_AnonAnyN_k_()
 end function
 
 function FilteringIndexedSequence_get_sequence_SequenceAnyN_k_() as Object
@@ -107,11 +107,11 @@ function FilteringIndexedSequence_get_sendWhen_Z_k_() as Boolean
     return m.sendWhen
 end function
 
-function FilteringIndexedSequence_get_predicate_Function2IAnyNZ_k_() as Function
+function FilteringIndexedSequence_get_predicate_Function2IAnyNZ_k_() as Object
     return m.predicate
 end function
 
-function FlatteningSequence_create_hoq5fb_k_(sequence as Object, transformer as Function, iterator as Function) as Object
+function FlatteningSequence_create_hoq5fb_k_(sequence as Object, transformer as Object, iterator as Object) as Object
     this = {}
     this.__type = "FlatteningSequence"
     this.__proto = ["FlatteningSequence"]
@@ -126,18 +126,18 @@ function FlatteningSequence_create_hoq5fb_k_(sequence as Object, transformer as 
 end function
 
 function FlatteningSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_5487a6a_create_AnonAnyNAnyNAnyN_k_()
+    return Anon_4b7c1779_create_AnonAnyNAnyNAnyN_k_()
 end function
 
 function FlatteningSequence_get_sequence_SequenceAnyN_k_() as Object
     return m.sequence
 end function
 
-function FlatteningSequence_get_transformer_Function1AnyNAnyN_k_() as Function
+function FlatteningSequence_get_transformer_Function1AnyNAnyN_k_() as Object
     return m.transformer
 end function
 
-function FlatteningSequence_get_iterator_Function1AnyNIteratorAnyN_k_() as Function
+function FlatteningSequence_get_iterator_Function1AnyNIteratorAnyN_k_() as Object
     return m.iterator
 end function
 
@@ -157,10 +157,10 @@ end function
 
 function TakingSequence_drop_I_SequenceAnyN_k_(n as Integer) as Object
     __when_tmp1 = invalid
-    if n >= m.count then
+    if n >= m.get_count() then
         __when_tmp1 = emptySequence_SequenceAnyN_k_()
     else if true then
-        __when_tmp1 = SubSequence_create_SequenceAnyN_I_I_SubSequenceAnyN_k_(m.sequence, n, m.count)
+        __when_tmp1 = SubSequence_create_SequenceAnyN_I_I_SubSequenceAnyN_k_(m.get_sequence(), n, m.get_count())
     end if
     return __when_tmp1
 
@@ -168,17 +168,17 @@ end function
 
 function TakingSequence_take_I_SequenceAnyN_k_(n as Integer) as Object
     __when_tmp2 = invalid
-    if n >= m.count then
+    if n >= m.get_count() then
         __when_tmp2 = m
     else if true then
-        __when_tmp2 = TakingSequence_create_SequenceAnyN_I_TakingSequenceAnyN_k_(m.sequence, n)
+        __when_tmp2 = TakingSequence_create_SequenceAnyN_I_TakingSequenceAnyN_k_(m.get_sequence(), n)
     end if
     return __when_tmp2
 
 end function
 
 function TakingSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_723eb328_create_AnonAnyN_k_()
+    return Anon_1fc3d3ec_create_AnonAnyN_k_()
 end function
 
 function TakingSequence_get_sequence_SequenceAnyN_k_() as Object
@@ -189,7 +189,7 @@ function TakingSequence_get_count_I_k_() as Integer
     return m.count
 end function
 
-function TakingWhileSequence_create_SequenceAnyN_Function1AnyNZ_TakingWhileSequenceAnyN_k_(sequence as Object, predicate as Function) as Object
+function TakingWhileSequence_create_SequenceAnyN_Function1AnyNZ_TakingWhileSequenceAnyN_k_(sequence as Object, predicate as Object) as Object
     this = {}
     this.__type = "TakingWhileSequence"
     this.__proto = ["TakingWhileSequence"]
@@ -202,14 +202,14 @@ function TakingWhileSequence_create_SequenceAnyN_Function1AnyNZ_TakingWhileSeque
 end function
 
 function TakingWhileSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_2b5da15d_create_AnonAnyN_k_()
+    return Anon_5d1d8c96_create_AnonAnyN_k_()
 end function
 
 function TakingWhileSequence_get_sequence_SequenceAnyN_k_() as Object
     return m.sequence
 end function
 
-function TakingWhileSequence_get_predicate_Function1AnyNZ_k_() as Function
+function TakingWhileSequence_get_predicate_Function1AnyNZ_k_() as Object
     return m.predicate
 end function
 
@@ -228,15 +228,15 @@ function DroppingSequence_create_SequenceAnyN_I_DroppingSequenceAnyN_k_(sequence
 end function
 
 function DroppingSequence_drop_I_SequenceAnyN_k_(n as Integer) as Object
-    return DroppingSequence_create_SequenceAnyN_I_DroppingSequenceAnyN_k_(m.sequence, m.count + n)
+    return DroppingSequence_create_SequenceAnyN_I_DroppingSequenceAnyN_k_(m.get_sequence(), m.get_count() + n)
 end function
 
 function DroppingSequence_take_I_SequenceAnyN_k_(n as Integer) as Object
-    return SubSequence_create_SequenceAnyN_I_I_SubSequenceAnyN_k_(m.sequence, m.count, n)
+    return SubSequence_create_SequenceAnyN_I_I_SubSequenceAnyN_k_(m.get_sequence(), m.get_count(), n)
 end function
 
 function DroppingSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_6df705df_create_AnonAnyN_k_()
+    return Anon_4257adf9_create_AnonAnyN_k_()
 end function
 
 function DroppingSequence_get_sequence_SequenceAnyN_k_() as Object
@@ -247,7 +247,7 @@ function DroppingSequence_get_count_I_k_() as Integer
     return m.count
 end function
 
-function DroppingWhileSequence_create_SequenceAnyN_Function1AnyNZ_DroppingWhileSequenceAnyN_k_(sequence as Object, predicate as Function) as Object
+function DroppingWhileSequence_create_SequenceAnyN_Function1AnyNZ_DroppingWhileSequenceAnyN_k_(sequence as Object, predicate as Object) as Object
     this = {}
     this.__type = "DroppingWhileSequence"
     this.__proto = ["DroppingWhileSequence"]
@@ -260,14 +260,14 @@ function DroppingWhileSequence_create_SequenceAnyN_Function1AnyNZ_DroppingWhileS
 end function
 
 function DroppingWhileSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_5c4429e7_create_AnonAnyN_k_()
+    return Anon_2700b7bf_create_AnonAnyN_k_()
 end function
 
 function DroppingWhileSequence_get_sequence_SequenceAnyN_k_() as Object
     return m.sequence
 end function
 
-function DroppingWhileSequence_get_predicate_Function1AnyNZ_k_() as Function
+function DroppingWhileSequence_get_predicate_Function1AnyNZ_k_() as Object
     return m.predicate
 end function
 
@@ -290,10 +290,10 @@ end function
 
 function SubSequence_drop_I_SequenceAnyN_k_(n as Integer) as Object
     __when_tmp3 = invalid
-    if n >= m.count then
+    if n >= m.get_count() then
         __when_tmp3 = emptySequence_SequenceAnyN_k_()
     else if true then
-        __when_tmp3 = SubSequence_create_SequenceAnyN_I_I_SubSequenceAnyN_k_(m.sequence, m.startIndex + n, m.endIndex)
+        __when_tmp3 = SubSequence_create_SequenceAnyN_I_I_SubSequenceAnyN_k_(m.get_sequence(), m.get_startIndex() + n, m.get_endIndex())
     end if
     return __when_tmp3
 
@@ -301,17 +301,17 @@ end function
 
 function SubSequence_take_I_SequenceAnyN_k_(n as Integer) as Object
     __when_tmp4 = invalid
-    if n >= m.count then
+    if n >= m.get_count() then
         __when_tmp4 = m
     else if true then
-        __when_tmp4 = SubSequence_create_SequenceAnyN_I_I_SubSequenceAnyN_k_(m.sequence, m.startIndex, m.startIndex + n)
+        __when_tmp4 = SubSequence_create_SequenceAnyN_I_I_SubSequenceAnyN_k_(m.get_sequence(), m.get_startIndex(), m.get_startIndex() + n)
     end if
     return __when_tmp4
 
 end function
 
 function SubSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_1cc2f888_create_AnonAnyN_k_()
+    return Anon_320b71a5_create_AnonAnyN_k_()
 end function
 
 function SubSequence_get_sequence_SequenceAnyN_k_() as Object
@@ -327,10 +327,10 @@ function SubSequence_get_endIndex_I_k_() as Integer
 end function
 
 function SubSequence_get_count_I_k_() as Integer
-    return m.endIndex - m.startIndex
+    return m.get_endIndex() - m.get_startIndex()
 end function
 
-function DistinctSequence_create_SequenceAnyN_Function1AnyNAnyN_DistinctSequenceAnyNAnyN_k_(source as Object, keySelector as Function) as Object
+function DistinctSequence_create_SequenceAnyN_Function1AnyNAnyN_DistinctSequenceAnyNAnyN_k_(source as Object, keySelector as Object) as Object
     this = {}
     this.__type = "DistinctSequence"
     this.__proto = ["DistinctSequence"]
@@ -343,18 +343,18 @@ function DistinctSequence_create_SequenceAnyN_Function1AnyNAnyN_DistinctSequence
 end function
 
 function DistinctSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_73ec23a2_create_AnonAnyNAnyN_k_()
+    return Anon_746acdca_create_AnonAnyNAnyN_k_()
 end function
 
 function DistinctSequence_get_source_SequenceAnyN_k_() as Object
     return m.source
 end function
 
-function DistinctSequence_get_keySelector_Function1AnyNAnyN_k_() as Function
+function DistinctSequence_get_keySelector_Function1AnyNAnyN_k_() as Object
     return m.keySelector
 end function
 
-function MergingSequence_create_efuchp_k_(sequence1 as Object, sequence2 as Object, transform as Function) as Object
+function MergingSequence_create_efuchp_k_(sequence1 as Object, sequence2 as Object, transform as Object) as Object
     this = {}
     this.__type = "MergingSequence"
     this.__proto = ["MergingSequence"]
@@ -369,7 +369,7 @@ function MergingSequence_create_efuchp_k_(sequence1 as Object, sequence2 as Obje
 end function
 
 function MergingSequence_iterator_IteratorAnyN_k_() as Object
-    return Anon_6c171b61_create_AnonAnyNAnyNAnyN_k_()
+    return Anon_12c27788_create_AnonAnyNAnyNAnyN_k_()
 end function
 
 function MergingSequence_get_sequence1_SequenceAnyN_k_() as Object
@@ -380,6 +380,6 @@ function MergingSequence_get_sequence2_SequenceAnyN_k_() as Object
     return m.sequence2
 end function
 
-function MergingSequence_get_transform_Function2AnyNAnyNAnyN_k_() as Function
+function MergingSequence_get_transform_Function2AnyNAnyNAnyN_k_() as Object
     return m.transform
 end function

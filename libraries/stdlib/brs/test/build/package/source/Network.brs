@@ -38,64 +38,64 @@ function RoUrlTransfer_create_RoUrlTransfer_k_() as Object
     this.escape_Str_Str_k_ = RoUrlTransfer_escape_Str_Str_k_
     this.unescape_Str_Str_k_ = RoUrlTransfer_unescape_Str_Str_k_
     this.get_native = RoUrlTransfer_get_native_Dynamic_k_
-    m.native = CreateObject("roUrlTransfer")
+    this.native = CreateObject("roUrlTransfer")
     return this
 end function
 
 function RoUrlTransfer_setUrl_Str_Z_k_(url as String) as Boolean
-    return m.native.SetUrl(url)
+    return m.get_native().SetUrl(url)
 end function
 
 function RoUrlTransfer_getUrl_Str_k_() as String
-    return m.native.GetUrl()
+    return m.get_native().GetUrl()
 end function
 
 function RoUrlTransfer_getToString_StrN_k_() as Dynamic
-    return m.native.GetToString()
+    return m.get_native().GetToString()
 end function
 
 function RoUrlTransfer_postFromString_Str_I_k_(body as String) as Integer
-    return m.native.PostFromString(body)
+    return m.get_native().PostFromString(body)
 end function
 
 function RoUrlTransfer_head_I_k_() as Integer
-    return m.native.Head()
+    return m.get_native().Head()
 end function
 
 function RoUrlTransfer_asyncGetToString_Z_k_() as Boolean
-    return m.native.AsyncGetToString()
+    return m.get_native().AsyncGetToString()
 end function
 
 function RoUrlTransfer_asyncPostFromString_Str_Z_k_(body as String) as Boolean
-    return m.native.AsyncPostFromString(body)
+    return m.get_native().AsyncPostFromString(body)
 end function
 
 function RoUrlTransfer_asyncCancel_Z_k_() as Boolean
-    return m.native.AsyncCancel()
+    return m.get_native().AsyncCancel()
 end function
 
 function RoUrlTransfer_addHeader_Str_Str_Z_k_(name as String, value as String) as Boolean
-    return m.native.AddHeader(name, value)
+    return m.get_native().AddHeader(name, value)
 end function
 
 function RoUrlTransfer_setCertificatesFile_Str_Z_k_(path as String) as Boolean
-    return m.native.SetCertificatesFile(path)
+    return m.get_native().SetCertificatesFile(path)
 end function
 
 function RoUrlTransfer_initClientCertificates_Z_k_() as Boolean
-    return m.native.InitClientCertificates()
+    return m.get_native().InitClientCertificates()
 end function
 
 function RoUrlTransfer_setHeaders_MapStrStr_Z_k_(headers as Object) as Boolean
-    return m.native.SetHeaders(headers)
+    return m.get_native().SetHeaders(headers)
 end function
 
 sub RoUrlTransfer_setMessagePort_RoMessagePort_k_(port as Object)
-    m.native.SetMessagePort(port.getNative())
+    m.get_native().SetMessagePort(port.getNative_Dynamic_k_())
 end sub
 
 function RoUrlTransfer_getMessagePort_RoMessagePortN_k_() as Dynamic
-    port = m.native.GetMessagePort()
+    port = m.get_native().GetMessagePort()
     __when_tmp0 = invalid
     if port <> invalid then
         __when_tmp0 = RoMessagePort_create_Dynamic_RoMessagePort_k_(port)
@@ -107,88 +107,88 @@ function RoUrlTransfer_getMessagePort_RoMessagePortN_k_() as Dynamic
 end function
 
 sub RoUrlTransfer_setRequest_Str_k_(method as String)
-    m.native.SetRequest(method)
+    m.get_native().SetRequest(method)
 end sub
 
 sub RoUrlTransfer_retainBodyOnError_Z_k_(retain as Boolean)
-    m.native.RetainBodyOnError(retain)
+    m.get_native().RetainBodyOnError(retain)
 end sub
 
 function RoUrlTransfer_setUserAndPassword_Str_Str_Z_k_(user as String, password as String) as Boolean
-    return m.native.SetUserAndPassword(user, password)
+    return m.get_native().SetUserAndPassword(user, password)
 end function
 
 sub RoUrlTransfer_setMinimumTransferRate_I_I_k_(bytesPerSecond as Integer, periodInSeconds as Integer)
-    m.native.SetMinimumTransferRate(bytesPerSecond, periodInSeconds)
+    m.get_native().SetMinimumTransferRate(bytesPerSecond, periodInSeconds)
 end sub
 
 sub RoUrlTransfer_enableEncodings_Z_k_(enable as Boolean)
-    m.native.EnableEncodings(enable)
+    m.get_native().EnableEncodings(enable)
 end sub
 
 sub RoUrlTransfer_enableResume_Z_k_(enable as Boolean)
-    m.native.EnableResume(enable)
+    m.get_native().EnableResume(enable)
 end sub
 
 sub RoUrlTransfer_enablePeerVerification_Z_k_(enable as Boolean)
-    m.native.EnablePeerVerification(enable)
+    m.get_native().EnablePeerVerification(enable)
 end sub
 
 sub RoUrlTransfer_enableHostVerification_Z_k_(enable as Boolean)
-    m.native.EnableHostVerification(enable)
+    m.get_native().EnableHostVerification(enable)
 end sub
 
 sub RoUrlTransfer_enableFreshConnection_Z_k_(enable as Boolean)
-    m.native.EnableFreshConnection(enable)
+    m.get_native().EnableFreshConnection(enable)
 end sub
 
 function RoUrlTransfer_getToFile_Str_I_k_(path as String) as Integer
-    return m.native.GetToFile(path)
+    return m.get_native().GetToFile(path)
 end function
 
 function RoUrlTransfer_postFromFile_Str_I_k_(path as String) as Integer
-    return m.native.PostFromFile(path)
+    return m.get_native().PostFromFile(path)
 end function
 
 function RoUrlTransfer_asyncGetToFile_Str_Z_k_(path as String) as Boolean
-    return m.native.AsyncGetToFile(path)
+    return m.get_native().AsyncGetToFile(path)
 end function
 
 function RoUrlTransfer_asyncPostFromFile_Str_Z_k_(path as String) as Boolean
-    return m.native.AsyncPostFromFile(path)
+    return m.get_native().AsyncPostFromFile(path)
 end function
 
 function RoUrlTransfer_asyncPostFromFileToString_Dynamic_Z_k_(elements as Object) as Boolean
-    return m.native.AsyncPostFromFileToString(elements)
+    return m.get_native().AsyncPostFromFileToString(elements)
 end function
 
 function RoUrlTransfer_getResponseCode_I_k_() as Integer
-    return m.native.GetResponseCode()
+    return m.get_native().GetResponseCode()
 end function
 
 function RoUrlTransfer_getResponseHeaders_Dynamic_k_() as Object
-    return m.native.GetResponseHeaders()
+    return m.get_native().GetResponseHeaders()
 end function
 
 function RoUrlTransfer_getResponseHeader_Str_Str_k_(name as String) as String
-    headers = m.getResponseHeaders()
+    headers = m.getResponseHeaders_Dynamic_k_()
     return invalid
 end function
 
 function RoUrlTransfer_getFailureReason_Str_k_() as String
-    return m.native.GetFailureReason()
+    return m.get_native().GetFailureReason()
 end function
 
 function RoUrlTransfer_getIdentity_I_k_() as Integer
-    return m.native.GetIdentity()
+    return m.get_native().GetIdentity()
 end function
 
 function RoUrlTransfer_escape_Str_Str_k_(text as String) as String
-    return m.native.Escape(text)
+    return m.get_native().Escape(text)
 end function
 
 function RoUrlTransfer_unescape_Str_Str_k_(text as String) as String
-    return m.native.Unescape(text)
+    return m.get_native().Unescape(text)
 end function
 
 function RoUrlTransfer_get_native_Dynamic_k_() as Object
@@ -213,36 +213,36 @@ function RoUrlEvent_create_Dynamic_RoUrlEvent_k_(event as Object) as Object
 end function
 
 function RoUrlEvent_getResponseCode_I_k_() as Integer
-    return m.event.GetResponseCode()
+    return m.get_event().GetResponseCode()
 end function
 
 function RoUrlEvent_getString_Str_k_() as String
-    return m.event.GetString()
+    return m.get_event().GetString()
 end function
 
 function RoUrlEvent_getFailureReason_Str_k_() as String
-    return m.event.GetFailureReason()
+    return m.get_event().GetFailureReason()
 end function
 
 function RoUrlEvent_getSourceIdentity_I_k_() as Integer
-    return m.event.GetSourceIdentity()
+    return m.get_event().GetSourceIdentity()
 end function
 
 function RoUrlEvent_getResponseHeaders_Dynamic_k_() as Object
-    return m.event.GetResponseHeaders()
+    return m.get_event().GetResponseHeaders()
 end function
 
 function RoUrlEvent_getResponseHeader_Str_Str_k_(name as String) as String
-    headers = m.getResponseHeaders()
+    headers = m.getResponseHeaders_Dynamic_k_()
     return invalid
 end function
 
 function RoUrlEvent_getTargetIpAddress_Str_k_() as String
-    return m.event.GetTargetIpAddress()
+    return m.get_event().GetTargetIpAddress()
 end function
 
 function RoUrlEvent_getBytesReceived_I_k_() as Integer
-    return m.event.GetInt()
+    return m.get_event().GetInt()
 end function
 
 function RoUrlEvent_get_event_Dynamic_k_() as Object

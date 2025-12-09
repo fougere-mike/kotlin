@@ -11,13 +11,15 @@ package kotlin.test
 internal class DefaultBrsAsserter : Asserter {
 
     override fun assertEquals(message: String?, expected: Any?, actual: Any?) {
-        if (expected != actual) {
+        // Use structural equality via brsStructuralEquals which handles all types properly
+        if (!brsStructuralEquals(expected, actual)) {
             fail(message ?: "Expected <$expected>, actual <$actual>.")
         }
     }
 
     override fun assertNotEquals(message: String?, illegal: Any?, actual: Any?) {
-        if (illegal == actual) {
+        // Use structural equality via brsStructuralEquals which handles all types properly
+        if (brsStructuralEquals(illegal, actual)) {
             fail(message ?: "Values should be different. Actual: <$actual>.")
         }
     }

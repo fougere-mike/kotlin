@@ -1,6 +1,6 @@
-sub runTests_Function1TestRunnerV_k_(block as Function)
+sub runTests_Function1TestRunnerV_k_(block as Object)
     runner = TestRunner_create_TestRunner_k_()
-    runner.run(block)
+    runner.run_Function1TestRunnerV_k_(block)
 end sub
 
 function TestRunner_create_TestRunner_k_() as Object
@@ -27,53 +27,53 @@ function TestRunner_create_TestRunner_k_() as Object
 end function
 
 sub TestRunner_testClass_Any_k_(instance as Object)
-    m.testClasses.add(instance)
+    m.get_testClasses().add_AnyN_Z_k_(instance)
 end sub
 
-sub TestRunner_suite_Str_Function1TestRunnerV_k_(name as String, suiteFn as Function)
-    m.directSuites.add(Pair_create_AnyN_AnyN_PairAnyNAnyN_k_(name, {suiteFn: suiteFn, this: this, invoke: function() as Void
+sub TestRunner_suite_Str_Function1TestRunnerV_k_(name as String, suiteFn as Object)
+    m.get_directSuites().add_AnyN_Z_k_(Pair_create_AnyN_AnyN_PairAnyNAnyN_k_(name, {suiteFn: suiteFn, this: m, invoke: function() as Void
         m.suiteFn.invoke(m.this)
     end function}))
 end sub
 
-sub TestRunner_test_Str_Function0V_k_(name as String, testFn as Function)
-    m.adapter.test(name, false, testFn)
+sub TestRunner_test_Str_Function0V_k_(name as String, testFn as Object)
+    m.get_adapter().test_Str_Z_Function0V_k_(name, false, testFn)
 end sub
 
 sub TestRunner_xtest_Str_Str_Function0V_k_(name as String, reason = "", testFn = invalid)
-    m.adapter.test(name, true, testFn)
+    m.get_adapter().test_Str_Z_Function0V_k_(name, true, testFn)
 end sub
 
-sub TestRunner_run_Function1TestRunnerV_k_(block as Function)
-    m.adapter.startRun()
+sub TestRunner_run_Function1TestRunnerV_k_(block as Object)
+    m.get_adapter().startRun()
     block.invoke(m)
-    for each __destruct_0 in m.directSuites
+    for each __destruct_0 in m.get_directSuites().array
         name = __destruct_0.component1()
         suiteFn = __destruct_0.component2()
-        m.adapter.suite(name, false, suiteFn)
+        m.get_adapter().suite_Str_Z_Function0V_k_(name, false, suiteFn)
 
     end for
-    for each instance in m.testClasses
-        m.executeTestClass(instance)
+    for each instance in m.get_testClasses().array
+        m.executeTestClass_Any_k_(instance)
 
     end for
-    m.adapter.endRun()
+    m.get_adapter().endRun()
 end sub
 
 sub TestRunner_executeTestClass_Any_k_(instance as Object)
-    className = m.getClassName(instance)
-    testMethods = m.getTestMethods(instance)
-    if testMethods.isEmpty() then
-        m.adapter.suite(className, false, {this: this, instance: instance, invoke: function() as Void
-            m.this.tryRunAsTestClass(m.instance)
+    className = m.getClassName_Any_Str_k_(instance)
+    testMethods = m.getTestMethods_Any_ListPairStrFunction0V_k_(instance)
+    if testMethods.isEmpty_Z_k_() then
+        m.get_adapter().suite_Str_Z_Function0V_k_(className, false, {this: m, instance: instance, invoke: function() as Void
+            m.this.tryRunAsTestClass_Any_k_(m.instance)
         end function})
         return
     end if
-    m.adapter.suite(className, false, {testMethods: testMethods, this: this, invoke: function() as Void
-        for each method in m.testMethods
+    m.get_adapter().suite_Str_Z_Function0V_k_(className, false, {testMethods: testMethods, this: m, invoke: function() as Void
+        for each method in m.testMethods.array
             methodName = method.first
             methodFn = method.second
-            m.this.adapter.test(methodName, false, {methodFn: methodFn, invoke: function() as Void
+            m.this.get_adapter().test_Str_Z_Function0V_k_(methodName, false, {methodFn: methodFn, invoke: function() as Void
                 m.methodFn.invoke()
             end function})
 
@@ -82,7 +82,7 @@ sub TestRunner_executeTestClass_Any_k_(instance as Object)
 end sub
 
 function TestRunner_getClassName_Any_Str_k_(instance as Object) as String
-    tmp0_elvis_lhs = "/* Unsupported: IrGetClassImpl */".simpleName
+    tmp0_elvis_lhs = "/* Unsupported: IrGetClassImpl */".get_simpleName()
     __when_tmp0 = invalid
     if tmp0_elvis_lhs = invalid then
         __when_tmp0 = "UnknownClass"
@@ -94,7 +94,7 @@ function TestRunner_getClassName_Any_Str_k_(instance as Object) as String
 end function
 
 function TestRunner_getTestMethods_Any_ListPairStrFunction0V_k_(instance as Object) as Object
-    getter = m.getTestMethodsProperty(instance)
+    getter = m.getTestMethodsProperty_Any_Function0AnyN_k_(instance)
     __when_tmp1 = invalid
     if getter <> invalid then
         __when_tmp1 = getter.invoke()
@@ -124,23 +124,13 @@ function TestRunner_get_directSuites_MutableListPairStrFunction0V_k_() as Object
     return m.directSuites
 end function
 
-function TestMethodInfo_create(name as String, ignored = false, ignoreReason = "") as Object
+function TestMethodInfo_create_Str_Z_Str_TestMethodInfo_k_(name as String, ignored = false, ignoreReason = "") as Object
     this = {}
     this.__type = "TestMethodInfo"
     this.__proto = ["TestMethodInfo"]
     this.name = name
     this.ignored = ignored
     this.ignoreReason = ignoreReason
-    this.component1_Str_k_ = TestMethodInfo_component1_Str_k_
-    this.component2_Z_k_ = TestMethodInfo_component2_Z_k_
-    this.component3_Str_k_ = TestMethodInfo_component3_Str_k_
-    this.copy_Str_Z_Str_TestMethodInfo_k_ = TestMethodInfo_copy_Str_Z_Str_TestMethodInfo_k_
-    this.toString_Str_k_ = TestMethodInfo_toString_Str_k_
-    this.hashCode_I_k_ = TestMethodInfo_hashCode_I_k_
-    this.equals_AnyN_Z_k_ = TestMethodInfo_equals_AnyN_Z_k_
-    this.get_name = TestMethodInfo_get_name_Str_k_
-    this.get_ignored = TestMethodInfo_get_ignored_Z_k_
-    this.get_ignoreReason = TestMethodInfo_get_ignoreReason_Str_k_
     this.equals = TestMethodInfo_equals
     this.hashCode = TestMethodInfo_hashCode
     this.toString = TestMethodInfo_toString
@@ -192,7 +182,7 @@ function TestMethodInfo_copy(name = invalid, ignored = invalid, ignoreReason = i
     if ignoreReason = invalid then
         ignoreReason = m.ignoreReason
     end if
-    return TestMethodInfo_create(name, ignored, ignoreReason)
+    return TestMethodInfo_create_Str_Z_Str_TestMethodInfo_k_(name, ignored, ignoreReason)
 end function
 
 function TestMethodInfo_component1() as String

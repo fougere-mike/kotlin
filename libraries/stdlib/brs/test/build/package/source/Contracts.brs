@@ -5,7 +5,7 @@ function ExperimentalContracts_create_ExperimentalContracts_k_() as Object
     return this
 end function
 
-sub contract_Function1ContractBuilderV_k_(builder as Function)
+sub contract_Function1ContractBuilderV_k_(builder as Object)
 end sub
 
 function ContractBuilder_returns_Returns_k_() as Object
@@ -17,10 +17,10 @@ end function
 function ContractBuilder_returnsNotNull_ReturnsNotNull_k_() as Object
 end function
 
-function ContractBuilder_callsInPlace_FunctionAnyN_InvocationKind_CallsInPlace_k_(lambda as Function, kind = InvocationKind_UNKNOWN) as Object
+function ContractBuilder_callsInPlace_FunctionAnyN_InvocationKind_CallsInPlace_k_(lambda as Object, kind = InvocationKind_UNKNOWN) as Object
 end function
 
-function InvocationKind_create(__name as String, __ordinal as Integer) as Object
+function InvocationKind_create_InvocationKind_k_(__name as String, __ordinal as Integer) as Object
     this = {}
     this.__type = "InvocationKind"
     this.name = __name
@@ -36,10 +36,10 @@ sub InvocationKind_initEntries()
         return
     end if
     m.InvocationKind_entriesInitialized = true
-    m.InvocationKind_AT_MOST_ONCE = InvocationKind_create("AT_MOST_ONCE", 0)
-    m.InvocationKind_EXACTLY_ONCE = InvocationKind_create("EXACTLY_ONCE", 1)
-    m.InvocationKind_AT_LEAST_ONCE = InvocationKind_create("AT_LEAST_ONCE", 2)
-    m.InvocationKind_UNKNOWN = InvocationKind_create("UNKNOWN", 3)
+    m.InvocationKind_AT_MOST_ONCE = InvocationKind_create_InvocationKind_k_("AT_MOST_ONCE", 0)
+    m.InvocationKind_EXACTLY_ONCE = InvocationKind_create_InvocationKind_k_("EXACTLY_ONCE", 1)
+    m.InvocationKind_AT_LEAST_ONCE = InvocationKind_create_InvocationKind_k_("AT_LEAST_ONCE", 2)
+    m.InvocationKind_UNKNOWN = InvocationKind_create_InvocationKind_k_("UNKNOWN", 3)
 end sub
 
 function InvocationKind_values() as Object

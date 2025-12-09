@@ -18,46 +18,31 @@ function UByteArray_create_ByteArray_UByteArray_k_(storage as Object) as Object
 end function
 
 function UByteArray_create_I_UByteArray_k_(size as Integer) as Object
-    this = {}
-    this.__type = "UByteArray"
-    this.__proto = ["UByteArray"]
-    this.storage = storage
-    this.get_I_UByte_k_ = UByteArray_get_I_UByte_k_
-    this.set_I_UByte_k_ = UByteArray_set_I_UByte_k_
-    this.iterator_IteratorUByte_k_ = UByteArray_iterator_IteratorUByte_k_
-    this.contains_UByte_Z_k_ = UByteArray_contains_UByte_Z_k_
-    this.containsAll_CollectionUByte_Z_k_ = UByteArray_containsAll_CollectionUByte_Z_k_
-    this.isEmpty_Z_k_ = UByteArray_isEmpty_Z_k_
-    this.equals_AnyN_Z_k_ = UByteArray_equals_AnyN_Z_k_
-    this.hashCode_I_k_ = UByteArray_hashCode_I_k_
-    this.toString_Str_k_ = UByteArray_toString_Str_k_
-    this.get_storage = UByteArray_get_storage_ByteArray_k_
-    this.get_size = UByteArray_get_size_I_k_
-    return this
+    return UByteArray_create_ByteArray_UByteArray_k_(ByteArray_create_I_ByteArray_k_(size))
 end function
 
 function UByteArray_get_I_UByte_k_(index as Integer) as Object
-    return toUByte_rB_UByte_k_(m.storage[index])
+    return toUByte_rB_UByte_k_(m.get_storage().get_I_B_k_(index))
 end function
 
 sub UByteArray_set_I_UByte_k_(index as Integer, value as Object)
-    m.storage.set(index, value)
+    m.get_storage().set_I_B_k_(index, value)
 end sub
 
 function UByteArray_iterator_IteratorUByte_k_() as Object
-    return UByteArray_Iterator_create_ByteArray_Iterator_k_(m.storage)
+    return UByteArray_Iterator_create_ByteArray_Iterator_k_(m.get_storage())
 end function
 
 function UByteArray_contains_UByte_Z_k_(element as Object) as Boolean
     target = element
-    progression = until_rI_I_IntRange_k_(0, m.storage.size)
-    inductionVariable = progression.first
-    last = progression.last
-    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+    progression = until_rI_I_IntRange_k_(0, m.get_storage().get_size())
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if m.storage[i] = target then
+        if m.get_storage().get_I_B_k_(i) = target then
             return true
         end if
 
@@ -66,7 +51,7 @@ function UByteArray_contains_UByte_Z_k_(element as Object) as Boolean
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if m.storage[i] = target then
+            if m.get_storage().get_I_B_k_(i) = target then
                 return true
             end if
 
@@ -78,8 +63,8 @@ function UByteArray_contains_UByte_Z_k_(element as Object) as Boolean
 end function
 
 function UByteArray_containsAll_CollectionUByte_Z_k_(elements as Object) as Boolean
-    for each element in elements
-        if m.contains(element).not() then
+    for each element in elements.array
+        if not m.contains_UByte_Z_k_(element) then
             return false
         end if
     end for
@@ -87,24 +72,24 @@ function UByteArray_containsAll_CollectionUByte_Z_k_(elements as Object) as Bool
 end function
 
 function UByteArray_isEmpty_Z_k_() as Boolean
-    return m.storage.size = 0
+    return m.get_storage().get_size() = 0
 end function
 
 function UByteArray_equals_AnyN_Z_k_(other as Dynamic) as Boolean
     if not __kotlin_isInstanceOf(other, "UByteArray") then
         return false
     end if
-    if m.storage.size <> other.storage.size then
+    if m.get_storage().get_size() <> other.get_storage().get_size() then
         return false
     end if
-    progression = until_rI_I_IntRange_k_(0, m.storage.size)
-    inductionVariable = progression.first
-    last = progression.last
-    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+    progression = until_rI_I_IntRange_k_(0, m.get_storage().get_size())
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if m.storage[i] <> other.storage[i] then
+        if m.get_storage().get_I_B_k_(i) <> other.get_storage().get_I_B_k_(i) then
             return false
         end if
 
@@ -113,7 +98,7 @@ function UByteArray_equals_AnyN_Z_k_(other as Dynamic) as Boolean
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if m.storage[i] <> other.storage[i] then
+            if m.get_storage().get_I_B_k_(i) <> other.get_storage().get_I_B_k_(i) then
                 return false
             end if
 
@@ -126,21 +111,21 @@ end function
 
 function UByteArray_hashCode_I_k_() as Integer
     result = 1
-    progression = until_rI_I_IntRange_k_(0, m.storage.size)
-    inductionVariable = progression.first
-    last = progression.last
-    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+    progression = until_rI_I_IntRange_k_(0, m.get_storage().get_size())
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        result = ((31 * result) + m.storage[i])
+        result = ((31 * result) + m.get_storage().get_I_B_k_(i))
 
 
         while i <> last
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            result = ((31 * result) + m.storage[i])
+            result = ((31 * result) + m.get_storage().get_I_B_k_(i))
 
         end while
 
@@ -151,18 +136,18 @@ end function
 
 function UByteArray_toString_Str_k_() as String
     sb = StringBuilder_create_StringBuilder_k_()
-    sb.append("UByteArray([")
-    progression = until_rI_I_IntRange_k_(0, m.storage.size)
-    inductionVariable = progression.first
-    last = progression.last
-    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+    sb.append_StrN_StringBuilder_k_("UByteArray([")
+    progression = until_rI_I_IntRange_k_(0, m.get_storage().get_size())
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
         if i > 0 then
-            sb.append(", ")
+            sb.append_StrN_StringBuilder_k_(", ")
         end if
-        sb.append(toUByte_rB_UByte_k_(m.storage[i]).toString())
+        sb.append_StrN_StringBuilder_k_(toUByte_rB_UByte_k_(m.get_storage().get_I_B_k_(i)).toString())
 
 
         while i <> last
@@ -170,15 +155,15 @@ function UByteArray_toString_Str_k_() as String
             inductionVariable = (inductionVariable + 1)
 
             if i > 0 then
-                sb.append(", ")
+                sb.append_StrN_StringBuilder_k_(", ")
             end if
-            sb.append(toUByte_rB_UByte_k_(m.storage[i]).toString())
+            sb.append_StrN_StringBuilder_k_(toUByte_rB_UByte_k_(m.get_storage().get_I_B_k_(i)).toString())
 
         end while
 
     end if
 
-    sb.append("])")
+    sb.append_StrN_StringBuilder_k_("])")
     return sb.toString()
 end function
 
@@ -187,7 +172,7 @@ function UByteArray_get_storage_ByteArray_k_() as Object
 end function
 
 function UByteArray_get_size_I_k_() as Integer
-    return m.storage.size
+    return m.get_storage().get_size()
 end function
 
 function UByteArray_Iterator_create_ByteArray_Iterator_k_(array as Object) as Object
@@ -205,15 +190,15 @@ function UByteArray_Iterator_create_ByteArray_Iterator_k_(array as Object) as Ob
 end function
 
 function UByteArray_Iterator_hasNext_Z_k_() as Boolean
-    return m.index < m.array.size
+    return m.get_index() < m.get_array().get_size()
 end function
 
 function UByteArray_Iterator_next_UByte_k_() as Object
     __when_tmp0 = invalid
-    if m.index < m.array.size then
-        __when_tmp0 = toUByte_rB_UByte_k_(m.array[m.index = (m.index + 1)])
+    if m.get_index() < m.get_array().get_size() then
+        __when_tmp0 = toUByte_rB_UByte_k_(m.get_array().get_I_B_k_(m.set_index(m.get_index() + 1)))
     else if true then
-        throw NoSuchElementException_create_StrN_NoSuchElementException_k_(Str(m.index))
+        throw NoSuchElementException_create_StrN_NoSuchElementException_k_(Str(m.get_index()))
     end if
     return __when_tmp0
 
@@ -231,14 +216,14 @@ sub UByteArray_Iterator_set_index_I_k_(value as Integer)
     m.index = value
 end sub
 
-function UByteArray_I_Function1IUByte_UByteArray_k_(size as Integer, init as Function) as Object
+function UByteArray_I_Function1IUByte_UByteArray_k_(size as Integer, init as Object) as Object
     return UByteArray_create_ByteArray_UByteArray_k_(ByteArray_create_I_Function1IB_ByteArray_k_(size, {init: init, invoke: function(index as Integer) as Integer
         return m.init.invoke(index)
     end function}))
 end function
 
 function ubyteArrayOf_UByteArray_UByteArray_k_(elements as Object) as Object
-    return UByteArray_create_ByteArray_UByteArray_k_(ByteArray_create_I_Function1IB_ByteArray_k_(elements.size, {elements: elements, invoke: function(it as Integer) as Integer
-        return m.elements[it]
+    return UByteArray_create_ByteArray_UByteArray_k_(ByteArray_create_I_Function1IB_ByteArray_k_(elements.get_size(), {elements: elements, invoke: function(it as Integer) as Integer
+        return m.elements.get_I_UByte_k_(it)
     end function}))
 end function

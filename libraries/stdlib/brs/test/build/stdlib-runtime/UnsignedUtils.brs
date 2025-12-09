@@ -1,20 +1,20 @@
 function uintCompare_I_I_I_k_(v1 as Integer, v2 as Integer) as Integer
-    return v1.xor(-2147483648).compareTo(v2.xor(-2147483648))
+    return v1.xor_I_I_k_(-2147483648).compareTo_I_I_k_(v2.xor_I_I_k_(-2147483648))
 end function
 
 function ulongCompare_J_J_I_k_(v1 as LongInteger, v2 as LongInteger) as Integer
-    return v1.xor(-9223372036854775808&).compareTo(v2.xor(-9223372036854775808&))
+    return v1.xor_J_J_k_(-9223372036854775808&).compareTo_J_I_k_(v2.xor_J_J_k_(-9223372036854775808&))
 end function
 
 function uintDivide_I_I_UInt_k_(dividend as Integer, divisor as Integer) as Object
-    dividendLong = dividend.and(4294967295&)
-    divisorLong = divisor.and(4294967295&)
+    dividendLong = dividend.and_J_J_k_(4294967295&)
+    divisorLong = divisor.and_J_J_k_(4294967295&)
     return UInt_create_I_UInt_k_(dividendLong / divisorLong)
 end function
 
 function uintRemainder_I_I_UInt_k_(dividend as Integer, divisor as Integer) as Object
-    dividendLong = dividend.and(4294967295&)
-    divisorLong = divisor.and(4294967295&)
+    dividendLong = dividend.and_J_J_k_(4294967295&)
+    divisorLong = divisor.and_J_J_k_(4294967295&)
     return UInt_create_I_UInt_k_(dividendLong mod divisorLong)
 end function
 
@@ -32,7 +32,7 @@ function ulongDivide_J_J_ULong_k_(dividend as LongInteger, divisor as LongIntege
     if dividend >= 0 then
         return ULong_create_J_ULong_k_(dividend / divisor)
     end if
-    quotient = dividend.ushr(1) / divisor.shl(1)
+    quotient = dividend.ushr_I_J_k_(1) / divisor.shl_I_J_k_(1)
     remainder = dividend - (quotient * divisor)
     __when_tmp1 = invalid
     if ulongCompare_J_J_I_k_(remainder, divisor) >= 0 then
@@ -58,7 +58,7 @@ function ulongRemainder_J_J_ULong_k_(dividend as LongInteger, divisor as LongInt
     if dividend >= 0 then
         return ULong_create_J_ULong_k_(dividend mod divisor)
     end if
-    quotient = dividend.ushr(1) / divisor.shl(1)
+    quotient = dividend.ushr_I_J_k_(1) / divisor.shl_I_J_k_(1)
     remainder = dividend - (quotient * divisor)
     __when_tmp3 = invalid
     if ulongCompare_J_J_I_k_(remainder, divisor) >= 0 then
@@ -71,7 +71,7 @@ function ulongRemainder_J_J_ULong_k_(dividend as LongInteger, divisor as LongInt
 end function
 
 function uintToLong_I_J_k_(value as Integer) as LongInteger
-    return value.and(4294967295&)
+    return value.and_J_J_k_(4294967295&)
 end function
 
 function uintToULong_I_ULong_k_(value as Integer) as Object
@@ -79,7 +79,7 @@ function uintToULong_I_ULong_k_(value as Integer) as Object
 end function
 
 function uintToDouble_I_D_k_(value as Integer) as Double
-    return value.and(2147483647) + (value.ushr(31).shl(30) * 2)
+    return value.and_I_I_k_(2147483647) + (value.ushr_I_I_k_(31).shl_I_I_k_(30) * 2)
 end function
 
 function uintToFloat_I_F_k_(value as Integer) as Float
@@ -108,7 +108,7 @@ function floatToUInt_F_UInt_k_(value as Float) as Object
 end function
 
 function ulongToDouble_J_D_k_(value as LongInteger) as Double
-    return (value.ushr(11) * 2048) + value.and(2047&)
+    return (value.ushr_I_J_k_(11) * 2048) + value.and_J_J_k_(2047&)
 end function
 
 function ulongToFloat_J_F_k_(value as LongInteger) as Float
@@ -168,11 +168,11 @@ function longToStringWithRadix_J_I_Str_k_(value as LongInteger, radix as Integer
     result = StringBuilder_create_StringBuilder_k_()
     while v <> 0&
         digit = v mod radix
-        result.insert(0, digits[digit])
-        v = v.div(radix)
+        result.insert_I_C_StringBuilder_k_(0, digits.get_I_C_k_(digit))
+        v = v.div_I_J_k_(radix)
     end while
     if isNegative then
-        result.insert(0, "-")
+        result.insert_I_C_StringBuilder_k_(0, "-")
     end if
     return result.toString()
 end function
@@ -181,10 +181,10 @@ function ulongToString_J_I_Str_k_(value as LongInteger, base as Integer) as Stri
     if value >= 0 then
         return longToStringWithRadix_J_I_Str_k_(value, base)
     end if
-    quotient = value.ushr(1) / base.shl(1)
+    quotient = value.ushr_I_J_k_(1) / base.shl_I_J_k_(1)
     rem = value - (quotient * base)
     if rem_ >= base then
-        rem = rem_.minus(base)
+        rem = rem_.minus_I_J_k_(base)
         quotient = (quotient + 1)
     end if
     return longToStringWithRadix_J_I_Str_k_(quotient, base) + longToStringWithRadix_J_I_Str_k_(rem_, base)

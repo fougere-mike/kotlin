@@ -96,45 +96,45 @@ function UIntRange_create_UInt_UInt_UIntRange_k_(start as Object, endInclusive a
 end function
 
 function UIntRange_contains_UInt_Z_k_(value as Object) as Boolean
-    return ((m.first <= value) <= 0) and ((value <= m.last) <= 0)
+    return ((m.get_first() <= value) <= 0) and ((value <= m.get_last()) <= 0)
 end function
 
 function UIntRange_isEmpty_Z_k_() as Boolean
-    return (m.first > m.last) > 0
+    return (m.get_first() > m.get_last()) > 0
 end function
 
 function UIntRange_equals_AnyN_Z_k_(other as Dynamic) as Boolean
-    return __kotlin_isInstanceOf(other, "UIntRange") and ((m.isEmpty() and other.isEmpty()) or ((m.first = other.first) and (m.last = other.last)))
+    return __kotlin_isInstanceOf(other, "UIntRange") and ((m.isEmpty_Z_k_() and other.isEmpty_Z_k_()) or ((m.get_first() = other.get_first()) and (m.get_last() = other.get_last())))
 end function
 
 function UIntRange_hashCode_I_k_() as Integer
     __when_tmp8 = invalid
-    if m.isEmpty() then
+    if m.isEmpty_Z_k_() then
         __when_tmp8 = -1
     else if true then
-        __when_tmp8 = ((31 * m.first) + m.last)
+        __when_tmp8 = ((31 * m.get_first()) + m.get_last())
     end if
     return __when_tmp8
 
 end function
 
 function UIntRange_toString_Str_k_() as String
-    return (m.first + "..") + m.last
+    return (m.get_first() + "..") + m.get_last()
 end function
 
 function UIntRange_get_start_UInt_k_() as Object
-    return m.first
+    return m.get_first()
 end function
 
 function UIntRange_get_endInclusive_UInt_k_() as Object
-    return m.last
+    return m.get_last()
 end function
 
 function UIntRange_get_endExclusive_UInt_k_() as Object
-    if m.last = UInt_Companion_get_MAX_VALUE_UInt_k_() then
+    if m.get_last() = UInt_Companion_get_MAX_VALUE_UInt_k_() then
         error_Any_k_("Cannot return the exclusive upper bound of a range that includes MAX_VALUE.")
     end if
-    return m.last + 1
+    return m.get_last() + 1
 end function
 
 function UIntRange_Companion_create_Companion_k_() as Object
@@ -148,7 +148,7 @@ end function
 
 function UIntRange_Companion_getInstance() as Object
     if m.UIntRange_Companion_instance = invalid then
-        m.UIntRange_Companion_instance = UIntRange_Companion_create()
+        m.UIntRange_Companion_instance = UIntRange_Companion_create_Companion_k_()
     end if
     return m.UIntRange_Companion_instance
 end function
@@ -176,30 +176,30 @@ function UIntProgression_create_UInt_UInt_I_UIntProgression_k_(start as Object, 
 end function
 
 function UIntProgression_iterator_IteratorUInt_k_() as Object
-    return UIntProgressionIterator_create_UInt_UInt_I_UIntProgressionIterator_k_(m.first, m.last, m.step)
+    return UIntProgressionIterator_create_UInt_UInt_I_UIntProgressionIterator_k_(m.get_first(), m.get_last(), m.get_step())
 end function
 
 function UIntProgression_isEmpty_Z_k_() as Boolean
     __when_tmp9 = invalid
-    if m.step > 0 then
-        __when_tmp9 = ((m.first > m.last) > 0)
+    if m.get_step() > 0 then
+        __when_tmp9 = ((m.get_first() > m.get_last()) > 0)
     else if true then
-        __when_tmp9 = ((m.first < m.last) < 0)
+        __when_tmp9 = ((m.get_first() < m.get_last()) < 0)
     end if
     return __when_tmp9
 
 end function
 
 function UIntProgression_equals_AnyN_Z_k_(other as Dynamic) as Boolean
-    return __kotlin_isInstanceOf(other, "UIntProgression") and ((m.isEmpty() and other.isEmpty()) or (((m.first = other.first) and (m.last = other.last)) and (m.step = other.step)))
+    return __kotlin_isInstanceOf(other, "UIntProgression") and ((m.isEmpty_Z_k_() and other.isEmpty_Z_k_()) or (((m.get_first() = other.get_first()) and (m.get_last() = other.get_last())) and (m.get_step() = other.get_step())))
 end function
 
 function UIntProgression_hashCode_I_k_() as Integer
     __when_tmp10 = invalid
-    if m.isEmpty() then
+    if m.isEmpty_Z_k_() then
         __when_tmp10 = -1
     else if true then
-        __when_tmp10 = ((31 * ((31 * m.first) + m.last)) + m.step)
+        __when_tmp10 = ((31 * ((31 * m.get_first()) + m.get_last())) + m.get_step())
     end if
     return __when_tmp10
 
@@ -207,10 +207,10 @@ end function
 
 function UIntProgression_toString_Str_k_() as String
     __when_tmp11 = invalid
-    if m.step > 0 then
-        __when_tmp11 = ((((m.first + "..") + m.last) + " step ") + m.step)
+    if m.get_step() > 0 then
+        __when_tmp11 = ((((m.get_first() + "..") + m.get_last()) + " step ") + m.get_step())
     else if true then
-        __when_tmp11 = ((((m.first + " downTo ") + m.last) + " step ") + -m.step)
+        __when_tmp11 = ((((m.get_first() + " downTo ") + m.get_last()) + " step ") + -m.get_step())
     end if
     return __when_tmp11
 
@@ -238,7 +238,7 @@ end function
 
 function UIntProgression_Companion_getInstance() as Object
     if m.UIntProgression_Companion_instance = invalid then
-        m.UIntProgression_Companion_instance = UIntProgression_Companion_create()
+        m.UIntProgression_Companion_instance = UIntProgression_Companion_create_Companion_k_()
     end if
     return m.UIntProgression_Companion_instance
 end function
@@ -267,18 +267,18 @@ function UIntProgressionIterator_create_UInt_UInt_I_UIntProgressionIterator_k_(f
 end function
 
 function UIntProgressionIterator_hasNext_Z_k_() as Boolean
-    return m.hasNext
+    return m.get_hasNext()
 end function
 
 function UIntProgressionIterator_next_UInt_k_() as Object
-    value = m.next
-    if value = m.finalElement then
-        if m.hasNext.not() then
+    value = m.get_next()
+    if value = m.get_finalElement() then
+        if not m.get_hasNext() then
             throw NoSuchElementException_create_NoSuchElementException_k_()
         end if
-        m.hasNext = false
+        m.set_hasNext(false)
     else if true then
-        m.next = (m.next + m.step)
+        m.set_next(m.get_next() + m.get_step())
     end if
     return value
 end function
@@ -329,45 +329,45 @@ function ULongRange_create_ULong_ULong_ULongRange_k_(start as Object, endInclusi
 end function
 
 function ULongRange_contains_ULong_Z_k_(value as Object) as Boolean
-    return ((m.first <= value) <= 0) and ((value <= m.last) <= 0)
+    return ((m.get_first() <= value) <= 0) and ((value <= m.get_last()) <= 0)
 end function
 
 function ULongRange_isEmpty_Z_k_() as Boolean
-    return (m.first > m.last) > 0
+    return (m.get_first() > m.get_last()) > 0
 end function
 
 function ULongRange_equals_AnyN_Z_k_(other as Dynamic) as Boolean
-    return __kotlin_isInstanceOf(other, "ULongRange") and ((m.isEmpty() and other.isEmpty()) or ((m.first = other.first) and (m.last = other.last)))
+    return __kotlin_isInstanceOf(other, "ULongRange") and ((m.isEmpty_Z_k_() and other.isEmpty_Z_k_()) or ((m.get_first() = other.get_first()) and (m.get_last() = other.get_last())))
 end function
 
 function ULongRange_hashCode_I_k_() as Integer
     __when_tmp14 = invalid
-    if m.isEmpty() then
+    if m.isEmpty_Z_k_() then
         __when_tmp14 = -1
     else if true then
-        __when_tmp14 = ((31 * m.first.xor(m.first.shr(32))) + m.last.xor(m.last.shr(32)))
+        __when_tmp14 = ((31 * m.get_first().xor_ULong_ULong_k_(m.get_first().shr_I_ULong_k_(32))) + m.get_last().xor_ULong_ULong_k_(m.get_last().shr_I_ULong_k_(32)))
     end if
     return __when_tmp14
 
 end function
 
 function ULongRange_toString_Str_k_() as String
-    return (m.first + "..") + m.last
+    return (m.get_first() + "..") + m.get_last()
 end function
 
 function ULongRange_get_start_ULong_k_() as Object
-    return m.first
+    return m.get_first()
 end function
 
 function ULongRange_get_endInclusive_ULong_k_() as Object
-    return m.last
+    return m.get_last()
 end function
 
 function ULongRange_get_endExclusive_ULong_k_() as Object
-    if m.last = ULong_Companion_get_MAX_VALUE_ULong_k_() then
+    if m.get_last() = ULong_Companion_get_MAX_VALUE_ULong_k_() then
         error_Any_k_("Cannot return the exclusive upper bound of a range that includes MAX_VALUE.")
     end if
-    return m.last + 1
+    return m.get_last() + 1
 end function
 
 function ULongRange_Companion_create_Companion_k_() as Object
@@ -381,7 +381,7 @@ end function
 
 function ULongRange_Companion_getInstance() as Object
     if m.ULongRange_Companion_instance = invalid then
-        m.ULongRange_Companion_instance = ULongRange_Companion_create()
+        m.ULongRange_Companion_instance = ULongRange_Companion_create_Companion_k_()
     end if
     return m.ULongRange_Companion_instance
 end function
@@ -409,30 +409,30 @@ function ULongProgression_create_ULong_ULong_J_ULongProgression_k_(start as Obje
 end function
 
 function ULongProgression_iterator_IteratorULong_k_() as Object
-    return ULongProgressionIterator_create_ULong_ULong_J_ULongProgressionIterator_k_(m.first, m.last, m.step)
+    return ULongProgressionIterator_create_ULong_ULong_J_ULongProgressionIterator_k_(m.get_first(), m.get_last(), m.get_step())
 end function
 
 function ULongProgression_isEmpty_Z_k_() as Boolean
     __when_tmp15 = invalid
-    if m.step > 0 then
-        __when_tmp15 = ((m.first > m.last) > 0)
+    if m.get_step() > 0 then
+        __when_tmp15 = ((m.get_first() > m.get_last()) > 0)
     else if true then
-        __when_tmp15 = ((m.first < m.last) < 0)
+        __when_tmp15 = ((m.get_first() < m.get_last()) < 0)
     end if
     return __when_tmp15
 
 end function
 
 function ULongProgression_equals_AnyN_Z_k_(other as Dynamic) as Boolean
-    return __kotlin_isInstanceOf(other, "ULongProgression") and ((m.isEmpty() and other.isEmpty()) or (((m.first = other.first) and (m.last = other.last)) and (m.step = other.step)))
+    return __kotlin_isInstanceOf(other, "ULongProgression") and ((m.isEmpty_Z_k_() and other.isEmpty_Z_k_()) or (((m.get_first() = other.get_first()) and (m.get_last() = other.get_last())) and (m.get_step() = other.get_step())))
 end function
 
 function ULongProgression_hashCode_I_k_() as Integer
     __when_tmp16 = invalid
-    if m.isEmpty() then
+    if m.isEmpty_Z_k_() then
         __when_tmp16 = -1
     else if true then
-        __when_tmp16 = ((31 * ((31 * m.first.xor(m.first.shr(32))) + m.last.xor(m.last.shr(32)))) + m.step.xor(m.step.ushr(32)))
+        __when_tmp16 = ((31 * ((31 * m.get_first().xor_ULong_ULong_k_(m.get_first().shr_I_ULong_k_(32))) + m.get_last().xor_ULong_ULong_k_(m.get_last().shr_I_ULong_k_(32)))) + m.get_step().xor_J_J_k_(m.get_step().ushr_I_J_k_(32)))
     end if
     return __when_tmp16
 
@@ -440,10 +440,10 @@ end function
 
 function ULongProgression_toString_Str_k_() as String
     __when_tmp17 = invalid
-    if m.step > 0 then
-        __when_tmp17 = ((((m.first + "..") + m.last) + " step ") + m.step)
+    if m.get_step() > 0 then
+        __when_tmp17 = ((((m.get_first() + "..") + m.get_last()) + " step ") + m.get_step())
     else if true then
-        __when_tmp17 = ((((m.first + " downTo ") + m.last) + " step ") + -m.step)
+        __when_tmp17 = ((((m.get_first() + " downTo ") + m.get_last()) + " step ") + -m.get_step())
     end if
     return __when_tmp17
 
@@ -471,7 +471,7 @@ end function
 
 function ULongProgression_Companion_getInstance() as Object
     if m.ULongProgression_Companion_instance = invalid then
-        m.ULongProgression_Companion_instance = ULongProgression_Companion_create()
+        m.ULongProgression_Companion_instance = ULongProgression_Companion_create_Companion_k_()
     end if
     return m.ULongProgression_Companion_instance
 end function
@@ -500,18 +500,18 @@ function ULongProgressionIterator_create_ULong_ULong_J_ULongProgressionIterator_
 end function
 
 function ULongProgressionIterator_hasNext_Z_k_() as Boolean
-    return m.hasNext
+    return m.get_hasNext()
 end function
 
 function ULongProgressionIterator_next_ULong_k_() as Object
-    value = m.next
-    if value = m.finalElement then
-        if m.hasNext.not() then
+    value = m.get_next()
+    if value = m.get_finalElement() then
+        if not m.get_hasNext() then
             throw NoSuchElementException_create_NoSuchElementException_k_()
         end if
-        m.hasNext = false
+        m.set_hasNext(false)
     else if true then
-        m.next = (m.next + m.step)
+        m.set_next(m.get_next() + m.get_step())
     end if
     return value
 end function
@@ -544,14 +544,14 @@ function until_rUInt_UInt_UIntRange_k_(m as Object, to_ as Object) as Object
     if (to_ <= UInt_Companion_get_MIN_VALUE_UInt_k_()) <= 0 then
         return UIntRange_Companion_get_EMPTY_UIntRange_k_()
     end if
-    return m.rangeTo(to_ - 1)
+    return m.rangeTo_UInt_UIntRange_k_(to_ - 1)
 end function
 
 function until_rULong_ULong_ULongRange_k_(m as Object, to_ as Object) as Object
     if (to_ <= ULong_Companion_get_MIN_VALUE_ULong_k_()) <= 0 then
         return ULongRange_Companion_get_EMPTY_ULongRange_k_()
     end if
-    return m.rangeTo(to_ - 1)
+    return m.rangeTo_ULong_ULongRange_k_(to_ - 1)
 end function
 
 function downTo_rUInt_UInt_UIntProgression_k_(m as Object, to_ as Object) as Object
@@ -565,29 +565,29 @@ end function
 function step_rUIntProgression_I_UIntProgression_k_(m as Object, step_ as Integer) as Object
     checkStepIsPositive_Z_Number_k_(step_ > 0, step_)
     __when_tmp20 = invalid
-    if m.step > 0 then
+    if m.get_step() > 0 then
         __when_tmp20 = step_
     else if true then
         __when_tmp20 = -step_
     end if
-    return UIntProgression_Companion_fromClosedRange_UInt_UInt_I_UIntProgression_k_(m.first, m.last, __when_tmp20)
+    return UIntProgression_Companion_fromClosedRange_UInt_UInt_I_UIntProgression_k_(m.get_first(), m.get_last(), __when_tmp20)
 
 end function
 
 function step_rULongProgression_J_ULongProgression_k_(m as Object, step_ as LongInteger) as Object
     checkStepIsPositive_Z_Number_k_(step_ > 0, step_)
     __when_tmp21 = invalid
-    if m.step > 0 then
+    if m.get_step() > 0 then
         __when_tmp21 = step_
     else if true then
         __when_tmp21 = -step_
     end if
-    return ULongProgression_Companion_fromClosedRange_ULong_ULong_J_ULongProgression_k_(m.first, m.last, __when_tmp21)
+    return ULongProgression_Companion_fromClosedRange_ULong_ULong_J_ULongProgression_k_(m.get_first(), m.get_last(), __when_tmp21)
 
 end function
 
 sub checkStepIsPositive_Z_Number_k_(isPositive as Boolean, step_ as Object)
-    if isPositive.not() then
+    if not isPositive then
         throw IllegalArgumentException_create_StrN_IllegalArgumentException_k_(("Step must be positive, was: " + step_) + ".")
     end if
 end sub
