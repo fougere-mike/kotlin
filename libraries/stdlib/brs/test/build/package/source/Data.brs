@@ -31,7 +31,7 @@ function RoByteArray_create_RoByteArray_k_() as Object
     this.append_RoByteArray_k_ = RoByteArray_append_RoByteArray_k_
     this.getNative_Dynamic_k_ = RoByteArray_getNative_Dynamic_k_
     this.get_native = RoByteArray_get_native_Dynamic_k_
-    m.native = CreateObject("roByteArray")
+    this.native = CreateObject("roByteArray")
     return this
 end function
 
@@ -68,120 +68,120 @@ function RoByteArray_create_Dynamic_RoByteArray_k_(nativeArray as Object) as Obj
     this.append_RoByteArray_k_ = RoByteArray_append_RoByteArray_k_
     this.getNative_Dynamic_k_ = RoByteArray_getNative_Dynamic_k_
     this.get_native = RoByteArray_get_native_Dynamic_k_
-    m.native = nativeArray
+    this.native = nativeArray
     return this
 end function
 
 function RoByteArray_count_I_k_() as Integer
-    return m.native.Count()
+    return m.get_native().Count()
 end function
 
 function RoByteArray_capacity_I_k_() as Integer
-    return m.native.Capacity()
+    return m.get_native().Capacity()
 end function
 
 function RoByteArray_isEmpty_Z_k_() as Boolean
-    return m.native.IsEmpty()
+    return m.get_native().IsEmpty()
 end function
 
 sub RoByteArray_clear()
-    m.native.Clear()
+    m.get_native().Clear()
 end sub
 
 function RoByteArray_get_I_I_k_(index as Integer) as Integer
-    return m.native[index]
+    return m.get_native()[index]
 end function
 
 sub RoByteArray_set_I_I_k_(index as Integer, value as Integer)
-    m.native[index] = value
+    m.get_native()[index] = value
 end sub
 
 sub RoByteArray_push_I_k_(value as Integer)
-    m.native.Push(value)
+    m.get_native().Push(value)
 end sub
 
 function RoByteArray_pop_IN_k_() as Dynamic
-    return m.native.Pop()
+    return m.get_native().Pop()
 end function
 
 function RoByteArray_peek_IN_k_() as Dynamic
-    return m.native.Peek()
+    return m.get_native().Peek()
 end function
 
 function RoByteArray_shift_IN_k_() as Dynamic
-    return m.native.Shift()
+    return m.get_native().Shift()
 end function
 
 sub RoByteArray_unshift_I_k_(value as Integer)
-    m.native.Unshift(value)
+    m.get_native().Unshift(value)
 end sub
 
 sub RoByteArray_fromAsciiString_Str_k_(str as String)
-    m.native.FromAsciiString(str)
+    m.get_native().FromAsciiString(str)
 end sub
 
 function RoByteArray_toAsciiString_Str_k_() as String
-    return m.native.ToAsciiString()
+    return m.get_native().ToAsciiString()
 end function
 
 sub RoByteArray_fromBase64String_Str_k_(base64 as String)
-    m.native.FromBase64String(base64)
+    m.get_native().FromBase64String(base64)
 end sub
 
 function RoByteArray_toBase64String_Str_k_() as String
-    return m.native.ToBase64String()
+    return m.get_native().ToBase64String()
 end function
 
 sub RoByteArray_fromHexString_Str_k_(hex as String)
-    m.native.FromHexString(hex)
+    m.get_native().FromHexString(hex)
 end sub
 
 function RoByteArray_toHexString_Str_k_() as String
-    return m.native.ToHexString()
+    return m.get_native().ToHexString()
 end function
 
 function RoByteArray_readFile_Str_Z_k_(path as String) as Boolean
-    return m.native.ReadFile(path)
+    return m.get_native().ReadFile(path)
 end function
 
 function RoByteArray_writeFile_Str_Z_k_(path as String) as Boolean
-    return m.native.WriteFile(path)
+    return m.get_native().WriteFile(path)
 end function
 
 function RoByteArray_appendFile_Str_Z_k_(path as String) as Boolean
-    return m.native.AppendFile(path)
+    return m.get_native().AppendFile(path)
 end function
 
 function RoByteArray_getCRC32_I_k_() as Integer
-    return m.native.GetCRC32()
+    return m.get_native().GetCRC32()
 end function
 
 function RoByteArray_getMD5_Str_k_() as String
-    return m.native.GetMD5()
+    return m.get_native().GetMD5()
 end function
 
 function RoByteArray_getSHA1_Str_k_() as String
-    return m.native.GetSHA1()
+    return m.get_native().GetSHA1()
 end function
 
 function RoByteArray_getSHA256_Str_k_() as String
-    return m.native.GetSHA256()
+    return m.get_native().GetSHA256()
 end function
 
 function RoByteArray_getSHA512_Str_k_() as String
-    return m.native.GetSHA512()
+    return m.get_native().GetSHA512()
 end function
 
 sub RoByteArray_resize_I_I_k_(newSize as Integer, fillValue = 0)
-    m.native.Resize(newSize, fillValue)
+    m.get_native().Resize(newSize, fillValue)
 end sub
 
 sub RoByteArray_append_RoByteArray_k_(other as Object)
-    m.native.Append(other.native)
+    m.get_native().Append(other.get_native())
 end sub
 
 function RoByteArray_getNative_Dynamic_k_() as Object
-    return m.native
+    return m.get_native()
 end function
 
 function RoByteArray_get_native_Dynamic_k_() as Object

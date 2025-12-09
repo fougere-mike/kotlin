@@ -61,179 +61,179 @@ function UByte_create_B_UByte_k_(data as Integer) as Object
 end function
 
 function UByte_compareTo_UByte_I_k_(other as Object) as Integer
-    return m.compareTo(other)
+    return m.compareTo_I_I_k_(other)
 end function
 
 function UByte_compareTo_UShort_I_k_(other as Object) as Integer
-    return m.compareTo(other)
+    return m.compareTo_I_I_k_(other)
 end function
 
 function UByte_compareTo_UInt_I_k_(other as Object) as Integer
-    return m.toUInt().compareTo(other)
+    return m.toUInt_UInt_k_().compareTo_UInt_I_k_(other)
 end function
 
 function UByte_compareTo_ULong_I_k_(other as Object) as Integer
-    return m.toULong().compareTo(other)
+    return m.toULong_ULong_k_().compareTo_ULong_I_k_(other)
 end function
 
 function UByte_plus_UByte_UInt_k_(other as Object) as Object
-    return m.toUInt() + other.toUInt()
+    return m.toUInt_UInt_k_() + other.toUInt_UInt_k_()
 end function
 
 function UByte_plus_UShort_UInt_k_(other as Object) as Object
-    return m.toUInt() + other.toUInt()
+    return m.toUInt_UInt_k_() + other.toUInt_UInt_k_()
 end function
 
 function UByte_plus_UInt_UInt_k_(other as Object) as Object
-    return m.toUInt() + other
+    return m.toUInt_UInt_k_() + other
 end function
 
 function UByte_plus_ULong_ULong_k_(other as Object) as Object
-    return m.toULong() + other
+    return m.toULong_ULong_k_() + other
 end function
 
 function UByte_minus_UByte_UInt_k_(other as Object) as Object
-    return m.toUInt().minus(other.toUInt())
+    return m.toUInt_UInt_k_().minus_UInt_UInt_k_(other.toUInt_UInt_k_())
 end function
 
 function UByte_minus_UShort_UInt_k_(other as Object) as Object
-    return m.toUInt().minus(other.toUInt())
+    return m.toUInt_UInt_k_().minus_UInt_UInt_k_(other.toUInt_UInt_k_())
 end function
 
 function UByte_minus_UInt_UInt_k_(other as Object) as Object
-    return m.toUInt().minus(other)
+    return m.toUInt_UInt_k_().minus_UInt_UInt_k_(other)
 end function
 
 function UByte_minus_ULong_ULong_k_(other as Object) as Object
-    return m.toULong().minus(other)
+    return m.toULong_ULong_k_().minus_ULong_ULong_k_(other)
 end function
 
 function UByte_times_UByte_UInt_k_(other as Object) as Object
-    return m.toUInt().times(other.toUInt())
+    return m.toUInt_UInt_k_().times_UInt_UInt_k_(other.toUInt_UInt_k_())
 end function
 
 function UByte_times_UShort_UInt_k_(other as Object) as Object
-    return m.toUInt().times(other.toUInt())
+    return m.toUInt_UInt_k_().times_UInt_UInt_k_(other.toUInt_UInt_k_())
 end function
 
 function UByte_times_UInt_UInt_k_(other as Object) as Object
-    return m.toUInt().times(other)
+    return m.toUInt_UInt_k_().times_UInt_UInt_k_(other)
 end function
 
 function UByte_times_ULong_ULong_k_(other as Object) as Object
-    return m.toULong().times(other)
+    return m.toULong_ULong_k_().times_ULong_ULong_k_(other)
 end function
 
 function UByte_div_UByte_UInt_k_(other as Object) as Object
-    return m.toUInt().div(other.toUInt())
+    return m.toUInt_UInt_k_().div_UInt_UInt_k_(other.toUInt_UInt_k_())
 end function
 
 function UByte_div_UShort_UInt_k_(other as Object) as Object
-    return m.toUInt().div(other.toUInt())
+    return m.toUInt_UInt_k_().div_UInt_UInt_k_(other.toUInt_UInt_k_())
 end function
 
 function UByte_div_UInt_UInt_k_(other as Object) as Object
-    return m.toUInt().div(other)
+    return m.toUInt_UInt_k_().div_UInt_UInt_k_(other)
 end function
 
 function UByte_div_ULong_ULong_k_(other as Object) as Object
-    return m.toULong().div(other)
+    return m.toULong_ULong_k_().div_ULong_ULong_k_(other)
 end function
 
 function UByte_rem_UByte_UInt_k_(other as Object) as Object
-    return m.toUInt().rem(other.toUInt())
+    return m.toUInt_UInt_k_().rem_UInt_UInt_k_(other.toUInt_UInt_k_())
 end function
 
 function UByte_rem_UShort_UInt_k_(other as Object) as Object
-    return m.toUInt().rem(other.toUInt())
+    return m.toUInt_UInt_k_().rem_UInt_UInt_k_(other.toUInt_UInt_k_())
 end function
 
 function UByte_rem_UInt_UInt_k_(other as Object) as Object
-    return m.toUInt().rem(other)
+    return m.toUInt_UInt_k_().rem_UInt_UInt_k_(other)
 end function
 
 function UByte_rem_ULong_ULong_k_(other as Object) as Object
-    return m.toULong().rem(other)
+    return m.toULong_ULong_k_().rem_ULong_ULong_k_(other)
 end function
 
 function UByte_floorDiv_UByte_UInt_k_(other as Object) as Object
-    return m.toUInt().floorDiv(other.toUInt())
+    return m.toUInt_UInt_k_().floorDiv_UInt_UInt_k_(other.toUInt_UInt_k_())
 end function
 
 function UByte_floorDiv_UShort_UInt_k_(other as Object) as Object
-    return m.toUInt().floorDiv(other.toUInt())
+    return m.toUInt_UInt_k_().floorDiv_UInt_UInt_k_(other.toUInt_UInt_k_())
 end function
 
 function UByte_floorDiv_UInt_UInt_k_(other as Object) as Object
-    return m.toUInt().floorDiv(other)
+    return m.toUInt_UInt_k_().floorDiv_UInt_UInt_k_(other)
 end function
 
 function UByte_floorDiv_ULong_ULong_k_(other as Object) as Object
-    return m.toULong().floorDiv(other)
+    return m.toULong_ULong_k_().floorDiv_ULong_ULong_k_(other)
 end function
 
 function UByte_mod_UByte_UByte_k_(other as Object) as Object
-    return m.toUInt().mod(other.toUInt()).toUByte()
+    return m.toUInt_UInt_k_().mod_UInt_UInt_k_(other.toUInt_UInt_k_()).toUByte_UByte_k_()
 end function
 
 function UByte_mod_UShort_UShort_k_(other as Object) as Object
-    return m.toUInt().mod(other.toUInt()).toUShort()
+    return m.toUInt_UInt_k_().mod_UInt_UInt_k_(other.toUInt_UInt_k_()).toUShort_UShort_k_()
 end function
 
 function UByte_mod_UInt_UInt_k_(other as Object) as Object
-    return m.toUInt().mod(other)
+    return m.toUInt_UInt_k_().mod_UInt_UInt_k_(other)
 end function
 
 function UByte_mod_ULong_ULong_k_(other as Object) as Object
-    return m.toULong().mod(other)
+    return m.toULong_ULong_k_().mod_ULong_ULong_k_(other)
 end function
 
 function UByte_inc_UByte_k_() as Object
-    return UByte_create_B_UByte_k_(m.data + 1)
+    return UByte_create_B_UByte_k_(m.get_data() + 1)
 end function
 
 function UByte_dec_UByte_k_() as Object
-    return UByte_create_B_UByte_k_(m.data - 1)
+    return UByte_create_B_UByte_k_(m.get_data() - 1)
 end function
 
 function UByte_rangeTo_UByte_UIntRange_k_(other as Object) as Object
-    return UIntRange_create_UInt_UInt_UIntRange_k_(m.toUInt(), other.toUInt())
+    return UIntRange_create_UInt_UInt_UIntRange_k_(m.toUInt_UInt_k_(), other.toUInt_UInt_k_())
 end function
 
 function UByte_rangeUntil_UByte_UIntRange_k_(other as Object) as Object
-    return until_rUInt_UInt_UIntRange_k_(m.toUInt(), other.toUInt())
+    return until_rUInt_UInt_UIntRange_k_(m.toUInt_UInt_k_(), other.toUInt_UInt_k_())
 end function
 
 function UByte_and_UByte_UByte_k_(other as Object) as Object
-    return UByte_create_B_UByte_k_(m.and(other))
+    return UByte_create_B_UByte_k_(m.and_I_I_k_(other))
 end function
 
 function UByte_or_UByte_UByte_k_(other as Object) as Object
-    return UByte_create_B_UByte_k_(m.or(other))
+    return UByte_create_B_UByte_k_(m.or_I_I_k_(other))
 end function
 
 function UByte_xor_UByte_UByte_k_(other as Object) as Object
-    return UByte_create_B_UByte_k_(m.xor(other))
+    return UByte_create_B_UByte_k_(m.xor_I_I_k_(other))
 end function
 
 function UByte_inv_UByte_k_() as Object
-    return UByte_create_B_UByte_k_(m.inv())
+    return UByte_create_B_UByte_k_(m.inv_I_k_())
 end function
 
 function UByte_toByte_B_k_() as Integer
-    return m.data
+    return m.get_data()
 end function
 
 function UByte_toShort_S_k_() as Integer
-    return m.data.and(255)
+    return m.get_data().and_I_I_k_(255)
 end function
 
 function UByte_toInt_I_k_() as Integer
-    return m.data.and(255)
+    return m.get_data().and_I_I_k_(255)
 end function
 
 function UByte_toLong_J_k_() as LongInteger
-    return m.data.and(255&)
+    return m.get_data().and_J_J_k_(255&)
 end function
 
 function UByte_toUByte_UByte_k_() as Object
@@ -241,15 +241,15 @@ function UByte_toUByte_UByte_k_() as Object
 end function
 
 function UByte_toUShort_UShort_k_() as Object
-    return UShort_create_S_UShort_k_(m.data.and(255))
+    return UShort_create_S_UShort_k_(m.get_data().and_I_I_k_(255))
 end function
 
 function UByte_toUInt_UInt_k_() as Object
-    return UInt_create_I_UInt_k_(m.data.and(255))
+    return UInt_create_I_UInt_k_(m.get_data().and_I_I_k_(255))
 end function
 
 function UByte_toULong_ULong_k_() as Object
-    return ULong_create_J_ULong_k_(m.data.and(255&))
+    return ULong_create_J_ULong_k_(m.get_data().and_J_J_k_(255&))
 end function
 
 function UByte_toFloat_F_k_() as Float
@@ -265,11 +265,11 @@ function UByte_toString_Str_k_() as String
 end function
 
 function UByte_equals_AnyN_Z_k_(other as Dynamic) as Boolean
-    return __kotlin_isInstanceOf(other, "UByte") and (m.data = other.data)
+    return __kotlin_isInstanceOf(other, "UByte") and (m.get_data() = other.get_data())
 end function
 
 function UByte_hashCode_I_k_() as Integer
-    return m.data
+    return m.get_data()
 end function
 
 function UByte_get_data_B_k_() as Integer
@@ -293,7 +293,7 @@ end function
 
 function UByte_Companion_getInstance() as Object
     if m.UByte_Companion_instance = invalid then
-        m.UByte_Companion_instance = UByte_Companion_create()
+        m.UByte_Companion_instance = UByte_Companion_create_Companion_k_()
     end if
     return m.UByte_Companion_instance
 end function

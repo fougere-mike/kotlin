@@ -16,8 +16,8 @@ end function
 
 function capitalize_rStr_Str_k_(m as String) as String
     __when_tmp0 = invalid
-    if isNotEmpty_rStr_Z_k_(m) and isLowerCase_rC_Z_k_(m[0]) then
-        __when_tmp0 = (uppercase_rC_Str_k_(m[0]) + substring_rStr_I_Str_k_(m, 1))
+    if isNotEmpty_rStr_Z_k_(m) and isLowerCase_rC_Z_k_(m.get_I_C_k_(0)) then
+        __when_tmp0 = (uppercase_rC_Str_k_(m.get_I_C_k_(0)) + substring_rStr_I_Str_k_(m, 1))
     else if true then
         __when_tmp0 = m
     end if
@@ -27,8 +27,8 @@ end function
 
 function decapitalize_rStr_Str_k_(m as String) as String
     __when_tmp1 = invalid
-    if isNotEmpty_rStr_Z_k_(m) and isUpperCase_rC_Z_k_(m[0]) then
-        __when_tmp1 = (lowercase_rC_Str_k_(m[0]) + substring_rStr_I_Str_k_(m, 1))
+    if isNotEmpty_rStr_Z_k_(m) and isUpperCase_rC_Z_k_(m.get_I_C_k_(0)) then
+        __when_tmp1 = (lowercase_rC_Str_k_(m.get_I_C_k_(0)) + substring_rStr_I_Str_k_(m, 1))
     else if true then
         __when_tmp1 = m
     end if
@@ -43,17 +43,17 @@ function contentEquals_rCharSequenceN_CharSequenceN_Z_k_(m as Dynamic, other as 
     if (m = invalid) or (other = invalid) then
         return false
     end if
-    if m.length <> other.length then
+    if m.get_length() <> other.get_length() then
         return false
     end if
-    progression = until_rI_I_IntRange_k_(0, m.length)
-    inductionVariable = progression.first
-    last = progression.last
-    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+    progression = until_rI_I_IntRange_k_(0, m.get_length())
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if m[i] <> other[i] then
+        if m.get_I_C_k_(i) <> other.get_I_C_k_(i) then
             return false
         end if
 
@@ -62,7 +62,7 @@ function contentEquals_rCharSequenceN_CharSequenceN_Z_k_(m as Dynamic, other as 
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if m[i] <> other[i] then
+            if m.get_I_C_k_(i) <> other.get_I_C_k_(i) then
                 return false
             end if
 
@@ -80,18 +80,18 @@ function contentEquals_rCharSequenceN_CharSequenceN_Z_Z_k_(m as Dynamic, other a
     if (m = invalid) or (other = invalid) then
         return false
     end if
-    if m.length <> other.length then
+    if m.get_length() <> other.get_length() then
         return false
     end if
-    if ignoreCase.not() then
-        progression = until_rI_I_IntRange_k_(0, m.length)
-        inductionVariable = progression.first
-        last = progression.last
-        if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+    if not ignoreCase then
+        progression = until_rI_I_IntRange_k_(0, m.get_length())
+        inductionVariable = progression.get_first()
+        last = progression.get_last()
+        if inductionVariable <= last then
                         i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if m[i] <> other[i] then
+            if m.get_I_C_k_(i) <> other.get_I_C_k_(i) then
                 return false
             end if
 
@@ -100,7 +100,7 @@ function contentEquals_rCharSequenceN_CharSequenceN_Z_Z_k_(m as Dynamic, other a
                 i = inductionVariable
                 inductionVariable = (inductionVariable + 1)
 
-                if m[i] <> other[i] then
+                if m.get_I_C_k_(i) <> other.get_I_C_k_(i) then
                     return false
                 end if
 
@@ -108,14 +108,14 @@ function contentEquals_rCharSequenceN_CharSequenceN_Z_Z_k_(m as Dynamic, other a
 
         end if
     else if true then
-        progression = until_rI_I_IntRange_k_(0, m.length)
-        inductionVariable = progression.first
-        last = progression.last
-        if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+        progression = until_rI_I_IntRange_k_(0, m.get_length())
+        inductionVariable = progression.get_first()
+        last = progression.get_last()
+        if inductionVariable <= last then
                         i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if equals_rC_C_Z_Z_k_(m[i], other[i], true).not() then
+            if not equals_rC_C_Z_Z_k_(m.get_I_C_k_(i), other.get_I_C_k_(i), true) then
                 return false
             end if
 
@@ -124,7 +124,7 @@ function contentEquals_rCharSequenceN_CharSequenceN_Z_Z_k_(m as Dynamic, other a
                 i = inductionVariable
                 inductionVariable = (inductionVariable + 1)
 
-                if equals_rC_C_Z_Z_k_(m[i], other[i], true).not() then
+                if not equals_rC_C_Z_Z_k_(m.get_I_C_k_(i), other.get_I_C_k_(i), true) then
                     return false
                 end if
 
@@ -154,15 +154,15 @@ function nativeLastIndexOf_rStr_Str_I_I_k_(m as String, str as String, fromIndex
 end function
 
 function substring_rStr_I_Str_k_(m as String, startIndex as Integer) as String
-    return substring_rStr_I_I_Str_k_(m, startIndex, m.length)
+    return substring_rStr_I_I_Str_k_(m, startIndex, m.get_length())
 end function
 
 function substring_rStr_I_I_Str_k_(m as String, startIndex as Integer, endIndex as Integer) as String
     if startIndex < 0 then
         throw IndexOutOfBoundsException_create_StrN_IndexOutOfBoundsException_k_("startIndex: " + startIndex)
     end if
-    if endIndex > m.length then
-        throw IndexOutOfBoundsException_create_StrN_IndexOutOfBoundsException_k_((("endIndex: " + endIndex) + ", length: ") + m.length)
+    if endIndex > m.get_length() then
+        throw IndexOutOfBoundsException_create_StrN_IndexOutOfBoundsException_k_((("endIndex: " + endIndex) + ", length: ") + m.get_length())
     end if
     if startIndex > endIndex then
         throw IllegalArgumentException_create_StrN_IllegalArgumentException_k_((("startIndex: " + startIndex) + " > endIndex: ") + endIndex)
@@ -180,10 +180,10 @@ function indexOf_rStr_Str_I_Z_I_k_(m as String, string_ as String, startIndex = 
     if startIndex < 0 then
         return indexOf_rStr_Str_I_Z_I_k_(m, string_, 0)
     end if
-    if startIndex >= m.length then
+    if startIndex >= m.get_length() then
         __when_tmp2 = invalid
         if isEmpty_rStr_Z_k_(string_) then
-            __when_tmp2 = m.length
+            __when_tmp2 = m.get_length()
         else if true then
             __when_tmp2 = -1
         end if
@@ -200,29 +200,29 @@ function lastIndexOf_rStr_Str_I_Z_I_k_(m as String, string_ as String, startInde
     if startIndex < 0 then
         return -1
     end if
-    return nativeLastIndexOf_rStr_Str_I_I_k_(m, string_, coerceAtMost_rI_I_I_k_(startIndex, m.length))
+    return nativeLastIndexOf_rStr_Str_I_I_k_(m, string_, coerceAtMost_rI_I_I_k_(startIndex, m.get_length()))
 end function
 
 function isEmpty_rStr_Z_k_(m as String) as Boolean
-    return m.length = 0
+    return m.get_length() = 0
 end function
 
 function isNotEmpty_rStr_Z_k_(m as String) as Boolean
-    return m.length > 0
+    return m.get_length() > 0
 end function
 
 function isBlank_rStr_Z_k_(m as String) as Boolean
     if isEmpty_rStr_Z_k_(m) then
         return true
     end if
-    progression = until_rI_I_IntRange_k_(0, m.length)
-    inductionVariable = progression.first
-    last = progression.last
-    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+    progression = until_rI_I_IntRange_k_(0, m.get_length())
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if isWhitespace_rC_Z_k_(m[i]).not() then
+        if not isWhitespace_rC_Z_k_(m.get_I_C_k_(i)) then
             return false
         end if
 
@@ -231,7 +231,7 @@ function isBlank_rStr_Z_k_(m as String) as Boolean
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if isWhitespace_rC_Z_k_(m[i]).not() then
+            if not isWhitespace_rC_Z_k_(m.get_I_C_k_(i)) then
                 return false
             end if
 
@@ -243,17 +243,17 @@ function isBlank_rStr_Z_k_(m as String) as Boolean
 end function
 
 function isNotBlank_rStr_Z_k_(m as String) as Boolean
-    return isBlank_rStr_Z_k_(m).not()
+    return not isBlank_rStr_Z_k_(m)
 end function
 
 function get_lastIndex_rStr_I_k_(m as String) as Integer
-    return m.length - 1
+    return m.get_length() - 1
 end function
 
-function getOrElse_rStr_I_Function1IC_C_k_(m as String, index as Integer, defaultValue as Function) as Object
+function getOrElse_rStr_I_Function1IC_C_k_(m as String, index as Integer, defaultValue as Object) as Object
     __when_tmp3 = invalid
-    if (index >= 0) and (index < m.length) then
-        __when_tmp3 = m[index]
+    if (index >= 0) and (index < m.get_length()) then
+        __when_tmp3 = m.get_I_C_k_(index)
     else if true then
         __when_tmp3 = defaultValue.invoke(index)
     end if
@@ -265,17 +265,17 @@ function padStart_rStr_I_C_Str_k_(m as String, length as Integer, padChar = " ")
     if length <= 0 then
         throw IllegalArgumentException_create_StrN_IllegalArgumentException_k_(("Desired length " + length) + " is less than zero.")
     end if
-    if m.length >= length then
+    if m.get_length() >= length then
         return m
     end if
     sb = StringBuilder_create_I_StringBuilder_k_(length)
     i = 0
-    times = length - m.length
+    times = length - m.get_length()
     while i < times
-        sb.append(padChar)
+        sb.append_C_StringBuilder_k_(padChar)
         i = (i + 1)
     end while
-    sb.append(m)
+    sb.append_StrN_StringBuilder_k_(m)
     return sb.toString()
 end function
 
@@ -283,15 +283,15 @@ function padEnd_rStr_I_C_Str_k_(m as String, length as Integer, padChar = " ") a
     if length <= 0 then
         throw IllegalArgumentException_create_StrN_IllegalArgumentException_k_(("Desired length " + length) + " is less than zero.")
     end if
-    if m.length >= length then
+    if m.get_length() >= length then
         return m
     end if
     sb = StringBuilder_create_I_StringBuilder_k_(length)
-    sb.append(m)
+    sb.append_StrN_StringBuilder_k_(m)
     i = 0
-    times = length - m.length
+    times = length - m.get_length()
     while i < times
-        sb.append(padChar)
+        sb.append_C_StringBuilder_k_(padChar)
         i = (i + 1)
     end while
     return sb.toString()
@@ -307,33 +307,33 @@ function repeat_rStr_I_Str_k_(m as String, n as Integer) as String
     if n = 1 then
         return m
     end if
-    sb = StringBuilder_create_I_StringBuilder_k_(m.length * n)
+    sb = StringBuilder_create_I_StringBuilder_k_(m.get_length() * n)
     i = 0
     while i < n
-        sb.append(m)
+        sb.append_StrN_StringBuilder_k_(m)
         i = (i + 1)
     end while
     return sb.toString()
 end function
 
 function startsWith_rStr_Str_Z_Z_k_(m as String, prefix as String, ignoreCase = false) as Boolean
-    if prefix.length > m.length then
+    if prefix.get_length() > m.get_length() then
         return false
     end if
     if ignoreCase then
-        return equals_rStr_StrN_Z_Z_k_(substring_rStr_I_I_Str_k_(m, 0, prefix.length), prefix, true)
+        return equals_rStr_StrN_Z_Z_k_(substring_rStr_I_I_Str_k_(m, 0, prefix.get_length()), prefix, true)
     end if
-    return substring_rStr_I_I_Str_k_(m, 0, prefix.length) = prefix
+    return substring_rStr_I_I_Str_k_(m, 0, prefix.get_length()) = prefix
 end function
 
 function endsWith_rStr_Str_Z_Z_k_(m as String, suffix as String, ignoreCase = false) as Boolean
-    if suffix.length > m.length then
+    if suffix.get_length() > m.get_length() then
         return false
     end if
     if ignoreCase then
-        return equals_rStr_StrN_Z_Z_k_(substring_rStr_I_Str_k_(m, m.length - suffix.length), suffix, true)
+        return equals_rStr_StrN_Z_Z_k_(substring_rStr_I_Str_k_(m, m.get_length() - suffix.get_length()), suffix, true)
     end if
-    return substring_rStr_I_Str_k_(m, m.length - suffix.length) = suffix
+    return substring_rStr_I_Str_k_(m, m.get_length() - suffix.get_length()) = suffix
 end function
 
 function equals_rStr_StrN_Z_Z_k_(m as String, other as Dynamic, ignoreCase = false) as Boolean
@@ -343,10 +343,10 @@ function equals_rStr_StrN_Z_Z_k_(m as String, other as Dynamic, ignoreCase = fal
     if EQEQEQ_AnyN_AnyN_Z_k_(m, other) then
         return true
     end if
-    if m.length <> other.length then
+    if m.get_length() <> other.get_length() then
         return false
     end if
-    if ignoreCase.not() then
+    if not ignoreCase then
         return m = other
     end if
     return lowercase_rStr_Str_k_(m) = lowercase_rStr_Str_k_(other)
@@ -357,42 +357,42 @@ function contains_rStr_Str_Z_Z_k_(m as String, other as String, ignoreCase = fal
 end function
 
 function concatToString_rCharArray_Str_k_(m as Object) as String
-    sb = StringBuilder_create_I_StringBuilder_k_(m.size)
+    sb = StringBuilder_create_I_StringBuilder_k_(m.get_size())
     indexedObject = m
     inductionVariable = 0
-    last = indexedObject.size
-    while less_I_I_Z_k_(inductionVariable, last)
-        c = indexedObject.get(inductionVariable)
+    last = indexedObject.get_size()
+    while inductionVariable < last
+        c = indexedObject.get_I_C_k_(inductionVariable)
         inductionVariable = (inductionVariable + 1)
 
-        sb.append(c)
+        sb.append_C_StringBuilder_k_(c)
     end while
 
     return sb.toString()
 end function
 
-function concatToString_rCharArray_I_I_Str_k_(m as Object, startIndex = 0, endIndex = m.size) as String
-    if (startIndex < 0) or (endIndex > m.size) then
-        throw IndexOutOfBoundsException_create_StrN_IndexOutOfBoundsException_k_((((("startIndex: " + startIndex) + ", endIndex: ") + endIndex) + ", size: ") + m.size)
+function concatToString_rCharArray_I_I_Str_k_(m as Object, startIndex = 0, endIndex = m.get_size()) as String
+    if (startIndex < 0) or (endIndex > m.get_size()) then
+        throw IndexOutOfBoundsException_create_StrN_IndexOutOfBoundsException_k_((((("startIndex: " + startIndex) + ", endIndex: ") + endIndex) + ", size: ") + m.get_size())
     end if
     if startIndex > endIndex then
         throw IllegalArgumentException_create_StrN_IllegalArgumentException_k_((("startIndex: " + startIndex) + " > endIndex: ") + endIndex)
     end if
     sb = StringBuilder_create_I_StringBuilder_k_(endIndex - startIndex)
     progression = until_rI_I_IntRange_k_(startIndex, endIndex)
-    inductionVariable = progression.first
-    last = progression.last
-    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        sb.append(m[i])
+        sb.append_C_StringBuilder_k_(m.get_I_C_k_(i))
 
         while i <> last
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            sb.append(m[i])
+            sb.append_C_StringBuilder_k_(m.get_I_C_k_(i))
         end while
 
     end if

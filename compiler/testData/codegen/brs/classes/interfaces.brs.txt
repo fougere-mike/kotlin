@@ -59,7 +59,7 @@ function Item_get_value_I_k_() as Integer
 end function
 
 function getDescription_Describable_Str_k_(item as Object) as String
-    return item.describe()
+    return item.describe_Str_k_()
 end function
 
 function createProduct_Product_k_() as Object

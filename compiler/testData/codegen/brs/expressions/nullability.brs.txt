@@ -23,7 +23,7 @@ function elvisOperator_IN_I_k_(value as Dynamic) as Integer
 end function
 
 function notNullAssertion_IN_I_k_(value as Dynamic) as Integer
-    return CHECK_NOT_NULL_AnyN_Any_k_(value) + 1
+    return value + 1
 end function
 
 function nullCheck_IN_Str_k_(value as Dynamic) as String

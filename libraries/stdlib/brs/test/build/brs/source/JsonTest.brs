@@ -1,30 +1,30 @@
 sub jsonTests_rTestRunner_k_(m as Object)
-    m.suite("JSON Formatting", {_this_suite: _this_suite, invoke: function() as Void
-        m._this_suite.test("format simple map", {invoke: function() as Void
+    m.suite_Str_Function1TestRunnerV_k_("JSON Formatting", {invoke: function(m as Object) as Void
+        m.test_Str_Function0V_k_("format simple map", {invoke: function() as Void
             map = mapOf_Arr_MapAnyNAnyN_k_([to_rAnyN_AnyN_PairAnyNAnyN_k_("name", "test"), to_rAnyN_AnyN_PairAnyNAnyN_k_("value", 42)])
-            json = brsFormatJson_AnyN_Str_k_(map)
+            json = FormatJson(map)
             assertTrue_Z_StrN_k_(contains_rStr_Str_Z_Z_k_(json, "name"))
             assertTrue_Z_StrN_k_(contains_rStr_Str_Z_Z_k_(json, "test"))
             assertTrue_Z_StrN_k_(contains_rStr_Str_Z_Z_k_(json, "value"))
             assertTrue_Z_StrN_k_(contains_rStr_Str_Z_Z_k_(json, "42"))
         end function})
-        m._this_suite.test("format nested map", {invoke: function() as Void
+        m.test_Str_Function0V_k_("format nested map", {invoke: function() as Void
             map = mapOf_PairAnyNAnyN_MapAnyNAnyN_k_(to_rAnyN_AnyN_PairAnyNAnyN_k_("outer", mapOf_PairAnyNAnyN_MapAnyNAnyN_k_(to_rAnyN_AnyN_PairAnyNAnyN_k_("inner", "value"))))
-            json = brsFormatJson_AnyN_Str_k_(map)
+            json = FormatJson(map)
             assertTrue_Z_StrN_k_(contains_rStr_Str_Z_Z_k_(json, "outer"))
             assertTrue_Z_StrN_k_(contains_rStr_Str_Z_Z_k_(json, "inner"))
             assertTrue_Z_StrN_k_(contains_rStr_Str_Z_Z_k_(json, "value"))
         end function})
-        m._this_suite.test("format list", {invoke: function() as Void
+        m.test_Str_Function0V_k_("format list", {invoke: function() as Void
             list = listOf_Arr_ListAnyN_k_([1, 2, 3])
-            json = brsFormatJson_AnyN_Str_k_(list)
+            json = FormatJson(list)
             assertTrue_Z_StrN_k_(contains_rStr_Str_Z_Z_k_(json, "1"))
             assertTrue_Z_StrN_k_(contains_rStr_Str_Z_Z_k_(json, "2"))
             assertTrue_Z_StrN_k_(contains_rStr_Str_Z_Z_k_(json, "3"))
         end function})
-        m._this_suite.test("format mixed types", {invoke: function() as Void
+        m.test_Str_Function0V_k_("format mixed types", {invoke: function() as Void
             map = mapOf_Arr_MapAnyNAnyN_k_([to_rAnyN_AnyN_PairAnyNAnyN_k_("string", "hello"), to_rAnyN_AnyN_PairAnyNAnyN_k_("number", 123), to_rAnyN_AnyN_PairAnyNAnyN_k_("boolean", true), to_rAnyN_AnyN_PairAnyNAnyN_k_("list", listOf_Arr_ListAnyN_k_([1, 2, 3]))])
-            json = brsFormatJson_AnyN_Str_k_(map)
+            json = FormatJson(map)
             assertTrue_Z_StrN_k_(contains_rStr_Str_Z_Z_k_(json, "string"))
             assertTrue_Z_StrN_k_(contains_rStr_Str_Z_Z_k_(json, "hello"))
             assertTrue_Z_StrN_k_(contains_rStr_Str_Z_Z_k_(json, "number"))
@@ -33,20 +33,20 @@ sub jsonTests_rTestRunner_k_(m as Object)
             assertTrue_Z_StrN_k_(contains_rStr_Str_Z_Z_k_(json, "true"))
             assertTrue_Z_StrN_k_(contains_rStr_Str_Z_Z_k_(json, "list"))
         end function})
-        m._this_suite.test("format empty map", {invoke: function() as Void
+        m.test_Str_Function0V_k_("format empty map", {invoke: function() as Void
             map = emptyMap_MapAnyNAnyN_k_()
-            json = brsFormatJson_AnyN_Str_k_(map)
+            json = FormatJson(map)
             assertTrue_Z_StrN_k_(contains_rStr_Str_Z_Z_k_(json, "{"))
             assertTrue_Z_StrN_k_(contains_rStr_Str_Z_Z_k_(json, "}"))
         end function})
-        m._this_suite.test("format empty list", {invoke: function() as Void
+        m.test_Str_Function0V_k_("format empty list", {invoke: function() as Void
             list = emptyList_ListAnyN_k_()
-            json = brsFormatJson_AnyN_Str_k_(list)
+            json = FormatJson(list)
             assertTrue_Z_StrN_k_(contains_rStr_Str_Z_Z_k_(json, "["))
             assertTrue_Z_StrN_k_(contains_rStr_Str_Z_Z_k_(json, "]"))
         end function})
-        m._this_suite.test("format null", {invoke: function() as Void
-            json = brsFormatJson_AnyN_Str_k_(invalid)
+        m.test_Str_Function0V_k_("format null", {invoke: function() as Void
+            json = FormatJson(invalid)
             assertTrue_Z_StrN_k_(contains_rStr_Str_Z_Z_k_(json, "null"))
         end function})
     end function})

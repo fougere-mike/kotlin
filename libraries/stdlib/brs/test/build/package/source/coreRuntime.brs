@@ -12,7 +12,17 @@ function toString_AnyN_Str_k_(obj as Dynamic) as String
     if obj = invalid then
         return "null"
     end if
-    return obj.toString()
+    return (function(Str, obj)
+        if obj = invalid then return "null" else return (function(Str, obj)
+            if (Type(obj) = "String") or (Type(obj) = "roString") then return obj else return (function(Str, obj)
+                if ((((((Type(obj) = "Integer") or (Type(obj) = "LongInteger")) or (Type(obj) = "Float")) or (Type(obj) = "Double")) or (Type(obj) = "roInt")) or (Type(obj) = "roFloat")) or (Type(obj) = "roDouble") then return Str(obj) else return (function(obj)
+                    if (Type(obj) = "Boolean") or (Type(obj) = "roBoolean") then return (function(obj)
+                        if obj then return "true" else return "false"
+                    end function)(obj) else return obj.toString()
+                end function)(obj)
+            end function)(Str, obj)
+        end function)(Str, obj)
+    end function)(Str, obj)
 end function
 
 function hashCode_AnyN_I_k_(obj as Dynamic) as Integer
@@ -24,21 +34,21 @@ end function
 
 function getStringHashCode_Str_I_k_(str as String) as Integer
     hash = 0
-    progression = until_rI_I_IntRange_k_(0, str.length)
-    inductionVariable = progression.first
-    last = progression.last
-    if lessOrEqual_I_I_Z_k_(inductionVariable, last) then
+    progression = until_rI_I_IntRange_k_(0, str.get_length())
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        hash = ((31 * hash) + get_code_rC_I_k_(str[i]))
+        hash = ((31 * hash) + get_code_rC_I_k_(str.get_I_C_k_(i)))
 
 
         while i <> last
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            hash = ((31 * hash) + get_code_rC_I_k_(str[i]))
+            hash = ((31 * hash) + get_code_rC_I_k_(str.get_I_C_k_(i)))
 
         end while
 
@@ -103,8 +113,8 @@ function checkCast_AnyN_Str_AnyN_k_(obj as Dynamic, type_ as String) as Dynamic
     if obj = invalid then
         return invalid
     end if
-    if isInstance_AnyN_Str_Z_k_(obj, type_).not() then
-        throw ClassCastException_create_StrN_ClassCastException_k_((("Cannot cast " + "/* Unsupported: IrGetClassImpl */".simpleName) + " to ") + type_)
+    if not isInstance_AnyN_Str_Z_k_(obj, type_) then
+        throw ClassCastException_create_StrN_ClassCastException_k_((("Cannot cast " + "/* Unsupported: IrGetClassImpl */".get_simpleName()) + " to ") + type_)
     end if
     return obj
 end function

@@ -1,113 +1,57 @@
-(46)
-BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'mutablelist_retainall_collectionanyn_z_k_' in pkg:/source/List.brs(49)
-BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'mutablelist_set_i_anyn_anyn_k_' in pkg:/source/List.brs(55)
-BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'mutablelist_set_i_anyn_anyn_k_' in pkg:/source/List.brs(55)
-BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'mutablelist_add_i_anyn_k_' in pkg:/source/List.brs(58)
-BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'mutablelist_add_i_anyn_k_' in pkg:/source/List.brs(58)
-BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'mutablelist_removeat_i_anyn_k_' in pkg:/source/List.brs(61)
-BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'mutablelist_listiterator_i_mutablelistiteratoranyn_k_' in pkg:/source/List.brs(67)
-BRIGHTSCRIPT: WARNING: unused variable 'fromindex' in function 'mutablelist_sublist_i_i_mutablelistanyn_k_' in pkg:/source/List.brs(70)
-BRIGHTSCRIPT: WARNING: unused variable 'toindex' in function 'mutablelist_sublist_i_i_mutablelistanyn_k_' in pkg:/source/List.brs(70)
-BRIGHTSCRIPT: WARNING: unused variable 'logmsg' in function 'logger_log_str_k_' in pkg:/source/Main.brs(145)
-BRIGHTSCRIPT: WARNING: unused variable 'key' in function 'map_containskey_anyn_z_k_' in pkg:/source/Map.brs(4)
-BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'map_containsvalue_anyn_z_k_' in pkg:/source/Map.brs(7)
-BRIGHTSCRIPT: WARNING: unused variable 'key' in function 'map_get_anyn_anyn_k_' in pkg:/source/Map.brs(10)
-BRIGHTSCRIPT: WARNING: unused variable 'key' in function 'mutablemap_put_anyn_anyn_anyn_k_' in pkg:/source/Map.brs(31)
-BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'mutablemap_put_anyn_anyn_anyn_k_' in pkg:/source/Map.brs(31)
-Displayed 100 of 194 warnings
-12-08 17:08:55.343 [scrpt.ctx.cmpl.time] Compiled 'RokuTestApp', id 'dev' in 277 milliseconds (BCVer:0)
-12-08 17:08:55.348 [beacon.signal] |AppCompileComplete --------> Duration(292 ms)
-12-08 17:56:40.985 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
-12-08 17:56:40.985 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
-12-08 17:56:40.986 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
+[KOTLINTEST_START]
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(100)
 
------- Compiling dev 'KotlinStdlibTests' ------
-*** ERROR compiling pkg:/source/ArrayListTest.brs:
-Syntax Error. (compile error &h02) in pkg:/source/ArrayListTest.brs(102)
-12-08 18:08:18.222 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
-12-08 18:08:18.222 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
-12-08 18:08:18.224 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(100)
 
------- Compiling dev 'KotlinStdlibTests' ------
-*** ERROR compiling pkg:/source/ArrayListTest.brs:
-Syntax Error. (compile error &h02) in pkg:/source/ArrayListTest.brs(102)
-12-08 18:12:47.580 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
-12-08 18:12:47.580 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
-12-08 18:12:47.582 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(100)
 
------- Compiling dev 'KotlinStdlibTests' ------
-*** ERROR compiling pkg:/source/ArrayListTest.brs:
-Syntax Error. (compile error &h02) in pkg:/source/ArrayListTest.brs(102)
-12-08 18:16:38.084 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
-12-08 18:16:38.084 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
-12-08 18:16:38.086 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
 
------- Compiling dev 'KotlinStdlibTests' ------
-*** ERROR compiling pkg:/source/Assertions.brs:
-Syntax Error. (compile error &h02) in pkg:/source/Assertions.brs(137)
-12-08 18:18:57.145 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
-12-08 18:18:57.145 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
-12-08 18:18:57.147 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
+BrightScript Micro Debugger.
+Enter any BrightScript statement, debug commands, or HELP.
 
------- Compiling dev 'KotlinStdlibTests' ------
-*** ERROR compiling pkg:/source/Assertions.brs:
-Syntax Error. (compile error &h02) in pkg:/source/Assertions.brs(137)
-12-08 18:21:53.950 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
-12-08 18:21:53.950 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
-12-08 18:21:53.952 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
 
------- Compiling dev 'KotlinStdlibTests' ------
-*** ERROR compiling pkg:/source/BareAdapter.brs:
-Syntax Error. (compile error &h02) in pkg:/source/BareAdapter.brs(46)
-12-08 18:25:51.790 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
-12-08 18:25:51.790 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
-12-08 18:25:51.793 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
+Current Function:
+294:  function brsStructuralEquals_AnyN_AnyN_Z_k_(a as Dynamic, b as Dynamic) as Boolean
+295:*     if EQEQEQ_AnyN_AnyN_Z_k_(a, b) then
+296:          return true
+297:      end if
+298:      if (a = invalid) or (b = invalid) then
+299:          return false
+Source Digest(s): 
+pkg:    dev 1.0.0 5f44e7f4 KotlinStdlibTests
+pkg: 632126 1.1.5 1f7df9df libplayready
 
------- Compiling dev 'KotlinStdlibTests' ------
-*** ERROR compiling pkg:/source/BareAdapter.brs:
-Syntax Error. (compile error &h02) in pkg:/source/BareAdapter.brs(46)
-12-08 18:31:42.898 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
-12-08 18:31:42.898 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
-12-08 18:31:42.900 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
+Function Call Operator ( ) attempted on non-function. (runtime error &he0) in pkg:/source/Kotlin.brs(295)
+Backtrace:
+#11 Function brsstructuralequals_anyn_anyn_z_k_(a As Dynamic, b As Dynamic) As Boolean
+   file/line: pkg:/source/Kotlin.brs(295)
+#10 Function defaultbrsasserter_assertequals_strn_anyn_anyn_k_(message As Dynamic, expected As Dynamic, actual As Dynamic) As Void
+   file/line: pkg:/source/DefaultBrsAsserter.brs(18)
+#9  Function assertequals_anyn_anyn_strn_k_(expected As Dynamic, actual As Dynamic) As Dynamic
+   file/line: pkg:/source/Assertions.brs(96)
+#8  Function $anon_a1() As Void
+   file/line: pkg:/source/ArrayListTest.brs(6)
+#7  Function jsontestadapter_test_str_z_function0v_k_(name As String, ignored As Boolean, testfn As Object) As Void
+   file/line: pkg:/source/JsonTestAdapter.brs(92)
+#6  Function testrunner_test_str_function0v_k_(name As String, testfn As Object) As Void
+   file/line: pkg:/source/TestRunner.brs(40)
+#5  Function $anon_a0(m As Object) As Void
+   file/line: pkg:/source/ArrayListTest.brs(7)
+#4  Function $anon_987() As Void
+   file/line: pkg:/source/TestRunner.brs(35)
+#3  Function jsontestadapter_suite_str_z_function0v_k_(name As String, ignored As Boolean, suitefn As Object) As Void
+   file/line: pkg:/source/JsonTestAdapter.brs(78)
+#2  Function testrunner_run_function1testrunnerv_k_(block As Object) As Void
+   file/line: pkg:/source/TestRunner.brs(53)
+#1  Function runtests_function1testrunnerv_k_(block As Object) As Void
+   file/line: pkg:/source/TestRunner.brs(3)
+#0  Function main() As Void
+   file/line: pkg:/source/TestMain.brs(18)
+Local Variables:
+a                Integer val:0 (&h0)
+b                Integer val:0 (&h0)
+global           Interface:ifGlobal
+m                roAssociativeArray refcnt=5 count:1
+eqeqeq_anyn_anyn_z_k_ <uninitialized>
 
------- Compiling dev 'KotlinStdlibTests' ------
-*** ERROR compiling pkg:/source/CollectionExtensionsTest.brs:
-Syntax Error. (compile error &h02) in pkg:/source/CollectionExtensionsTest.brs(157)
-Return can not have a return-value if inside a Sub or Function with Void return type. (compile error &haa) in pkg:/source/CollectionExtensionsTest.brs(158)
-Syntax Error. (compile error &h02) in pkg:/source/CollectionExtensionsTest.brs(280)
-12-08 18:35:00.401 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
-12-08 18:35:00.401 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
-12-08 18:35:00.403 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
-
------- Compiling dev 'KotlinStdlibTests' ------
-*** ERROR compiling pkg:/source/CollectionExtensionsTest.brs:
-Syntax Error. (compile error &h02) in pkg:/source/CollectionExtensionsTest.brs(157)
-Return can not have a return-value if inside a Sub or Function with Void return type. (compile error &haa) in pkg:/source/CollectionExtensionsTest.brs(158)
-Syntax Error. (compile error &h02) in pkg:/source/CollectionExtensionsTest.brs(280)
-12-08 18:37:29.857 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
-12-08 18:37:29.857 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
-12-08 18:37:29.859 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
-
------- Compiling dev 'KotlinStdlibTests' ------
-*** ERROR compiling pkg:/source/CollectionExtensionsTest.brs:
-Syntax Error. (compile error &h02) in pkg:/source/CollectionExtensionsTest.brs(157)
-Return can not have a return-value if inside a Sub or Function with Void return type. (compile error &haa) in pkg:/source/CollectionExtensionsTest.brs(158)
-Syntax Error. (compile error &h02) in pkg:/source/CollectionExtensionsTest.brs(280)
-12-08 18:54:08.735 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
-12-08 18:54:08.735 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
-12-08 18:54:08.737 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
-
------- Compiling dev 'KotlinStdlibTests' ------
-*** ERROR compiling pkg:/source/CollectionExtensionsTest.brs:
-Syntax Error. (compile error &h02) in pkg:/source/CollectionExtensionsTest.brs(157)
-Return can not have a return-value if inside a Sub or Function with Void return type. (compile error &haa) in pkg:/source/CollectionExtensionsTest.brs(158)
-Syntax Error. (compile error &h02) in pkg:/source/CollectionExtensionsTest.brs(280)
-12-08 18:59:24.694 [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
-12-08 18:59:24.694 [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
-12-08 18:59:24.695 [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
-
------- Compiling dev 'KotlinStdlibTests' ------
-*** ERROR compiling pkg:/source/CollectionExtensionsTest.brs:
-Syntax Error. (compile error &h02) in pkg:/source/CollectionExtensionsTest.brs(157)
-Return can not have a return-value if inside a Sub or Function with Void return type. (compile error &haa) in pkg:/source/CollectionExtensionsTest.brs(158)
-Syntax Error. (compile error &h02) in pkg:/source/CollectionExtensionsTest.brs(280)
+Brightscript Debugger> 

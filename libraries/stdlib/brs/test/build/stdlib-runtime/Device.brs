@@ -41,161 +41,161 @@ function RoDeviceInfo_create_RoDeviceInfo_k_() as Object
     this.isAdTrackingLimited_Z_k_ = RoDeviceInfo_isAdTrackingLimited_Z_k_
     this.getClockFormat_Str_k_ = RoDeviceInfo_getClockFormat_Str_k_
     this.get_native = RoDeviceInfo_get_native_Dynamic_k_
-    m.native = CreateObject("roDeviceInfo")
+    this.native = CreateObject("roDeviceInfo")
     return this
 end function
 
 function RoDeviceInfo_getModel_Str_k_() as String
-    return m.native.GetModel()
+    return m.get_native().GetModel()
 end function
 
 function RoDeviceInfo_getModelDisplayName_Str_k_() as String
-    return m.native.GetModelDisplayName()
+    return m.get_native().GetModelDisplayName()
 end function
 
 function RoDeviceInfo_getModelDetails_Dynamic_k_() as Object
-    return m.native.GetModelDetails()
+    return m.get_native().GetModelDetails()
 end function
 
 function RoDeviceInfo_getFriendlyName_Str_k_() as String
-    return m.native.GetFriendlyName()
+    return m.get_native().GetFriendlyName()
 end function
 
 function RoDeviceInfo_getDeviceUniqueId_Str_k_() as String
-    return m.native.GetDeviceUniqueId()
+    return m.get_native().GetDeviceUniqueId()
 end function
 
 function RoDeviceInfo_getRIDA_Str_k_() as String
-    return m.native.GetRIDA()
+    return m.get_native().GetRIDA()
 end function
 
 function RoDeviceInfo_isRIDADisabled_Z_k_() as Boolean
-    return m.native.IsRIDADisabled()
+    return m.get_native().IsRIDADisabled()
 end function
 
 function RoDeviceInfo_getChannelClientId_Str_k_() as String
-    return m.native.GetChannelClientId()
+    return m.get_native().GetChannelClientId()
 end function
 
 function RoDeviceInfo_getSoftwareVersion_Str_k_() as String
-    return m.native.GetVersion()
+    return m.get_native().GetVersion()
 end function
 
 function RoDeviceInfo_getOSVersion_Dynamic_k_() as Object
-    return m.native.GetOSVersion()
+    return m.get_native().GetOSVersion()
 end function
 
 function RoDeviceInfo_getUIResolution_Dynamic_k_() as Object
-    return m.native.GetUIResolution()
+    return m.get_native().GetUIResolution()
 end function
 
 function RoDeviceInfo_getDisplayType_Str_k_() as String
-    return m.native.GetDisplayType()
+    return m.get_native().GetDisplayType()
 end function
 
 function RoDeviceInfo_getDisplayMode_Str_k_() as String
-    return m.native.GetDisplayMode()
+    return m.get_native().GetDisplayMode()
 end function
 
 function RoDeviceInfo_getVideoMode_Str_k_() as String
-    return m.native.GetVideoMode()
+    return m.get_native().GetVideoMode()
 end function
 
 function RoDeviceInfo_getDisplayAspectRatio_Str_k_() as String
-    return m.native.GetDisplayAspectRatio()
+    return m.get_native().GetDisplayAspectRatio()
 end function
 
 function RoDeviceInfo_getDisplayProperties_Dynamic_k_() as Object
-    return m.native.GetDisplayProperties()
+    return m.get_native().GetDisplayProperties()
 end function
 
 function RoDeviceInfo_getDisplaySize_Dynamic_k_() as Object
-    return m.native.GetDisplaySize()
+    return m.get_native().GetDisplaySize()
 end function
 
 function RoDeviceInfo_getGraphicsPlatform_Str_k_() as String
-    return m.native.GetGraphicsPlatform()
+    return m.get_native().GetGraphicsPlatform()
 end function
 
 function RoDeviceInfo_getConnectionType_Str_k_() as String
-    return m.native.GetConnectionType()
+    return m.get_native().GetConnectionType()
 end function
 
 function RoDeviceInfo_getExternalIp_Str_k_() as String
-    return m.native.GetExternalIp()
+    return m.get_native().GetExternalIp()
 end function
 
 function RoDeviceInfo_getIPAddrs_Dynamic_k_() as Object
-    return m.native.GetIPAddrs()
+    return m.get_native().GetIPAddrs()
 end function
 
 function RoDeviceInfo_getLinkStatus_Dynamic_k_() as Object
-    return m.native.GetLinkStatus()
+    return m.get_native().GetLinkStatus()
 end function
 
 function RoDeviceInfo_hasInternetConnection_Z_k_() as Boolean
-    status = m.getLinkStatus()
+    status = m.getLinkStatus_Dynamic_k_()
     return invalid
 end function
 
 function RoDeviceInfo_getCurrentLocale_Str_k_() as String
-    return m.native.GetCurrentLocale()
+    return m.get_native().GetCurrentLocale()
 end function
 
 function RoDeviceInfo_getCountryCode_Str_k_() as String
-    return m.native.GetCountryCode()
+    return m.get_native().GetCountryCode()
 end function
 
 function RoDeviceInfo_getCaptionsMode_Str_k_() as String
-    return m.native.GetCaptionsMode()
+    return m.get_native().GetCaptionsMode()
 end function
 
 function RoDeviceInfo_getTimeZone_Str_k_() as String
-    return m.native.GetTimeZone()
+    return m.get_native().GetTimeZone()
 end function
 
 function RoDeviceInfo_getPreferredAudioLanguage_Str_k_() as String
-    return m.native.GetPreferredAudioLanguage()
+    return m.get_native().GetPreferredAudioLanguage()
 end function
 
 function RoDeviceInfo_canDecodeAudio_MapStrStr_Dynamic_k_(codec as Object) as Object
-    return m.native.CanDecodeAudio(codec)
+    return m.get_native().CanDecodeAudio(codec)
 end function
 
 function RoDeviceInfo_canDecodeVideo_MapStrStr_Dynamic_k_(video as Object) as Object
-    return m.native.CanDecodeVideo(video)
+    return m.get_native().CanDecodeVideo(video)
 end function
 
 function RoDeviceInfo_getSupportedAudioCodecs_Dynamic_k_() as Object
-    return m.native.GetSupportedAudioCodecs()
+    return m.get_native().GetSupportedAudioCodecs()
 end function
 
 function RoDeviceInfo_hasFeature_Str_Z_k_(feature as String) as Boolean
-    return m.native.HasFeature(feature)
+    return m.get_native().HasFeature(feature)
 end function
 
 function RoDeviceInfo_getGeneralMemoryLevel_Str_k_() as String
-    return m.native.GetGeneralMemoryLevel()
+    return m.get_native().GetGeneralMemoryLevel()
 end function
 
 function RoDeviceInfo_getAudioOutputChannel_Str_k_() as String
-    return m.native.GetAudioOutputChannel()
+    return m.get_native().GetAudioOutputChannel()
 end function
 
 function RoDeviceInfo_isAutoAudioModeEnabled_Z_k_() as Boolean
-    return m.native.IsAutoAudioModeEnabled()
+    return m.get_native().IsAutoAudioModeEnabled()
 end function
 
 function RoDeviceInfo_isAudioGuideEnabled_Z_k_() as Boolean
-    return m.native.IsAudioGuideEnabled()
+    return m.get_native().IsAudioGuideEnabled()
 end function
 
 function RoDeviceInfo_isAdTrackingLimited_Z_k_() as Boolean
-    return m.native.IsRIDADisabled()
+    return m.get_native().IsRIDADisabled()
 end function
 
 function RoDeviceInfo_getClockFormat_Str_k_() as String
-    return m.native.GetClockFormat()
+    return m.get_native().GetClockFormat()
 end function
 
 function RoDeviceInfo_get_native_Dynamic_k_() as Object
@@ -214,36 +214,36 @@ function RoAppInfo_create_RoAppInfo_k_() as Object
     this.getDevID_Str_k_ = RoAppInfo_getDevID_Str_k_
     this.getValue_Str_Str_k_ = RoAppInfo_getValue_Str_Str_k_
     this.get_native = RoAppInfo_get_native_Dynamic_k_
-    m.native = CreateObject("roAppInfo")
+    this.native = CreateObject("roAppInfo")
     return this
 end function
 
 function RoAppInfo_getID_Str_k_() as String
-    return m.native.GetID()
+    return m.get_native().GetID()
 end function
 
 function RoAppInfo_isDev_Z_k_() as Boolean
-    return m.native.IsDev()
+    return m.get_native().IsDev()
 end function
 
 function RoAppInfo_getTitle_Str_k_() as String
-    return m.native.GetTitle()
+    return m.get_native().GetTitle()
 end function
 
 function RoAppInfo_getVersion_Str_k_() as String
-    return m.native.GetVersion()
+    return m.get_native().GetVersion()
 end function
 
 function RoAppInfo_getSubtitle_Str_k_() as String
-    return m.native.GetSubtitle()
+    return m.get_native().GetSubtitle()
 end function
 
 function RoAppInfo_getDevID_Str_k_() as String
-    return m.native.GetDevID()
+    return m.get_native().GetDevID()
 end function
 
 function RoAppInfo_getValue_Str_Str_k_(key as String) as String
-    return m.native.GetValue(key)
+    return m.get_native().GetValue(key)
 end function
 
 function RoAppInfo_get_native_Dynamic_k_() as Object

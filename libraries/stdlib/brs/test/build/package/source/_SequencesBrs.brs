@@ -8,14 +8,14 @@ function elementAt_rSequenceAnyN_I_AnyN_k_(m as Object, index as Integer) as Dyn
     end function})
 end function
 
-function elementAtOrElse_rSequenceAnyN_I_Function1IAnyN_AnyN_k_(m as Object, index as Integer, defaultValue as Function) as Dynamic
+function elementAtOrElse_rSequenceAnyN_I_Function1IAnyN_AnyN_k_(m as Object, index as Integer, defaultValue as Object) as Dynamic
     if index < 0 then
         return defaultValue.invoke(index)
     end if
-    iterator = m.iterator()
+    iterator = m.iterator_IteratorAnyN_k_()
     count = 0
-    while iterator.hasNext()
-        element = iterator.next()
+    while iterator.hasNext_Z_k_()
+        element = iterator.next_AnyN_k_()
         unary = count
         count = (unary + 1)
         if index = unary then
@@ -29,10 +29,10 @@ function elementAtOrNull_rSequenceAnyN_I_AnyN_k_(m as Object, index as Integer) 
     if index < 0 then
         return invalid
     end if
-    iterator = m.iterator()
+    iterator = m.iterator_IteratorAnyN_k_()
     count = 0
-    while iterator.hasNext()
-        element = iterator.next()
+    while iterator.hasNext_Z_k_()
+        element = iterator.next_AnyN_k_()
         unary = count
         count = (unary + 1)
         if index = unary then
@@ -42,23 +42,23 @@ function elementAtOrNull_rSequenceAnyN_I_AnyN_k_(m as Object, index as Integer) 
     return invalid
 end function
 
-function find_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Function) as Dynamic
+function find_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Object) as Dynamic
     return firstOrNull_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m, predicate)
 end function
 
-function findLast_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Function) as Dynamic
+function findLast_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Object) as Dynamic
     return lastOrNull_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m, predicate)
 end function
 
 function first_rSequenceAnyN_AnyN_k_(m as Object) as Dynamic
-    iterator = m.iterator()
-    if iterator.hasNext().not() then
+    iterator = m.iterator_IteratorAnyN_k_()
+    if not iterator.hasNext_Z_k_() then
         throw NoSuchElementException_create_StrN_NoSuchElementException_k_("Sequence is empty.")
     end if
-    return iterator.next()
+    return iterator.next_AnyN_k_()
 end function
 
-function first_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Function) as Dynamic
+function first_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Object) as Dynamic
     for each element in m
         if predicate.invoke(element) then
             return element
@@ -68,14 +68,14 @@ function first_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Fu
 end function
 
 function firstOrNull_rSequenceAnyN_AnyN_k_(m as Object) as Dynamic
-    iterator = m.iterator()
-    if iterator.hasNext().not() then
+    iterator = m.iterator_IteratorAnyN_k_()
+    if not iterator.hasNext_Z_k_() then
         return invalid
     end if
-    return iterator.next()
+    return iterator.next_AnyN_k_()
 end function
 
-function firstOrNull_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Function) as Dynamic
+function firstOrNull_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Object) as Dynamic
     for each element in m
         if predicate.invoke(element) then
             return element
@@ -84,7 +84,7 @@ function firstOrNull_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate
     return invalid
 end function
 
-function firstNotNullOf_rSequenceAnyN_Function1AnyNAnyN_Any_k_(m as Object, transform as Function) as Object
+function firstNotNullOf_rSequenceAnyN_Function1AnyNAnyN_Any_k_(m as Object, transform as Object) as Object
     tmp0_elvis_lhs = firstNotNullOfOrNull_rSequenceAnyN_Function1AnyNAnyN_AnyN_k_(m, transform)
     __when_tmp0 = invalid
     if tmp0_elvis_lhs = invalid then
@@ -96,7 +96,7 @@ function firstNotNullOf_rSequenceAnyN_Function1AnyNAnyN_Any_k_(m as Object, tran
 
 end function
 
-function firstNotNullOfOrNull_rSequenceAnyN_Function1AnyNAnyN_AnyN_k_(m as Object, transform as Function) as Dynamic
+function firstNotNullOfOrNull_rSequenceAnyN_Function1AnyNAnyN_AnyN_k_(m as Object, transform as Object) as Dynamic
     for each element in m
         result = transform.invoke(element)
         if result <> invalid then
@@ -119,7 +119,7 @@ function indexOf_rSequenceAnyN_AnyN_I_k_(m as Object, element as Dynamic) as Int
     return -1
 end function
 
-function indexOfFirst_rSequenceAnyN_Function1AnyNZ_I_k_(m as Object, predicate as Function) as Integer
+function indexOfFirst_rSequenceAnyN_Function1AnyNZ_I_k_(m as Object, predicate as Object) as Integer
     index = 0
     for each item in m
         if predicate.invoke(item) then
@@ -131,7 +131,7 @@ function indexOfFirst_rSequenceAnyN_Function1AnyNZ_I_k_(m as Object, predicate a
     return -1
 end function
 
-function indexOfLast_rSequenceAnyN_Function1AnyNZ_I_k_(m as Object, predicate as Function) as Integer
+function indexOfLast_rSequenceAnyN_Function1AnyNZ_I_k_(m as Object, predicate as Object) as Integer
     lastIndex = -1
     index = 0
     for each item in m
@@ -145,18 +145,18 @@ function indexOfLast_rSequenceAnyN_Function1AnyNZ_I_k_(m as Object, predicate as
 end function
 
 function last_rSequenceAnyN_AnyN_k_(m as Object) as Dynamic
-    iterator = m.iterator()
-    if iterator.hasNext().not() then
+    iterator = m.iterator_IteratorAnyN_k_()
+    if not iterator.hasNext_Z_k_() then
         throw NoSuchElementException_create_StrN_NoSuchElementException_k_("Sequence is empty.")
     end if
-    last = iterator.next()
-    while iterator.hasNext()
-        last = iterator.next()
+    last = iterator.next_AnyN_k_()
+    while iterator.hasNext_Z_k_()
+        last = iterator.next_AnyN_k_()
     end while
     return last
 end function
 
-function last_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Function) as Dynamic
+function last_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Object) as Dynamic
     last = invalid
     found = false
     for each element in m
@@ -165,7 +165,7 @@ function last_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Fun
             found = true
         end if
     end for
-    if found.not() then
+    if not found then
         throw NoSuchElementException_create_StrN_NoSuchElementException_k_("Sequence contains no element matching the predicate.")
     end if
     return last
@@ -185,18 +185,18 @@ function lastIndexOf_rSequenceAnyN_AnyN_I_k_(m as Object, element as Dynamic) as
 end function
 
 function lastOrNull_rSequenceAnyN_AnyN_k_(m as Object) as Dynamic
-    iterator = m.iterator()
-    if iterator.hasNext().not() then
+    iterator = m.iterator_IteratorAnyN_k_()
+    if not iterator.hasNext_Z_k_() then
         return invalid
     end if
-    last = iterator.next()
-    while iterator.hasNext()
-        last = iterator.next()
+    last = iterator.next_AnyN_k_()
+    while iterator.hasNext_Z_k_()
+        last = iterator.next_AnyN_k_()
     end while
     return last
 end function
 
-function lastOrNull_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Function) as Dynamic
+function lastOrNull_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Object) as Dynamic
     last = invalid
     for each element in m
         if predicate.invoke(element) then
@@ -207,18 +207,18 @@ function lastOrNull_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate 
 end function
 
 function single_rSequenceAnyN_AnyN_k_(m as Object) as Dynamic
-    iterator = m.iterator()
-    if iterator.hasNext().not() then
+    iterator = m.iterator_IteratorAnyN_k_()
+    if not iterator.hasNext_Z_k_() then
         throw NoSuchElementException_create_StrN_NoSuchElementException_k_("Sequence is empty.")
     end if
-    single = iterator.next()
-    if iterator.hasNext() then
+    single = iterator.next_AnyN_k_()
+    if iterator.hasNext_Z_k_() then
         throw IllegalArgumentException_create_StrN_IllegalArgumentException_k_("Sequence has more than one element.")
     end if
     return single
 end function
 
-function single_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Function) as Dynamic
+function single_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Object) as Dynamic
     single = invalid
     found = false
     for each element in m
@@ -230,25 +230,25 @@ function single_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as F
             found = true
         end if
     end for
-    if found.not() then
+    if not found then
         throw NoSuchElementException_create_StrN_NoSuchElementException_k_("Sequence contains no element matching the predicate.")
     end if
     return single
 end function
 
 function singleOrNull_rSequenceAnyN_AnyN_k_(m as Object) as Dynamic
-    iterator = m.iterator()
-    if iterator.hasNext().not() then
+    iterator = m.iterator_IteratorAnyN_k_()
+    if not iterator.hasNext_Z_k_() then
         return invalid
     end if
-    single = iterator.next()
-    if iterator.hasNext() then
+    single = iterator.next_AnyN_k_()
+    if iterator.hasNext_Z_k_() then
         return invalid
     end if
     return single
 end function
 
-function singleOrNull_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Function) as Dynamic
+function singleOrNull_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Object) as Dynamic
     single = invalid
     found = false
     for each element in m
@@ -260,15 +260,15 @@ function singleOrNull_rSequenceAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicat
             found = true
         end if
     end for
-    if found.not() then
+    if not found then
         return invalid
     end if
     return single
 end function
 
-function all_rSequenceAnyN_Function1AnyNZ_Z_k_(m as Object, predicate as Function) as Boolean
+function all_rSequenceAnyN_Function1AnyNZ_Z_k_(m as Object, predicate as Object) as Boolean
     for each element in m
-        if predicate.invoke(element).not() then
+        if not predicate.invoke(element) then
             return false
         end if
     end for
@@ -282,7 +282,7 @@ function any_rSequenceAnyN_Z_k_(m as Object) as Boolean
     return false
 end function
 
-function any_rSequenceAnyN_Function1AnyNZ_Z_k_(m as Object, predicate as Function) as Boolean
+function any_rSequenceAnyN_Function1AnyNZ_Z_k_(m as Object, predicate as Object) as Boolean
     for each element in m
         if predicate.invoke(element) then
             return true
@@ -299,7 +299,7 @@ function count_rSequenceAnyN_I_k_(m as Object) as Integer
     return count
 end function
 
-function count_rSequenceAnyN_Function1AnyNZ_I_k_(m as Object, predicate as Function) as Integer
+function count_rSequenceAnyN_Function1AnyNZ_I_k_(m as Object, predicate as Object) as Integer
     count = 0
     for each element in m
         if predicate.invoke(element) then
@@ -309,7 +309,7 @@ function count_rSequenceAnyN_Function1AnyNZ_I_k_(m as Object, predicate as Funct
     return count
 end function
 
-function fold_rSequenceAnyN_AnyN_Function2AnyNAnyNAnyN_AnyN_k_(m as Object, initial as Dynamic, operation as Function) as Dynamic
+function fold_rSequenceAnyN_AnyN_Function2AnyNAnyNAnyN_AnyN_k_(m as Object, initial as Dynamic, operation as Object) as Dynamic
     accumulator = initial
     for each element in m
         accumulator = operation.invoke(accumulator, element)
@@ -317,7 +317,7 @@ function fold_rSequenceAnyN_AnyN_Function2AnyNAnyNAnyN_AnyN_k_(m as Object, init
     return accumulator
 end function
 
-function foldIndexed_rSequenceAnyN_AnyN_Function3IAnyNAnyNAnyN_AnyN_k_(m as Object, initial as Dynamic, operation as Function) as Dynamic
+function foldIndexed_rSequenceAnyN_AnyN_Function3IAnyNAnyNAnyN_AnyN_k_(m as Object, initial as Dynamic, operation as Object) as Dynamic
     index = 0
     accumulator = initial
     for each element in m
@@ -326,13 +326,13 @@ function foldIndexed_rSequenceAnyN_AnyN_Function3IAnyNAnyNAnyN_AnyN_k_(m as Obje
     return accumulator
 end function
 
-sub forEach_rSequenceAnyN_Function1AnyNV_k_(m as Object, action as Function)
+sub forEach_rSequenceAnyN_Function1AnyNV_k_(m as Object, action as Object)
     for each element in m
         action.invoke(element)
     end for
 end sub
 
-sub forEachIndexed_rSequenceAnyN_Function2IAnyNV_k_(m as Object, action as Function)
+sub forEachIndexed_rSequenceAnyN_Function2IAnyNV_k_(m as Object, action as Object)
     index = 0
     for each item in m
         action.invoke(index = (index + 1), item)
@@ -346,7 +346,7 @@ function none_rSequenceAnyN_Z_k_(m as Object) as Boolean
     return true
 end function
 
-function none_rSequenceAnyN_Function1AnyNZ_Z_k_(m as Object, predicate as Function) as Boolean
+function none_rSequenceAnyN_Function1AnyNZ_Z_k_(m as Object, predicate as Object) as Boolean
     for each element in m
         if predicate.invoke(element) then
             return false
@@ -355,62 +355,62 @@ function none_rSequenceAnyN_Function1AnyNZ_Z_k_(m as Object, predicate as Functi
     return true
 end function
 
-function reduce_rSequenceAnyN_Function2AnyNAnyNAnyN_AnyN_k_(m as Object, operation as Function) as Dynamic
-    iterator = m.iterator()
-    if iterator.hasNext().not() then
+function reduce_rSequenceAnyN_Function2AnyNAnyNAnyN_AnyN_k_(m as Object, operation as Object) as Dynamic
+    iterator = m.iterator_IteratorAnyN_k_()
+    if not iterator.hasNext_Z_k_() then
         throw UnsupportedOperationException_create_StrN_UnsupportedOperationException_k_("Empty sequence can't be reduced.")
     end if
-    accumulator = iterator.next()
-    while iterator.hasNext()
-        accumulator = operation.invoke(accumulator, iterator.next())
+    accumulator = iterator.next_AnyN_k_()
+    while iterator.hasNext_Z_k_()
+        accumulator = operation.invoke(accumulator, iterator.next_AnyN_k_())
     end while
     return accumulator
 end function
 
-function reduceIndexed_rSequenceAnyN_Function3IAnyNAnyNAnyN_AnyN_k_(m as Object, operation as Function) as Dynamic
-    iterator = m.iterator()
-    if iterator.hasNext().not() then
+function reduceIndexed_rSequenceAnyN_Function3IAnyNAnyNAnyN_AnyN_k_(m as Object, operation as Object) as Dynamic
+    iterator = m.iterator_IteratorAnyN_k_()
+    if not iterator.hasNext_Z_k_() then
         throw UnsupportedOperationException_create_StrN_UnsupportedOperationException_k_("Empty sequence can't be reduced.")
     end if
     index = 1
-    accumulator = iterator.next()
-    while iterator.hasNext()
-        accumulator = operation.invoke(index = (index + 1), accumulator, iterator.next())
+    accumulator = iterator.next_AnyN_k_()
+    while iterator.hasNext_Z_k_()
+        accumulator = operation.invoke(index = (index + 1), accumulator, iterator.next_AnyN_k_())
     end while
     return accumulator
 end function
 
-function reduceIndexedOrNull_rSequenceAnyN_Function3IAnyNAnyNAnyN_AnyN_k_(m as Object, operation as Function) as Dynamic
-    iterator = m.iterator()
-    if iterator.hasNext().not() then
+function reduceIndexedOrNull_rSequenceAnyN_Function3IAnyNAnyNAnyN_AnyN_k_(m as Object, operation as Object) as Dynamic
+    iterator = m.iterator_IteratorAnyN_k_()
+    if not iterator.hasNext_Z_k_() then
         return invalid
     end if
     index = 1
-    accumulator = iterator.next()
-    while iterator.hasNext()
-        accumulator = operation.invoke(index = (index + 1), accumulator, iterator.next())
+    accumulator = iterator.next_AnyN_k_()
+    while iterator.hasNext_Z_k_()
+        accumulator = operation.invoke(index = (index + 1), accumulator, iterator.next_AnyN_k_())
     end while
     return accumulator
 end function
 
-function reduceOrNull_rSequenceAnyN_Function2AnyNAnyNAnyN_AnyN_k_(m as Object, operation as Function) as Dynamic
-    iterator = m.iterator()
-    if iterator.hasNext().not() then
+function reduceOrNull_rSequenceAnyN_Function2AnyNAnyNAnyN_AnyN_k_(m as Object, operation as Object) as Dynamic
+    iterator = m.iterator_IteratorAnyN_k_()
+    if not iterator.hasNext_Z_k_() then
         return invalid
     end if
-    accumulator = iterator.next()
-    while iterator.hasNext()
-        accumulator = operation.invoke(accumulator, iterator.next())
+    accumulator = iterator.next_AnyN_k_()
+    while iterator.hasNext_Z_k_()
+        accumulator = operation.invoke(accumulator, iterator.next_AnyN_k_())
     end while
     return accumulator
 end function
 
-function scan_rSequenceAnyN_AnyN_Function2AnyNAnyNAnyN_SequenceAnyN_k_(m as Object, initial as Dynamic, operation as Function) as Object
-    return Anon_2517634b_create_AnonAnyNAnyN_k_()
+function scan_rSequenceAnyN_AnyN_Function2AnyNAnyNAnyN_SequenceAnyN_k_(m as Object, initial as Dynamic, operation as Object) as Object
+    return Anon_3e3ffea8_create_AnonAnyNAnyN_k_()
 end function
 
-function scanIndexed_rSequenceAnyN_AnyN_Function3IAnyNAnyNAnyN_SequenceAnyN_k_(m as Object, initial as Dynamic, operation as Function) as Object
-    return Anon_41f24cc6_create_AnonAnyNAnyN_k_()
+function scanIndexed_rSequenceAnyN_AnyN_Function3IAnyNAnyNAnyN_SequenceAnyN_k_(m as Object, initial as Dynamic, operation as Object) as Object
+    return Anon_6cd3d48c_create_AnonAnyNAnyN_k_()
 end function
 
 function sum_rSequenceB_I_k_(m as Object) as Integer
@@ -467,7 +467,7 @@ function sum_rSequenceD_D_k_(m as Object) as Double
     return sum
 end function
 
-function sumBy_rSequenceAnyN_Function1AnyNI_I_k_(m as Object, selector as Function) as Integer
+function sumBy_rSequenceAnyN_Function1AnyNI_I_k_(m as Object, selector as Object) as Integer
     sum = 0
     for each element in m
         sum = (sum + selector.invoke(element))
@@ -476,7 +476,7 @@ function sumBy_rSequenceAnyN_Function1AnyNI_I_k_(m as Object, selector as Functi
     return sum
 end function
 
-function sumByDouble_rSequenceAnyN_Function1AnyND_D_k_(m as Object, selector as Function) as Double
+function sumByDouble_rSequenceAnyN_Function1AnyND_D_k_(m as Object, selector as Object) as Double
     sum = 0.0#
     for each element in m
         sum = (sum + selector.invoke(element))
@@ -485,7 +485,7 @@ function sumByDouble_rSequenceAnyN_Function1AnyND_D_k_(m as Object, selector as 
     return sum
 end function
 
-function sumOf_rSequenceAnyN_Function1AnyNI_I_k_(m as Object, selector as Function) as Integer
+function sumOf_rSequenceAnyN_Function1AnyNI_I_k_(m as Object, selector as Object) as Integer
     sum = 0
     for each element in m
         sum = (sum + selector.invoke(element))
@@ -494,7 +494,7 @@ function sumOf_rSequenceAnyN_Function1AnyNI_I_k_(m as Object, selector as Functi
     return sum
 end function
 
-function sumOf_rSequenceAnyN_Function1AnyNJ_J_k_(m as Object, selector as Function) as LongInteger
+function sumOf_rSequenceAnyN_Function1AnyNJ_J_k_(m as Object, selector as Object) as LongInteger
     sum = 0&
     for each element in m
         sum = (sum + selector.invoke(element))
@@ -503,7 +503,7 @@ function sumOf_rSequenceAnyN_Function1AnyNJ_J_k_(m as Object, selector as Functi
     return sum
 end function
 
-function sumOf_rSequenceAnyN_Function1AnyND_D_k_(m as Object, selector as Function) as Double
+function sumOf_rSequenceAnyN_Function1AnyND_D_k_(m as Object, selector as Object) as Double
     sum = 0.0#
     for each element in m
         sum = (sum + selector.invoke(element))
@@ -512,7 +512,7 @@ function sumOf_rSequenceAnyN_Function1AnyND_D_k_(m as Object, selector as Functi
     return sum
 end function
 
-function sumOf_rSequenceAnyN_Function1AnyNUInt_UInt_k_(m as Object, selector as Function) as Object
+function sumOf_rSequenceAnyN_Function1AnyNUInt_UInt_k_(m as Object, selector as Object) as Object
     sum = 0
     for each element in m
         sum = (sum + selector.invoke(element))
@@ -521,7 +521,7 @@ function sumOf_rSequenceAnyN_Function1AnyNUInt_UInt_k_(m as Object, selector as 
     return sum
 end function
 
-function sumOf_rSequenceAnyN_Function1AnyNULong_ULong_k_(m as Object, selector as Function) as Object
+function sumOf_rSequenceAnyN_Function1AnyNULong_ULong_k_(m as Object, selector as Object) as Object
     sum = 0&
     for each element in m
         sum = (sum + selector.invoke(element))
@@ -543,13 +543,13 @@ function max_rSequenceAny_Any_k_(m as Object) as Object
 end function
 
 function maxOrNull_rSequenceAny_AnyN_k_(m as Object) as Dynamic
-    iterator = m.iterator()
-    if iterator.hasNext().not() then
+    iterator = m.iterator_IteratorAnyN_k_()
+    if not iterator.hasNext_Z_k_() then
         return invalid
     end if
-    max = iterator.next()
-    while iterator.hasNext()
-        e = iterator.next()
+    max = iterator.next_AnyN_k_()
+    while iterator.hasNext_Z_k_()
+        e = iterator.next_AnyN_k_()
         if (max < e) < 0 then
             max = e
         end if
@@ -570,13 +570,13 @@ function min_rSequenceAny_Any_k_(m as Object) as Object
 end function
 
 function minOrNull_rSequenceAny_AnyN_k_(m as Object) as Dynamic
-    iterator = m.iterator()
-    if iterator.hasNext().not() then
+    iterator = m.iterator_IteratorAnyN_k_()
+    if not iterator.hasNext_Z_k_() then
         return invalid
     end if
-    min = iterator.next()
-    while iterator.hasNext()
-        e = iterator.next()
+    min = iterator.next_AnyN_k_()
+    while iterator.hasNext_Z_k_()
+        e = iterator.next_AnyN_k_()
         if (min > e) > 0 then
             min = e
         end if
@@ -584,68 +584,78 @@ function minOrNull_rSequenceAny_AnyN_k_(m as Object) as Dynamic
     return min
 end function
 
-function groupBy_rSequenceAnyN_Function1AnyNAnyN_MapAnyNListAnyN_k_(m as Object, keySelector as Function) as Object
+function groupBy_rSequenceAnyN_Function1AnyNAnyN_MapAnyNListAnyN_k_(m as Object, keySelector as Object) as Object
     return groupByTo_rSequenceAnyN_Any_Function1AnyNAnyN_Any_k_(m, HashMap_create_HashMapAnyNAnyN_k_(), keySelector)
 end function
 
-function groupBy_rSequenceAnyN_Function1AnyNAnyN_Function1AnyNAnyN_MapAnyNListAnyN_k_(m as Object, keySelector as Function, valueTransform as Function) as Object
+function groupBy_rSequenceAnyN_Function1AnyNAnyN_Function1AnyNAnyN_MapAnyNListAnyN_k_(m as Object, keySelector as Object, valueTransform as Object) as Object
     return groupByTo_rSequenceAnyN_Any_Function1AnyNAnyN_Function1AnyNAnyN_Any_k_(m, HashMap_create_HashMapAnyNAnyN_k_(), keySelector, valueTransform)
 end function
 
-function groupByTo_rSequenceAnyN_Any_Function1AnyNAnyN_Any_k_(m as Object, destination as Object, keySelector as Function) as Object
+function groupByTo_rSequenceAnyN_Any_Function1AnyNAnyN_Any_k_(m as Object, destination as Object, keySelector as Object) as Object
     for each element in m
         key = keySelector.invoke(element)
         list = getOrPut_rMutableMapAnyNAnyN_AnyN_Function0AnyN_AnyN_k_(destination, key, {invoke: function() as Object
             return ArrayList_create_ArrayListAnyN_k_()
         end function})
-        list.add(element)
+        list.add_AnyN_Z_k_(element)
 
     end for
     return destination
 end function
 
-function groupByTo_rSequenceAnyN_Any_Function1AnyNAnyN_Function1AnyNAnyN_Any_k_(m as Object, destination as Object, keySelector as Function, valueTransform as Function) as Object
+function groupByTo_rSequenceAnyN_Any_Function1AnyNAnyN_Function1AnyNAnyN_Any_k_(m as Object, destination as Object, keySelector as Object, valueTransform as Object) as Object
     for each element in m
         key = keySelector.invoke(element)
         list = getOrPut_rMutableMapAnyNAnyN_AnyN_Function0AnyN_AnyN_k_(destination, key, {invoke: function() as Object
             return ArrayList_create_ArrayListAnyN_k_()
         end function})
-        list.add(valueTransform.invoke(element))
+        list.add_AnyN_Z_k_(valueTransform.invoke(element))
 
     end for
     return destination
 end function
 
-function partition_rSequenceAnyN_Function1AnyNZ_PairListAnyNListAnyN_k_(m as Object, predicate as Function) as Object
+function partition_rSequenceAnyN_Function1AnyNZ_PairListAnyNListAnyN_k_(m as Object, predicate as Object) as Object
     first = ArrayList_create_ArrayListAnyN_k_()
     second = ArrayList_create_ArrayListAnyN_k_()
     for each element in m
         if predicate.invoke(element) then
-            first.add(element)
+            first.add_AnyN_Z_k_(element)
         else if true then
-            second.add(element)
+            second.add_AnyN_Z_k_(element)
         end if
     end for
     return Pair_create_AnyN_AnyN_PairAnyNAnyN_k_(first, second)
 end function
 
 function joinTo_kxums0_k_(m as Object, buffer as Object, separator = ", ", prefix = "", postfix = "", limit = -1, truncated = "...", transform = invalid) as Object
-    buffer.append(prefix)
+    buffer.append_CharSequenceN_Appendable_k_(prefix)
     count = 0
     for each element in m
         count = (count + 1)
         if count > 1 then
-            buffer.append(separator)
+            buffer.append_CharSequenceN_Appendable_k_(separator)
         end if
         if (limit < 0) or (count <= limit) then
             if transform <> invalid then
-                buffer.append(transform.invoke(element))
+                buffer.append_CharSequenceN_Appendable_k_(transform.invoke(element))
             else if __kotlin_isInstanceOf(element, "CharSequence") then
-                buffer.append(element)
+                buffer.append_CharSequenceN_Appendable_k_(element)
             else if __kotlin_isInstanceOf(element, "Char") then
-                buffer.append(element)
+                buffer.append_C_Appendable_k_(element)
             else if true then
-                buffer.append(element.toString())
+                buffer.append_CharSequenceN_Appendable_k_((function(Str, element)
+                    if element = invalid then return "null" else return (function(Str, element)
+                        if (Type(element) = "String") or (Type(element) = "roString") then return element else return (function(Str, element)
+                            if ((((((Type(element) = "Integer") or (Type(element) = "LongInteger")) or (Type(element) = "Float")) or (Type(element) = "Double")) or (Type(element) = "roInt")) or (Type(element) = "roFloat")) or (Type(element) = "roDouble") then return Str(element) else return (function(element)
+                                if (Type(element) = "Boolean") or (Type(element) = "roBoolean") then return (function(element)
+                                    if element then return "true" else return "false"
+                                end function)(element) else return element.toString()
+                            end function)(element)
+                        end function)(Str, element)
+                    end function)(Str, element)
+                end function)(Str, element))
             end if
         else if true then
             exit for
@@ -653,9 +663,9 @@ function joinTo_kxums0_k_(m as Object, buffer as Object, separator = ", ", prefi
 
     end for
     if (limit >= 0) and (count > limit) then
-        buffer.append(truncated)
+        buffer.append_CharSequenceN_Appendable_k_(truncated)
     end if
-    buffer.append(postfix)
+    buffer.append_CharSequenceN_Appendable_k_(postfix)
     return buffer
 end function
 
@@ -663,14 +673,14 @@ function joinToString_h85ta6_k_(m as Object, separator = ", ", prefix = "", post
     return joinTo_kxums0_k_(m, StringBuilder_create_StringBuilder_k_(), separator, prefix, postfix, limit, truncated, transform).toString()
 end function
 
-function onEach_rSequenceAnyN_Function1AnyNV_SequenceAnyN_k_(m as Object, action as Function) as Object
+function onEach_rSequenceAnyN_Function1AnyNV_SequenceAnyN_k_(m as Object, action as Object) as Object
     return map_rSequenceAnyN_Function1AnyNAnyN_SequenceAnyN_k_(m, {action: action, invoke: function(it as Dynamic) as Dynamic
         m.action.invoke(it)
         return it
     end function})
 end function
 
-function onEachIndexed_rSequenceAnyN_Function2IAnyNV_SequenceAnyN_k_(m as Object, action as Function) as Object
+function onEachIndexed_rSequenceAnyN_Function2IAnyNV_SequenceAnyN_k_(m as Object, action as Object) as Object
     return mapIndexed_rSequenceAnyN_Function2IAnyNAnyN_SequenceAnyN_k_(m, {action: action, invoke: function(index as Integer, element as Dynamic) as Dynamic
         m.action.invoke(index, element)
         return element
@@ -683,7 +693,7 @@ function withIndex_rSequenceAnyN_SequenceIndexedValueAnyN_k_(m as Object) as Obj
     end function})
 end function
 
-function mapNotNull_rSequenceAnyN_Function1AnyNAnyN_SequenceAny_k_(m as Object, transform as Function) as Object
+function mapNotNull_rSequenceAnyN_Function1AnyNAnyN_SequenceAny_k_(m as Object, transform as Object) as Object
     return TransformingSequence_create_SequenceAnyN_Function1AnyNAnyN_TransformingSequenceAnyNAnyN_k_(FilteringSequence_create_SequenceAnyN_Z_Function1AnyNZ_FilteringSequenceAnyN_k_(map_rSequenceAnyN_Function1AnyNAnyN_SequenceAnyN_k_(m, transform), true, {invoke: function(it as Dynamic) as Boolean
         return it <> invalid
     end function}), {invoke: function(it as Dynamic) as Object
@@ -691,7 +701,7 @@ function mapNotNull_rSequenceAnyN_Function1AnyNAnyN_SequenceAny_k_(m as Object, 
     end function})
 end function
 
-function mapIndexedNotNull_rSequenceAnyN_Function2IAnyNAnyN_SequenceAny_k_(m as Object, transform as Function) as Object
+function mapIndexedNotNull_rSequenceAnyN_Function2IAnyNAnyN_SequenceAny_k_(m as Object, transform as Object) as Object
     return TransformingSequence_create_SequenceAnyN_Function1AnyNAnyN_TransformingSequenceAnyNAnyN_k_(FilteringSequence_create_SequenceAnyN_Z_Function1AnyNZ_FilteringSequenceAnyN_k_(mapIndexed_rSequenceAnyN_Function2IAnyNAnyN_SequenceAnyN_k_(m, transform), true, {invoke: function(it as Dynamic) as Boolean
         return it <> invalid
     end function}), {invoke: function(it as Dynamic) as Object

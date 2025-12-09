@@ -158,6 +158,14 @@ class BrsCompiler(
         val isInstanceOfFunction = createIsInstanceOfHelper()
         program.declarations.add(0, isInstanceOfFunction)
 
+        // Add identity check helper function for === operator
+        val identityEqualsFunction = createIdentityEqualsHelper()
+        program.declarations.add(0, identityEqualsFunction)
+
+        // Add object ID counter and generator for identity tracking
+        val nextObjectIdFunction = createNextObjectIdHelper()
+        program.declarations.add(0, nextObjectIdFunction)
+
         // Note: Exception helpers (THROW_NPE, THROW_CCE, etc.) are defined in
         // libraries/stdlib/brs/src/kotlin/ExceptionHelpers.kt - do NOT add them here
         // as that would create duplicate definitions.
@@ -292,6 +300,167 @@ class BrsCompiler(
         return BrsSub(
             name = "throwKotlinNothingValueException",
             parameters = mutableListOf(),
+            body = body
+        )
+    }
+
+    /**
+     * Create the nextObjectId helper function for generating unique object IDs.
+     *
+     * Generated BrightScript:
+     * ```
+     * function __kotlin_nextObjectId() as Integer
+     *     if m.__kotlin_objectIdCounter = invalid then
+     *         m.__kotlin_objectIdCounter = 0
+     *     end if
+     *     m.__kotlin_objectIdCounter = m.__kotlin_objectIdCounter + 1
+     *     return m.__kotlin_objectIdCounter
+     * end function
+     * ```
+     */
+    private fun createNextObjectIdHelper(): BrsFunction {
+        val body = BrsBlock(mutableListOf(
+            // if m.__kotlin_objectIdCounter = invalid then m.__kotlin_objectIdCounter = 0
+            BrsIf(
+                condition = BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier("m"), "__kotlin_objectIdCounter"),
+                    BrsBinaryOperator.EQ,
+                    BrsInvalidLiteral()
+                ),
+                thenBranch = BrsBlock(mutableListOf(
+                    BrsExpressionStatement(
+                        BrsBinaryOp(
+                            BrsDotAccess(BrsIdentifier("m"), "__kotlin_objectIdCounter"),
+                            BrsBinaryOperator.EQ,
+                            BrsIntLiteral(0)
+                        )
+                    )
+                )),
+                elseBranch = null
+            ),
+            // m.__kotlin_objectIdCounter = m.__kotlin_objectIdCounter + 1
+            BrsExpressionStatement(
+                BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier("m"), "__kotlin_objectIdCounter"),
+                    BrsBinaryOperator.EQ,
+                    BrsBinaryOp(
+                        BrsDotAccess(BrsIdentifier("m"), "__kotlin_objectIdCounter"),
+                        BrsBinaryOperator.ADD,
+                        BrsIntLiteral(1)
+                    )
+                )
+            ),
+            // return m.__kotlin_objectIdCounter
+            BrsReturn(BrsDotAccess(BrsIdentifier("m"), "__kotlin_objectIdCounter"))
+        ))
+
+        return BrsFunction(
+            name = "__kotlin_nextObjectId",
+            parameters = mutableListOf(),
+            returnType = BrsType.INTEGER,
+            body = body
+        )
+    }
+
+    /**
+     * Create the identity equals helper function for === operator.
+     *
+     * Generated BrightScript:
+     * ```
+     * function __kotlin_identityEquals(a as Dynamic, b as Dynamic) as Boolean
+     *     ' Both invalid (null)
+     *     if a = invalid and b = invalid then return true
+     *     ' One is invalid
+     *     if a = invalid or b = invalid then return false
+     *     ' Both are primitives - use value equality
+     *     aType = type(a)
+     *     bType = type(b)
+     *     if aType <> "roAssociativeArray" and bType <> "roAssociativeArray" then
+     *         return a = b
+     *     end if
+     *     ' Both must be objects for identity comparison
+     *     if aType <> "roAssociativeArray" or bType <> "roAssociativeArray" then
+     *         return false
+     *     end if
+     *     ' Compare object IDs
+     *     if a.__id = invalid or b.__id = invalid then return false
+     *     return a.__id = b.__id
+     * end function
+     * ```
+     */
+    private fun createIdentityEqualsHelper(): BrsFunction {
+        val body = BrsBlock(mutableListOf(
+            // if a = invalid and b = invalid then return true
+            BrsIf(
+                condition = BrsBinaryOp(
+                    BrsBinaryOp(BrsIdentifier("a"), BrsBinaryOperator.EQ, BrsInvalidLiteral()),
+                    BrsBinaryOperator.AND,
+                    BrsBinaryOp(BrsIdentifier("b"), BrsBinaryOperator.EQ, BrsInvalidLiteral())
+                ),
+                thenBranch = BrsBlock(mutableListOf(BrsReturn(BrsBooleanLiteral(true)))),
+                elseBranch = null
+            ),
+            // if a = invalid or b = invalid then return false
+            BrsIf(
+                condition = BrsBinaryOp(
+                    BrsBinaryOp(BrsIdentifier("a"), BrsBinaryOperator.EQ, BrsInvalidLiteral()),
+                    BrsBinaryOperator.OR,
+                    BrsBinaryOp(BrsIdentifier("b"), BrsBinaryOperator.EQ, BrsInvalidLiteral())
+                ),
+                thenBranch = BrsBlock(mutableListOf(BrsReturn(BrsBooleanLiteral(false)))),
+                elseBranch = null
+            ),
+            // aType = type(a)
+            BrsVariable(name = "aType", initializer = BrsTypeOf(BrsIdentifier("a"))),
+            // bType = type(b)
+            BrsVariable(name = "bType", initializer = BrsTypeOf(BrsIdentifier("b"))),
+            // if aType <> "roAssociativeArray" and bType <> "roAssociativeArray" then return a = b
+            BrsIf(
+                condition = BrsBinaryOp(
+                    BrsBinaryOp(BrsIdentifier("aType"), BrsBinaryOperator.NE, BrsStringLiteral("roAssociativeArray")),
+                    BrsBinaryOperator.AND,
+                    BrsBinaryOp(BrsIdentifier("bType"), BrsBinaryOperator.NE, BrsStringLiteral("roAssociativeArray"))
+                ),
+                thenBranch = BrsBlock(mutableListOf(
+                    BrsReturn(BrsBinaryOp(BrsIdentifier("a"), BrsBinaryOperator.EQ, BrsIdentifier("b")))
+                )),
+                elseBranch = null
+            ),
+            // if aType <> "roAssociativeArray" or bType <> "roAssociativeArray" then return false
+            BrsIf(
+                condition = BrsBinaryOp(
+                    BrsBinaryOp(BrsIdentifier("aType"), BrsBinaryOperator.NE, BrsStringLiteral("roAssociativeArray")),
+                    BrsBinaryOperator.OR,
+                    BrsBinaryOp(BrsIdentifier("bType"), BrsBinaryOperator.NE, BrsStringLiteral("roAssociativeArray"))
+                ),
+                thenBranch = BrsBlock(mutableListOf(BrsReturn(BrsBooleanLiteral(false)))),
+                elseBranch = null
+            ),
+            // if a.__id = invalid or b.__id = invalid then return false
+            BrsIf(
+                condition = BrsBinaryOp(
+                    BrsBinaryOp(BrsDotAccess(BrsIdentifier("a"), "__id"), BrsBinaryOperator.EQ, BrsInvalidLiteral()),
+                    BrsBinaryOperator.OR,
+                    BrsBinaryOp(BrsDotAccess(BrsIdentifier("b"), "__id"), BrsBinaryOperator.EQ, BrsInvalidLiteral())
+                ),
+                thenBranch = BrsBlock(mutableListOf(BrsReturn(BrsBooleanLiteral(false)))),
+                elseBranch = null
+            ),
+            // return a.__id = b.__id
+            BrsReturn(BrsBinaryOp(
+                BrsDotAccess(BrsIdentifier("a"), "__id"),
+                BrsBinaryOperator.EQ,
+                BrsDotAccess(BrsIdentifier("b"), "__id")
+            ))
+        ))
+
+        return BrsFunction(
+            name = "__kotlin_identityEquals",
+            parameters = mutableListOf(
+                BrsParameter("a", BrsType.DYNAMIC),
+                BrsParameter("b", BrsType.DYNAMIC)
+            ),
+            returnType = BrsType.BOOLEAN,
             body = body
         )
     }

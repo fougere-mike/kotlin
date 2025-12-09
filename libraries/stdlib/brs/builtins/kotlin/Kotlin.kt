@@ -309,3 +309,25 @@ private class UnsafeLazyImpl<out T>(private val initializer: () -> T) : Lazy<T> 
 }
 
 private object UNINITIALIZED_VALUE
+
+// ============================================
+// Structural Equality
+// ============================================
+
+/**
+ * Compares two values for structural equality.
+ * This is needed because BrightScript's == operator doesn't work for associative arrays (objects).
+ * For objects, we delegate to their equals method.
+ *
+ * @param a first value to compare
+ * @param b second value to compare
+ * @return true if the values are structurally equal
+ */
+public fun brsStructuralEquals(a: Any?, b: Any?): Boolean {
+    // Identity check (also handles null == null)
+    if (a === b) return true
+    // Null checks
+    if (a == null || b == null) return false
+    // Delegate to equals method for objects
+    return a.equals(b)
+}

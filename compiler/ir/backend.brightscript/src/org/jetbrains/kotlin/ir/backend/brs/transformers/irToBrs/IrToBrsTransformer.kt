@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
+import org.jetbrains.kotlin.ir.util.getPackageFragment
 import org.jetbrains.kotlin.ir.util.isFunction
 import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.ir.util.isNullable
@@ -67,6 +68,19 @@ class IrToBrsTransformer(
      * Internal visibility so expression/statement transformers can access it.
      */
     internal var currentClosureContext: List<CapturedVariable>? = null
+
+    /**
+     * Current lambda extension receiver symbol.
+     * When non-null, we're inside a lambda with an extension receiver and need to rewrite
+     * references to this receiver as 'm' (the first parameter of the lambda).
+     */
+    internal var currentLambdaExtensionReceiver: IrValueSymbol? = null
+
+    /**
+     * Flag to indicate we're inside a constructor body.
+     * When true, '<this>' references should map to 'this' (local variable) instead of 'm'.
+     */
+    internal var isInConstructorBody: Boolean = false
 
     /**
      * Temp variable substitution map for increment/decrement inlining.
@@ -140,11 +154,20 @@ class IrToBrsTransformer(
 
         // Collect function parameters as declared
         function.valueParameters.forEach { declaredSymbols.add(it.symbol) }
+        // Also include extension receiver parameter so it's not treated as captured
+        function.extensionReceiverParameter?.let { declaredSymbols.add(it.symbol) }
 
         // Walk the function body to find declared and referenced variables
         function.body?.acceptVoid(object : IrElementVisitorVoid {
             override fun visitElement(element: IrElement) {
                 element.acceptChildrenVoid(this)
+            }
+
+            // Skip nested function expressions - they have their own capture detection
+            // We only want to detect variables captured directly by this function,
+            // not variables used inside nested lambdas (which are their parameters)
+            override fun visitFunctionExpression(expression: IrFunctionExpression) {
+                // Don't recurse into nested function expressions
             }
 
             override fun visitVariable(declaration: IrVariable) {
@@ -386,12 +409,21 @@ class IrToBrsTransformer(
         // Instance is lazily initialized in getInstance()
 
         // Generate the _create function (like regular class constructor)
+        // Find the primary constructor first (needed for getInstance function)
+        val primaryConstructor = irClass.declarations.filterIsInstance<IrConstructor>().firstOrNull()
         for (constructor in irClass.declarations.filterIsInstance<IrConstructor>()) {
             transformConstructor(irClass, constructor)?.let { declarations.add(it) }
         }
 
         // Generate getInstance function
         val getInstanceBody = mutableListOf<BrsStatement>()
+
+        // Get the mangled constructor name (must match the definition)
+        val constructorName = if (primaryConstructor != null) {
+            context.getBrsName(primaryConstructor)
+        } else {
+            "${className}_create"  // Fallback for edge cases
+        }
 
         // if m.MySingleton_instance = invalid then
         //     m.MySingleton_instance = MySingleton_create()
@@ -408,7 +440,7 @@ class IrToBrsTransformer(
                         BrsBinaryOp(
                             BrsDotAccess(BrsIdentifier("m"), instanceVarName),
                             BrsBinaryOperator.EQ,
-                            BrsFunctionCall(BrsIdentifier("${className}_create"), mutableListOf())
+                            BrsFunctionCall(BrsIdentifier(constructorName), mutableListOf())
                         )
                     )
                 ))
@@ -504,12 +536,16 @@ class IrToBrsTransformer(
             context.mapping.enumEntryOrdinals[entry] = ordinal
             context.mapping.enumEntryNames[entry] = entry.name.asString()
 
+            // Get the constructor from the initializer expression
+            var entryConstructor: IrConstructor? = null
+
             // Extract constant property values for inlining
             entry.initializerExpression?.let { init ->
                 val initExpr = init.expression
                 if (initExpr is IrEnumConstructorCall) {
                     val constantProps = mutableMapOf<String, Any?>()
                     val constructor = initExpr.symbol.owner
+                    entryConstructor = constructor
                     for (i in 0 until initExpr.valueArgumentsCount) {
                         initExpr.getValueArgument(i)?.let { arg ->
                             if (arg is IrConst) {
@@ -545,12 +581,19 @@ class IrToBrsTransformer(
                 }
             }
 
+            // Get the mangled constructor name (must match the definition)
+            val constructorName = if (entryConstructor != null) {
+                context.getBrsName(entryConstructor!!)
+            } else {
+                "${className}_create"  // Fallback for edge cases
+            }
+
             initEntriesBody.add(
                 BrsExpressionStatement(
                     BrsBinaryOp(
                         BrsDotAccess(BrsIdentifier("m"), entryVarName),
                         BrsBinaryOperator.EQ,
-                        BrsFunctionCall(BrsIdentifier("${className}_create"), args)
+                        BrsFunctionCall(BrsIdentifier(constructorName), args)
                     )
                 )
             )
@@ -653,7 +696,8 @@ class IrToBrsTransformer(
      */
     private fun transformEnumConstructor(irClass: IrClass, constructor: IrConstructor): BrsFunction? {
         val className = context.getBrsName(irClass)
-        val name = "${className}_create"
+        // Use mangled constructor name to support overloading (must match call sites)
+        val name = context.getBrsName(constructor)
 
         // Start with name and ordinal parameters
         val parameters = mutableListOf(
@@ -713,6 +757,29 @@ class IrToBrsTransformer(
                     BrsDotAccess(BrsIdentifier("this"), "ordinal"),
                     BrsBinaryOperator.EQ,
                     BrsIdentifier("__ordinal")
+                )
+            )
+        )
+
+        // this.__proto = ["ClassName"]
+        bodyStatements.add(
+            BrsExpressionStatement(
+                BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier("this"), "__proto"),
+                    BrsBinaryOperator.EQ,
+                    BrsArrayLiteral(mutableListOf(BrsStringLiteral(className)))
+                )
+            )
+        )
+
+        // this.__id = __kotlin_nextObjectId()
+        // Unique object ID for identity checks (===)
+        bodyStatements.add(
+            BrsExpressionStatement(
+                BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier("this"), "__id"),
+                    BrsBinaryOperator.EQ,
+                    BrsFunctionCall(BrsIdentifier("__kotlin_nextObjectId"), mutableListOf())
                 )
             )
         )
@@ -796,7 +863,7 @@ class IrToBrsTransformer(
         declarations.add(generateDataClassToString(className, properties))
 
         // 5. Generate copy method
-        declarations.add(generateDataClassCopy(className, properties))
+        declarations.add(generateDataClassCopy(className, primaryConstructor, properties))
 
         // 6. Generate componentN methods
         properties.forEachIndexed { index, param ->
@@ -825,7 +892,8 @@ class IrToBrsTransformer(
         properties: List<IrValueParameter>
     ): BrsFunction? {
         val className = context.getBrsName(irClass)
-        val name = "${className}_create"
+        // Use mangled constructor name to support overloading (must match call sites)
+        val name = context.getBrsName(constructor)
 
         val parameters = normalizeParametersForBrs(constructor.valueParameters.map { param ->
             BrsParameter(
@@ -864,6 +932,18 @@ class IrToBrsTransformer(
                     BrsDotAccess(BrsIdentifier("this"), "__proto"),
                     BrsBinaryOperator.EQ,
                     BrsArrayLiteral(mutableListOf(BrsStringLiteral(className)))
+                )
+            )
+        )
+
+        // this.__id = __kotlin_nextObjectId()
+        // Unique object ID for identity checks (===)
+        bodyStatements.add(
+            BrsExpressionStatement(
+                BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier("this"), "__id"),
+                    BrsBinaryOperator.EQ,
+                    BrsFunctionCall(BrsIdentifier("__kotlin_nextObjectId"), mutableListOf())
                 )
             )
         )
@@ -1067,7 +1147,7 @@ class IrToBrsTransformer(
      * BrightScript doesn't support expressions like `m.name` as default parameter values,
      * so we use `invalid` as the default and add runtime checks to substitute the current value.
      */
-    private fun generateDataClassCopy(className: String, properties: List<IrValueParameter>): BrsFunction {
+    private fun generateDataClassCopy(className: String, primaryConstructor: IrConstructor?, properties: List<IrValueParameter>): BrsFunction {
         val bodyStatements = mutableListOf<BrsStatement>()
 
         // Parameters with invalid as default (BrightScript doesn't allow m.property as default)
@@ -1104,12 +1184,19 @@ class IrToBrsTransformer(
             )
         }
 
+        // Get the mangled constructor name (must match the definition)
+        val constructorName = if (primaryConstructor != null) {
+            context.getBrsName(primaryConstructor)
+        } else {
+            "${className}_create"  // Fallback for edge cases
+        }
+
         // return ClassName_create(name, age, ...)
         val args = properties.map { param ->
             BrsIdentifier(sanitizeParameterName(param.name.asString()))
         }
         bodyStatements.add(
-            BrsReturn(BrsFunctionCall(BrsIdentifier("${className}_create"), args.toMutableList()))
+            BrsReturn(BrsFunctionCall(BrsIdentifier(constructorName), args.toMutableList()))
         )
 
         return BrsFunction(
@@ -1178,6 +1265,23 @@ class IrToBrsTransformer(
 
         // Build constructor body
         val bodyStatements = mutableListOf<BrsStatement>()
+
+        // Check if this constructor delegates to another constructor of the same class (this(...))
+        // If so, we just call that constructor and return the result - no object initialization here
+        val delegatingCall = findDelegatingConstructorCall(constructor)
+        if (delegatingCall != null) {
+            val delegatedConstructor = delegatingCall.symbol.owner
+            val delegatedClass = delegatedConstructor.parentAsClass
+            if (delegatedClass == irClass) {
+                // This is a this(...) delegation - just call the other constructor and return
+                val (hoistedStatements, args) = getSuperConstructorArgsWithHoisting(constructor)
+                bodyStatements.addAll(hoistedStatements)
+                val delegatedName = context.getBrsName(delegatedConstructor)
+                val call = BrsFunctionCall(BrsIdentifier(delegatedName), args)
+                bodyStatements.add(BrsReturn(call))
+                return BrsFunction(name, parameters.toMutableList(), BrsType.OBJECT, BrsBlock(bodyStatements))
+            }
+        }
 
         // Check if there's a superclass (not Any)
         val superClass = irClass.superTypes
@@ -1283,6 +1387,18 @@ class IrToBrsTransformer(
                     )
                 )
             )
+
+            // this.__id = __kotlin_nextObjectId()
+            // Unique object ID for identity checks (===)
+            bodyStatements.add(
+                BrsExpressionStatement(
+                    BrsBinaryOp(
+                        BrsDotAccess(BrsIdentifier("this"), "__id"),
+                        BrsBinaryOperator.EQ,
+                        BrsFunctionCall(BrsIdentifier("__kotlin_nextObjectId"), mutableListOf())
+                    )
+                )
+            )
         }
 
         // Update __type to current class for inherited classes
@@ -1351,8 +1467,11 @@ class IrToBrsTransformer(
         addMethodAttachments(irClass, className, bodyStatements)
 
         // Execute constructor body (handles property initialization from parameters, etc.)
+        // Set flag so that '<this>' references map to 'this' instead of 'm'
         constructor.body?.let { body ->
+            isInConstructorBody = true
             val transformed = transformBody(body)
+            isInConstructorBody = false
             // Filter out delegating constructor calls since we handle them above
             val filteredStatements = transformed.statements.filter { stmt ->
                 !(stmt is BrsExpressionStatement && isDelegatingConstructorCall(stmt))
@@ -1378,15 +1497,33 @@ class IrToBrsTransformer(
      * Important: Regular methods use mangled names (with type signatures) to support overloading.
      * Property accessors use simple names (via sanitizeMethodName) to match call sites.
      */
+    // Synthetic data class method names that are handled separately with simple names
+    private val syntheticDataClassMethods = setOf("equals", "hashCode", "toString", "copy")
+
     private fun addMethodAttachments(
         irClass: IrClass,
         className: String,
         bodyStatements: MutableList<BrsStatement>
     ) {
+        val isDataClass = irClass.isData
+
         // Add regular methods (IrSimpleFunction)
         // Use mangled names (fullMethodName minus class prefix) to support overloading
         for (function in irClass.declarations.filterIsInstance<IrSimpleFunction>()) {
             if (!function.isFakeOverride && !function.isExternal) {
+                val methodBaseName = function.name.asString()
+
+                // Skip synthetic data class methods - they're attached separately with simple names
+                // This prevents creating references like Pair_toString_Str_k_ which don't exist
+                if (isDataClass && syntheticDataClassMethods.contains(methodBaseName)) {
+                    continue
+                }
+
+                // Skip componentN methods for data classes - also handled separately
+                if (isDataClass && methodBaseName.startsWith("component") && methodBaseName.drop(9).toIntOrNull() != null) {
+                    continue
+                }
+
                 val fullMethodName = context.getBrsName(function)
                 val methodName = fullMethodName.removePrefix("${className}_")
                 bodyStatements.add(
@@ -1403,35 +1540,38 @@ class IrToBrsTransformer(
 
         // Add property accessor methods (getter/setter)
         // Use sanitizeMethodName to match call site naming convention
-        for (property in irClass.declarations.filterIsInstance<IrProperty>()) {
-            property.getter?.let { getter ->
-                if (!getter.isFakeOverride && !getter.isExternal) {
-                    val fullMethodName = context.getBrsName(getter)
-                    val methodName = sanitizeMethodName(getter.name.asString())
-                    bodyStatements.add(
-                        BrsExpressionStatement(
-                            BrsBinaryOp(
-                                BrsDotAccess(BrsIdentifier("this"), methodName),
-                                BrsBinaryOperator.EQ,
-                                BrsIdentifier(fullMethodName)
+        // Skip for data classes - their properties are constructor parameters accessed directly (e.g., m.first)
+        if (!isDataClass) {
+            for (property in irClass.declarations.filterIsInstance<IrProperty>()) {
+                property.getter?.let { getter ->
+                    if (!getter.isFakeOverride && !getter.isExternal) {
+                        val fullMethodName = context.getBrsName(getter)
+                        val methodName = sanitizeMethodName(getter.name.asString())
+                        bodyStatements.add(
+                            BrsExpressionStatement(
+                                BrsBinaryOp(
+                                    BrsDotAccess(BrsIdentifier("this"), methodName),
+                                    BrsBinaryOperator.EQ,
+                                    BrsIdentifier(fullMethodName)
+                                )
                             )
                         )
-                    )
+                    }
                 }
-            }
-            property.setter?.let { setter ->
-                if (!setter.isFakeOverride && !setter.isExternal) {
-                    val fullMethodName = context.getBrsName(setter)
-                    val methodName = sanitizeMethodName(setter.name.asString())
-                    bodyStatements.add(
-                        BrsExpressionStatement(
-                            BrsBinaryOp(
-                                BrsDotAccess(BrsIdentifier("this"), methodName),
-                                BrsBinaryOperator.EQ,
-                                BrsIdentifier(fullMethodName)
+                property.setter?.let { setter ->
+                    if (!setter.isFakeOverride && !setter.isExternal) {
+                        val fullMethodName = context.getBrsName(setter)
+                        val methodName = sanitizeMethodName(setter.name.asString())
+                        bodyStatements.add(
+                            BrsExpressionStatement(
+                                BrsBinaryOp(
+                                    BrsDotAccess(BrsIdentifier("this"), methodName),
+                                    BrsBinaryOperator.EQ,
+                                    BrsIdentifier(fullMethodName)
+                                )
                             )
                         )
-                    )
+                    }
                 }
             }
         }
@@ -1812,7 +1952,9 @@ class IrToBrsTransformer(
             // Nothing maps to Dynamic for parameters (Void only valid for return types)
             type.isNothing() -> BrsType.DYNAMIC
             type.isNullable() -> BrsType.DYNAMIC
-            type.isFunction() -> BrsType.FUNCTION
+            // Function types are implemented as closure objects (AA with invoke method), not as
+            // BrightScript Function type. Map to Object to accept closure objects as arguments.
+            type.isFunction() -> BrsType.OBJECT
             else -> BrsType.OBJECT
         }
     }
@@ -1843,8 +1985,13 @@ class IrToBrsTransformer(
                 )
             }
 
-            // Objects (including nullable types): call toString method if available
-            // For objects with custom toString(), they should have it defined
+            // Any?, Dynamic, or nullable types: use runtime type checking
+            // since BrightScript primitives don't have .toString() method
+            receiverType.isNullable() || receiverType.isAny() -> {
+                generateRuntimeToString(receiverExpr)
+            }
+
+            // Non-nullable objects: call toString method
             else -> {
                 BrsMethodCall(receiverExpr, "toString", mutableListOf())
             }
@@ -2752,10 +2899,30 @@ class IrStatementToBrsTransformer(
             }
         }
 
+        // Transform the iterable expression
+        var iterableBrs = parent.transformExpression(iterableExpr)
+
+        // For Kotlin collection types (ArrayList, MutableList, etc.), we need to iterate
+        // over the underlying array, not the wrapper object. In BrightScript, 'for each'
+        // on an AA iterates over keys, not values. Collections store items in .array property.
+        val iterableType = iterableExpr.type
+        val iterableClassName = iterableType.classOrNull?.owner?.name?.asString() ?: ""
+        val isKotlinCollection = iterableClassName in listOf(
+            "ArrayList", "MutableList", "List",
+            "HashSet", "MutableSet", "Set",
+            "LinkedHashSet", "LinkedHashMap",
+            "ArrayDeque"
+        ) || iterableType.classFqName?.asString()?.startsWith("kotlin.collections.") == true
+
+        if (isKotlinCollection) {
+            // Access .array property for iteration
+            iterableBrs = BrsDotAccess(iterableBrs, "array")
+        }
+
         // Generate BrsForEach
         return BrsForEach(
             variable = loopVarName,
-            iterable = parent.transformExpression(iterableExpr),
+            iterable = iterableBrs,
             body = BrsBlock(actualBody.toMutableList())
         )
     }
@@ -3111,8 +3278,16 @@ class IrExpressionToBrsTransformer(
             }
         }
 
+        // Check if this is a reference to a lambda's extension receiver
+        // The receiver parameter is named 'm' in the generated BrightScript
+        if (expression.symbol == parent.currentLambdaExtensionReceiver) {
+            return BrsMRef()
+        }
+
         return when {
-            rawName == "<this>" -> BrsMRef()
+            // In constructor bodies, '<this>' refers to the local 'this' variable being constructed
+            // In regular methods, '<this>' refers to 'm' (the object the method was called on)
+            rawName == "<this>" -> if (parent.isInConstructorBody) BrsIdentifier("this") else BrsMRef()
             // Sanitize setter parameter names
             rawName.startsWith("<set-") && rawName.endsWith(">") -> BrsIdentifier("value")
             // Sanitize other special names
@@ -3233,6 +3408,81 @@ class IrExpressionToBrsTransformer(
             if (operatorResult != null) return operatorResult
         }
 
+        // Handle builtin comparison functions (less, lessOrEqual, greater, greaterOrEqual)
+        // These come from irBuiltIns and may not have an origin when introduced by lowering passes
+        val builtinComparisonResult = transformBuiltinComparison(expression)
+        if (builtinComparisonResult != null) return builtinComparisonResult
+
+        // Handle kotlin.internal.ir intrinsics like CHECK_NOT_NULL, THROW_CCE, etc.
+        // These are built-in operators that need to be lowered to BrightScript
+        val intrinsicFunctionName = function.name.asString()
+        val intrinsicPackageFqName = function.getPackageFragment()?.packageFqName?.asString() ?: ""
+        if (intrinsicPackageFqName.startsWith("kotlin.internal")) {
+            when (intrinsicFunctionName) {
+                "CHECK_NOT_NULL" -> {
+                    // In BrightScript we don't have strict null checking,
+                    // so just return the value argument directly
+                    return expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                }
+                "THROW_CCE" -> {
+                    // Class cast exception - generate a stop statement for debugging
+                    return BrsIdentifier("invalid")
+                }
+                "THROW_ISE" -> {
+                    // Illegal state exception - generate a stop statement for debugging
+                    return BrsIdentifier("invalid")
+                }
+            }
+        }
+
+        // Handle BrightScript runtime intrinsics (brsFormatJson, brsParseJson, etc.)
+        // These are defined in kotlin.brs.runtime but are not marked external
+        val runtimeFunctionName = function.name.asString()
+        val runtimePackageFqName = function.getPackageFragment()?.packageFqName?.asString() ?: ""
+        if (runtimePackageFqName == "kotlin.brs.runtime") {
+            when (runtimeFunctionName) {
+                "brsFormatJson" -> {
+                    val arg = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                    return BrsFunctionCall(BrsIdentifier("FormatJson"), mutableListOf(arg))
+                }
+                "brsParseJson" -> {
+                    val arg = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                    return BrsFunctionCall(BrsIdentifier("ParseJson"), mutableListOf(arg))
+                }
+                "brsTypeOf" -> {
+                    val arg = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                    return BrsTypeOf(arg)
+                }
+                "brsIsInvalid" -> {
+                    val arg = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                    return BrsBinaryOp(arg, BrsBinaryOperator.EQ, BrsInvalidLiteral())
+                }
+                "brsCreateObject" -> {
+                    val typeArg = expression.getValueArgument(0)
+                    val objectType = (typeArg as? IrConst)?.let { it.value.toString() } ?: "Object"
+                    val args = (1 until expression.valueArgumentsCount).mapNotNull { i ->
+                        expression.getValueArgument(i)?.accept(this, data)
+                    }
+                    return BrsCreateObject(objectType, args.toMutableList())
+                }
+                "brsCreateArray" -> {
+                    val sizeArg = expression.getValueArgument(0)?.accept(this, data) ?: BrsIntLiteral(0)
+                    return BrsCreateObject("roArray", mutableListOf(sizeArg, BrsBooleanLiteral(true)))
+                }
+                "brsArrayLength" -> {
+                    val arg = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                    return BrsMethodCall(arg, "count", mutableListOf())
+                }
+                "brsCreateAssociativeArray" -> {
+                    return BrsAALiteral()
+                }
+                "brsPrint" -> {
+                    val arg = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                    return BrsFunctionCall(BrsIdentifier("print"), mutableListOf(arg))
+                }
+            }
+        }
+
         // Check for @BrsInline functions - inline at call site
         if (parent.inlineCallTransformer.shouldInline(expression)) {
             return transformBrsInlineCall(expression)
@@ -3286,6 +3536,27 @@ class IrExpressionToBrsTransformer(
         val methodName = function.name.asString()
         val receiver = expression.dispatchReceiver ?: expression.extensionReceiver
         if (receiver != null) {
+            // Handle Array.size - BrightScript arrays use .count() not .size property
+            if (methodName == "<get-size>" && receiver.type.isArray()) {
+                val receiverExpr = receiver.accept(this, data)
+                return BrsMethodCall(receiverExpr, "count", mutableListOf())
+            }
+
+            // Handle Array.get(index) - BrightScript arrays use [] indexing, not .get() method
+            if (methodName == "get" && receiver.type.isArray() && expression.valueArgumentsCount == 1) {
+                val receiverExpr = receiver.accept(this, data)
+                val indexExpr = expression.getValueArgument(0)?.accept(this, data) ?: return BrsInvalidLiteral()
+                return BrsIndexAccess(receiverExpr, indexExpr)
+            }
+
+            // Handle Array.set(index, value) - BrightScript arrays use [] indexing, not .set() method
+            if (methodName == "set" && receiver.type.isArray() && expression.valueArgumentsCount == 2) {
+                val receiverExpr = receiver.accept(this, data)
+                val indexExpr = expression.getValueArgument(0)?.accept(this, data) ?: return BrsInvalidLiteral()
+                val valueExpr = expression.getValueArgument(1)?.accept(this, data) ?: return BrsInvalidLiteral()
+                return BrsBinaryOp(BrsIndexAccess(receiverExpr, indexExpr), BrsBinaryOperator.EQ, valueExpr)
+            }
+
             when (methodName) {
                 // Type conversions - BrightScript handles these implicitly
                 "toDouble", "toFloat", "toInt", "toLong", "toShort", "toByte", "toChar" -> {
@@ -3297,6 +3568,12 @@ class IrExpressionToBrsTransformer(
                 }
                 "unaryPlus" -> {
                     return receiver.accept(this, data)  // No-op
+                }
+                // Boolean.not() - BrightScript uses prefix 'not' operator, not a method call
+                "not" -> {
+                    if (receiver.type.isBoolean()) {
+                        return BrsUnaryOp(BrsUnaryOperator.NOT, receiver.accept(this, data))
+                    }
                 }
                 // Binary plus as method call (String.plus, etc.)
                 "plus" -> {
@@ -3412,7 +3689,9 @@ class IrExpressionToBrsTransformer(
             }
 
             // For method calls, transform to dot notation
-            if (function.dispatchReceiverParameter != null) {
+            // Use expression.dispatchReceiver to detect dispatch calls (more reliable than
+            // function.dispatchReceiverParameter which may be null for interface methods)
+            if (expression.dispatchReceiver != null) {
                 // Check if this is a call on a singleton object - use global function instead
                 val parentClass = function.parent as? IrClass
                 if (parentClass?.kind == ClassKind.OBJECT) {
@@ -3423,26 +3702,69 @@ class IrExpressionToBrsTransformer(
                     return BrsFunctionCall(BrsIdentifier(functionName), args.toMutableList())
                 }
 
-                // Inline property getters to direct field access (avoids function call overhead)
+                // Handle property getters and setters
+                // Check if the property has a simple backing field that can be accessed directly.
+                // For computed properties (custom getter), overridden properties (interface impl),
+                // or properties from interfaces, we need to call the getter method.
                 val rawName = function.name.asString()
                 if (rawName.startsWith("<get-") && rawName.endsWith(">")) {
                     val fieldName = rawName.removePrefix("<get-").removeSuffix(">")
-                    return BrsDotAccess(receiverExpr, fieldName)
+                    val property = function.correspondingPropertySymbol?.owner
+                    val backingField = property?.backingField
+
+                    // Determine if we should use direct field access or call the getter method
+                    // Use direct access ONLY if:
+                    // 1. There is a backing field
+                    // 2. The getter is not overridden (interface implementation)
+                    // 3. The parent class is a data class (simple properties)
+                    val isOverridden = function.overriddenSymbols.isNotEmpty()
+                    val parentClass = function.parent as? IrClass
+                    val isDataClass = parentClass?.isData == true
+                    val hasSimpleBackingField = backingField != null && !isOverridden && isDataClass
+
+                    return if (hasSimpleBackingField) {
+                        // Direct field access for simple backing field properties
+                        BrsDotAccess(receiverExpr, fieldName)
+                    } else {
+                        // Call getter for computed properties, overridden properties, etc.
+                        BrsMethodCall(receiverExpr, "get_$fieldName", mutableListOf())
+                    }
                 }
 
-                // Inline property setters to direct field assignment (avoids function call overhead)
+                // Handle property setters
                 if (rawName.startsWith("<set-") && rawName.endsWith(">")) {
                     val fieldName = rawName.removePrefix("<set-").removeSuffix(">")
+                    val property = function.correspondingPropertySymbol?.owner
+                    val hasBackingField = property?.backingField != null
                     val value = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
-                    return BrsBinaryOp(
-                        BrsDotAccess(receiverExpr, fieldName),
-                        BrsBinaryOperator.EQ,
-                        value
-                    )
+
+                    // For backing field properties, this code path shouldn't typically be reached
+                    // because IrSetField is used instead. But if we do get here, fall through
+                    // to the setter call which will fail at runtime if there's no setter attached.
+                    // For computed properties, call the setter method.
+                    return BrsMethodCall(receiverExpr, "set_$fieldName", mutableListOf(value))
                 }
 
-                // For regular method calls, sanitize the method name
-                val methodName = parent.sanitizeMethodName(function.name.asString())
+                // For regular method calls, determine the method name
+                // Data class synthetic methods (componentN, copy, equals, hashCode, toString)
+                // are attached with simple names, so we should not mangle them
+                val rawMethodName = function.name.asString()
+                val isDataClassSyntheticMethod = rawMethodName.startsWith("component") ||
+                    rawMethodName in listOf("copy", "equals", "hashCode", "toString")
+
+                val methodName = if (isDataClassSyntheticMethod) {
+                    // Use simple name for data class synthetic methods
+                    rawMethodName
+                } else {
+                    // Use mangled name for other methods (to match how methods are attached)
+                    val fullMethodName = context.getBrsName(function)
+                    val className = (function.parent as? IrClass)?.let { context.getBrsName(it) } ?: ""
+                    if (className.isNotEmpty()) {
+                        fullMethodName.removePrefix("${className}_")
+                    } else {
+                        fullMethodName
+                    }
+                }
                 val args = (0 until expression.valueArgumentsCount).mapNotNull { i ->
                     expression.getValueArgument(i)?.let { it.accept(this, data) }
                 }
@@ -3799,6 +4121,43 @@ class IrExpressionToBrsTransformer(
             }
         }
 
+        // Special case: EXCLEQEQ on Boolean.not() call - this means `!==` was lowered to `(a === b).not()`
+        // Extract operands from inner call and generate NOT __kotlin_identityEquals(a, b)
+        if (origin == IrStatementOrigin.EXCLEQEQ && function.name.asString() == "not") {
+            val dispatchReceiver = expression.dispatchReceiver
+            if (dispatchReceiver != null && function.valueParameters.isEmpty()) {
+                if (dispatchReceiver is IrCall) {
+                    val innerCall = dispatchReceiver
+                    val (left, right) = when {
+                        innerCall.dispatchReceiver != null -> {
+                            val l = innerCall.dispatchReceiver!!.accept(this, Unit)
+                            val r = innerCall.getValueArgument(0)?.accept(this, Unit) ?: return null
+                            Pair(l, r)
+                        }
+                        innerCall.extensionReceiver != null -> {
+                            val l = innerCall.extensionReceiver!!.accept(this, Unit)
+                            val r = innerCall.getValueArgument(0)?.accept(this, Unit) ?: return null
+                            Pair(l, r)
+                        }
+                        else -> {
+                            val l = innerCall.getValueArgument(0)?.accept(this, Unit) ?: return null
+                            val r = innerCall.getValueArgument(1)?.accept(this, Unit) ?: return null
+                            Pair(l, r)
+                        }
+                    }
+                    // Generate NOT __kotlin_identityEquals(a, b)
+                    val identityCall = BrsFunctionCall(
+                        BrsIdentifier("__kotlin_identityEquals"),
+                        mutableListOf(left, right)
+                    )
+                    return BrsUnaryOp(BrsUnaryOperator.NOT, identityCall)
+                }
+                // Fallback for non-call receivers
+                val operand = dispatchReceiver.accept(this, Unit)
+                return BrsUnaryOp(BrsUnaryOperator.NOT, operand)
+            }
+        }
+
         // Binary operators
         val binaryOp = when (origin) {
             IrStatementOrigin.PLUS -> BrsBinaryOperator.ADD
@@ -3903,6 +4262,37 @@ class IrExpressionToBrsTransformer(
             return BrsBinaryOp(left, binaryOp, right)
         }
 
+        // Identity operators (=== and !==)
+        // These need special handling because BrightScript's = operator doesn't work for associative arrays
+        if (origin == IrStatementOrigin.EQEQEQ || origin == IrStatementOrigin.EXCLEQEQ) {
+            val (left, right) = when {
+                expression.dispatchReceiver != null -> {
+                    val l = expression.dispatchReceiver!!.accept(this, Unit)
+                    val r = expression.getValueArgument(0)?.accept(this, Unit) ?: return null
+                    Pair(l, r)
+                }
+                expression.extensionReceiver != null -> {
+                    val l = expression.extensionReceiver!!.accept(this, Unit)
+                    val r = expression.getValueArgument(0)?.accept(this, Unit) ?: return null
+                    Pair(l, r)
+                }
+                else -> {
+                    val l = expression.getValueArgument(0)?.accept(this, Unit) ?: return null
+                    val r = expression.getValueArgument(1)?.accept(this, Unit) ?: return null
+                    Pair(l, r)
+                }
+            }
+            val identityCall = BrsFunctionCall(
+                BrsIdentifier("__kotlin_identityEquals"),
+                mutableListOf(left, right)
+            )
+            return if (origin == IrStatementOrigin.EXCLEQEQ) {
+                BrsUnaryOp(BrsUnaryOperator.NOT, identityCall)
+            } else {
+                identityCall
+            }
+        }
+
         // Unary operators
         return when (origin) {
             IrStatementOrigin.UMINUS -> {
@@ -3924,14 +4314,70 @@ class IrExpressionToBrsTransformer(
             }
             IrStatementOrigin.GET_ARRAY_ELEMENT -> {
                 // Array access: arr[index]
-                val array = expression.dispatchReceiver?.let { it.accept(this, Unit) }
-                    ?: return null
+                // Only use BrsIndexAccess for native Kotlin arrays.
+                // For other types (like ArrayList), fall through to method call handling.
+                val receiver = expression.dispatchReceiver ?: return null
+                if (!receiver.type.isArray()) {
+                    // Not a native array - return null to let the normal method call handling take over
+                    return null
+                }
+                val array = receiver.accept(this, Unit)
                 val index = expression.getValueArgument(0)?.let { it.accept(this, Unit) }
                     ?: return null
                 BrsIndexAccess(array, index)
             }
             else -> null
         }
+    }
+
+    /**
+     * Transform builtin comparison functions from irBuiltIns to binary operators.
+     * These functions (less, lessOrEqual, greater, greaterOrEqual) may not have an
+     * IrStatementOrigin when introduced by lowering passes, so we check the function
+     * name directly.
+     */
+    private fun transformBuiltinComparison(expression: IrCall): BrsExpression? {
+        val function = expression.symbol.owner
+        val functionName = function.name.asString()
+
+        // Check if this is a builtin comparison function
+        val binaryOp = when (functionName) {
+            "less" -> BrsBinaryOperator.LT
+            "lessOrEqual" -> BrsBinaryOperator.LE
+            "greater" -> BrsBinaryOperator.GT
+            "greaterOrEqual" -> BrsBinaryOperator.GE
+            else -> return null
+        }
+
+        // Verify this is from kotlin.internal (builtins) not a user-defined function
+        val packageFqName = function.getPackageFragment().packageFqName.asString()
+        if (packageFqName.startsWith("kotlin.internal") || packageFqName.startsWith("kotlin")) {
+            // This is a builtin comparison function
+        } else {
+            return null
+        }
+
+        // Extract left and right operands
+        val (left, right) = when {
+            expression.valueArgumentsCount >= 2 -> {
+                val l = expression.getValueArgument(0)?.accept(this, Unit) ?: return null
+                val r = expression.getValueArgument(1)?.accept(this, Unit) ?: return null
+                Pair(l, r)
+            }
+            expression.dispatchReceiver != null -> {
+                val l = expression.dispatchReceiver!!.accept(this, Unit)
+                val r = expression.getValueArgument(0)?.accept(this, Unit) ?: return null
+                Pair(l, r)
+            }
+            expression.extensionReceiver != null -> {
+                val l = expression.extensionReceiver!!.accept(this, Unit)
+                val r = expression.getValueArgument(0)?.accept(this, Unit) ?: return null
+                Pair(l, r)
+            }
+            else -> return null
+        }
+
+        return BrsBinaryOp(left, binaryOp, right)
     }
 
     override fun visitConstructorCall(expression: IrConstructorCall, data: Unit): BrsExpression {
@@ -4150,6 +4596,13 @@ class IrExpressionToBrsTransformer(
     // ==================== Collections ====================
 
     override fun visitVararg(expression: IrVararg, data: Unit): BrsExpression {
+        // If vararg has a single spread element, don't wrap it in another array
+        // e.g., hashMapOf(*pairs) should just pass pairs, not [pairs]
+        if (expression.elements.size == 1 && expression.elements[0] is IrSpreadElement) {
+            val spreadElement = expression.elements[0] as IrSpreadElement
+            return spreadElement.expression.accept(this, data)
+        }
+
         val elements = expression.elements.map { element ->
             when (element) {
                 is IrExpression -> element.accept(this, data)
@@ -4218,13 +4671,27 @@ class IrExpressionToBrsTransformer(
         // Detect captured variables from outer scope
         val capturedVars = parent.detectCapturedVariables(function)
 
+        // Build parameter list, starting with extension receiver if present
+        val allParameters = mutableListOf<BrsParameter>()
+
+        // Add extension receiver as first parameter if present (matches regular function handling)
+        function.extensionReceiverParameter?.let { receiver ->
+            allParameters.add(BrsParameter(
+                name = "m",
+                type = parent.mapTypeToBrs(receiver.type)
+            ))
+        }
+
+        // Add value parameters
         val rawParameters = function.valueParameters.map { param ->
             BrsParameter(
                 name = parent.sanitizeParameterName(param.name.asString()),
                 type = parent.mapTypeToBrs(param.type)
             )
         }
-        val parameters = parent.normalizeParametersForBrs(parent.deduplicateParameterNames(rawParameters))
+        allParameters.addAll(rawParameters)
+
+        val parameters = parent.normalizeParametersForBrs(parent.deduplicateParameterNames(allParameters))
 
         val returnType = parent.mapTypeToBrs(function.returnType)
 
@@ -4235,25 +4702,39 @@ class IrExpressionToBrsTransformer(
         // For consistency, even lambdas without captures use this pattern so that
         // all lambdas can be invoked uniformly with .invoke()
 
-        // Save previous closure context
+        // Save previous closure context and lambda extension receiver
         val previousContext = parent.currentClosureContext
+        val previousLambdaReceiver = parent.currentLambdaExtensionReceiver
 
         // Set closure context for body transformation (if there are captures)
         if (capturedVars.isNotEmpty()) {
             parent.currentClosureContext = capturedVars
         }
 
+        // Set lambda extension receiver for body transformation
+        // This allows visitGetValue to rewrite receiver references to 'm'
+        function.extensionReceiverParameter?.let {
+            parent.currentLambdaExtensionReceiver = it.symbol
+        }
+
         // Transform body with closure context active (variable accesses will be rewritten)
         val body = function.body?.let { parent.transformBody(it) } ?: BrsBlock()
 
-        // Restore previous context
+        // Restore previous context and lambda receiver
         parent.currentClosureContext = previousContext
+        parent.currentLambdaExtensionReceiver = previousLambdaReceiver
 
         // Build closure object fields for captured variables
         val entries = mutableListOf<BrsAAEntry>()
 
         for (capturedVar in capturedVars) {
-            val varValue = BrsIdentifier(capturedVar.name)
+            // When capturing 'this' from an outer method, use 'm' (BrightScript's object reference)
+            // instead of 'this' (which doesn't exist in BrightScript methods)
+            val varValue = if (capturedVar.name == "this") {
+                BrsIdentifier("m")
+            } else {
+                BrsIdentifier(capturedVar.name)
+            }
             val fieldValue = if (capturedVar.isMutable) {
                 // Wrap mutable captures in { value: x } for mutation to propagate
                 BrsAALiteral(mutableListOf(BrsAAEntry("value", varValue)))

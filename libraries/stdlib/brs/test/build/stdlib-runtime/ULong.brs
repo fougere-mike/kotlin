@@ -63,139 +63,139 @@ function ULong_create_J_ULong_k_(data as LongInteger) as Object
 end function
 
 function ULong_compareTo_UByte_I_k_(other as Object) as Integer
-    return m.compareTo(other.toULong())
+    return m.compareTo_ULong_I_k_(other.toULong_ULong_k_())
 end function
 
 function ULong_compareTo_UShort_I_k_(other as Object) as Integer
-    return m.compareTo(other.toULong())
+    return m.compareTo_ULong_I_k_(other.toULong_ULong_k_())
 end function
 
 function ULong_compareTo_UInt_I_k_(other as Object) as Integer
-    return m.compareTo(other.toULong())
+    return m.compareTo_ULong_I_k_(other.toULong_ULong_k_())
 end function
 
 function ULong_compareTo_ULong_I_k_(other as Object) as Integer
-    return ulongCompare_J_J_I_k_(m.data, other.data)
+    return ulongCompare_J_J_I_k_(m.get_data(), other.get_data())
 end function
 
 function ULong_plus_UByte_ULong_k_(other as Object) as Object
-    return m + other.toULong()
+    return m + other.toULong_ULong_k_()
 end function
 
 function ULong_plus_UShort_ULong_k_(other as Object) as Object
-    return m + other.toULong()
+    return m + other.toULong_ULong_k_()
 end function
 
 function ULong_plus_UInt_ULong_k_(other as Object) as Object
-    return m + other.toULong()
+    return m + other.toULong_ULong_k_()
 end function
 
 function ULong_plus_ULong_ULong_k_(other as Object) as Object
-    return ULong_create_J_ULong_k_(m.data + other.data)
+    return ULong_create_J_ULong_k_(m.get_data() + other.get_data())
 end function
 
 function ULong_minus_UByte_ULong_k_(other as Object) as Object
-    return m.minus(other.toULong())
+    return m.minus_ULong_ULong_k_(other.toULong_ULong_k_())
 end function
 
 function ULong_minus_UShort_ULong_k_(other as Object) as Object
-    return m.minus(other.toULong())
+    return m.minus_ULong_ULong_k_(other.toULong_ULong_k_())
 end function
 
 function ULong_minus_UInt_ULong_k_(other as Object) as Object
-    return m.minus(other.toULong())
+    return m.minus_ULong_ULong_k_(other.toULong_ULong_k_())
 end function
 
 function ULong_minus_ULong_ULong_k_(other as Object) as Object
-    return ULong_create_J_ULong_k_(m.data.minus(other.data))
+    return ULong_create_J_ULong_k_(m.get_data().minus_J_J_k_(other.get_data()))
 end function
 
 function ULong_times_UByte_ULong_k_(other as Object) as Object
-    return m.times(other.toULong())
+    return m.times_ULong_ULong_k_(other.toULong_ULong_k_())
 end function
 
 function ULong_times_UShort_ULong_k_(other as Object) as Object
-    return m.times(other.toULong())
+    return m.times_ULong_ULong_k_(other.toULong_ULong_k_())
 end function
 
 function ULong_times_UInt_ULong_k_(other as Object) as Object
-    return m.times(other.toULong())
+    return m.times_ULong_ULong_k_(other.toULong_ULong_k_())
 end function
 
 function ULong_times_ULong_ULong_k_(other as Object) as Object
-    return ULong_create_J_ULong_k_(m.data.times(other.data))
+    return ULong_create_J_ULong_k_(m.get_data().times_J_J_k_(other.get_data()))
 end function
 
 function ULong_div_UByte_ULong_k_(other as Object) as Object
-    return m.div(other.toULong())
+    return m.div_ULong_ULong_k_(other.toULong_ULong_k_())
 end function
 
 function ULong_div_UShort_ULong_k_(other as Object) as Object
-    return m.div(other.toULong())
+    return m.div_ULong_ULong_k_(other.toULong_ULong_k_())
 end function
 
 function ULong_div_UInt_ULong_k_(other as Object) as Object
-    return m.div(other.toULong())
+    return m.div_ULong_ULong_k_(other.toULong_ULong_k_())
 end function
 
 function ULong_div_ULong_ULong_k_(other as Object) as Object
-    return ulongDivide_J_J_ULong_k_(m.data, other.data)
+    return ulongDivide_J_J_ULong_k_(m.get_data(), other.get_data())
 end function
 
 function ULong_rem_UByte_ULong_k_(other as Object) as Object
-    return m.rem(other.toULong())
+    return m.rem_ULong_ULong_k_(other.toULong_ULong_k_())
 end function
 
 function ULong_rem_UShort_ULong_k_(other as Object) as Object
-    return m.rem(other.toULong())
+    return m.rem_ULong_ULong_k_(other.toULong_ULong_k_())
 end function
 
 function ULong_rem_UInt_ULong_k_(other as Object) as Object
-    return m.rem(other.toULong())
+    return m.rem_ULong_ULong_k_(other.toULong_ULong_k_())
 end function
 
 function ULong_rem_ULong_ULong_k_(other as Object) as Object
-    return ulongRemainder_J_J_ULong_k_(m.data, other.data)
+    return ulongRemainder_J_J_ULong_k_(m.get_data(), other.get_data())
 end function
 
 function ULong_floorDiv_UByte_ULong_k_(other as Object) as Object
-    return m.floorDiv(other.toULong())
+    return m.floorDiv_ULong_ULong_k_(other.toULong_ULong_k_())
 end function
 
 function ULong_floorDiv_UShort_ULong_k_(other as Object) as Object
-    return m.floorDiv(other.toULong())
+    return m.floorDiv_ULong_ULong_k_(other.toULong_ULong_k_())
 end function
 
 function ULong_floorDiv_UInt_ULong_k_(other as Object) as Object
-    return m.floorDiv(other.toULong())
+    return m.floorDiv_ULong_ULong_k_(other.toULong_ULong_k_())
 end function
 
 function ULong_floorDiv_ULong_ULong_k_(other as Object) as Object
-    return m.div(other)
+    return m.div_ULong_ULong_k_(other)
 end function
 
 function ULong_mod_UByte_UByte_k_(other as Object) as Object
-    return m.mod(other.toULong()).toUByte()
+    return m.mod_ULong_ULong_k_(other.toULong_ULong_k_()).toUByte_UByte_k_()
 end function
 
 function ULong_mod_UShort_UShort_k_(other as Object) as Object
-    return m.mod(other.toULong()).toUShort()
+    return m.mod_ULong_ULong_k_(other.toULong_ULong_k_()).toUShort_UShort_k_()
 end function
 
 function ULong_mod_UInt_UInt_k_(other as Object) as Object
-    return m.mod(other.toULong()).toUInt()
+    return m.mod_ULong_ULong_k_(other.toULong_ULong_k_()).toUInt_UInt_k_()
 end function
 
 function ULong_mod_ULong_ULong_k_(other as Object) as Object
-    return m.rem(other)
+    return m.rem_ULong_ULong_k_(other)
 end function
 
 function ULong_inc_ULong_k_() as Object
-    return ULong_create_J_ULong_k_(m.data + 1&)
+    return ULong_create_J_ULong_k_(m.get_data() + 1&)
 end function
 
 function ULong_dec_ULong_k_() as Object
-    return ULong_create_J_ULong_k_(m.data - 1&)
+    return ULong_create_J_ULong_k_(m.get_data() - 1&)
 end function
 
 function ULong_rangeTo_ULong_ULongRange_k_(other as Object) as Object
@@ -207,55 +207,55 @@ function ULong_rangeUntil_ULong_ULongRange_k_(other as Object) as Object
 end function
 
 function ULong_shl_I_ULong_k_(bitCount as Integer) as Object
-    return ULong_create_J_ULong_k_(m.data.shl(bitCount))
+    return ULong_create_J_ULong_k_(m.get_data().shl_I_J_k_(bitCount))
 end function
 
 function ULong_shr_I_ULong_k_(bitCount as Integer) as Object
-    return ULong_create_J_ULong_k_(m.data.ushr(bitCount))
+    return ULong_create_J_ULong_k_(m.get_data().ushr_I_J_k_(bitCount))
 end function
 
 function ULong_and_ULong_ULong_k_(other as Object) as Object
-    return ULong_create_J_ULong_k_(m.data.and(other.data))
+    return ULong_create_J_ULong_k_(m.get_data().and_J_J_k_(other.get_data()))
 end function
 
 function ULong_or_ULong_ULong_k_(other as Object) as Object
-    return ULong_create_J_ULong_k_(m.data.or(other.data))
+    return ULong_create_J_ULong_k_(m.get_data().or_J_J_k_(other.get_data()))
 end function
 
 function ULong_xor_ULong_ULong_k_(other as Object) as Object
-    return ULong_create_J_ULong_k_(m.data.xor(other.data))
+    return ULong_create_J_ULong_k_(m.get_data().xor_J_J_k_(other.get_data()))
 end function
 
 function ULong_inv_ULong_k_() as Object
-    return ULong_create_J_ULong_k_(m.data.inv())
+    return ULong_create_J_ULong_k_(m.get_data().inv_J_k_())
 end function
 
 function ULong_toByte_B_k_() as Integer
-    return m.data
+    return m.get_data()
 end function
 
 function ULong_toShort_S_k_() as Integer
-    return m.data
+    return m.get_data()
 end function
 
 function ULong_toInt_I_k_() as Integer
-    return m.data
+    return m.get_data()
 end function
 
 function ULong_toLong_J_k_() as LongInteger
-    return m.data
+    return m.get_data()
 end function
 
 function ULong_toUByte_UByte_k_() as Object
-    return UByte_create_B_UByte_k_(m.data)
+    return UByte_create_B_UByte_k_(m.get_data())
 end function
 
 function ULong_toUShort_UShort_k_() as Object
-    return UShort_create_S_UShort_k_(m.data)
+    return UShort_create_S_UShort_k_(m.get_data())
 end function
 
 function ULong_toUInt_UInt_k_() as Object
-    return UInt_create_I_UInt_k_(m.data)
+    return UInt_create_I_UInt_k_(m.get_data())
 end function
 
 function ULong_toULong_ULong_k_() as Object
@@ -263,23 +263,23 @@ function ULong_toULong_ULong_k_() as Object
 end function
 
 function ULong_toFloat_F_k_() as Float
-    return ulongToFloat_J_F_k_(m.data)
+    return ulongToFloat_J_F_k_(m.get_data())
 end function
 
 function ULong_toDouble_D_k_() as Double
-    return ulongToDouble_J_D_k_(m.data)
+    return ulongToDouble_J_D_k_(m.get_data())
 end function
 
 function ULong_toString_Str_k_() as String
-    return ulongToString_J_Str_k_(m.data)
+    return ulongToString_J_Str_k_(m.get_data())
 end function
 
 function ULong_equals_AnyN_Z_k_(other as Dynamic) as Boolean
-    return __kotlin_isInstanceOf(other, "ULong") and (m.data = other.data)
+    return __kotlin_isInstanceOf(other, "ULong") and (m.get_data() = other.get_data())
 end function
 
 function ULong_hashCode_I_k_() as Integer
-    return m.data.hashCode()
+    return m.get_data().hashCode()
 end function
 
 function ULong_get_data_J_k_() as LongInteger
@@ -303,7 +303,7 @@ end function
 
 function ULong_Companion_getInstance() as Object
     if m.ULong_Companion_instance = invalid then
-        m.ULong_Companion_instance = ULong_Companion_create()
+        m.ULong_Companion_instance = ULong_Companion_create_Companion_k_()
     end if
     return m.ULong_Companion_instance
 end function

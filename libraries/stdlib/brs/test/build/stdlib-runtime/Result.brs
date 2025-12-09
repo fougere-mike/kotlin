@@ -18,10 +18,10 @@ end function
 
 function Result_getOrNull_AnyN_k_() as Dynamic
     __when_tmp0 = invalid
-    if m.isFailure then
+    if m.get_isFailure() then
         __when_tmp0 = invalid
     else if true then
-        __when_tmp0 = m.value
+        __when_tmp0 = m.get_value()
     end if
     return __when_tmp0
 
@@ -30,7 +30,7 @@ end function
 function Result_exceptionOrNull_ThrowableN_k_() as Dynamic
     __when_tmp1 = invalid
     if __kotlin_isInstanceOf(tmp0_subject, "Result_Failure") then
-        __when_tmp1 = m.value.exception
+        __when_tmp1 = m.get_value().get_exception()
     else if true then
         __when_tmp1 = invalid
     end if
@@ -40,21 +40,21 @@ end function
 
 function Result_getOrThrow_AnyN_k_() as Dynamic
     m.throwOnFailure()
-    return m.value
+    return m.get_value()
 end function
 
 sub Result_throwOnFailure()
-    if __kotlin_isInstanceOf(m.value, "Result_Failure") then
-        throw m.value.exception
+    if __kotlin_isInstanceOf(m.get_value(), "Result_Failure") then
+        throw m.get_value().get_exception()
     end if
 end sub
 
 function Result_toString_Str_k_() as String
     __when_tmp2 = invalid
     if __kotlin_isInstanceOf(tmp0_subject, "Result_Failure") then
-        __when_tmp2 = (("Failure(" + m.value.exception) + ")")
+        __when_tmp2 = (("Failure(" + m.get_value().get_exception()) + ")")
     else if true then
-        __when_tmp2 = (("Success(" + m.value) + ")")
+        __when_tmp2 = (("Success(" + m.get_value()) + ")")
     end if
     return __when_tmp2
 
@@ -87,11 +87,11 @@ function Result_get_value_AnyN_k_() as Dynamic
 end function
 
 function Result_get_isSuccess_Z_k_() as Boolean
-    return not __kotlin_isInstanceOf(m.value, "Result_Failure")
+    return not __kotlin_isInstanceOf(m.get_value(), "Result_Failure")
 end function
 
 function Result_get_isFailure_Z_k_() as Boolean
-    return __kotlin_isInstanceOf(m.value, "Result_Failure")
+    return __kotlin_isInstanceOf(m.get_value(), "Result_Failure")
 end function
 
 function Result_Companion_create_Companion_k_() as Object
@@ -105,7 +105,7 @@ end function
 
 function Result_Companion_getInstance() as Object
     if m.Result_Companion_instance = invalid then
-        m.Result_Companion_instance = Result_Companion_create()
+        m.Result_Companion_instance = Result_Companion_create_Companion_k_()
     end if
     return m.Result_Companion_instance
 end function

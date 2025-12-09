@@ -60,5 +60,5 @@ end function
 
 function testDogSpeak_Str_k_() as String
     dog = Dog_create_Str_Dog_k_("Rex")
-    return dog.speak()
+    return dog.speak_Str_k_()
 end function

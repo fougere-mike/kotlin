@@ -15,7 +15,7 @@ function DefaultBrsAsserter_create_DefaultBrsAsserter_k_() as Object
 end function
 
 sub DefaultBrsAsserter_assertEquals_StrN_AnyN_AnyN_k_(message as Dynamic, expected as Dynamic, actual as Dynamic)
-    if expected <> actual then
+    if not brsStructuralEquals_AnyN_AnyN_Z_k_(expected, actual) then
         tmp0_elvis_lhs = message
         __when_tmp0 = invalid
         if tmp0_elvis_lhs = invalid then
@@ -23,12 +23,12 @@ sub DefaultBrsAsserter_assertEquals_StrN_AnyN_AnyN_k_(message as Dynamic, expect
         else if true then
             __when_tmp0 = tmp0_elvis_lhs
         end if
-        m.fail(__when_tmp0)
+        m.fail_StrN_k_(__when_tmp0)
     end if
 end sub
 
 sub DefaultBrsAsserter_assertNotEquals_StrN_AnyN_AnyN_k_(message as Dynamic, illegal as Dynamic, actual as Dynamic)
-    if illegal = actual then
+    if brsStructuralEquals_AnyN_AnyN_Z_k_(illegal, actual) then
         tmp0_elvis_lhs = message
         __when_tmp1 = invalid
         if tmp0_elvis_lhs = invalid then
@@ -36,12 +36,12 @@ sub DefaultBrsAsserter_assertNotEquals_StrN_AnyN_AnyN_k_(message as Dynamic, ill
         else if true then
             __when_tmp1 = tmp0_elvis_lhs
         end if
-        m.fail(__when_tmp1)
+        m.fail_StrN_k_(__when_tmp1)
     end if
 end sub
 
 sub DefaultBrsAsserter_assertSame_StrN_AnyN_AnyN_k_(message as Dynamic, expected as Dynamic, actual as Dynamic)
-    if EQEQEQ_AnyN_AnyN_Z_k_(expected, actual).not() then
+    if not EQEQEQ_AnyN_AnyN_Z_k_(expected, actual) then
         tmp0_elvis_lhs = message
         __when_tmp2 = invalid
         if tmp0_elvis_lhs = invalid then
@@ -49,7 +49,7 @@ sub DefaultBrsAsserter_assertSame_StrN_AnyN_AnyN_k_(message as Dynamic, expected
         else if true then
             __when_tmp2 = tmp0_elvis_lhs
         end if
-        m.fail(__when_tmp2)
+        m.fail_StrN_k_(__when_tmp2)
     end if
 end sub
 
@@ -62,12 +62,12 @@ sub DefaultBrsAsserter_assertNotSame_StrN_AnyN_AnyN_k_(message as Dynamic, illeg
         else if true then
             __when_tmp3 = tmp0_elvis_lhs
         end if
-        m.fail(__when_tmp3)
+        m.fail_StrN_k_(__when_tmp3)
     end if
 end sub
 
 sub DefaultBrsAsserter_assertTrue_StrN_Z_k_(message as Dynamic, actual as Boolean)
-    if actual.not() then
+    if not actual then
         tmp0_elvis_lhs = message
         __when_tmp4 = invalid
         if tmp0_elvis_lhs = invalid then
@@ -75,7 +75,7 @@ sub DefaultBrsAsserter_assertTrue_StrN_Z_k_(message as Dynamic, actual as Boolea
         else if true then
             __when_tmp4 = tmp0_elvis_lhs
         end if
-        m.fail(__when_tmp4)
+        m.fail_StrN_k_(__when_tmp4)
     end if
 end sub
 
@@ -88,7 +88,7 @@ sub DefaultBrsAsserter_assertFalse_StrN_Z_k_(message as Dynamic, actual as Boole
         else if true then
             __when_tmp5 = tmp0_elvis_lhs
         end if
-        m.fail(__when_tmp5)
+        m.fail_StrN_k_(__when_tmp5)
     end if
 end sub
 
@@ -101,7 +101,7 @@ sub DefaultBrsAsserter_assertNotNull_StrN_AnyN_k_(message as Dynamic, actual as 
         else if true then
             __when_tmp6 = tmp0_elvis_lhs
         end if
-        m.fail(__when_tmp6)
+        m.fail_StrN_k_(__when_tmp6)
     end if
 end sub
 
@@ -114,7 +114,7 @@ sub DefaultBrsAsserter_assertNull_StrN_AnyN_k_(message as Dynamic, actual as Dyn
         else if true then
             __when_tmp7 = tmp0_elvis_lhs
         end if
-        m.fail(__when_tmp7)
+        m.fail_StrN_k_(__when_tmp7)
     end if
 end sub
 

@@ -13,21 +13,21 @@ function BareAdapter_create_BareAdapter_k_() as Object
     return this
 end function
 
-sub BareAdapter_suite_Str_Z_Function0V_k_(name as String, ignored as Boolean, suiteFn as Function)
+sub BareAdapter_suite_Str_Z_Function0V_k_(name as String, ignored as Boolean, suiteFn as Object)
     if ignored then
         println_AnyN_k_("[SUITE IGNORED] " + name)
         return
     end if
-    m.currentSuite = name
+    m.set_currentSuite(name)
     println_AnyN_k_("[SUITE START] " + name)
     suiteFn.invoke()
     println_AnyN_k_("[SUITE PASS] " + name)
 end sub
 
-sub BareAdapter_test_Str_Z_Function0V_k_(name as String, ignored as Boolean, testFn as Function)
+sub BareAdapter_test_Str_Z_Function0V_k_(name as String, ignored as Boolean, testFn as Object)
     __when_tmp0 = invalid
-    if isNotEmpty_rStr_Z_k_(m.currentSuite) then
-        __when_tmp0 = ((m.currentSuite + ".") + name)
+    if isNotEmpty_rStr_Z_k_(m.get_currentSuite()) then
+        __when_tmp0 = ((m.get_currentSuite() + ".") + name)
     else if true then
         __when_tmp0 = name
     end if
@@ -35,24 +35,24 @@ sub BareAdapter_test_Str_Z_Function0V_k_(name as String, ignored as Boolean, tes
 
     if ignored then
         println_AnyN_k_("[TEST IGNORED] " + fullName)
-        m.results.add(BareAdapter_TestResult_create_Str_Str_Str_StrN_TestResult_k_(m.currentSuite, name, "IGNORED", invalid))
+        m.get_results().add_AnyN_Z_k_(BareAdapter_TestResult_create_Str_Str_Str_StrN_TestResult_k_(m.get_currentSuite(), name, "IGNORED", invalid))
         return
     end if
     println_AnyN_k_("[TEST START] " + fullName)
     testFn.invoke()
     println_AnyN_k_("[TEST PASS] " + fullName)
-    m.results.add(BareAdapter_TestResult_create_Str_Str_Str_StrN_TestResult_k_(m.currentSuite, name, "PASS", invalid))
+    m.get_results().add_AnyN_Z_k_(BareAdapter_TestResult_create_Str_Str_Str_StrN_TestResult_k_(m.get_currentSuite(), name, "PASS", invalid))
 end sub
 
 sub BareAdapter_printSummary()
-    total = m.results.size
-    passed = count_rIterableAnyN_Function1AnyNZ_I_k_(m.results, {invoke: function(it as Object) as Boolean
+    total = m.get_results().get_size()
+    passed = count_rIterableAnyN_Function1AnyNZ_I_k_(m.get_results(), {invoke: function(it as Object) as Boolean
         return it.status = "PASS"
     end function})
-    failed = count_rIterableAnyN_Function1AnyNZ_I_k_(m.results, {invoke: function(it as Object) as Boolean
+    failed = count_rIterableAnyN_Function1AnyNZ_I_k_(m.get_results(), {invoke: function(it as Object) as Boolean
         return it.status = "FAIL"
     end function})
-    ignored = count_rIterableAnyN_Function1AnyNZ_I_k_(m.results, {invoke: function(it as Object) as Boolean
+    ignored = count_rIterableAnyN_Function1AnyNZ_I_k_(m.get_results(), {invoke: function(it as Object) as Boolean
         return it.status = "IGNORED"
     end function})
     println_AnyN_k_(chr(10) + "[TEST SUMMARY]")
@@ -75,7 +75,7 @@ sub BareAdapter_set_currentSuite_Str_k_(value as String)
     m.currentSuite = value
 end sub
 
-function BareAdapter_TestResult_create(suite as String, test as String, status as String, message as Dynamic) as Object
+function BareAdapter_TestResult_create_Str_Str_Str_StrN_TestResult_k_(suite as String, test as String, status as String, message as Dynamic) as Object
     this = {}
     this.__type = "BareAdapter_TestResult"
     this.__proto = ["BareAdapter_TestResult"]
@@ -83,18 +83,6 @@ function BareAdapter_TestResult_create(suite as String, test as String, status a
     this.test = test
     this.status = status
     this.message = message
-    this.component1_Str_k_ = BareAdapter_TestResult_component1_Str_k_
-    this.component2_Str_k_ = BareAdapter_TestResult_component2_Str_k_
-    this.component3_Str_k_ = BareAdapter_TestResult_component3_Str_k_
-    this.component4_StrN_k_ = BareAdapter_TestResult_component4_StrN_k_
-    this.copy_Str_Str_Str_StrN_TestResult_k_ = BareAdapter_TestResult_copy_Str_Str_Str_StrN_TestResult_k_
-    this.toString_Str_k_ = BareAdapter_TestResult_toString_Str_k_
-    this.hashCode_I_k_ = BareAdapter_TestResult_hashCode_I_k_
-    this.equals_AnyN_Z_k_ = BareAdapter_TestResult_equals_AnyN_Z_k_
-    this.get_suite = BareAdapter_TestResult_get_suite_Str_k_
-    this.get_test = BareAdapter_TestResult_get_test_Str_k_
-    this.get_status = BareAdapter_TestResult_get_status_Str_k_
-    this.get_message = BareAdapter_TestResult_get_message_StrN_k_
     this.equals = BareAdapter_TestResult_equals
     this.hashCode = BareAdapter_TestResult_hashCode
     this.toString = BareAdapter_TestResult_toString
@@ -154,7 +142,7 @@ function BareAdapter_TestResult_copy(suite = invalid, test = invalid, status = i
     if message = invalid then
         message = m.message
     end if
-    return BareAdapter_TestResult_create(suite, test, status, message)
+    return BareAdapter_TestResult_create_Str_Str_Str_StrN_TestResult_k_(suite, test, status, message)
 end function
 
 function BareAdapter_TestResult_component1() as String

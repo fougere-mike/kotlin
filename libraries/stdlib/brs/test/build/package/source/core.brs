@@ -8,7 +8,7 @@ end function
 
 function Invalid_getInstance() as Object
     if m.Invalid_instance = invalid then
-        m.Invalid_instance = Invalid_create()
+        m.Invalid_instance = Invalid_create_Invalid_k_()
     end if
     return m.Invalid_instance
 end function
