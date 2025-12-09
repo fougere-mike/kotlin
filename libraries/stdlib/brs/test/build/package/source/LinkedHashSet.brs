@@ -1,7 +1,8 @@
 function LinkedHashSet_create_LinkedHashSetAnyN_k_() as Object
     this = {}
     this.__type = "LinkedHashSet"
-    this.__proto = ["LinkedHashSet"]
+    this.__proto = ["LinkedHashSet", "MutableSet", "Set", "Collection", "Iterable", "MutableCollection", "MutableIterable"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = LinkedHashSet_isEmpty_Z_k_
     this.contains_AnyN_Z_k_ = LinkedHashSet_contains_AnyN_Z_k_
     this.containsAll_CollectionAnyN_Z_k_ = LinkedHashSet_containsAll_CollectionAnyN_Z_k_
@@ -13,8 +14,11 @@ function LinkedHashSet_create_LinkedHashSetAnyN_k_() as Object
     this.retainAll_CollectionAnyN_Z_k_ = LinkedHashSet_retainAll_CollectionAnyN_Z_k_
     this.clear = LinkedHashSet_clear
     this.equals_AnyN_Z_k_ = LinkedHashSet_equals_AnyN_Z_k_
+    this.equals = LinkedHashSet_equals_AnyN_Z_k_
     this.hashCode_I_k_ = LinkedHashSet_hashCode_I_k_
+    this.hashCode = LinkedHashSet_hashCode_I_k_
     this.toString_Str_k_ = LinkedHashSet_toString_Str_k_
+    this.toString = LinkedHashSet_toString_Str_k_
     this.get_map = LinkedHashSet_get_map_LinkedHashMapAnyNZ_k_
     this.get_size = LinkedHashSet_get_size_I_k_
     this.map = LinkedHashMap_create_LinkedHashMapAnyNAnyN_k_()
@@ -24,7 +28,8 @@ end function
 function LinkedHashSet_create_I_LinkedHashSetAnyN_k_(initialCapacity as Integer) as Object
     this = {}
     this.__type = "LinkedHashSet"
-    this.__proto = ["LinkedHashSet"]
+    this.__proto = ["LinkedHashSet", "MutableSet", "Set", "Collection", "Iterable", "MutableCollection", "MutableIterable"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = LinkedHashSet_isEmpty_Z_k_
     this.contains_AnyN_Z_k_ = LinkedHashSet_contains_AnyN_Z_k_
     this.containsAll_CollectionAnyN_Z_k_ = LinkedHashSet_containsAll_CollectionAnyN_Z_k_
@@ -36,8 +41,11 @@ function LinkedHashSet_create_I_LinkedHashSetAnyN_k_(initialCapacity as Integer)
     this.retainAll_CollectionAnyN_Z_k_ = LinkedHashSet_retainAll_CollectionAnyN_Z_k_
     this.clear = LinkedHashSet_clear
     this.equals_AnyN_Z_k_ = LinkedHashSet_equals_AnyN_Z_k_
+    this.equals = LinkedHashSet_equals_AnyN_Z_k_
     this.hashCode_I_k_ = LinkedHashSet_hashCode_I_k_
+    this.hashCode = LinkedHashSet_hashCode_I_k_
     this.toString_Str_k_ = LinkedHashSet_toString_Str_k_
+    this.toString = LinkedHashSet_toString_Str_k_
     this.get_map = LinkedHashSet_get_map_LinkedHashMapAnyNZ_k_
     this.get_size = LinkedHashSet_get_size_I_k_
     this.map = LinkedHashMap_create_I_LinkedHashMapAnyNAnyN_k_(initialCapacity)
@@ -47,7 +55,8 @@ end function
 function LinkedHashSet_create_I_F_LinkedHashSetAnyN_k_(initialCapacity as Integer, loadFactor as Float) as Object
     this = {}
     this.__type = "LinkedHashSet"
-    this.__proto = ["LinkedHashSet"]
+    this.__proto = ["LinkedHashSet", "MutableSet", "Set", "Collection", "Iterable", "MutableCollection", "MutableIterable"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = LinkedHashSet_isEmpty_Z_k_
     this.contains_AnyN_Z_k_ = LinkedHashSet_contains_AnyN_Z_k_
     this.containsAll_CollectionAnyN_Z_k_ = LinkedHashSet_containsAll_CollectionAnyN_Z_k_
@@ -59,8 +68,11 @@ function LinkedHashSet_create_I_F_LinkedHashSetAnyN_k_(initialCapacity as Intege
     this.retainAll_CollectionAnyN_Z_k_ = LinkedHashSet_retainAll_CollectionAnyN_Z_k_
     this.clear = LinkedHashSet_clear
     this.equals_AnyN_Z_k_ = LinkedHashSet_equals_AnyN_Z_k_
+    this.equals = LinkedHashSet_equals_AnyN_Z_k_
     this.hashCode_I_k_ = LinkedHashSet_hashCode_I_k_
+    this.hashCode = LinkedHashSet_hashCode_I_k_
     this.toString_Str_k_ = LinkedHashSet_toString_Str_k_
+    this.toString = LinkedHashSet_toString_Str_k_
     this.get_map = LinkedHashSet_get_map_LinkedHashMapAnyNZ_k_
     this.get_size = LinkedHashSet_get_size_I_k_
     this.map = LinkedHashMap_create_I_F_LinkedHashMapAnyNAnyN_k_(initialCapacity, loadFactor)
@@ -70,7 +82,8 @@ end function
 function LinkedHashSet_create_CollectionAnyN_LinkedHashSetAnyN_k_(elements as Object) as Object
     this = {}
     this.__type = "LinkedHashSet"
-    this.__proto = ["LinkedHashSet"]
+    this.__proto = ["LinkedHashSet", "MutableSet", "Set", "Collection", "Iterable", "MutableCollection", "MutableIterable"]
+    this.__id = __kotlin_nextObjectId()
     this.isEmpty_Z_k_ = LinkedHashSet_isEmpty_Z_k_
     this.contains_AnyN_Z_k_ = LinkedHashSet_contains_AnyN_Z_k_
     this.containsAll_CollectionAnyN_Z_k_ = LinkedHashSet_containsAll_CollectionAnyN_Z_k_
@@ -82,8 +95,11 @@ function LinkedHashSet_create_CollectionAnyN_LinkedHashSetAnyN_k_(elements as Ob
     this.retainAll_CollectionAnyN_Z_k_ = LinkedHashSet_retainAll_CollectionAnyN_Z_k_
     this.clear = LinkedHashSet_clear
     this.equals_AnyN_Z_k_ = LinkedHashSet_equals_AnyN_Z_k_
+    this.equals = LinkedHashSet_equals_AnyN_Z_k_
     this.hashCode_I_k_ = LinkedHashSet_hashCode_I_k_
+    this.hashCode = LinkedHashSet_hashCode_I_k_
     this.toString_Str_k_ = LinkedHashSet_toString_Str_k_
+    this.toString = LinkedHashSet_toString_Str_k_
     this.get_map = LinkedHashSet_get_map_LinkedHashMapAnyNZ_k_
     this.get_size = LinkedHashSet_get_size_I_k_
     this.map = LinkedHashMap_create_I_LinkedHashMapAnyNAnyN_k_(elements.get_size())
@@ -100,7 +116,7 @@ function LinkedHashSet_contains_AnyN_Z_k_(element as Dynamic) as Boolean
 end function
 
 function LinkedHashSet_containsAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
-    for each element in elements.array
+    for each element in elements
         if not m.contains_AnyN_Z_k_(element) then
             return false
         end if
@@ -130,7 +146,7 @@ end function
 
 function LinkedHashSet_addAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
     modified = false
-    for each element in elements.array
+    for each element in elements
         if m.add_AnyN_Z_k_(element) then
             modified = true
         end if
@@ -140,7 +156,7 @@ end function
 
 function LinkedHashSet_removeAll_CollectionAnyN_Z_k_(elements as Object) as Boolean
     modified = false
-    for each element in elements.array
+    for each element in elements
         if m.remove_AnyN_Z_k_(element) then
             modified = true
         end if
@@ -165,7 +181,7 @@ sub LinkedHashSet_clear()
 end sub
 
 function LinkedHashSet_equals_AnyN_Z_k_(other as Dynamic) as Boolean
-    if EQEQEQ_AnyN_AnyN_Z_k_(other, m) then
+    if __kotlin_identityEquals(other, m) then
         return true
     end if
     if not __kotlin_isInstanceOf(other, "Set") then
@@ -181,7 +197,7 @@ end function
 
 function LinkedHashSet_hashCode_I_k_() as Integer
     result = 0
-    for each element in m.array
+    for each element in m
         tmp0_safe_receiver = element
         __when_tmp0 = invalid
         if tmp0_safe_receiver = invalid then
@@ -217,12 +233,13 @@ end function
 function LinkedHashSet_SetIterator_create_MutableIteratorAnyN_SetIteratorAnyN_k_(keyIterator as Object) as Object
     this = {}
     this.__type = "LinkedHashSet_SetIterator"
-    this.__proto = ["LinkedHashSet_SetIterator"]
-    this.keyIterator = keyIterator
+    this.__proto = ["LinkedHashSet_SetIterator", "MutableIterator", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
     this.hasNext_Z_k_ = LinkedHashSet_SetIterator_hasNext_Z_k_
     this.next_AnyN_k_ = LinkedHashSet_SetIterator_next_AnyN_k_
     this.remove = LinkedHashSet_SetIterator_remove
     this.get_keyIterator = LinkedHashSet_SetIterator_get_keyIterator_MutableIteratorAnyN_k_
+    this.keyIterator = keyIterator
     return this
 end function
 

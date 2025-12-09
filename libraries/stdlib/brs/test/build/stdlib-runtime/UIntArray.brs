@@ -1,8 +1,8 @@
 function UIntArray_create_IntArray_UIntArray_k_(storage as Object) as Object
     this = {}
     this.__type = "UIntArray"
-    this.__proto = ["UIntArray"]
-    this.storage = storage
+    this.__proto = ["UIntArray", "Collection", "Iterable"]
+    this.__id = __kotlin_nextObjectId()
     this.get_I_UInt_k_ = UIntArray_get_I_UInt_k_
     this.set_I_UInt_k_ = UIntArray_set_I_UInt_k_
     this.iterator_IteratorUInt_k_ = UIntArray_iterator_IteratorUInt_k_
@@ -10,10 +10,14 @@ function UIntArray_create_IntArray_UIntArray_k_(storage as Object) as Object
     this.containsAll_CollectionUInt_Z_k_ = UIntArray_containsAll_CollectionUInt_Z_k_
     this.isEmpty_Z_k_ = UIntArray_isEmpty_Z_k_
     this.equals_AnyN_Z_k_ = UIntArray_equals_AnyN_Z_k_
+    this.equals = UIntArray_equals_AnyN_Z_k_
     this.hashCode_I_k_ = UIntArray_hashCode_I_k_
+    this.hashCode = UIntArray_hashCode_I_k_
     this.toString_Str_k_ = UIntArray_toString_Str_k_
+    this.toString = UIntArray_toString_Str_k_
     this.get_storage = UIntArray_get_storage_IntArray_k_
     this.get_size = UIntArray_get_size_I_k_
+    this.storage = storage
     return this
 end function
 
@@ -63,7 +67,7 @@ function UIntArray_contains_UInt_Z_k_(element as Object) as Boolean
 end function
 
 function UIntArray_containsAll_CollectionUInt_Z_k_(elements as Object) as Boolean
-    for each element in elements.array
+    for each element in elements
         if not m.contains_UInt_Z_k_(element) then
             return false
         end if
@@ -178,14 +182,15 @@ end function
 function UIntArray_Iterator_create_IntArray_Iterator_k_(array as Object) as Object
     this = {}
     this.__type = "UIntArray_Iterator"
-    this.__proto = ["UIntArray_Iterator"]
-    this.array = array
-    this.index = 0
+    this.__proto = ["UIntArray_Iterator", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
     this.hasNext_Z_k_ = UIntArray_Iterator_hasNext_Z_k_
     this.next_UInt_k_ = UIntArray_Iterator_next_UInt_k_
     this.get_array = UIntArray_Iterator_get_array_IntArray_k_
     this.get_index = UIntArray_Iterator_get_index_I_k_
     this.set_index = UIntArray_Iterator_set_index_I_k_
+    this.array = array
+    this.index = 0
     return this
 end function
 
@@ -196,9 +201,11 @@ end function
 function UIntArray_Iterator_next_UInt_k_() as Object
     __when_tmp0 = invalid
     if m.get_index() < m.get_array().get_size() then
-        __when_tmp0 = toUInt_rI_UInt_k_(m.get_array().get_I_I_k_(m.set_index(m.get_index() + 1)))
+        __incr_tmp_14 = m.get_index()
+        m.set_index(__incr_tmp_14 + 1)
+        __when_tmp0 = toUInt_rI_UInt_k_(m.get_array().get_I_I_k_(__incr_tmp_14))
     else if true then
-        throw NoSuchElementException_create_StrN_NoSuchElementException_k_(Str(m.get_index()))
+        throw NoSuchElementException_create_StrN_NoSuchElementException_k_(__kotlin_numToStr_I_Str_k_(m.get_index()))
     end if
     return __when_tmp0
 

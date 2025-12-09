@@ -597,8 +597,25 @@ class BrsRenderer(
         conditional.thenExpr.accept(collector, Unit)
         conditional.elseExpr.accept(collector, Unit)
 
-        // Filter to only include simple variable names (not m, not containing dots)
-        val params = identifiers.filter { it != "m" && !it.contains(".") }.sorted()
+        // Filter to only include simple variable names (not m, not containing dots, not built-in functions)
+        // Built-in BrightScript functions and Kotlin runtime functions that should not be captured as variables
+        val builtinFunctions = setOf(
+            // BrightScript built-ins
+            "Str", "LTrim", "RTrim", "Trim", "UCase", "LCase", "Len", "Left", "Right", "Mid",
+            "Instr", "Asc", "Chr", "Val", "Type", "GetInterface", "CreateObject", "GetGlobalAA",
+            "Box", "Abs", "Atn", "Cos", "Exp", "Fix", "Int", "Log", "Rnd", "Sgn", "Sin", "Sqr", "Tan",
+            "FormatJSON", "ParseJSON", "RebootSystem", "Sleep", "Wait", "GetLastRunCompileError",
+            "GetLastRunRuntimeError", "Run", "Substitute",
+            // Kotlin runtime helper functions (top-level functions accessible from IIFEs)
+            "__kotlin_numToStr", "__kotlin_identityEquals", "__kotlin_nextObjectId",
+            // Mangled versions of runtime functions
+            "__kotlin_numToStr_I_Str_k_", "__kotlin_numToStr_J_Str_k_",
+            "__kotlin_numToStr_F_Str_k_", "__kotlin_numToStr_D_Str_k_",
+            "__kotlin_numToStr_AnyN_Str_k_"
+        )
+        val params = identifiers.filter {
+            it != "m" && !it.contains(".") && it !in builtinFunctions
+        }.sorted()
 
         if (params.isEmpty()) {
             // No variables to capture - use simple IIFE

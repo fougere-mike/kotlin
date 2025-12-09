@@ -37,16 +37,16 @@ function decapitalize_rStr_Str_k_(m as String) as String
 end function
 
 function contentEquals_rCharSequenceN_CharSequenceN_Z_k_(m as Dynamic, other as Dynamic) as Boolean
-    if EQEQEQ_AnyN_AnyN_Z_k_(m, other) then
+    if __kotlin_identityEquals(m, other) then
         return true
     end if
     if (m = invalid) or (other = invalid) then
         return false
     end if
-    if m.get_length() <> other.get_length() then
+    if Len(m) <> Len(other) then
         return false
     end if
-    progression = until_rI_I_IntRange_k_(0, m.get_length())
+    progression = until_rI_I_IntRange_k_(0, Len(m))
     inductionVariable = progression.get_first()
     last = progression.get_last()
     if inductionVariable <= last then
@@ -74,17 +74,17 @@ function contentEquals_rCharSequenceN_CharSequenceN_Z_k_(m as Dynamic, other as 
 end function
 
 function contentEquals_rCharSequenceN_CharSequenceN_Z_Z_k_(m as Dynamic, other as Dynamic, ignoreCase as Boolean) as Boolean
-    if EQEQEQ_AnyN_AnyN_Z_k_(m, other) then
+    if __kotlin_identityEquals(m, other) then
         return true
     end if
     if (m = invalid) or (other = invalid) then
         return false
     end if
-    if m.get_length() <> other.get_length() then
+    if Len(m) <> Len(other) then
         return false
     end if
     if not ignoreCase then
-        progression = until_rI_I_IntRange_k_(0, m.get_length())
+        progression = until_rI_I_IntRange_k_(0, Len(m))
         inductionVariable = progression.get_first()
         last = progression.get_last()
         if inductionVariable <= last then
@@ -108,7 +108,7 @@ function contentEquals_rCharSequenceN_CharSequenceN_Z_Z_k_(m as Dynamic, other a
 
         end if
     else if true then
-        progression = until_rI_I_IntRange_k_(0, m.get_length())
+        progression = until_rI_I_IntRange_k_(0, Len(m))
         inductionVariable = progression.get_first()
         last = progression.get_last()
         if inductionVariable <= last then
@@ -154,15 +154,15 @@ function nativeLastIndexOf_rStr_Str_I_I_k_(m as String, str as String, fromIndex
 end function
 
 function substring_rStr_I_Str_k_(m as String, startIndex as Integer) as String
-    return substring_rStr_I_I_Str_k_(m, startIndex, m.get_length())
+    return substring_rStr_I_I_Str_k_(m, startIndex, Len(m))
 end function
 
 function substring_rStr_I_I_Str_k_(m as String, startIndex as Integer, endIndex as Integer) as String
     if startIndex < 0 then
         throw IndexOutOfBoundsException_create_StrN_IndexOutOfBoundsException_k_("startIndex: " + startIndex)
     end if
-    if endIndex > m.get_length() then
-        throw IndexOutOfBoundsException_create_StrN_IndexOutOfBoundsException_k_((("endIndex: " + endIndex) + ", length: ") + m.get_length())
+    if endIndex > Len(m) then
+        throw IndexOutOfBoundsException_create_StrN_IndexOutOfBoundsException_k_((("endIndex: " + endIndex) + ", length: ") + Len(m))
     end if
     if startIndex > endIndex then
         throw IllegalArgumentException_create_StrN_IllegalArgumentException_k_((("startIndex: " + startIndex) + " > endIndex: ") + endIndex)
@@ -180,10 +180,10 @@ function indexOf_rStr_Str_I_Z_I_k_(m as String, string_ as String, startIndex = 
     if startIndex < 0 then
         return indexOf_rStr_Str_I_Z_I_k_(m, string_, 0)
     end if
-    if startIndex >= m.get_length() then
+    if startIndex >= Len(m) then
         __when_tmp2 = invalid
         if isEmpty_rStr_Z_k_(string_) then
-            __when_tmp2 = m.get_length()
+            __when_tmp2 = Len(m)
         else if true then
             __when_tmp2 = -1
         end if
@@ -200,22 +200,22 @@ function lastIndexOf_rStr_Str_I_Z_I_k_(m as String, string_ as String, startInde
     if startIndex < 0 then
         return -1
     end if
-    return nativeLastIndexOf_rStr_Str_I_I_k_(m, string_, coerceAtMost_rI_I_I_k_(startIndex, m.get_length()))
+    return nativeLastIndexOf_rStr_Str_I_I_k_(m, string_, coerceAtMost_rI_I_I_k_(startIndex, Len(m)))
 end function
 
 function isEmpty_rStr_Z_k_(m as String) as Boolean
-    return m.get_length() = 0
+    return Len(m) = 0
 end function
 
 function isNotEmpty_rStr_Z_k_(m as String) as Boolean
-    return m.get_length() > 0
+    return Len(m) > 0
 end function
 
 function isBlank_rStr_Z_k_(m as String) as Boolean
     if isEmpty_rStr_Z_k_(m) then
         return true
     end if
-    progression = until_rI_I_IntRange_k_(0, m.get_length())
+    progression = until_rI_I_IntRange_k_(0, Len(m))
     inductionVariable = progression.get_first()
     last = progression.get_last()
     if inductionVariable <= last then
@@ -247,12 +247,12 @@ function isNotBlank_rStr_Z_k_(m as String) as Boolean
 end function
 
 function get_lastIndex_rStr_I_k_(m as String) as Integer
-    return m.get_length() - 1
+    return Len(m) - 1
 end function
 
 function getOrElse_rStr_I_Function1IC_C_k_(m as String, index as Integer, defaultValue as Object) as Object
     __when_tmp3 = invalid
-    if (index >= 0) and (index < m.get_length()) then
+    if (index >= 0) and (index < Len(m)) then
         __when_tmp3 = m.get_I_C_k_(index)
     else if true then
         __when_tmp3 = defaultValue.invoke(index)
@@ -265,12 +265,12 @@ function padStart_rStr_I_C_Str_k_(m as String, length as Integer, padChar = " ")
     if length <= 0 then
         throw IllegalArgumentException_create_StrN_IllegalArgumentException_k_(("Desired length " + length) + " is less than zero.")
     end if
-    if m.get_length() >= length then
+    if Len(m) >= length then
         return m
     end if
     sb = StringBuilder_create_I_StringBuilder_k_(length)
     i = 0
-    times = length - m.get_length()
+    times = length - Len(m)
     while i < times
         sb.append_C_StringBuilder_k_(padChar)
         i = (i + 1)
@@ -283,13 +283,13 @@ function padEnd_rStr_I_C_Str_k_(m as String, length as Integer, padChar = " ") a
     if length <= 0 then
         throw IllegalArgumentException_create_StrN_IllegalArgumentException_k_(("Desired length " + length) + " is less than zero.")
     end if
-    if m.get_length() >= length then
+    if Len(m) >= length then
         return m
     end if
     sb = StringBuilder_create_I_StringBuilder_k_(length)
     sb.append_StrN_StringBuilder_k_(m)
     i = 0
-    times = length - m.get_length()
+    times = length - Len(m)
     while i < times
         sb.append_C_StringBuilder_k_(padChar)
         i = (i + 1)
@@ -307,7 +307,7 @@ function repeat_rStr_I_Str_k_(m as String, n as Integer) as String
     if n = 1 then
         return m
     end if
-    sb = StringBuilder_create_I_StringBuilder_k_(m.get_length() * n)
+    sb = StringBuilder_create_I_StringBuilder_k_(Len(m) * n)
     i = 0
     while i < n
         sb.append_StrN_StringBuilder_k_(m)
@@ -317,33 +317,33 @@ function repeat_rStr_I_Str_k_(m as String, n as Integer) as String
 end function
 
 function startsWith_rStr_Str_Z_Z_k_(m as String, prefix as String, ignoreCase = false) as Boolean
-    if prefix.get_length() > m.get_length() then
+    if Len(prefix) > Len(m) then
         return false
     end if
     if ignoreCase then
-        return equals_rStr_StrN_Z_Z_k_(substring_rStr_I_I_Str_k_(m, 0, prefix.get_length()), prefix, true)
+        return equals_rStr_StrN_Z_Z_k_(substring_rStr_I_I_Str_k_(m, 0, Len(prefix)), prefix, true)
     end if
-    return substring_rStr_I_I_Str_k_(m, 0, prefix.get_length()) = prefix
+    return substring_rStr_I_I_Str_k_(m, 0, Len(prefix)) = prefix
 end function
 
 function endsWith_rStr_Str_Z_Z_k_(m as String, suffix as String, ignoreCase = false) as Boolean
-    if suffix.get_length() > m.get_length() then
+    if Len(suffix) > Len(m) then
         return false
     end if
     if ignoreCase then
-        return equals_rStr_StrN_Z_Z_k_(substring_rStr_I_Str_k_(m, m.get_length() - suffix.get_length()), suffix, true)
+        return equals_rStr_StrN_Z_Z_k_(substring_rStr_I_Str_k_(m, Len(m) - Len(suffix)), suffix, true)
     end if
-    return substring_rStr_I_Str_k_(m, m.get_length() - suffix.get_length()) = suffix
+    return substring_rStr_I_Str_k_(m, Len(m) - Len(suffix)) = suffix
 end function
 
 function equals_rStr_StrN_Z_Z_k_(m as String, other as Dynamic, ignoreCase = false) as Boolean
     if other = invalid then
         return false
     end if
-    if EQEQEQ_AnyN_AnyN_Z_k_(m, other) then
+    if __kotlin_identityEquals(m, other) then
         return true
     end if
-    if m.get_length() <> other.get_length() then
+    if Len(m) <> Len(other) then
         return false
     end if
     if not ignoreCase then

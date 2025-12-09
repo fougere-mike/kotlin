@@ -3,6 +3,7 @@ function Person_create_Str_I_Person_k_(name as String, age as Integer) as Object
     this = {}
     this.__type = "Person"
     this.__proto = ["Person"]
+    this.__id = __kotlin_nextObjectId()
     this.name = name
     this.age = age
     this.greet_Str_k_ = Person_greet_Str_k_
@@ -13,11 +14,11 @@ function Person_create_Str_I_Person_k_(name as String, age as Integer) as Object
 end function
 
 function Person_greet_Str_k_() as String
-    return "Hello, my name is " + m.name
+    return "Hello, my name is " + m.get_name()
 end function
 
 function Person_isAdult_Z_k_() as Boolean
-    return m.age >= 18
+    return m.get_age() >= 18
 end function
 
 function Person_get_name_Str_k_() as String

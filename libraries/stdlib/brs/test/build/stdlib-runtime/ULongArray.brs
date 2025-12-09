@@ -1,8 +1,8 @@
 function ULongArray_create_LongArray_ULongArray_k_(storage as Object) as Object
     this = {}
     this.__type = "ULongArray"
-    this.__proto = ["ULongArray"]
-    this.storage = storage
+    this.__proto = ["ULongArray", "Collection", "Iterable"]
+    this.__id = __kotlin_nextObjectId()
     this.get_I_ULong_k_ = ULongArray_get_I_ULong_k_
     this.set_I_ULong_k_ = ULongArray_set_I_ULong_k_
     this.iterator_IteratorULong_k_ = ULongArray_iterator_IteratorULong_k_
@@ -10,10 +10,14 @@ function ULongArray_create_LongArray_ULongArray_k_(storage as Object) as Object
     this.containsAll_CollectionULong_Z_k_ = ULongArray_containsAll_CollectionULong_Z_k_
     this.isEmpty_Z_k_ = ULongArray_isEmpty_Z_k_
     this.equals_AnyN_Z_k_ = ULongArray_equals_AnyN_Z_k_
+    this.equals = ULongArray_equals_AnyN_Z_k_
     this.hashCode_I_k_ = ULongArray_hashCode_I_k_
+    this.hashCode = ULongArray_hashCode_I_k_
     this.toString_Str_k_ = ULongArray_toString_Str_k_
+    this.toString = ULongArray_toString_Str_k_
     this.get_storage = ULongArray_get_storage_LongArray_k_
     this.get_size = ULongArray_get_size_I_k_
+    this.storage = storage
     return this
 end function
 
@@ -63,7 +67,7 @@ function ULongArray_contains_ULong_Z_k_(element as Object) as Boolean
 end function
 
 function ULongArray_containsAll_CollectionULong_Z_k_(elements as Object) as Boolean
-    for each element in elements.array
+    for each element in elements
         if not m.contains_ULong_Z_k_(element) then
             return false
         end if
@@ -119,7 +123,7 @@ function ULongArray_hashCode_I_k_() as Integer
         inductionVariable = (inductionVariable + 1)
 
         element = m.get_storage().get_I_J_k_(i)
-        result = ((31 * result) + element.xor_J_J_k_(element.ushr_I_J_k_(32)))
+        result = ((31 * result) + xor_rJ_J_J_k_(element, ushr_rJ_I_J_k_(element, 32)))
 
 
         while i <> last
@@ -127,7 +131,7 @@ function ULongArray_hashCode_I_k_() as Integer
             inductionVariable = (inductionVariable + 1)
 
             element = m.get_storage().get_I_J_k_(i)
-            result = ((31 * result) + element.xor_J_J_k_(element.ushr_I_J_k_(32)))
+            result = ((31 * result) + xor_rJ_J_J_k_(element, ushr_rJ_I_J_k_(element, 32)))
 
         end while
 
@@ -180,14 +184,15 @@ end function
 function ULongArray_Iterator_create_LongArray_Iterator_k_(array as Object) as Object
     this = {}
     this.__type = "ULongArray_Iterator"
-    this.__proto = ["ULongArray_Iterator"]
-    this.array = array
-    this.index = 0
+    this.__proto = ["ULongArray_Iterator", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
     this.hasNext_Z_k_ = ULongArray_Iterator_hasNext_Z_k_
     this.next_ULong_k_ = ULongArray_Iterator_next_ULong_k_
     this.get_array = ULongArray_Iterator_get_array_LongArray_k_
     this.get_index = ULongArray_Iterator_get_index_I_k_
     this.set_index = ULongArray_Iterator_set_index_I_k_
+    this.array = array
+    this.index = 0
     return this
 end function
 
@@ -198,9 +203,11 @@ end function
 function ULongArray_Iterator_next_ULong_k_() as Object
     __when_tmp0 = invalid
     if m.get_index() < m.get_array().get_size() then
-        __when_tmp0 = toULong_rJ_ULong_k_(m.get_array().get_I_J_k_(m.set_index(m.get_index() + 1)))
+        __incr_tmp_15 = m.get_index()
+        m.set_index(__incr_tmp_15 + 1)
+        __when_tmp0 = toULong_rJ_ULong_k_(m.get_array().get_I_J_k_(__incr_tmp_15))
     else if true then
-        throw NoSuchElementException_create_StrN_NoSuchElementException_k_(Str(m.get_index()))
+        throw NoSuchElementException_create_StrN_NoSuchElementException_k_(__kotlin_numToStr_I_Str_k_(m.get_index()))
     end if
     return __when_tmp0
 

@@ -1,7 +1,8 @@
 function RoMessagePort_create_RoMessagePort_k_() as Object
     this = {}
     this.__type = "RoMessagePort"
-    this.__proto = ["RoMessagePort"]
+    this.__proto = ["RoMessagePort", "IMessagePort"]
+    this.__id = __kotlin_nextObjectId()
     this.waitMessage_I_DynamicN_k_ = RoMessagePort_waitMessage_I_DynamicN_k_
     this.getMessage_DynamicN_k_ = RoMessagePort_getMessage_DynamicN_k_
     this.peekMessage_DynamicN_k_ = RoMessagePort_peekMessage_DynamicN_k_
@@ -14,7 +15,8 @@ end function
 function RoMessagePort_create_Dynamic_RoMessagePort_k_(nativePort as Object) as Object
     this = {}
     this.__type = "RoMessagePort"
-    this.__proto = ["RoMessagePort"]
+    this.__proto = ["RoMessagePort", "IMessagePort"]
+    this.__id = __kotlin_nextObjectId()
     this.waitMessage_I_DynamicN_k_ = RoMessagePort_waitMessage_I_DynamicN_k_
     this.getMessage_DynamicN_k_ = RoMessagePort_getMessage_DynamicN_k_
     this.peekMessage_DynamicN_k_ = RoMessagePort_peekMessage_DynamicN_k_

@@ -1,19 +1,8 @@
 function JsonTestAdapter_create_JsonTestAdapter_k_() as Object
     this = {}
     this.__type = "JsonTestAdapter"
-    this.__proto = ["JsonTestAdapter"]
-    this.currentSuite = ""
-    this.suiteTimer = RoTimespan_create_RoTimespan_k_()
-    this.testTimer = RoTimespan_create_RoTimespan_k_()
-    this.runTimer = RoTimespan_create_RoTimespan_k_()
-    this.suitePassed = 0
-    this.suiteFailed = 0
-    this.suiteIgnored = 0
-    this.totalSuites = 0
-    this.totalPassed = 0
-    this.totalFailed = 0
-    this.totalIgnored = 0
-    this.runStarted = false
+    this.__proto = ["JsonTestAdapter", "FrameworkAdapter"]
+    this.__id = __kotlin_nextObjectId()
     this.startRun = JsonTestAdapter_startRun
     this.endRun = JsonTestAdapter_endRun
     this.suite_Str_Z_Function0V_k_ = JsonTestAdapter_suite_Str_Z_Function0V_k_
@@ -44,6 +33,18 @@ function JsonTestAdapter_create_JsonTestAdapter_k_() as Object
     this.set_totalIgnored = JsonTestAdapter_set_totalIgnored_I_k_
     this.get_runStarted = JsonTestAdapter_get_runStarted_Z_k_
     this.set_runStarted = JsonTestAdapter_set_runStarted_Z_k_
+    this.currentSuite = ""
+    this.suiteTimer = RoTimespan_create_RoTimespan_k_()
+    this.testTimer = RoTimespan_create_RoTimespan_k_()
+    this.runTimer = RoTimespan_create_RoTimespan_k_()
+    this.suitePassed = 0
+    this.suiteFailed = 0
+    this.suiteIgnored = 0
+    this.totalSuites = 0
+    this.totalPassed = 0
+    this.totalFailed = 0
+    this.totalIgnored = 0
+    this.runStarted = false
     return this
 end function
 

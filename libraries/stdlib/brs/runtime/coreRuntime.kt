@@ -26,11 +26,50 @@ internal fun equals(obj1: Any?, obj2: Any?): Boolean {
 
 /**
  * Converts any value to a string representation.
+ *
+ * Written using only if-statements (not if-expressions) to avoid generating
+ * IIFEs that cause scope issues with global built-in functions in BrightScript.
  */
 internal fun toString(obj: Any?): String {
     if (obj == null) return "null"
-    return obj.toString()
+
+    // Get type string
+    val t = brsType(obj)
+
+    // String types - return as-is
+    if (t == "String" || t == "roString") {
+        @Suppress("UNCHECKED_CAST")
+        return obj as String
+    }
+
+    // Numeric types - convert without leading space
+    if (t == "Integer" || t == "LongInteger" || t == "Float" || t == "Double" ||
+        t == "roInt" || t == "roFloat" || t == "roDouble" || t == "roInteger" || t == "roLongInteger") {
+        return __kotlin_numToStr(obj)
+    }
+
+    // Boolean types
+    if (t == "Boolean" || t == "roBoolean") {
+        @Suppress("UNCHECKED_CAST")
+        if (obj as Boolean) return "true"
+        return "false"
+    }
+
+    // Object - call toString method directly (using inline to avoid recursive dispatch)
+    return brsObjectToString(obj)
 }
+
+/**
+ * Gets the BrightScript type name of a value.
+ */
+@kotlin.brs.BrsInline("return Type(obj)")
+private external fun brsType(obj: Any?): String
+
+/**
+ * Calls toString() method on an object. Uses inline to ensure direct method call.
+ */
+@kotlin.brs.BrsInline("return obj.toString()")
+private external fun brsObjectToString(obj: Any?): String
 
 /**
  * Computes the hash code for an object.
@@ -119,3 +158,48 @@ internal fun checkCast(obj: Any?, type: String): Any? {
     }
     return obj
 }
+
+/**
+ * Converts a numeric value to a string without the leading space.
+ * BrightScript's Str() function adds a leading space for positive numbers.
+ *
+ * Uses stdlib intrinsics (brsIntrinsic*) which the compiler recognizes
+ * and replaces with direct BrightScript function calls.
+ */
+public fun __kotlin_numToStr(value: Int): String {
+    val s = brsIntrinsicStr(value)
+    if (brsIntrinsicLeft(s, 1) == " ") return brsIntrinsicMid(s, 2)
+    return s
+}
+
+public fun __kotlin_numToStr(value: Long): String {
+    val s = brsIntrinsicStr(value)
+    if (brsIntrinsicLeft(s, 1) == " ") return brsIntrinsicMid(s, 2)
+    return s
+}
+
+public fun __kotlin_numToStr(value: Float): String {
+    val s = brsIntrinsicStr(value)
+    if (brsIntrinsicLeft(s, 1) == " ") return brsIntrinsicMid(s, 2)
+    return s
+}
+
+public fun __kotlin_numToStr(value: Double): String {
+    val s = brsIntrinsicStr(value)
+    if (brsIntrinsicLeft(s, 1) == " ") return brsIntrinsicMid(s, 2)
+    return s
+}
+
+public fun __kotlin_numToStr(value: Any?): String {
+    if (value == null) return "null"
+    val s = brsIntrinsicStr(value)
+    if (brsIntrinsicLeft(s, 1) == " ") return brsIntrinsicMid(s, 2)
+    return s
+}
+
+// BrightScript global function intrinsics
+// Named with 'brsIntrinsic' prefix so the compiler recognizes them
+// and replaces calls with direct BrightScript function calls.
+internal external fun brsIntrinsicStr(x: Any?): String
+internal external fun brsIntrinsicLeft(s: String, n: Int): String
+internal external fun brsIntrinsicMid(s: String, start: Int): String

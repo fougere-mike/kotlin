@@ -9,6 +9,8 @@ function LazyThreadSafetyMode_create_LazyThreadSafetyMode_k_(__name as String, _
     this.__type = "LazyThreadSafetyMode"
     this.name = __name
     this.ordinal = __ordinal
+    this.__proto = ["LazyThreadSafetyMode", "Comparable"]
+    this.__id = __kotlin_nextObjectId()
     this.values_Arr_k_ = LazyThreadSafetyMode_values_Arr_k_
     this.valueOf_Str_LazyThreadSafetyMode_k_ = LazyThreadSafetyMode_valueOf_Str_LazyThreadSafetyMode_k_
     this.get_entries = LazyThreadSafetyMode_get_entries_EnumEntries_k_

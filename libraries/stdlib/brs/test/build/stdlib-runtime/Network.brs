@@ -1,7 +1,8 @@
 function RoUrlTransfer_create_RoUrlTransfer_k_() as Object
     this = {}
     this.__type = "RoUrlTransfer"
-    this.__proto = ["RoUrlTransfer"]
+    this.__proto = ["RoUrlTransfer", "ISetMessagePort", "IGetMessagePort", "IHttpAgent", "IUrlTransfer"]
+    this.__id = __kotlin_nextObjectId()
     this.setUrl_Str_Z_k_ = RoUrlTransfer_setUrl_Str_Z_k_
     this.getUrl_Str_k_ = RoUrlTransfer_getUrl_Str_k_
     this.getToString_StrN_k_ = RoUrlTransfer_getToString_StrN_k_
@@ -199,7 +200,7 @@ function RoUrlEvent_create_Dynamic_RoUrlEvent_k_(event as Object) as Object
     this = {}
     this.__type = "RoUrlEvent"
     this.__proto = ["RoUrlEvent"]
-    this.event = event
+    this.__id = __kotlin_nextObjectId()
     this.getResponseCode_I_k_ = RoUrlEvent_getResponseCode_I_k_
     this.getString_Str_k_ = RoUrlEvent_getString_Str_k_
     this.getFailureReason_Str_k_ = RoUrlEvent_getFailureReason_Str_k_
@@ -209,6 +210,7 @@ function RoUrlEvent_create_Dynamic_RoUrlEvent_k_(event as Object) as Object
     this.getTargetIpAddress_Str_k_ = RoUrlEvent_getTargetIpAddress_Str_k_
     this.getBytesReceived_I_k_ = RoUrlEvent_getBytesReceived_I_k_
     this.get_event = RoUrlEvent_get_event_Dynamic_k_
+    this.event = event
     return this
 end function
 

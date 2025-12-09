@@ -3,7 +3,7 @@ function emptySequence_SequenceAnyN_k_() as Object
 end function
 
 function sequenceOf_AnyN_SequenceAnyN_k_(element as Dynamic) as Object
-    return Anon_3468192e_create_AnonAnyN_k_()
+    return Anon_49a18232_create_AnonAnyN_k_()
 end function
 
 function sequenceOf_Arr_SequenceAnyN_k_(elements as Object) as Object
@@ -18,7 +18,7 @@ function sequenceOf_Arr_SequenceAnyN_k_(elements as Object) as Object
 end function
 
 function sequenceOf_IteratorAnyN_SequenceAnyN_k_(iterator as Object) as Object
-    return Anon_6bc553d_create_AnonAnyN_k_()
+    return Anon_ef5a84_create_AnonAnyN_k_()
 end function
 
 function sequence_SequenceAnyN_k_() as Object
@@ -66,13 +66,14 @@ function asSequence_rIteratorAnyN_SequenceAnyN_k_(m as Object) as Object
 end function
 
 function Sequence_Function0IteratorAnyN_SequenceAnyN_k_(iterator as Object) as Object
-    return Anon_2545b920_create_AnonAnyN_k_()
+    return Anon_fb69974_create_AnonAnyN_k_()
 end function
 
 function EmptySequence_create_EmptySequence_k_() as Object
     this = {}
     this.__type = "EmptySequence"
-    this.__proto = ["EmptySequence"]
+    this.__proto = ["EmptySequence", "Sequence", "DropTakeSequence"]
+    this.__id = __kotlin_nextObjectId()
     this.iterator_IteratorNothing_k_ = EmptySequence_iterator_IteratorNothing_k_
     this.drop_I_SequenceNothing_k_ = EmptySequence_drop_I_SequenceNothing_k_
     this.take_I_SequenceNothing_k_ = EmptySequence_take_I_SequenceNothing_k_
@@ -101,7 +102,8 @@ end function
 function SequenceEmptyIterator_create_SequenceEmptyIterator_k_() as Object
     this = {}
     this.__type = "SequenceEmptyIterator"
-    this.__proto = ["SequenceEmptyIterator"]
+    this.__proto = ["SequenceEmptyIterator", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
     this.hasNext_Z_k_ = SequenceEmptyIterator_hasNext_Z_k_
     this.next = SequenceEmptyIterator_next
     return this
@@ -125,17 +127,18 @@ end sub
 function GeneratorSequence_create_Function0AnyN_Function1AnyAnyN_GeneratorSequenceAny_k_(getInitialValue as Object, getNextValue as Object) as Object
     this = {}
     this.__type = "GeneratorSequence"
-    this.__proto = ["GeneratorSequence"]
-    this.getInitialValue = getInitialValue
-    this.getNextValue = getNextValue
+    this.__proto = ["GeneratorSequence", "Sequence"]
+    this.__id = __kotlin_nextObjectId()
     this.iterator_IteratorAny_k_ = GeneratorSequence_iterator_IteratorAny_k_
     this.get_getInitialValue = GeneratorSequence_get_getInitialValue_Function0AnyN_k_
     this.get_getNextValue = GeneratorSequence_get_getNextValue_Function1AnyAnyN_k_
+    this.getInitialValue = getInitialValue
+    this.getNextValue = getNextValue
     return this
 end function
 
 function GeneratorSequence_iterator_IteratorAny_k_() as Object
-    return Anon_40ae6e43_create_AnonAny_k_()
+    return Anon_58358c13_create_AnonAny_k_()
 end function
 
 function GeneratorSequence_get_getInitialValue_Function0AnyN_k_() as Object
@@ -149,10 +152,11 @@ end function
 function IndexedSequence_create_Arr_IndexedSequenceAnyN_k_(array as Object) as Object
     this = {}
     this.__type = "IndexedSequence"
-    this.__proto = ["IndexedSequence"]
-    this.array = array
+    this.__proto = ["IndexedSequence", "Sequence"]
+    this.__id = __kotlin_nextObjectId()
     this.iterator_IteratorAnyN_k_ = IndexedSequence_iterator_IteratorAnyN_k_
     this.get_array = IndexedSequence_get_array_Arr_k_
+    this.array = array
     return this
 end function
 
@@ -168,6 +172,7 @@ function SequenceScope_create_SequenceScopeAnyN_k_() as Object
     this = {}
     this.__type = "SequenceScope"
     this.__proto = ["SequenceScope"]
+    this.__id = __kotlin_nextObjectId()
     return this
 end function
 

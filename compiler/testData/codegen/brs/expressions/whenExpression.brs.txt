@@ -1,5 +1,6 @@
 // --- File: whenExpression.brs ---
 function describeNumber_I_Str_k_(x as Integer) as String
+    tmp0_subject = x
     __when_tmp0 = invalid
     if tmp0_subject = 0 then
         __when_tmp0 = "zero"
@@ -32,6 +33,7 @@ function getGrade_I_Str_k_(score as Integer) as String
 end function
 
 function categorize_I_Str_k_(x as Integer) as String
+    tmp0_subject = x
     __when_tmp2 = invalid
     if (tmp0_subject = 1) or ((tmp0_subject = 2) or (tmp0_subject = 3)) then
         __when_tmp2 = "small"

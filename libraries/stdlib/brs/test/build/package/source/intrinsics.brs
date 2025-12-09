@@ -23,7 +23,7 @@ function brsCreateAssociativeArray_Any_k_() as Object
 end function
 
 function brsStringLength_Str_I_k_(str as String) as Integer
-    return str.get_length()
+    return Len(str)
 end function
 
 function brsStringConcat_Str_Str_Str_k_(str1 as String, str2 as String) as String

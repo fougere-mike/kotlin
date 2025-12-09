@@ -3,6 +3,8 @@ function CharCategory_create_I_Str_CharCategory_k_(__name as String, __ordinal a
     this.__type = "CharCategory"
     this.name = __name
     this.ordinal = __ordinal
+    this.__proto = ["CharCategory", "Comparable"]
+    this.__id = __kotlin_nextObjectId()
     this.value = value
     this.code = code
     this.contains_C_Z_k_ = CharCategory_contains_C_Z_k_

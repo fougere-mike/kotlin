@@ -23,14 +23,14 @@ sub sortingTests_rTestRunner_k_(m as Object)
         m.test_Str_Function0V_k_("sortBy", {invoke: function() as Void
             list = mutableListOf_Arr_MutableListAnyN_k_(["apple", "pie", "a", "zoo"])
             sortBy_rMutableListAnyN_Function1AnyNAnyN_k_(list, {invoke: function(it as String) as Dynamic
-                return it.get_length()
+                return Len(it)
             end function})
             assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_ListAnyN_k_(["a", "pie", "zoo", "apple"]), list)
         end function})
         m.test_Str_Function0V_k_("sortByDescending", {invoke: function() as Void
             list = mutableListOf_Arr_MutableListAnyN_k_(["apple", "pie", "a", "zoo"])
             sortByDescending_rMutableListAnyN_Function1AnyNAnyN_k_(list, {invoke: function(it as String) as Dynamic
-                return it.get_length()
+                return Len(it)
             end function})
             assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_ListAnyN_k_(["apple", "pie", "zoo", "a"]), list)
         end function})
@@ -53,14 +53,14 @@ sub sortingTests_rTestRunner_k_(m as Object)
         m.test_Str_Function0V_k_("sortedBy", {invoke: function() as Void
             list = listOf_Arr_ListAnyN_k_(["apple", "pie", "a", "zoo"])
             sorted = sortedBy_rIterableAnyN_Function1AnyNAnyN_ListAnyN_k_(list, {invoke: function(it as String) as Dynamic
-                return it.get_length()
+                return Len(it)
             end function})
             assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_ListAnyN_k_(["a", "pie", "zoo", "apple"]), sorted)
         end function})
         m.test_Str_Function0V_k_("sortedByDescending", {invoke: function() as Void
             list = listOf_Arr_ListAnyN_k_(["apple", "pie", "a", "zoo"])
             sorted = sortedByDescending_rIterableAnyN_Function1AnyNAnyN_ListAnyN_k_(list, {invoke: function(it as String) as Dynamic
-                return it.get_length()
+                return Len(it)
             end function})
             assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_ListAnyN_k_(["apple", "pie", "zoo", "a"]), sorted)
         end function})

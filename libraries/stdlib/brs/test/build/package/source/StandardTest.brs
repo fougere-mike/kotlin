@@ -2,7 +2,7 @@ sub standardFunctionsTests_rTestRunner_k_(m as Object)
     m.suite_Str_Function1TestRunnerV_k_("Standard Functions", {invoke: function(m as Object) as Void
         m.test_Str_Function0V_k_("let returns lambda result", {invoke: function() as Void
             result = let_rAnyN_Function1AnyNAnyN_AnyN_k_("hello", {invoke: function(it as String) as Integer
-                return it.get_length()
+                return Len(it)
             end function})
             assertEquals_AnyN_AnyN_StrN_k_(5, result)
         end function})
@@ -14,7 +14,7 @@ sub standardFunctionsTests_rTestRunner_k_(m as Object)
                 __when_tmp0 = invalid
             else if true then
                 __when_tmp0 = let_rAnyN_Function1AnyNAnyN_AnyN_k_(tmp0_safe_receiver, {invoke: function(it as String) as Integer
-                    return it.get_length()
+                    return Len(it)
                 end function})
             end if
             result = __when_tmp0
@@ -31,7 +31,7 @@ sub standardFunctionsTests_rTestRunner_k_(m as Object)
         end function})
         m.test_Str_Function0V_k_("run returns lambda result", {invoke: function() as Void
             result = run_rAnyN_Function1AnyNAnyN_AnyN_k_("hello", {invoke: function(m as String) as Integer
-                return m.get_length()
+                return Len(m)
             end function})
             assertEquals_AnyN_AnyN_StrN_k_(5, result)
         end function})
@@ -46,7 +46,7 @@ sub standardFunctionsTests_rTestRunner_k_(m as Object)
         m.test_Str_Function0V_k_("also returns receiver", {invoke: function() as Void
             sideEffect = 0
             result = also_rAnyN_Function1AnyNV_AnyN_k_("hello", {sideEffect: {value: sideEffect}, invoke: function(it as String) as Void
-                m.sideEffect.value = it.get_length()
+                m.sideEffect.value = Len(it)
             end function})
             assertEquals_AnyN_AnyN_StrN_k_("hello", result)
             assertEquals_AnyN_AnyN_StrN_k_(5, sideEffect)

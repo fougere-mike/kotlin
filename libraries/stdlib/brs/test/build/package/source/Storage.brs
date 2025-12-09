@@ -2,6 +2,7 @@ function RoRegistry_create_RoRegistry_k_() as Object
     this = {}
     this.__type = "RoRegistry"
     this.__proto = ["RoRegistry"]
+    this.__id = __kotlin_nextObjectId()
     this.getSectionList_Dynamic_k_ = RoRegistry_getSectionList_Dynamic_k_
     this.delete_Str_Z_k_ = RoRegistry_delete_Str_Z_k_
     this.flush_Z_k_ = RoRegistry_flush_Z_k_
@@ -30,6 +31,7 @@ function RoRegistrySection_create_Str_RoRegistrySection_k_(section as String) as
     this = {}
     this.__type = "RoRegistrySection"
     this.__proto = ["RoRegistrySection"]
+    this.__id = __kotlin_nextObjectId()
     this.read_Str_Str_k_ = RoRegistrySection_read_Str_Str_k_
     this.write_Str_Str_Z_k_ = RoRegistrySection_write_Str_Str_Z_k_
     this.delete_Str_Z_k_ = RoRegistrySection_delete_Str_Z_k_
@@ -83,6 +85,7 @@ function RoPath_create_Str_RoPath_k_(path as String) as Object
     this = {}
     this.__type = "RoPath"
     this.__proto = ["RoPath"]
+    this.__id = __kotlin_nextObjectId()
     this.isValid_Z_k_ = RoPath_isValid_Z_k_
     this.change_Str_Z_k_ = RoPath_change_Str_Z_k_
     this.getString_Str_k_ = RoPath_getString_Str_k_
@@ -91,6 +94,7 @@ function RoPath_create_Str_RoPath_k_(path as String) as Object
     this.getExtension_Str_k_ = RoPath_getExtension_Str_k_
     this.split_Dynamic_k_ = RoPath_split_Dynamic_k_
     this.toString_Str_k_ = RoPath_toString_Str_k_
+    this.toString = RoPath_toString_Str_k_
     this.get_native = RoPath_get_native_Dynamic_k_
     this.native = CreateObject("roPath", path)
     return this
@@ -136,6 +140,7 @@ function RoFileSystem_create_RoFileSystem_k_() as Object
     this = {}
     this.__type = "RoFileSystem"
     this.__proto = ["RoFileSystem"]
+    this.__id = __kotlin_nextObjectId()
     this.exists_Str_Z_k_ = RoFileSystem_exists_Str_Z_k_
     this.stat_Str_Dynamic_k_ = RoFileSystem_stat_Str_Dynamic_k_
     this.getVolumeList_Dynamic_k_ = RoFileSystem_getVolumeList_Dynamic_k_

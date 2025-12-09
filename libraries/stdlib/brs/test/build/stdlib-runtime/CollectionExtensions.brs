@@ -1,19 +1,23 @@
 sub forEach_rIterableAnyN_Function1AnyNV_k_(m as Object, action as Object)
-    for each element in m.array
+    for each element in m
         action.invoke(element)
     end for
 end sub
 
 sub forEachIndexed_rIterableAnyN_Function2IAnyNV_k_(m as Object, action as Object)
     index = 0
-    for each item in m.array
-        action.invoke(index = (index + 1), item)
+    for each item in m
+        __incr_tmp_21 = index
+        index = (__incr_tmp_21 + 1)
+
+        action.invoke(__incr_tmp_21, item)
+
     end for
 end sub
 
 function map_rIterableAnyN_Function1AnyNAnyN_ListAnyN_k_(m as Object, transform as Object) as Object
     result = ArrayList_create_ArrayListAnyN_k_()
-    for each item in m.array
+    for each item in m
         result.add_AnyN_Z_k_(transform.invoke(item))
 
     end for
@@ -23,8 +27,11 @@ end function
 function mapIndexed_rIterableAnyN_Function2IAnyNAnyN_ListAnyN_k_(m as Object, transform as Object) as Object
     result = ArrayList_create_ArrayListAnyN_k_()
     index = 0
-    for each item in m.array
-        result.add_AnyN_Z_k_(transform.invoke(index = (index + 1), item))
+    for each item in m
+        __incr_tmp_22 = index
+        index = (__incr_tmp_22 + 1)
+
+        result.add_AnyN_Z_k_(transform.invoke(__incr_tmp_22, item))
 
     end for
     return result
@@ -32,7 +39,7 @@ end function
 
 function mapNotNull_rIterableAnyN_Function1AnyNAnyN_ListAny_k_(m as Object, transform as Object) as Object
     result = ArrayList_create_ArrayListAnyN_k_()
-    for each item in m.array
+    for each item in m
         transformed = transform.invoke(item)
         if transformed <> invalid then
             result.add_AnyN_Z_k_(transformed)
@@ -44,7 +51,7 @@ end function
 
 function filter_rIterableAnyN_Function1AnyNZ_ListAnyN_k_(m as Object, predicate as Object) as Object
     result = ArrayList_create_ArrayListAnyN_k_()
-    for each item in m.array
+    for each item in m
         if predicate.invoke(item) then
             result.add_AnyN_Z_k_(item)
         end if
@@ -55,7 +62,7 @@ end function
 function filterIndexed_rIterableAnyN_Function2IAnyNZ_ListAnyN_k_(m as Object, predicate as Object) as Object
     result = ArrayList_create_ArrayListAnyN_k_()
     index = 0
-    for each item in m.array
+    for each item in m
         unary = index
         index = (unary + 1)
         if predicate.invoke(unary, item) then
@@ -68,7 +75,7 @@ end function
 
 function filterNotNull_rIterableAnyN_ListAny_k_(m as Object) as Object
     result = ArrayList_create_ArrayListAnyN_k_()
-    for each item in m.array
+    for each item in m
         if item <> invalid then
             result.add_AnyN_Z_k_(item)
         end if
@@ -78,7 +85,7 @@ end function
 
 function filterNot_rIterableAnyN_Function1AnyNZ_ListAnyN_k_(m as Object, predicate as Object) as Object
     result = ArrayList_create_ArrayListAnyN_k_()
-    for each item in m.array
+    for each item in m
         if not predicate.invoke(item) then
             result.add_AnyN_Z_k_(item)
         end if
@@ -87,7 +94,7 @@ function filterNot_rIterableAnyN_Function1AnyNZ_ListAnyN_k_(m as Object, predica
 end function
 
 function find_rIterableAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Object) as Dynamic
-    for each element in m.array
+    for each element in m
         if predicate.invoke(element) then
             return element
         end if
@@ -97,7 +104,7 @@ end function
 
 function findLast_rIterableAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Object) as Dynamic
     last = invalid
-    for each element in m.array
+    for each element in m
         if predicate.invoke(element) then
             last = element
         end if
@@ -123,7 +130,7 @@ function first_rIterableAnyN_AnyN_k_(m as Object) as Dynamic
 end function
 
 function first_rIterableAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Object) as Dynamic
-    for each element in m.array
+    for each element in m
         if predicate.invoke(element) then
             return element
         end if
@@ -152,7 +159,7 @@ function firstOrNull_rIterableAnyN_AnyN_k_(m as Object) as Dynamic
 end function
 
 function firstOrNull_rIterableAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Object) as Dynamic
-    for each element in m.array
+    for each element in m
         if predicate.invoke(element) then
             return element
         end if
@@ -184,7 +191,7 @@ end function
 function last_rIterableAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Object) as Dynamic
     last = invalid
     found = false
-    for each element in m.array
+    for each element in m
         if predicate.invoke(element) then
             last = element
             found = true
@@ -222,7 +229,7 @@ end function
 
 function lastOrNull_rIterableAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Object) as Dynamic
     last = invalid
-    for each element in m.array
+    for each element in m
         if predicate.invoke(element) then
             last = element
         end if
@@ -241,7 +248,7 @@ function any_rIterableAnyN_Function1AnyNZ_Z_k_(m as Object, predicate as Object)
     if __kotlin_isInstanceOf(m, "Collection") and m.isEmpty_Z_k_() then
         return false
     end if
-    for each element in m.array
+    for each element in m
         if predicate.invoke(element) then
             return true
         end if
@@ -253,7 +260,7 @@ function all_rIterableAnyN_Function1AnyNZ_Z_k_(m as Object, predicate as Object)
     if __kotlin_isInstanceOf(m, "Collection") and m.isEmpty_Z_k_() then
         return true
     end if
-    for each element in m.array
+    for each element in m
         if not predicate.invoke(element) then
             return false
         end if
@@ -272,7 +279,7 @@ function none_rIterableAnyN_Function1AnyNZ_Z_k_(m as Object, predicate as Object
     if __kotlin_isInstanceOf(m, "Collection") and m.isEmpty_Z_k_() then
         return true
     end if
-    for each element in m.array
+    for each element in m
         if predicate.invoke(element) then
             return false
         end if
@@ -285,8 +292,8 @@ function count_rIterableAnyN_I_k_(m as Object) as Integer
         return m.get_size()
     end if
     count = 0
-    for each element in m.array
-        count = (unary + 1)
+    for each element in m
+        count = (count + 1)
     end for
     return count
 end function
@@ -296,9 +303,9 @@ function count_rIterableAnyN_Function1AnyNZ_I_k_(m as Object, predicate as Objec
         return 0
     end if
     count = 0
-    for each element in m.array
+    for each element in m
         if predicate.invoke(element) then
-            count = (unary + 1)
+            count = (count + 1)
         end if
     end for
     return count
@@ -306,7 +313,7 @@ end function
 
 function fold_rIterableAnyN_AnyN_Function2AnyNAnyNAnyN_AnyN_k_(m as Object, initial as Dynamic, operation as Object) as Dynamic
     accumulator = initial
-    for each element in m.array
+    for each element in m
         accumulator = operation.invoke(accumulator, element)
     end for
     return accumulator
@@ -315,8 +322,12 @@ end function
 function foldIndexed_rIterableAnyN_AnyN_Function3IAnyNAnyNAnyN_AnyN_k_(m as Object, initial as Dynamic, operation as Object) as Dynamic
     index = 0
     accumulator = initial
-    for each element in m.array
-        accumulator = operation.invoke(index = (index + 1), accumulator, element)
+    for each element in m
+        __incr_tmp_23 = index
+        index = (__incr_tmp_23 + 1)
+
+        accumulator = operation.invoke(__incr_tmp_23, accumulator, element)
+
     end for
     return accumulator
 end function
@@ -341,7 +352,10 @@ function reduceIndexed_rIterableAnyN_Function3IAnyNAnyNAnyN_AnyN_k_(m as Object,
     index = 1
     accumulator = iterator.next_AnyN_k_()
     while iterator.hasNext_Z_k_()
-        accumulator = operation.invoke(index = (index + 1), accumulator, iterator.next_AnyN_k_())
+        __incr_tmp_24 = index
+        index = (__incr_tmp_24 + 1)
+
+        accumulator = operation.invoke(__incr_tmp_24, accumulator, iterator.next_AnyN_k_())
     end while
     return accumulator
 end function
@@ -360,7 +374,7 @@ end function
 
 function sum_rIterableI_I_k_(m as Object) as Integer
     sum = 0
-    for each element in m.array
+    for each element in m
         sum = (sum + element)
     end for
     return sum
@@ -368,7 +382,7 @@ end function
 
 function sum_rIterableJ_J_k_(m as Object) as LongInteger
     sum = 0&
-    for each element in m.array
+    for each element in m
         sum = (sum + element)
     end for
     return sum
@@ -376,7 +390,7 @@ end function
 
 function sum_rIterableF_F_k_(m as Object) as Float
     sum = 0.0!
-    for each element in m.array
+    for each element in m
         sum = (sum + element)
     end for
     return sum
@@ -384,7 +398,7 @@ end function
 
 function sum_rIterableD_D_k_(m as Object) as Double
     sum = 0.0#
-    for each element in m.array
+    for each element in m
         sum = (sum + element)
     end for
     return sum
@@ -392,7 +406,7 @@ end function
 
 function sumOf_rIterableAnyN_Function1AnyNI_I_k_(m as Object, selector as Object) as Integer
     sum = 0
-    for each element in m.array
+    for each element in m
         sum = (sum + selector.invoke(element))
     end for
     return sum
@@ -400,7 +414,7 @@ end function
 
 function sumOfDouble_rIterableAnyN_Function1AnyND_D_k_(m as Object, selector as Object) as Double
     sum = 0.0#
-    for each element in m.array
+    for each element in m
         sum = (sum + selector.invoke(element))
     end for
     return sum
@@ -420,7 +434,7 @@ function take_rIterableAnyN_I_ListAnyN_k_(m as Object, n as Integer) as Object
     end if
     count = 0
     list = ArrayList_create_ArrayListAnyN_k_()
-    for each item in m.array
+    for each item in m
         list.add_AnyN_Z_k_(item)
         count = (count + 1)
         if count = n then
@@ -440,11 +454,11 @@ function drop_rIterableAnyN_I_ListAnyN_k_(m as Object, n as Integer) as Object
     end if
     list = ArrayList_create_ArrayListAnyN_k_()
     count = 0
-    for each item in m.array
+    for each item in m
         if count >= n then
             list.add_AnyN_Z_k_(item)
         end if
-        count = (unary + 1)
+        count = (count + 1)
 
     end for
     return list
@@ -452,7 +466,7 @@ end function
 
 function takeWhile_rIterableAnyN_Function1AnyNZ_ListAnyN_k_(m as Object, predicate as Object) as Object
     list = ArrayList_create_ArrayListAnyN_k_()
-    for each item in m.array
+    for each item in m
         if not predicate.invoke(item) then
             exit for
         end if
@@ -465,7 +479,7 @@ end function
 function dropWhile_rIterableAnyN_Function1AnyNZ_ListAnyN_k_(m as Object, predicate as Object) as Object
     yielding = false
     list = ArrayList_create_ArrayListAnyN_k_()
-    for each item in m.array
+    for each item in m
         if yielding then
             list.add_AnyN_Z_k_(item)
         else if not predicate.invoke(item) then
@@ -483,7 +497,7 @@ end function
 function distinctBy_rIterableAnyN_Function1AnyNAnyN_ListAnyN_k_(m as Object, selector as Object) as Object
     set = HashSet_create_HashSetAnyN_k_()
     list = ArrayList_create_ArrayListAnyN_k_()
-    for each e in m.array
+    for each e in m
         key = selector.invoke(e)
         if set.add_AnyN_Z_k_(key) then
             list.add_AnyN_Z_k_(e)
@@ -495,7 +509,7 @@ end function
 
 function flatMap_rIterableAnyN_Function1AnyNIterableAnyN_ListAnyN_k_(m as Object, transform as Object) as Object
     result = ArrayList_create_ArrayListAnyN_k_()
-    for each element in m.array
+    for each element in m
         list = transform.invoke(element)
         result.addAll_CollectionAnyN_Z_k_(toList_rIterableAnyN_ListAnyN_k_(list))
 
@@ -505,7 +519,7 @@ end function
 
 function flatten_rIterableIterableAnyN_ListAnyN_k_(m as Object) as Object
     result = ArrayList_create_ArrayListAnyN_k_()
-    for each element in m.array
+    for each element in m
         result.addAll_CollectionAnyN_Z_k_(toList_rIterableAnyN_ListAnyN_k_(element))
 
     end for
@@ -514,6 +528,7 @@ end function
 
 function toList_rIterableAnyN_ListAnyN_k_(m as Object) as Object
     if __kotlin_isInstanceOf(m, "Collection") then
+        tmp0_subject = m.get_size()
         __when_tmp3 = invalid
         if tmp0_subject = 0 then
             __when_tmp3 = emptyList_ListAnyN_k_()
@@ -539,7 +554,7 @@ function toMutableList_rIterableAnyN_MutableListAnyN_k_(m as Object) as Object
         return ArrayList_create_CollectionAnyN_ArrayListAnyN_k_(m)
     end if
     result = ArrayList_create_ArrayListAnyN_k_()
-    for each element in m.array
+    for each element in m
         result.add_AnyN_Z_k_(element)
 
     end for
@@ -548,6 +563,7 @@ end function
 
 function toSet_rIterableAnyN_SetAnyN_k_(m as Object) as Object
     if __kotlin_isInstanceOf(m, "Collection") then
+        tmp0_subject = m.get_size()
         __when_tmp4 = invalid
         if tmp0_subject = 0 then
             __when_tmp4 = emptySet_SetAnyN_k_()
@@ -562,7 +578,7 @@ end function
 
 function toMutableSet_rIterableAnyN_MutableSetAnyN_k_(m as Object) as Object
     set = HashSet_create_HashSetAnyN_k_()
-    for each item in m.array
+    for each item in m
         set.add_AnyN_Z_k_(item)
     end for
     return set
@@ -572,23 +588,13 @@ function joinToString_rIterableAnyN_CharSequence_CharSequence_CharSequence_I_Cha
     sb = StringBuilder_create_StringBuilder_k_()
     sb.append_CharSequenceN_StringBuilder_k_(prefix)
     count = 0
-    for each element in m.array
+    for each element in m
         count = (count + 1)
         if count > 1 then
             sb.append_CharSequenceN_StringBuilder_k_(separator)
         end if
         if (limit < 0) or (count <= limit) then
-            sb.append_StrN_StringBuilder_k_((function(Str, element)
-                if element = invalid then return "null" else return (function(Str, element)
-                    if (Type(element) = "String") or (Type(element) = "roString") then return element else return (function(Str, element)
-                        if ((((((Type(element) = "Integer") or (Type(element) = "LongInteger")) or (Type(element) = "Float")) or (Type(element) = "Double")) or (Type(element) = "roInt")) or (Type(element) = "roFloat")) or (Type(element) = "roDouble") then return Str(element) else return (function(element)
-                            if (Type(element) = "Boolean") or (Type(element) = "roBoolean") then return (function(element)
-                                if element then return "true" else return "false"
-                            end function)(element) else return element.toString()
-                        end function)(element)
-                    end function)(Str, element)
-                end function)(Str, element)
-            end function)(Str, element))
+            sb.append_StrN_StringBuilder_k_(toString_AnyN_Str_k_(element))
         else if true then
             exit for
         end if
@@ -605,7 +611,7 @@ function joinToString_77mgo1_k_(m as Object, separator = ", ", prefix = "", post
     sb = StringBuilder_create_StringBuilder_k_()
     sb.append_CharSequenceN_StringBuilder_k_(prefix)
     count = 0
-    for each element in m.array
+    for each element in m
         count = (count + 1)
         if count > 1 then
             sb.append_CharSequenceN_StringBuilder_k_(separator)
@@ -636,11 +642,11 @@ function indexOf_rIterableAnyN_AnyN_I_k_(m as Object, element as Dynamic) as Int
         return m.indexOf_AnyN_I_k_(element)
     end if
     index = 0
-    for each item in m.array
+    for each item in m
         if element = item then
             return index
         end if
-        index = (unary + 1)
+        index = (index + 1)
 
     end for
     return -1
@@ -648,11 +654,11 @@ end function
 
 function indexOfFirst_rIterableAnyN_Function1AnyNZ_I_k_(m as Object, predicate as Object) as Integer
     index = 0
-    for each item in m.array
+    for each item in m
         if predicate.invoke(item) then
             return index
         end if
-        index = (unary + 1)
+        index = (index + 1)
 
     end for
     return -1
@@ -661,11 +667,11 @@ end function
 function indexOfLast_rIterableAnyN_Function1AnyNZ_I_k_(m as Object, predicate as Object) as Integer
     lastIndex = -1
     index = 0
-    for each item in m.array
+    for each item in m
         if predicate.invoke(item) then
             lastIndex = index
         end if
-        index = (unary + 1)
+        index = (index + 1)
 
     end for
     return lastIndex
@@ -674,6 +680,7 @@ end function
 function single_rIterableAnyN_AnyN_k_(m as Object) as Dynamic
     tmp0_subject = m
     if __kotlin_isInstanceOf(tmp0_subject, "List") then
+        tmp1_subject = m.get_size()
         __when_tmp5 = invalid
         if tmp1_subject = 0 then
             throw NoSuchElementException_create_StrN_NoSuchElementException_k_("List is empty.")
@@ -701,7 +708,7 @@ end function
 function single_rIterableAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Object) as Dynamic
     single = invalid
     found = false
-    for each element in m.array
+    for each element in m
         if predicate.invoke(element) then
             if found then
                 throw IllegalArgumentException_create_StrN_IllegalArgumentException_k_("Collection contains more than one matching element.")
@@ -744,7 +751,7 @@ end function
 function singleOrNull_rIterableAnyN_Function1AnyNZ_AnyN_k_(m as Object, predicate as Object) as Dynamic
     single = invalid
     found = false
-    for each element in m.array
+    for each element in m
         if predicate.invoke(element) then
             if found then
                 return invalid
@@ -762,7 +769,7 @@ end function
 function partition_rIterableAnyN_Function1AnyNZ_PairListAnyNListAnyN_k_(m as Object, predicate as Object) as Object
     first = ArrayList_create_ArrayListAnyN_k_()
     second = ArrayList_create_ArrayListAnyN_k_()
-    for each element in m.array
+    for each element in m
         if predicate.invoke(element) then
             first.add_AnyN_Z_k_(element)
         else if true then
@@ -809,7 +816,7 @@ end function
 function minus_rIterableAnyN_AnyN_ListAnyN_k_(m as Object, element as Dynamic) as Object
     result = ArrayList_create_ArrayListAnyN_k_()
     removed = false
-    for each item in m.array
+    for each item in m
         if not removed and (item = element) then
             removed = true
         else if true then

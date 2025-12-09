@@ -1,3 +1,32 @@
+function __kotlin_nextObjectId() as Integer
+    if m.__kotlin_objectIdCounter = invalid then
+        m.__kotlin_objectIdCounter = 0
+    end if
+    m.__kotlin_objectIdCounter = (m.__kotlin_objectIdCounter + 1)
+    return m.__kotlin_objectIdCounter
+end function
+
+function __kotlin_identityEquals(a as Dynamic, b as Dynamic) as Boolean
+    if (a = invalid) and (b = invalid) then
+        return true
+    end if
+    if (a = invalid) or (b = invalid) then
+        return false
+    end if
+    aType = Type(a)
+    bType = Type(b)
+    if (aType <> "roAssociativeArray") and (bType <> "roAssociativeArray") then
+        return a = b
+    end if
+    if (aType <> "roAssociativeArray") or (bType <> "roAssociativeArray") then
+        return false
+    end if
+    if (a.__id = invalid) or (b.__id = invalid) then
+        return false
+    end if
+    return a.__id = b.__id
+end function
+
 function __kotlin_isInstanceOf(obj as Object, typeName as String) as Boolean
     if obj = invalid then
         return false
@@ -335,17 +364,7 @@ function AssertionError_create_AnyN_AssertionError_k_(message as Dynamic) as Obj
     if tmp0_safe_receiver = invalid then
         __when_tmp0 = invalid
     else if true then
-        __when_tmp0 = ((function(Str, tmp0_safe_receiver)
-            if tmp0_safe_receiver = invalid then return "null" else return (function(Str, tmp0_safe_receiver)
-                if (Type(tmp0_safe_receiver) = "String") or (Type(tmp0_safe_receiver) = "roString") then return tmp0_safe_receiver else return (function(Str, tmp0_safe_receiver)
-                    if ((((((Type(tmp0_safe_receiver) = "Integer") or (Type(tmp0_safe_receiver) = "LongInteger")) or (Type(tmp0_safe_receiver) = "Float")) or (Type(tmp0_safe_receiver) = "Double")) or (Type(tmp0_safe_receiver) = "roInt")) or (Type(tmp0_safe_receiver) = "roFloat")) or (Type(tmp0_safe_receiver) = "roDouble") then return Str(tmp0_safe_receiver) else return (function(tmp0_safe_receiver)
-                        if (Type(tmp0_safe_receiver) = "Boolean") or (Type(tmp0_safe_receiver) = "roBoolean") then return (function(tmp0_safe_receiver)
-                            if tmp0_safe_receiver then return "true" else return "false"
-                        end function)(tmp0_safe_receiver) else return tmp0_safe_receiver.toString()
-                    end function)(tmp0_safe_receiver)
-                end function)(Str, tmp0_safe_receiver)
-            end function)(Str, tmp0_safe_receiver)
-        end function)(Str, tmp0_safe_receiver))
+        __when_tmp0 = toString_AnyN_Str_k_(tmp0_safe_receiver)
     end if
     this = Error_create_StrN_Error_k_(__when_tmp0)
     this._super = {}

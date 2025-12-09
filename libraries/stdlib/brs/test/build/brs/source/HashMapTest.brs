@@ -93,7 +93,7 @@ sub hashMapTests_rTestRunner_k_(m as Object)
             map = hashMapOf_Arr_HashMapAnyNAnyN_k_([to_rAnyN_AnyN_PairAnyNAnyN_k_("a", 1), to_rAnyN_AnyN_PairAnyNAnyN_k_("b", 2)])
             keys = mutableListOf_MutableListAnyN_k_()
             values = mutableListOf_MutableListAnyN_k_()
-            for each entry in map.get_entries().array
+            for each entry in map.get_entries()
                 keys.add_AnyN_Z_k_(entry.get_key())
                 values.add_AnyN_Z_k_(entry.get_value())
 

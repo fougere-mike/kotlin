@@ -1,7 +1,8 @@
 function ExperimentalContracts_create_ExperimentalContracts_k_() as Object
     this = {}
     this.__type = "ExperimentalContracts"
-    this.__proto = ["ExperimentalContracts"]
+    this.__proto = ["ExperimentalContracts", "Annotation"]
+    this.__id = __kotlin_nextObjectId()
     return this
 end function
 
@@ -25,6 +26,8 @@ function InvocationKind_create_InvocationKind_k_(__name as String, __ordinal as 
     this.__type = "InvocationKind"
     this.name = __name
     this.ordinal = __ordinal
+    this.__proto = ["InvocationKind", "Comparable"]
+    this.__id = __kotlin_nextObjectId()
     this.values_Arr_k_ = InvocationKind_values_Arr_k_
     this.valueOf_Str_InvocationKind_k_ = InvocationKind_valueOf_Str_InvocationKind_k_
     this.get_entries = InvocationKind_get_entries_EnumEntries_k_

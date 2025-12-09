@@ -1,9 +1,104 @@
-[KOTLINTEST_START]
-BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(100)
+: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
 
-BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(100)
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
 
-BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(100)
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
+
+BRIGHTSCRIPT: ERROR: FormatJSON: clear: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
 
 
 BrightScript Micro Debugger.
@@ -11,47 +106,46 @@ Enter any BrightScript statement, debug commands, or HELP.
 
 
 Current Function:
-294:  function brsStructuralEquals_AnyN_AnyN_Z_k_(a as Dynamic, b as Dynamic) as Boolean
-295:*     if EQEQEQ_AnyN_AnyN_Z_k_(a, b) then
-296:          return true
-297:      end if
-298:      if (a = invalid) or (b = invalid) then
-299:          return false
+173:  sub HashMap_putAll_MapAnyNAnyN_k_(from as Object)
+174:*     __iter_1514884249 = from.get_entries().iterator_MutableIteratorAnyN_k_()
+175:      while __iter_1514884249.hasNext_Z_k_()
+176:          entry = __iter_1514884249.next_AnyN_k_()
+177:          m.put_AnyN_AnyN_AnyN_k_(entry.get_key(), entry.get_value())
+178:  
 Source Digest(s): 
-pkg:    dev 1.0.0 5f44e7f4 KotlinStdlibTests
+pkg:    dev 1.0.0 1c1de360 KotlinStdlibTests
 pkg: 632126 1.1.5 1f7df9df libplayready
 
-Function Call Operator ( ) attempted on non-function. (runtime error &he0) in pkg:/source/Kotlin.brs(295)
+Member function not found in BrightScript Component or interface. (runtime error &hf4) in pkg:/source/HashMap.brs(174)
 Backtrace:
-#11 Function brsstructuralequals_anyn_anyn_z_k_(a As Dynamic, b As Dynamic) As Boolean
-   file/line: pkg:/source/Kotlin.brs(295)
-#10 Function defaultbrsasserter_assertequals_strn_anyn_anyn_k_(message As Dynamic, expected As Dynamic, actual As Dynamic) As Void
-   file/line: pkg:/source/DefaultBrsAsserter.brs(18)
-#9  Function assertequals_anyn_anyn_strn_k_(expected As Dynamic, actual As Dynamic) As Dynamic
-   file/line: pkg:/source/Assertions.brs(96)
-#8  Function $anon_a1() As Void
-   file/line: pkg:/source/ArrayListTest.brs(6)
+#10 Function hashmap_putall_mapanynanyn_k_(from As Object) As Void
+   file/line: pkg:/source/HashMap.brs(174)
+#9  Function hashmap_create_mapanynanyn_hashmapanynanyn_k_(original As Object) As Object
+   file/line: pkg:/source/HashMap.brs(109)
+#8  Function $anon_35f() As Void
+   file/line: pkg:/source/HashMapTest.brs(9)
 #7  Function jsontestadapter_test_str_z_function0v_k_(name As String, ignored As Boolean, testfn As Object) As Void
-   file/line: pkg:/source/JsonTestAdapter.brs(92)
+   file/line: pkg:/source/JsonTestAdapter.brs(93)
 #6  Function testrunner_test_str_function0v_k_(name As String, testfn As Object) As Void
-   file/line: pkg:/source/TestRunner.brs(40)
-#5  Function $anon_a0(m As Object) As Void
-   file/line: pkg:/source/ArrayListTest.brs(7)
-#4  Function $anon_987() As Void
-   file/line: pkg:/source/TestRunner.brs(35)
+   file/line: pkg:/source/TestRunner.brs(41)
+#5  Function $anon_35d(m As Object) As Void
+   file/line: pkg:/source/HashMapTest.brs(13)
+#4  Function $anon_8da() As Void
+   file/line: pkg:/source/TestRunner.brs(36)
 #3  Function jsontestadapter_suite_str_z_function0v_k_(name As String, ignored As Boolean, suitefn As Object) As Void
-   file/line: pkg:/source/JsonTestAdapter.brs(78)
+   file/line: pkg:/source/JsonTestAdapter.brs(79)
 #2  Function testrunner_run_function1testrunnerv_k_(block As Object) As Void
-   file/line: pkg:/source/TestRunner.brs(53)
+   file/line: pkg:/source/TestRunner.brs(56)
 #1  Function runtests_function1testrunnerv_k_(block As Object) As Void
    file/line: pkg:/source/TestRunner.brs(3)
 #0  Function main() As Void
    file/line: pkg:/source/TestMain.brs(18)
 Local Variables:
-a                Integer val:0 (&h0)
-b                Integer val:0 (&h0)
+from             roAssociativeArray refcnt=2 count:30
 global           Interface:ifGlobal
-m                roAssociativeArray refcnt=5 count:1
-eqeqeq_anyn_anyn_z_k_ <uninitialized>
+m                roAssociativeArray refcnt=3 count:30
+__iter_1514884249 <uninitialized>
+entry            <uninitialized>
 
-Brightscript Debugger> 
+Brightscript Debugger> Note: GC - Found 87 orphaned objects (objects in a circular ref loop).
+12-09 22:07:53.214 [bs.ndk.proc.exit] plugin=dev pid=2343 status=exit retval=30 user requested=1 process name='SdkLauncher' exit code=EXIT_BRIGHTSCRIPT_UNK_FUNC

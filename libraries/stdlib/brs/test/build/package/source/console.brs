@@ -3,31 +3,11 @@ sub println()
 end sub
 
 sub println_AnyN_k_(message as Dynamic)
-    print((function(Str, message)
-        if message = invalid then return "null" else return (function(Str, message)
-            if (Type(message) = "String") or (Type(message) = "roString") then return message else return (function(Str, message)
-                if ((((((Type(message) = "Integer") or (Type(message) = "LongInteger")) or (Type(message) = "Float")) or (Type(message) = "Double")) or (Type(message) = "roInt")) or (Type(message) = "roFloat")) or (Type(message) = "roDouble") then return Str(message) else return (function(message)
-                    if (Type(message) = "Boolean") or (Type(message) = "roBoolean") then return (function(message)
-                        if message then return "true" else return "false"
-                    end function)(message) else return message.toString()
-                end function)(message)
-            end function)(Str, message)
-        end function)(Str, message)
-    end function)(Str, message))
+    print(toString_AnyN_Str_k_(message))
 end sub
 
 sub print_AnyN_k_(message as Dynamic)
-    print (function(Str, message)
-        if message = invalid then return "null" else return (function(Str, message)
-            if (Type(message) = "String") or (Type(message) = "roString") then return message else return (function(Str, message)
-                if ((((((Type(message) = "Integer") or (Type(message) = "LongInteger")) or (Type(message) = "Float")) or (Type(message) = "Double")) or (Type(message) = "roInt")) or (Type(message) = "roFloat")) or (Type(message) = "roDouble") then return Str(message) else return (function(message)
-                    if (Type(message) = "Boolean") or (Type(message) = "roBoolean") then return (function(message)
-                        if message then return "true" else return "false"
-                    end function)(message) else return message.toString()
-                end function)(message)
-            end function)(Str, message)
-        end function)(Str, message)
-    end function)(Str, message);
+    print toString_AnyN_Str_k_(message);
 end sub
 
 function readln_Str_k_() as String

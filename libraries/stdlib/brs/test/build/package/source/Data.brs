@@ -2,6 +2,7 @@ function RoByteArray_create_RoByteArray_k_() as Object
     this = {}
     this.__type = "RoByteArray"
     this.__proto = ["RoByteArray"]
+    this.__id = __kotlin_nextObjectId()
     this.count_I_k_ = RoByteArray_count_I_k_
     this.capacity_I_k_ = RoByteArray_capacity_I_k_
     this.isEmpty_Z_k_ = RoByteArray_isEmpty_Z_k_
@@ -39,6 +40,7 @@ function RoByteArray_create_Dynamic_RoByteArray_k_(nativeArray as Object) as Obj
     this = {}
     this.__type = "RoByteArray"
     this.__proto = ["RoByteArray"]
+    this.__id = __kotlin_nextObjectId()
     this.count_I_k_ = RoByteArray_count_I_k_
     this.capacity_I_k_ = RoByteArray_capacity_I_k_
     this.isEmpty_Z_k_ = RoByteArray_isEmpty_Z_k_

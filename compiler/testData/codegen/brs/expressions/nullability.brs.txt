@@ -43,14 +43,14 @@ function chainedSafeCall_HolderN_IN_k_(holder as Dynamic) as Dynamic
     if tmp0_safe_receiver = invalid then
         __when_tmp3 = invalid
     else if true then
-        __when_tmp3 = tmp0_safe_receiver.inner
+        __when_tmp3 = tmp0_safe_receiver.get_inner()
     end if
     tmp1_safe_receiver = __when_tmp3
     __when_tmp4 = invalid
     if tmp1_safe_receiver = invalid then
         __when_tmp4 = invalid
     else if true then
-        __when_tmp4 = tmp1_safe_receiver.value
+        __when_tmp4 = tmp1_safe_receiver.get_value()
     end if
     return __when_tmp4
 
@@ -60,6 +60,7 @@ function Holder_create_InnerN_Holder_k_(inner as Dynamic) as Object
     this = {}
     this.__type = "Holder"
     this.__proto = ["Holder"]
+    this.__id = __kotlin_nextObjectId()
     this.inner = inner
     this.get_inner = Holder_get_inner_InnerN_k_
     return this
@@ -73,6 +74,7 @@ function Inner_create_I_Inner_k_(value as Integer) as Object
     this = {}
     this.__type = "Inner"
     this.__proto = ["Inner"]
+    this.__id = __kotlin_nextObjectId()
     this.value = value
     this.get_value = Inner_get_value_I_k_
     return this
