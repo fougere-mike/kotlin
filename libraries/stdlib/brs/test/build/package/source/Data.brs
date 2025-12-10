@@ -1,0 +1,18 @@
+function RoByteArray_Companion_create_k_() as Object
+    this = {}
+    this.__type = "RoByteArray_Companion"
+    this.__proto = ["RoByteArray_Companion"]
+    this.__id = __kotlin_nextObjectId()
+    return this
+end function
+
+function RoByteArray_Companion_getInstance() as Object
+    if m.RoByteArray_Companion_instance = invalid then
+        m.RoByteArray_Companion_instance = RoByteArray_Companion_create_k_()
+    end if
+    return m.RoByteArray_Companion_instance
+end function
+
+sub resize_rRoByteArray_I_k_(m as Object, newSize as Integer)
+    m.resize(newSize, 0)
+end sub
