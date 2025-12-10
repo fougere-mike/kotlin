@@ -1,20 +1,20 @@
-function rangeTo_rI_I_IntRange_k_(m as Integer, other as Integer) as Object
-    return IntRange_create_I_I_IntRange_k_(m, other)
+function rangeTo_rI_I_k_(m as Integer, other as Integer) as Object
+    return IntRange_create_I_I_k_(m, other)
 end function
 
-function rangeTo_rI_J_LongRange_k_(m as Integer, other as LongInteger) as Object
-    return LongRange_create_J_J_LongRange_k_(m, other)
+function rangeTo_rI_J_k_(m as Integer, other as LongInteger) as Object
+    return LongRange_create_J_J_k_(m, other)
 end function
 
-function downTo_rI_I_IntProgression_k_(m as Integer, to_ as Integer) as Object
-    return IntProgression_Companion_fromClosedRange_I_I_I_IntProgression_k_(m, to_, -1)
+function downTo_rI_I_k_(m as Integer, to_ as Integer) as Object
+    return IntProgression_Companion_fromClosedRange_I_I_I_k_(m, to_, -1)
 end function
 
-function downTo_rI_J_LongProgression_k_(m as Integer, to_ as LongInteger) as Object
-    return LongProgression_Companion_fromClosedRange_J_J_J_LongProgression_k_(m, to_, -1&)
+function downTo_rI_J_k_(m as Integer, to_ as LongInteger) as Object
+    return LongProgression_Companion_fromClosedRange_J_J_J_k_(m, to_, -1&)
 end function
 
-function step_rIntProgression_I_IntProgression_k_(m as Object, step_ as Integer) as Object
+function step_rIntProgression_I_k_(m as Object, step_ as Integer) as Object
     checkStepIsPositive_Z_Number_k_(step_ > 0, step_)
     __when_tmp0 = invalid
     if m.get_step() > 0 then
@@ -22,23 +22,23 @@ function step_rIntProgression_I_IntProgression_k_(m as Object, step_ as Integer)
     else if true then
         __when_tmp0 = -step_
     end if
-    return IntProgression_Companion_fromClosedRange_I_I_I_IntProgression_k_(m.get_first(), m.get_last(), __when_tmp0)
+    return IntProgression_Companion_fromClosedRange_I_I_I_k_(m.get_first(), m.get_last(), __when_tmp0)
 
 end function
 
-function rangeTo_rJ_J_LongRange_k_(m as LongInteger, other as LongInteger) as Object
-    return LongRange_create_J_J_LongRange_k_(m, other)
+function rangeTo_rJ_J_k_(m as LongInteger, other as LongInteger) as Object
+    return LongRange_create_J_J_k_(m, other)
 end function
 
-function downTo_rJ_I_LongProgression_k_(m as LongInteger, to_ as Integer) as Object
-    return LongProgression_Companion_fromClosedRange_J_J_J_LongProgression_k_(m, to_, -1&)
+function downTo_rJ_I_k_(m as LongInteger, to_ as Integer) as Object
+    return LongProgression_Companion_fromClosedRange_J_J_J_k_(m, to_, -1&)
 end function
 
-function downTo_rJ_J_LongProgression_k_(m as LongInteger, to_ as LongInteger) as Object
-    return LongProgression_Companion_fromClosedRange_J_J_J_LongProgression_k_(m, to_, -1&)
+function downTo_rJ_J_k_(m as LongInteger, to_ as LongInteger) as Object
+    return LongProgression_Companion_fromClosedRange_J_J_J_k_(m, to_, -1&)
 end function
 
-function step_rLongProgression_J_LongProgression_k_(m as Object, step_ as LongInteger) as Object
+function step_rLongProgression_J_k_(m as Object, step_ as LongInteger) as Object
     checkStepIsPositive_Z_Number_k_(step_ > 0, step_)
     __when_tmp1 = invalid
     if m.get_step() > 0 then
@@ -46,19 +46,19 @@ function step_rLongProgression_J_LongProgression_k_(m as Object, step_ as LongIn
     else if true then
         __when_tmp1 = -step_
     end if
-    return LongProgression_Companion_fromClosedRange_J_J_J_LongProgression_k_(m.get_first(), m.get_last(), __when_tmp1)
+    return LongProgression_Companion_fromClosedRange_J_J_J_k_(m.get_first(), m.get_last(), __when_tmp1)
 
 end function
 
-function rangeTo_rC_C_CharRange_k_(m as Object, other as Object) as Object
-    return CharRange_create_C_C_CharRange_k_(m, other)
+function rangeTo_rC_C_k_(m as Object, other as Object) as Object
+    return CharRange_create_C_C_k_(m, other)
 end function
 
-function downTo_rC_C_CharProgression_k_(m as Object, to_ as Object) as Object
-    return CharProgression_Companion_fromClosedRange_C_C_I_CharProgression_k_(m, to_, -1)
+function downTo_rC_C_k_(m as Object, to_ as Object) as Object
+    return CharProgression_Companion_fromClosedRange_C_C_I_k_(m, to_, -1)
 end function
 
-function step_rCharProgression_I_CharProgression_k_(m as Object, step_ as Integer) as Object
+function step_rCharProgression_I_k_(m as Object, step_ as Integer) as Object
     checkStepIsPositive_Z_Number_k_(step_ > 0, step_)
     __when_tmp2 = invalid
     if m.get_step() > 0 then
@@ -66,6 +66,6 @@ function step_rCharProgression_I_CharProgression_k_(m as Object, step_ as Intege
     else if true then
         __when_tmp2 = -step_
     end if
-    return CharProgression_Companion_fromClosedRange_C_C_I_CharProgression_k_(m.get_first(), m.get_last(), __when_tmp2)
+    return CharProgression_Companion_fromClosedRange_C_C_I_k_(m.get_first(), m.get_last(), __when_tmp2)
 
 end function

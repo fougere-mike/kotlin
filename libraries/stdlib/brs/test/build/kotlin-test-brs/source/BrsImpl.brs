@@ -1,12 +1,12 @@
-function lookupAsserter_Asserter_k_() as Object
-    if get__asserter_AsserterN_k_() = invalid then
-        set__asserter_AsserterN_k_(DefaultBrsAsserter_create_DefaultBrsAsserter_k_())
+function lookupAsserter_k_() as Object
+    if get__asserter_k_() = invalid then
+        set__asserter_AsserterN_k_(DefaultBrsAsserter_create_k_())
     end if
-    return get__asserter_AsserterN_k_()
+    return get__asserter_k_()
 end function
 
-function AssertionErrorWithCause_StrN_ThrowableN_AssertionError_k_(message as Dynamic, cause as Dynamic) as Object
-    error = AssertionError_create_AnyN_AssertionError_k_(message)
+function AssertionErrorWithCause_StrN_ThrowableN_k_(message as Dynamic, cause as Dynamic) as Object
+    error = AssertionError_create_AnyN_k_(message)
     return error
 end function
 

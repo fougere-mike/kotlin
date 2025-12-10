@@ -1,4 +1,4 @@
-function Test_create_Test_k_() as Object
+function Test_create_k_() as Object
     this = {}
     this.__type = "Test"
     this.__proto = ["Test", "Annotation"]
@@ -6,21 +6,21 @@ function Test_create_Test_k_() as Object
     return this
 end function
 
-function Ignore_create_Str_Ignore_k_(reason = "") as Object
+function Ignore_create_Str_k_(reason = "") as Object
     this = {}
     this.__type = "Ignore"
     this.__proto = ["Ignore", "Annotation"]
     this.__id = __kotlin_nextObjectId()
-    this.get_reason = Ignore_get_reason_Str_k_
+    this.get_reason = Ignore_get_reason_k_
     this.reason = reason
     return this
 end function
 
-function Ignore_get_reason_Str_k_() as String
+function Ignore_get_reason_k_() as String
     return m.reason
 end function
 
-function BeforeTest_create_BeforeTest_k_() as Object
+function BeforeTest_create_k_() as Object
     this = {}
     this.__type = "BeforeTest"
     this.__proto = ["BeforeTest", "Annotation"]
@@ -28,7 +28,7 @@ function BeforeTest_create_BeforeTest_k_() as Object
     return this
 end function
 
-function AfterTest_create_AfterTest_k_() as Object
+function AfterTest_create_k_() as Object
     this = {}
     this.__type = "AfterTest"
     this.__proto = ["AfterTest", "Annotation"]

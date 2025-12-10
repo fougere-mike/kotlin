@@ -119,14 +119,10 @@ public class HashMap<K, V> : MutableMap<K, V> {
     // ==================== Bulk Operations ====================
 
     override fun putAll(from: Map<out K, V>) {
-        // Use explicit key iteration to avoid iterator method name mismatch issues
-        // when iterating over generic Map<K, V> parameter
-        for (key in from.keys) {
-            val value = from[key]
-            if (value != null || from.containsKey(key)) {
-                @Suppress("UNCHECKED_CAST")
-                put(key as K, value as V)
-            }
+        // With type erasure, iterator method names are consistent regardless of generic types
+        for (entry in from.entries) {
+            @Suppress("UNCHECKED_CAST")
+            put(entry.key as K, entry.value)
         }
     }
 

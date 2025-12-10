@@ -1,16 +1,16 @@
-function contentToString_rUByteArrayN_Str_k_(m as Dynamic) as String
+function contentToString_rUByteArrayN_k_(m as Dynamic) as String
     if m = invalid then
         return "null"
     end if
-    list = ArrayList_create_ArrayListAnyN_k_()
+    list = ArrayList_create_k_()
     for each item in m
-        list.add_AnyN_Z_k_(item.toString())
+        list.add_AnyN_k_(item.toString())
 
     end for
-    return ("[" + joinToString_rIterableAnyN_CharSequence_CharSequence_CharSequence_I_CharSequence_Str_k_(list, ", ")) + "]"
+    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ")) + "]"
 end function
 
-function contentEquals_rUByteArrayN_UByteArrayN_Z_k_(m as Dynamic, other as Dynamic) as Boolean
+function contentEquals_rUByteArrayN_UByteArrayN_k_(m as Dynamic, other as Dynamic) as Boolean
     if __kotlin_identityEquals(m, other) then
         return true
     end if
@@ -20,14 +20,14 @@ function contentEquals_rUByteArrayN_UByteArrayN_Z_k_(m as Dynamic, other as Dyna
     if m.get_size() <> other.get_size() then
         return false
     end if
-    progression = until_rI_I_IntRange_k_(0, m.get_size())
+    progression = until_rI_I_k_(0, m.get_size())
     inductionVariable = progression.get_first()
     last = progression.get_last()
     if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if m.get_I_UByte_k_(i) <> other.get_I_UByte_k_(i) then
+        if m.get_I_k_(i) <> other.get_I_k_(i) then
             return false
         end if
 
@@ -36,7 +36,7 @@ function contentEquals_rUByteArrayN_UByteArrayN_Z_k_(m as Dynamic, other as Dyna
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if m.get_I_UByte_k_(i) <> other.get_I_UByte_k_(i) then
+            if m.get_I_k_(i) <> other.get_I_k_(i) then
                 return false
             end if
 
@@ -47,19 +47,19 @@ function contentEquals_rUByteArrayN_UByteArrayN_Z_k_(m as Dynamic, other as Dyna
     return true
 end function
 
-function contentToString_rUShortArrayN_Str_k_(m as Dynamic) as String
+function contentToString_rUShortArrayN_k_(m as Dynamic) as String
     if m = invalid then
         return "null"
     end if
-    list = ArrayList_create_ArrayListAnyN_k_()
+    list = ArrayList_create_k_()
     for each item in m
-        list.add_AnyN_Z_k_(item.toString())
+        list.add_AnyN_k_(item.toString())
 
     end for
-    return ("[" + joinToString_rIterableAnyN_CharSequence_CharSequence_CharSequence_I_CharSequence_Str_k_(list, ", ")) + "]"
+    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ")) + "]"
 end function
 
-function contentEquals_rUShortArrayN_UShortArrayN_Z_k_(m as Dynamic, other as Dynamic) as Boolean
+function contentEquals_rUShortArrayN_UShortArrayN_k_(m as Dynamic, other as Dynamic) as Boolean
     if __kotlin_identityEquals(m, other) then
         return true
     end if
@@ -69,14 +69,14 @@ function contentEquals_rUShortArrayN_UShortArrayN_Z_k_(m as Dynamic, other as Dy
     if m.get_size() <> other.get_size() then
         return false
     end if
-    progression = until_rI_I_IntRange_k_(0, m.get_size())
+    progression = until_rI_I_k_(0, m.get_size())
     inductionVariable = progression.get_first()
     last = progression.get_last()
     if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if m.get_I_UShort_k_(i) <> other.get_I_UShort_k_(i) then
+        if m.get_I_k_(i) <> other.get_I_k_(i) then
             return false
         end if
 
@@ -85,7 +85,7 @@ function contentEquals_rUShortArrayN_UShortArrayN_Z_k_(m as Dynamic, other as Dy
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if m.get_I_UShort_k_(i) <> other.get_I_UShort_k_(i) then
+            if m.get_I_k_(i) <> other.get_I_k_(i) then
                 return false
             end if
 
@@ -96,19 +96,19 @@ function contentEquals_rUShortArrayN_UShortArrayN_Z_k_(m as Dynamic, other as Dy
     return true
 end function
 
-function contentToString_rUIntArrayN_Str_k_(m as Dynamic) as String
+function contentToString_rUIntArrayN_k_(m as Dynamic) as String
     if m = invalid then
         return "null"
     end if
-    list = ArrayList_create_ArrayListAnyN_k_()
+    list = ArrayList_create_k_()
     for each item in m
-        list.add_AnyN_Z_k_(item.toString())
+        list.add_AnyN_k_(item.toString())
 
     end for
-    return ("[" + joinToString_rIterableAnyN_CharSequence_CharSequence_CharSequence_I_CharSequence_Str_k_(list, ", ")) + "]"
+    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ")) + "]"
 end function
 
-function contentEquals_rUIntArrayN_UIntArrayN_Z_k_(m as Dynamic, other as Dynamic) as Boolean
+function contentEquals_rUIntArrayN_UIntArrayN_k_(m as Dynamic, other as Dynamic) as Boolean
     if __kotlin_identityEquals(m, other) then
         return true
     end if
@@ -118,14 +118,14 @@ function contentEquals_rUIntArrayN_UIntArrayN_Z_k_(m as Dynamic, other as Dynami
     if m.get_size() <> other.get_size() then
         return false
     end if
-    progression = until_rI_I_IntRange_k_(0, m.get_size())
+    progression = until_rI_I_k_(0, m.get_size())
     inductionVariable = progression.get_first()
     last = progression.get_last()
     if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if m.get_I_UInt_k_(i) <> other.get_I_UInt_k_(i) then
+        if m.get_I_k_(i) <> other.get_I_k_(i) then
             return false
         end if
 
@@ -134,7 +134,7 @@ function contentEquals_rUIntArrayN_UIntArrayN_Z_k_(m as Dynamic, other as Dynami
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if m.get_I_UInt_k_(i) <> other.get_I_UInt_k_(i) then
+            if m.get_I_k_(i) <> other.get_I_k_(i) then
                 return false
             end if
 
@@ -145,19 +145,19 @@ function contentEquals_rUIntArrayN_UIntArrayN_Z_k_(m as Dynamic, other as Dynami
     return true
 end function
 
-function contentToString_rULongArrayN_Str_k_(m as Dynamic) as String
+function contentToString_rULongArrayN_k_(m as Dynamic) as String
     if m = invalid then
         return "null"
     end if
-    list = ArrayList_create_ArrayListAnyN_k_()
+    list = ArrayList_create_k_()
     for each item in m
-        list.add_AnyN_Z_k_(item.toString())
+        list.add_AnyN_k_(item.toString())
 
     end for
-    return ("[" + joinToString_rIterableAnyN_CharSequence_CharSequence_CharSequence_I_CharSequence_Str_k_(list, ", ")) + "]"
+    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ")) + "]"
 end function
 
-function contentEquals_rULongArrayN_ULongArrayN_Z_k_(m as Dynamic, other as Dynamic) as Boolean
+function contentEquals_rULongArrayN_ULongArrayN_k_(m as Dynamic, other as Dynamic) as Boolean
     if __kotlin_identityEquals(m, other) then
         return true
     end if
@@ -167,14 +167,14 @@ function contentEquals_rULongArrayN_ULongArrayN_Z_k_(m as Dynamic, other as Dyna
     if m.get_size() <> other.get_size() then
         return false
     end if
-    progression = until_rI_I_IntRange_k_(0, m.get_size())
+    progression = until_rI_I_k_(0, m.get_size())
     inductionVariable = progression.get_first()
     last = progression.get_last()
     if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if m.get_I_ULong_k_(i) <> other.get_I_ULong_k_(i) then
+        if m.get_I_k_(i) <> other.get_I_k_(i) then
             return false
         end if
 
@@ -183,7 +183,7 @@ function contentEquals_rULongArrayN_ULongArrayN_Z_k_(m as Dynamic, other as Dyna
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if m.get_I_ULong_k_(i) <> other.get_I_ULong_k_(i) then
+            if m.get_I_k_(i) <> other.get_I_k_(i) then
                 return false
             end if
 

@@ -1,9 +1,9 @@
-function KType_get_classifier_KClassifierN_k_() as Dynamic
+function KType_get_classifier_k_() as Dynamic
 end function
 
-function KClass_get_simpleName_StrN_k_() as Dynamic
+function KClass_get_simpleName_k_() as Dynamic
 end function
 
-function typeOf_KType_k_() as Object
-    return Anon_40647d94_create_AnonAnyN_k_()
+function typeOf_k_() as Object
+    return Anon_75b5809b_create_k_()
 end function

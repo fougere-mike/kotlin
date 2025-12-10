@@ -1,3 +1,3 @@
-function isNotEmpty_rCollectionAnyN_Z_k_(m as Object) as Boolean
-    return not m.isEmpty_Z_k_()
+function isNotEmpty_rCollection_k_(m as Object) as Boolean
+    return not m.isEmpty_k_()
 end function

@@ -1,4 +1,4 @@
-function IndexedValue_create_I_AnyN_IndexedValueAnyN_k_(index as Integer, value as Dynamic) as Object
+function IndexedValue_create_I_AnyN_k_(index as Integer, value as Dynamic) as Object
     this = {}
     this.__type = "IndexedValue"
     this.__proto = ["IndexedValue"]
@@ -48,7 +48,7 @@ function IndexedValue_copy(index = invalid, value = invalid) as Object
     if value = invalid then
         value = m.value
     end if
-    return IndexedValue_create_I_AnyN_IndexedValueAnyN_k_(index, value)
+    return IndexedValue_create_I_AnyN_k_(index, value)
 end function
 
 function IndexedValue_component1() as Integer

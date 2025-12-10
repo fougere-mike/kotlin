@@ -1,11 +1,11 @@
-function isNotEmpty_rCharSequence_Z_k_(m as Object) as Boolean
+function isNotEmpty_rCharSequence_k_(m as Object) as Boolean
     return Len(m) > 0
 end function
 
-function isNullOrEmpty_rCharSequenceN_Z_k_(m as Dynamic) as Boolean
+function isNullOrEmpty_rCharSequenceN_k_(m as Dynamic) as Boolean
     return (m = invalid) or (Len(m) = 0)
 end function
 
-function isEmpty_rCharSequence_Z_k_(m as Object) as Boolean
+function isEmpty_rCharSequence_k_(m as Object) as Boolean
     return Len(m) = 0
 end function

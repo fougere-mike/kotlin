@@ -2053,15 +2053,16 @@ class IrToBrsTransformer(
             // Numeric types: use __kotlin_numToStr() helper function
             // BrightScript's Str() adds a leading space for positive numbers
             // We use a helper function because anonymous functions can't call global built-ins
+            // Note: Method names do NOT include return types (like Java) to support polymorphism
             receiverType.isInt() || receiverType.isShort() || receiverType.isByte() ||
             receiverType.isLong() || receiverType.isFloat() || receiverType.isDouble() -> {
                 // Choose the appropriate overload based on type
                 val funcName = when {
-                    receiverType.isInt() || receiverType.isShort() || receiverType.isByte() -> "__kotlin_numToStr_I_Str_k_"
-                    receiverType.isLong() -> "__kotlin_numToStr_J_Str_k_"
-                    receiverType.isFloat() -> "__kotlin_numToStr_F_Str_k_"
-                    receiverType.isDouble() -> "__kotlin_numToStr_D_Str_k_"
-                    else -> "__kotlin_numToStr_AnyN_Str_k_"
+                    receiverType.isInt() || receiverType.isShort() || receiverType.isByte() -> "__kotlin_numToStr_I_k_"
+                    receiverType.isLong() -> "__kotlin_numToStr_J_k_"
+                    receiverType.isFloat() -> "__kotlin_numToStr_F_k_"
+                    receiverType.isDouble() -> "__kotlin_numToStr_D_k_"
+                    else -> "__kotlin_numToStr_AnyN_k_"
                 }
                 BrsFunctionCall(
                     BrsIdentifier(funcName),
@@ -2096,13 +2097,14 @@ class IrToBrsTransformer(
      * This is used by brsIntrinsicToString when the type is not known at compile time.
      *
      * Instead of generating inline nested conditionals (which become IIFEs with scope issues),
-     * we call the stdlib toString_AnyN_Str_k_ function which handles all types properly.
+     * we call the stdlib toString_AnyN_k_ function which handles all types properly.
+     * Note: Method names do NOT include return types (like Java) to support polymorphism.
      */
     fun generateRuntimeToString(valueExpr: BrsExpression): BrsExpression {
         // Call the stdlib toString function which handles all type checking
         // This avoids nested IIFEs that cause scope issues with global built-in functions
         return BrsFunctionCall(
-            BrsIdentifier("toString_AnyN_Str_k_"),
+            BrsIdentifier("toString_AnyN_k_"),
             mutableListOf(valueExpr)
         )
     }
@@ -3006,9 +3008,7 @@ class IrStatementToBrsTransformer(
         val iterableType = iterableExpr.type
         val iterableClassName = iterableType.classOrNull?.owner?.name?.asString() ?: ""
 
-        // These collection types have get_array() that returns the underlying roArray
-        // Includes both array-backed collections and view collections (KeySet, ValueCollection, EntrySet)
-        // Also includes interface types since at runtime they're always implemented by our stdlib classes
+        // These concrete stdlib collection types have get_array() that returns the underlying roArray
         val hasGetArray = iterableClassName in listOf(
             // Array-backed collections
             "ArrayList", "ArrayDeque", "CharArray", "IntArray", "LongArray",
@@ -3016,14 +3016,11 @@ class IrStatementToBrsTransformer(
             // HashMap view collections
             "KeySet", "ValueCollection", "EntrySet",
             // LinkedHashMap view collections
-            "LinkedKeySet", "LinkedValueCollection", "LinkedEntrySet",
-            // Interface types - at runtime always backed by stdlib classes with get_array()
-            "Set", "MutableSet", "Collection", "MutableCollection",
-            "List", "MutableList", "Iterable", "MutableIterable"
+            "LinkedKeySet", "LinkedValueCollection", "LinkedEntrySet"
         )
 
         if (hasGetArray) {
-            // Call get_array() method for iteration - this works for array-backed collections
+            // Call get_array() method for iteration - this works for concrete stdlib collections
             val arrayIterable = BrsFunctionCall(BrsDotAccess(iterableBrs, "get_array"), mutableListOf())
             return BrsForEach(
                 variable = loopVarName,
@@ -3032,12 +3029,86 @@ class IrStatementToBrsTransformer(
             )
         }
 
+        // Check if this is a collection type that needs iterator-based iteration
+        // With type erasure, iterator/hasNext/next methods have consistent names
+        // Note: This includes both interface types AND concrete classes that use iterator pattern
+        val isCollectionInterface = iterableClassName in listOf(
+            // Interface types
+            "Iterable", "MutableIterable", "Collection", "MutableCollection",
+            "List", "MutableList", "Set", "MutableSet",
+            // Concrete collection classes that need iterator-based iteration
+            // (these don't have get_array() - they use hash-based storage)
+            "HashSet", "LinkedHashSet", "HashMap", "LinkedHashMap"
+        )
+
+        if (isCollectionInterface) {
+            // Generate: __iter = iterable.iterator_k_(); while __iter.hasNext_k_() { loopVar = __iter.next_k_(); body }
+            // Note: Method names do NOT include return types (like Java) to support polymorphism
+            val iterVarName = "__iter_${parent.nextTempId()}"
+            val iterVar = BrsIdentifier(iterVarName)
+
+            // All iterator methods use the same name regardless of mutable/non-mutable
+            // (return types are not part of method name mangling)
+            val iteratorMethodName = "iterator_k_"
+
+            // __iter = iterable.iterator_k_()
+            val iteratorCall = BrsFunctionCall(BrsDotAccess(iterableBrs, iteratorMethodName), mutableListOf())
+            val iterAssign = BrsVariable(iterVarName, null, iteratorCall)
+
+            // __iter.hasNext_k_()  (returns Boolean, but return type not in name)
+            val hasNextCall = BrsFunctionCall(BrsDotAccess(iterVar, "hasNext_k_"), mutableListOf())
+
+            // loopVar = __iter.next_k_()  (returns T which erases to Any?, but return type not in name)
+            val nextCall = BrsFunctionCall(BrsDotAccess(iterVar, "next_k_"), mutableListOf())
+            val loopVarAssign = BrsVariable(loopVarName, null, nextCall)
+
+            // Build while body: assignment + original body
+            val whileBody = mutableListOf<BrsStatement>()
+            whileBody.add(loopVarAssign)
+            whileBody.addAll(actualBody)
+
+            // Convert any "exit for" to "exit while" and "continue for" to continue pattern
+            val convertedBody = convertForControlToWhile(whileBody)
+
+            return BrsBlock(mutableListOf(
+                iterAssign,
+                BrsWhile(hasNextCall, BrsBlock(convertedBody.toMutableList()))
+            ))
+        }
+
         // For native arrays or other types, use for-each directly
         return BrsForEach(
             variable = loopVarName,
             iterable = iterableBrs,
             body = BrsBlock(actualBody.toMutableList())
         )
+    }
+
+    /**
+     * Convert "exit for" to "exit while" in statements that were originally in a for-each
+     * but are now in a while loop due to iterator-based conversion.
+     */
+    private fun convertForControlToWhile(statements: List<BrsStatement>): List<BrsStatement> {
+        return statements.map { stmt -> convertForControlToWhileStmt(stmt) }
+    }
+
+    private fun convertForControlToWhileStmt(stmt: BrsStatement): BrsStatement {
+        return when (stmt) {
+            is BrsExit -> if (stmt.kind == BrsExitKind.FOR) BrsExit(BrsExitKind.WHILE) else stmt
+            is BrsBlock -> BrsBlock(convertForControlToWhile(stmt.statements).toMutableList())
+            is BrsIf -> BrsIf(
+                condition = stmt.condition,
+                thenBranch = convertForControlToWhileStmt(stmt.thenBranch),
+                elseBranch = stmt.elseBranch?.let { convertForControlToWhileStmt(it) }
+            )
+            is BrsWhile -> BrsWhile(
+                condition = stmt.condition,
+                body = stmt.body // Don't recurse into nested while - it has its own scope
+            )
+            is BrsForEach -> stmt // Don't recurse into nested for - it has its own scope
+            is BrsFor -> stmt // Don't recurse into nested for - it has its own scope
+            else -> stmt
+        }
     }
 
     /**
@@ -3853,7 +3924,8 @@ class IrExpressionToBrsTransformer(
 
                     val correctedFunctionName = if (hasWrongClassPrefix) {
                         // Rebuild the function name with correct format:
-                        // functionName_rReceiverType_ParamTypes_ReturnType_k_
+                        // functionName_rReceiverType_ParamTypes_k_
+                        // Note: Return types are NOT included (like Java) to support polymorphism
                         val rawName = function.name.asString()
 
                         // Build signature parts
@@ -3867,13 +3939,7 @@ class IrExpressionToBrsTransformer(
                             signatureParts.add(context.typeToMangledString(param.type))
                         }
 
-                        // Add return type if not Unit
-                        val returnType = function.returnType
-                        if (!returnType.isUnit() && !returnType.isNothing()) {
-                            signatureParts.add(context.typeToMangledString(returnType))
-                        }
-
-                        // Build the full name
+                        // Build the full name (no return type)
                         val signature = signatureParts.joinToString("_")
                         "${rawName}_${signature}_k_"
                     } else {
@@ -3976,7 +4042,8 @@ class IrExpressionToBrsTransformer(
                 // For extension functions on primitives, we need to fix the function name.
                 // When functions are loaded from klib, the parent might be the class (e.g., Int)
                 // instead of the package, causing getBrsName to prepend "Int_" to the name.
-                // The correct format is: functionName_rReceiverType_ParamTypes_ReturnType_k_
+                // The correct format is: functionName_rReceiverType_ParamTypes_k_
+                // Note: Return types are NOT included (like Java) to support polymorphism
 
                 // Check if functionName starts with a primitive class prefix that needs stripping
                 val primitiveClassPrefixes = listOf("Int_", "Long_", "Float_", "Double_", "Short_", "Byte_", "Boolean_", "Char_")
@@ -3995,13 +4062,7 @@ class IrExpressionToBrsTransformer(
                         signatureParts.add(context.typeToMangledString(param.type))
                     }
 
-                    // Add return type if not Unit
-                    val returnType = function.returnType
-                    if (!returnType.isUnit() && !returnType.isNothing()) {
-                        signatureParts.add(context.typeToMangledString(returnType))
-                    }
-
-                    // Build the full name
+                    // Build the full name (no return type)
                     val signature = signatureParts.joinToString("_")
                     "${rawName}_${signature}_k_"
                 } else {
