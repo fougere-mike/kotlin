@@ -34,9 +34,9 @@ import kotlin.test.FrameworkAdapter
  */
 public class JsonTestAdapter : FrameworkAdapter {
     private var currentSuite: String = ""
-    private var suiteTimer = RoTimespan()
-    private var testTimer = RoTimespan()
-    private var runTimer = RoTimespan()
+    private var suiteTimer = RoTimespan.create()
+    private var testTimer = RoTimespan.create()
+    private var runTimer = RoTimespan.create()
 
     // Suite-level counters
     private var suitePassed = 0
@@ -178,7 +178,7 @@ public class JsonTestAdapter : FrameworkAdapter {
      * Returns the current time in milliseconds since epoch.
      */
     private fun currentTimeMillis(): Long {
-        val dt = RoDateTime()
+        val dt = RoDateTime.create()
         dt.mark()
         return dt.asSeconds() * 1000L + dt.getMilliseconds().toLong()
     }

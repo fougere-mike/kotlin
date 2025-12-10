@@ -5,7 +5,7 @@
 
 package kotlin.brs.roku
 
-import kotlin.brs.BrsInline
+import kotlin.brs.BrsCreateObject
 import kotlin.brs.Dynamic
 
 /**
@@ -16,14 +16,14 @@ import kotlin.brs.Dynamic
  *
  * Example usage:
  * ```kotlin
- * val input = RoInput()
- * val port = RoMessagePort()
+ * val input = RoInput.create()
+ * val port = RoMessagePort.create()
  * input.setMessagePort(port)
  *
  * // Wait for input events
  * val msg = port.waitMessage(0)
  * if (msg != null) {
- *     val event = RoInputEvent(msg)
+ *     val event = msg as RoInputEvent
  *     val info = event.getInfo()
  *     // Process the input
  * }
@@ -31,51 +31,26 @@ import kotlin.brs.Dynamic
  *
  * @see <a href="https://developer.roku.com/docs/references/brightscript/components/roinput.md">roInput</a>
  */
-public class RoInput : ISetMessagePort, IGetMessagePort {
-
-    private val native: Dynamic
-
-    /**
-     * Creates a new roInput instance.
-     */
-    public constructor() {
-        native = brsCreateInput()
-    }
-
-    override fun setMessagePort(port: RoMessagePort) {
-        brsSetMessagePort(native, port.getNative())
-    }
-
-    override fun getMessagePort(): RoMessagePort? {
-        val port = brsGetMessagePort(native)
-        return if (port != null) RoMessagePort(port) else null
-    }
+public external interface RoInput : ISetMessagePort, IGetMessagePort {
+    override fun setMessagePort(port: IMessagePort)
+    override fun getMessagePort(): IMessagePort?
 
     /**
      * Marks the input as handled, preventing it from being processed elsewhere.
      */
-    public fun markAsHandled() {
-        brsMarkAsHandled(native)
+    public fun markAsHandled()
+
+    public companion object {
+        /**
+         * Creates a new roInput instance.
+         *
+         * Compiles to: `CreateObject("roInput")`
+         *
+         * @return A new RoInput instance.
+         */
+        @BrsCreateObject("roInput")
+        public fun create(): RoInput = definedExternally
     }
-
-    /**
-     * Returns the native BrightScript object.
-     */
-    internal fun getNative(): Dynamic = native
-
-    // ==================== BrightScript Intrinsics ====================
-
-    @BrsInline("return CreateObject(\"roInput\")")
-    private external fun brsCreateInput(): Dynamic
-
-    @BrsInline("input.SetMessagePort(port)")
-    private external fun brsSetMessagePort(input: Dynamic, port: Dynamic)
-
-    @BrsInline("return input.GetMessagePort()")
-    private external fun brsGetMessagePort(input: Dynamic): Dynamic?
-
-    @BrsInline("input.MarkAsHandled()")
-    private external fun brsMarkAsHandled(input: Dynamic)
 }
 
 /**
@@ -83,17 +58,16 @@ public class RoInput : ISetMessagePort, IGetMessagePort {
  *
  * @see <a href="https://developer.roku.com/docs/references/brightscript/events/roinputevent.md">roInputEvent</a>
  */
-public class RoInputEvent(private val event: Dynamic) {
-
+public external interface RoInputEvent {
     /**
      * Returns true if this is a deep link input event.
      */
-    public fun isInput(): Boolean = brsIsInput(event)
+    public fun isInput(): Boolean
 
     /**
      * Returns true if this is a screen saver exit event.
      */
-    public fun isScreenSaverExitedEvent(): Boolean = brsIsScreenSaverExitedEvent(event)
+    public fun isScreenSaverExitedEvent(): Boolean
 
     /**
      * Returns the input parameters as an associative array.
@@ -101,14 +75,5 @@ public class RoInputEvent(private val event: Dynamic) {
      *
      * @return Map of parameter names to values.
      */
-    public fun getInfo(): Dynamic = brsGetInfo(event)
-
-    @BrsInline("return ev.IsInput()")
-    private external fun brsIsInput(ev: Dynamic): Boolean
-
-    @BrsInline("return ev.IsScreenSaverExitedEvent()")
-    private external fun brsIsScreenSaverExitedEvent(ev: Dynamic): Boolean
-
-    @BrsInline("return ev.GetInfo()")
-    private external fun brsGetInfo(ev: Dynamic): Dynamic
+    public fun getInfo(): Dynamic
 }

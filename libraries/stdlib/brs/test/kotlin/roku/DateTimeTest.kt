@@ -14,13 +14,13 @@ import kotlin.test.*
 fun TestRunner.dateTimeTests() {
     suite("DateTime") {
         test("RoDateTime creation") {
-            val dt = RoDateTime()
+            val dt = RoDateTime.create()
             // Just verify it can be created
             assertTrue(true)
         }
 
         test("RoDateTime mark") {
-            val dt = RoDateTime()
+            val dt = RoDateTime.create()
             dt.mark()
             val seconds = dt.asSeconds()
             // Should be a reasonable epoch time (after year 2000)
@@ -28,7 +28,7 @@ fun TestRunner.dateTimeTests() {
         }
 
         test("RoDateTime components") {
-            val dt = RoDateTime()
+            val dt = RoDateTime.create()
             dt.mark()
 
             val year = dt.getYear()
@@ -42,7 +42,7 @@ fun TestRunner.dateTimeTests() {
         }
 
         test("RoDateTime time components") {
-            val dt = RoDateTime()
+            val dt = RoDateTime.create()
             dt.mark()
 
             val hours = dt.getHours()
@@ -55,7 +55,7 @@ fun TestRunner.dateTimeTests() {
         }
 
         test("RoDateTime milliseconds") {
-            val dt = RoDateTime()
+            val dt = RoDateTime.create()
             dt.mark()
 
             val ms = dt.getMilliseconds()
@@ -63,7 +63,7 @@ fun TestRunner.dateTimeTests() {
         }
 
         test("RoDateTime day of week") {
-            val dt = RoDateTime()
+            val dt = RoDateTime.create()
             dt.mark()
 
             val dow = dt.getDayOfWeek()
@@ -71,13 +71,13 @@ fun TestRunner.dateTimeTests() {
         }
 
         test("RoTimespan creation") {
-            val ts = RoTimespan()
+            val ts = RoTimespan.create()
             // Just verify it can be created
             assertTrue(true)
         }
 
         test("RoTimespan mark and measure") {
-            val ts = RoTimespan()
+            val ts = RoTimespan.create()
             ts.mark()
 
             // Do some work
@@ -92,7 +92,7 @@ fun TestRunner.dateTimeTests() {
         }
 
         test("RoTimespan totalSeconds") {
-            val ts = RoTimespan()
+            val ts = RoTimespan.create()
             ts.mark()
 
             val seconds = ts.totalSeconds()
@@ -100,8 +100,8 @@ fun TestRunner.dateTimeTests() {
         }
 
         test("multiple timespans") {
-            val ts1 = RoTimespan()
-            val ts2 = RoTimespan()
+            val ts1 = RoTimespan.create()
+            val ts2 = RoTimespan.create()
 
             ts1.mark()
 

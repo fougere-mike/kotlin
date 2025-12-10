@@ -5,7 +5,7 @@
 
 package kotlin.brs.roku
 
-import kotlin.brs.BrsInline
+import kotlin.brs.BrsCreateObject
 import kotlin.brs.Dynamic
 
 /**
@@ -16,7 +16,7 @@ import kotlin.brs.Dynamic
  *
  * Example usage:
  * ```kotlin
- * val port = RoMessagePort()
+ * val port = RoMessagePort.create()
  * urlTransfer.setMessagePort(port)
  *
  * val msg = port.waitMessage(5000)
@@ -27,69 +27,38 @@ import kotlin.brs.Dynamic
  *
  * @see <a href="https://developer.roku.com/docs/references/brightscript/components/romessageport.md">roMessagePort</a>
  */
-public class RoMessagePort : IMessagePort {
-
-    /** The native BrightScript roMessagePort instance. */
-    private val native: Dynamic
-
-    /**
-     * Creates a new message port.
-     */
-    public constructor() {
-        native = brsCreateMessagePort()
-    }
-
-    /**
-     * Internal constructor for wrapping an existing native message port.
-     */
-    internal constructor(nativePort: Dynamic) {
-        native = nativePort
-    }
-
+public external interface RoMessagePort : IMessagePort {
     /**
      * Waits for a message on the port, with a timeout.
      *
      * @param timeout Maximum time to wait in milliseconds.
      * @return The received message, or null if timeout occurred.
      */
-    override fun waitMessage(timeout: Int): Dynamic? {
-        return brsWaitMessage(native, timeout)
-    }
+    override fun waitMessage(timeout: Int): Dynamic?
 
     /**
      * Gets a message from the port without blocking.
      *
      * @return The message if one is available, or null otherwise.
      */
-    override fun getMessage(): Dynamic? {
-        return brsGetMessage(native)
-    }
+    override fun getMessage(): Dynamic?
 
     /**
      * Peeks at the next message without removing it from the queue.
      *
      * @return The message if one is available, or null otherwise.
      */
-    override fun peekMessage(): Dynamic? {
-        return brsPeekMessage(native)
+    override fun peekMessage(): Dynamic?
+
+    public companion object {
+        /**
+         * Creates a new message port.
+         *
+         * Compiles to: `CreateObject("roMessagePort")`
+         *
+         * @return A new RoMessagePort instance.
+         */
+        @BrsCreateObject("roMessagePort")
+        public fun create(): RoMessagePort = definedExternally
     }
-
-    /**
-     * Returns the native BrightScript object for use with other components.
-     */
-    internal fun getNative(): Dynamic = native
-
-    // ==================== BrightScript Intrinsics ====================
-
-    @BrsInline("return CreateObject(\"roMessagePort\")")
-    private external fun brsCreateMessagePort(): Dynamic
-
-    @BrsInline("return port.WaitMessage(timeout)")
-    private external fun brsWaitMessage(port: Dynamic, timeout: Int): Dynamic?
-
-    @BrsInline("return port.GetMessage()")
-    private external fun brsGetMessage(port: Dynamic): Dynamic?
-
-    @BrsInline("return port.PeekMessage()")
-    private external fun brsPeekMessage(port: Dynamic): Dynamic?
 }
