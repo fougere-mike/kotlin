@@ -1,9 +1,9 @@
-sub set_rMutableMapAnyNAnyN_AnyN_AnyN_k_(m as Object, key as Dynamic, value as Dynamic)
-    m.put_AnyN_AnyN_AnyN_k_(key, value)
+sub set_rMutableMap_AnyN_AnyN_k_(m as Object, key as Dynamic, value as Dynamic)
+    m.put_AnyN_AnyN_k_(key, value)
 end sub
 
-function getOrElse_rMapAnyNAnyN_AnyN_Function0AnyN_AnyN_k_(m as Object, key as Dynamic, defaultValue as Object) as Dynamic
-    tmp0_elvis_lhs = m.get_AnyN_AnyN_k_(key)
+function getOrElse_rMap_AnyN_Function0_k_(m as Object, key as Dynamic, defaultValue as Object) as Dynamic
+    tmp0_elvis_lhs = m.get_AnyN_k_(key)
     __when_tmp0 = invalid
     if tmp0_elvis_lhs = invalid then
         __when_tmp0 = defaultValue.invoke()
@@ -14,18 +14,18 @@ function getOrElse_rMapAnyNAnyN_AnyN_Function0AnyN_AnyN_k_(m as Object, key as D
 
 end function
 
-function getOrPut_rMutableMapAnyNAnyN_AnyN_Function0AnyN_AnyN_k_(m as Object, key as Dynamic, defaultValue as Object) as Dynamic
-    value = m.get_AnyN_AnyN_k_(key)
-    if (value <> invalid) or m.containsKey_AnyN_Z_k_(key) then
+function getOrPut_rMutableMap_AnyN_Function0_k_(m as Object, key as Dynamic, defaultValue as Object) as Dynamic
+    value = m.get_AnyN_k_(key)
+    if (value <> invalid) or m.containsKey_AnyN_k_(key) then
         return value
     end if
     answer = defaultValue.invoke()
-    m.put_AnyN_AnyN_AnyN_k_(key, answer)
+    m.put_AnyN_AnyN_k_(key, answer)
     return answer
 end function
 
-function getOrDefault_rMapAnyNAnyN_AnyN_AnyN_AnyN_k_(m as Object, key as Dynamic, defaultValue as Dynamic) as Dynamic
-    tmp0_elvis_lhs = m.get_AnyN_AnyN_k_(key)
+function getOrDefault_rMap_AnyN_AnyN_k_(m as Object, key as Dynamic, defaultValue as Dynamic) as Dynamic
+    tmp0_elvis_lhs = m.get_AnyN_k_(key)
     __when_tmp1 = invalid
     if tmp0_elvis_lhs = invalid then
         __when_tmp1 = defaultValue
@@ -36,43 +36,58 @@ function getOrDefault_rMapAnyNAnyN_AnyN_AnyN_AnyN_k_(m as Object, key as Dynamic
 
 end function
 
-function toMap_rMapAnyNAnyN_MapAnyNAnyN_k_(m as Object) as Object
-    result = HashMap_create_HashMapAnyNAnyN_k_()
-    for each entry in m.get_entries()
-        result.put_AnyN_AnyN_AnyN_k_(entry.get_key(), entry.get_value())
+function toMap_rMap_k_(m as Object) as Object
+    result = HashMap_create_k_()
+    __iter_15 = m.get_entries().iterator_k_()
+    while __iter_15.hasNext_k_()
+        entry = __iter_15.next_k_()
+        result.put_AnyN_AnyN_k_(entry.get_key(), entry.get_value())
 
-    end for
+    end while
+
     return result
 end function
 
-function toMutableMap_rMapAnyNAnyN_MutableMapAnyNAnyN_k_(m as Object) as Object
-    result = HashMap_create_HashMapAnyNAnyN_k_()
-    for each entry in m.get_entries()
-        result.put_AnyN_AnyN_AnyN_k_(entry.get_key(), entry.get_value())
+function toMutableMap_rMap_k_(m as Object) as Object
+    result = HashMap_create_k_()
+    __iter_16 = m.get_entries().iterator_k_()
+    while __iter_16.hasNext_k_()
+        entry = __iter_16.next_k_()
+        result.put_AnyN_AnyN_k_(entry.get_key(), entry.get_value())
 
-    end for
+    end while
+
     return result
 end function
 
-function plus_rMapAnyNAnyN_MapAnyNAnyN_MapAnyNAnyN_k_(m as Object, map as Object) as Object
-    result = HashMap_create_HashMapAnyNAnyN_k_()
-    for each entry in m.get_entries()
-        result.put_AnyN_AnyN_AnyN_k_(entry.get_key(), entry.get_value())
+function plus_rMap_Map_k_(m as Object, map as Object) as Object
+    result = HashMap_create_k_()
+    __iter_17 = m.get_entries().iterator_k_()
+    while __iter_17.hasNext_k_()
+        entry = __iter_17.next_k_()
+        result.put_AnyN_AnyN_k_(entry.get_key(), entry.get_value())
 
-    end for
-    for each entry in map.get_entries()
-        result.put_AnyN_AnyN_AnyN_k_(entry.get_key(), entry.get_value())
+    end while
 
-    end for
+    __iter_18 = map.get_entries().iterator_k_()
+    while __iter_18.hasNext_k_()
+        entry = __iter_18.next_k_()
+        result.put_AnyN_AnyN_k_(entry.get_key(), entry.get_value())
+
+    end while
+
     return result
 end function
 
-function plus_rMapAnyNAnyN_PairAnyNAnyN_MapAnyNAnyN_k_(m as Object, pair as Object) as Object
-    result = HashMap_create_HashMapAnyNAnyN_k_()
-    for each entry in m.get_entries()
-        result.put_AnyN_AnyN_AnyN_k_(entry.get_key(), entry.get_value())
+function plus_rMap_Pair_k_(m as Object, pair as Object) as Object
+    result = HashMap_create_k_()
+    __iter_19 = m.get_entries().iterator_k_()
+    while __iter_19.hasNext_k_()
+        entry = __iter_19.next_k_()
+        result.put_AnyN_AnyN_k_(entry.get_key(), entry.get_value())
 
-    end for
-    result.put_AnyN_AnyN_AnyN_k_(pair.first, pair.second)
+    end while
+
+    result.put_AnyN_AnyN_k_(pair.first, pair.second)
     return result
 end function

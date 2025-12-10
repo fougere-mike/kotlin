@@ -1,2 +1,2 @@
-function Sequence_iterator_IteratorAnyN_k_() as Object
+function Sequence_iterator_k_() as Object
 end function

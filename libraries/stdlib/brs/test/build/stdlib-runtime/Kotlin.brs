@@ -1,35 +1,35 @@
-function isNaN_rD_Z_k_(m as Double) as Boolean
+function isNaN_rD_k_(m as Double) as Boolean
     return m <> m
 end function
 
-function isInfinite_rD_Z_k_(m as Double) as Boolean
+function isInfinite_rD_k_(m as Double) as Boolean
     return (m = (1.0E+309#)) or (m = (-1.0E+309#))
 end function
 
-function isFinite_rD_Z_k_(m as Double) as Boolean
-    return not isInfinite_rD_Z_k_(m) and not isNaN_rD_Z_k_(m)
+function isFinite_rD_k_(m as Double) as Boolean
+    return not isInfinite_rD_k_(m) and not isNaN_rD_k_(m)
 end function
 
-function isNaN_rF_Z_k_(m as Float) as Boolean
+function isNaN_rF_k_(m as Float) as Boolean
     return m <> m
 end function
 
-function isInfinite_rF_Z_k_(m as Float) as Boolean
+function isInfinite_rF_k_(m as Float) as Boolean
     return (m = Infinity!) or (m = -Infinity!)
 end function
 
-function isFinite_rF_Z_k_(m as Float) as Boolean
-    return not isInfinite_rF_Z_k_(m) and not isNaN_rF_Z_k_(m)
+function isFinite_rF_k_(m as Float) as Boolean
+    return not isInfinite_rF_k_(m) and not isNaN_rF_k_(m)
 end function
 
-function toBits_rD_J_k_(m as Double) as LongInteger
-    if isNaN_rD_Z_k_(m) then
+function toBits_rD_k_(m as Double) as LongInteger
+    if isNaN_rD_k_(m) then
         return 9221120237041090560&
     end if
-    return toRawBits_rD_J_k_(m)
+    return toRawBits_rD_k_(m)
 end function
 
-function toRawBits_rD_J_k_(m as Double) as LongInteger
+function toRawBits_rD_k_(m as Double) as LongInteger
     __when_tmp3 = invalid
     if m = 0.0# then
         __when_tmp0 = invalid
@@ -39,7 +39,7 @@ function toRawBits_rD_J_k_(m as Double) as LongInteger
             __when_tmp0 = 0&
         end if
         __when_tmp3 = __when_tmp0
-    else if isNaN_rD_Z_k_(m) then
+    else if isNaN_rD_k_(m) then
         __when_tmp3 = 9221120237041090560&
     else if m = (1.0E+309#) then
         __when_tmp3 = 9218868437227405312&
@@ -60,27 +60,27 @@ function toRawBits_rD_J_k_(m as Double) as LongInteger
         exp = 0
         mantissa = absValue
         while mantissa >= 2.0#
-            mantissa = div_rD_D_D_k_(mantissa, 2.0#)
+            mantissa = div_rD_D_k_(mantissa, 2.0#)
             exp = (exp + 1)
         end while
         while mantissa < 1.0#
-            mantissa = times_rD_D_D_k_(mantissa, 2.0#)
+            mantissa = times_rD_D_k_(mantissa, 2.0#)
             exp = (exp - 1)
         end while
         biasedExp = exp + 1023
-        mantissa = minus_rD_D_D_k_(mantissa, 1.0#)
+        mantissa = minus_rD_D_k_(mantissa, 1.0#)
         mantissaBits = 0&
-        progression = until_rI_I_IntRange_k_(0, 52)
+        progression = until_rI_I_k_(0, 52)
         inductionVariable = progression.get_first()
         last = progression.get_last()
         if inductionVariable <= last then
                         i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            mantissa = times_rD_D_D_k_(mantissa, 2.0#)
+            mantissa = times_rD_D_k_(mantissa, 2.0#)
             if mantissa >= 1.0# then
-                mantissaBits = or_rJ_J_J_k_(mantissaBits, shl_rJ_I_J_k_(1&, 51 - i))
-                mantissa = minus_rD_D_D_k_(mantissa, 1.0#)
+                mantissaBits = or_rJ_J_k_(mantissaBits, shl_rJ_I_k_(1&, 51 - i))
+                mantissa = minus_rD_D_k_(mantissa, 1.0#)
             end if
 
 
@@ -88,10 +88,10 @@ function toRawBits_rD_J_k_(m as Double) as LongInteger
                 i = inductionVariable
                 inductionVariable = (inductionVariable + 1)
 
-                mantissa = times_rD_D_D_k_(mantissa, 2.0#)
+                mantissa = times_rD_D_k_(mantissa, 2.0#)
                 if mantissa >= 1.0# then
-                    mantissaBits = or_rJ_J_J_k_(mantissaBits, shl_rJ_I_J_k_(1&, 51 - i))
-                    mantissa = minus_rD_D_D_k_(mantissa, 1.0#)
+                    mantissaBits = or_rJ_J_k_(mantissaBits, shl_rJ_I_k_(1&, 51 - i))
+                    mantissa = minus_rD_D_k_(mantissa, 1.0#)
                 end if
 
             end while
@@ -99,18 +99,18 @@ function toRawBits_rD_J_k_(m as Double) as LongInteger
         end if
         __when_tmp2 = invalid
         if negative then
-            __when_tmp2 = shl_rJ_I_J_k_(1&, 63)
+            __when_tmp2 = shl_rJ_I_k_(1&, 63)
         else if true then
             __when_tmp2 = 0&
         end if
         signBit = __when_tmp2
-        __when_tmp3 = or_rJ_J_J_k_(or_rJ_J_J_k_(signBit, shl_rJ_I_J_k_(biasedExp, 52)), mantissaBits)
+        __when_tmp3 = or_rJ_J_k_(or_rJ_J_k_(signBit, shl_rJ_I_k_(biasedExp, 52)), mantissaBits)
     end if
     return __when_tmp3
 
 end function
 
-function fromBits_rCompanion_J_D_k_(m as Object, bits as LongInteger) as Double
+function fromBits_rCompanion_J_k_(m as Object, bits as LongInteger) as Double
     tmp0_subject = bits
     if tmp0_subject = 0& then
         return 0.0#
@@ -122,23 +122,23 @@ function fromBits_rCompanion_J_D_k_(m as Object, bits as LongInteger) as Double
         return (-1.0E+309#)
     end if
 
-    exp = and_rJ_J_J_k_(shr_rJ_I_J_k_(bits, 52), 2047&)
-    mantissaBits = and_rJ_J_J_k_(bits, 4503599627370495&)
+    exp = and_rJ_J_k_(shr_rJ_I_k_(bits, 52), 2047&)
+    mantissaBits = and_rJ_J_k_(bits, 4503599627370495&)
     if (exp = 2047) and (mantissaBits <> 0&) then
         return (0.0# / 0.0#)
     end if
     negative = bits < 0
     biasedExp = exp - 1023
     mantissa = 1.0#
-    progression = until_rI_I_IntRange_k_(0, 52)
+    progression = until_rI_I_k_(0, 52)
     inductionVariable = progression.get_first()
     last = progression.get_last()
     if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if and_rJ_J_J_k_(mantissaBits, shl_rJ_I_J_k_(1&, 51 - i)) <> 0& then
-            mantissa = (mantissa + (1.0# / shl_rJ_I_J_k_(1&, i + 1)))
+        if and_rJ_J_k_(mantissaBits, shl_rJ_I_k_(1&, 51 - i)) <> 0& then
+            mantissa = (mantissa + (1.0# / shl_rJ_I_k_(1&, i + 1)))
         end if
 
 
@@ -146,8 +146,8 @@ function fromBits_rCompanion_J_D_k_(m as Object, bits as LongInteger) as Double
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if and_rJ_J_J_k_(mantissaBits, shl_rJ_I_J_k_(1&, 51 - i)) <> 0& then
-                mantissa = (mantissa + (1.0# / shl_rJ_I_J_k_(1&, i + 1)))
+            if and_rJ_J_k_(mantissaBits, shl_rJ_I_k_(1&, 51 - i)) <> 0& then
+                mantissa = (mantissa + (1.0# / shl_rJ_I_k_(1&, i + 1)))
             end if
 
         end while
@@ -156,9 +156,9 @@ function fromBits_rCompanion_J_D_k_(m as Object, bits as LongInteger) as Double
 
     __when_tmp4 = invalid
     if biasedExp >= 0 then
-        __when_tmp4 = (mantissa * shl_rJ_I_J_k_(1&, coerceAtMost_rI_I_I_k_(biasedExp, 62)))
+        __when_tmp4 = (mantissa * shl_rJ_I_k_(1&, coerceAtMost_rI_I_k_(biasedExp, 62)))
     else if true then
-        __when_tmp4 = (mantissa / shl_rJ_I_J_k_(1&, coerceAtMost_rI_I_I_k_(-biasedExp, 62)))
+        __when_tmp4 = (mantissa / shl_rJ_I_k_(1&, coerceAtMost_rI_I_k_(-biasedExp, 62)))
     end if
     result = __when_tmp4
 
@@ -172,14 +172,14 @@ function fromBits_rCompanion_J_D_k_(m as Object, bits as LongInteger) as Double
 
 end function
 
-function toBits_rF_I_k_(m as Float) as Integer
-    if isNaN_rF_Z_k_(m) then
+function toBits_rF_k_(m as Float) as Integer
+    if isNaN_rF_k_(m) then
         return 2143289344
     end if
-    return toRawBits_rF_I_k_(m)
+    return toRawBits_rF_k_(m)
 end function
 
-function toRawBits_rF_I_k_(m as Float) as Integer
+function toRawBits_rF_k_(m as Float) as Integer
     __when_tmp9 = invalid
     if m = 0.0! then
         __when_tmp6 = invalid
@@ -189,7 +189,7 @@ function toRawBits_rF_I_k_(m as Float) as Integer
             __when_tmp6 = 0
         end if
         __when_tmp9 = __when_tmp6
-    else if isNaN_rF_Z_k_(m) then
+    else if isNaN_rF_k_(m) then
         __when_tmp9 = 2143289344
     else if m = Infinity! then
         __when_tmp9 = 2139095040
@@ -207,27 +207,27 @@ function toRawBits_rF_I_k_(m as Float) as Integer
         exp = 0
         mantissa = absValue
         while mantissa >= 2.0#
-            mantissa = div_rD_D_D_k_(mantissa, 2.0#)
+            mantissa = div_rD_D_k_(mantissa, 2.0#)
             exp = (exp + 1)
         end while
         while mantissa < 1.0#
-            mantissa = times_rD_D_D_k_(mantissa, 2.0#)
+            mantissa = times_rD_D_k_(mantissa, 2.0#)
             exp = (exp - 1)
         end while
         biasedExp = exp + 127
-        mantissa = minus_rD_D_D_k_(mantissa, 1.0#)
+        mantissa = minus_rD_D_k_(mantissa, 1.0#)
         mantissaBits = 0
-        progression = until_rI_I_IntRange_k_(0, 23)
+        progression = until_rI_I_k_(0, 23)
         inductionVariable = progression.get_first()
         last = progression.get_last()
         if inductionVariable <= last then
                         i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            mantissa = times_rD_D_D_k_(mantissa, 2.0#)
+            mantissa = times_rD_D_k_(mantissa, 2.0#)
             if mantissa >= 1.0# then
-                mantissaBits = or_rI_I_I_k_(mantissaBits, shl_rI_I_I_k_(1, 22 - i))
-                mantissa = minus_rD_D_D_k_(mantissa, 1.0#)
+                mantissaBits = or_rI_I_k_(mantissaBits, shl_rI_I_k_(1, 22 - i))
+                mantissa = minus_rD_D_k_(mantissa, 1.0#)
             end if
 
 
@@ -235,10 +235,10 @@ function toRawBits_rF_I_k_(m as Float) as Integer
                 i = inductionVariable
                 inductionVariable = (inductionVariable + 1)
 
-                mantissa = times_rD_D_D_k_(mantissa, 2.0#)
+                mantissa = times_rD_D_k_(mantissa, 2.0#)
                 if mantissa >= 1.0# then
-                    mantissaBits = or_rI_I_I_k_(mantissaBits, shl_rI_I_I_k_(1, 22 - i))
-                    mantissa = minus_rD_D_D_k_(mantissa, 1.0#)
+                    mantissaBits = or_rI_I_k_(mantissaBits, shl_rI_I_k_(1, 22 - i))
+                    mantissa = minus_rD_D_k_(mantissa, 1.0#)
                 end if
 
             end while
@@ -246,18 +246,18 @@ function toRawBits_rF_I_k_(m as Float) as Integer
         end if
         __when_tmp8 = invalid
         if negative then
-            __when_tmp8 = shl_rI_I_I_k_(1, 31)
+            __when_tmp8 = shl_rI_I_k_(1, 31)
         else if true then
             __when_tmp8 = 0
         end if
         signBit = __when_tmp8
-        __when_tmp9 = or_rI_I_I_k_(or_rI_I_I_k_(signBit, shl_rI_I_I_k_(biasedExp, 23)), mantissaBits)
+        __when_tmp9 = or_rI_I_k_(or_rI_I_k_(signBit, shl_rI_I_k_(biasedExp, 23)), mantissaBits)
     end if
     return __when_tmp9
 
 end function
 
-function fromBits_rCompanion_I_F_k_(m as Object, bits as Integer) as Float
+function fromBits_rCompanion_I_k_(m as Object, bits as Integer) as Float
     tmp0_subject = bits
     if tmp0_subject = 0 then
         return 0.0!
@@ -269,23 +269,23 @@ function fromBits_rCompanion_I_F_k_(m as Object, bits as Integer) as Float
         return -Infinity!
     end if
 
-    exp = and_rI_I_I_k_(shr_rI_I_I_k_(bits, 23), 255)
-    mantissaBits = and_rI_I_I_k_(bits, 8388607)
+    exp = and_rI_I_k_(shr_rI_I_k_(bits, 23), 255)
+    mantissaBits = and_rI_I_k_(bits, 8388607)
     if (exp = 255) and (mantissaBits <> 0) then
         return NaN!
     end if
     negative = bits < 0
     biasedExp = exp - 127
     mantissa = 1.0#
-    progression = until_rI_I_IntRange_k_(0, 23)
+    progression = until_rI_I_k_(0, 23)
     inductionVariable = progression.get_first()
     last = progression.get_last()
     if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if and_rI_I_I_k_(mantissaBits, shl_rI_I_I_k_(1, 22 - i)) <> 0 then
-            mantissa = (mantissa + (1.0# / shl_rI_I_I_k_(1, i + 1)))
+        if and_rI_I_k_(mantissaBits, shl_rI_I_k_(1, 22 - i)) <> 0 then
+            mantissa = (mantissa + (1.0# / shl_rI_I_k_(1, i + 1)))
         end if
 
 
@@ -293,8 +293,8 @@ function fromBits_rCompanion_I_F_k_(m as Object, bits as Integer) as Float
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if and_rI_I_I_k_(mantissaBits, shl_rI_I_I_k_(1, 22 - i)) <> 0 then
-                mantissa = (mantissa + (1.0# / shl_rI_I_I_k_(1, i + 1)))
+            if and_rI_I_k_(mantissaBits, shl_rI_I_k_(1, 22 - i)) <> 0 then
+                mantissa = (mantissa + (1.0# / shl_rI_I_k_(1, i + 1)))
             end if
 
         end while
@@ -303,9 +303,9 @@ function fromBits_rCompanion_I_F_k_(m as Object, bits as Integer) as Float
 
     __when_tmp10 = invalid
     if biasedExp >= 0 then
-        __when_tmp10 = (mantissa * shl_rI_I_I_k_(1, coerceAtMost_rI_I_I_k_(biasedExp, 30)))
+        __when_tmp10 = (mantissa * shl_rI_I_k_(1, coerceAtMost_rI_I_k_(biasedExp, 30)))
     else if true then
-        __when_tmp10 = (mantissa / shl_rI_I_I_k_(1, coerceAtMost_rI_I_I_k_(-biasedExp, 30)))
+        __when_tmp10 = (mantissa / shl_rI_I_k_(1, coerceAtMost_rI_I_k_(-biasedExp, 30)))
     end if
     result = __when_tmp10
 
@@ -319,43 +319,43 @@ function fromBits_rCompanion_I_F_k_(m as Object, bits as Integer) as Float
 
 end function
 
-function lazy_Function0AnyN_LazyAnyN_k_(initializer as Object) as Object
-    return UnsafeLazyImpl_create_Function0AnyN_UnsafeLazyImplAnyN_k_(initializer)
+function lazy_Function0_k_(initializer as Object) as Object
+    return UnsafeLazyImpl_create_Function0_k_(initializer)
 end function
 
-function lazy_LazyThreadSafetyMode_Function0AnyN_LazyAnyN_k_(mode as Object, initializer as Object) as Object
-    return UnsafeLazyImpl_create_Function0AnyN_UnsafeLazyImplAnyN_k_(initializer)
+function lazy_LazyThreadSafetyMode_Function0_k_(mode as Object, initializer as Object) as Object
+    return UnsafeLazyImpl_create_Function0_k_(initializer)
 end function
 
-function lazy_AnyN_Function0AnyN_LazyAnyN_k_(lock as Dynamic, initializer as Object) as Object
-    return UnsafeLazyImpl_create_Function0AnyN_UnsafeLazyImplAnyN_k_(initializer)
+function lazy_AnyN_Function0_k_(lock as Dynamic, initializer as Object) as Object
+    return UnsafeLazyImpl_create_Function0_k_(initializer)
 end function
 
-function UnsafeLazyImpl_create_Function0AnyN_UnsafeLazyImplAnyN_k_(initializer as Object) as Object
+function UnsafeLazyImpl_create_Function0_k_(initializer as Object) as Object
     this = {}
     this.__type = "UnsafeLazyImpl"
     this.__proto = ["UnsafeLazyImpl", "Lazy"]
     this.__id = __kotlin_nextObjectId()
-    this.isInitialized_Z_k_ = UnsafeLazyImpl_isInitialized_Z_k_
-    this.toString_Str_k_ = UnsafeLazyImpl_toString_Str_k_
-    this.toString = UnsafeLazyImpl_toString_Str_k_
-    this.get_initializer = UnsafeLazyImpl_get_initializer_Function0AnyN_k_
-    this.get__value = UnsafeLazyImpl_get__value_AnyN_k_
+    this.isInitialized_k_ = UnsafeLazyImpl_isInitialized_k_
+    this.toString_k_ = UnsafeLazyImpl_toString_k_
+    this.toString = UnsafeLazyImpl_toString_k_
+    this.get_initializer = UnsafeLazyImpl_get_initializer_k_
+    this.get__value = UnsafeLazyImpl_get__value_k_
     this.set__value = UnsafeLazyImpl_set__value_AnyN_k_
-    this.get_value = UnsafeLazyImpl_get_value_AnyN_k_
+    this.get_value = UnsafeLazyImpl_get_value_k_
     this.initializer = initializer
     this._value = UNINITIALIZED_VALUE_getInstance()
     return this
 end function
 
-function UnsafeLazyImpl_isInitialized_Z_k_() as Boolean
+function UnsafeLazyImpl_isInitialized_k_() as Boolean
     return not __kotlin_identityEquals(m.get__value(), UNINITIALIZED_VALUE_getInstance())
 end function
 
-function UnsafeLazyImpl_toString_Str_k_() as String
+function UnsafeLazyImpl_toString_k_() as String
     __when_tmp12 = invalid
-    if m.isInitialized_Z_k_() then
-        __when_tmp12 = toString_AnyN_Str_k_(m.get_value())
+    if m.isInitialized_k_() then
+        __when_tmp12 = toString_AnyN_k_(m.get_value())
     else if true then
         __when_tmp12 = "Lazy value not initialized yet."
     end if
@@ -363,11 +363,11 @@ function UnsafeLazyImpl_toString_Str_k_() as String
 
 end function
 
-function UnsafeLazyImpl_get_initializer_Function0AnyN_k_() as Object
+function UnsafeLazyImpl_get_initializer_k_() as Object
     return m.initializer
 end function
 
-function UnsafeLazyImpl_get__value_AnyN_k_() as Dynamic
+function UnsafeLazyImpl_get__value_k_() as Dynamic
     return m._value
 end function
 
@@ -375,14 +375,14 @@ sub UnsafeLazyImpl_set__value_AnyN_k_(value as Dynamic)
     m._value = value
 end sub
 
-function UnsafeLazyImpl_get_value_AnyN_k_() as Dynamic
+function UnsafeLazyImpl_get_value_k_() as Dynamic
     if __kotlin_identityEquals(m.get__value(), UNINITIALIZED_VALUE_getInstance()) then
         m.set__value(m.get_initializer().invoke())
     end if
     return m.get__value()
 end function
 
-function UNINITIALIZED_VALUE_create_UNINITIALIZED_VALUE_k_() as Object
+function UNINITIALIZED_VALUE_create_k_() as Object
     this = {}
     this.__type = "UNINITIALIZED_VALUE"
     this.__proto = ["UNINITIALIZED_VALUE"]
@@ -392,12 +392,12 @@ end function
 
 function UNINITIALIZED_VALUE_getInstance() as Object
     if m.UNINITIALIZED_VALUE_instance = invalid then
-        m.UNINITIALIZED_VALUE_instance = UNINITIALIZED_VALUE_create_UNINITIALIZED_VALUE_k_()
+        m.UNINITIALIZED_VALUE_instance = UNINITIALIZED_VALUE_create_k_()
     end if
     return m.UNINITIALIZED_VALUE_instance
 end function
 
-function brsStructuralEquals_AnyN_AnyN_Z_k_(a as Dynamic, b as Dynamic) as Boolean
+function brsStructuralEquals_AnyN_AnyN_k_(a as Dynamic, b as Dynamic) as Boolean
     if __kotlin_identityEquals(a, b) then
         return true
     end if

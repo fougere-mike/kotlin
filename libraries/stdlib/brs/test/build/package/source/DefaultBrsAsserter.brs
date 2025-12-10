@@ -1,4 +1,4 @@
-function DefaultBrsAsserter_create_DefaultBrsAsserter_k_() as Object
+function DefaultBrsAsserter_create_k_() as Object
     this = {}
     this.__type = "DefaultBrsAsserter"
     this.__proto = ["DefaultBrsAsserter", "Asserter"]
@@ -16,17 +16,17 @@ function DefaultBrsAsserter_create_DefaultBrsAsserter_k_() as Object
 end function
 
 sub DefaultBrsAsserter_assertEquals_StrN_AnyN_AnyN_k_(message as Dynamic, expected as Dynamic, actual as Dynamic)
-    if not brsStructuralEquals_AnyN_AnyN_Z_k_(expected, actual) then
+    if not brsStructuralEquals_AnyN_AnyN_k_(expected, actual) then
         __when_tmp0 = invalid
         if expected <> invalid then
-            __when_tmp0 = toString_AnyN_Str_k_(expected)
+            __when_tmp0 = toString_AnyN_k_(expected)
         else if true then
             __when_tmp0 = "null"
         end if
         expectedStr = __when_tmp0
         __when_tmp1 = invalid
         if actual <> invalid then
-            __when_tmp1 = toString_AnyN_Str_k_(actual)
+            __when_tmp1 = toString_AnyN_k_(actual)
         else if true then
             __when_tmp1 = "null"
         end if
@@ -43,10 +43,10 @@ sub DefaultBrsAsserter_assertEquals_StrN_AnyN_AnyN_k_(message as Dynamic, expect
 end sub
 
 sub DefaultBrsAsserter_assertNotEquals_StrN_AnyN_AnyN_k_(message as Dynamic, illegal as Dynamic, actual as Dynamic)
-    if brsStructuralEquals_AnyN_AnyN_Z_k_(illegal, actual) then
+    if brsStructuralEquals_AnyN_AnyN_k_(illegal, actual) then
         __when_tmp3 = invalid
         if actual <> invalid then
-            __when_tmp3 = toString_AnyN_Str_k_(actual)
+            __when_tmp3 = toString_AnyN_k_(actual)
         else if true then
             __when_tmp3 = "null"
         end if
@@ -141,5 +141,5 @@ sub DefaultBrsAsserter_assertNull_StrN_AnyN_k_(message as Dynamic, actual as Dyn
 end sub
 
 sub DefaultBrsAsserter_fail_StrN_k_(message as Dynamic)
-    throw AssertionError_create_AnyN_AssertionError_k_(message)
+    throw AssertionError_create_AnyN_k_(message)
 end sub

@@ -1,4 +1,4 @@
-function ExperimentalContracts_create_ExperimentalContracts_k_() as Object
+function ExperimentalContracts_create_k_() as Object
     this = {}
     this.__type = "ExperimentalContracts"
     this.__proto = ["ExperimentalContracts", "Annotation"]
@@ -9,28 +9,28 @@ end function
 sub contract_Function1ContractBuilderV_k_(builder as Object)
 end sub
 
-function ContractBuilder_returns_Returns_k_() as Object
+function ContractBuilder_returns_k_() as Object
 end function
 
-function ContractBuilder_returns_AnyN_Returns_k_(value as Dynamic) as Object
+function ContractBuilder_returns_AnyN_k_(value as Dynamic) as Object
 end function
 
-function ContractBuilder_returnsNotNull_ReturnsNotNull_k_() as Object
+function ContractBuilder_returnsNotNull_k_() as Object
 end function
 
-function ContractBuilder_callsInPlace_FunctionAnyN_InvocationKind_CallsInPlace_k_(lambda as Object, kind = InvocationKind_UNKNOWN) as Object
+function ContractBuilder_callsInPlace_Function_InvocationKind_k_(lambda as Object, kind = InvocationKind_UNKNOWN) as Object
 end function
 
-function InvocationKind_create_InvocationKind_k_(__name as String, __ordinal as Integer) as Object
+function InvocationKind_create_k_(__name as String, __ordinal as Integer) as Object
     this = {}
     this.__type = "InvocationKind"
     this.name = __name
     this.ordinal = __ordinal
     this.__proto = ["InvocationKind", "Comparable"]
     this.__id = __kotlin_nextObjectId()
-    this.values_Arr_k_ = InvocationKind_values_Arr_k_
-    this.valueOf_Str_InvocationKind_k_ = InvocationKind_valueOf_Str_InvocationKind_k_
-    this.get_entries = InvocationKind_get_entries_EnumEntries_k_
+    this.values_k_ = InvocationKind_values_k_
+    this.valueOf_Str_k_ = InvocationKind_valueOf_Str_k_
+    this.get_entries = InvocationKind_get_entries_k_
     return this
 end function
 
@@ -39,10 +39,10 @@ sub InvocationKind_initEntries()
         return
     end if
     m.InvocationKind_entriesInitialized = true
-    m.InvocationKind_AT_MOST_ONCE = InvocationKind_create_InvocationKind_k_("AT_MOST_ONCE", 0)
-    m.InvocationKind_EXACTLY_ONCE = InvocationKind_create_InvocationKind_k_("EXACTLY_ONCE", 1)
-    m.InvocationKind_AT_LEAST_ONCE = InvocationKind_create_InvocationKind_k_("AT_LEAST_ONCE", 2)
-    m.InvocationKind_UNKNOWN = InvocationKind_create_InvocationKind_k_("UNKNOWN", 3)
+    m.InvocationKind_AT_MOST_ONCE = InvocationKind_create_k_("AT_MOST_ONCE", 0)
+    m.InvocationKind_EXACTLY_ONCE = InvocationKind_create_k_("EXACTLY_ONCE", 1)
+    m.InvocationKind_AT_LEAST_ONCE = InvocationKind_create_k_("AT_LEAST_ONCE", 2)
+    m.InvocationKind_UNKNOWN = InvocationKind_create_k_("UNKNOWN", 3)
 end sub
 
 function InvocationKind_values() as Object
@@ -65,5 +65,5 @@ function InvocationKind_valueOf(name as String) as Object
     end if
 end function
 
-function SimpleEffect_implies_Z_ConditionalEffect_k_(booleanExpression as Boolean) as Object
+function SimpleEffect_implies_Z_k_(booleanExpression as Boolean) as Object
 end function

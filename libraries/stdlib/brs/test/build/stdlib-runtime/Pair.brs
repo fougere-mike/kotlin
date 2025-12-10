@@ -1,4 +1,4 @@
-function Pair_create_AnyN_AnyN_PairAnyNAnyN_k_(first as Dynamic, second as Dynamic) as Object
+function Pair_create_AnyN_AnyN_k_(first as Dynamic, second as Dynamic) as Object
     this = {}
     this.__type = "Pair"
     this.__proto = ["Pair"]
@@ -48,7 +48,7 @@ function Pair_copy(first = invalid, second = invalid) as Object
     if second = invalid then
         second = m.second
     end if
-    return Pair_create_AnyN_AnyN_PairAnyNAnyN_k_(first, second)
+    return Pair_create_AnyN_AnyN_k_(first, second)
 end function
 
 function Pair_component1() as Dynamic
@@ -59,6 +59,6 @@ function Pair_component2() as Dynamic
     return m.second
 end function
 
-function to_rAnyN_AnyN_PairAnyNAnyN_k_(m as Dynamic, that as Dynamic) as Object
-    return Pair_create_AnyN_AnyN_PairAnyNAnyN_k_(m, that)
+function to_rAnyN_AnyN_k_(m as Dynamic, that as Dynamic) as Object
+    return Pair_create_AnyN_AnyN_k_(m, that)
 end function

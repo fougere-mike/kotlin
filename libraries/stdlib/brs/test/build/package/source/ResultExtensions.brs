@@ -1,4 +1,4 @@
-function fold_rResultAnyN_Function1AnyNAnyN_Function1ThrowableAnyN_AnyN_k_(m as Object, onSuccess as Object, onFailure as Object) as Dynamic
+function fold_rResult_Function1_Function1Throwable_k_(m as Object, onSuccess as Object, onFailure as Object) as Dynamic
     __when_tmp0 = invalid
     if exception = invalid then
         __when_tmp0 = onSuccess.invoke(m.get_value())
@@ -9,10 +9,10 @@ function fold_rResultAnyN_Function1AnyNAnyN_Function1ThrowableAnyN_AnyN_k_(m as 
 
 end function
 
-function runCatching_Function0AnyN_ResultAnyN_k_(block as Object) as Object
+function runCatching_Function0_k_(block as Object) as Object
     return "/* Unsupported: IrTryImpl */"
 end function
 
-function runCatching_rAnyN_Function1AnyNAnyN_ResultAnyN_k_(m as Dynamic, block as Object) as Object
+function runCatching_rAnyN_Function1_k_(m as Dynamic, block as Object) as Object
     return "/* Unsupported: IrTryImpl */"
 end function

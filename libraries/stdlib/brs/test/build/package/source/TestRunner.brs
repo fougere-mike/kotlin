@@ -1,9 +1,9 @@
 sub runTests_Function1TestRunnerV_k_(block as Object)
-    runner = TestRunner_create_TestRunner_k_()
+    runner = TestRunner_create_k_()
     runner.run_Function1TestRunnerV_k_(block)
 end sub
 
-function TestRunner_create_TestRunner_k_() as Object
+function TestRunner_create_k_() as Object
     this = {}
     this.__type = "TestRunner"
     this.__proto = ["TestRunner"]
@@ -14,25 +14,25 @@ function TestRunner_create_TestRunner_k_() as Object
     this.xtest_Str_Str_Function0V_k_ = TestRunner_xtest_Str_Str_Function0V_k_
     this.run_Function1TestRunnerV_k_ = TestRunner_run_Function1TestRunnerV_k_
     this.executeTestClass_Any_k_ = TestRunner_executeTestClass_Any_k_
-    this.getClassName_Any_Str_k_ = TestRunner_getClassName_Any_Str_k_
-    this.getTestMethods_Any_ListPairStrFunction0V_k_ = TestRunner_getTestMethods_Any_ListPairStrFunction0V_k_
-    this.getTestMethodsProperty_Any_Function0AnyN_k_ = TestRunner_getTestMethodsProperty_Any_Function0AnyN_k_
+    this.getClassName_Any_k_ = TestRunner_getClassName_Any_k_
+    this.getTestMethods_Any_k_ = TestRunner_getTestMethods_Any_k_
+    this.getTestMethodsProperty_Any_k_ = TestRunner_getTestMethodsProperty_Any_k_
     this.tryRunAsTestClass_Any_k_ = TestRunner_tryRunAsTestClass_Any_k_
-    this.get_adapter = TestRunner_get_adapter_JsonTestAdapter_k_
-    this.get_testClasses = TestRunner_get_testClasses_MutableListAny_k_
-    this.get_directSuites = TestRunner_get_directSuites_MutableListPairStrFunction0V_k_
-    this.adapter = JsonTestAdapter_create_JsonTestAdapter_k_()
-    this.testClasses = mutableListOf_MutableListAnyN_k_()
-    this.directSuites = mutableListOf_MutableListAnyN_k_()
+    this.get_adapter = TestRunner_get_adapter_k_
+    this.get_testClasses = TestRunner_get_testClasses_k_
+    this.get_directSuites = TestRunner_get_directSuites_k_
+    this.adapter = JsonTestAdapter_create_k_()
+    this.testClasses = mutableListOf_k_()
+    this.directSuites = mutableListOf_k_()
     return this
 end function
 
 sub TestRunner_testClass_Any_k_(instance as Object)
-    m.get_testClasses().add_AnyN_Z_k_(instance)
+    m.get_testClasses().add_AnyN_k_(instance)
 end sub
 
 sub TestRunner_suite_Str_Function1TestRunnerV_k_(name as String, suiteFn as Object)
-    m.get_directSuites().add_AnyN_Z_k_(Pair_create_AnyN_AnyN_PairAnyNAnyN_k_(name, {suiteFn: suiteFn, this: m, invoke: function() as Void
+    m.get_directSuites().add_AnyN_k_(Pair_create_AnyN_AnyN_k_(name, {suiteFn: suiteFn, this: m, invoke: function() as Void
         m.suiteFn.invoke(m.this)
     end function}))
 end sub
@@ -46,43 +46,52 @@ sub TestRunner_xtest_Str_Str_Function0V_k_(name as String, reason = "", testFn =
 end sub
 
 sub TestRunner_run_Function1TestRunnerV_k_(block as Object)
-    m.get_adapter().startRun()
+    m.get_adapter().startRun_k_()
     block.invoke(m)
-    for each __destruct_0 in m.get_directSuites()
+    __iter_0 = m.get_directSuites().iterator_k_()
+    while __iter_0.hasNext_k_()
+        __destruct_0 = __iter_0.next_k_()
         name = __destruct_0.component1()
         suiteFn = __destruct_0.component2()
         m.get_adapter().suite_Str_Z_Function0V_k_(name, false, suiteFn)
 
-    end for
-    for each instance in m.get_testClasses()
+    end while
+
+    __iter_1 = m.get_testClasses().iterator_k_()
+    while __iter_1.hasNext_k_()
+        instance = __iter_1.next_k_()
         m.executeTestClass_Any_k_(instance)
 
-    end for
-    m.get_adapter().endRun()
+    end while
+
+    m.get_adapter().endRun_k_()
 end sub
 
 sub TestRunner_executeTestClass_Any_k_(instance as Object)
-    className = m.getClassName_Any_Str_k_(instance)
-    testMethods = m.getTestMethods_Any_ListPairStrFunction0V_k_(instance)
-    if testMethods.isEmpty_Z_k_() then
+    className = m.getClassName_Any_k_(instance)
+    testMethods = m.getTestMethods_Any_k_(instance)
+    if testMethods.isEmpty_k_() then
         m.get_adapter().suite_Str_Z_Function0V_k_(className, false, {this: m, instance: instance, invoke: function() as Void
             m.this.tryRunAsTestClass_Any_k_(m.instance)
         end function})
         return
     end if
     m.get_adapter().suite_Str_Z_Function0V_k_(className, false, {testMethods: testMethods, this: m, invoke: function() as Void
-        for each method in m.testMethods
+        __iter_2 = m.testMethods.iterator_k_()
+        while __iter_2.hasNext_k_()
+            method = __iter_2.next_k_()
             methodName = method.first
             methodFn = method.second
             m.this.get_adapter().test_Str_Z_Function0V_k_(methodName, false, {methodFn: methodFn, invoke: function() as Void
                 m.methodFn.invoke()
             end function})
 
-        end for
+        end while
+
     end function})
 end sub
 
-function TestRunner_getClassName_Any_Str_k_(instance as Object) as String
+function TestRunner_getClassName_Any_k_(instance as Object) as String
     tmp0_elvis_lhs = "/* Unsupported: IrGetClassImpl */".get_simpleName()
     __when_tmp0 = invalid
     if tmp0_elvis_lhs = invalid then
@@ -94,38 +103,38 @@ function TestRunner_getClassName_Any_Str_k_(instance as Object) as String
 
 end function
 
-function TestRunner_getTestMethods_Any_ListPairStrFunction0V_k_(instance as Object) as Object
-    getter = m.getTestMethodsProperty_Any_Function0AnyN_k_(instance)
+function TestRunner_getTestMethods_Any_k_(instance as Object) as Object
+    getter = m.getTestMethodsProperty_Any_k_(instance)
     __when_tmp1 = invalid
     if getter <> invalid then
         __when_tmp1 = getter.invoke()
     else if true then
-        __when_tmp1 = emptyList_ListAnyN_k_()
+        __when_tmp1 = emptyList_k_()
     end if
     return __when_tmp1
 
 end function
 
-function TestRunner_getTestMethodsProperty_Any_Function0AnyN_k_(instance as Object) as Dynamic
+function TestRunner_getTestMethodsProperty_Any_k_(instance as Object) as Dynamic
     return invalid
 end function
 
 sub TestRunner_tryRunAsTestClass_Any_k_(instance as Object)
 end sub
 
-function TestRunner_get_adapter_JsonTestAdapter_k_() as Object
+function TestRunner_get_adapter_k_() as Object
     return m.adapter
 end function
 
-function TestRunner_get_testClasses_MutableListAny_k_() as Object
+function TestRunner_get_testClasses_k_() as Object
     return m.testClasses
 end function
 
-function TestRunner_get_directSuites_MutableListPairStrFunction0V_k_() as Object
+function TestRunner_get_directSuites_k_() as Object
     return m.directSuites
 end function
 
-function TestMethodInfo_create_Str_Z_Str_TestMethodInfo_k_(name as String, ignored = false, ignoreReason = "") as Object
+function TestMethodInfo_create_Str_Z_Str_k_(name as String, ignored = false, ignoreReason = "") as Object
     this = {}
     this.__type = "TestMethodInfo"
     this.__proto = ["TestMethodInfo"]
@@ -184,7 +193,7 @@ function TestMethodInfo_copy(name = invalid, ignored = invalid, ignoreReason = i
     if ignoreReason = invalid then
         ignoreReason = m.ignoreReason
     end if
-    return TestMethodInfo_create_Str_Z_Str_TestMethodInfo_k_(name, ignored, ignoreReason)
+    return TestMethodInfo_create_Str_Z_Str_k_(name, ignored, ignoreReason)
 end function
 
 function TestMethodInfo_component1() as String

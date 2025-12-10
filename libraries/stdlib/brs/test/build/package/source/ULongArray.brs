@@ -1,52 +1,52 @@
-function ULongArray_create_LongArray_ULongArray_k_(storage as Object) as Object
+function ULongArray_create_LongArray_k_(storage as Object) as Object
     this = {}
     this.__type = "ULongArray"
     this.__proto = ["ULongArray", "Collection", "Iterable"]
     this.__id = __kotlin_nextObjectId()
-    this.get_I_ULong_k_ = ULongArray_get_I_ULong_k_
+    this.get_I_k_ = ULongArray_get_I_k_
     this.set_I_ULong_k_ = ULongArray_set_I_ULong_k_
-    this.iterator_IteratorULong_k_ = ULongArray_iterator_IteratorULong_k_
-    this.contains_ULong_Z_k_ = ULongArray_contains_ULong_Z_k_
-    this.containsAll_CollectionULong_Z_k_ = ULongArray_containsAll_CollectionULong_Z_k_
-    this.isEmpty_Z_k_ = ULongArray_isEmpty_Z_k_
-    this.equals_AnyN_Z_k_ = ULongArray_equals_AnyN_Z_k_
-    this.equals = ULongArray_equals_AnyN_Z_k_
-    this.hashCode_I_k_ = ULongArray_hashCode_I_k_
-    this.hashCode = ULongArray_hashCode_I_k_
-    this.toString_Str_k_ = ULongArray_toString_Str_k_
-    this.toString = ULongArray_toString_Str_k_
-    this.get_storage = ULongArray_get_storage_LongArray_k_
-    this.get_size = ULongArray_get_size_I_k_
+    this.iterator_k_ = ULongArray_iterator_k_
+    this.contains_ULong_k_ = ULongArray_contains_ULong_k_
+    this.containsAll_CollectionULong_k_ = ULongArray_containsAll_CollectionULong_k_
+    this.isEmpty_k_ = ULongArray_isEmpty_k_
+    this.equals_AnyN_k_ = ULongArray_equals_AnyN_k_
+    this.equals = ULongArray_equals_AnyN_k_
+    this.hashCode_k_ = ULongArray_hashCode_k_
+    this.hashCode = ULongArray_hashCode_k_
+    this.toString_k_ = ULongArray_toString_k_
+    this.toString = ULongArray_toString_k_
+    this.get_storage = ULongArray_get_storage_k_
+    this.get_size = ULongArray_get_size_k_
     this.storage = storage
     return this
 end function
 
-function ULongArray_create_I_ULongArray_k_(size as Integer) as Object
-    return ULongArray_create_LongArray_ULongArray_k_(LongArray_create_I_LongArray_k_(size))
+function ULongArray_create_I_k_(size as Integer) as Object
+    return ULongArray_create_LongArray_k_(LongArray_create_I_k_(size))
 end function
 
-function ULongArray_get_I_ULong_k_(index as Integer) as Object
-    return toULong_rJ_ULong_k_(m.get_storage().get_I_J_k_(index))
+function ULongArray_get_I_k_(index as Integer) as Object
+    return toULong_rJ_k_(m.get_storage().get_I_k_(index))
 end function
 
 sub ULongArray_set_I_ULong_k_(index as Integer, value as Object)
     m.get_storage().set_I_J_k_(index, value)
 end sub
 
-function ULongArray_iterator_IteratorULong_k_() as Object
-    return ULongArray_Iterator_create_LongArray_Iterator_k_(m.get_storage())
+function ULongArray_iterator_k_() as Object
+    return ULongArray_Iterator_create_LongArray_k_(m.get_storage())
 end function
 
-function ULongArray_contains_ULong_Z_k_(element as Object) as Boolean
+function ULongArray_contains_ULong_k_(element as Object) as Boolean
     target = element
-    progression = until_rI_I_IntRange_k_(0, m.get_storage().get_size())
+    progression = until_rI_I_k_(0, m.get_storage().get_size())
     inductionVariable = progression.get_first()
     last = progression.get_last()
     if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if m.get_storage().get_I_J_k_(i) = target then
+        if m.get_storage().get_I_k_(i) = target then
             return true
         end if
 
@@ -55,7 +55,7 @@ function ULongArray_contains_ULong_Z_k_(element as Object) as Boolean
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if m.get_storage().get_I_J_k_(i) = target then
+            if m.get_storage().get_I_k_(i) = target then
                 return true
             end if
 
@@ -66,34 +66,37 @@ function ULongArray_contains_ULong_Z_k_(element as Object) as Boolean
     return false
 end function
 
-function ULongArray_containsAll_CollectionULong_Z_k_(elements as Object) as Boolean
-    for each element in elements
-        if not m.contains_ULong_Z_k_(element) then
+function ULongArray_containsAll_CollectionULong_k_(elements as Object) as Boolean
+    __iter_33 = elements.iterator_k_()
+    while __iter_33.hasNext_k_()
+        element = __iter_33.next_k_()
+        if not m.contains_ULong_k_(element) then
             return false
         end if
-    end for
+    end while
+
     return true
 end function
 
-function ULongArray_isEmpty_Z_k_() as Boolean
+function ULongArray_isEmpty_k_() as Boolean
     return m.get_storage().get_size() = 0
 end function
 
-function ULongArray_equals_AnyN_Z_k_(other as Dynamic) as Boolean
+function ULongArray_equals_AnyN_k_(other as Dynamic) as Boolean
     if not __kotlin_isInstanceOf(other, "ULongArray") then
         return false
     end if
     if m.get_storage().get_size() <> other.get_storage().get_size() then
         return false
     end if
-    progression = until_rI_I_IntRange_k_(0, m.get_storage().get_size())
+    progression = until_rI_I_k_(0, m.get_storage().get_size())
     inductionVariable = progression.get_first()
     last = progression.get_last()
     if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if m.get_storage().get_I_J_k_(i) <> other.get_storage().get_I_J_k_(i) then
+        if m.get_storage().get_I_k_(i) <> other.get_storage().get_I_k_(i) then
             return false
         end if
 
@@ -102,7 +105,7 @@ function ULongArray_equals_AnyN_Z_k_(other as Dynamic) as Boolean
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if m.get_storage().get_I_J_k_(i) <> other.get_storage().get_I_J_k_(i) then
+            if m.get_storage().get_I_k_(i) <> other.get_storage().get_I_k_(i) then
                 return false
             end if
 
@@ -113,25 +116,25 @@ function ULongArray_equals_AnyN_Z_k_(other as Dynamic) as Boolean
     return true
 end function
 
-function ULongArray_hashCode_I_k_() as Integer
+function ULongArray_hashCode_k_() as Integer
     result = 1
-    progression = until_rI_I_IntRange_k_(0, m.get_storage().get_size())
+    progression = until_rI_I_k_(0, m.get_storage().get_size())
     inductionVariable = progression.get_first()
     last = progression.get_last()
     if inductionVariable <= last then
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        element = m.get_storage().get_I_J_k_(i)
-        result = ((31 * result) + xor_rJ_J_J_k_(element, ushr_rJ_I_J_k_(element, 32)))
+        element = m.get_storage().get_I_k_(i)
+        result = ((31 * result) + xor_rJ_J_k_(element, ushr_rJ_I_k_(element, 32)))
 
 
         while i <> last
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            element = m.get_storage().get_I_J_k_(i)
-            result = ((31 * result) + xor_rJ_J_J_k_(element, ushr_rJ_I_J_k_(element, 32)))
+            element = m.get_storage().get_I_k_(i)
+            result = ((31 * result) + xor_rJ_J_k_(element, ushr_rJ_I_k_(element, 32)))
 
         end while
 
@@ -140,10 +143,10 @@ function ULongArray_hashCode_I_k_() as Integer
     return result
 end function
 
-function ULongArray_toString_Str_k_() as String
-    sb = StringBuilder_create_StringBuilder_k_()
-    sb.append_StrN_StringBuilder_k_("ULongArray([")
-    progression = until_rI_I_IntRange_k_(0, m.get_storage().get_size())
+function ULongArray_toString_k_() as String
+    sb = StringBuilder_create_k_()
+    sb.append_StrN_k_("ULongArray([")
+    progression = until_rI_I_k_(0, m.get_storage().get_size())
     inductionVariable = progression.get_first()
     last = progression.get_last()
     if inductionVariable <= last then
@@ -151,9 +154,9 @@ function ULongArray_toString_Str_k_() as String
         inductionVariable = (inductionVariable + 1)
 
         if i > 0 then
-            sb.append_StrN_StringBuilder_k_(", ")
+            sb.append_StrN_k_(", ")
         end if
-        sb.append_StrN_StringBuilder_k_(toULong_rJ_ULong_k_(m.get_storage().get_I_J_k_(i)).toString())
+        sb.append_StrN_k_(toULong_rJ_k_(m.get_storage().get_I_k_(i)).toString())
 
 
         while i <> last
@@ -161,63 +164,63 @@ function ULongArray_toString_Str_k_() as String
             inductionVariable = (inductionVariable + 1)
 
             if i > 0 then
-                sb.append_StrN_StringBuilder_k_(", ")
+                sb.append_StrN_k_(", ")
             end if
-            sb.append_StrN_StringBuilder_k_(toULong_rJ_ULong_k_(m.get_storage().get_I_J_k_(i)).toString())
+            sb.append_StrN_k_(toULong_rJ_k_(m.get_storage().get_I_k_(i)).toString())
 
         end while
 
     end if
 
-    sb.append_StrN_StringBuilder_k_("])")
+    sb.append_StrN_k_("])")
     return sb.toString()
 end function
 
-function ULongArray_get_storage_LongArray_k_() as Object
+function ULongArray_get_storage_k_() as Object
     return m.storage
 end function
 
-function ULongArray_get_size_I_k_() as Integer
+function ULongArray_get_size_k_() as Integer
     return m.get_storage().get_size()
 end function
 
-function ULongArray_Iterator_create_LongArray_Iterator_k_(array as Object) as Object
+function ULongArray_Iterator_create_LongArray_k_(array as Object) as Object
     this = {}
     this.__type = "ULongArray_Iterator"
     this.__proto = ["ULongArray_Iterator", "Iterator"]
     this.__id = __kotlin_nextObjectId()
-    this.hasNext_Z_k_ = ULongArray_Iterator_hasNext_Z_k_
-    this.next_ULong_k_ = ULongArray_Iterator_next_ULong_k_
-    this.get_array = ULongArray_Iterator_get_array_LongArray_k_
-    this.get_index = ULongArray_Iterator_get_index_I_k_
+    this.hasNext_k_ = ULongArray_Iterator_hasNext_k_
+    this.next_k_ = ULongArray_Iterator_next_k_
+    this.get_array = ULongArray_Iterator_get_array_k_
+    this.get_index = ULongArray_Iterator_get_index_k_
     this.set_index = ULongArray_Iterator_set_index_I_k_
     this.array = array
     this.index = 0
     return this
 end function
 
-function ULongArray_Iterator_hasNext_Z_k_() as Boolean
+function ULongArray_Iterator_hasNext_k_() as Boolean
     return m.get_index() < m.get_array().get_size()
 end function
 
-function ULongArray_Iterator_next_ULong_k_() as Object
+function ULongArray_Iterator_next_k_() as Object
     __when_tmp0 = invalid
     if m.get_index() < m.get_array().get_size() then
-        __incr_tmp_15 = m.get_index()
-        m.set_index(__incr_tmp_15 + 1)
-        __when_tmp0 = toULong_rJ_ULong_k_(m.get_array().get_I_J_k_(__incr_tmp_15))
+        __incr_tmp_34 = m.get_index()
+        m.set_index(__incr_tmp_34 + 1)
+        __when_tmp0 = toULong_rJ_k_(m.get_array().get_I_k_(__incr_tmp_34))
     else if true then
-        throw NoSuchElementException_create_StrN_NoSuchElementException_k_(__kotlin_numToStr_I_Str_k_(m.get_index()))
+        throw NoSuchElementException_create_StrN_k_(__kotlin_numToStr_I_k_(m.get_index()))
     end if
     return __when_tmp0
 
 end function
 
-function ULongArray_Iterator_get_array_LongArray_k_() as Object
+function ULongArray_Iterator_get_array_k_() as Object
     return m.array
 end function
 
-function ULongArray_Iterator_get_index_I_k_() as Integer
+function ULongArray_Iterator_get_index_k_() as Integer
     return m.index
 end function
 
@@ -225,14 +228,14 @@ sub ULongArray_Iterator_set_index_I_k_(value as Integer)
     m.index = value
 end sub
 
-function ULongArray_I_Function1IULong_ULongArray_k_(size as Integer, init as Object) as Object
-    return ULongArray_create_LongArray_ULongArray_k_(LongArray_create_I_Function1IJ_LongArray_k_(size, {init: init, invoke: function(index as Integer) as LongInteger
+function ULongArray_I_Function1IULong_k_(size as Integer, init as Object) as Object
+    return ULongArray_create_LongArray_k_(LongArray_create_I_Function1IJ_k_(size, {init: init, invoke: function(index as Integer) as LongInteger
         return m.init.invoke(index)
     end function}))
 end function
 
-function ulongArrayOf_ULongArray_ULongArray_k_(elements as Object) as Object
-    return ULongArray_create_LongArray_ULongArray_k_(LongArray_create_I_Function1IJ_LongArray_k_(elements.get_size(), {elements: elements, invoke: function(it as Integer) as LongInteger
-        return m.elements.get_I_ULong_k_(it)
+function ulongArrayOf_ULongArray_k_(elements as Object) as Object
+    return ULongArray_create_LongArray_k_(LongArray_create_I_Function1IJ_k_(elements.get_size(), {elements: elements, invoke: function(it as Integer) as LongInteger
+        return m.elements.get_I_k_(it)
     end function}))
 end function

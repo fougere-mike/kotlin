@@ -156,11 +156,34 @@ If you see SSL certificate errors, handshake failures, or connection reset error
 
 | What Changed | Run This |
 |--------------|----------|
-| Compiler backend | `./rebuild.sh` |
-| **Stdlib sources** | **Nuclear clean (see above) - NOT just rebuild.sh** |
-| Both | Nuclear clean + `./rebuild.sh` |
+| Compiler backend only | `./rebuild.sh` (if UP-TO-DATE, use compiler nuclear clean) |
+| **Stdlib sources only** | **Stdlib nuclear clean command (see above)** |
+| **Both compiler AND stdlib** | **Must do BOTH nuclear cleans - see below** |
 | Everything + test app | `cd ../roku-test-app && ./rebuild-all.sh --all` |
 | Plugin only (no compiler changes) | `cd ../roku-test-app && ./rebuild-all.sh --plugin --clean` |
+
+### ⚠️ Changed BOTH Compiler AND Stdlib? (VERY COMMON)
+
+When you edit BOTH compiler code AND stdlib code in the same session, you MUST do BOTH nuclear cleans. Running just one will leave stale code. Use this combined command:
+
+```bash
+# Step 1: Compiler nuclear clean
+./gradlew --stop && \
+rm -rf ~/.gradle/caches/build-cache-1/* && \
+rm -rf compiler/ir/backend.brightscript/build && \
+rm -rf compiler/cli-brs/build && \
+rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-compiler-brs
+
+# Step 2: Stdlib nuclear clean
+rm -rf libraries/stdlib/build && \
+rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-brs && \
+rm -rf libraries/stdlib/brs/test/build
+
+# Step 3: Rebuild everything with --no-build-cache
+./gradlew :compiler:backend.brightscript:compileKotlin :compiler:cli-brs:fatJar :kotlin-stdlib:compileKotlinBrs :kotlin-stdlib:brsBrsJar publishBrsModulePublicationToMavenLocal --no-build-cache --no-configuration-cache -Dorg.gradle.dependency.verification=off
+```
+
+**COMMON MISTAKE:** After changing compiler code, you run nuclear clean and rebuild. Then you change stdlib code and run `./rebuild.sh`. The stdlib shows UP-TO-DATE because Gradle's cache doesn't know the files changed. **Your stdlib changes are NOT built.** Always check if you edited stdlib files and run stdlib nuclear clean too.
 
 ### Verifying Your Changes Are Actually Built
 

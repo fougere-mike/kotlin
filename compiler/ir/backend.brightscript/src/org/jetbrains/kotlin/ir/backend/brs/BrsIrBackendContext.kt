@@ -288,12 +288,24 @@ class BrsIrBackendContext(
                         name
                     }
 
-                    // Include type arguments to distinguish e.g. Sequence<Sequence<T>> from Sequence<Iterable<T>>
+                    // Type erasure: Only erase TYPE PARAMETERS (like T, K, V), keep concrete types
+                    // This allows Sequence<Int>.sum() and Sequence<Short>.sum() to have different names,
+                    // while Sequence<T> becomes just "Sequence" for interface method matching.
                     val simpleType = this as? org.jetbrains.kotlin.ir.types.IrSimpleType
-                    val typeArgs = simpleType?.arguments?.map { arg ->
+                    val typeArgs = simpleType?.arguments?.mapNotNull { arg ->
                         when (arg) {
-                            is org.jetbrains.kotlin.ir.types.IrTypeProjection -> arg.type.toMangledString()
-                            is org.jetbrains.kotlin.ir.types.IrStarProjection -> "Star"
+                            is org.jetbrains.kotlin.ir.types.IrTypeProjection -> {
+                                // Check if this type argument is a type parameter or a concrete type
+                                val argClassifier = arg.type.classifierOrNull?.owner
+                                if (argClassifier is org.jetbrains.kotlin.ir.declarations.IrTypeParameter) {
+                                    // Erase type parameters - they vary at runtime
+                                    null
+                                } else {
+                                    // Keep concrete types - they're stable
+                                    arg.type.toMangledString()
+                                }
+                            }
+                            is org.jetbrains.kotlin.ir.types.IrStarProjection -> null // Erase star projections
                         }
                     } ?: emptyList()
 
@@ -332,27 +344,23 @@ class BrsIrBackendContext(
             signatureParts.add(param.type.toMangledString())
         }
 
-        // Include return type for non-Unit functions to distinguish overloads that differ only by return type
-        // (e.g., Iterable<Int>.sum(): Int vs Iterable<Long>.sum(): Long after type erasure)
-        val returnType = irFunction.returnType
-        val returnTypeStr = if (!returnType.isUnit() && !returnType.isNothing()) {
-            returnType.toMangledString()
-        } else {
-            null
-        }
+        // Return types are NOT included in method name mangling (like Java does).
+        // This allows polymorphic dispatch to work correctly when the static type
+        // differs from the runtime type (e.g., Collection vs ArrayList).
+        // Kotlin/Java don't allow overloading by return type anyway.
 
-        // No parameters, extension receiver, or return type = no mangling needed
-        if (signatureParts.isEmpty() && returnTypeStr == null) {
+        // Special case: main() must not have the _k_ suffix - Roku requires exactly "main"
+        if (baseName == "main" && signatureParts.isEmpty()) {
             return baseName
         }
 
-        // Build signature string
-        val paramTypes = signatureParts.joinToString("_")
-        val fullSignature = if (returnTypeStr != null) {
-            if (paramTypes.isEmpty()) returnTypeStr else "${paramTypes}_$returnTypeStr"
-        } else {
-            paramTypes
+        // Always add _k_ suffix for consistency, even for parameterless functions
+        if (signatureParts.isEmpty()) {
+            return "${baseName}${MANGLED_NAME_SUFFIX}"
         }
+
+        // Build signature string from parameters only
+        val fullSignature = signatureParts.joinToString("_")
 
         // Check if the resulting name would be too long (keep under 100 chars for readability)
         val fullName = "${baseName}_${fullSignature}${MANGLED_NAME_SUFFIX}"

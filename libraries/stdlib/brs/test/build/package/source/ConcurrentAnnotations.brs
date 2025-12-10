@@ -1,4 +1,4 @@
-function ThreadLocal_create_ThreadLocal_k_() as Object
+function ThreadLocal_create_k_() as Object
     this = {}
     this.__type = "ThreadLocal"
     this.__proto = ["ThreadLocal", "Annotation"]

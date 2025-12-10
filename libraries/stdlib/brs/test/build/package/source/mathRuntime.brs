@@ -1,4 +1,4 @@
-function brsIntrinsicMinDouble_D_D_D_k_(a as Double, b as Double) as Double
+function brsIntrinsicMinDouble_D_D_k_(a as Double, b as Double) as Double
     __when_tmp0 = invalid
     if a <= b then
         __when_tmp0 = a
@@ -9,7 +9,7 @@ function brsIntrinsicMinDouble_D_D_D_k_(a as Double, b as Double) as Double
 
 end function
 
-function brsIntrinsicMaxDouble_D_D_D_k_(a as Double, b as Double) as Double
+function brsIntrinsicMaxDouble_D_D_k_(a as Double, b as Double) as Double
     __when_tmp1 = invalid
     if a >= b then
         __when_tmp1 = a
@@ -20,7 +20,7 @@ function brsIntrinsicMaxDouble_D_D_D_k_(a as Double, b as Double) as Double
 
 end function
 
-function brsIntrinsicMinInt_I_I_I_k_(a as Integer, b as Integer) as Integer
+function brsIntrinsicMinInt_I_I_k_(a as Integer, b as Integer) as Integer
     __when_tmp2 = invalid
     if a <= b then
         __when_tmp2 = a
@@ -31,7 +31,7 @@ function brsIntrinsicMinInt_I_I_I_k_(a as Integer, b as Integer) as Integer
 
 end function
 
-function brsIntrinsicMaxInt_I_I_I_k_(a as Integer, b as Integer) as Integer
+function brsIntrinsicMaxInt_I_I_k_(a as Integer, b as Integer) as Integer
     __when_tmp3 = invalid
     if a >= b then
         __when_tmp3 = a
@@ -42,18 +42,18 @@ function brsIntrinsicMaxInt_I_I_I_k_(a as Integer, b as Integer) as Integer
 
 end function
 
-function brsIntrinsicIsNaN_D_Z_k_(x as Double) as Boolean
+function brsIntrinsicIsNaN_D_k_(x as Double) as Boolean
     return x <> x
 end function
 
-function brsIntrinsicIsNaNFloat_F_Z_k_(x as Float) as Boolean
+function brsIntrinsicIsNaNFloat_F_k_(x as Float) as Boolean
     return x <> x
 end function
 
-function brsIntrinsicIsInfinite_D_Z_k_(x as Double) as Boolean
+function brsIntrinsicIsInfinite_D_k_(x as Double) as Boolean
     return (x = (1.0E+309#)) or (x = (-1.0E+309#))
 end function
 
-function brsIntrinsicIsInfiniteFloat_F_Z_k_(x as Float) as Boolean
+function brsIntrinsicIsInfiniteFloat_F_k_(x as Float) as Boolean
     return (x = Infinity!) or (x = -Infinity!)
 end function

@@ -1,4 +1,4 @@
-function ContractsDsl_create_ContractsDsl_k_() as Object
+function ContractsDsl_create_k_() as Object
     this = {}
     this.__type = "ContractsDsl"
     this.__proto = ["ContractsDsl", "Annotation"]
@@ -6,7 +6,7 @@ function ContractsDsl_create_ContractsDsl_k_() as Object
     return this
 end function
 
-function InlineOnly_create_InlineOnly_k_() as Object
+function InlineOnly_create_k_() as Object
     this = {}
     this.__type = "InlineOnly"
     this.__proto = ["InlineOnly", "Annotation"]
