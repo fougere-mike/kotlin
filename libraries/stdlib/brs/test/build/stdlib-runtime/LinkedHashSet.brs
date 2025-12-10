@@ -116,9 +116,9 @@ function LinkedHashSet_contains_AnyN_k_(element as Dynamic) as Boolean
 end function
 
 function LinkedHashSet_containsAll_Collection_k_(elements as Object) as Boolean
-    __iter_122 = elements.iterator_k_()
-    while __iter_122.hasNext_k_()
-        element = __iter_122.next_k_()
+    __iter_136 = elements.iterator_k_()
+    while __iter_136.hasNext_k_()
+        element = __iter_136.next_k_()
         if not m.contains_AnyN_k_(element) then
             return false
         end if
@@ -149,9 +149,9 @@ end function
 
 function LinkedHashSet_addAll_Collection_k_(elements as Object) as Boolean
     modified = false
-    __iter_123 = elements.iterator_k_()
-    while __iter_123.hasNext_k_()
-        element = __iter_123.next_k_()
+    __iter_137 = elements.iterator_k_()
+    while __iter_137.hasNext_k_()
+        element = __iter_137.next_k_()
         if m.add_AnyN_k_(element) then
             modified = true
         end if
@@ -162,9 +162,9 @@ end function
 
 function LinkedHashSet_removeAll_Collection_k_(elements as Object) as Boolean
     modified = false
-    __iter_124 = elements.iterator_k_()
-    while __iter_124.hasNext_k_()
-        element = __iter_124.next_k_()
+    __iter_138 = elements.iterator_k_()
+    while __iter_138.hasNext_k_()
+        element = __iter_138.next_k_()
         if m.remove_AnyN_k_(element) then
             modified = true
         end if
@@ -206,9 +206,9 @@ end function
 
 function LinkedHashSet_hashCode_k_() as Integer
     result = 0
-    __iter_125 = m.iterator_k_()
-    while __iter_125.hasNext_k_()
-        element = __iter_125.next_k_()
+    __iter_139 = m.iterator_k_()
+    while __iter_139.hasNext_k_()
+        element = __iter_139.next_k_()
         tmp0_safe_receiver = element
         __when_tmp0 = invalid
         if tmp0_safe_receiver = invalid then
@@ -231,7 +231,7 @@ function LinkedHashSet_hashCode_k_() as Integer
 end function
 
 function LinkedHashSet_toString_k_() as String
-    return joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(m, ", ", "[", "]")
+    return joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(m, ", ", "[", "]", invalid, invalid)
 end function
 
 function LinkedHashSet_get_map_k_() as Object
@@ -264,7 +264,9 @@ function LinkedHashSet_SetIterator_next_k_() as Dynamic
 end function
 
 sub LinkedHashSet_SetIterator_remove_k_()
+    m.get_keyIterator().remove_k_()
     return
+
 end sub
 
 function LinkedHashSet_SetIterator_get_keyIterator_k_() as Object

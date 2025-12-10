@@ -87,7 +87,7 @@ end function
 
 function StringBuilder_get_I_k_(index as Integer) as Object
     return getOrElse_rStr_I_Function1IC_k_(m.get_string(), index, {index: index, this: m, invoke: function(it as Integer) as Object
-        throw IndexOutOfBoundsException_create_StrN_k_(((("index: " + m.index) + ", length: ") + m.this.get_length()) + "}")
+        throw IndexOutOfBoundsException_create_StrN_k_(((("index: " + __kotlin_numToStr_I_k_(m.index)) + ", length: ") + __kotlin_numToStr_I_k_(m.this.get_length())) + "}")
     end function})
 end function
 
@@ -96,7 +96,7 @@ function StringBuilder_subSequence_I_I_k_(startIndex as Integer, endIndex as Int
 end function
 
 function StringBuilder_append_C_k_(value as Object) as Object
-    m.set_string(m.get_string() + value)
+    m.set_string(m.get_string() + value.toString())
     return m
 end function
 
@@ -121,22 +121,22 @@ function StringBuilder_reverse_k_() as Object
     reversed = ""
     index = Len(m.get_string()) - 1
     while index >= 0
-        __incr_tmp_26 = index
-        index = (__incr_tmp_26 - 1)
+        __incr_tmp_40 = index
+        index = (__incr_tmp_40 - 1)
 
-        low = m.get_string().get_I_k_(__incr_tmp_26)
+        low = m.get_string().get_I_k_(__incr_tmp_40)
         if isLowSurrogate_rC_k_(low) and (index >= 0) then
-            __incr_tmp_27 = index
-            index = (__incr_tmp_27 - 1)
+            __incr_tmp_41 = index
+            index = (__incr_tmp_41 - 1)
 
-            high = m.get_string().get_I_k_(__incr_tmp_27)
+            high = m.get_string().get_I_k_(__incr_tmp_41)
             if isHighSurrogate_rC_k_(high) then
-                reversed = ((reversed + high) + low)
+                reversed = ((reversed + high.toString()) + low.toString())
             else if true then
-                reversed = ((reversed + low) + high)
+                reversed = ((reversed + low.toString()) + high.toString())
             end if
         else if true then
-            reversed = (reversed + low)
+            reversed = (reversed + low.toString())
         end if
     end while
     m.set_string(reversed)
@@ -149,7 +149,9 @@ function StringBuilder_append_AnyN_k_(value as Dynamic) as Object
 end function
 
 function StringBuilder_append_Z_k_(value as Boolean) as Object
-    m.set_string(m.get_string() + value)
+    m.set_string(m.get_string() + ((function(value)
+        if value then return "true" else return "false"
+    end function)(value)))
     return m
 end function
 
@@ -203,27 +205,29 @@ sub StringBuilder_ensureCapacity_I_k_(minimumCapacity as Integer)
 end sub
 
 function StringBuilder_indexOf_Str_k_(string_ as String) as Integer
-    return indexOf_rStr_Str_I_Z_k_(m.get_string(), string_)
+    return indexOf_rStr_Str_I_Z_k_(m.get_string(), string_, invalid, invalid)
 end function
 
 function StringBuilder_indexOf_Str_I_k_(string_ as String, startIndex as Integer) as Integer
-    return indexOf_rStr_Str_I_Z_k_(m.get_string(), string_, startIndex)
+    return indexOf_rStr_Str_I_Z_k_(m.get_string(), string_, startIndex, invalid)
 end function
 
 function StringBuilder_lastIndexOf_Str_k_(string_ as String) as Integer
-    return lastIndexOf_rStr_Str_I_Z_k_(m.get_string(), string_)
+    return lastIndexOf_rStr_Str_I_Z_k_(m.get_string(), string_, invalid, invalid)
 end function
 
 function StringBuilder_lastIndexOf_Str_I_k_(string_ as String, startIndex as Integer) as Integer
     if isEmpty_rStr_k_(string_) and (startIndex < 0) then
         return -1
     end if
-    return lastIndexOf_rStr_Str_I_Z_k_(m.get_string(), string_, startIndex)
+    return lastIndexOf_rStr_Str_I_Z_k_(m.get_string(), string_, startIndex, invalid)
 end function
 
 function StringBuilder_insert_I_Z_k_(index as Integer, value as Boolean) as Object
     checkPositionIndex_I_I_k_(index, m.get_length())
-    m.set_string((substring_rStr_I_I_k_(m.get_string(), 0, index) + value) + substring_rStr_I_k_(m.get_string(), index))
+    m.set_string((substring_rStr_I_I_k_(m.get_string(), 0, index) + ((function(value)
+        if value then return "true" else return "false"
+    end function)(value))) + substring_rStr_I_k_(m.get_string(), index))
     return m
 end function
 
@@ -253,7 +257,7 @@ end function
 
 function StringBuilder_insert_I_C_k_(index as Integer, value as Object) as Object
     checkPositionIndex_I_I_k_(index, m.get_length())
-    m.set_string((substring_rStr_I_I_k_(m.get_string(), 0, index) + value) + substring_rStr_I_k_(m.get_string(), index))
+    m.set_string((substring_rStr_I_I_k_(m.get_string(), 0, index) + value.toString()) + substring_rStr_I_k_(m.get_string(), index))
     return m
 end function
 
@@ -292,7 +296,7 @@ end function
 
 sub StringBuilder_setLength_I_k_(newLength as Integer)
     if newLength < 0 then
-        throw IllegalArgumentException_create_StrN_k_(("Negative new length: " + newLength) + ".")
+        throw IllegalArgumentException_create_StrN_k_(("Negative new length: " + __kotlin_numToStr_I_k_(newLength)) + ".")
     end if
     if newLength <= m.get_length() then
         m.set_string(substring_rStr_I_I_k_(m.get_string(), 0, newLength))
@@ -304,14 +308,14 @@ sub StringBuilder_setLength_I_k_(newLength as Integer)
                         i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            m.set_string(m.get_string() + " ")
+            m.set_string(m.get_string() + " ".toString())
 
 
             while i <> last
                 i = inductionVariable
                 inductionVariable = (inductionVariable + 1)
 
-                m.set_string(m.get_string() + " ")
+                m.set_string(m.get_string() + " ".toString())
 
             end while
 
@@ -343,7 +347,7 @@ end function
 
 sub StringBuilder_set_I_C_k_(index as Integer, value as Object)
     checkElementIndex_I_I_k_(index, m.get_length())
-    m.set_string((substring_rStr_I_I_k_(m.get_string(), 0, index) + value) + substring_rStr_I_k_(m.get_string(), index + 1))
+    m.set_string((substring_rStr_I_I_k_(m.get_string(), 0, index) + value.toString()) + substring_rStr_I_k_(m.get_string(), index + 1))
 end sub
 
 function StringBuilder_setRange_I_I_Str_k_(startIndex as Integer, endIndex as Integer, value as String) as Object
@@ -354,10 +358,10 @@ end function
 
 sub StringBuilder_checkReplaceRange_I_I_I_k_(startIndex as Integer, endIndex as Integer, length as Integer)
     if (startIndex < 0) or (startIndex > length) then
-        throw IndexOutOfBoundsException_create_StrN_k_((("startIndex: " + startIndex) + ", length: ") + length)
+        throw IndexOutOfBoundsException_create_StrN_k_((("startIndex: " + __kotlin_numToStr_I_k_(startIndex)) + ", length: ") + __kotlin_numToStr_I_k_(length))
     end if
     if startIndex > endIndex then
-        throw IllegalArgumentException_create_StrN_k_(((("startIndex(" + startIndex) + ") > endIndex(") + endIndex) + ")")
+        throw IllegalArgumentException_create_StrN_k_(((("startIndex(" + __kotlin_numToStr_I_k_(startIndex)) + ") > endIndex(") + __kotlin_numToStr_I_k_(endIndex)) + ")")
     end if
 end sub
 
@@ -374,6 +378,15 @@ function StringBuilder_deleteRange_I_I_k_(startIndex as Integer, endIndex as Int
 end function
 
 sub StringBuilder_toCharArray_CharArray_I_I_I_k_(destination as Object, destinationOffset = 0, startIndex = 0, endIndex = m.get_length())
+    if destinationOffset = invalid then
+        destinationOffset = 0
+    end if
+    if startIndex = invalid then
+        startIndex = 0
+    end if
+    if endIndex = invalid then
+        endIndex = m.get_length()
+    end if
     checkBoundsIndexes_I_I_I_k_(startIndex, endIndex, m.get_length())
     checkBoundsIndexes_I_I_I_k_(destinationOffset, (destinationOffset + endIndex) - startIndex, destination.get_size())
     dstIndex = destinationOffset
@@ -384,20 +397,20 @@ sub StringBuilder_toCharArray_CharArray_I_I_I_k_(destination as Object, destinat
                 index = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        __incr_tmp_28 = dstIndex
-        dstIndex = (__incr_tmp_28 + 1)
+        __incr_tmp_42 = dstIndex
+        dstIndex = (__incr_tmp_42 + 1)
 
-        destination.set_I_C_k_(__incr_tmp_28, m.get_string().get_I_k_(index))
+        destination.set_I_C_k_(__incr_tmp_42, m.get_string().get_I_k_(index))
 
 
         while index <> last
             index = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            __incr_tmp_28 = dstIndex
-            dstIndex = (__incr_tmp_28 + 1)
+            __incr_tmp_42 = dstIndex
+            dstIndex = (__incr_tmp_42 + 1)
 
-            destination.set_I_C_k_(__incr_tmp_28, m.get_string().get_I_k_(index))
+            destination.set_I_C_k_(__incr_tmp_42, m.get_string().get_I_k_(index))
 
         end while
 
@@ -512,7 +525,9 @@ function clear_rStringBuilder_k_(m as Object) as Object
 end function
 
 sub set_rStringBuilder_I_C_k_(m as Object, index as Integer, value as Object)
+    m.set_I_C_k_(index, value)
     return
+
 end sub
 
 function setRange_rStringBuilder_I_I_Str_k_(m as Object, startIndex as Integer, endIndex as Integer, value as String) as Object
@@ -528,7 +543,18 @@ function deleteRange_rStringBuilder_I_I_k_(m as Object, startIndex as Integer, e
 end function
 
 sub toCharArray_rStringBuilder_CharArray_I_I_I_k_(m as Object, destination as Object, destinationOffset = 0, startIndex = 0, endIndex = m.get_length())
+    if destinationOffset = invalid then
+        destinationOffset = 0
+    end if
+    if startIndex = invalid then
+        startIndex = 0
+    end if
+    if endIndex = invalid then
+        endIndex = m.get_length()
+    end if
+    m.toCharArray_CharArray_I_I_I_k_(destination, destinationOffset, startIndex, endIndex)
     return
+
 end sub
 
 function appendRange_rStringBuilder_CharArray_I_I_k_(m as Object, value as Object, startIndex as Integer, endIndex as Integer) as Object

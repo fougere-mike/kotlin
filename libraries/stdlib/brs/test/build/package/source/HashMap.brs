@@ -66,7 +66,7 @@ function HashMap_create_I_k_(initialCapacity as Integer) as Object
     this.get_entries = HashMap_get_entries_k_
     this._size = 0
     require_Z_Function0Any_k_(initialCapacity >= 0, {initialCapacity: initialCapacity, invoke: function() as Object
-        return "Negative initial capacity: " + m.initialCapacity
+        return "Negative initial capacity: " + __kotlin_numToStr_I_k_(m.initialCapacity)
     end function})
     this.set_map(CreateObject("roAssociativeArray"))
     this.set__size(0)
@@ -127,7 +127,7 @@ function HashMap_containsValue_AnyN_k_(value as Dynamic) as Boolean
         keyStr = keysArray[i]
         entry = m.get_map().Lookup(keyStr)
         v = entry.v
-        if v = value then
+        if brsStructuralEquals_AnyN_AnyN_k_(v, value) then
             return true
         end if
         i = (i + 1)
@@ -171,9 +171,9 @@ function HashMap_remove_AnyN_k_(key as Dynamic) as Dynamic
 end function
 
 sub HashMap_putAll_Map_k_(from as Object)
-    __iter_97 = from.get_entries().iterator_k_()
-    while __iter_97.hasNext_k_()
-        entry = __iter_97.next_k_()
+    __iter_111 = from.get_entries().iterator_k_()
+    while __iter_111.hasNext_k_()
+        entry = __iter_111.next_k_()
         m.put_AnyN_AnyN_k_(entry.get_key(), entry.get_value())
 
     end while
@@ -195,12 +195,12 @@ function HashMap_equals_AnyN_k_(other as Dynamic) as Boolean
     if other.get_size() <> m.get_size() then
         return false
     end if
-    __iter_98 = m.get_entries().iterator_k_()
-    while __iter_98.hasNext_k_()
-        entry = __iter_98.next_k_()
+    __iter_112 = m.get_entries().iterator_k_()
+    while __iter_112.hasNext_k_()
+        entry = __iter_112.next_k_()
         otherMap = other
         otherValue = otherMap.get_AnyN_k_(entry.get_key())
-        if entry.get_value() <> otherValue then
+        if not brsStructuralEquals_AnyN_AnyN_k_(entry.get_value(), otherValue) then
             return false
         end if
 
@@ -211,9 +211,9 @@ end function
 
 function HashMap_hashCode_k_() as Integer
     h = 0
-    __iter_99 = m.get_entries().iterator_k_()
-    while __iter_99.hasNext_k_()
-        entry = __iter_99.next_k_()
+    __iter_113 = m.get_entries().iterator_k_()
+    while __iter_113.hasNext_k_()
+        entry = __iter_113.next_k_()
         h = (h + entry.hashCode())
 
     end while
@@ -228,9 +228,9 @@ function HashMap_toString_k_() as String
     sb = StringBuilder_create_k_()
     sb.append_StrN_k_("{")
     first = true
-    __iter_100 = m.get_entries().iterator_k_()
-    while __iter_100.hasNext_k_()
-        entry = __iter_100.next_k_()
+    __iter_114 = m.get_entries().iterator_k_()
+    while __iter_114.hasNext_k_()
+        entry = __iter_114.next_k_()
         if not first then
             sb.append_StrN_k_(", ")
         end if
@@ -328,7 +328,7 @@ function HashMapEntry_equals_AnyN_k_(other as Dynamic) as Boolean
     if not __kotlin_isInstanceOf(other, "Map_Entry") then
         return false
     end if
-    return (m.get_key() = other.get_key()) and (m.get_value() = other.get_value())
+    return brsStructuralEquals_AnyN_AnyN_k_(m.get_key(), other.get_key()) and brsStructuralEquals_AnyN_AnyN_k_(m.get_value(), other.get_value())
 end function
 
 function HashMapEntry_hashCode_k_() as Integer
@@ -365,7 +365,7 @@ function HashMapEntry_hashCode_k_() as Integer
 end function
 
 function HashMapEntry_toString_k_() as String
-    return (m.get_key() + "=") + m.get_value()
+    return (toString_AnyN_k_(m.get_key()) + "=") + toString_AnyN_k_(m.get_value())
 end function
 
 function HashMapEntry_get_map_k_() as Object
@@ -411,9 +411,9 @@ function KeySet_contains_AnyN_k_(element as Dynamic) as Boolean
 end function
 
 function KeySet_containsAll_Collection_k_(elements as Object) as Boolean
-    __iter_101 = elements.iterator_k_()
-    while __iter_101.hasNext_k_()
-        element = __iter_101.next_k_()
+    __iter_115 = elements.iterator_k_()
+    while __iter_115.hasNext_k_()
+        element = __iter_115.next_k_()
         if not m.contains_AnyN_k_(element) then
             return false
         end if
@@ -444,9 +444,9 @@ end function
 
 function KeySet_removeAll_Collection_k_(elements as Object) as Boolean
     modified = false
-    __iter_102 = elements.iterator_k_()
-    while __iter_102.hasNext_k_()
-        element = __iter_102.next_k_()
+    __iter_116 = elements.iterator_k_()
+    while __iter_116.hasNext_k_()
+        element = __iter_116.next_k_()
         if m.remove_AnyN_k_(element) then
             modified = true
         end if
@@ -525,9 +525,9 @@ function ValueCollection_contains_AnyN_k_(element as Dynamic) as Boolean
 end function
 
 function ValueCollection_containsAll_Collection_k_(elements as Object) as Boolean
-    __iter_103 = elements.iterator_k_()
-    while __iter_103.hasNext_k_()
-        element = __iter_103.next_k_()
+    __iter_117 = elements.iterator_k_()
+    while __iter_117.hasNext_k_()
+        element = __iter_117.next_k_()
         if not m.contains_AnyN_k_(element) then
             return false
         end if
@@ -547,7 +547,7 @@ end function
 function ValueCollection_remove_AnyN_k_(element as Dynamic) as Boolean
     iter = m.iterator_k_()
     while iter.hasNext_k_()
-        if iter.next_k_() = element then
+        if brsStructuralEquals_AnyN_AnyN_k_(iter.next_k_(), element) then
             iter.remove_k_()
             return true
         end if
@@ -638,13 +638,13 @@ end function
 
 function EntrySet_contains_MutableEntry_k_(element as Object) as Boolean
     value = m.get_map().get_AnyN_k_(element.get_key())
-    return (value <> invalid) and (value = element.get_value())
+    return (value <> invalid) and brsStructuralEquals_AnyN_AnyN_k_(value, element.get_value())
 end function
 
 function EntrySet_containsAll_CollectionMutableEntry_k_(elements as Object) as Boolean
-    __iter_104 = elements.iterator_k_()
-    while __iter_104.hasNext_k_()
-        element = __iter_104.next_k_()
+    __iter_118 = elements.iterator_k_()
+    while __iter_118.hasNext_k_()
+        element = __iter_118.next_k_()
         if not m.contains_MutableEntry_k_(element) then
             return false
         end if
@@ -673,9 +673,9 @@ end function
 
 function EntrySet_addAll_CollectionMutableEntry_k_(elements as Object) as Boolean
     modified = false
-    __iter_105 = elements.iterator_k_()
-    while __iter_105.hasNext_k_()
-        element = __iter_105.next_k_()
+    __iter_119 = elements.iterator_k_()
+    while __iter_119.hasNext_k_()
+        element = __iter_119.next_k_()
         if m.add_MutableEntry_k_(element) then
             modified = true
         end if
@@ -686,9 +686,9 @@ end function
 
 function EntrySet_removeAll_CollectionMutableEntry_k_(elements as Object) as Boolean
     modified = false
-    __iter_106 = elements.iterator_k_()
-    while __iter_106.hasNext_k_()
-        element = __iter_106.next_k_()
+    __iter_120 = elements.iterator_k_()
+    while __iter_120.hasNext_k_()
+        element = __iter_120.next_k_()
         if m.remove_MutableEntry_k_(element) then
             modified = true
         end if

@@ -401,12 +401,39 @@ function brsStructuralEquals_AnyN_AnyN_k_(a as Dynamic, b as Dynamic) as Boolean
     if __kotlin_identityEquals(a, b) then
         return true
     end if
-    if (a = invalid) or (b = invalid) then
+    if __kotlin_identityEquals(a, invalid) or __kotlin_identityEquals(b, invalid) then
         return false
     end if
+    __when_tmp13 = invalid
     if Type(a) = "roAssociativeArray" then
-        return a.equals(b)
+        __when_tmp13 = a.equals(b)
     else if true then
-        return a = b
+        __when_tmp13 = (a = b)
     end if
+    return __when_tmp13
+
+end function
+
+function brsCompareTo_AnyN_AnyN_k_(a as Dynamic, b as Dynamic) as Integer
+    if __kotlin_identityEquals(a, b) then
+        return 0
+    end if
+    if __kotlin_identityEquals(a, invalid) then
+        return -1
+    end if
+    if __kotlin_identityEquals(b, invalid) then
+        return 1
+    end if
+    __when_tmp14 = invalid
+    if Type(a) = "roAssociativeArray" then
+        __when_tmp14 = a.compareTo(b)
+    else if true then
+        __when_tmp14 = ((function(a, b)
+            if a < b then return -1 else return (function(a, b)
+                if a > b then return 1 else return 0
+            end function)(a, b)
+        end function)(a, b))
+    end if
+    return __when_tmp14
+
 end function

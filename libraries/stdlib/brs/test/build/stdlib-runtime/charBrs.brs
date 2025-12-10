@@ -102,6 +102,9 @@ function isSurrogate_rC_k_(m as Object) as Boolean
 end function
 
 function equals_rC_C_Z_k_(m as Object, other as Object, ignoreCase = false) as Boolean
+    if ignoreCase = invalid then
+        ignoreCase = false
+    end if
     if m = other then
         return true
     end if

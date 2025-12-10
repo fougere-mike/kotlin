@@ -42,12 +42,8 @@ public inline fun <T> compareValuesBy(a: T, b: T, selector: (T) -> Comparable<*>
  * Compares two nullable [Comparable] values. Null is considered less than any value.
  */
 public fun <T : Comparable<*>> compareValues(a: T?, b: T?): Int {
-    if (a === b) return 0
-    if (a == null) return -1
-    if (b == null) return 1
-
-    @Suppress("UNCHECKED_CAST")
-    return (a as Comparable<Any>).compareTo(b)
+    // Use brsCompareTo which handles both primitives and objects correctly
+    return brsCompareTo(a, b)
 }
 
 /**
@@ -65,10 +61,10 @@ public fun <T : Comparable<T>> reverseOrder(): Comparator<T> = @Suppress("UNCHEC
  */
 public fun <T> Comparator<T>.reversed(): Comparator<T> = Comparator { a, b -> compare(b, a) }
 
-private object NaturalOrderComparator : Comparator<Comparable<Any>> {
-    override fun compare(a: Comparable<Any>, b: Comparable<Any>): Int = a.compareTo(b)
+private object NaturalOrderComparator : Comparator<Any?> {
+    override fun compare(a: Any?, b: Any?): Int = brsCompareTo(a, b)
 }
 
-private object ReverseOrderComparator : Comparator<Comparable<Any>> {
-    override fun compare(a: Comparable<Any>, b: Comparable<Any>): Int = b.compareTo(a)
+private object ReverseOrderComparator : Comparator<Any?> {
+    override fun compare(a: Any?, b: Any?): Int = brsCompareTo(b, a)
 }

@@ -102,6 +102,18 @@ public annotation class BrsComponent(
 public annotation class BrsInline(val code: String)
 
 /**
+ * Marks a function as a BrightScript intrinsic.
+ *
+ * The compiler will replace calls to this function with the specified
+ * intrinsic implementation. The function must be declared as `external`.
+ *
+ * @property name The intrinsic name (e.g., "brsIntrinsicIsAA").
+ */
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.BINARY)
+public annotation class BrsIntrinsic(val name: String)
+
+/**
  * Specifies the minimum Roku OS version required for a declaration.
  *
  * The compiler will generate appropriate fallbacks or errors for
@@ -131,3 +143,26 @@ public annotation class BrsMinRokuOS(val major: Int, val minor: Int = 0)
 )
 @Retention(AnnotationRetention.SOURCE)
 public annotation class BrsSuppress(vararg val warnings: String)
+
+/**
+ * Marks a companion object function as a CreateObject factory.
+ *
+ * The function compiles to `CreateObject("<typeName>", args...)`.
+ * Use this on companion object functions to provide type-safe factories
+ * for native BrightScript objects.
+ *
+ * Example:
+ * ```kotlin
+ * external interface RoArray {
+ *     companion object {
+ *         @BrsCreateObject("roArray")
+ *         fun create(size: Int = 0, resize: Boolean = true): RoArray = definedExternally
+ *     }
+ * }
+ * ```
+ *
+ * @property typeName The BrightScript object type name (e.g., "roArray", "roAssociativeArray").
+ */
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.BINARY)
+public annotation class BrsCreateObject(val typeName: String)

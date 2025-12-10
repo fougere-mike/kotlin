@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.name.StandardClassIds.BASE_KOTLIN_PACKAGE
 object BrsStandardClassIds {
     val BASE_BRS_PACKAGE = BASE_KOTLIN_PACKAGE.child(Name.identifier("brs"))
     val BASE_BRS_INTERNAL_PACKAGE = BASE_BRS_PACKAGE.child(Name.identifier("internal"))
+    val BASE_BRS_ROKU_PACKAGE = BASE_BRS_PACKAGE.child(Name.identifier("roku"))
 
     /**
      * Built-in BrightScript object types.
@@ -80,6 +81,23 @@ object BrsStandardClassIds {
 
         @JvmField
         val roRegistrySection = "roRegistrySection".brsInternalId()
+
+        // Native iteration marker types (kotlin.brs.roku package)
+        @JvmField
+        val nativeArrayIterator = "NativeArrayIterator".brsRokuId()
+
+        @JvmField
+        val nativeIterable = "NativeIterable".brsRokuId()
+
+        // Native type interfaces (kotlin.brs.roku package)
+        @JvmField
+        val roArrayInterface = "RoArray".brsRokuId()
+
+        @JvmField
+        val roAssociativeArrayInterface = "RoAssociativeArray".brsRokuId()
+
+        @JvmField
+        val iEnumNative = "IEnumNative".brsRokuId()
     }
 
     /**
@@ -139,6 +157,12 @@ object BrsStandardClassIds {
          */
         @JvmField
         val BrsInline = "BrsInline".brsId()
+
+        /**
+         * Marks a companion object function as a CreateObject factory.
+         */
+        @JvmField
+        val BrsCreateObject = "BrsCreateObject".brsId()
 
         /**
          * Suppresses specific compiler warnings for BrightScript.
@@ -204,5 +228,7 @@ object BrsStandardClassIds {
 private fun String.brsId() = ClassId(BrsStandardClassIds.BASE_BRS_PACKAGE, Name.identifier(this))
 
 private fun String.brsInternalId() = ClassId(BrsStandardClassIds.BASE_BRS_INTERNAL_PACKAGE, Name.identifier(this))
+
+private fun String.brsRokuId() = ClassId(BrsStandardClassIds.BASE_BRS_ROKU_PACKAGE, Name.identifier(this))
 
 private fun String.callableId(packageName: FqName) = CallableId(packageName, Name.identifier(this))

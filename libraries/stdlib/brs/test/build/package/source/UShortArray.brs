@@ -67,9 +67,9 @@ function UShortArray_contains_UShort_k_(element as Object) as Boolean
 end function
 
 function UShortArray_containsAll_CollectionUShort_k_(elements as Object) as Boolean
-    __iter_35 = elements.iterator_k_()
-    while __iter_35.hasNext_k_()
-        element = __iter_35.next_k_()
+    __iter_49 = elements.iterator_k_()
+    while __iter_49.hasNext_k_()
+        element = __iter_49.next_k_()
         if not m.contains_UShort_k_(element) then
             return false
         end if
@@ -204,9 +204,9 @@ end function
 function UShortArray_Iterator_next_k_() as Object
     __when_tmp0 = invalid
     if m.get_index() < m.get_array().get_size() then
-        __incr_tmp_36 = m.get_index()
-        m.set_index(__incr_tmp_36 + 1)
-        __when_tmp0 = toUShort_rS_k_(m.get_array().get_I_k_(__incr_tmp_36))
+        __incr_tmp_50 = m.get_index()
+        m.set_index(__incr_tmp_50 + 1)
+        __when_tmp0 = toUShort_rS_k_(m.get_array().get_I_k_(__incr_tmp_50))
     else if true then
         throw NoSuchElementException_create_StrN_k_(__kotlin_numToStr_I_k_(m.get_index()))
     end if

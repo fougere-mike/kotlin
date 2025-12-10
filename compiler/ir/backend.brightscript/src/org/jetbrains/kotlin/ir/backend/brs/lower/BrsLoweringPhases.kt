@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.ir.backend.brs.lower
 
+import org.jetbrains.kotlin.backend.common.BodyLoweringPass
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.lower.*
 import org.jetbrains.kotlin.backend.common.lower.loops.ForLoopsLowering
@@ -90,8 +91,18 @@ object BrsLoweringPhases {
             // Phase 13: Control flow simplification
             ControlFlowLowering(context),
 
-            // Phase 13: Final cleanup
-            CleanupLowering(context)
+            // Phase 14: Final cleanup
+            CleanupLowering(context),
+
+            // Phase 15: Local declarations lowering - handles closure capture for local classes
+            // This transforms local classes to properly capture variables from enclosing scopes
+            // Must run after ForLoopsLowering to avoid conflicts
+            LocalDeclarationsLowering(context, suggestUniqueNames = false),
+
+            // Phase 16: Extract local classes to file level
+            // After LocalDeclarationsLowering handles the closure capture, this pass moves
+            // local classes to file level so they can be properly emitted.
+            BrsLocalClassExtractionLowering(context)
         )
 
         for (phase in phases) {

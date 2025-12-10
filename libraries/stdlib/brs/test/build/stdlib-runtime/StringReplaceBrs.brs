@@ -1,4 +1,7 @@
 function replace_rStr_Str_Str_Z_k_(m as String, oldValue as String, newValue as String, ignoreCase = false) as String
+    if ignoreCase = invalid then
+        ignoreCase = false
+    end if
     if isEmpty_rStr_k_(oldValue) then
         result = StringBuilder_create_k_()
         result.append_StrN_k_(newValue)
@@ -41,10 +44,16 @@ function replace_rStr_Str_Str_Z_k_(m as String, oldValue as String, newValue as 
 end function
 
 function replace_rStr_C_C_Z_k_(m as String, oldChar as Object, newChar as Object, ignoreCase = false) as String
+    if ignoreCase = invalid then
+        ignoreCase = false
+    end if
     return replace_rStr_Str_Str_Z_k_(m, oldChar.toString(), newChar.toString(), ignoreCase)
 end function
 
 function replaceFirst_rStr_Str_Str_Z_k_(m as String, oldValue as String, newValue as String, ignoreCase = false) as String
+    if ignoreCase = invalid then
+        ignoreCase = false
+    end if
     index = indexOf_rStr_Str_I_Z_k_(m, oldValue, 0, ignoreCase)
     if index < 0 then
         return m
@@ -53,6 +62,9 @@ function replaceFirst_rStr_Str_Str_Z_k_(m as String, oldValue as String, newValu
 end function
 
 function replaceFirst_rStr_C_C_Z_k_(m as String, oldChar as Object, newChar as Object, ignoreCase = false) as String
+    if ignoreCase = invalid then
+        ignoreCase = false
+    end if
     return replaceFirst_rStr_Str_Str_Z_k_(m, oldChar.toString(), newChar.toString(), ignoreCase)
 end function
 
@@ -62,13 +74,13 @@ end function
 
 function replaceRange_rStr_I_I_CharSequence_k_(m as String, startIndex as Integer, endIndex as Integer, replacement as Object) as String
     if endIndex < startIndex then
-        throw IndexOutOfBoundsException_create_StrN_k_(((("End index (" + endIndex) + ") is less than start index (") + startIndex) + ")")
+        throw IndexOutOfBoundsException_create_StrN_k_(((("End index (" + __kotlin_numToStr_I_k_(endIndex)) + ") is less than start index (") + __kotlin_numToStr_I_k_(startIndex)) + ")")
     end if
     if startIndex < 0 then
-        throw IndexOutOfBoundsException_create_StrN_k_(("Start index (" + startIndex) + ") is negative")
+        throw IndexOutOfBoundsException_create_StrN_k_(("Start index (" + __kotlin_numToStr_I_k_(startIndex)) + ") is negative")
     end if
     if endIndex > Len(m) then
-        throw IndexOutOfBoundsException_create_StrN_k_(((("End index (" + endIndex) + ") is greater than length (") + Len(m)) + ")")
+        throw IndexOutOfBoundsException_create_StrN_k_(((("End index (" + __kotlin_numToStr_I_k_(endIndex)) + ") is greater than length (") + __kotlin_numToStr_I_k_(Len(m))) + ")")
     end if
     return (substring_rStr_I_I_k_(m, 0, startIndex) + toString_AnyN_k_(replacement)) + substring_rStr_I_k_(m, endIndex)
 end function

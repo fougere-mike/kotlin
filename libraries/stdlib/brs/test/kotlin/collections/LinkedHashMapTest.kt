@@ -111,7 +111,8 @@ fun TestRunner.linkedHashMapTests() {
             val map = LinkedHashMap<String, Int>()
             map["one"] = 1
 
-            val other = mapOf("two" to 2, "three" to 3)
+            // Use linkedMapOf to ensure iteration order is preserved
+            val other = linkedMapOf("two" to 2, "three" to 3)
             map.putAll(other)
 
             assertEquals(3, map.size)

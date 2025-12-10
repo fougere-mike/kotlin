@@ -13,7 +13,7 @@ function TransformingSequence_create_Sequence_Function1_k_(sequence as Object, t
 end function
 
 function TransformingSequence_iterator_k_() as Object
-    return Anon_6c06e61a_create_k_()
+    return Anon_198e0d63_create_TransformingSequence_k_(m)
 end function
 
 function TransformingSequence_flatten_Function1Iterator_k_(iterator as Object) as Object
@@ -42,7 +42,7 @@ function TransformingIndexedSequence_create_Sequence_Function2I_k_(sequence as O
 end function
 
 function TransformingIndexedSequence_iterator_k_() as Object
-    return Anon_3bf5d2f6_create_k_()
+    return Anon_4e9c4bc2_create_TransformingIndexedSequence_k_(m)
 end function
 
 function TransformingIndexedSequence_get_sequence_k_() as Object
@@ -69,7 +69,7 @@ function FilteringSequence_create_Sequence_Z_Function1Z_k_(sequence as Object, s
 end function
 
 function FilteringSequence_iterator_k_() as Object
-    return Anon_17691c4f_create_k_()
+    return Anon_956cfbd_create_FilteringSequence_k_(m)
 end function
 
 function FilteringSequence_get_sequence_k_() as Object
@@ -100,7 +100,7 @@ function FilteringIndexedSequence_create_Sequence_Z_Function2IZ_k_(sequence as O
 end function
 
 function FilteringIndexedSequence_iterator_k_() as Object
-    return Anon_f8601ab_create_k_()
+    return Anon_4173cb17_create_FilteringIndexedSequence_k_(m)
 end function
 
 function FilteringIndexedSequence_get_sequence_k_() as Object
@@ -131,7 +131,7 @@ function FlatteningSequence_create_Sequence_Function1_Function1Iterator_k_(seque
 end function
 
 function FlatteningSequence_iterator_k_() as Object
-    return Anon_2f5ebba_create_k_()
+    return Anon_3cd83d75_create_FlatteningSequence_k_(m)
 end function
 
 function FlatteningSequence_get_sequence_k_() as Object
@@ -184,7 +184,7 @@ function TakingSequence_take_I_k_(n as Integer) as Object
 end function
 
 function TakingSequence_iterator_k_() as Object
-    return Anon_428156ae_create_k_()
+    return Anon_3104aa87_create_TakingSequence_k_(m)
 end function
 
 function TakingSequence_get_sequence_k_() as Object
@@ -209,7 +209,7 @@ function TakingWhileSequence_create_Sequence_Function1Z_k_(sequence as Object, p
 end function
 
 function TakingWhileSequence_iterator_k_() as Object
-    return Anon_fb152c5_create_k_()
+    return Anon_610dfe1d_create_TakingWhileSequence_k_(m)
 end function
 
 function TakingWhileSequence_get_sequence_k_() as Object
@@ -244,7 +244,7 @@ function DroppingSequence_take_I_k_(n as Integer) as Object
 end function
 
 function DroppingSequence_iterator_k_() as Object
-    return Anon_1acfe21_create_k_()
+    return Anon_61d348e3_create_DroppingSequence_k_(m)
 end function
 
 function DroppingSequence_get_sequence_k_() as Object
@@ -269,7 +269,7 @@ function DroppingWhileSequence_create_Sequence_Function1Z_k_(sequence as Object,
 end function
 
 function DroppingWhileSequence_iterator_k_() as Object
-    return Anon_2b999312_create_k_()
+    return Anon_28f3815c_create_DroppingWhileSequence_k_(m)
 end function
 
 function DroppingWhileSequence_get_sequence_k_() as Object
@@ -321,7 +321,7 @@ function SubSequence_take_I_k_(n as Integer) as Object
 end function
 
 function SubSequence_iterator_k_() as Object
-    return Anon_1766f744_create_k_()
+    return Anon_15c362f_create_SubSequence_k_(m)
 end function
 
 function SubSequence_get_sequence_k_() as Object
@@ -354,7 +354,7 @@ function DistinctSequence_create_Sequence_Function1_k_(source as Object, keySele
 end function
 
 function DistinctSequence_iterator_k_() as Object
-    return Anon_10892b7_create_k_()
+    return Anon_6817304_create_DistinctSequence_k_(m)
 end function
 
 function DistinctSequence_get_source_k_() as Object
@@ -381,7 +381,7 @@ function MergingSequence_create_Sequence_Sequence_Function2_k_(sequence1 as Obje
 end function
 
 function MergingSequence_iterator_k_() as Object
-    return Anon_79c421c_create_k_()
+    return Anon_9b9f937_create_MergingSequence_k_(m)
 end function
 
 function MergingSequence_get_sequence1_k_() as Object
@@ -394,4 +394,681 @@ end function
 
 function MergingSequence_get_transform_k_() as Object
     return m.transform
+end function
+
+function Anon_198e0d63_create_TransformingSequence_k_(this_0 as Object) as Object
+    this = {}
+    this.__type = "Anon_198e0d63"
+    this.__proto = ["Anon_198e0d63", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.next_k_ = Anon_198e0d63_next_k_
+    this.hasNext_k_ = Anon_198e0d63_hasNext_k_
+    this.get_iterator = Anon_198e0d63_get_iterator_k_
+    this.iterator = this_0.get_sequence().iterator_k_()
+    this.this_0 = this_0
+    return this
+end function
+
+function Anon_198e0d63_next_k_() as Dynamic
+    return m.this_0.get_transformer().invoke(m.get_iterator().next_k_())
+end function
+
+function Anon_198e0d63_hasNext_k_() as Boolean
+    return m.get_iterator().hasNext_k_()
+end function
+
+function Anon_198e0d63_get_iterator_k_() as Object
+    return m.iterator
+end function
+
+function Anon_4e9c4bc2_create_TransformingIndexedSequence_k_(this_0 as Object) as Object
+    this = {}
+    this.__type = "Anon_4e9c4bc2"
+    this.__proto = ["Anon_4e9c4bc2", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.next_k_ = Anon_4e9c4bc2_next_k_
+    this.hasNext_k_ = Anon_4e9c4bc2_hasNext_k_
+    this.get_iterator = Anon_4e9c4bc2_get_iterator_k_
+    this.get_index = Anon_4e9c4bc2_get_index_k_
+    this.set_index = Anon_4e9c4bc2_set_index_I_k_
+    this.iterator = this_0.get_sequence().iterator_k_()
+    this.index = 0
+    this.this_0 = this_0
+    return this
+end function
+
+function Anon_4e9c4bc2_next_k_() as Dynamic
+    __incr_tmp_20 = m.get_index()
+    m.set_index(__incr_tmp_20 + 1)
+    return m.this_0.get_transformer().invoke(__incr_tmp_20, m.get_iterator().next_k_())
+
+end function
+
+function Anon_4e9c4bc2_hasNext_k_() as Boolean
+    return m.get_iterator().hasNext_k_()
+end function
+
+function Anon_4e9c4bc2_get_iterator_k_() as Object
+    return m.iterator
+end function
+
+function Anon_4e9c4bc2_get_index_k_() as Integer
+    return m.index
+end function
+
+sub Anon_4e9c4bc2_set_index_I_k_(value as Integer)
+    m.index = value
+end sub
+
+function Anon_956cfbd_create_FilteringSequence_k_(this_0 as Object) as Object
+    this = {}
+    this.__type = "Anon_956cfbd"
+    this.__proto = ["Anon_956cfbd", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.calcNext_k_ = Anon_956cfbd_calcNext_k_
+    this.next_k_ = Anon_956cfbd_next_k_
+    this.hasNext_k_ = Anon_956cfbd_hasNext_k_
+    this.get_iterator = Anon_956cfbd_get_iterator_k_
+    this.get_nextState = Anon_956cfbd_get_nextState_k_
+    this.set_nextState = Anon_956cfbd_set_nextState_I_k_
+    this.get_nextItem = Anon_956cfbd_get_nextItem_k_
+    this.set_nextItem = Anon_956cfbd_set_nextItem_AnyN_k_
+    this.iterator = this_0.get_sequence().iterator_k_()
+    this.nextState = -1
+    this.nextItem = invalid
+    this.this_0 = this_0
+    return this
+end function
+
+sub Anon_956cfbd_calcNext_k_()
+    while m.get_iterator().hasNext_k_()
+        item = m.get_iterator().next_k_()
+        if m.this_0.get_predicate().invoke(item) = m.this_0.get_sendWhen() then
+            m.set_nextItem(item)
+            m.set_nextState(1)
+            return
+        end if
+    end while
+    m.set_nextState(0)
+end sub
+
+function Anon_956cfbd_next_k_() as Dynamic
+    if m.get_nextState() = -1 then
+        m.calcNext_k_()
+    end if
+    if m.get_nextState() = 0 then
+        throw NoSuchElementException_create_k_()
+    end if
+    result = m.get_nextItem()
+    m.set_nextItem(invalid)
+    m.set_nextState(-1)
+    return result
+end function
+
+function Anon_956cfbd_hasNext_k_() as Boolean
+    if m.get_nextState() = -1 then
+        m.calcNext_k_()
+    end if
+    return m.get_nextState() = 1
+end function
+
+function Anon_956cfbd_get_iterator_k_() as Object
+    return m.iterator
+end function
+
+function Anon_956cfbd_get_nextState_k_() as Integer
+    return m.nextState
+end function
+
+sub Anon_956cfbd_set_nextState_I_k_(value as Integer)
+    m.nextState = value
+end sub
+
+function Anon_956cfbd_get_nextItem_k_() as Dynamic
+    return m.nextItem
+end function
+
+sub Anon_956cfbd_set_nextItem_AnyN_k_(value as Dynamic)
+    m.nextItem = value
+end sub
+
+function Anon_4173cb17_create_FilteringIndexedSequence_k_(this_0 as Object) as Object
+    this = {}
+    this.__type = "Anon_4173cb17"
+    this.__proto = ["Anon_4173cb17", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.calcNext_k_ = Anon_4173cb17_calcNext_k_
+    this.next_k_ = Anon_4173cb17_next_k_
+    this.hasNext_k_ = Anon_4173cb17_hasNext_k_
+    this.get_iterator = Anon_4173cb17_get_iterator_k_
+    this.get_index = Anon_4173cb17_get_index_k_
+    this.set_index = Anon_4173cb17_set_index_I_k_
+    this.get_nextState = Anon_4173cb17_get_nextState_k_
+    this.set_nextState = Anon_4173cb17_set_nextState_I_k_
+    this.get_nextItem = Anon_4173cb17_get_nextItem_k_
+    this.set_nextItem = Anon_4173cb17_set_nextItem_AnyN_k_
+    this.iterator = this_0.get_sequence().iterator_k_()
+    this.index = 0
+    this.nextState = -1
+    this.nextItem = invalid
+    this.this_0 = this_0
+    return this
+end function
+
+sub Anon_4173cb17_calcNext_k_()
+    while m.get_iterator().hasNext_k_()
+        item = m.get_iterator().next_k_()
+        __incr_tmp_21 = m.get_index()
+        m.set_index(__incr_tmp_21 + 1)
+        if m.this_0.get_predicate().invoke(__incr_tmp_21, item) = m.this_0.get_sendWhen() then
+            m.set_nextItem(item)
+            m.set_nextState(1)
+            return
+        end if
+
+    end while
+    m.set_nextState(0)
+end sub
+
+function Anon_4173cb17_next_k_() as Dynamic
+    if m.get_nextState() = -1 then
+        m.calcNext_k_()
+    end if
+    if m.get_nextState() = 0 then
+        throw NoSuchElementException_create_k_()
+    end if
+    result = m.get_nextItem()
+    m.set_nextItem(invalid)
+    m.set_nextState(-1)
+    return result
+end function
+
+function Anon_4173cb17_hasNext_k_() as Boolean
+    if m.get_nextState() = -1 then
+        m.calcNext_k_()
+    end if
+    return m.get_nextState() = 1
+end function
+
+function Anon_4173cb17_get_iterator_k_() as Object
+    return m.iterator
+end function
+
+function Anon_4173cb17_get_index_k_() as Integer
+    return m.index
+end function
+
+sub Anon_4173cb17_set_index_I_k_(value as Integer)
+    m.index = value
+end sub
+
+function Anon_4173cb17_get_nextState_k_() as Integer
+    return m.nextState
+end function
+
+sub Anon_4173cb17_set_nextState_I_k_(value as Integer)
+    m.nextState = value
+end sub
+
+function Anon_4173cb17_get_nextItem_k_() as Dynamic
+    return m.nextItem
+end function
+
+sub Anon_4173cb17_set_nextItem_AnyN_k_(value as Dynamic)
+    m.nextItem = value
+end sub
+
+function Anon_3cd83d75_create_FlatteningSequence_k_(this_0 as Object) as Object
+    this = {}
+    this.__type = "Anon_3cd83d75"
+    this.__proto = ["Anon_3cd83d75", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.next_k_ = Anon_3cd83d75_next_k_
+    this.hasNext_k_ = Anon_3cd83d75_hasNext_k_
+    this.ensureItemIterator_k_ = Anon_3cd83d75_ensureItemIterator_k_
+    this.get_iterator = Anon_3cd83d75_get_iterator_k_
+    this.get_itemIterator = Anon_3cd83d75_get_itemIterator_k_
+    this.set_itemIterator = Anon_3cd83d75_set_itemIterator_IteratorN_k_
+    this.iterator = this_0.get_sequence().iterator_k_()
+    this.itemIterator = invalid
+    this.this_0 = this_0
+    return this
+end function
+
+function Anon_3cd83d75_next_k_() as Dynamic
+    if not m.ensureItemIterator_k_() then
+        throw NoSuchElementException_create_k_()
+    end if
+    return m.get_itemIterator().next_k_()
+end function
+
+function Anon_3cd83d75_hasNext_k_() as Boolean
+    return m.ensureItemIterator_k_()
+end function
+
+function Anon_3cd83d75_ensureItemIterator_k_() as Boolean
+    tmp0_safe_receiver = m.get_itemIterator()
+    __when_tmp0 = invalid
+    if tmp0_safe_receiver = invalid then
+        __when_tmp0 = invalid
+    else if true then
+        __when_tmp0 = tmp0_safe_receiver.hasNext_k_()
+    end if
+    if __when_tmp0 = false then
+        m.set_itemIterator(invalid)
+    end if
+
+    while m.get_itemIterator() = invalid
+        if not m.get_iterator().hasNext_k_() then
+            return false
+        else if true then
+            element = m.get_iterator().next_k_()
+            nextItemIterator = m.this_0.get_iterator().invoke(m.this_0.get_transformer().invoke(element))
+            if nextItemIterator.hasNext_k_() then
+                m.set_itemIterator(nextItemIterator)
+                return true
+            end if
+        end if
+    end while
+    return true
+end function
+
+function Anon_3cd83d75_get_iterator_k_() as Object
+    return m.iterator
+end function
+
+function Anon_3cd83d75_get_itemIterator_k_() as Dynamic
+    return m.itemIterator
+end function
+
+sub Anon_3cd83d75_set_itemIterator_IteratorN_k_(value as Dynamic)
+    m.itemIterator = value
+end sub
+
+function Anon_3104aa87_create_TakingSequence_k_(this_0 as Object) as Object
+    this = {}
+    this.__type = "Anon_3104aa87"
+    this.__proto = ["Anon_3104aa87", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.next_k_ = Anon_3104aa87_next_k_
+    this.hasNext_k_ = Anon_3104aa87_hasNext_k_
+    this.get_left = Anon_3104aa87_get_left_k_
+    this.set_left = Anon_3104aa87_set_left_I_k_
+    this.get_iterator = Anon_3104aa87_get_iterator_k_
+    this.left = this_0.get_count()
+    this.iterator = this_0.get_sequence().iterator_k_()
+    return this
+end function
+
+function Anon_3104aa87_next_k_() as Dynamic
+    if m.get_left() = 0 then
+        throw NoSuchElementException_create_k_()
+    end if
+    m.set_left(m.get_left() - 1)
+    return m.get_iterator().next_k_()
+end function
+
+function Anon_3104aa87_hasNext_k_() as Boolean
+    return (m.get_left() > 0) and m.get_iterator().hasNext_k_()
+end function
+
+function Anon_3104aa87_get_left_k_() as Integer
+    return m.left
+end function
+
+sub Anon_3104aa87_set_left_I_k_(value as Integer)
+    m.left = value
+end sub
+
+function Anon_3104aa87_get_iterator_k_() as Object
+    return m.iterator
+end function
+
+function Anon_610dfe1d_create_TakingWhileSequence_k_(this_0 as Object) as Object
+    this = {}
+    this.__type = "Anon_610dfe1d"
+    this.__proto = ["Anon_610dfe1d", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.calcNext_k_ = Anon_610dfe1d_calcNext_k_
+    this.next_k_ = Anon_610dfe1d_next_k_
+    this.hasNext_k_ = Anon_610dfe1d_hasNext_k_
+    this.get_iterator = Anon_610dfe1d_get_iterator_k_
+    this.get_nextState = Anon_610dfe1d_get_nextState_k_
+    this.set_nextState = Anon_610dfe1d_set_nextState_I_k_
+    this.get_nextItem = Anon_610dfe1d_get_nextItem_k_
+    this.set_nextItem = Anon_610dfe1d_set_nextItem_AnyN_k_
+    this.iterator = this_0.get_sequence().iterator_k_()
+    this.nextState = -1
+    this.nextItem = invalid
+    this.this_0 = this_0
+    return this
+end function
+
+sub Anon_610dfe1d_calcNext_k_()
+    if m.get_iterator().hasNext_k_() then
+        item = m.get_iterator().next_k_()
+        if m.this_0.get_predicate().invoke(item) then
+            m.set_nextState(1)
+            m.set_nextItem(item)
+            return
+        end if
+    end if
+    m.set_nextState(0)
+end sub
+
+function Anon_610dfe1d_next_k_() as Dynamic
+    if m.get_nextState() = -1 then
+        m.calcNext_k_()
+    end if
+    if m.get_nextState() = 0 then
+        throw NoSuchElementException_create_k_()
+    end if
+    result = m.get_nextItem()
+    m.set_nextItem(invalid)
+    m.set_nextState(-1)
+    return result
+end function
+
+function Anon_610dfe1d_hasNext_k_() as Boolean
+    if m.get_nextState() = -1 then
+        m.calcNext_k_()
+    end if
+    return m.get_nextState() = 1
+end function
+
+function Anon_610dfe1d_get_iterator_k_() as Object
+    return m.iterator
+end function
+
+function Anon_610dfe1d_get_nextState_k_() as Integer
+    return m.nextState
+end function
+
+sub Anon_610dfe1d_set_nextState_I_k_(value as Integer)
+    m.nextState = value
+end sub
+
+function Anon_610dfe1d_get_nextItem_k_() as Dynamic
+    return m.nextItem
+end function
+
+sub Anon_610dfe1d_set_nextItem_AnyN_k_(value as Dynamic)
+    m.nextItem = value
+end sub
+
+function Anon_61d348e3_create_DroppingSequence_k_(this_0 as Object) as Object
+    this = {}
+    this.__type = "Anon_61d348e3"
+    this.__proto = ["Anon_61d348e3", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.drop_k_ = Anon_61d348e3_drop_k_
+    this.next_k_ = Anon_61d348e3_next_k_
+    this.hasNext_k_ = Anon_61d348e3_hasNext_k_
+    this.get_iterator = Anon_61d348e3_get_iterator_k_
+    this.get_left = Anon_61d348e3_get_left_k_
+    this.set_left = Anon_61d348e3_set_left_I_k_
+    this.iterator = this_0.get_sequence().iterator_k_()
+    this.left = this_0.get_count()
+    return this
+end function
+
+sub Anon_61d348e3_drop_k_()
+    while (m.get_left() > 0) and m.get_iterator().hasNext_k_()
+        m.get_iterator().next_k_()
+        m.set_left(m.get_left() - 1)
+    end while
+end sub
+
+function Anon_61d348e3_next_k_() as Dynamic
+    m.drop_k_()
+    return m.get_iterator().next_k_()
+end function
+
+function Anon_61d348e3_hasNext_k_() as Boolean
+    m.drop_k_()
+    return m.get_iterator().hasNext_k_()
+end function
+
+function Anon_61d348e3_get_iterator_k_() as Object
+    return m.iterator
+end function
+
+function Anon_61d348e3_get_left_k_() as Integer
+    return m.left
+end function
+
+sub Anon_61d348e3_set_left_I_k_(value as Integer)
+    m.left = value
+end sub
+
+function Anon_28f3815c_create_DroppingWhileSequence_k_(this_0 as Object) as Object
+    this = {}
+    this.__type = "Anon_28f3815c"
+    this.__proto = ["Anon_28f3815c", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.drop_k_ = Anon_28f3815c_drop_k_
+    this.next_k_ = Anon_28f3815c_next_k_
+    this.hasNext_k_ = Anon_28f3815c_hasNext_k_
+    this.get_iterator = Anon_28f3815c_get_iterator_k_
+    this.get_dropState = Anon_28f3815c_get_dropState_k_
+    this.set_dropState = Anon_28f3815c_set_dropState_I_k_
+    this.get_nextItem = Anon_28f3815c_get_nextItem_k_
+    this.set_nextItem = Anon_28f3815c_set_nextItem_AnyN_k_
+    this.iterator = this_0.get_sequence().iterator_k_()
+    this.dropState = -1
+    this.nextItem = invalid
+    this.this_0 = this_0
+    return this
+end function
+
+sub Anon_28f3815c_drop_k_()
+    while m.get_iterator().hasNext_k_()
+        item = m.get_iterator().next_k_()
+        if not m.this_0.get_predicate().invoke(item) then
+            m.set_nextItem(item)
+            m.set_dropState(1)
+            return
+        end if
+    end while
+    m.set_dropState(0)
+end sub
+
+function Anon_28f3815c_next_k_() as Dynamic
+    if m.get_dropState() = -1 then
+        m.drop_k_()
+    end if
+    if m.get_dropState() = 1 then
+        result = m.get_nextItem()
+        m.set_nextItem(invalid)
+        m.set_dropState(0)
+        return result
+    end if
+    return m.get_iterator().next_k_()
+end function
+
+function Anon_28f3815c_hasNext_k_() as Boolean
+    if m.get_dropState() = -1 then
+        m.drop_k_()
+    end if
+    return (m.get_dropState() = 1) or m.get_iterator().hasNext_k_()
+end function
+
+function Anon_28f3815c_get_iterator_k_() as Object
+    return m.iterator
+end function
+
+function Anon_28f3815c_get_dropState_k_() as Integer
+    return m.dropState
+end function
+
+sub Anon_28f3815c_set_dropState_I_k_(value as Integer)
+    m.dropState = value
+end sub
+
+function Anon_28f3815c_get_nextItem_k_() as Dynamic
+    return m.nextItem
+end function
+
+sub Anon_28f3815c_set_nextItem_AnyN_k_(value as Dynamic)
+    m.nextItem = value
+end sub
+
+function Anon_15c362f_create_SubSequence_k_(this_0 as Object) as Object
+    this = {}
+    this.__type = "Anon_15c362f"
+    this.__proto = ["Anon_15c362f", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.drop_k_ = Anon_15c362f_drop_k_
+    this.hasNext_k_ = Anon_15c362f_hasNext_k_
+    this.next_k_ = Anon_15c362f_next_k_
+    this.get_iterator = Anon_15c362f_get_iterator_k_
+    this.get_position = Anon_15c362f_get_position_k_
+    this.set_position = Anon_15c362f_set_position_I_k_
+    this.iterator = this_0.get_sequence().iterator_k_()
+    this.position = 0
+    this.this_0 = this_0
+    return this
+end function
+
+sub Anon_15c362f_drop_k_()
+    while (m.get_position() < m.this_0.get_startIndex()) and m.get_iterator().hasNext_k_()
+        m.get_iterator().next_k_()
+        m.set_position(m.get_position() + 1)
+    end while
+end sub
+
+function Anon_15c362f_hasNext_k_() as Boolean
+    m.drop_k_()
+    return (m.get_position() < m.this_0.get_endIndex()) and m.get_iterator().hasNext_k_()
+end function
+
+function Anon_15c362f_next_k_() as Dynamic
+    m.drop_k_()
+    if m.get_position() >= m.this_0.get_endIndex() then
+        throw NoSuchElementException_create_k_()
+    end if
+    m.set_position(m.get_position() + 1)
+    return m.get_iterator().next_k_()
+end function
+
+function Anon_15c362f_get_iterator_k_() as Object
+    return m.iterator
+end function
+
+function Anon_15c362f_get_position_k_() as Integer
+    return m.position
+end function
+
+sub Anon_15c362f_set_position_I_k_(value as Integer)
+    m.position = value
+end sub
+
+function Anon_6817304_create_DistinctSequence_k_(this_0 as Object) as Object
+    this = {}
+    this.__type = "Anon_6817304"
+    this.__proto = ["Anon_6817304", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.calcNext_k_ = Anon_6817304_calcNext_k_
+    this.hasNext_k_ = Anon_6817304_hasNext_k_
+    this.next_k_ = Anon_6817304_next_k_
+    this.get_sourceIterator = Anon_6817304_get_sourceIterator_k_
+    this.get_observed = Anon_6817304_get_observed_k_
+    this.get_nextValue = Anon_6817304_get_nextValue_k_
+    this.set_nextValue = Anon_6817304_set_nextValue_AnyN_k_
+    this.get_nextState = Anon_6817304_get_nextState_k_
+    this.set_nextState = Anon_6817304_set_nextState_I_k_
+    this.sourceIterator = this_0.get_source().iterator_k_()
+    this.observed = HashSet_create_k_()
+    this.nextValue = invalid
+    this.nextState = -1
+    this.this_0 = this_0
+    return this
+end function
+
+sub Anon_6817304_calcNext_k_()
+    while m.get_sourceIterator().hasNext_k_()
+        next_ = m.get_sourceIterator().next_k_()
+        key = m.this_0.get_keySelector().invoke(next_)
+        if m.get_observed().add_AnyN_k_(key) then
+            m.set_nextValue(next_)
+            m.set_nextState(1)
+            return
+        end if
+    end while
+    m.set_nextState(0)
+end sub
+
+function Anon_6817304_hasNext_k_() as Boolean
+    if m.get_nextState() = -1 then
+        m.calcNext_k_()
+    end if
+    return m.get_nextState() = 1
+end function
+
+function Anon_6817304_next_k_() as Dynamic
+    if m.get_nextState() = -1 then
+        m.calcNext_k_()
+    end if
+    if m.get_nextState() = 0 then
+        throw NoSuchElementException_create_k_()
+    end if
+    value = m.get_nextValue()
+    m.set_nextValue(invalid)
+    m.set_nextState(-1)
+    return value
+end function
+
+function Anon_6817304_get_sourceIterator_k_() as Object
+    return m.sourceIterator
+end function
+
+function Anon_6817304_get_observed_k_() as Object
+    return m.observed
+end function
+
+function Anon_6817304_get_nextValue_k_() as Dynamic
+    return m.nextValue
+end function
+
+sub Anon_6817304_set_nextValue_AnyN_k_(value as Dynamic)
+    m.nextValue = value
+end sub
+
+function Anon_6817304_get_nextState_k_() as Integer
+    return m.nextState
+end function
+
+sub Anon_6817304_set_nextState_I_k_(value as Integer)
+    m.nextState = value
+end sub
+
+function Anon_9b9f937_create_MergingSequence_k_(this_0 as Object) as Object
+    this = {}
+    this.__type = "Anon_9b9f937"
+    this.__proto = ["Anon_9b9f937", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.hasNext_k_ = Anon_9b9f937_hasNext_k_
+    this.next_k_ = Anon_9b9f937_next_k_
+    this.get_iterator1 = Anon_9b9f937_get_iterator1_k_
+    this.get_iterator2 = Anon_9b9f937_get_iterator2_k_
+    this.iterator1 = this_0.get_sequence1().iterator_k_()
+    this.iterator2 = this_0.get_sequence2().iterator_k_()
+    this.this_0 = this_0
+    return this
+end function
+
+function Anon_9b9f937_hasNext_k_() as Boolean
+    return m.get_iterator1().hasNext_k_() and m.get_iterator2().hasNext_k_()
+end function
+
+function Anon_9b9f937_next_k_() as Dynamic
+    return m.this_0.get_transform().invoke(m.get_iterator1().next_k_(), m.get_iterator2().next_k_())
+end function
+
+function Anon_9b9f937_get_iterator1_k_() as Object
+    return m.iterator1
+end function
+
+function Anon_9b9f937_get_iterator2_k_() as Object
+    return m.iterator2
 end function

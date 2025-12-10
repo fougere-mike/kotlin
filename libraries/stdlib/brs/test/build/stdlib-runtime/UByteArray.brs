@@ -67,9 +67,9 @@ function UByteArray_contains_UByte_k_(element as Object) as Boolean
 end function
 
 function UByteArray_containsAll_CollectionUByte_k_(elements as Object) as Boolean
-    __iter_29 = elements.iterator_k_()
-    while __iter_29.hasNext_k_()
-        element = __iter_29.next_k_()
+    __iter_43 = elements.iterator_k_()
+    while __iter_43.hasNext_k_()
+        element = __iter_43.next_k_()
         if not m.contains_UByte_k_(element) then
             return false
         end if
@@ -204,9 +204,9 @@ end function
 function UByteArray_Iterator_next_k_() as Object
     __when_tmp0 = invalid
     if m.get_index() < m.get_array().get_size() then
-        __incr_tmp_30 = m.get_index()
-        m.set_index(__incr_tmp_30 + 1)
-        __when_tmp0 = toUByte_rB_k_(m.get_array().get_I_k_(__incr_tmp_30))
+        __incr_tmp_44 = m.get_index()
+        m.set_index(__incr_tmp_44 + 1)
+        __when_tmp0 = toUByte_rB_k_(m.get_array().get_I_k_(__incr_tmp_44))
     else if true then
         throw NoSuchElementException_create_StrN_k_(__kotlin_numToStr_I_k_(m.get_index()))
     end if

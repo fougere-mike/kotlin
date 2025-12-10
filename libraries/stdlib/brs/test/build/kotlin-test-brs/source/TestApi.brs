@@ -14,9 +14,15 @@ function adapter_k_() as Object
 end function
 
 sub suite_Str_Z_Function0V_k_(name as String, ignored = false, suiteFn = invalid)
+    if ignored = invalid then
+        ignored = false
+    end if
     adapter_k_().suite_Str_Z_Function0V_k_(name, ignored, suiteFn)
 end sub
 
 sub test_Str_Z_Function0V_k_(name as String, ignored = false, testFn = invalid)
+    if ignored = invalid then
+        ignored = false
+    end if
     adapter_k_().test_Str_Z_Function0V_k_(name, ignored, testFn)
 end sub

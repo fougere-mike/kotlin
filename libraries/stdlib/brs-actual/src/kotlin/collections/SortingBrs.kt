@@ -5,12 +5,23 @@
 
 package kotlin.collections
 
+import kotlin.brsCompareTo
+import kotlin.brs.BrsIntrinsic
+
+/**
+ * Calls the comparator's compare method directly.
+ * This is an intrinsic that generates: comparator.compare_AnyN_AnyN_k_(a, b)
+ * Works around closure capture issues with method calls.
+ */
+@BrsIntrinsic("brsIntrinsicCallComparator")
+private external fun <T> brsInvokeComparator(comparator: Comparator<in T>, a: T, b: T): Int
+
 /**
  * Sorts the array in-place according to the natural order of its elements.
  */
 public fun <T : Comparable<T>> Array<T>.sort() {
     if (size <= 1) return
-    quickSort(this, 0, size - 1) { a, b -> a.compareTo(b) }
+    quickSort(this, 0, size - 1) { a, b -> brsCompareTo(a, b) }
 }
 
 /**
@@ -18,7 +29,7 @@ public fun <T : Comparable<T>> Array<T>.sort() {
  */
 public fun <T> Array<T>.sortWith(comparator: Comparator<in T>) {
     if (size <= 1) return
-    quickSort(this, 0, size - 1) { a, b -> comparator.compare(a, b) }
+    quickSort(this, 0, size - 1) { a, b -> brsInvokeComparator(comparator, a, b) }
 }
 
 /**
@@ -32,7 +43,7 @@ public fun <T> Array<T>.sortWith(comparator: Comparator<in T>, fromIndex: Int = 
         throw IndexOutOfBoundsException("fromIndex: $fromIndex, toIndex: $toIndex, size: $size")
     }
     if (fromIndex >= toIndex - 1) return
-    quickSort(this, fromIndex, toIndex - 1) { a, b -> comparator.compare(a, b) }
+    quickSort(this, fromIndex, toIndex - 1) { a, b -> brsInvokeComparator(comparator, a, b) }
 }
 
 /**
@@ -40,7 +51,7 @@ public fun <T> Array<T>.sortWith(comparator: Comparator<in T>, fromIndex: Int = 
  */
 public fun <T : Comparable<T>> MutableList<T>.sort() {
     if (size <= 1) return
-    quickSortList(this, 0, size - 1) { a, b -> a.compareTo(b) }
+    quickSortList(this, 0, size - 1) { a, b -> brsCompareTo(a, b) }
 }
 
 /**
@@ -48,7 +59,7 @@ public fun <T : Comparable<T>> MutableList<T>.sort() {
  */
 public fun <T> MutableList<T>.sortWith(comparator: Comparator<in T>) {
     if (size <= 1) return
-    quickSortList(this, 0, size - 1) { a, b -> comparator.compare(a, b) }
+    quickSortList(this, 0, size - 1) { a, b -> brsInvokeComparator(comparator, a, b) }
 }
 
 /**
@@ -86,7 +97,7 @@ public fun <T> Iterable<T>.sortedWith(comparator: Comparator<in T>): List<T> {
  */
 public fun <T : Comparable<T>> Iterable<T>.sortedDescending(): List<T> {
     val list = this.toMutableList()
-    quickSortList(list, 0, list.size - 1) { a, b -> b.compareTo(a) }
+    quickSortList(list, 0, list.size - 1) { a, b -> brsCompareTo(b, a) }
     return list
 }
 
@@ -109,7 +120,7 @@ public fun <T, R : Comparable<R>> Iterable<T>.sortedByDescending(selector: (T) -
  */
 public fun <T : Comparable<T>> MutableList<T>.sortDescending() {
     if (size <= 1) return
-    quickSortList(this, 0, size - 1) { a, b -> b.compareTo(a) }
+    quickSortList(this, 0, size - 1) { a, b -> brsCompareTo(b, a) }
 }
 
 /**

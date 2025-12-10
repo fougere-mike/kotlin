@@ -1,5 +1,5 @@
 // --- File: nullability.brs ---
-function safeCallIncrement_IN_IN_k_(value as Dynamic) as Dynamic
+function safeCallIncrement_IN_k_(value as Dynamic) as Dynamic
     __when_tmp0 = invalid
     if value <> invalid then
         __when_tmp0 = (value + 1)
@@ -10,7 +10,7 @@ function safeCallIncrement_IN_IN_k_(value as Dynamic) as Dynamic
 
 end function
 
-function elvisOperator_IN_I_k_(value as Dynamic) as Integer
+function elvisOperator_IN_k_(value as Dynamic) as Integer
     tmp0_elvis_lhs = value
     __when_tmp1 = invalid
     if tmp0_elvis_lhs = invalid then
@@ -22,11 +22,11 @@ function elvisOperator_IN_I_k_(value as Dynamic) as Integer
 
 end function
 
-function notNullAssertion_IN_I_k_(value as Dynamic) as Integer
+function notNullAssertion_IN_k_(value as Dynamic) as Integer
     return value + 1
 end function
 
-function nullCheck_IN_Str_k_(value as Dynamic) as String
+function nullCheck_IN_k_(value as Dynamic) as String
     __when_tmp2 = invalid
     if value <> invalid then
         __when_tmp2 = "Has value"
@@ -37,7 +37,7 @@ function nullCheck_IN_Str_k_(value as Dynamic) as String
 
 end function
 
-function chainedSafeCall_HolderN_IN_k_(holder as Dynamic) as Dynamic
+function chainedSafeCall_HolderN_k_(holder as Dynamic) as Dynamic
     tmp0_safe_receiver = holder
     __when_tmp3 = invalid
     if tmp0_safe_receiver = invalid then
@@ -56,30 +56,30 @@ function chainedSafeCall_HolderN_IN_k_(holder as Dynamic) as Dynamic
 
 end function
 
-function Holder_create_InnerN_Holder_k_(inner as Dynamic) as Object
+function Holder_create_InnerN_k_(inner as Dynamic) as Object
     this = {}
     this.__type = "Holder"
     this.__proto = ["Holder"]
     this.__id = __kotlin_nextObjectId()
+    this.get_inner = Holder_get_inner_k_
     this.inner = inner
-    this.get_inner = Holder_get_inner_InnerN_k_
     return this
 end function
 
-function Holder_get_inner_InnerN_k_() as Dynamic
+function Holder_get_inner_k_() as Dynamic
     return m.inner
 end function
 
-function Inner_create_I_Inner_k_(value as Integer) as Object
+function Inner_create_I_k_(value as Integer) as Object
     this = {}
     this.__type = "Inner"
     this.__proto = ["Inner"]
     this.__id = __kotlin_nextObjectId()
+    this.get_value = Inner_get_value_k_
     this.value = value
-    this.get_value = Inner_get_value_I_k_
     return this
 end function
 
-function Inner_get_value_I_k_() as Integer
+function Inner_get_value_k_() as Integer
     return m.value
 end function

@@ -159,13 +159,13 @@ end function
 
 function substring_rStr_I_I_k_(m as String, startIndex as Integer, endIndex as Integer) as String
     if startIndex < 0 then
-        throw IndexOutOfBoundsException_create_StrN_k_("startIndex: " + startIndex)
+        throw IndexOutOfBoundsException_create_StrN_k_("startIndex: " + __kotlin_numToStr_I_k_(startIndex))
     end if
     if endIndex > Len(m) then
-        throw IndexOutOfBoundsException_create_StrN_k_((("endIndex: " + endIndex) + ", length: ") + Len(m))
+        throw IndexOutOfBoundsException_create_StrN_k_((("endIndex: " + __kotlin_numToStr_I_k_(endIndex)) + ", length: ") + __kotlin_numToStr_I_k_(Len(m)))
     end if
     if startIndex > endIndex then
-        throw IllegalArgumentException_create_StrN_k_((("startIndex: " + startIndex) + " > endIndex: ") + endIndex)
+        throw IllegalArgumentException_create_StrN_k_((("startIndex: " + __kotlin_numToStr_I_k_(startIndex)) + " > endIndex: ") + __kotlin_numToStr_I_k_(endIndex))
     end if
     if startIndex = endIndex then
         return ""
@@ -174,11 +174,17 @@ function substring_rStr_I_I_k_(m as String, startIndex as Integer, endIndex as I
 end function
 
 function indexOf_rStr_Str_I_Z_k_(m as String, string_ as String, startIndex = 0, ignoreCase = false) as Integer
+    if startIndex = invalid then
+        startIndex = 0
+    end if
+    if ignoreCase = invalid then
+        ignoreCase = false
+    end if
     if ignoreCase then
         return indexOf_rStr_Str_I_Z_k_(lowercase_rStr_k_(m), lowercase_rStr_k_(string_), startIndex, false)
     end if
     if startIndex < 0 then
-        return indexOf_rStr_Str_I_Z_k_(m, string_, 0)
+        return indexOf_rStr_Str_I_Z_k_(m, string_, 0, invalid)
     end if
     if startIndex >= Len(m) then
         __when_tmp2 = invalid
@@ -194,6 +200,12 @@ function indexOf_rStr_Str_I_Z_k_(m as String, string_ as String, startIndex = 0,
 end function
 
 function lastIndexOf_rStr_Str_I_Z_k_(m as String, string_ as String, startIndex = get_lastIndex_rStr_k_(m), ignoreCase = false) as Integer
+    if startIndex = invalid then
+        startIndex = get_lastIndex_rStr_k_(m)
+    end if
+    if ignoreCase = invalid then
+        ignoreCase = false
+    end if
     if ignoreCase then
         return lastIndexOf_rStr_Str_I_Z_k_(lowercase_rStr_k_(m), lowercase_rStr_k_(string_), startIndex, false)
     end if
@@ -262,8 +274,11 @@ function getOrElse_rStr_I_Function1IC_k_(m as String, index as Integer, defaultV
 end function
 
 function padStart_rStr_I_C_k_(m as String, length as Integer, padChar = " ") as String
+    if padChar = invalid then
+        padChar = " "
+    end if
     if length <= 0 then
-        throw IllegalArgumentException_create_StrN_k_(("Desired length " + length) + " is less than zero.")
+        throw IllegalArgumentException_create_StrN_k_(("Desired length " + __kotlin_numToStr_I_k_(length)) + " is less than zero.")
     end if
     if Len(m) >= length then
         return m
@@ -280,8 +295,11 @@ function padStart_rStr_I_C_k_(m as String, length as Integer, padChar = " ") as 
 end function
 
 function padEnd_rStr_I_C_k_(m as String, length as Integer, padChar = " ") as String
+    if padChar = invalid then
+        padChar = " "
+    end if
     if length <= 0 then
-        throw IllegalArgumentException_create_StrN_k_(("Desired length " + length) + " is less than zero.")
+        throw IllegalArgumentException_create_StrN_k_(("Desired length " + __kotlin_numToStr_I_k_(length)) + " is less than zero.")
     end if
     if Len(m) >= length then
         return m
@@ -299,7 +317,7 @@ end function
 
 function repeat_rStr_I_k_(m as String, n as Integer) as String
     if n < 0 then
-        throw IllegalArgumentException_create_StrN_k_(("Count 'n' must be non-negative, but was " + n) + ".")
+        throw IllegalArgumentException_create_StrN_k_(("Count 'n' must be non-negative, but was " + __kotlin_numToStr_I_k_(n)) + ".")
     end if
     if (n = 0) or isEmpty_rStr_k_(m) then
         return ""
@@ -317,6 +335,9 @@ function repeat_rStr_I_k_(m as String, n as Integer) as String
 end function
 
 function startsWith_rStr_Str_Z_k_(m as String, prefix as String, ignoreCase = false) as Boolean
+    if ignoreCase = invalid then
+        ignoreCase = false
+    end if
     if Len(prefix) > Len(m) then
         return false
     end if
@@ -327,6 +348,9 @@ function startsWith_rStr_Str_Z_k_(m as String, prefix as String, ignoreCase = fa
 end function
 
 function endsWith_rStr_Str_Z_k_(m as String, suffix as String, ignoreCase = false) as Boolean
+    if ignoreCase = invalid then
+        ignoreCase = false
+    end if
     if Len(suffix) > Len(m) then
         return false
     end if
@@ -337,6 +361,9 @@ function endsWith_rStr_Str_Z_k_(m as String, suffix as String, ignoreCase = fals
 end function
 
 function equals_rStr_StrN_Z_k_(m as String, other as Dynamic, ignoreCase = false) as Boolean
+    if ignoreCase = invalid then
+        ignoreCase = false
+    end if
     if other = invalid then
         return false
     end if
@@ -353,6 +380,9 @@ function equals_rStr_StrN_Z_k_(m as String, other as Dynamic, ignoreCase = false
 end function
 
 function contains_rStr_Str_Z_k_(m as String, other as String, ignoreCase = false) as Boolean
+    if ignoreCase = invalid then
+        ignoreCase = false
+    end if
     return indexOf_rStr_Str_I_Z_k_(m, other, 0, ignoreCase) >= 0
 end function
 
@@ -372,11 +402,17 @@ function concatToString_rCharArray_k_(m as Object) as String
 end function
 
 function concatToString_rCharArray_I_I_k_(m as Object, startIndex = 0, endIndex = m.get_size()) as String
+    if startIndex = invalid then
+        startIndex = 0
+    end if
+    if endIndex = invalid then
+        endIndex = m.get_size()
+    end if
     if (startIndex < 0) or (endIndex > m.get_size()) then
-        throw IndexOutOfBoundsException_create_StrN_k_((((("startIndex: " + startIndex) + ", endIndex: ") + endIndex) + ", size: ") + m.get_size())
+        throw IndexOutOfBoundsException_create_StrN_k_((((("startIndex: " + __kotlin_numToStr_I_k_(startIndex)) + ", endIndex: ") + __kotlin_numToStr_I_k_(endIndex)) + ", size: ") + __kotlin_numToStr_I_k_(m.get_size()))
     end if
     if startIndex > endIndex then
-        throw IllegalArgumentException_create_StrN_k_((("startIndex: " + startIndex) + " > endIndex: ") + endIndex)
+        throw IllegalArgumentException_create_StrN_k_((("startIndex: " + __kotlin_numToStr_I_k_(startIndex)) + " > endIndex: ") + __kotlin_numToStr_I_k_(endIndex))
     end if
     sb = StringBuilder_create_I_k_(endIndex - startIndex)
     progression = until_rI_I_k_(startIndex, endIndex)

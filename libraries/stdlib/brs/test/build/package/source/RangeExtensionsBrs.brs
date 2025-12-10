@@ -12,7 +12,7 @@ end function
 
 function coerceIn_rJ_J_J_k_(m as LongInteger, minimumValue as LongInteger, maximumValue as LongInteger) as LongInteger
     if minimumValue > maximumValue then
-        throw IllegalArgumentException_create_StrN_k_(((("Cannot coerce value to an empty range: maximum " + maximumValue) + " is less than minimum ") + minimumValue) + ".")
+        throw IllegalArgumentException_create_StrN_k_(((("Cannot coerce value to an empty range: maximum " + __kotlin_numToStr_J_k_(maximumValue)) + " is less than minimum ") + __kotlin_numToStr_J_k_(minimumValue)) + ".")
     end if
     if m < minimumValue then
         return minimumValue
@@ -28,7 +28,7 @@ function coerceIn_rJ_ClosedRangeJ_k_(m as LongInteger, range as Object) as LongI
         return coerceIn_rJ_ClosedFloatingPointRangeJ_k_(m, range)
     end if
     if range.isEmpty_k_() then
-        throw IllegalArgumentException_create_StrN_k_(("Cannot coerce value to an empty range: " + range) + ".")
+        throw IllegalArgumentException_create_StrN_k_(("Cannot coerce value to an empty range: " + range.toString()) + ".")
     end if
     __when_tmp0 = invalid
     if m < range.get_start() then
@@ -44,7 +44,7 @@ end function
 
 function coerceIn_rJ_OpenEndRangeJ_k_(m as LongInteger, range as Object) as LongInteger
     if range.isEmpty_k_() then
-        throw IllegalArgumentException_create_StrN_k_(("Cannot coerce value to an empty range: " + range) + ".")
+        throw IllegalArgumentException_create_StrN_k_(("Cannot coerce value to an empty range: " + range.toString()) + ".")
     end if
     __when_tmp1 = invalid
     if m < range.get_start() then
@@ -60,7 +60,7 @@ end function
 
 function coerceIn_rC_C_C_k_(m as Object, minimumValue as Object, maximumValue as Object) as Object
     if (minimumValue > maximumValue) > 0 then
-        throw IllegalArgumentException_create_StrN_k_(((("Cannot coerce value to an empty range: maximum " + maximumValue) + " is less than minimum ") + minimumValue) + ".")
+        throw IllegalArgumentException_create_StrN_k_(((("Cannot coerce value to an empty range: maximum " + maximumValue.toString()) + " is less than minimum ") + minimumValue.toString()) + ".")
     end if
     if (m < minimumValue) < 0 then
         return minimumValue
@@ -73,7 +73,7 @@ end function
 
 function coerceIn_rC_ClosedRangeC_k_(m as Object, range as Object) as Object
     if range.isEmpty_k_() then
-        throw IllegalArgumentException_create_StrN_k_(("Cannot coerce value to an empty range: " + range) + ".")
+        throw IllegalArgumentException_create_StrN_k_(("Cannot coerce value to an empty range: " + range.toString()) + ".")
     end if
     __when_tmp2 = invalid
     if (m < range.get_start()) < 0 then
@@ -89,7 +89,7 @@ end function
 
 function coerceIn_rC_OpenEndRangeC_k_(m as Object, range as Object) as Object
     if range.isEmpty_k_() then
-        throw IllegalArgumentException_create_StrN_k_(("Cannot coerce value to an empty range: " + range) + ".")
+        throw IllegalArgumentException_create_StrN_k_(("Cannot coerce value to an empty range: " + range.toString()) + ".")
     end if
     __when_tmp3 = invalid
     if (m < range.get_start()) < 0 then
@@ -244,7 +244,7 @@ end function
 
 function coerceIn_rI_ClosedFloatingPointRangeI_k_(m as Integer, range as Object) as Integer
     if range.isEmpty_k_() then
-        throw IllegalArgumentException_create_StrN_k_(("Cannot coerce value to an empty range: " + range) + ".")
+        throw IllegalArgumentException_create_StrN_k_(("Cannot coerce value to an empty range: " + range.toString()) + ".")
     end if
     __when_tmp16 = invalid
     if range.lessThanOrEquals_Any_Any_k_(m, range.get_start()) then
@@ -260,7 +260,7 @@ end function
 
 function coerceIn_rJ_ClosedFloatingPointRangeJ_k_(m as LongInteger, range as Object) as LongInteger
     if range.isEmpty_k_() then
-        throw IllegalArgumentException_create_StrN_k_(("Cannot coerce value to an empty range: " + range) + ".")
+        throw IllegalArgumentException_create_StrN_k_(("Cannot coerce value to an empty range: " + range.toString()) + ".")
     end if
     __when_tmp17 = invalid
     if range.lessThanOrEquals_Any_Any_k_(m, range.get_start()) then

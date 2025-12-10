@@ -3,7 +3,7 @@ sub sort_rArr_k_(m as Object)
         return
     end if
     quickSort_Arr_I_I_Function2I_k_(m, 0, m.count() - 1, {invoke: function(a as Object, b as Object) as Integer
-        return a.compareTo_AnyN_k_(b)
+        return brsCompareTo_AnyN_AnyN_k_(a, b)
     end function})
 end sub
 
@@ -17,8 +17,14 @@ sub sortWith_rArr_Comparator_k_(m as Object, comparator as Object)
 end sub
 
 sub sortWith_rArr_Comparator_I_I_k_(m as Object, comparator as Object, fromIndex = 0, toIndex = m.count())
+    if fromIndex = invalid then
+        fromIndex = 0
+    end if
+    if toIndex = invalid then
+        toIndex = m.count()
+    end if
     if (fromIndex < 0) or (toIndex > m.count()) then
-        throw IndexOutOfBoundsException_create_StrN_k_((((("fromIndex: " + fromIndex) + ", toIndex: ") + toIndex) + ", size: ") + m.count())
+        throw IndexOutOfBoundsException_create_StrN_k_((((("fromIndex: " + __kotlin_numToStr_I_k_(fromIndex)) + ", toIndex: ") + __kotlin_numToStr_I_k_(toIndex)) + ", size: ") + __kotlin_numToStr_I_k_(m.count()))
     end if
     if fromIndex >= (toIndex - 1) then
         return
@@ -33,7 +39,7 @@ sub sort_rMutableList_k_(m as Object)
         return
     end if
     quickSortList_MutableList_I_I_Function2I_k_(m, 0, m.get_size() - 1, {invoke: function(a as Object, b as Object) as Integer
-        return a.compareTo_AnyN_k_(b)
+        return brsCompareTo_AnyN_AnyN_k_(a, b)
     end function})
 end sub
 
@@ -77,7 +83,7 @@ end function
 function sortedDescending_rIterable_k_(m as Object) as Object
     list = toMutableList_rIterable_k_(m)
     quickSortList_MutableList_I_I_Function2I_k_(list, 0, list.get_size() - 1, {invoke: function(a as Object, b as Object) as Integer
-        return b.compareTo_AnyN_k_(a)
+        return brsCompareTo_AnyN_AnyN_k_(b, a)
     end function})
     return list
 end function
@@ -95,7 +101,7 @@ sub sortDescending_rMutableList_k_(m as Object)
         return
     end if
     quickSortList_MutableList_I_I_Function2I_k_(m, 0, m.get_size() - 1, {invoke: function(a as Object, b as Object) as Integer
-        return b.compareTo_AnyN_k_(a)
+        return brsCompareTo_AnyN_AnyN_k_(b, a)
     end function})
 end sub
 

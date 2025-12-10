@@ -67,7 +67,7 @@ function LinkedHashMap_create_I_k_(initialCapacity as Integer) as Object
     this.get_entries = LinkedHashMap_get_entries_k_
     this._size = 0
     require_Z_Function0Any_k_(initialCapacity >= 0, {initialCapacity: initialCapacity, invoke: function() as Object
-        return "Negative initial capacity: " + m.initialCapacity
+        return "Negative initial capacity: " + __kotlin_numToStr_I_k_(m.initialCapacity)
     end function})
     this.set_map(CreateObject("roAssociativeArray"))
     this.set_keyOrder(CreateObject("roArray", 0, true))
@@ -107,10 +107,10 @@ function LinkedHashMap_create_I_F_k_(initialCapacity as Integer, loadFactor as F
     this.get_entries = LinkedHashMap_get_entries_k_
     this._size = 0
     require_Z_Function0Any_k_(initialCapacity >= 0, {initialCapacity: initialCapacity, invoke: function() as Object
-        return "Negative initial capacity: " + m.initialCapacity
+        return "Negative initial capacity: " + __kotlin_numToStr_I_k_(m.initialCapacity)
     end function})
     require_Z_Function0Any_k_(loadFactor > 0, {loadFactor: loadFactor, invoke: function() as Object
-        return "Non-positive load factor: " + m.loadFactor
+        return "Non-positive load factor: " + __kotlin_numToStr_F_k_(m.loadFactor)
     end function})
     this.set_map(CreateObject("roAssociativeArray"))
     this.set_keyOrder(CreateObject("roArray", 0, true))
@@ -170,8 +170,9 @@ function LinkedHashMap_containsValue_AnyN_k_(value as Dynamic) as Boolean
     i = 0
     while i < count
         keyStr = m.get_keyOrder()[i]
-        v = m.get_map()[keyStr]
-        if v = value then
+        entry = m.get_map()[keyStr]
+        v = entry.v
+        if brsStructuralEquals_AnyN_AnyN_k_(v, value) then
             return true
         end if
         i = (i + 1)
@@ -184,14 +185,16 @@ function LinkedHashMap_get_AnyN_k_(key as Dynamic) as Dynamic
     if not m.get_map().DoesExist(keyStr) then
         return invalid
     end if
-    return m.get_map()[keyStr]
+    entry = m.get_map()[keyStr]
+    return entry.v
 end function
 
 function LinkedHashMap_put_AnyN_AnyN_k_(key as Dynamic, value as Dynamic) as Dynamic
     keyStr = m.keyToString_AnyN_k_(key)
     __when_tmp0 = invalid
     if m.get_map().DoesExist(keyStr) then
-        __when_tmp0 = m.get_map()[keyStr]
+        oldEntry = m.get_map()[keyStr]
+        __when_tmp0 = oldEntry.v
     else if true then
         m.get_keyOrder().Push(keyStr)
         m.set__size(m.get__size() + 1)
@@ -199,7 +202,8 @@ function LinkedHashMap_put_AnyN_AnyN_k_(key as Dynamic, value as Dynamic) as Dyn
     end if
     oldValue = __when_tmp0
 
-    m.get_map().AddReplace(keyStr, value)
+    entry = {k: key, v: value}
+    m.get_map().AddReplace(keyStr, entry)
     return oldValue
 end function
 
@@ -208,7 +212,8 @@ function LinkedHashMap_remove_AnyN_k_(key as Dynamic) as Dynamic
     if not m.get_map().DoesExist(keyStr) then
         return invalid
     end if
-    oldValue = m.get_map()[keyStr]
+    oldEntry = m.get_map()[keyStr]
+    oldValue = oldEntry.v
     m.get_map().Delete(keyStr)
     count = m.get_keyOrder().Count()
     i = 0
@@ -224,9 +229,9 @@ function LinkedHashMap_remove_AnyN_k_(key as Dynamic) as Dynamic
 end function
 
 sub LinkedHashMap_putAll_Map_k_(from as Object)
-    __iter_113 = from.get_entries().iterator_k_()
-    while __iter_113.hasNext_k_()
-        entry = __iter_113.next_k_()
+    __iter_127 = from.get_entries().iterator_k_()
+    while __iter_127.hasNext_k_()
+        entry = __iter_127.next_k_()
         m.put_AnyN_AnyN_k_(entry.get_key(), entry.get_value())
 
     end while
@@ -249,12 +254,12 @@ function LinkedHashMap_equals_AnyN_k_(other as Dynamic) as Boolean
     if other.get_size() <> m.get_size() then
         return false
     end if
-    __iter_114 = m.get_entries().iterator_k_()
-    while __iter_114.hasNext_k_()
-        entry = __iter_114.next_k_()
+    __iter_128 = m.get_entries().iterator_k_()
+    while __iter_128.hasNext_k_()
+        entry = __iter_128.next_k_()
         otherMap = other
         otherValue = otherMap.get_AnyN_k_(entry.get_key())
-        if entry.get_value() <> otherValue then
+        if not brsStructuralEquals_AnyN_AnyN_k_(entry.get_value(), otherValue) then
             return false
         end if
         if (otherValue = invalid) and not otherMap.containsKey_AnyN_k_(entry.get_key()) then
@@ -268,9 +273,9 @@ end function
 
 function LinkedHashMap_hashCode_k_() as Integer
     result = 0
-    __iter_115 = m.get_entries().iterator_k_()
-    while __iter_115.hasNext_k_()
-        entry = __iter_115.next_k_()
+    __iter_129 = m.get_entries().iterator_k_()
+    while __iter_129.hasNext_k_()
+        entry = __iter_129.next_k_()
         result = (result + entry.hashCode())
 
     end while
@@ -279,8 +284,8 @@ function LinkedHashMap_hashCode_k_() as Integer
 end function
 
 function LinkedHashMap_toString_k_() as String
-    entries = joinToString_v4kj63_k_(m.get_entries(), ", ", "{", "}", {invoke: function(it as Object) as Object
-        return (it.get_key() + "=") + it.get_value()
+    entries = joinToString_v4kj63_k_(m.get_entries(), ", ", "{", "}", invalid, invalid, {invoke: function(it as Object) as Object
+        return (toString_AnyN_k_(it.get_key()) + "=") + toString_AnyN_k_(it.get_value())
     end function})
     return entries
 end function
@@ -360,9 +365,9 @@ function LinkedHashMap_LinkedKeySet_contains_AnyN_k_(element as Dynamic) as Bool
 end function
 
 function LinkedHashMap_LinkedKeySet_containsAll_Collection_k_(elements as Object) as Boolean
-    __iter_116 = elements.iterator_k_()
-    while __iter_116.hasNext_k_()
-        element = __iter_116.next_k_()
+    __iter_130 = elements.iterator_k_()
+    while __iter_130.hasNext_k_()
+        element = __iter_130.next_k_()
         if not m.contains_AnyN_k_(element) then
             return false
         end if
@@ -393,9 +398,9 @@ end function
 
 function LinkedHashMap_LinkedKeySet_removeAll_Collection_k_(elements as Object) as Boolean
     modified = false
-    __iter_117 = elements.iterator_k_()
-    while __iter_117.hasNext_k_()
-        element = __iter_117.next_k_()
+    __iter_131 = elements.iterator_k_()
+    while __iter_131.hasNext_k_()
+        element = __iter_131.next_k_()
         if m.remove_AnyN_k_(element) then
             modified = true
         end if
@@ -463,9 +468,9 @@ function LinkedHashMap_LinkedValueCollection_contains_AnyN_k_(element as Dynamic
 end function
 
 function LinkedHashMap_LinkedValueCollection_containsAll_Collection_k_(elements as Object) as Boolean
-    __iter_118 = elements.iterator_k_()
-    while __iter_118.hasNext_k_()
-        element = __iter_118.next_k_()
+    __iter_132 = elements.iterator_k_()
+    while __iter_132.hasNext_k_()
+        element = __iter_132.next_k_()
         if not m.contains_AnyN_k_(element) then
             return false
         end if
@@ -489,7 +494,7 @@ end function
 function LinkedHashMap_LinkedValueCollection_remove_AnyN_k_(element as Dynamic) as Boolean
     iter = m.iterator_k_()
     while iter.hasNext_k_()
-        if iter.next_k_() = element then
+        if brsStructuralEquals_AnyN_AnyN_k_(iter.next_k_(), element) then
             iter.remove_k_()
             return true
         end if
@@ -499,9 +504,9 @@ end function
 
 function LinkedHashMap_LinkedValueCollection_removeAll_Collection_k_(elements as Object) as Boolean
     modified = false
-    __iter_119 = elements.iterator_k_()
-    while __iter_119.hasNext_k_()
-        element = __iter_119.next_k_()
+    __iter_133 = elements.iterator_k_()
+    while __iter_133.hasNext_k_()
+        element = __iter_133.next_k_()
         while m.remove_AnyN_k_(element)
             modified = true
         end while
@@ -576,13 +581,13 @@ end function
 
 function LinkedHashMap_LinkedEntrySet_contains_MutableEntry_k_(element as Object) as Boolean
     value = m.get_map().get_AnyN_k_(element.get_key())
-    return (value = element.get_value()) and ((value <> invalid) or m.get_map().containsKey_AnyN_k_(element.get_key()))
+    return brsStructuralEquals_AnyN_AnyN_k_(value, element.get_value()) and ((value <> invalid) or m.get_map().containsKey_AnyN_k_(element.get_key()))
 end function
 
 function LinkedHashMap_LinkedEntrySet_containsAll_CollectionMutableEntry_k_(elements as Object) as Boolean
-    __iter_120 = elements.iterator_k_()
-    while __iter_120.hasNext_k_()
-        element = __iter_120.next_k_()
+    __iter_134 = elements.iterator_k_()
+    while __iter_134.hasNext_k_()
+        element = __iter_134.next_k_()
         if not m.contains_MutableEntry_k_(element) then
             return false
         end if
@@ -613,9 +618,9 @@ end function
 
 function LinkedHashMap_LinkedEntrySet_removeAll_CollectionMutableEntry_k_(elements as Object) as Boolean
     modified = false
-    __iter_121 = elements.iterator_k_()
-    while __iter_121.hasNext_k_()
-        element = __iter_121.next_k_()
+    __iter_135 = elements.iterator_k_()
+    while __iter_135.hasNext_k_()
+        element = __iter_135.next_k_()
         if m.remove_MutableEntry_k_(element) then
             modified = true
         end if
@@ -675,7 +680,7 @@ function LinkedHashMap_LinkedKeyIterator_create_LinkedHashMap_k_(map as Object) 
     this.get_orderCount = LinkedHashMap_LinkedKeyIterator_get_orderCount_k_
     this.set_orderCount = LinkedHashMap_LinkedKeyIterator_set_orderCount_I_k_
     this.get_lastReturnedKey = LinkedHashMap_LinkedKeyIterator_get_lastReturnedKey_k_
-    this.set_lastReturnedKey = LinkedHashMap_LinkedKeyIterator_set_lastReturnedKey_StrN_k_
+    this.set_lastReturnedKey = LinkedHashMap_LinkedKeyIterator_set_lastReturnedKey_AnyN_k_
     this.get_canRemove = LinkedHashMap_LinkedKeyIterator_get_canRemove_k_
     this.set_canRemove = LinkedHashMap_LinkedKeyIterator_set_canRemove_Z_k_
     this.map = map
@@ -695,10 +700,12 @@ function LinkedHashMap_LinkedKeyIterator_next_k_() as Dynamic
         throw NoSuchElementException_create_k_()
     end if
     keyStr = m.get_map().get_keyOrder()[m.get_currentIndex()]
-    m.set_lastReturnedKey(keyStr)
+    entry = m.get_map().get_map()[keyStr]
+    key = entry.k
+    m.set_lastReturnedKey(key)
     m.set_currentIndex(m.get_currentIndex() + 1)
     m.set_canRemove(true)
-    return keyStr
+    return key
 end function
 
 sub LinkedHashMap_LinkedKeyIterator_remove_k_()
@@ -712,10 +719,11 @@ sub LinkedHashMap_LinkedKeyIterator_remove_k_()
     else if true then
         __when_tmp1 = tmp0_elvis_lhs
     end if
-    keyStr = __when_tmp1
+    key = __when_tmp1
 
-    m.get_map().remove_AnyN_k_(keyStr)
+    m.get_map().remove_AnyN_k_(key)
     m.set_currentIndex(m.get_currentIndex() - 1)
+    m.set_orderCount(m.get_orderCount() - 1)
     m.set_canRemove(false)
 end sub
 
@@ -743,7 +751,7 @@ function LinkedHashMap_LinkedKeyIterator_get_lastReturnedKey_k_() as Dynamic
     return m.lastReturnedKey
 end function
 
-sub LinkedHashMap_LinkedKeyIterator_set_lastReturnedKey_StrN_k_(value as Dynamic)
+sub LinkedHashMap_LinkedKeyIterator_set_lastReturnedKey_AnyN_k_(value as Dynamic)
     m.lastReturnedKey = value
 end sub
 
@@ -769,7 +777,7 @@ function LinkedHashMap_LinkedValueIterator_create_LinkedHashMap_k_(map as Object
     this.get_orderCount = LinkedHashMap_LinkedValueIterator_get_orderCount_k_
     this.set_orderCount = LinkedHashMap_LinkedValueIterator_set_orderCount_I_k_
     this.get_lastReturnedKey = LinkedHashMap_LinkedValueIterator_get_lastReturnedKey_k_
-    this.set_lastReturnedKey = LinkedHashMap_LinkedValueIterator_set_lastReturnedKey_StrN_k_
+    this.set_lastReturnedKey = LinkedHashMap_LinkedValueIterator_set_lastReturnedKey_AnyN_k_
     this.get_canRemove = LinkedHashMap_LinkedValueIterator_get_canRemove_k_
     this.set_canRemove = LinkedHashMap_LinkedValueIterator_set_canRemove_Z_k_
     this.map = map
@@ -789,10 +797,13 @@ function LinkedHashMap_LinkedValueIterator_next_k_() as Dynamic
         throw NoSuchElementException_create_k_()
     end if
     keyStr = m.get_map().get_keyOrder()[m.get_currentIndex()]
-    m.set_lastReturnedKey(keyStr)
+    entry = m.get_map().get_map()[keyStr]
+    key = entry.k
+    value = entry.v
+    m.set_lastReturnedKey(key)
     m.set_currentIndex(m.get_currentIndex() + 1)
     m.set_canRemove(true)
-    return m.get_map().get_map()[keyStr]
+    return value
 end function
 
 sub LinkedHashMap_LinkedValueIterator_remove_k_()
@@ -806,12 +817,11 @@ sub LinkedHashMap_LinkedValueIterator_remove_k_()
     else if true then
         __when_tmp2 = tmp0_elvis_lhs
     end if
-    keyStr = __when_tmp2
+    key = __when_tmp2
 
-    m.get_map().get_map().Delete(keyStr)
-    m.get_map().get_keyOrder().Delete(m.get_currentIndex() - 1)
-    m.get_map().set__size(unary - 1)
+    m.get_map().remove_AnyN_k_(key)
     m.set_currentIndex(m.get_currentIndex() - 1)
+    m.set_orderCount(m.get_orderCount() - 1)
     m.set_canRemove(false)
 end sub
 
@@ -839,7 +849,7 @@ function LinkedHashMap_LinkedValueIterator_get_lastReturnedKey_k_() as Dynamic
     return m.lastReturnedKey
 end function
 
-sub LinkedHashMap_LinkedValueIterator_set_lastReturnedKey_StrN_k_(value as Dynamic)
+sub LinkedHashMap_LinkedValueIterator_set_lastReturnedKey_AnyN_k_(value as Dynamic)
     m.lastReturnedKey = value
 end sub
 
@@ -865,7 +875,7 @@ function LinkedHashMap_LinkedEntryIterator_create_LinkedHashMap_k_(map as Object
     this.get_orderCount = LinkedHashMap_LinkedEntryIterator_get_orderCount_k_
     this.set_orderCount = LinkedHashMap_LinkedEntryIterator_set_orderCount_I_k_
     this.get_lastReturnedKey = LinkedHashMap_LinkedEntryIterator_get_lastReturnedKey_k_
-    this.set_lastReturnedKey = LinkedHashMap_LinkedEntryIterator_set_lastReturnedKey_StrN_k_
+    this.set_lastReturnedKey = LinkedHashMap_LinkedEntryIterator_set_lastReturnedKey_AnyN_k_
     this.get_canRemove = LinkedHashMap_LinkedEntryIterator_get_canRemove_k_
     this.set_canRemove = LinkedHashMap_LinkedEntryIterator_set_canRemove_Z_k_
     this.map = map
@@ -885,11 +895,13 @@ function LinkedHashMap_LinkedEntryIterator_next_k_() as Object
         throw NoSuchElementException_create_k_()
     end if
     keyStr = m.get_map().get_keyOrder()[m.get_currentIndex()]
-    value = m.get_map().get_map()[keyStr]
-    m.set_lastReturnedKey(keyStr)
+    entry = m.get_map().get_map()[keyStr]
+    key = entry.k
+    value = entry.v
+    m.set_lastReturnedKey(key)
     m.set_currentIndex(m.get_currentIndex() + 1)
     m.set_canRemove(true)
-    return LinkedHashMap_SimpleEntry_create_AnyN_AnyN_k_(keyStr, value)
+    return LinkedHashMap_SimpleEntry_create_AnyN_AnyN_k_(key, value)
 end function
 
 sub LinkedHashMap_LinkedEntryIterator_remove_k_()
@@ -903,12 +915,11 @@ sub LinkedHashMap_LinkedEntryIterator_remove_k_()
     else if true then
         __when_tmp3 = tmp0_elvis_lhs
     end if
-    keyStr = __when_tmp3
+    key = __when_tmp3
 
-    m.get_map().get_map().Delete(keyStr)
-    m.get_map().get_keyOrder().Delete(m.get_currentIndex() - 1)
-    m.get_map().set__size(unary - 1)
+    m.get_map().remove_AnyN_k_(key)
     m.set_currentIndex(m.get_currentIndex() - 1)
+    m.set_orderCount(m.get_orderCount() - 1)
     m.set_canRemove(false)
 end sub
 
@@ -936,7 +947,7 @@ function LinkedHashMap_LinkedEntryIterator_get_lastReturnedKey_k_() as Dynamic
     return m.lastReturnedKey
 end function
 
-sub LinkedHashMap_LinkedEntryIterator_set_lastReturnedKey_StrN_k_(value as Dynamic)
+sub LinkedHashMap_LinkedEntryIterator_set_lastReturnedKey_AnyN_k_(value as Dynamic)
     m.lastReturnedKey = value
 end sub
 
@@ -978,7 +989,7 @@ function LinkedHashMap_SimpleEntry_equals_AnyN_k_(other as Dynamic) as Boolean
     if not __kotlin_isInstanceOf(other, "Map_Entry") then
         return false
     end if
-    return (m.get_key() = other.get_key()) and (m.get_value() = other.get_value())
+    return brsStructuralEquals_AnyN_AnyN_k_(m.get_key(), other.get_key()) and brsStructuralEquals_AnyN_AnyN_k_(m.get_value(), other.get_value())
 end function
 
 function LinkedHashMap_SimpleEntry_hashCode_k_() as Integer
@@ -1015,7 +1026,7 @@ function LinkedHashMap_SimpleEntry_hashCode_k_() as Integer
 end function
 
 function LinkedHashMap_SimpleEntry_toString_k_() as String
-    return (m.get_key() + "=") + m.get_value()
+    return (toString_AnyN_k_(m.get_key()) + "=") + toString_AnyN_k_(m.get_value())
 end function
 
 function LinkedHashMap_SimpleEntry_get_key_k_() as Dynamic
@@ -1029,3 +1040,23 @@ end function
 sub LinkedHashMap_SimpleEntry_set_value_AnyN_k_(value as Dynamic)
     m.value = value
 end sub
+
+function linkedMapOf_k_() as Object
+    return LinkedHashMap_create_k_()
+end function
+
+function linkedMapOf_Arr_k_(pairs as Object) as Object
+    map = LinkedHashMap_create_I_k_(pairs.count())
+    indexedObject = pairs
+    inductionVariable = 0
+    last = indexedObject.count()
+    while inductionVariable < last
+        pair = indexedObject[inductionVariable]
+        inductionVariable = (inductionVariable + 1)
+
+        map.put_AnyN_AnyN_k_(pair.first, pair.second)
+
+    end while
+
+    return map
+end function

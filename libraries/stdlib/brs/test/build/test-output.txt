@@ -1,103 +1,67 @@
-Adapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
-BRIGHTSCRIPT: ERROR: FormatJSON: clear_k_: Value type not supported: Function: pkg:/source/JsonTestAdapter.brs(101)
-
+ection Extensions","test":"joinToString","type":"test_pass"}
+{"suite":"Collection Extensions","test":"forEach","timestamp":1765401957444,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"forEach","type":"test_pass"}
+{"suite":"Collection Extensions","test":"forEachIndexed","timestamp":1765401957446,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"forEachIndexed","type":"test_pass"}
+{"suite":"Collection Extensions","test":"indexOf","timestamp":1765401957448,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"indexOf","type":"test_pass"}
+{"suite":"Collection Extensions","test":"indexOfFirst","timestamp":1765401957449,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"indexOfFirst","type":"test_pass"}
+{"suite":"Collection Extensions","test":"indexOfLast","timestamp":1765401957451,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"indexOfLast","type":"test_pass"}
+{"suite":"Collection Extensions","test":"distinct","timestamp":1765401957452,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"distinct","type":"test_pass"}
+{"suite":"Collection Extensions","test":"distinctBy","timestamp":1765401957455,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"distinctBy","type":"test_pass"}
+{"suite":"Collection Extensions","test":"take","timestamp":1765401957456,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"take","type":"test_pass"}
+{"suite":"Collection Extensions","test":"drop","timestamp":1765401957458,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"drop","type":"test_pass"}
+{"suite":"Collection Extensions","test":"takeWhile","timestamp":1765401957460,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"takeWhile","type":"test_pass"}
+{"suite":"Collection Extensions","test":"dropWhile","timestamp":1765401957462,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"dropWhile","type":"test_pass"}
+{"suite":"Collection Extensions","test":"reversed","timestamp":1765401957464,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"reversed","type":"test_pass"}
+{"suite":"Collection Extensions","test":"zip","timestamp":1765401957466,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"zip","type":"test_pass"}
+{"duration_ms":74,"failed":0,"ignored":0,"passed":40,"suite":"Collection Extensions","type":"suite_end"}
+{"suite":"Sorting","timestamp":1765401957469,"type":"suite_start"}
+{"suite":"Sorting","test":"sort integers","timestamp":1765401957469,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sort integers","type":"test_pass"}
+{"suite":"Sorting","test":"sort strings","timestamp":1765401957471,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sort strings","type":"test_pass"}
+{"suite":"Sorting","test":"sort with comparator","timestamp":1765401957473,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sort with comparator","type":"test_pass"}
+{"suite":"Sorting","test":"sort descending","timestamp":1765401957475,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sort descending","type":"test_pass"}
+{"suite":"Sorting","test":"sortBy","timestamp":1765401957478,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sortBy","type":"test_pass"}
+{"suite":"Sorting","test":"sortByDescending","timestamp":1765401957479,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sortByDescending","type":"test_pass"}
+{"suite":"Sorting","test":"sorted (immutable)","timestamp":1765401957481,"type":"test_start"}
+{"duration_ms":2,"suite":"Sorting","test":"sorted (immutable)","type":"test_pass"}
+{"suite":"Sorting","test":"sortedWith","timestamp":1765401957484,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sortedWith","type":"test_pass"}
+{"suite":"Sorting","test":"sortedDescending","timestamp":1765401957486,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sortedDescending","type":"test_pass"}
+{"suite":"Sorting","test":"sortedBy","timestamp":1765401957489,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sortedBy","type":"test_pass"}
+{"suite":"Sorting","test":"sortedByDescending","timestamp":1765401957491,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sortedByDescending","type":"test_pass"}
+{"suite":"Sorting","test":"sort empty list","timestamp":1765401957493,"type":"test_start"}
+{"duration_ms":0,"suite":"Sorting","test":"sort empty list","type":"test_pass"}
+{"suite":"Sorting","test":"sort single element","timestamp":1765401957494,"type":"test_start"}
+{"duration_ms":0,"suite":"Sorting","test":"sort single element","type":"test_pass"}
+{"suite":"Sorting","test":"sort large list","timestamp":1765401957496,"type":"test_start"}
+{"duration_ms":158,"suite":"Sorting","test":"sort large list","type":"test_pass"}
+{"suite":"Sorting","test":"comparator reversed","timestamp":1765401957655,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"comparator reversed","type":"test_pass"}
+{"suite":"Sorting","test":"compareValues","timestamp":1765401957657,"type":"test_start"}
+{"duration_ms":0,"suite":"Sorting","test":"compareValues","type":"test_pass"}
+{"duration_ms":189,"failed":0,"ignored":0,"passed":16,"suite":"Sorting","type":"suite_end"}
+{"suite":"Sequence","timestamp":1765401957659,"type":"suite_start"}
+{"suite":"Sequence","test":"map and filter","timestamp":1765401957660,"type":"test_start"}
 
 BrightScript Micro Debugger.
 Enter any BrightScript statement, debug commands, or HELP.
@@ -108,39 +72,39 @@ Current Function:
 144:*     throw AssertionError_create_AnyN_k_(message)
 145:  end sub
 Source Digest(s): 
-pkg:    dev 1.0.0 3ce5daf4 KotlinStdlibTests
+pkg:    dev 1.0.0 3ca93eff KotlinStdlibTests
 pkg: 632126 1.1.5 1f7df9df libplayready
 
-Expected <[one, two, three]>, actual <[one, three, two]>. (runtime error &h28) in pkg:/source/DefaultBrsAsserter.brs(144)
+Expected <[6, 8, 10]>, actual <[get_predicate, sequence, __id, sendwhen, get_sequence, predicate, iterator_k_, __proto, __type, get_sendwhen]>. (runtime error &h28) in pkg:/source/DefaultBrsAsserter.brs(144)
 Backtrace:
 #11 Function defaultbrsasserter_fail_strn_k_(message As Dynamic) As Void
    file/line: pkg:/source/DefaultBrsAsserter.brs(145)
 #10 Function defaultbrsasserter_assertequals_strn_anyn_anyn_k_(message As Dynamic, expected As Dynamic, actual As Dynamic) As Void
    file/line: pkg:/source/DefaultBrsAsserter.brs(41)
-#9  Function assertequals_anyn_anyn_strn_k_(expected As Dynamic, actual As Dynamic) As Dynamic
-   file/line: pkg:/source/Assertions.brs(96)
-#8  Function $anon_4b2() As Void
-   file/line: pkg:/source/LinkedHashMapTest.brs(85)
+#9  Function assertequals_anyn_anyn_strn_k_(expected As Dynamic, actual As Dynamic, message As Dynamic) As Void
+   file/line: pkg:/source/Assertions.brs(111)
+#8  Function $anon_844() As Void
+   file/line: pkg:/source/SequenceTest.brs(10)
 #7  Function jsontestadapter_test_str_z_function0v_k_(name As String, ignored As Boolean, testfn As Object) As Void
    file/line: pkg:/source/JsonTestAdapter.brs(93)
 #6  Function testrunner_test_str_function0v_k_(name As String, testfn As Object) As Void
    file/line: pkg:/source/TestRunner.brs(41)
-#5  Function $anon_4a9(m As Object) As Void
-   file/line: pkg:/source/LinkedHashMapTest.brs(86)
-#4  Function $anon_8dd() As Void
+#5  Function $anon_843(m As Object) As Void
+   file/line: pkg:/source/SequenceTest.brs(11)
+#4  Function $anon_9d0() As Void
    file/line: pkg:/source/TestRunner.brs(36)
 #3  Function jsontestadapter_suite_str_z_function0v_k_(name As String, ignored As Boolean, suitefn As Object) As Void
    file/line: pkg:/source/JsonTestAdapter.brs(79)
 #2  Function testrunner_run_function1testrunnerv_k_(block As Object) As Void
-   file/line: pkg:/source/TestRunner.brs(56)
+   file/line: pkg:/source/TestRunner.brs(59)
 #1  Function runtests_function1testrunnerv_k_(block As Object) As Void
    file/line: pkg:/source/TestRunner.brs(3)
 #0  Function main() As Void
    file/line: pkg:/source/TestMain.brs(18)
 Local Variables:
-message          roString (2.1 was String) refcnt=3 val:"Expected <[one, two, three]>, actual <[one, three, two]>."
+message          roString (2.1 was String) refcnt=3 val:"Expected <[6, 8, 10]>, actual <[get_predicate, sequence, __id, sendwhen, get_sequence, predica"...
 global           Interface:ifGlobal
 m                roAssociativeArray refcnt=5 count:12
 
 Brightscript Debugger> Note: GC - Found 87 orphaned objects (objects in a circular ref loop).
-12-10 05:08:58.447 [bs.ndk.proc.exit] plugin=dev pid=28000 status=exit retval=12 user requested=1 process name='SdkLauncher' exit code=EXIT_BRIGHTSCRIPT_CRASH
+12-10 21:28:51.724 [bs.ndk.proc.exit] plugin=dev pid=11305 status=exit retval=12 user requested=1 process name='SdkLauncher' exit code=EXIT_BRIGHTSCRIPT_CRASH

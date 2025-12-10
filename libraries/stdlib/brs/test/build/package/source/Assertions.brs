@@ -54,13 +54,16 @@ function messagePrefix_StrN_k_(message as Dynamic) as String
     if message = invalid then
         __when_tmp1 = ""
     else if true then
-        __when_tmp1 = (message + ". ")
+        __when_tmp1 = (toString_AnyN_k_(message) + ". ")
     end if
     return __when_tmp1
 
 end function
 
 sub assertTrue_Z_StrN_k_(actual as Boolean, message = invalid)
+    if message = invalid then
+        message = invalid
+    end if
     tmp0_elvis_lhs = message
     __when_tmp2 = invalid
     if tmp0_elvis_lhs = invalid then
@@ -73,10 +76,16 @@ sub assertTrue_Z_StrN_k_(actual as Boolean, message = invalid)
 end sub
 
 sub assertTrue_StrN_Function0Z_k_(message = invalid, block = invalid)
+    if message = invalid then
+        message = invalid
+    end if
     assertTrue_Z_StrN_k_(block.invoke(), message)
 end sub
 
 sub assertFalse_Z_StrN_k_(actual as Boolean, message = invalid)
+    if message = invalid then
+        message = invalid
+    end if
     tmp0_elvis_lhs = message
     __when_tmp3 = invalid
     if tmp0_elvis_lhs = invalid then
@@ -89,43 +98,73 @@ sub assertFalse_Z_StrN_k_(actual as Boolean, message = invalid)
 end sub
 
 sub assertFalse_StrN_Function0Z_k_(message = invalid, block = invalid)
+    if message = invalid then
+        message = invalid
+    end if
     assertFalse_Z_StrN_k_(block.invoke(), message)
 end sub
 
 sub assertEquals_AnyN_AnyN_StrN_k_(expected as Dynamic, actual as Dynamic, message = invalid)
+    if message = invalid then
+        message = invalid
+    end if
     get_asserter_k_().assertEquals_StrN_AnyN_AnyN_k_(message, expected, actual)
 end sub
 
 sub assertNotEquals_AnyN_AnyN_StrN_k_(illegal as Dynamic, actual as Dynamic, message = invalid)
+    if message = invalid then
+        message = invalid
+    end if
     get_asserter_k_().assertNotEquals_StrN_AnyN_AnyN_k_(message, illegal, actual)
 end sub
 
 sub assertSame_AnyN_AnyN_StrN_k_(expected as Dynamic, actual as Dynamic, message = invalid)
+    if message = invalid then
+        message = invalid
+    end if
     get_asserter_k_().assertSame_StrN_AnyN_AnyN_k_(message, expected, actual)
 end sub
 
 sub assertNotSame_AnyN_AnyN_StrN_k_(illegal as Dynamic, actual as Dynamic, message = invalid)
+    if message = invalid then
+        message = invalid
+    end if
     get_asserter_k_().assertNotSame_StrN_AnyN_AnyN_k_(message, illegal, actual)
 end sub
 
 function assertNotNull_AnyN_StrN_k_(actual as Dynamic, message = invalid) as Object
+    if message = invalid then
+        message = invalid
+    end if
     get_asserter_k_().assertNotNull_StrN_AnyN_k_(message, actual)
     return actual
 end function
 
 function assertNotNull_AnyN_StrN_Function1_k_(actual as Dynamic, message = invalid, block = invalid) as Dynamic
+    if message = invalid then
+        message = invalid
+    end if
     get_asserter_k_().assertNotNull_StrN_AnyN_k_(message, actual)
     return block.invoke(actual)
 end function
 
 sub assertNull_AnyN_StrN_k_(actual as Dynamic, message = invalid)
+    if message = invalid then
+        message = invalid
+    end if
     get_asserter_k_().assertNull_StrN_AnyN_k_(message, actual)
 end sub
 
 sub fail_StrN_k_(message = invalid)
+    if message = invalid then
+        message = invalid
+    end if
     get_asserter_k_().fail_StrN_k_(message)
 end sub
 
 sub fail_StrN_ThrowableN_k_(message = invalid, cause = invalid)
+    if message = invalid then
+        message = invalid
+    end if
     get_asserter_k_().fail_StrN_ThrowableN_k_(message, cause)
 end sub
