@@ -126,5 +126,5 @@ function CharCategory_valueOf(name as String) as Object
 end function
 
 function CharCategory_contains_C_k_(char as Object) as Boolean
-    return get_category_rC_k_(char) = m
+    return brsStructuralEquals_AnyN_AnyN_k_(get_category_rC_k_(char), m)
 end function

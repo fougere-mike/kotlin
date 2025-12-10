@@ -1,69 +1,69 @@
 // --- File: interfaces.brs ---
-function Describable_describe_Str_k_() as String
+function Describable_describe_k_() as String
 end function
 
-function Named_getName_Str_k_() as String
+function Named_getName_k_() as String
 end function
 
-function Product_create_Str_I_Product_k_(name as String, price as Integer) as Object
+function Product_create_Str_I_k_(name as String, price as Integer) as Object
     this = {}
     this.__type = "Product"
-    this.__proto = ["Product"]
+    this.__proto = ["Product", "Describable"]
     this.__id = __kotlin_nextObjectId()
+    this.describe_k_ = Product_describe_k_
+    this.get_name = Product_get_name_k_
+    this.get_price = Product_get_price_k_
     this.name = name
     this.price = price
-    this.describe_Str_k_ = Product_describe_Str_k_
-    this.get_name = Product_get_name_Str_k_
-    this.get_price = Product_get_price_I_k_
     return this
 end function
 
-function Product_describe_Str_k_() as String
-    return (m.get_name() + " costs ") + m.get_price()
+function Product_describe_k_() as String
+    return (m.get_name() + " costs ") + __kotlin_numToStr_I_k_(m.get_price())
 end function
 
-function Product_get_name_Str_k_() as String
+function Product_get_name_k_() as String
     return m.name
 end function
 
-function Product_get_price_I_k_() as Integer
+function Product_get_price_k_() as Integer
     return m.price
 end function
 
-function Item_create_Str_I_Item_k_(title as String, value as Integer) as Object
+function Item_create_Str_I_k_(title as String, value as Integer) as Object
     this = {}
     this.__type = "Item"
-    this.__proto = ["Item"]
+    this.__proto = ["Item", "Describable", "Named"]
     this.__id = __kotlin_nextObjectId()
+    this.describe_k_ = Item_describe_k_
+    this.getName_k_ = Item_getName_k_
+    this.get_title = Item_get_title_k_
+    this.get_value = Item_get_value_k_
     this.title = title
     this.value = value
-    this.describe_Str_k_ = Item_describe_Str_k_
-    this.getName_Str_k_ = Item_getName_Str_k_
-    this.get_title = Item_get_title_Str_k_
-    this.get_value = Item_get_value_I_k_
     return this
 end function
 
-function Item_describe_Str_k_() as String
+function Item_describe_k_() as String
     return "Item: " + m.get_title()
 end function
 
-function Item_getName_Str_k_() as String
+function Item_getName_k_() as String
     return m.get_title()
 end function
 
-function Item_get_title_Str_k_() as String
+function Item_get_title_k_() as String
     return m.title
 end function
 
-function Item_get_value_I_k_() as Integer
+function Item_get_value_k_() as Integer
     return m.value
 end function
 
-function getDescription_Describable_Str_k_(item as Object) as String
-    return item.describe_Str_k_()
+function getDescription_Describable_k_(item as Object) as String
+    return item.describe_k_()
 end function
 
-function createProduct_Product_k_() as Object
-    return Product_create_Str_I_Product_k_("Widget", 100)
+function createProduct_k_() as Object
+    return Product_create_Str_I_k_("Widget", 100)
 end function

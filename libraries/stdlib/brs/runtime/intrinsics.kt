@@ -142,3 +142,38 @@ internal fun brsParseJson(jsonString: String): Any? {
 public fun brsFormatJson(obj: Any?): String {
     error("brsFormatJson should be lowered by the backend")
 }
+
+// ============================================
+// Map to Plain AA Conversion
+// ============================================
+
+/**
+ * Converts a Kotlin Map to a plain BrightScript associative array.
+ *
+ * This is necessary because Kotlin Maps (HashMap, LinkedHashMap) compile to
+ * BrightScript AAs that include method references (like clear_k_, put_k_, etc.).
+ * FormatJson() cannot serialize Function types, so we need to extract just
+ * the key-value pairs into a plain AA.
+ *
+ * The returned AA only contains the string keys and their values.
+ */
+public fun mapToPlainAA(map: Map<String, Any?>): Any {
+    val result = brsCreatePlainAA()
+    val entries = map.entries
+    val iter = entries.iterator()
+    while (iter.hasNext()) {
+        val entry = iter.next()
+        brsAAAddReplace(result, entry.key, entry.value)
+    }
+    return result
+}
+
+@PublishedApi
+internal fun brsCreatePlainAA(): Any {
+    error("brsCreatePlainAA should be lowered by the backend")
+}
+
+@PublishedApi
+internal fun brsAAAddReplace(aa: Any, key: String, value: Any?) {
+    error("brsAAAddReplace should be lowered by the backend")
+}

@@ -130,6 +130,9 @@ function trimIndent_rStr_k_(m as String) as String
 end function
 
 function replaceIndent_rStr_Str_k_(m as String, newIndent = "") as String
+    if newIndent = invalid then
+        newIndent = ""
+    end if
     lines = lines_rCharSequence_k_(m)
     minIndent = 2147483647
     lineIndex = 0
@@ -181,10 +184,19 @@ function replaceIndent_rStr_Str_k_(m as String, newIndent = "") as String
 end function
 
 function trimMargin_rStr_Str_k_(m as String, marginPrefix = "|") as String
+    if marginPrefix = invalid then
+        marginPrefix = "|"
+    end if
     return replaceIndentByMargin_rStr_Str_Str_k_(m, "", marginPrefix)
 end function
 
 function replaceIndentByMargin_rStr_Str_Str_k_(m as String, newIndent = "", marginPrefix = "|") as String
+    if newIndent = invalid then
+        newIndent = ""
+    end if
+    if marginPrefix = invalid then
+        marginPrefix = "|"
+    end if
     lines = lines_rCharSequence_k_(m)
     result = StringBuilder_create_k_()
     firstLine = true
@@ -203,7 +215,7 @@ function replaceIndentByMargin_rStr_Str_Str_k_(m as String, newIndent = "", marg
             result.append_C_k_(chr(10))
         end if
         firstLine = false
-        marginIndex = indexOf_rStr_Str_I_Z_k_(line, marginPrefix)
+        marginIndex = indexOf_rStr_Str_I_Z_k_(line, marginPrefix, invalid, invalid)
         if marginIndex >= 0 then
             beforeMargin = substring_rStr_I_I_k_(line, 0, marginIndex)
             allWhitespace = true

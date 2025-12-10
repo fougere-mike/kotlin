@@ -175,6 +175,9 @@ function RoByteArray_getSHA512_k_() as String
 end function
 
 sub RoByteArray_resize_I_I_k_(newSize as Integer, fillValue = 0)
+    if fillValue = invalid then
+        fillValue = 0
+    end if
     m.get_native().Resize(newSize, fillValue)
 end sub
 

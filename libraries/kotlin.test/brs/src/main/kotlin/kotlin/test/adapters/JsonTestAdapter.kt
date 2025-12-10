@@ -8,6 +8,7 @@ package kotlin.test.adapters
 import kotlin.brs.roku.RoDateTime
 import kotlin.brs.roku.RoTimespan
 import kotlin.brs.runtime.brsFormatJson
+import kotlin.brs.runtime.mapToPlainAA
 import kotlin.test.FrameworkAdapter
 
 /**
@@ -164,9 +165,12 @@ public class JsonTestAdapter : FrameworkAdapter {
 
     /**
      * Emits a JSON object as a single line to the console.
+     * Converts the Kotlin Map to a plain BrightScript AA to avoid
+     * FormatJson trying to serialize method references.
      */
     private fun emitJson(data: Map<String, Any?>) {
-        val json = brsFormatJson(data)
+        val plainAA = mapToPlainAA(data)
+        val json = brsFormatJson(plainAA)
         println(json)
     }
 

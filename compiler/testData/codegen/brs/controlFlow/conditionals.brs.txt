@@ -1,5 +1,5 @@
 // --- File: conditionals.brs ---
-function classifyNumber_I_Str_k_(x as Integer) as String
+function classifyNumber_I_k_(x as Integer) as String
     if x > 0 then
         return "positive"
     else if x < 0 then
@@ -9,7 +9,7 @@ function classifyNumber_I_Str_k_(x as Integer) as String
     end if
 end function
 
-function ifExpression_I_Str_k_(x as Integer) as String
+function ifExpression_I_k_(x as Integer) as String
     __when_tmp0 = invalid
     if x > 0 then
         __when_tmp0 = "positive"
@@ -20,7 +20,7 @@ function ifExpression_I_Str_k_(x as Integer) as String
 
 end function
 
-function nestedIf_I_I_Str_k_(a as Integer, b as Integer) as String
+function nestedIf_I_I_k_(a as Integer, b as Integer) as String
     __when_tmp3 = invalid
     if a > 0 then
         __when_tmp1 = invalid

@@ -96,7 +96,8 @@ public open class LinkedHashMap<K, V> : MutableMap<K, V> {
         var i = 0
         while (i < count) {
             val keyStr = brsArrayGet<String>(keyOrder, i)
-            val v = brsLookup<V>(map, keyStr)
+            val entry = brsLookup<Dynamic>(map, keyStr)
+            val v = brsEntryGetValue<V>(entry)
             if (v == value) return true
             i++
         }
@@ -106,7 +107,8 @@ public open class LinkedHashMap<K, V> : MutableMap<K, V> {
     override operator fun get(key: K): V? {
         val keyStr = keyToString(key)
         if (!brsDoesExist(map, keyStr)) return null
-        return brsLookup(map, keyStr)
+        val entry = brsLookup<Dynamic>(map, keyStr)
+        return brsEntryGetValue(entry)
     }
 
     // ==================== Modification Operations ====================
@@ -114,14 +116,17 @@ public open class LinkedHashMap<K, V> : MutableMap<K, V> {
     override fun put(key: K, value: V): V? {
         val keyStr = keyToString(key)
         val oldValue: V? = if (brsDoesExist(map, keyStr)) {
-            brsLookup(map, keyStr)
+            val oldEntry = brsLookup<Dynamic>(map, keyStr)
+            brsEntryGetValue(oldEntry)
         } else {
             // New key - add to insertion order array
             brsArrayPush(keyOrder, keyStr)
             _size++
             null
         }
-        brsAddReplace(map, keyStr, value)
+        // Store entry with original key and value for type preservation during iteration
+        val entry = brsCreateEntry(key, value)
+        brsAddReplace(map, keyStr, entry)
         return oldValue
     }
 
@@ -129,7 +134,8 @@ public open class LinkedHashMap<K, V> : MutableMap<K, V> {
         val keyStr = keyToString(key)
         if (!brsDoesExist(map, keyStr)) return null
 
-        val oldValue = brsLookup<V>(map, keyStr)
+        val oldEntry = brsLookup<Dynamic>(map, keyStr)
+        val oldValue = brsEntryGetValue<V>(oldEntry)
         brsDelete(map, keyStr)
 
         // Remove from insertion order array
@@ -447,7 +453,7 @@ public open class LinkedHashMap<K, V> : MutableMap<K, V> {
     private class LinkedKeyIterator<K, V>(private val map: LinkedHashMap<K, V>) : MutableIterator<K> {
         private var currentIndex = 0
         private var orderCount = brsArrayCount(map.keyOrder)
-        private var lastReturnedKey: String? = null
+        private var lastReturnedKey: K? = null
         private var canRemove = false
 
         override fun hasNext(): Boolean = currentIndex < orderCount
@@ -455,19 +461,21 @@ public open class LinkedHashMap<K, V> : MutableMap<K, V> {
         override fun next(): K {
             if (!hasNext()) throw NoSuchElementException()
             val keyStr = brsArrayGet<String>(map.keyOrder, currentIndex)
-            lastReturnedKey = keyStr
+            // Look up the entry to get the original key type
+            val entry = brsLookup<Dynamic>(map.map, keyStr)
+            val key = brsEntryGetKey<K>(entry)
+            lastReturnedKey = key
             currentIndex++
             canRemove = true
-            @Suppress("UNCHECKED_CAST")
-            return keyStr as K
+            return key
         }
 
         override fun remove() {
             check(canRemove) { "Call next() before removing element" }
-            val keyStr = lastReturnedKey ?: throw IllegalStateException()
-            @Suppress("UNCHECKED_CAST")
-            map.remove(keyStr as K)
+            val key = lastReturnedKey ?: throw IllegalStateException()
+            map.remove(key)
             currentIndex-- // Adjust index after removal
+            orderCount-- // Size decreased
             canRemove = false
         }
     }
@@ -478,7 +486,7 @@ public open class LinkedHashMap<K, V> : MutableMap<K, V> {
     private class LinkedValueIterator<K, V>(private val map: LinkedHashMap<K, V>) : MutableIterator<V> {
         private var currentIndex = 0
         private var orderCount = brsArrayCount(map.keyOrder)
-        private var lastReturnedKey: String? = null
+        private var lastReturnedKey: K? = null
         private var canRemove = false
 
         override fun hasNext(): Boolean = currentIndex < orderCount
@@ -486,19 +494,22 @@ public open class LinkedHashMap<K, V> : MutableMap<K, V> {
         override fun next(): V {
             if (!hasNext()) throw NoSuchElementException()
             val keyStr = brsArrayGet<String>(map.keyOrder, currentIndex)
-            lastReturnedKey = keyStr
+            // Look up the entry to get original key and value
+            val entry = brsLookup<Dynamic>(map.map, keyStr)
+            val key = brsEntryGetKey<K>(entry)
+            val value = brsEntryGetValue<V>(entry)
+            lastReturnedKey = key
             currentIndex++
             canRemove = true
-            return brsLookup(map.map, keyStr)
+            return value
         }
 
         override fun remove() {
             check(canRemove) { "Call next() before removing element" }
-            val keyStr = lastReturnedKey ?: throw IllegalStateException()
-            brsDelete(map.map, keyStr)
-            brsArrayDelete(map.keyOrder, currentIndex - 1)
-            map._size--
+            val key = lastReturnedKey ?: throw IllegalStateException()
+            map.remove(key)
             currentIndex--
+            orderCount--
             canRemove = false
         }
     }
@@ -509,7 +520,7 @@ public open class LinkedHashMap<K, V> : MutableMap<K, V> {
     private class LinkedEntryIterator<K, V>(private val map: LinkedHashMap<K, V>) : MutableIterator<MutableMap.MutableEntry<K, V>> {
         private var currentIndex = 0
         private var orderCount = brsArrayCount(map.keyOrder)
-        private var lastReturnedKey: String? = null
+        private var lastReturnedKey: K? = null
         private var canRemove = false
 
         override fun hasNext(): Boolean = currentIndex < orderCount
@@ -517,22 +528,23 @@ public open class LinkedHashMap<K, V> : MutableMap<K, V> {
         override fun next(): MutableMap.MutableEntry<K, V> {
             if (!hasNext()) throw NoSuchElementException()
             val keyStr = brsArrayGet<String>(map.keyOrder, currentIndex)
-            val value = brsLookup<V>(map.map, keyStr)
-            lastReturnedKey = keyStr
+            // Look up the entry to get original key and value
+            val entry = brsLookup<Dynamic>(map.map, keyStr)
+            val key = brsEntryGetKey<K>(entry)
+            val value = brsEntryGetValue<V>(entry)
+            lastReturnedKey = key
             currentIndex++
             canRemove = true
 
-            @Suppress("UNCHECKED_CAST")
-            return SimpleEntry(keyStr as K, value)
+            return SimpleEntry(key, value)
         }
 
         override fun remove() {
             check(canRemove) { "Call next() before removing element" }
-            val keyStr = lastReturnedKey ?: throw IllegalStateException()
-            brsDelete(map.map, keyStr)
-            brsArrayDelete(map.keyOrder, currentIndex - 1)
-            map._size--
+            val key = lastReturnedKey ?: throw IllegalStateException()
+            map.remove(key)
             currentIndex--
+            orderCount--
             canRemove = false
         }
     }
@@ -598,3 +610,32 @@ private external fun brsClear(map: Dynamic)
 
 @BrsInline("arr.Clear()")
 private external fun brsClearArray(arr: Dynamic)
+
+// Entry creation and access - stores {k: key, v: value} to preserve original key type
+@BrsInline("return {k: key, v: value}")
+private external fun brsCreateEntry(key: Any?, value: Any?): Dynamic
+
+@BrsInline("return entry.k")
+private external fun <T> brsEntryGetKey(entry: Dynamic): T
+
+@BrsInline("return entry.v")
+private external fun <T> brsEntryGetValue(entry: Dynamic): T
+
+// ==================== Factory Functions ====================
+
+/**
+ * Returns an empty new [LinkedHashMap].
+ */
+public fun <K, V> linkedMapOf(): LinkedHashMap<K, V> = LinkedHashMap()
+
+/**
+ * Returns a new [LinkedHashMap] with the specified contents, given as a list of pairs.
+ * The iteration order of the returned map preserves the order in which pairs are specified.
+ */
+public fun <K, V> linkedMapOf(vararg pairs: Pair<K, V>): LinkedHashMap<K, V> {
+    val map = LinkedHashMap<K, V>(pairs.size)
+    for (pair in pairs) {
+        map.put(pair.first, pair.second)
+    }
+    return map
+}

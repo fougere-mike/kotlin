@@ -11,6 +11,9 @@ function brsCreateObject_Str_Arr_k_(className as String, args as Object) as Dyna
 end function
 
 function brsCreateArray_I_k_(size = 0) as Object
+    if size = invalid then
+        size = 0
+    end if
     error_Any_k_("brsCreateArray should be lowered by the backend")
 end function
 
@@ -40,3 +43,22 @@ end function
 function brsFormatJson_AnyN_k_(obj as Dynamic) as String
     error_Any_k_("brsFormatJson should be lowered by the backend")
 end function
+
+function mapToPlainAA_MapStrAnyN_k_(map as Object) as Object
+    result = CreateObject("roAssociativeArray")
+    entries = map.get_entries()
+    iter = entries.iterator_k_()
+    while iter.hasNext_k_()
+        entry = iter.next_k_()
+        result.AddReplace(entry.get_key(), entry.get_value())
+    end while
+    return result
+end function
+
+function brsCreatePlainAA_k_() as Object
+    error_Any_k_("brsCreatePlainAA should be lowered by the backend")
+end function
+
+sub brsAAAddReplace_Any_Str_AnyN_k_(aa as Object, key as String, value as Dynamic)
+    error_Any_k_("brsAAAddReplace should be lowered by the backend")
+end sub

@@ -119,7 +119,7 @@ function checkCast_AnyN_Str_k_(obj as Dynamic, type_ as String) as Dynamic
         return invalid
     end if
     if not isInstance_AnyN_Str_k_(obj, type_) then
-        throw ClassCastException_create_StrN_k_((("Cannot cast " + "/* Unsupported: IrGetClassImpl */".get_simpleName()) + " to ") + type_)
+        throw ClassCastException_create_StrN_k_((("Cannot cast " + toString_AnyN_k_("/* Unsupported: IrGetClassImpl */".get_simpleName())) + " to ") + type_)
     end if
     return obj
 end function

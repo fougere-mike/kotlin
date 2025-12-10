@@ -150,7 +150,7 @@ end function
 
 function longToStringWithRadix_J_I_k_(value as LongInteger, radix as Integer) as String
     if (radix < 2) or (radix > 36) then
-        throw IllegalArgumentException_create_StrN_k_(("radix " + radix) + " was not in valid range 2..36")
+        throw IllegalArgumentException_create_StrN_k_(("radix " + __kotlin_numToStr_I_k_(radix)) + " was not in valid range 2..36")
     end if
     if value = 0& then
         return "0"

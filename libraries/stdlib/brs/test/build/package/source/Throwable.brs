@@ -61,7 +61,7 @@ function Throwable_toString_k_() as String
 
     __when_tmp2 = invalid
     if m.get_message() <> invalid then
-        __when_tmp2 = ((className + ": ") + m.get_message())
+        __when_tmp2 = ((className + ": ") + toString_AnyN_k_(m.get_message()))
     else if true then
         __when_tmp2 = className
     end if

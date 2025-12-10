@@ -17,7 +17,7 @@ sub comparisonOps_I_I_k_(a as Integer, b as Integer)
 end sub
 
 sub logicalOps_Z_Z_k_(a as Boolean, b as Boolean)
-    and = a and b
-    or = a or b
-    not = not a
+    and_ = a and b
+    or_ = a or b
+    not_ = not a
 end sub

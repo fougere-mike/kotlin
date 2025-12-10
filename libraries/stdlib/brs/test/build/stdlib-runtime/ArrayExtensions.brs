@@ -51,7 +51,7 @@ function contentEquals_rArrN_ArrN_k_(m as Dynamic, other as Dynamic) as Boolean
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if m.get_I_k_(i) <> other.get_I_k_(i) then
+        if not brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), other.get_I_k_(i)) then
             return false
         end if
 
@@ -60,7 +60,7 @@ function contentEquals_rArrN_ArrN_k_(m as Dynamic, other as Dynamic) as Boolean
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if m.get_I_k_(i) <> other.get_I_k_(i) then
+            if not brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), other.get_I_k_(i)) then
                 return false
             end if
 
@@ -87,7 +87,7 @@ function contentToString_rByteArrayN_k_(m as Dynamic) as String
 
     end while
 
-    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ")) + "]"
+    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ", invalid, invalid, invalid, invalid)) + "]"
 end function
 
 function contentEquals_rByteArrayN_ByteArrayN_k_(m as Dynamic, other as Dynamic) as Boolean
@@ -143,7 +143,7 @@ function contentToString_rShortArrayN_k_(m as Dynamic) as String
 
     end while
 
-    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ")) + "]"
+    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ", invalid, invalid, invalid, invalid)) + "]"
 end function
 
 function contentEquals_rShortArrayN_ShortArrayN_k_(m as Dynamic, other as Dynamic) as Boolean
@@ -199,7 +199,7 @@ function contentToString_rIntArrayN_k_(m as Dynamic) as String
 
     end while
 
-    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ")) + "]"
+    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ", invalid, invalid, invalid, invalid)) + "]"
 end function
 
 function contentEquals_rIntArrayN_IntArrayN_k_(m as Dynamic, other as Dynamic) as Boolean
@@ -255,7 +255,7 @@ function contentToString_rLongArrayN_k_(m as Dynamic) as String
 
     end while
 
-    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ")) + "]"
+    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ", invalid, invalid, invalid, invalid)) + "]"
 end function
 
 function contentEquals_rLongArrayN_LongArrayN_k_(m as Dynamic, other as Dynamic) as Boolean
@@ -311,7 +311,7 @@ function contentToString_rFloatArrayN_k_(m as Dynamic) as String
 
     end while
 
-    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ")) + "]"
+    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ", invalid, invalid, invalid, invalid)) + "]"
 end function
 
 function contentEquals_rFloatArrayN_FloatArrayN_k_(m as Dynamic, other as Dynamic) as Boolean
@@ -367,7 +367,7 @@ function contentToString_rDoubleArrayN_k_(m as Dynamic) as String
 
     end while
 
-    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ")) + "]"
+    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ", invalid, invalid, invalid, invalid)) + "]"
 end function
 
 function contentEquals_rDoubleArrayN_DoubleArrayN_k_(m as Dynamic, other as Dynamic) as Boolean
@@ -425,7 +425,7 @@ function contentToString_rBooleanArrayN_k_(m as Dynamic) as String
 
     end while
 
-    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ")) + "]"
+    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ", invalid, invalid, invalid, invalid)) + "]"
 end function
 
 function contentEquals_rBooleanArrayN_BooleanArrayN_k_(m as Dynamic, other as Dynamic) as Boolean
@@ -481,7 +481,7 @@ function contentToString_rCharArrayN_k_(m as Dynamic) as String
 
     end while
 
-    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ")) + "]"
+    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ", invalid, invalid, invalid, invalid)) + "]"
 end function
 
 function contentEquals_rCharArrayN_CharArrayN_k_(m as Dynamic, other as Dynamic) as Boolean

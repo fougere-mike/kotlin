@@ -7,7 +7,7 @@ function contentToString_rUByteArrayN_k_(m as Dynamic) as String
         list.add_AnyN_k_(item.toString())
 
     end for
-    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ")) + "]"
+    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ", invalid, invalid, invalid, invalid)) + "]"
 end function
 
 function contentEquals_rUByteArrayN_UByteArrayN_k_(m as Dynamic, other as Dynamic) as Boolean
@@ -27,7 +27,7 @@ function contentEquals_rUByteArrayN_UByteArrayN_k_(m as Dynamic, other as Dynami
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if m.get_I_k_(i) <> other.get_I_k_(i) then
+        if not brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), other.get_I_k_(i)) then
             return false
         end if
 
@@ -36,7 +36,7 @@ function contentEquals_rUByteArrayN_UByteArrayN_k_(m as Dynamic, other as Dynami
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if m.get_I_k_(i) <> other.get_I_k_(i) then
+            if not brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), other.get_I_k_(i)) then
                 return false
             end if
 
@@ -56,7 +56,7 @@ function contentToString_rUShortArrayN_k_(m as Dynamic) as String
         list.add_AnyN_k_(item.toString())
 
     end for
-    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ")) + "]"
+    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ", invalid, invalid, invalid, invalid)) + "]"
 end function
 
 function contentEquals_rUShortArrayN_UShortArrayN_k_(m as Dynamic, other as Dynamic) as Boolean
@@ -76,7 +76,7 @@ function contentEquals_rUShortArrayN_UShortArrayN_k_(m as Dynamic, other as Dyna
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if m.get_I_k_(i) <> other.get_I_k_(i) then
+        if not brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), other.get_I_k_(i)) then
             return false
         end if
 
@@ -85,7 +85,7 @@ function contentEquals_rUShortArrayN_UShortArrayN_k_(m as Dynamic, other as Dyna
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if m.get_I_k_(i) <> other.get_I_k_(i) then
+            if not brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), other.get_I_k_(i)) then
                 return false
             end if
 
@@ -105,7 +105,7 @@ function contentToString_rUIntArrayN_k_(m as Dynamic) as String
         list.add_AnyN_k_(item.toString())
 
     end for
-    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ")) + "]"
+    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ", invalid, invalid, invalid, invalid)) + "]"
 end function
 
 function contentEquals_rUIntArrayN_UIntArrayN_k_(m as Dynamic, other as Dynamic) as Boolean
@@ -125,7 +125,7 @@ function contentEquals_rUIntArrayN_UIntArrayN_k_(m as Dynamic, other as Dynamic)
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if m.get_I_k_(i) <> other.get_I_k_(i) then
+        if not brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), other.get_I_k_(i)) then
             return false
         end if
 
@@ -134,7 +134,7 @@ function contentEquals_rUIntArrayN_UIntArrayN_k_(m as Dynamic, other as Dynamic)
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if m.get_I_k_(i) <> other.get_I_k_(i) then
+            if not brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), other.get_I_k_(i)) then
                 return false
             end if
 
@@ -154,7 +154,7 @@ function contentToString_rULongArrayN_k_(m as Dynamic) as String
         list.add_AnyN_k_(item.toString())
 
     end for
-    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ")) + "]"
+    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ", invalid, invalid, invalid, invalid)) + "]"
 end function
 
 function contentEquals_rULongArrayN_ULongArrayN_k_(m as Dynamic, other as Dynamic) as Boolean
@@ -174,7 +174,7 @@ function contentEquals_rULongArrayN_ULongArrayN_k_(m as Dynamic, other as Dynami
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if m.get_I_k_(i) <> other.get_I_k_(i) then
+        if not brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), other.get_I_k_(i)) then
             return false
         end if
 
@@ -183,7 +183,7 @@ function contentEquals_rULongArrayN_ULongArrayN_k_(m as Dynamic, other as Dynami
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if m.get_I_k_(i) <> other.get_I_k_(i) then
+            if not brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), other.get_I_k_(i)) then
                 return false
             end if
 

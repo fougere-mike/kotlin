@@ -1,5 +1,5 @@
 // --- File: dataClass.brs ---
-function Point_create_I_I_Point_k_(x as Integer, y as Integer) as Object
+function Point_create_I_I_k_(x as Integer, y as Integer) as Object
     this = {}
     this.__type = "Point"
     this.__proto = ["Point"]
@@ -49,7 +49,7 @@ function Point_copy(x = invalid, y = invalid) as Object
     if y = invalid then
         y = m.y
     end if
-    return Point_create_I_I_Point_k_(x, y)
+    return Point_create_I_I_k_(x, y)
 end function
 
 function Point_component1() as Integer
@@ -60,7 +60,7 @@ function Point_component2() as Integer
     return m.y
 end function
 
-function User_create_Str_I_User_k_(name as String, age as Integer) as Object
+function User_create_Str_I_k_(name as String, age as Integer) as Object
     this = {}
     this.__type = "User"
     this.__proto = ["User"]
@@ -110,7 +110,7 @@ function User_copy(name = invalid, age = invalid) as Object
     if age = invalid then
         age = m.age
     end if
-    return User_create_Str_I_User_k_(name, age)
+    return User_create_Str_I_k_(name, age)
 end function
 
 function User_component1() as String
@@ -121,20 +121,20 @@ function User_component2() as Integer
     return m.age
 end function
 
-function createPoint_Point_k_() as Object
-    return Point_create_I_I_Point_k_(1, 2)
+function createPoint_k_() as Object
+    return Point_create_I_I_k_(1, 2)
 end function
 
-function copyPoint_Point_Point_k_(p as Object) as Object
-    return p.copy(10)
+function copyPoint_Point_k_(p as Object) as Object
+    return p.copy(invalid, 10)
 end function
 
-function comparePoints_Z_k_() as Boolean
-    p1 = Point_create_I_I_Point_k_(1, 2)
-    p2 = Point_create_I_I_Point_k_(1, 2)
-    return p1 = p2
+function comparePoints_k_() as Boolean
+    p1 = Point_create_I_I_k_(1, 2)
+    p2 = Point_create_I_I_k_(1, 2)
+    return brsStructuralEquals_AnyN_AnyN_k_(p1, p2)
 end function
 
-function createUser_User_k_() as Object
-    return User_create_Str_I_User_k_("Alice", 30)
+function createUser_k_() as Object
+    return User_create_Str_I_k_("Alice", 30)
 end function

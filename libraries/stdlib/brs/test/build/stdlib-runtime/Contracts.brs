@@ -19,6 +19,9 @@ function ContractBuilder_returnsNotNull_k_() as Object
 end function
 
 function ContractBuilder_callsInPlace_Function_InvocationKind_k_(lambda as Object, kind = InvocationKind_UNKNOWN) as Object
+    if kind = invalid then
+        kind = InvocationKind_UNKNOWN
+    end if
 end function
 
 function InvocationKind_create_k_(__name as String, __ordinal as Integer) as Object

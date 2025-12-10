@@ -1,6 +1,12 @@
 function split_rCharSequence_Str_Z_I_k_(m as Object, delimiter as String, ignoreCase = false, limit = 0) as Object
+    if ignoreCase = invalid then
+        ignoreCase = false
+    end if
+    if limit = invalid then
+        limit = 0
+    end if
     if limit < 0 then
-        throw IllegalArgumentException_create_StrN_k_("Limit must be non-negative, but was " + limit)
+        throw IllegalArgumentException_create_StrN_k_("Limit must be non-negative, but was " + __kotlin_numToStr_I_k_(limit))
     end if
     str = toString_AnyN_k_(m)
     if isEmpty_rStr_k_(delimiter) then
@@ -60,12 +66,24 @@ function split_rCharSequence_Str_Z_I_k_(m as Object, delimiter as String, ignore
 end function
 
 function split_rCharSequence_C_Z_I_k_(m as Object, delimiter as Object, ignoreCase = false, limit = 0) as Object
+    if ignoreCase = invalid then
+        ignoreCase = false
+    end if
+    if limit = invalid then
+        limit = 0
+    end if
     return split_rCharSequence_Str_Z_I_k_(m, delimiter.toString(), ignoreCase, limit)
 end function
 
 function split_rCharSequence_CharArray_Z_I_k_(m as Object, delimiters as Object, ignoreCase = false, limit = 0) as Object
+    if ignoreCase = invalid then
+        ignoreCase = false
+    end if
+    if limit = invalid then
+        limit = 0
+    end if
     if limit < 0 then
-        throw IllegalArgumentException_create_StrN_k_("Limit must be non-negative, but was " + limit)
+        throw IllegalArgumentException_create_StrN_k_("Limit must be non-negative, but was " + __kotlin_numToStr_I_k_(limit))
     end if
     if delimiters.get_size() = 0 then
         return listOf_Arr_k_([toString_AnyN_k_(m)])
@@ -113,8 +131,14 @@ function split_rCharSequence_CharArray_Z_I_k_(m as Object, delimiters as Object,
 end function
 
 function split_rCharSequence_Arr_Z_I_k_(m as Object, delimiters as Object, ignoreCase = false, limit = 0) as Object
+    if ignoreCase = invalid then
+        ignoreCase = false
+    end if
+    if limit = invalid then
+        limit = 0
+    end if
     if limit < 0 then
-        throw IllegalArgumentException_create_StrN_k_("Limit must be non-negative, but was " + limit)
+        throw IllegalArgumentException_create_StrN_k_("Limit must be non-negative, but was " + __kotlin_numToStr_I_k_(limit))
     end if
     if delimiters.count() = 0 then
         return listOf_Arr_k_([toString_AnyN_k_(m)])
@@ -167,5 +191,5 @@ function split_rCharSequence_Arr_Z_I_k_(m as Object, delimiters as Object, ignor
 end function
 
 function lines_rCharSequence_k_(m as Object) as Object
-    return split_rCharSequence_Arr_Z_I_k_(m, [chr(13) + chr(10), chr(10), chr(13)])
+    return split_rCharSequence_Arr_Z_I_k_(m, [chr(13) + chr(10), chr(10), chr(13)], invalid, invalid)
 end function

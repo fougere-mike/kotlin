@@ -73,7 +73,7 @@ function ArrayList_create_I_k_(initialCapacity as Integer) as Object
     this.set_array = ArrayList_set_array_Dynamic_k_
     this.get_size = ArrayList_get_size_k_
     require_Z_Function0Any_k_(initialCapacity >= 0, {initialCapacity: initialCapacity, invoke: function() as Object
-        return "Negative initial capacity: " + m.initialCapacity
+        return "Negative initial capacity: " + __kotlin_numToStr_I_k_(m.initialCapacity)
     end function})
     this.set_array(CreateObject("roArray", initialCapacity, true))
     return this
@@ -128,9 +128,9 @@ function ArrayList_contains_AnyN_k_(element as Dynamic) as Boolean
 end function
 
 function ArrayList_containsAll_Collection_k_(elements as Object) as Boolean
-    __iter_37 = elements.iterator_k_()
-    while __iter_37.hasNext_k_()
-        element = __iter_37.next_k_()
+    __iter_51 = elements.iterator_k_()
+    while __iter_51.hasNext_k_()
+        element = __iter_51.next_k_()
         if not m.contains_AnyN_k_(element) then
             return false
         end if
@@ -185,9 +185,9 @@ function ArrayList_addAll_Collection_k_(elements as Object) as Boolean
     if elements.isEmpty_k_() then
         return false
     end if
-    __iter_38 = elements.iterator_k_()
-    while __iter_38.hasNext_k_()
-        element = __iter_38.next_k_()
+    __iter_52 = elements.iterator_k_()
+    while __iter_52.hasNext_k_()
+        element = __iter_52.next_k_()
         m.get_array().Push(element)
 
     end while
@@ -201,9 +201,9 @@ function ArrayList_addAll_I_Collection_k_(index as Integer, elements as Object) 
         return false
     end if
     currentIndex = index
-    __iter_39 = elements.iterator_k_()
-    while __iter_39.hasNext_k_()
-        element = __iter_39.next_k_()
+    __iter_53 = elements.iterator_k_()
+    while __iter_53.hasNext_k_()
+        element = __iter_53.next_k_()
         m.add_I_AnyN_k_(currentIndex, element)
         currentIndex = (currentIndex + 1)
 
@@ -214,9 +214,9 @@ end function
 
 function ArrayList_removeAll_Collection_k_(elements as Object) as Boolean
     modified = false
-    __iter_40 = elements.iterator_k_()
-    while __iter_40.hasNext_k_()
-        element = __iter_40.next_k_()
+    __iter_54 = elements.iterator_k_()
+    while __iter_54.hasNext_k_()
+        element = __iter_54.next_k_()
         while m.remove_AnyN_k_(element)
             modified = true
         end while
@@ -250,7 +250,7 @@ function ArrayList_indexOf_AnyN_k_(element as Dynamic) as Integer
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if m.get_array()[i] = element then
+        if brsStructuralEquals_AnyN_AnyN_k_(m.get_array()[i], element) then
             return i
         end if
 
@@ -259,7 +259,7 @@ function ArrayList_indexOf_AnyN_k_(element as Dynamic) as Integer
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if m.get_array()[i] = element then
+            if brsStructuralEquals_AnyN_AnyN_k_(m.get_array()[i], element) then
                 return i
             end if
 
@@ -273,7 +273,7 @@ end function
 function ArrayList_lastIndexOf_AnyN_k_(element as Dynamic) as Integer
     i = m.get_size() - 1
     while i >= 0
-        if m.get_array()[i] = element then
+        if brsStructuralEquals_AnyN_AnyN_k_(m.get_array()[i], element) then
             return i
         end if
         i = (i - 1)
@@ -310,10 +310,10 @@ function ArrayList_equals_AnyN_k_(other as Dynamic) as Boolean
         return false
     end if
     i = 0
-    __iter_41 = other.iterator_k_()
-    while __iter_41.hasNext_k_()
-        element = __iter_41.next_k_()
-        if m.get_I_k_(i) <> element then
+    __iter_55 = other.iterator_k_()
+    while __iter_55.hasNext_k_()
+        element = __iter_55.next_k_()
+        if not brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), element) then
             return false
         end if
         i = (i + 1)
@@ -480,9 +480,9 @@ function ArrayListIterator_next_k_() as Dynamic
         throw NoSuchElementException_create_k_()
     end if
     m.set_lastReturned(m.get_index())
-    __incr_tmp_42 = m.get_index()
-    m.set_index(__incr_tmp_42 + 1)
-    return m.get_list().get_I_k_(__incr_tmp_42)
+    __incr_tmp_56 = m.get_index()
+    m.set_index(__incr_tmp_56 + 1)
+    return m.get_list().get_I_k_(__incr_tmp_56)
 
 end function
 
@@ -525,9 +525,9 @@ sub ArrayListIterator_set_AnyN_k_(element as Dynamic)
 end sub
 
 sub ArrayListIterator_add_AnyN_k_(element as Dynamic)
-    __incr_tmp_43 = m.get_index()
-    m.set_index(__incr_tmp_43 + 1)
-    m.get_list().add_I_AnyN_k_(__incr_tmp_43, element)
+    __incr_tmp_57 = m.get_index()
+    m.set_index(__incr_tmp_57 + 1)
+    m.get_list().add_I_AnyN_k_(__incr_tmp_57, element)
 
     m.set_lastReturned(-1)
 end sub
@@ -598,9 +598,9 @@ function SubList_contains_AnyN_k_(element as Dynamic) as Boolean
 end function
 
 function SubList_containsAll_Collection_k_(elements as Object) as Boolean
-    __iter_44 = elements.iterator_k_()
-    while __iter_44.hasNext_k_()
-        element = __iter_44.next_k_()
+    __iter_58 = elements.iterator_k_()
+    while __iter_58.hasNext_k_()
+        element = __iter_58.next_k_()
         if not m.contains_AnyN_k_(element) then
             return false
         end if
@@ -699,7 +699,7 @@ function SubList_indexOf_AnyN_k_(element as Dynamic) as Integer
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if m.get_I_k_(i) = element then
+        if brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), element) then
             return i
         end if
 
@@ -708,7 +708,7 @@ function SubList_indexOf_AnyN_k_(element as Dynamic) as Integer
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if m.get_I_k_(i) = element then
+            if brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), element) then
                 return i
             end if
 
@@ -722,7 +722,7 @@ end function
 function SubList_lastIndexOf_AnyN_k_(element as Dynamic) as Integer
     i = m.get_size() - 1
     while i >= 0
-        if m.get_I_k_(i) = element then
+        if brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), element) then
             return i
         end if
         i = (i - 1)
@@ -827,9 +827,9 @@ function SubListIterator_next_k_() as Dynamic
         throw NoSuchElementException_create_k_()
     end if
     m.set_lastReturned(m.get_index())
-    __incr_tmp_45 = m.get_index()
-    m.set_index(__incr_tmp_45 + 1)
-    return m.get_list().get_I_k_(__incr_tmp_45)
+    __incr_tmp_59 = m.get_index()
+    m.set_index(__incr_tmp_59 + 1)
+    return m.get_list().get_I_k_(__incr_tmp_59)
 
 end function
 
@@ -872,9 +872,9 @@ sub SubListIterator_set_AnyN_k_(element as Dynamic)
 end sub
 
 sub SubListIterator_add_AnyN_k_(element as Dynamic)
-    __incr_tmp_46 = m.get_index()
-    m.set_index(__incr_tmp_46 + 1)
-    m.get_list().add_I_AnyN_k_(__incr_tmp_46, element)
+    __incr_tmp_60 = m.get_index()
+    m.set_index(__incr_tmp_60 + 1)
+    m.get_list().add_I_AnyN_k_(__incr_tmp_60, element)
 
     m.set_lastReturned(-1)
 end sub
@@ -1013,7 +1013,7 @@ end function
 
 function EmptyList_listIterator_I_k_(index as Integer) as Object
     if index <> 0 then
-        throw IndexOutOfBoundsException_create_StrN_k_("Index: " + index)
+        throw IndexOutOfBoundsException_create_StrN_k_("Index: " + __kotlin_numToStr_I_k_(index))
     end if
     return EmptyIterator_getInstance()
 end function

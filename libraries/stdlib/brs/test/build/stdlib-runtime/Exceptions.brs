@@ -504,5 +504,5 @@ sub addSuppressed_rThrowable_Throwable_k_(m as Object, exception as Object)
 end sub
 
 function get_suppressedExceptions_rThrowable_k_(m as Object) as Object
-    return arrayOf_Arr_k_()
+    return arrayOf_Arr_k_(invalid)
 end function

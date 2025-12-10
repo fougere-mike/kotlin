@@ -57,10 +57,10 @@ sub BareAdapter_printSummary_k_()
         return it.status = "IGNORED"
     end function})
     println_AnyN_k_(chr(10) + "[TEST SUMMARY]")
-    println_AnyN_k_("Total: " + total)
-    println_AnyN_k_("Passed: " + passed)
-    println_AnyN_k_("Failed: " + failed)
-    println_AnyN_k_("Ignored: " + ignored)
+    println_AnyN_k_("Total: " + __kotlin_numToStr_I_k_(total))
+    println_AnyN_k_("Passed: " + __kotlin_numToStr_I_k_(passed))
+    println_AnyN_k_("Failed: " + __kotlin_numToStr_I_k_(failed))
+    println_AnyN_k_("Ignored: " + __kotlin_numToStr_I_k_(ignored))
     println_AnyN_k_("[TEST SUMMARY END]")
 end sub
 

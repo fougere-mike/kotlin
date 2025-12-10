@@ -1,5 +1,5 @@
 // --- File: loops.brs ---
-function forLoopSum_I_k_() as Integer
+function forLoopSum_k_() as Integer
     sum = 0
     inductionVariable = 1
     if inductionVariable <= 10 then
@@ -22,7 +22,7 @@ function forLoopSum_I_k_() as Integer
     return sum
 end function
 
-function whileLoopSum_I_k_() as Integer
+function whileLoopSum_k_() as Integer
     sum = 0
     i = 0
     while i < 10
@@ -32,7 +32,7 @@ function whileLoopSum_I_k_() as Integer
     return sum
 end function
 
-function breakContinueSum_I_k_() as Integer
+function breakContinueSum_k_() as Integer
     sum = 0
     inductionVariable = 1
     if inductionVariable <= 10 then

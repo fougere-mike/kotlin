@@ -98,7 +98,8 @@ sub JsonTestAdapter_test_Str_Z_Function0V_k_(name as String, ignored as Boolean,
 end sub
 
 sub JsonTestAdapter_emitJson_MapStrAnyN_k_(data as Object)
-    json = FormatJson(data)
+    plainAA = mapToPlainAA_MapStrAnyN_k_(data)
+    json = FormatJson(plainAA)
     println_AnyN_k_(json)
 end sub
 

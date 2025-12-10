@@ -7,9 +7,16 @@ package org.jetbrains.kotlin.ir.backend.brs
 
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.InternalSymbolFinderAPI
+import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.expressions.IrConst
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
+import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.classOrNull
+import org.jetbrains.kotlin.ir.util.getAnnotation
+import org.jetbrains.kotlin.ir.util.superTypes
 import org.jetbrains.kotlin.name.BrsStandardClassIds
+import org.jetbrains.kotlin.name.FqName
 
 /**
  * BrightScript-specific intrinsic functions and types.
@@ -45,6 +52,102 @@ class BrsIntrinsics(
     val roSGNodeClass: IrClassSymbol? by lazy {
         val classId = BrsStandardClassIds.BuiltIns.roSGNode
         symbolFinder.findClass(classId.shortClassName, classId.packageFqName)
+    }
+
+    // =============================================================================
+    // Native Iteration Support
+    // =============================================================================
+
+    /**
+     * The NativeArrayIterator marker interface symbol.
+     * When iterator() returns this type, the compiler emits native for-each.
+     */
+    val nativeArrayIteratorClass: IrClassSymbol? by lazy {
+        val classId = BrsStandardClassIds.BuiltIns.nativeArrayIterator
+        symbolFinder.findClass(classId.shortClassName, classId.packageFqName)
+    }
+
+    /**
+     * The NativeIterable interface symbol.
+     * Types implementing this support native BrightScript for-each iteration.
+     */
+    val nativeIterableClass: IrClassSymbol? by lazy {
+        val classId = BrsStandardClassIds.BuiltIns.nativeIterable
+        symbolFinder.findClass(classId.shortClassName, classId.packageFqName)
+    }
+
+    /**
+     * The IEnumNative interface symbol.
+     * External native types that support BrightScript enumeration.
+     */
+    val iEnumNativeClass: IrClassSymbol? by lazy {
+        val classId = BrsStandardClassIds.BuiltIns.iEnumNative
+        symbolFinder.findClass(classId.shortClassName, classId.packageFqName)
+    }
+
+    /**
+     * The RoArray interface symbol.
+     */
+    val roArrayInterfaceClass: IrClassSymbol? by lazy {
+        val classId = BrsStandardClassIds.BuiltIns.roArrayInterface
+        symbolFinder.findClass(classId.shortClassName, classId.packageFqName)
+    }
+
+    /**
+     * The RoAssociativeArray interface symbol.
+     */
+    val roAssociativeArrayInterfaceClass: IrClassSymbol? by lazy {
+        val classId = BrsStandardClassIds.BuiltIns.roAssociativeArrayInterface
+        symbolFinder.findClass(classId.shortClassName, classId.packageFqName)
+    }
+
+    /**
+     * Checks if a type implements NativeIterable.
+     * Types implementing this interface support native BrightScript for-each iteration.
+     */
+    fun isNativeIterable(type: IrType): Boolean {
+        val nativeIterableSym = nativeIterableClass ?: return false
+        val classifier = type.classOrNull ?: return false
+
+        // Check direct match
+        if (classifier == nativeIterableSym) return true
+
+        // Check supertypes recursively
+        return checkSuperTypesFor(classifier, nativeIterableSym)
+    }
+
+    /**
+     * Checks if a function's return type is NativeArrayIterator.
+     * This signals that the type supports native BrightScript for-each iteration.
+     */
+    fun returnsNativeArrayIterator(function: IrSimpleFunction): Boolean {
+        val nativeArrayIteratorSym = nativeArrayIteratorClass ?: return false
+        val returnClassifier = function.returnType.classOrNull ?: return false
+        return returnClassifier == nativeArrayIteratorSym
+    }
+
+    /**
+     * Helper to check if a class symbol has a specific interface in its supertype hierarchy.
+     */
+    private fun checkSuperTypesFor(classSymbol: IrClassSymbol, targetInterface: IrClassSymbol): Boolean {
+        val visited = mutableSetOf<IrClassSymbol>()
+        val queue = ArrayDeque<IrClassSymbol>()
+        queue.add(classSymbol)
+
+        while (queue.isNotEmpty()) {
+            val current = queue.removeFirst()
+            if (current in visited) continue
+            visited.add(current)
+
+            if (current == targetInterface) return true
+
+            // Add supertypes to queue
+            for (superType in current.owner.superTypes) {
+                val superClassifier = superType.classOrNull ?: continue
+                queue.add(superClassifier)
+            }
+        }
+        return false
     }
 
     /**
@@ -116,14 +219,39 @@ class BrsIntrinsics(
                 isStdlibIntrinsic(symbol)
     }
 
+    private val brsIntrinsicFqn = FqName("kotlin.brs.BrsIntrinsic")
+
     /**
-     * Check if a function is a stdlib intrinsic (external function with brsIntrinsic* prefix).
-     * These are defined in the stdlib as `internal external fun brsIntrinsic*()` and
-     * are replaced by native BrightScript code during code generation.
+     * Check if a function is a stdlib intrinsic.
+     * These are either:
+     * 1. External functions with brsIntrinsic* prefix
+     * 2. External functions with @BrsIntrinsic annotation
      */
     fun isStdlibIntrinsic(symbol: IrSimpleFunctionSymbol): Boolean {
         val function = symbol.owner
-        return function.isExternal && function.name.asString().startsWith("brsIntrinsic")
+        if (!function.isExternal) return false
+        // Check by name prefix
+        if (function.name.asString().startsWith("brsIntrinsic")) return true
+        // Check for @BrsIntrinsic annotation
+        return function.getAnnotation(brsIntrinsicFqn) != null
+    }
+
+    /**
+     * Get the intrinsic name for a function.
+     * Returns the function name, or the value from @BrsIntrinsic annotation if present.
+     */
+    fun getIntrinsicName(symbol: IrSimpleFunctionSymbol): String {
+        val function = symbol.owner
+        // Check for @BrsIntrinsic annotation
+        val annotation = function.getAnnotation(brsIntrinsicFqn)
+        if (annotation != null) {
+            val nameArg = annotation.getValueArgument(0)
+            if (nameArg is IrConst) {
+                return nameArg.value as String
+            }
+        }
+        // Fall back to function name
+        return function.name.asString()
     }
 
     /**
@@ -192,7 +320,19 @@ class BrsIntrinsics(
         "brsIntrinsicCreateObject" to StdlibIntrinsic.CreateObject,
 
         // Conversion intrinsics
-        "brsIntrinsicToString" to StdlibIntrinsic.ToString
+        "brsIntrinsicToString" to StdlibIntrinsic.ToString,
+
+        // Structural equality intrinsics
+        "brsIntrinsicIsAA" to StdlibIntrinsic.IsAssociativeArray,
+        "brsIntrinsicCallEquals" to StdlibIntrinsic.CallEquals,
+        "brsIntrinsicNativeEquals" to StdlibIntrinsic.NativeEquals,
+
+        // Comparison intrinsics
+        "brsIntrinsicNativeCompare" to StdlibIntrinsic.NativeCompare,
+        "brsIntrinsicCallCompareTo" to StdlibIntrinsic.CallCompareTo,
+
+        // Comparator intrinsic
+        "brsIntrinsicCallComparator" to StdlibIntrinsic.CallComparator
     )
 
     /**
@@ -246,6 +386,24 @@ class BrsIntrinsics(
 
         /** Type-aware toString conversion for Any? */
         data object ToString : StdlibIntrinsic()
+
+        /** Check if value is roAssociativeArray: Type(a) = "roAssociativeArray" */
+        data object IsAssociativeArray : StdlibIntrinsic()
+
+        /** Call equals method on object: a.equals(b) */
+        data object CallEquals : StdlibIntrinsic()
+
+        /** Native BrightScript equals: a = b */
+        data object NativeEquals : StdlibIntrinsic()
+
+        /** Native BrightScript comparison: returns -1, 0, or 1 using < and > */
+        data object NativeCompare : StdlibIntrinsic()
+
+        /** Call compareTo method on object: a.compareTo(b) */
+        data object CallCompareTo : StdlibIntrinsic()
+
+        /** Call Comparator's compare method: comparator.compare_AnyN_AnyN_k_(a, b) */
+        data object CallComparator : StdlibIntrinsic()
     }
 
     /**

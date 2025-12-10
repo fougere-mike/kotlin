@@ -20,11 +20,14 @@ import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
+import org.jetbrains.kotlin.ir.util.getAnnotation
 import org.jetbrains.kotlin.ir.util.getPackageFragment
 import org.jetbrains.kotlin.ir.util.isFunction
 import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.ir.util.isNullable
 import org.jetbrains.kotlin.ir.util.parentAsClass
+import org.jetbrains.kotlin.name.BrsStandardClassIds
+import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitor
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
@@ -349,6 +352,40 @@ class IrToBrsTransformer(
         val remainingHoisted = takeHoistedStatements()
         if (remainingHoisted.isNotEmpty()) {
             val combinedStatements = remainingHoisted.toMutableList()
+            combinedStatements.addAll(body.statements)
+            body = BrsBlock(combinedStatements)
+        }
+
+        // Generate runtime checks for parameters with default values
+        // When caller passes `invalid`, substitute with the actual default value
+        // BrightScript's default parameter syntax only applies when args are omitted, not when invalid is passed
+        val defaultValueChecks = mutableListOf<BrsStatement>()
+        irFunction.valueParameters.forEach { param ->
+            val defaultExpr = param.defaultValue?.expression
+            if (defaultExpr != null) {
+                val paramName = sanitizeParameterName(param.name.asString())
+                val defaultValue = transformExpression(defaultExpr)
+                defaultValueChecks.add(
+                    BrsIf(
+                        condition = BrsBinaryOp(
+                            BrsIdentifier(paramName),
+                            BrsBinaryOperator.EQ,
+                            BrsIdentifier("invalid")
+                        ),
+                        thenBranch = BrsExpressionStatement(
+                            BrsBinaryOp(
+                                BrsIdentifier(paramName),
+                                BrsBinaryOperator.EQ,
+                                defaultValue
+                            )
+                        ),
+                        elseBranch = null
+                    )
+                )
+            }
+        }
+        if (defaultValueChecks.isNotEmpty()) {
+            val combinedStatements = defaultValueChecks.toMutableList()
             combinedStatements.addAll(body.statements)
             body = BrsBlock(combinedStatements)
         }
@@ -1277,9 +1314,9 @@ class IrToBrsTransformer(
 
         val parametersList = mutableListOf<BrsParameter>()
 
-        // For inner classes, add $outer parameter first
+        // For inner classes, add _outer parameter first
         if (irClass.isInner) {
-            parametersList.add(BrsParameter("\$outer", BrsType.OBJECT))
+            parametersList.add(BrsParameter("_outer", BrsType.OBJECT))
         }
 
         // Add regular constructor parameters
@@ -1457,9 +1494,9 @@ class IrToBrsTransformer(
             bodyStatements.add(
                 BrsExpressionStatement(
                     BrsBinaryOp(
-                        BrsDotAccess(BrsIdentifier("this"), "\$outer"),
+                        BrsDotAccess(BrsIdentifier("this"), "_outer"),
                         BrsBinaryOperator.EQ,
-                        BrsIdentifier("\$outer")
+                        BrsIdentifier("_outer")
                     )
                 )
             )
@@ -1493,7 +1530,8 @@ class IrToBrsTransformer(
 
         // Also initialize property backing fields (may not be direct members of declarations)
         for (property in irClass.declarations.filterIsInstance<IrProperty>()) {
-            val fieldName = property.name.asString()
+            // Sanitize field name - LocalDeclarationsLowering uses $ prefix for captured vars
+            val fieldName = property.name.asString().replace("$", "_")
             if (fieldName !in initializedFields) {
                 property.backingField?.initializer?.expression?.let { initializer ->
                     bodyStatements.add(
@@ -2337,13 +2375,22 @@ class IrStatementToBrsTransformer(
     }
 
     override fun visitReturn(expression: IrReturn, data: Unit): BrsStatement {
-        if (expression.value.type.isUnit()) {
-            return BrsReturn(value = null)
-        }
-
         // Transform the expression - hoisted statements from when-lowered blocks go to current scope
         val transformedValue = parent.transformExpression(expression.value)
         val hoisted = parent.takeHoistedStatements()
+
+        // For Unit return types, we still need to execute the expression (it may have side effects)
+        // but we don't return a value. Emit the expression as a statement followed by empty return.
+        if (expression.value.type.isUnit()) {
+            val statements = hoisted.toMutableList()
+            // Only add the expression as a statement if it's not just a literal/identifier
+            // (to avoid emitting standalone "invalid" statements)
+            if (transformedValue !is BrsInvalidLiteral && transformedValue !is BrsIdentifier) {
+                statements.add(BrsExpressionStatement(transformedValue))
+            }
+            statements.add(BrsReturn(value = null))
+            return if (statements.size == 1) statements[0] else BrsBlock(statements)
+        }
 
         return if (hoisted.isNotEmpty()) {
             val allStatements = hoisted.toMutableList()
@@ -3008,7 +3055,35 @@ class IrStatementToBrsTransformer(
         val iterableType = iterableExpr.type
         val iterableClassName = iterableType.classOrNull?.owner?.name?.asString() ?: ""
 
-        // These concrete stdlib collection types have get_array() that returns the underlying roArray
+        // =============================================================================
+        // Strategy 1: Check if type implements NativeIterable (e.g., RoArray, RoAssociativeArray)
+        // These types support native BrightScript for-each iteration directly.
+        // =============================================================================
+        if (context.intrinsics.isNativeIterable(iterableType)) {
+            return BrsForEach(
+                variable = loopVarName,
+                iterable = iterableBrs,
+                body = BrsBlock(actualBody.toMutableList())
+            )
+        }
+
+        // =============================================================================
+        // Strategy 2: Check if iterator() returns NativeArrayIterator
+        // This signals that the type supports native BrightScript for-each.
+        // =============================================================================
+        val iteratorMethod = findIteratorMethod(iterableType)
+        if (iteratorMethod != null && context.intrinsics.returnsNativeArrayIterator(iteratorMethod)) {
+            return BrsForEach(
+                variable = loopVarName,
+                iterable = iterableBrs,
+                body = BrsBlock(actualBody.toMutableList())
+            )
+        }
+
+        // =============================================================================
+        // Strategy 3: Stdlib collections with get_array() (backward compatibility)
+        // These concrete stdlib collection types wrap roArray and expose it via get_array().
+        // =============================================================================
         val hasGetArray = iterableClassName in listOf(
             // Array-backed collections
             "ArrayList", "ArrayDeque", "CharArray", "IntArray", "LongArray",
@@ -3029,13 +3104,16 @@ class IrStatementToBrsTransformer(
             )
         }
 
-        // Check if this is a collection type that needs iterator-based iteration
-        // With type erasure, iterator/hasNext/next methods have consistent names
-        // Note: This includes both interface types AND concrete classes that use iterator pattern
+        // =============================================================================
+        // Strategy 4: Kotlin Iterable interface types → iterator protocol
+        // Generate a while loop with iterator_k_(), hasNext_k_(), next_k_() calls.
+        // =============================================================================
         val isCollectionInterface = iterableClassName in listOf(
             // Interface types
             "Iterable", "MutableIterable", "Collection", "MutableCollection",
             "List", "MutableList", "Set", "MutableSet",
+            // Sequence types - need iterator protocol, not native for-each (which iterates AA keys)
+            "Sequence",
             // Concrete collection classes that need iterator-based iteration
             // (these don't have get_array() - they use hash-based storage)
             "HashSet", "LinkedHashSet", "HashMap", "LinkedHashMap"
@@ -3076,12 +3154,26 @@ class IrStatementToBrsTransformer(
             ))
         }
 
-        // For native arrays or other types, use for-each directly
+        // =============================================================================
+        // Strategy 5: Default - native for-each
+        // For native arrays or other types, use for-each directly.
+        // =============================================================================
         return BrsForEach(
             variable = loopVarName,
             iterable = iterableBrs,
             body = BrsBlock(actualBody.toMutableList())
         )
+    }
+
+    /**
+     * Find the iterator() method on a type.
+     * Returns the IrSimpleFunction if found, null otherwise.
+     */
+    private fun findIteratorMethod(type: IrType): IrSimpleFunction? {
+        val classSymbol = type.classOrNull ?: return null
+        return classSymbol.owner.declarations
+            .filterIsInstance<IrSimpleFunction>()
+            .find { it.name.asString() == "iterator" && it.valueParameters.isEmpty() }
     }
 
     /**
@@ -3254,7 +3346,8 @@ class IrStatementToBrsTransformer(
         val receiver = expression.receiver?.let { parent.transformExpression(it) }
             ?: BrsMRef()
 
-        val fieldName = expression.symbol.owner.name.asString()
+        // Sanitize field name - LocalDeclarationsLowering uses $ prefix for captured vars
+        val fieldName = expression.symbol.owner.name.asString().replace("$", "_")
         val target = BrsDotAccess(receiver, fieldName)
 
         // Transform the expression - when-lowered blocks will add to hoisted queue
@@ -3515,15 +3608,17 @@ class IrExpressionToBrsTransformer(
             // it means we're accessing an outer class field
             val receiverSymbol = (expression.receiver as? IrGetValue)?.symbol?.owner
             if (receiverSymbol != null && receiverSymbol.name.asString().contains("\$this")) {
-                // This is an outer class reference - access through $outer
+                // This is an outer class reference - access through _outer
+                // Sanitize field name - LocalDeclarationsLowering uses $ prefix for captured vars
                 return BrsDotAccess(
-                    BrsDotAccess(BrsMRef(), "\$outer"),
-                    field.name.asString()
+                    BrsDotAccess(BrsMRef(), "_outer"),
+                    field.name.asString().replace("$", "_")
                 )
             }
         }
 
-        return BrsDotAccess(receiver, field.name.asString())
+        // Sanitize field name - LocalDeclarationsLowering uses $ prefix for captured vars
+        return BrsDotAccess(receiver, field.name.asString().replace("$", "_"))
     }
 
     override fun visitSetField(expression: IrSetField, data: Unit): BrsExpression {
@@ -3537,8 +3632,9 @@ class IrExpressionToBrsTransformer(
         }
 
         // Generate assignment expression: receiver.field = value
+        // Sanitize field name - LocalDeclarationsLowering uses $ prefix for captured vars
         return BrsBinaryOp(
-            BrsDotAccess(receiver, field.name.asString()),
+            BrsDotAccess(receiver, field.name.asString().replace("$", "_")),
             BrsBinaryOperator.EQ,
             expression.value.accept(this, data)
         )
@@ -3574,6 +3670,11 @@ class IrExpressionToBrsTransformer(
     }
 
     override fun visitGetObjectValue(expression: IrGetObjectValue, data: Unit): BrsExpression {
+        // Special case: Unit doesn't need a getInstance call in BrightScript
+        // Unit represents "void" which is just invalid in BrightScript
+        if (expression.type.isUnit()) {
+            return BrsIdentifier("invalid")
+        }
         // Object singletons are represented as function calls that create/return the instance
         val name = context.getBrsName(expression.symbol.owner)
         return BrsFunctionCall(BrsIdentifier("${name}_getInstance"), mutableListOf())
@@ -3665,11 +3766,40 @@ class IrExpressionToBrsTransformer(
                 "brsCreateAssociativeArray" -> {
                     return BrsAALiteral()
                 }
+                "brsCreatePlainAA" -> {
+                    // Create a plain roAssociativeArray (not a Kotlin class instance)
+                    return BrsCreateObject("roAssociativeArray", mutableListOf())
+                }
+                "brsAAAddReplace" -> {
+                    // aa.AddReplace(key, value)
+                    val aa = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                    val key = expression.getValueArgument(1)?.accept(this, data) ?: BrsInvalidLiteral()
+                    val value = expression.getValueArgument(2)?.accept(this, data) ?: BrsInvalidLiteral()
+                    return BrsMethodCall(aa, "AddReplace", mutableListOf(key, value))
+                }
                 "brsPrint" -> {
                     val arg = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
                     return BrsFunctionCall(BrsIdentifier("print"), mutableListOf(arg))
                 }
             }
+        }
+
+        // Check for @BrsCreateObject annotation - compile to CreateObject(typeName, args...)
+        val brsCreateObjectAnnotation = function.getAnnotation(BrsStandardClassIds.Annotations.BrsCreateObject.asSingleFqName())
+        if (brsCreateObjectAnnotation != null) {
+            val typeNameArg = brsCreateObjectAnnotation.getValueArgument(0)
+            val typeName = if (typeNameArg is IrConst) {
+                (typeNameArg as IrConst).value as String
+            } else {
+                // Fallback if annotation value is not a simple constant
+                "Object"
+            }
+            val args = mutableListOf<BrsExpression>(BrsStringLiteral(typeName))
+            // Add all call arguments
+            for (i in 0 until expression.valueArgumentsCount) {
+                expression.getValueArgument(i)?.let { args.add(it.accept(this, data)) }
+            }
+            return BrsFunctionCall(BrsIdentifier("CreateObject"), args)
         }
 
         // Check for @BrsInline functions - inline at call site
@@ -3782,11 +3912,23 @@ class IrExpressionToBrsTransformer(
                 "plus" -> {
                     val arg = expression.getValueArgument(0)
                     if (arg != null) {
-                        return BrsBinaryOp(
-                            receiver.accept(this, data),
-                            BrsBinaryOperator.ADD,
-                            arg.accept(this, data)
-                        )
+                        var left = receiver.accept(this, data)
+                        var right = arg.accept(this, data)
+
+                        // For PLUS operations involving strings, convert non-string operands to strings
+                        // BrightScript's + operator cannot mix Integer/Float with String
+                        val leftIsString = receiver.type.isString()
+                        val rightIsString = arg.type.isString()
+
+                        if (leftIsString && !rightIsString) {
+                            // Right operand needs string conversion
+                            right = parent.transformToString(right, arg.type)
+                        } else if (!leftIsString && rightIsString) {
+                            // Left operand needs string conversion
+                            left = parent.transformToString(left, receiver.type)
+                        }
+
+                        return BrsBinaryOp(left, BrsBinaryOperator.ADD, right)
                     }
                 }
                 // toString - handle primitives specially since BrightScript primitives don't have methods
@@ -3830,11 +3972,18 @@ class IrExpressionToBrsTransformer(
         val isLocalFunction = function.parent is IrFunction
         if (isLocalFunction) {
             val localFunctionName = function.name.asString()
-            val args = (0 until expression.valueArgumentsCount).mapNotNull { i ->
-                expression.getValueArgument(i)?.accept(this, data)
+            val args = mutableListOf<BrsExpression>()
+            for (i in 0 until expression.valueArgumentsCount) {
+                val arg = expression.getValueArgument(i)
+                if (arg != null) {
+                    args.add(arg.accept(this, data))
+                } else {
+                    // Parameter uses default value - add invalid to preserve position
+                    args.add(BrsInvalidLiteral())
+                }
             }
             // Call .invoke() method on the local function closure object
-            return BrsMethodCall(BrsIdentifier(localFunctionName), "invoke", args.toMutableList())
+            return BrsMethodCall(BrsIdentifier(localFunctionName), "invoke", args)
         }
 
         val functionName = context.getBrsName(function)
@@ -3850,7 +3999,7 @@ class IrExpressionToBrsTransformer(
             val receiverParamOwner = receiverValue?.symbol?.owner
 
             // If the function belongs to an outer class and the receiver is a dispatch receiver
-            // from the outer class (not the current inner class), we access through $outer
+            // from the outer class (not the current inner class), we access through _outer
             val isOuterClassAccess = if (functionParentClass != null && receiverParamOwner != null) {
                 // Check if the receiver is a dispatch receiver that belongs to the function's parent class
                 // When we're in an inner class and accessing outer class members,
@@ -3864,8 +4013,8 @@ class IrExpressionToBrsTransformer(
             }
 
             val receiverExpr = if (isOuterClassAccess) {
-                // Access through $outer for inner class outer reference
-                BrsDotAccess(BrsMRef(), "\$outer")
+                // Access through _outer for inner class outer reference
+                BrsDotAccess(BrsMRef(), "_outer")
             } else {
                 receiver.accept(this, data)
             }
@@ -4021,10 +4170,17 @@ class IrExpressionToBrsTransformer(
                         fullMethodName
                     }
                 }
-                val args = (0 until expression.valueArgumentsCount).mapNotNull { i ->
-                    expression.getValueArgument(i)?.let { it.accept(this, data) }
+                val args = mutableListOf<BrsExpression>()
+                for (i in 0 until expression.valueArgumentsCount) {
+                    val arg = expression.getValueArgument(i)
+                    if (arg != null) {
+                        args.add(arg.accept(this, data))
+                    } else {
+                        // Parameter uses default value - add invalid to preserve position
+                        args.add(BrsInvalidLiteral())
+                    }
                 }
-                return BrsMethodCall(receiverExpr, methodName, args.toMutableList())
+                return BrsMethodCall(receiverExpr, methodName, args)
             }
             arguments.add(receiverExpr)
         }
@@ -4073,8 +4229,12 @@ class IrExpressionToBrsTransformer(
                 val args = mutableListOf<BrsExpression>()
                 args.add(receiver.accept(this, data))
                 for (i in 0 until expression.valueArgumentsCount) {
-                    expression.getValueArgument(i)?.let { arg ->
+                    val arg = expression.getValueArgument(i)
+                    if (arg != null) {
                         args.add(arg.accept(this, data))
+                    } else {
+                        // Parameter uses default value - add invalid to preserve position
+                        args.add(BrsInvalidLiteral())
                     }
                 }
                 return BrsFunctionCall(BrsIdentifier(correctedName), args)
@@ -4083,10 +4243,14 @@ class IrExpressionToBrsTransformer(
             arguments.add(receiver.accept(this, data))
         }
 
-        // Add value arguments
+        // Add value arguments, using invalid for default parameters to preserve positional alignment
         for (i in 0 until expression.valueArgumentsCount) {
-            expression.getValueArgument(i)?.let { arg ->
+            val arg = expression.getValueArgument(i)
+            if (arg != null) {
                 arguments.add(arg.accept(this, data))
+            } else {
+                // Parameter uses default value - add invalid to preserve position
+                arguments.add(BrsInvalidLiteral())
             }
         }
 
@@ -4132,7 +4296,8 @@ class IrExpressionToBrsTransformer(
 
         // Check if this is a stdlib intrinsic
         if (context.intrinsics.isStdlibIntrinsic(expression.symbol)) {
-            return transformStdlibIntrinsic(expression, name)
+            val intrinsicName = context.intrinsics.getIntrinsicName(expression.symbol)
+            return transformStdlibIntrinsic(expression, intrinsicName)
         }
 
         return when (name) {
@@ -4378,6 +4543,73 @@ class IrExpressionToBrsTransformer(
                 }
             }
 
+            is BrsIntrinsics.StdlibIntrinsic.IsAssociativeArray -> {
+                // Type(a) = "roAssociativeArray"
+                if (args.isNotEmpty()) {
+                    BrsBinaryOp(
+                        BrsFunctionCall(BrsIdentifier("Type"), mutableListOf(args[0])),
+                        BrsBinaryOperator.EQ,
+                        BrsStringLiteral("roAssociativeArray")
+                    )
+                } else {
+                    BrsBooleanLiteral(false)
+                }
+            }
+
+            is BrsIntrinsics.StdlibIntrinsic.CallEquals -> {
+                // a.equals(b) - direct method call on roAssociativeArray
+                if (args.size >= 2) {
+                    BrsMethodCall(args[0], "equals", mutableListOf(args[1]))
+                } else {
+                    BrsBooleanLiteral(false)
+                }
+            }
+
+            is BrsIntrinsics.StdlibIntrinsic.NativeEquals -> {
+                // a = b - native BrightScript comparison
+                if (args.size >= 2) {
+                    BrsBinaryOp(args[0], BrsBinaryOperator.EQ, args[1])
+                } else {
+                    BrsBooleanLiteral(false)
+                }
+            }
+
+            is BrsIntrinsics.StdlibIntrinsic.NativeCompare -> {
+                // Native comparison returning -1, 0, or 1
+                // Generates: if a < b then -1 else if a > b then 1 else 0
+                if (args.size >= 2) {
+                    BrsConditional(
+                        BrsBinaryOp(args[0], BrsBinaryOperator.LT, args[1]),
+                        BrsIntLiteral(-1),
+                        BrsConditional(
+                            BrsBinaryOp(args[0], BrsBinaryOperator.GT, args[1]),
+                            BrsIntLiteral(1),
+                            BrsIntLiteral(0)
+                        )
+                    )
+                } else {
+                    BrsIntLiteral(0)
+                }
+            }
+
+            is BrsIntrinsics.StdlibIntrinsic.CallCompareTo -> {
+                // a.compareTo(b) - direct method call on roAssociativeArray
+                if (args.size >= 2) {
+                    BrsMethodCall(args[0], "compareTo", mutableListOf(args[1]))
+                } else {
+                    BrsIntLiteral(0)
+                }
+            }
+
+            is BrsIntrinsics.StdlibIntrinsic.CallComparator -> {
+                // comparator.compare_AnyN_AnyN_k_(a, b) - call Comparator's compare method directly
+                if (args.size >= 3) {
+                    BrsMethodCall(args[0], "compare_AnyN_AnyN_k_", mutableListOf(args[1], args[2]))
+                } else {
+                    BrsIntLiteral(0)
+                }
+            }
+
             null -> {
                 // Unknown intrinsic - generate as function call with the name stripped of prefix
                 val simpleName = name.removePrefix("brsIntrinsic")
@@ -4401,24 +4633,40 @@ class IrExpressionToBrsTransformer(
             if (dispatchReceiver != null && function.valueParameters.isEmpty()) {
                 if (dispatchReceiver is IrCall) {
                     val innerCall = dispatchReceiver
-                    val (left, right) = when {
+                    val (leftIr, rightIr) = when {
                         innerCall.dispatchReceiver != null -> {
-                            val l = innerCall.dispatchReceiver!!.accept(this, Unit)
-                            val r = innerCall.getValueArgument(0)?.accept(this, Unit) ?: return null
-                            Pair(l, r)
+                            Pair(innerCall.dispatchReceiver!!, innerCall.getValueArgument(0)!!)
                         }
                         innerCall.extensionReceiver != null -> {
-                            val l = innerCall.extensionReceiver!!.accept(this, Unit)
-                            val r = innerCall.getValueArgument(0)?.accept(this, Unit) ?: return null
-                            Pair(l, r)
+                            Pair(innerCall.extensionReceiver!!, innerCall.getValueArgument(0)!!)
                         }
                         else -> {
-                            val l = innerCall.getValueArgument(0)?.accept(this, Unit) ?: return null
-                            val r = innerCall.getValueArgument(1)?.accept(this, Unit) ?: return null
-                            Pair(l, r)
+                            Pair(innerCall.getValueArgument(0)!!, innerCall.getValueArgument(1)!!)
                         }
                     }
-                    return BrsBinaryOp(left, BrsBinaryOperator.NE, right)
+
+                    // Check if we need structural comparison for non-primitive types
+                    // Exclude null comparisons - BrightScript's = and <> work correctly with invalid
+                    val leftType = leftIr.type
+                    val rightType = rightIr.type
+                    val isNullComparison = (leftIr is IrConst && (leftIr as IrConst).value == null) ||
+                                          (rightIr is IrConst && (rightIr as IrConst).value == null)
+                    val needsStructuralEquals = !isNullComparison &&
+                        (!leftType.isPrimitiveForComparison() || !rightType.isPrimitiveForComparison())
+
+                    val left = leftIr.accept(this, Unit)
+                    val right = rightIr.accept(this, Unit)
+
+                    return if (needsStructuralEquals) {
+                        // Use NOT brsStructuralEquals() for non-primitive types
+                        val structuralCall = BrsFunctionCall(
+                            BrsIdentifier("brsStructuralEquals_AnyN_AnyN_k_"),
+                            mutableListOf(left, right)
+                        )
+                        BrsUnaryOp(BrsUnaryOperator.NOT, structuralCall)
+                    } else {
+                        BrsBinaryOp(left, BrsBinaryOperator.NE, right)
+                    }
                 }
                 // Fallback for non-call receivers
                 val operand = dispatchReceiver.accept(this, Unit)
@@ -4547,23 +4795,68 @@ class IrExpressionToBrsTransformer(
             }
             // ==================== End Enum Comparison Optimization ====================
 
-            val (left, right) = when {
+            val (leftIr, rightIr) = when {
                 expression.dispatchReceiver != null -> {
-                    val l = expression.dispatchReceiver!!.accept(this, Unit)
-                    val r = expression.getValueArgument(0)?.accept(this, Unit) ?: return null
-                    Pair(l, r)
+                    Pair(expression.dispatchReceiver!!, expression.getValueArgument(0)!!)
                 }
                 expression.extensionReceiver != null -> {
-                    val l = expression.extensionReceiver!!.accept(this, Unit)
-                    val r = expression.getValueArgument(0)?.accept(this, Unit) ?: return null
-                    Pair(l, r)
+                    Pair(expression.extensionReceiver!!, expression.getValueArgument(0)!!)
                 }
                 else -> {
-                    val l = expression.getValueArgument(0)?.accept(this, Unit) ?: return null
-                    val r = expression.getValueArgument(1)?.accept(this, Unit) ?: return null
-                    Pair(l, r)
+                    Pair(expression.getValueArgument(0)!!, expression.getValueArgument(1)!!)
                 }
             }
+
+            // ==================== Structural Equals for Non-Primitive Types ====================
+            // BrightScript's = and <> operators can't compare roAssociativeArray objects (Kotlin classes).
+            // For non-primitive types (generics, Any, class instances), use brsStructuralEquals.
+            // Exclude null comparisons - BrightScript's = and <> work correctly with invalid.
+            if (binaryOp == BrsBinaryOperator.EQ || binaryOp == BrsBinaryOperator.NE) {
+                val leftType = leftIr.type
+                val rightType = rightIr.type
+
+                // Check if this is a null comparison - these don't need structural equals
+                val isNullComparison = (leftIr is IrConst && (leftIr as IrConst).value == null) ||
+                                       (rightIr is IrConst && (rightIr as IrConst).value == null)
+
+                // Check if either operand is a non-primitive type that needs structural comparison
+                val needsStructuralEquals = !isNullComparison &&
+                    (!leftType.isPrimitiveForComparison() || !rightType.isPrimitiveForComparison())
+
+                if (needsStructuralEquals) {
+                    val left = leftIr.accept(this, Unit)
+                    val right = rightIr.accept(this, Unit)
+                    val structuralCall = BrsFunctionCall(
+                        BrsIdentifier("brsStructuralEquals_AnyN_AnyN_k_"),
+                        mutableListOf(left, right)
+                    )
+                    return if (binaryOp == BrsBinaryOperator.NE) {
+                        BrsUnaryOp(BrsUnaryOperator.NOT, structuralCall)
+                    } else {
+                        structuralCall
+                    }
+                }
+            }
+            // ==================== End Structural Equals ====================
+
+            var left = leftIr.accept(this, Unit)
+            var right = rightIr.accept(this, Unit)
+
+            // For PLUS operations involving strings, convert non-string operands to strings
+            // BrightScript's + operator cannot mix Integer/Float with String
+            if (binaryOp == BrsBinaryOperator.ADD) {
+                val leftIsString = leftIr.type.isString()
+                val rightIsString = rightIr.type.isString()
+
+                if (leftIsString && !rightIsString) {
+                    // Right operand needs string conversion
+                    right = parent.transformToString(right, rightIr.type)
+                } else if (!leftIsString && rightIsString) {
+                    // Left operand needs string conversion
+                    left = parent.transformToString(left, leftIr.type)
+                }
+            }
+
             return BrsBinaryOp(left, binaryOp, right)
         }
 
@@ -4831,6 +5124,32 @@ class IrExpressionToBrsTransformer(
                     generateInstanceCheck(argument, expression.typeOperand)
                 )
             }
+            IrTypeOperator.SAM_CONVERSION -> {
+                // For SAM conversions, we need to add the interface method name in addition to invoke
+                // This allows both lambda-style calls (.invoke()) and interface-style calls (.methodName())
+                if (argument is BrsAALiteral) {
+                    val targetClass = expression.typeOperand.classOrNull?.owner
+                    if (targetClass != null && targetClass.isFun) {
+                        // Find the single abstract method
+                        val samMethod = targetClass.declarations
+                            .filterIsInstance<org.jetbrains.kotlin.ir.declarations.IrSimpleFunction>()
+                            .firstOrNull { it.modality == org.jetbrains.kotlin.descriptors.Modality.ABSTRACT }
+                        if (samMethod != null) {
+                            // Get the mangled method name and strip the class prefix
+                            // to match how call sites generate method names
+                            val fullMethodName = context.getBrsName(samMethod)
+                            val className = context.getBrsName(targetClass)
+                            val methodName = fullMethodName.removePrefix("${className}_")
+                            // Find the invoke entry and duplicate it with the SAM method name
+                            val invokeEntry = argument.entries.find { it.key == "invoke" }
+                            if (invokeEntry != null) {
+                                argument.entries.add(BrsAAEntry(methodName, invokeEntry.value.deepCopy()))
+                            }
+                        }
+                    }
+                }
+                argument
+            }
             else -> argument
         }
     }
@@ -4892,7 +5211,15 @@ class IrExpressionToBrsTransformer(
     // ==================== Binary Operations ====================
 
     override fun visitStringConcatenation(expression: IrStringConcatenation, data: Unit): BrsExpression {
-        val parts = expression.arguments.map { it.accept(this, data) }
+        val parts = expression.arguments.mapIndexed { index, arg ->
+            val expr = arg.accept(this, data)
+            // Convert non-string arguments to strings for BrightScript string concatenation
+            if (!arg.type.isString()) {
+                parent.transformToString(expr, arg.type)
+            } else {
+                expr
+            }
+        }
         return parts.reduce { acc, expr ->
             BrsBinaryOp(acc, BrsBinaryOperator.CONCAT, expr)
         }
@@ -5445,4 +5772,43 @@ class IrExpressionToBrsTransformer(
             }
         }
     }
+}
+
+// ==================== Type Helper Extensions ====================
+
+/**
+ * Check if a type is primitive for comparison purposes.
+ * Primitive types can use BrightScript's native = and <> operators.
+ * Non-primitive types (classes, Any, type parameters) need brsStructuralEquals.
+ */
+private fun IrType.isPrimitiveForComparison(): Boolean {
+    // Get the non-nullable version for checking
+    val baseType = this.makeNotNull()
+
+    // Primitive types that BrightScript can compare natively
+    if (baseType.isInt() || baseType.isLong() || baseType.isFloat() || baseType.isDouble() ||
+        baseType.isShort() || baseType.isByte() || baseType.isBoolean() || baseType.isChar() ||
+        baseType.isString()) {
+        return true
+    }
+
+    // Type parameters (generics) need structural comparison
+    if (baseType.classifierOrNull is IrTypeParameterSymbol) {
+        return false
+    }
+
+    // Any and Nothing types need structural comparison
+    if (baseType.isAny() || baseType.isNothing()) {
+        return false
+    }
+
+    // Class types (non-primitive) need structural comparison
+    val classifier = baseType.classifierOrNull?.owner
+    if (classifier is IrClass) {
+        // Enum comparisons are handled separately above, but regular classes need structural
+        return false
+    }
+
+    // Default to structural comparison for safety
+    return false
 }

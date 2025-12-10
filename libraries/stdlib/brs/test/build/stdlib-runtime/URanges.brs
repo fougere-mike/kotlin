@@ -107,7 +107,7 @@ function UIntRange_isEmpty_k_() as Boolean
 end function
 
 function UIntRange_equals_AnyN_k_(other as Dynamic) as Boolean
-    return __kotlin_isInstanceOf(other, "UIntRange") and ((m.isEmpty_k_() and other.isEmpty_k_()) or ((m.get_first() = other.get_first()) and (m.get_last() = other.get_last())))
+    return __kotlin_isInstanceOf(other, "UIntRange") and ((m.isEmpty_k_() and other.isEmpty_k_()) or (brsStructuralEquals_AnyN_AnyN_k_(m.get_first(), other.get_first()) and brsStructuralEquals_AnyN_AnyN_k_(m.get_last(), other.get_last())))
 end function
 
 function UIntRange_hashCode_k_() as Integer
@@ -122,7 +122,7 @@ function UIntRange_hashCode_k_() as Integer
 end function
 
 function UIntRange_toString_k_() as String
-    return (m.get_first() + "..") + m.get_last()
+    return (m.get_first().toString() + "..") + m.get_last().toString()
 end function
 
 function UIntRange_get_start_k_() as Object
@@ -134,7 +134,7 @@ function UIntRange_get_endInclusive_k_() as Object
 end function
 
 function UIntRange_get_endExclusive_k_() as Object
-    if m.get_last() = UInt_Companion_get_MAX_VALUE_k_() then
+    if brsStructuralEquals_AnyN_AnyN_k_(m.get_last(), UInt_Companion_get_MAX_VALUE_k_()) then
         error_Any_k_("Cannot return the exclusive upper bound of a range that includes MAX_VALUE.")
     end if
     return m.get_last() + 1
@@ -199,7 +199,7 @@ function UIntProgression_isEmpty_k_() as Boolean
 end function
 
 function UIntProgression_equals_AnyN_k_(other as Dynamic) as Boolean
-    return __kotlin_isInstanceOf(other, "UIntProgression") and ((m.isEmpty_k_() and other.isEmpty_k_()) or (((m.get_first() = other.get_first()) and (m.get_last() = other.get_last())) and (m.get_step() = other.get_step())))
+    return __kotlin_isInstanceOf(other, "UIntProgression") and ((m.isEmpty_k_() and other.isEmpty_k_()) or ((brsStructuralEquals_AnyN_AnyN_k_(m.get_first(), other.get_first()) and brsStructuralEquals_AnyN_AnyN_k_(m.get_last(), other.get_last())) and (m.get_step() = other.get_step())))
 end function
 
 function UIntProgression_hashCode_k_() as Integer
@@ -216,9 +216,9 @@ end function
 function UIntProgression_toString_k_() as String
     __when_tmp11 = invalid
     if m.get_step() > 0 then
-        __when_tmp11 = ((((m.get_first() + "..") + m.get_last()) + " step ") + m.get_step())
+        __when_tmp11 = ((((m.get_first().toString() + "..") + m.get_last().toString()) + " step ") + __kotlin_numToStr_I_k_(m.get_step()))
     else if true then
-        __when_tmp11 = ((((m.get_first() + " downTo ") + m.get_last()) + " step ") + -m.get_step())
+        __when_tmp11 = ((((m.get_first().toString() + " downTo ") + m.get_last().toString()) + " step ") + __kotlin_numToStr_I_k_(-m.get_step()))
     end if
     return __when_tmp11
 
@@ -282,7 +282,7 @@ end function
 
 function UIntProgressionIterator_next_k_() as Object
     value = m.get_next()
-    if value = m.get_finalElement() then
+    if brsStructuralEquals_AnyN_AnyN_k_(value, m.get_finalElement()) then
         if not m.get_hasNext() then
             throw NoSuchElementException_create_k_()
         end if
@@ -350,7 +350,7 @@ function ULongRange_isEmpty_k_() as Boolean
 end function
 
 function ULongRange_equals_AnyN_k_(other as Dynamic) as Boolean
-    return __kotlin_isInstanceOf(other, "ULongRange") and ((m.isEmpty_k_() and other.isEmpty_k_()) or ((m.get_first() = other.get_first()) and (m.get_last() = other.get_last())))
+    return __kotlin_isInstanceOf(other, "ULongRange") and ((m.isEmpty_k_() and other.isEmpty_k_()) or (brsStructuralEquals_AnyN_AnyN_k_(m.get_first(), other.get_first()) and brsStructuralEquals_AnyN_AnyN_k_(m.get_last(), other.get_last())))
 end function
 
 function ULongRange_hashCode_k_() as Integer
@@ -365,7 +365,7 @@ function ULongRange_hashCode_k_() as Integer
 end function
 
 function ULongRange_toString_k_() as String
-    return (m.get_first() + "..") + m.get_last()
+    return (m.get_first().toString() + "..") + m.get_last().toString()
 end function
 
 function ULongRange_get_start_k_() as Object
@@ -377,7 +377,7 @@ function ULongRange_get_endInclusive_k_() as Object
 end function
 
 function ULongRange_get_endExclusive_k_() as Object
-    if m.get_last() = ULong_Companion_get_MAX_VALUE_k_() then
+    if brsStructuralEquals_AnyN_AnyN_k_(m.get_last(), ULong_Companion_get_MAX_VALUE_k_()) then
         error_Any_k_("Cannot return the exclusive upper bound of a range that includes MAX_VALUE.")
     end if
     return m.get_last() + 1
@@ -442,7 +442,7 @@ function ULongProgression_isEmpty_k_() as Boolean
 end function
 
 function ULongProgression_equals_AnyN_k_(other as Dynamic) as Boolean
-    return __kotlin_isInstanceOf(other, "ULongProgression") and ((m.isEmpty_k_() and other.isEmpty_k_()) or (((m.get_first() = other.get_first()) and (m.get_last() = other.get_last())) and (m.get_step() = other.get_step())))
+    return __kotlin_isInstanceOf(other, "ULongProgression") and ((m.isEmpty_k_() and other.isEmpty_k_()) or ((brsStructuralEquals_AnyN_AnyN_k_(m.get_first(), other.get_first()) and brsStructuralEquals_AnyN_AnyN_k_(m.get_last(), other.get_last())) and (m.get_step() = other.get_step())))
 end function
 
 function ULongProgression_hashCode_k_() as Integer
@@ -459,9 +459,9 @@ end function
 function ULongProgression_toString_k_() as String
     __when_tmp17 = invalid
     if m.get_step() > 0 then
-        __when_tmp17 = ((((m.get_first() + "..") + m.get_last()) + " step ") + m.get_step())
+        __when_tmp17 = ((((m.get_first().toString() + "..") + m.get_last().toString()) + " step ") + __kotlin_numToStr_J_k_(m.get_step()))
     else if true then
-        __when_tmp17 = ((((m.get_first() + " downTo ") + m.get_last()) + " step ") + -m.get_step())
+        __when_tmp17 = ((((m.get_first().toString() + " downTo ") + m.get_last().toString()) + " step ") + __kotlin_numToStr_J_k_(-m.get_step()))
     end if
     return __when_tmp17
 
@@ -525,7 +525,7 @@ end function
 
 function ULongProgressionIterator_next_k_() as Object
     value = m.get_next()
-    if value = m.get_finalElement() then
+    if brsStructuralEquals_AnyN_AnyN_k_(value, m.get_finalElement()) then
         if not m.get_hasNext() then
             throw NoSuchElementException_create_k_()
         end if
@@ -608,6 +608,6 @@ end function
 
 sub checkStepIsPositive_Z_Number_k_(isPositive as Boolean, step_ as Object)
     if not isPositive then
-        throw IllegalArgumentException_create_StrN_k_(("Step must be positive, was: " + step_) + ".")
+        throw IllegalArgumentException_create_StrN_k_(("Step must be positive, was: " + step_.toString()) + ".")
     end if
 end sub

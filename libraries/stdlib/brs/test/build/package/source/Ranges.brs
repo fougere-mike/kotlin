@@ -73,7 +73,7 @@ function IntRange_hashCode_k_() as Integer
 end function
 
 function IntRange_toString_k_() as String
-    return (m.get_first() + "..") + m.get_last()
+    return (__kotlin_numToStr_I_k_(m.get_first()) + "..") + __kotlin_numToStr_I_k_(m.get_last())
 end function
 
 function IntRange_get_start_k_() as Integer
@@ -152,7 +152,7 @@ function LongRange_hashCode_k_() as Integer
 end function
 
 function LongRange_toString_k_() as String
-    return (m.get_first() + "..") + m.get_last()
+    return (__kotlin_numToStr_J_k_(m.get_first()) + "..") + __kotlin_numToStr_J_k_(m.get_last())
 end function
 
 function LongRange_get_start_k_() as LongInteger
@@ -231,7 +231,7 @@ function CharRange_hashCode_k_() as Integer
 end function
 
 function CharRange_toString_k_() as String
-    return (m.get_first() + "..") + m.get_last()
+    return (m.get_first().toString() + "..") + m.get_last().toString()
 end function
 
 function CharRange_get_start_k_() as Object
@@ -318,9 +318,9 @@ end function
 function IntProgression_toString_k_() as String
     __when_tmp5 = invalid
     if m.get_step() > 0 then
-        __when_tmp5 = ((((m.get_first() + "..") + m.get_last()) + " step ") + m.get_step())
+        __when_tmp5 = ((((__kotlin_numToStr_I_k_(m.get_first()) + "..") + __kotlin_numToStr_I_k_(m.get_last())) + " step ") + __kotlin_numToStr_I_k_(m.get_step()))
     else if true then
-        __when_tmp5 = ((((m.get_first() + " downTo ") + m.get_last()) + " step ") + -m.get_step())
+        __when_tmp5 = ((((__kotlin_numToStr_I_k_(m.get_first()) + " downTo ") + __kotlin_numToStr_I_k_(m.get_last())) + " step ") + __kotlin_numToStr_I_k_(-m.get_step()))
     end if
     return __when_tmp5
 
@@ -413,9 +413,9 @@ end function
 function LongProgression_toString_k_() as String
     __when_tmp8 = invalid
     if m.get_step() > 0 then
-        __when_tmp8 = ((((m.get_first() + "..") + m.get_last()) + " step ") + m.get_step())
+        __when_tmp8 = ((((__kotlin_numToStr_J_k_(m.get_first()) + "..") + __kotlin_numToStr_J_k_(m.get_last())) + " step ") + __kotlin_numToStr_J_k_(m.get_step()))
     else if true then
-        __when_tmp8 = ((((m.get_first() + " downTo ") + m.get_last()) + " step ") + -m.get_step())
+        __when_tmp8 = ((((__kotlin_numToStr_J_k_(m.get_first()) + " downTo ") + __kotlin_numToStr_J_k_(m.get_last())) + " step ") + __kotlin_numToStr_J_k_(-m.get_step()))
     end if
     return __when_tmp8
 
@@ -508,9 +508,9 @@ end function
 function CharProgression_toString_k_() as String
     __when_tmp11 = invalid
     if m.get_step() > 0 then
-        __when_tmp11 = ((((m.get_first() + "..") + m.get_last()) + " step ") + m.get_step())
+        __when_tmp11 = ((((m.get_first().toString() + "..") + m.get_last().toString()) + " step ") + __kotlin_numToStr_I_k_(m.get_step()))
     else if true then
-        __when_tmp11 = ((((m.get_first() + " downTo ") + m.get_last()) + " step ") + -m.get_step())
+        __when_tmp11 = ((((m.get_first().toString() + " downTo ") + m.get_last().toString()) + " step ") + __kotlin_numToStr_I_k_(-m.get_step()))
     end if
     return __when_tmp11
 

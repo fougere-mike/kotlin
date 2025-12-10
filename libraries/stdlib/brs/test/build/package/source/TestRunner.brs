@@ -42,6 +42,9 @@ sub TestRunner_test_Str_Function0V_k_(name as String, testFn as Object)
 end sub
 
 sub TestRunner_xtest_Str_Str_Function0V_k_(name as String, reason = "", testFn = invalid)
+    if reason = invalid then
+        reason = ""
+    end if
     m.get_adapter().test_Str_Z_Function0V_k_(name, true, testFn)
 end sub
 

@@ -203,6 +203,9 @@ function RoFileSystem_find_Str_Str_k_(path as String, regex as String) as Object
 end function
 
 function RoFileSystem_findRecurse_Str_Str_I_k_(path as String, regex as String, maxDepth = 10) as Object
+    if maxDepth = invalid then
+        maxDepth = 10
+    end if
     return m.get_native().FindRecurse(path, regex, maxDepth)
 end function
 

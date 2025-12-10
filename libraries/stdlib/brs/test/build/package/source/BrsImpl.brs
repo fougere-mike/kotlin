@@ -11,5 +11,5 @@ function AssertionErrorWithCause_StrN_ThrowableN_k_(message as Dynamic, cause as
 end function
 
 sub todo_Function0V_k_(block as Object)
-    println_AnyN_k_("TODO at " + block)
+    println_AnyN_k_("TODO at " + block.toString())
 end sub

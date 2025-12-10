@@ -5,6 +5,8 @@
 
 package kotlin
 
+import kotlin.brs.BrsInline
+
 /**
  * Actual implementations of core Kotlin functions for BrightScript target.
  */
@@ -318,6 +320,10 @@ private object UNINITIALIZED_VALUE
  * Compares two values for structural equality.
  * This is needed because BrightScript's == operator doesn't work for associative arrays (objects).
  * For objects, we delegate to their equals method.
+ * For primitives, we use native BrightScript comparison.
+ *
+ * This function uses brsTypeOf() to check for roAssociativeArray at runtime,
+ * then either calls equals method or uses native comparison.
  *
  * @param a first value to compare
  * @param b second value to compare
@@ -327,7 +333,75 @@ public fun brsStructuralEquals(a: Any?, b: Any?): Boolean {
     // Identity check (also handles null == null)
     if (a === b) return true
     // Null checks
-    if (a == null || b == null) return false
-    // Delegate to equals method for objects
-    return a.equals(b)
+    if (a === null || b === null) return false
+    // For objects (roAssociativeArray), use equals method
+    // For primitives, use native comparison via brsNativeEquals intrinsic
+    return if (brsIsAssociativeArray(a)) {
+        brsCallEquals(a, b)
+    } else {
+        brsNativeEquals(a, b)
+    }
 }
+
+/**
+ * Check if a value is a roAssociativeArray (Kotlin class instance).
+ * This is an intrinsic that compiles to: Type(a) = "roAssociativeArray"
+ */
+@kotlin.brs.BrsIntrinsic("brsIntrinsicIsAA")
+private external fun brsIsAssociativeArray(a: Any?): Boolean
+
+/**
+ * Call the equals method on an object.
+ * This is an intrinsic that compiles to: a.equals(b)
+ */
+@kotlin.brs.BrsIntrinsic("brsIntrinsicCallEquals")
+private external fun brsCallEquals(a: Any?, b: Any?): Boolean
+
+/**
+ * Native BrightScript equals comparison.
+ * This is an intrinsic that compiles to: a = b
+ */
+@kotlin.brs.BrsIntrinsic("brsIntrinsicNativeEquals")
+private external fun brsNativeEquals(a: Any?, b: Any?): Boolean
+
+// ============================================
+// Comparison for Comparable types
+// ============================================
+
+/**
+ * Compares two values for ordering.
+ * This is needed because BrightScript primitives (roInt, roString, etc.) don't have
+ * a compareTo method. For objects (roAssociativeArray), we delegate to compareTo.
+ * For primitives, we use native BrightScript comparison operators.
+ *
+ * @param a first value to compare
+ * @param b second value to compare
+ * @return negative if a < b, zero if a == b, positive if a > b
+ */
+public fun brsCompareTo(a: Any?, b: Any?): Int {
+    // Handle null cases
+    if (a === b) return 0
+    if (a === null) return -1
+    if (b === null) return 1
+    // For objects (roAssociativeArray), use compareTo method
+    // For primitives, use native comparison operators
+    return if (brsIsAssociativeArray(a)) {
+        brsCallCompareTo(a, b)
+    } else {
+        brsNativeCompare(a, b)
+    }
+}
+
+/**
+ * Call the compareTo method on an object.
+ * This is an intrinsic that compiles to: a.compareTo(b)
+ */
+@kotlin.brs.BrsIntrinsic("brsIntrinsicCallCompareTo")
+private external fun brsCallCompareTo(a: Any?, b: Any?): Int
+
+/**
+ * Native BrightScript comparison.
+ * This is an intrinsic that compiles to: if a < b then -1 else if a > b then 1 else 0
+ */
+@kotlin.brs.BrsIntrinsic("brsIntrinsicNativeCompare")
+private external fun brsNativeCompare(a: Any?, b: Any?): Int

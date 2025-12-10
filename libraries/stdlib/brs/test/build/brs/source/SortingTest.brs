@@ -3,90 +3,76 @@ sub sortingTests_rTestRunner_k_(m as Object)
         m.test_Str_Function0V_k_("sort integers", {invoke: function() as Void
             list = mutableListOf_Arr_k_([5, 2, 8, 1, 9, 3])
             sort_rMutableList_k_(list)
-            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_([1, 2, 3, 5, 8, 9]), list)
+            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_([1, 2, 3, 5, 8, 9]), list, invalid)
         end function})
         m.test_Str_Function0V_k_("sort strings", {invoke: function() as Void
             list = mutableListOf_Arr_k_(["dog", "cat", "apple", "zebra"])
             sort_rMutableList_k_(list)
-            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_(["apple", "cat", "dog", "zebra"]), list)
+            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_(["apple", "cat", "dog", "zebra"]), list, invalid)
         end function})
         m.test_Str_Function0V_k_("sort with comparator", {invoke: function() as Void
             list = mutableListOf_Arr_k_([5, 2, 8, 1, 9, 3])
             sortWith_rMutableList_Comparator_k_(list, reverseOrder_k_())
-            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_([9, 8, 5, 3, 2, 1]), list)
+            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_([9, 8, 5, 3, 2, 1]), list, invalid)
         end function})
         m.test_Str_Function0V_k_("sort descending", {invoke: function() as Void
             list = mutableListOf_Arr_k_([5, 2, 8, 1, 9, 3])
             sortDescending_rMutableList_k_(list)
-            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_([9, 8, 5, 3, 2, 1]), list)
+            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_([9, 8, 5, 3, 2, 1]), list, invalid)
         end function})
         m.test_Str_Function0V_k_("sortBy", {invoke: function() as Void
             list = mutableListOf_Arr_k_(["apple", "pie", "a", "zoo"])
             sortBy_rMutableList_Function1_k_(list, {invoke: function(it as String) as Dynamic
                 return Len(it)
             end function})
-            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_(["a", "pie", "zoo", "apple"]), list)
+            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_(["a", "pie", "zoo", "apple"]), list, invalid)
         end function})
         m.test_Str_Function0V_k_("sortByDescending", {invoke: function() as Void
             list = mutableListOf_Arr_k_(["apple", "pie", "a", "zoo"])
             sortByDescending_rMutableList_Function1_k_(list, {invoke: function(it as String) as Dynamic
                 return Len(it)
             end function})
-            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_(["apple", "pie", "zoo", "a"]), list)
+            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_(["apple", "pie", "zoo", "a"]), list, invalid)
         end function})
         m.test_Str_Function0V_k_("sorted (immutable)", {invoke: function() as Void
             list = listOf_Arr_k_([5, 2, 8, 1, 9, 3])
             sorted = sorted_rIterable_k_(list)
-            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_([5, 2, 8, 1, 9, 3]), list)
-            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_([1, 2, 3, 5, 8, 9]), sorted)
+            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_([5, 2, 8, 1, 9, 3]), list, invalid)
+            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_([1, 2, 3, 5, 8, 9]), sorted, invalid)
         end function})
         m.test_Str_Function0V_k_("sortedWith", {invoke: function() as Void
             list = listOf_Arr_k_([5, 2, 8, 1, 9, 3])
             sorted = sortedWith_rIterable_Comparator_k_(list, reverseOrder_k_())
-            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_([9, 8, 5, 3, 2, 1]), sorted)
+            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_([9, 8, 5, 3, 2, 1]), sorted, invalid)
         end function})
         m.test_Str_Function0V_k_("sortedDescending", {invoke: function() as Void
             list = listOf_Arr_k_([5, 2, 8, 1, 9, 3])
             sorted = sortedDescending_rIterable_k_(list)
-            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_([9, 8, 5, 3, 2, 1]), sorted)
+            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_([9, 8, 5, 3, 2, 1]), sorted, invalid)
         end function})
         m.test_Str_Function0V_k_("sortedBy", {invoke: function() as Void
             list = listOf_Arr_k_(["apple", "pie", "a", "zoo"])
             sorted = sortedBy_rIterable_Function1_k_(list, {invoke: function(it as String) as Dynamic
                 return Len(it)
             end function})
-            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_(["a", "pie", "zoo", "apple"]), sorted)
+            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_(["a", "pie", "zoo", "apple"]), sorted, invalid)
         end function})
         m.test_Str_Function0V_k_("sortedByDescending", {invoke: function() as Void
             list = listOf_Arr_k_(["apple", "pie", "a", "zoo"])
             sorted = sortedByDescending_rIterable_Function1_k_(list, {invoke: function(it as String) as Dynamic
                 return Len(it)
             end function})
-            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_(["apple", "pie", "zoo", "a"]), sorted)
-        end function})
-        m.test_Str_Function0V_k_("sort stability", {name: name, this: m, age: age, this: m, this: m, this: m, this: m, name: name, age: age, this: m, this: m, this: m, other: other, invoke: function() as Void
-            list = mutableListOf_Arr_k_([Person_create_Str_I_k_("Alice", 30), Person_create_Str_I_k_("Bob", 25), Person_create_Str_I_k_("Charlie", 30), Person_create_Str_I_k_("David", 25)])
-            sortBy_rMutableList_Function1_k_(list, {invoke: function(it as Object) as Dynamic
-                return it.age
-            end function})
-            assertEquals_AnyN_AnyN_StrN_k_(25, list.get_I_k_(0).age)
-            assertEquals_AnyN_AnyN_StrN_k_("Bob", list.get_I_k_(0).name)
-            assertEquals_AnyN_AnyN_StrN_k_(25, list.get_I_k_(1).age)
-            assertEquals_AnyN_AnyN_StrN_k_("David", list.get_I_k_(1).name)
-            assertEquals_AnyN_AnyN_StrN_k_(30, list.get_I_k_(2).age)
-            assertEquals_AnyN_AnyN_StrN_k_("Alice", list.get_I_k_(2).name)
-            assertEquals_AnyN_AnyN_StrN_k_(30, list.get_I_k_(3).age)
-            assertEquals_AnyN_AnyN_StrN_k_("Charlie", list.get_I_k_(3).name)
+            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_(["apple", "pie", "zoo", "a"]), sorted, invalid)
         end function})
         m.test_Str_Function0V_k_("sort empty list", {invoke: function() as Void
             list = mutableListOf_k_()
             sort_rMutableList_k_(list)
-            assertEquals_AnyN_AnyN_StrN_k_(emptyList_k_(), list)
+            assertEquals_AnyN_AnyN_StrN_k_(emptyList_k_(), list, invalid)
         end function})
         m.test_Str_Function0V_k_("sort single element", {invoke: function() as Void
             list = mutableListOf_Arr_k_([42])
             sort_rMutableList_k_(list)
-            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_([42]), list)
+            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_([42]), list, invalid)
         end function})
         m.test_Str_Function0V_k_("sort large list", {invoke: function() as Void
             list = mutableListOf_k_()
@@ -116,41 +102,32 @@ sub sortingTests_rTestRunner_k_(m as Object)
                                 i = inductionVariable
                 inductionVariable = (inductionVariable + 1)
 
-                assertEquals_AnyN_AnyN_StrN_k_(i + 1, list.get_I_k_(i))
+                assertEquals_AnyN_AnyN_StrN_k_(i + 1, list.get_I_k_(i), invalid)
 
 
                 while i <> last
                     i = inductionVariable
                     inductionVariable = (inductionVariable + 1)
 
-                    assertEquals_AnyN_AnyN_StrN_k_(i + 1, list.get_I_k_(i))
+                    assertEquals_AnyN_AnyN_StrN_k_(i + 1, list.get_I_k_(i), invalid)
 
                 end while
 
             end if
 
         end function})
-        m.test_Str_Function0V_k_("compareBy", {name: name, this: m, age: age, this: m, this: m, this: m, this: m, name: name, age: age, this: m, this: m, this: m, other: other, invoke: function() as Void
-            list = mutableListOf_Arr_k_([Person_create_Str_I_k_("Alice", 30), Person_create_Str_I_k_("Bob", 25), Person_create_Str_I_k_("Charlie", 30)])
-            sortWith_rMutableList_Comparator_k_(list, compareBy_Function1ComparableN_k_({invoke: function(it as Object) as Dynamic
-                return it.age
-            end function}))
-            assertEquals_AnyN_AnyN_StrN_k_("Bob", list.get_I_k_(0).name)
-            assertEquals_AnyN_AnyN_StrN_k_("Alice", list.get_I_k_(1).name)
-            assertEquals_AnyN_AnyN_StrN_k_("Charlie", list.get_I_k_(2).name)
-        end function})
         m.test_Str_Function0V_k_("comparator reversed", {invoke: function() as Void
             list = mutableListOf_Arr_k_([5, 2, 8, 1, 9, 3])
             sortWith_rMutableList_Comparator_k_(list, reversed_rComparator_k_(naturalOrder_k_()))
-            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_([9, 8, 5, 3, 2, 1]), list)
+            assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_([9, 8, 5, 3, 2, 1]), list, invalid)
         end function})
         m.test_Str_Function0V_k_("compareValues", {invoke: function() as Void
-            assertEquals_AnyN_AnyN_StrN_k_(0, compareValues_AnyN_AnyN_k_(5, 5))
-            assertTrue_Z_StrN_k_(compareValues_AnyN_AnyN_k_(3, 5) < 0)
-            assertTrue_Z_StrN_k_(compareValues_AnyN_AnyN_k_(5, 3) > 0)
-            assertTrue_Z_StrN_k_(compareValues_AnyN_AnyN_k_(invalid, 5) < 0)
-            assertTrue_Z_StrN_k_(compareValues_AnyN_AnyN_k_(5, invalid) > 0)
-            assertEquals_AnyN_AnyN_StrN_k_(0, compareValues_AnyN_AnyN_k_(invalid, invalid))
+            assertEquals_AnyN_AnyN_StrN_k_(0, compareValues_AnyN_AnyN_k_(5, 5), invalid)
+            assertTrue_Z_StrN_k_(compareValues_AnyN_AnyN_k_(3, 5) < 0, invalid)
+            assertTrue_Z_StrN_k_(compareValues_AnyN_AnyN_k_(5, 3) > 0, invalid)
+            assertTrue_Z_StrN_k_(compareValues_AnyN_AnyN_k_(invalid, 5) < 0, invalid)
+            assertTrue_Z_StrN_k_(compareValues_AnyN_AnyN_k_(5, invalid) > 0, invalid)
+            assertEquals_AnyN_AnyN_StrN_k_(0, compareValues_AnyN_AnyN_k_(invalid, invalid), invalid)
         end function})
     end function})
 end sub

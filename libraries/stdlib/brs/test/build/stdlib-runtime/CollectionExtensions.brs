@@ -1,7 +1,7 @@
 sub forEach_rIterable_Function1V_k_(m as Object, action as Object)
-    __iter_47 = m.iterator_k_()
-    while __iter_47.hasNext_k_()
-        element = __iter_47.next_k_()
+    __iter_61 = m.iterator_k_()
+    while __iter_61.hasNext_k_()
+        element = __iter_61.next_k_()
         action.invoke(element)
     end while
 
@@ -9,13 +9,13 @@ end sub
 
 sub forEachIndexed_rIterable_Function2IV_k_(m as Object, action as Object)
     index = 0
-    __iter_49 = m.iterator_k_()
-    while __iter_49.hasNext_k_()
-        item = __iter_49.next_k_()
-        __incr_tmp_48 = index
-        index = (__incr_tmp_48 + 1)
+    __iter_63 = m.iterator_k_()
+    while __iter_63.hasNext_k_()
+        item = __iter_63.next_k_()
+        __incr_tmp_62 = index
+        index = (__incr_tmp_62 + 1)
 
-        action.invoke(__incr_tmp_48, item)
+        action.invoke(__incr_tmp_62, item)
 
     end while
 
@@ -23,9 +23,9 @@ end sub
 
 function map_rIterable_Function1_k_(m as Object, transform as Object) as Object
     result = ArrayList_create_k_()
-    __iter_50 = m.iterator_k_()
-    while __iter_50.hasNext_k_()
-        item = __iter_50.next_k_()
+    __iter_64 = m.iterator_k_()
+    while __iter_64.hasNext_k_()
+        item = __iter_64.next_k_()
         result.add_AnyN_k_(transform.invoke(item))
 
     end while
@@ -36,13 +36,13 @@ end function
 function mapIndexed_rIterable_Function2I_k_(m as Object, transform as Object) as Object
     result = ArrayList_create_k_()
     index = 0
-    __iter_52 = m.iterator_k_()
-    while __iter_52.hasNext_k_()
-        item = __iter_52.next_k_()
-        __incr_tmp_51 = index
-        index = (__incr_tmp_51 + 1)
+    __iter_66 = m.iterator_k_()
+    while __iter_66.hasNext_k_()
+        item = __iter_66.next_k_()
+        __incr_tmp_65 = index
+        index = (__incr_tmp_65 + 1)
 
-        result.add_AnyN_k_(transform.invoke(__incr_tmp_51, item))
+        result.add_AnyN_k_(transform.invoke(__incr_tmp_65, item))
 
     end while
 
@@ -51,9 +51,9 @@ end function
 
 function mapNotNull_rIterable_Function1_k_(m as Object, transform as Object) as Object
     result = ArrayList_create_k_()
-    __iter_53 = m.iterator_k_()
-    while __iter_53.hasNext_k_()
-        item = __iter_53.next_k_()
+    __iter_67 = m.iterator_k_()
+    while __iter_67.hasNext_k_()
+        item = __iter_67.next_k_()
         transformed = transform.invoke(item)
         if transformed <> invalid then
             result.add_AnyN_k_(transformed)
@@ -66,9 +66,9 @@ end function
 
 function filter_rIterable_Function1Z_k_(m as Object, predicate as Object) as Object
     result = ArrayList_create_k_()
-    __iter_54 = m.iterator_k_()
-    while __iter_54.hasNext_k_()
-        item = __iter_54.next_k_()
+    __iter_68 = m.iterator_k_()
+    while __iter_68.hasNext_k_()
+        item = __iter_68.next_k_()
         if predicate.invoke(item) then
             result.add_AnyN_k_(item)
         end if
@@ -80,9 +80,9 @@ end function
 function filterIndexed_rIterable_Function2IZ_k_(m as Object, predicate as Object) as Object
     result = ArrayList_create_k_()
     index = 0
-    __iter_55 = m.iterator_k_()
-    while __iter_55.hasNext_k_()
-        item = __iter_55.next_k_()
+    __iter_69 = m.iterator_k_()
+    while __iter_69.hasNext_k_()
+        item = __iter_69.next_k_()
         unary = index
         index = (unary + 1)
         if predicate.invoke(unary, item) then
@@ -96,9 +96,9 @@ end function
 
 function filterNotNull_rIterable_k_(m as Object) as Object
     result = ArrayList_create_k_()
-    __iter_56 = m.iterator_k_()
-    while __iter_56.hasNext_k_()
-        item = __iter_56.next_k_()
+    __iter_70 = m.iterator_k_()
+    while __iter_70.hasNext_k_()
+        item = __iter_70.next_k_()
         if item <> invalid then
             result.add_AnyN_k_(item)
         end if
@@ -109,9 +109,9 @@ end function
 
 function filterNot_rIterable_Function1Z_k_(m as Object, predicate as Object) as Object
     result = ArrayList_create_k_()
-    __iter_57 = m.iterator_k_()
-    while __iter_57.hasNext_k_()
-        item = __iter_57.next_k_()
+    __iter_71 = m.iterator_k_()
+    while __iter_71.hasNext_k_()
+        item = __iter_71.next_k_()
         if not predicate.invoke(item) then
             result.add_AnyN_k_(item)
         end if
@@ -121,9 +121,9 @@ function filterNot_rIterable_Function1Z_k_(m as Object, predicate as Object) as 
 end function
 
 function find_rIterable_Function1Z_k_(m as Object, predicate as Object) as Dynamic
-    __iter_58 = m.iterator_k_()
-    while __iter_58.hasNext_k_()
-        element = __iter_58.next_k_()
+    __iter_72 = m.iterator_k_()
+    while __iter_72.hasNext_k_()
+        element = __iter_72.next_k_()
         if predicate.invoke(element) then
             return element
         end if
@@ -134,9 +134,9 @@ end function
 
 function findLast_rIterable_Function1Z_k_(m as Object, predicate as Object) as Dynamic
     last = invalid
-    __iter_59 = m.iterator_k_()
-    while __iter_59.hasNext_k_()
-        element = __iter_59.next_k_()
+    __iter_73 = m.iterator_k_()
+    while __iter_73.hasNext_k_()
+        element = __iter_73.next_k_()
         if predicate.invoke(element) then
             last = element
         end if
@@ -163,9 +163,9 @@ function first_rIterable_k_(m as Object) as Dynamic
 end function
 
 function first_rIterable_Function1Z_k_(m as Object, predicate as Object) as Dynamic
-    __iter_60 = m.iterator_k_()
-    while __iter_60.hasNext_k_()
-        element = __iter_60.next_k_()
+    __iter_74 = m.iterator_k_()
+    while __iter_74.hasNext_k_()
+        element = __iter_74.next_k_()
         if predicate.invoke(element) then
             return element
         end if
@@ -195,9 +195,9 @@ function firstOrNull_rIterable_k_(m as Object) as Dynamic
 end function
 
 function firstOrNull_rIterable_Function1Z_k_(m as Object, predicate as Object) as Dynamic
-    __iter_61 = m.iterator_k_()
-    while __iter_61.hasNext_k_()
-        element = __iter_61.next_k_()
+    __iter_75 = m.iterator_k_()
+    while __iter_75.hasNext_k_()
+        element = __iter_75.next_k_()
         if predicate.invoke(element) then
             return element
         end if
@@ -230,9 +230,9 @@ end function
 function last_rIterable_Function1Z_k_(m as Object, predicate as Object) as Dynamic
     last = invalid
     found = false
-    __iter_62 = m.iterator_k_()
-    while __iter_62.hasNext_k_()
-        element = __iter_62.next_k_()
+    __iter_76 = m.iterator_k_()
+    while __iter_76.hasNext_k_()
+        element = __iter_76.next_k_()
         if predicate.invoke(element) then
             last = element
             found = true
@@ -271,9 +271,9 @@ end function
 
 function lastOrNull_rIterable_Function1Z_k_(m as Object, predicate as Object) as Dynamic
     last = invalid
-    __iter_63 = m.iterator_k_()
-    while __iter_63.hasNext_k_()
-        element = __iter_63.next_k_()
+    __iter_77 = m.iterator_k_()
+    while __iter_77.hasNext_k_()
+        element = __iter_77.next_k_()
         if predicate.invoke(element) then
             last = element
         end if
@@ -293,9 +293,9 @@ function any_rIterable_Function1Z_k_(m as Object, predicate as Object) as Boolea
     if __kotlin_isInstanceOf(m, "Collection") and m.isEmpty_k_() then
         return false
     end if
-    __iter_64 = m.iterator_k_()
-    while __iter_64.hasNext_k_()
-        element = __iter_64.next_k_()
+    __iter_78 = m.iterator_k_()
+    while __iter_78.hasNext_k_()
+        element = __iter_78.next_k_()
         if predicate.invoke(element) then
             return true
         end if
@@ -308,9 +308,9 @@ function all_rIterable_Function1Z_k_(m as Object, predicate as Object) as Boolea
     if __kotlin_isInstanceOf(m, "Collection") and m.isEmpty_k_() then
         return true
     end if
-    __iter_65 = m.iterator_k_()
-    while __iter_65.hasNext_k_()
-        element = __iter_65.next_k_()
+    __iter_79 = m.iterator_k_()
+    while __iter_79.hasNext_k_()
+        element = __iter_79.next_k_()
         if not predicate.invoke(element) then
             return false
         end if
@@ -330,9 +330,9 @@ function none_rIterable_Function1Z_k_(m as Object, predicate as Object) as Boole
     if __kotlin_isInstanceOf(m, "Collection") and m.isEmpty_k_() then
         return true
     end if
-    __iter_66 = m.iterator_k_()
-    while __iter_66.hasNext_k_()
-        element = __iter_66.next_k_()
+    __iter_80 = m.iterator_k_()
+    while __iter_80.hasNext_k_()
+        element = __iter_80.next_k_()
         if predicate.invoke(element) then
             return false
         end if
@@ -346,9 +346,9 @@ function count_rIterable_k_(m as Object) as Integer
         return m.get_size()
     end if
     count = 0
-    __iter_67 = m.iterator_k_()
-    while __iter_67.hasNext_k_()
-        element = __iter_67.next_k_()
+    __iter_81 = m.iterator_k_()
+    while __iter_81.hasNext_k_()
+        element = __iter_81.next_k_()
         count = (count + 1)
     end while
 
@@ -360,9 +360,9 @@ function count_rIterable_Function1Z_k_(m as Object, predicate as Object) as Inte
         return 0
     end if
     count = 0
-    __iter_68 = m.iterator_k_()
-    while __iter_68.hasNext_k_()
-        element = __iter_68.next_k_()
+    __iter_82 = m.iterator_k_()
+    while __iter_82.hasNext_k_()
+        element = __iter_82.next_k_()
         if predicate.invoke(element) then
             count = (count + 1)
         end if
@@ -373,9 +373,9 @@ end function
 
 function fold_rIterable_AnyN_Function2_k_(m as Object, initial as Dynamic, operation as Object) as Dynamic
     accumulator = initial
-    __iter_69 = m.iterator_k_()
-    while __iter_69.hasNext_k_()
-        element = __iter_69.next_k_()
+    __iter_83 = m.iterator_k_()
+    while __iter_83.hasNext_k_()
+        element = __iter_83.next_k_()
         accumulator = operation.invoke(accumulator, element)
     end while
 
@@ -385,13 +385,13 @@ end function
 function foldIndexed_rIterable_AnyN_Function3I_k_(m as Object, initial as Dynamic, operation as Object) as Dynamic
     index = 0
     accumulator = initial
-    __iter_71 = m.iterator_k_()
-    while __iter_71.hasNext_k_()
-        element = __iter_71.next_k_()
-        __incr_tmp_70 = index
-        index = (__incr_tmp_70 + 1)
+    __iter_85 = m.iterator_k_()
+    while __iter_85.hasNext_k_()
+        element = __iter_85.next_k_()
+        __incr_tmp_84 = index
+        index = (__incr_tmp_84 + 1)
 
-        accumulator = operation.invoke(__incr_tmp_70, accumulator, element)
+        accumulator = operation.invoke(__incr_tmp_84, accumulator, element)
 
     end while
 
@@ -418,10 +418,10 @@ function reduceIndexed_rIterable_Function3I_k_(m as Object, operation as Object)
     index = 1
     accumulator = iterator.next_k_()
     while iterator.hasNext_k_()
-        __incr_tmp_72 = index
-        index = (__incr_tmp_72 + 1)
+        __incr_tmp_86 = index
+        index = (__incr_tmp_86 + 1)
 
-        accumulator = operation.invoke(__incr_tmp_72, accumulator, iterator.next_k_())
+        accumulator = operation.invoke(__incr_tmp_86, accumulator, iterator.next_k_())
     end while
     return accumulator
 end function
@@ -440,9 +440,9 @@ end function
 
 function sum_rIterableI_k_(m as Object) as Integer
     sum = 0
-    __iter_73 = m.iterator_k_()
-    while __iter_73.hasNext_k_()
-        element = __iter_73.next_k_()
+    __iter_87 = m.iterator_k_()
+    while __iter_87.hasNext_k_()
+        element = __iter_87.next_k_()
         sum = (sum + element)
     end while
 
@@ -451,9 +451,9 @@ end function
 
 function sum_rIterableJ_k_(m as Object) as LongInteger
     sum = 0&
-    __iter_74 = m.iterator_k_()
-    while __iter_74.hasNext_k_()
-        element = __iter_74.next_k_()
+    __iter_88 = m.iterator_k_()
+    while __iter_88.hasNext_k_()
+        element = __iter_88.next_k_()
         sum = (sum + element)
     end while
 
@@ -462,9 +462,9 @@ end function
 
 function sum_rIterableF_k_(m as Object) as Float
     sum = 0.0!
-    __iter_75 = m.iterator_k_()
-    while __iter_75.hasNext_k_()
-        element = __iter_75.next_k_()
+    __iter_89 = m.iterator_k_()
+    while __iter_89.hasNext_k_()
+        element = __iter_89.next_k_()
         sum = (sum + element)
     end while
 
@@ -473,9 +473,9 @@ end function
 
 function sum_rIterableD_k_(m as Object) as Double
     sum = 0.0#
-    __iter_76 = m.iterator_k_()
-    while __iter_76.hasNext_k_()
-        element = __iter_76.next_k_()
+    __iter_90 = m.iterator_k_()
+    while __iter_90.hasNext_k_()
+        element = __iter_90.next_k_()
         sum = (sum + element)
     end while
 
@@ -484,9 +484,9 @@ end function
 
 function sumOf_rIterable_Function1I_k_(m as Object, selector as Object) as Integer
     sum = 0
-    __iter_77 = m.iterator_k_()
-    while __iter_77.hasNext_k_()
-        element = __iter_77.next_k_()
+    __iter_91 = m.iterator_k_()
+    while __iter_91.hasNext_k_()
+        element = __iter_91.next_k_()
         sum = (sum + selector.invoke(element))
     end while
 
@@ -495,9 +495,9 @@ end function
 
 function sumOfDouble_rIterable_Function1D_k_(m as Object, selector as Object) as Double
     sum = 0.0#
-    __iter_78 = m.iterator_k_()
-    while __iter_78.hasNext_k_()
-        element = __iter_78.next_k_()
+    __iter_92 = m.iterator_k_()
+    while __iter_92.hasNext_k_()
+        element = __iter_92.next_k_()
         sum = (sum + selector.invoke(element))
     end while
 
@@ -506,7 +506,7 @@ end function
 
 function take_rIterable_I_k_(m as Object, n as Integer) as Object
     require_Z_Function0Any_k_(n >= 0, {n: n, invoke: function() as Object
-        return ("Requested element count " + m.n) + " is less than zero."
+        return ("Requested element count " + __kotlin_numToStr_I_k_(m.n)) + " is less than zero."
     end function})
     if n = 0 then
         return emptyList_k_()
@@ -518,9 +518,9 @@ function take_rIterable_I_k_(m as Object, n as Integer) as Object
     end if
     count = 0
     list = ArrayList_create_k_()
-    __iter_79 = m.iterator_k_()
-    while __iter_79.hasNext_k_()
-        item = __iter_79.next_k_()
+    __iter_93 = m.iterator_k_()
+    while __iter_93.hasNext_k_()
+        item = __iter_93.next_k_()
         list.add_AnyN_k_(item)
         count = (count + 1)
         if count = n then
@@ -534,16 +534,16 @@ end function
 
 function drop_rIterable_I_k_(m as Object, n as Integer) as Object
     require_Z_Function0Any_k_(n >= 0, {n: n, invoke: function() as Object
-        return ("Requested element count " + m.n) + " is less than zero."
+        return ("Requested element count " + __kotlin_numToStr_I_k_(m.n)) + " is less than zero."
     end function})
     if n = 0 then
         return toList_rIterable_k_(m)
     end if
     list = ArrayList_create_k_()
     count = 0
-    __iter_80 = m.iterator_k_()
-    while __iter_80.hasNext_k_()
-        item = __iter_80.next_k_()
+    __iter_94 = m.iterator_k_()
+    while __iter_94.hasNext_k_()
+        item = __iter_94.next_k_()
         if count >= n then
             list.add_AnyN_k_(item)
         end if
@@ -556,9 +556,9 @@ end function
 
 function takeWhile_rIterable_Function1Z_k_(m as Object, predicate as Object) as Object
     list = ArrayList_create_k_()
-    __iter_81 = m.iterator_k_()
-    while __iter_81.hasNext_k_()
-        item = __iter_81.next_k_()
+    __iter_95 = m.iterator_k_()
+    while __iter_95.hasNext_k_()
+        item = __iter_95.next_k_()
         if not predicate.invoke(item) then
             exit while
         end if
@@ -572,9 +572,9 @@ end function
 function dropWhile_rIterable_Function1Z_k_(m as Object, predicate as Object) as Object
     yielding = false
     list = ArrayList_create_k_()
-    __iter_82 = m.iterator_k_()
-    while __iter_82.hasNext_k_()
-        item = __iter_82.next_k_()
+    __iter_96 = m.iterator_k_()
+    while __iter_96.hasNext_k_()
+        item = __iter_96.next_k_()
         if yielding then
             list.add_AnyN_k_(item)
         else if not predicate.invoke(item) then
@@ -593,9 +593,9 @@ end function
 function distinctBy_rIterable_Function1_k_(m as Object, selector as Object) as Object
     set = HashSet_create_k_()
     list = ArrayList_create_k_()
-    __iter_83 = m.iterator_k_()
-    while __iter_83.hasNext_k_()
-        e = __iter_83.next_k_()
+    __iter_97 = m.iterator_k_()
+    while __iter_97.hasNext_k_()
+        e = __iter_97.next_k_()
         key = selector.invoke(e)
         if set.add_AnyN_k_(key) then
             list.add_AnyN_k_(e)
@@ -608,9 +608,9 @@ end function
 
 function flatMap_rIterable_Function1Iterable_k_(m as Object, transform as Object) as Object
     result = ArrayList_create_k_()
-    __iter_84 = m.iterator_k_()
-    while __iter_84.hasNext_k_()
-        element = __iter_84.next_k_()
+    __iter_98 = m.iterator_k_()
+    while __iter_98.hasNext_k_()
+        element = __iter_98.next_k_()
         list = transform.invoke(element)
         result.addAll_Collection_k_(toList_rIterable_k_(list))
 
@@ -621,9 +621,9 @@ end function
 
 function flatten_rIterableIterable_k_(m as Object) as Object
     result = ArrayList_create_k_()
-    __iter_85 = m.iterator_k_()
-    while __iter_85.hasNext_k_()
-        element = __iter_85.next_k_()
+    __iter_99 = m.iterator_k_()
+    while __iter_99.hasNext_k_()
+        element = __iter_99.next_k_()
         result.addAll_Collection_k_(toList_rIterable_k_(element))
 
     end while
@@ -659,9 +659,9 @@ function toMutableList_rIterable_k_(m as Object) as Object
         return ArrayList_create_Collection_k_(m)
     end if
     result = ArrayList_create_k_()
-    __iter_86 = m.iterator_k_()
-    while __iter_86.hasNext_k_()
-        element = __iter_86.next_k_()
+    __iter_100 = m.iterator_k_()
+    while __iter_100.hasNext_k_()
+        element = __iter_100.next_k_()
         result.add_AnyN_k_(element)
 
     end while
@@ -686,9 +686,9 @@ end function
 
 function toMutableSet_rIterable_k_(m as Object) as Object
     set = HashSet_create_k_()
-    __iter_87 = m.iterator_k_()
-    while __iter_87.hasNext_k_()
-        item = __iter_87.next_k_()
+    __iter_101 = m.iterator_k_()
+    while __iter_101.hasNext_k_()
+        item = __iter_101.next_k_()
         set.add_AnyN_k_(item)
     end while
 
@@ -696,12 +696,27 @@ function toMutableSet_rIterable_k_(m as Object) as Object
 end function
 
 function joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(m as Object, separator = ", ", prefix = "", postfix = "", limit = -1, truncated = "...") as String
+    if separator = invalid then
+        separator = ", "
+    end if
+    if prefix = invalid then
+        prefix = ""
+    end if
+    if postfix = invalid then
+        postfix = ""
+    end if
+    if limit = invalid then
+        limit = -1
+    end if
+    if truncated = invalid then
+        truncated = "..."
+    end if
     sb = StringBuilder_create_k_()
     sb.append_CharSequenceN_k_(prefix)
     count = 0
-    __iter_88 = m.iterator_k_()
-    while __iter_88.hasNext_k_()
-        element = __iter_88.next_k_()
+    __iter_102 = m.iterator_k_()
+    while __iter_102.hasNext_k_()
+        element = __iter_102.next_k_()
         count = (count + 1)
         if count > 1 then
             sb.append_CharSequenceN_k_(separator)
@@ -722,12 +737,27 @@ function joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSeq
 end function
 
 function joinToString_v4kj63_k_(m as Object, separator = ", ", prefix = "", postfix = "", limit = -1, truncated = "...", transform = invalid) as String
+    if separator = invalid then
+        separator = ", "
+    end if
+    if prefix = invalid then
+        prefix = ""
+    end if
+    if postfix = invalid then
+        postfix = ""
+    end if
+    if limit = invalid then
+        limit = -1
+    end if
+    if truncated = invalid then
+        truncated = "..."
+    end if
     sb = StringBuilder_create_k_()
     sb.append_CharSequenceN_k_(prefix)
     count = 0
-    __iter_89 = m.iterator_k_()
-    while __iter_89.hasNext_k_()
-        element = __iter_89.next_k_()
+    __iter_103 = m.iterator_k_()
+    while __iter_103.hasNext_k_()
+        element = __iter_103.next_k_()
         count = (count + 1)
         if count > 1 then
             sb.append_CharSequenceN_k_(separator)
@@ -759,10 +789,10 @@ function indexOf_rIterable_AnyN_k_(m as Object, element as Dynamic) as Integer
         return m.indexOf_AnyN_k_(element)
     end if
     index = 0
-    __iter_90 = m.iterator_k_()
-    while __iter_90.hasNext_k_()
-        item = __iter_90.next_k_()
-        if element = item then
+    __iter_104 = m.iterator_k_()
+    while __iter_104.hasNext_k_()
+        item = __iter_104.next_k_()
+        if brsStructuralEquals_AnyN_AnyN_k_(element, item) then
             return index
         end if
         index = (index + 1)
@@ -774,9 +804,9 @@ end function
 
 function indexOfFirst_rIterable_Function1Z_k_(m as Object, predicate as Object) as Integer
     index = 0
-    __iter_91 = m.iterator_k_()
-    while __iter_91.hasNext_k_()
-        item = __iter_91.next_k_()
+    __iter_105 = m.iterator_k_()
+    while __iter_105.hasNext_k_()
+        item = __iter_105.next_k_()
         if predicate.invoke(item) then
             return index
         end if
@@ -790,9 +820,9 @@ end function
 function indexOfLast_rIterable_Function1Z_k_(m as Object, predicate as Object) as Integer
     lastIndex = -1
     index = 0
-    __iter_92 = m.iterator_k_()
-    while __iter_92.hasNext_k_()
-        item = __iter_92.next_k_()
+    __iter_106 = m.iterator_k_()
+    while __iter_106.hasNext_k_()
+        item = __iter_106.next_k_()
         if predicate.invoke(item) then
             lastIndex = index
         end if
@@ -834,9 +864,9 @@ end function
 function single_rIterable_Function1Z_k_(m as Object, predicate as Object) as Dynamic
     single = invalid
     found = false
-    __iter_93 = m.iterator_k_()
-    while __iter_93.hasNext_k_()
-        element = __iter_93.next_k_()
+    __iter_107 = m.iterator_k_()
+    while __iter_107.hasNext_k_()
+        element = __iter_107.next_k_()
         if predicate.invoke(element) then
             if found then
                 throw IllegalArgumentException_create_StrN_k_("Collection contains more than one matching element.")
@@ -880,9 +910,9 @@ end function
 function singleOrNull_rIterable_Function1Z_k_(m as Object, predicate as Object) as Dynamic
     single = invalid
     found = false
-    __iter_94 = m.iterator_k_()
-    while __iter_94.hasNext_k_()
-        element = __iter_94.next_k_()
+    __iter_108 = m.iterator_k_()
+    while __iter_108.hasNext_k_()
+        element = __iter_108.next_k_()
         if predicate.invoke(element) then
             if found then
                 return invalid
@@ -901,9 +931,9 @@ end function
 function partition_rIterable_Function1Z_k_(m as Object, predicate as Object) as Object
     first = ArrayList_create_k_()
     second = ArrayList_create_k_()
-    __iter_95 = m.iterator_k_()
-    while __iter_95.hasNext_k_()
-        element = __iter_95.next_k_()
+    __iter_109 = m.iterator_k_()
+    while __iter_109.hasNext_k_()
+        element = __iter_109.next_k_()
         if predicate.invoke(element) then
             first.add_AnyN_k_(element)
         else if true then
@@ -951,10 +981,10 @@ end function
 function minus_rIterable_AnyN_k_(m as Object, element as Dynamic) as Object
     result = ArrayList_create_k_()
     removed = false
-    __iter_96 = m.iterator_k_()
-    while __iter_96.hasNext_k_()
-        item = __iter_96.next_k_()
-        if not removed and (item = element) then
+    __iter_110 = m.iterator_k_()
+    while __iter_110.hasNext_k_()
+        item = __iter_110.next_k_()
+        if not removed and brsStructuralEquals_AnyN_AnyN_k_(item, element) then
             removed = true
         else if true then
             result.add_AnyN_k_(item)

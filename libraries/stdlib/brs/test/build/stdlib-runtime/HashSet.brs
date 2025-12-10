@@ -92,9 +92,9 @@ function HashSet_contains_AnyN_k_(element as Dynamic) as Boolean
 end function
 
 function HashSet_containsAll_Collection_k_(elements as Object) as Boolean
-    __iter_107 = elements.iterator_k_()
-    while __iter_107.hasNext_k_()
-        element = __iter_107.next_k_()
+    __iter_121 = elements.iterator_k_()
+    while __iter_121.hasNext_k_()
+        element = __iter_121.next_k_()
         if not m.contains_AnyN_k_(element) then
             return false
         end if
@@ -125,9 +125,9 @@ end function
 
 function HashSet_addAll_Collection_k_(elements as Object) as Boolean
     modified = false
-    __iter_108 = elements.iterator_k_()
-    while __iter_108.hasNext_k_()
-        element = __iter_108.next_k_()
+    __iter_122 = elements.iterator_k_()
+    while __iter_122.hasNext_k_()
+        element = __iter_122.next_k_()
         if m.add_AnyN_k_(element) then
             modified = true
         end if
@@ -138,9 +138,9 @@ end function
 
 function HashSet_removeAll_Collection_k_(elements as Object) as Boolean
     modified = false
-    __iter_109 = elements.iterator_k_()
-    while __iter_109.hasNext_k_()
-        element = __iter_109.next_k_()
+    __iter_123 = elements.iterator_k_()
+    while __iter_123.hasNext_k_()
+        element = __iter_123.next_k_()
         if m.remove_AnyN_k_(element) then
             modified = true
         end if
@@ -175,9 +175,9 @@ function HashSet_equals_AnyN_k_(other as Dynamic) as Boolean
     if other.get_size() <> m.get_size() then
         return false
     end if
-    __iter_110 = m.iterator_k_()
-    while __iter_110.hasNext_k_()
-        element = __iter_110.next_k_()
+    __iter_124 = m.iterator_k_()
+    while __iter_124.hasNext_k_()
+        element = __iter_124.next_k_()
         if not other.contains_AnyN_k_(element) then
             return false
         end if
@@ -188,9 +188,9 @@ end function
 
 function HashSet_hashCode_k_() as Integer
     h = 0
-    __iter_111 = m.iterator_k_()
-    while __iter_111.hasNext_k_()
-        element = __iter_111.next_k_()
+    __iter_125 = m.iterator_k_()
+    while __iter_125.hasNext_k_()
+        element = __iter_125.next_k_()
         tmp0_safe_receiver = element
         __when_tmp0 = invalid
         if tmp0_safe_receiver = invalid then
@@ -219,9 +219,9 @@ function HashSet_toString_k_() as String
     sb = StringBuilder_create_k_()
     sb.append_StrN_k_("[")
     first = true
-    __iter_112 = m.iterator_k_()
-    while __iter_112.hasNext_k_()
-        element = __iter_112.next_k_()
+    __iter_126 = m.iterator_k_()
+    while __iter_126.hasNext_k_()
+        element = __iter_126.next_k_()
         if not first then
             sb.append_StrN_k_(", ")
         end if

@@ -58,9 +58,9 @@ function Result_toString_k_() as String
     tmp0_subject = m.get_value()
     __when_tmp2 = invalid
     if __kotlin_isInstanceOf(tmp0_subject, "Result_Failure") then
-        __when_tmp2 = (("Failure(" + m.get_value().get_exception()) + ")")
+        __when_tmp2 = (("Failure(" + m.get_value().get_exception().toString()) + ")")
     else if true then
-        __when_tmp2 = (("Success(" + m.get_value()) + ")")
+        __when_tmp2 = (("Success(" + toString_AnyN_k_(m.get_value())) + ")")
     end if
     return __when_tmp2
 
@@ -82,7 +82,7 @@ function Result_equals_AnyN_k_(other as Dynamic) as Boolean
         return false
     end if
     tmp0_other_with_cast = other
-    if m.value <> tmp0_other_with_cast.value then
+    if not brsStructuralEquals_AnyN_AnyN_k_(m.value, tmp0_other_with_cast.value) then
         return false
     end if
     return true

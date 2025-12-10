@@ -4,11 +4,15 @@ end function
 function compareBy_Function1ComparableN_k_(selector as Object) as Object
     return {selector: selector, invoke: function(a as Dynamic, b as Dynamic) as Integer
         return compareValuesBy_AnyN_AnyN_Function1ComparableN_k_(a, b, m.selector)
+    end function, compare_AnyN_AnyN_k_: function(a as Dynamic, b as Dynamic) as Integer
+        return compareValuesBy_AnyN_AnyN_Function1ComparableN_k_(a, b, m.selector)
     end function}
 end function
 
 function compareByDescending_Function1ComparableN_k_(selector as Object) as Object
     return {selector: selector, invoke: function(a as Dynamic, b as Dynamic) as Integer
+        return compareValuesBy_AnyN_AnyN_Function1ComparableN_k_(b, a, m.selector)
+    end function, compare_AnyN_AnyN_k_: function(a as Dynamic, b as Dynamic) as Integer
         return compareValuesBy_AnyN_AnyN_Function1ComparableN_k_(b, a, m.selector)
     end function}
 end function
@@ -18,16 +22,7 @@ function compareValuesBy_AnyN_AnyN_Function1ComparableN_k_(a as Dynamic, b as Dy
 end function
 
 function compareValues_AnyN_AnyN_k_(a as Dynamic, b as Dynamic) as Integer
-    if __kotlin_identityEquals(a, b) then
-        return 0
-    end if
-    if a = invalid then
-        return -1
-    end if
-    if b = invalid then
-        return 1
-    end if
-    return a.compareTo_AnyN_k_(b)
+    return brsCompareTo_AnyN_AnyN_k_(a, b)
 end function
 
 function naturalOrder_k_() as Object
@@ -41,6 +36,8 @@ end function
 function reversed_rComparator_k_(m as Object) as Object
     return {this: m, invoke: function(a as Dynamic, b as Dynamic) as Integer
         return m.this.compare_AnyN_AnyN_k_(b, a)
+    end function, compare_AnyN_AnyN_k_: function(a as Dynamic, b as Dynamic) as Integer
+        return m.this.compare_AnyN_AnyN_k_(b, a)
     end function}
 end function
 
@@ -49,7 +46,7 @@ function NaturalOrderComparator_create_k_() as Object
     this.__type = "NaturalOrderComparator"
     this.__proto = ["NaturalOrderComparator", "Comparator"]
     this.__id = __kotlin_nextObjectId()
-    this.compare_ComparableAny_ComparableAny_k_ = NaturalOrderComparator_compare_ComparableAny_ComparableAny_k_
+    this.compare_AnyN_AnyN_k_ = NaturalOrderComparator_compare_AnyN_AnyN_k_
     return this
 end function
 
@@ -60,8 +57,8 @@ function NaturalOrderComparator_getInstance() as Object
     return m.NaturalOrderComparator_instance
 end function
 
-function NaturalOrderComparator_compare_ComparableAny_ComparableAny_k_(a as Object, b as Object) as Integer
-    return a.compareTo_AnyN_k_(b)
+function NaturalOrderComparator_compare_AnyN_AnyN_k_(a as Dynamic, b as Dynamic) as Integer
+    return brsCompareTo_AnyN_AnyN_k_(a, b)
 end function
 
 function ReverseOrderComparator_create_k_() as Object
@@ -69,7 +66,7 @@ function ReverseOrderComparator_create_k_() as Object
     this.__type = "ReverseOrderComparator"
     this.__proto = ["ReverseOrderComparator", "Comparator"]
     this.__id = __kotlin_nextObjectId()
-    this.compare_ComparableAny_ComparableAny_k_ = ReverseOrderComparator_compare_ComparableAny_ComparableAny_k_
+    this.compare_AnyN_AnyN_k_ = ReverseOrderComparator_compare_AnyN_AnyN_k_
     return this
 end function
 
@@ -80,6 +77,6 @@ function ReverseOrderComparator_getInstance() as Object
     return m.ReverseOrderComparator_instance
 end function
 
-function ReverseOrderComparator_compare_ComparableAny_ComparableAny_k_(a as Object, b as Object) as Integer
-    return b.compareTo_AnyN_k_(a)
+function ReverseOrderComparator_compare_AnyN_AnyN_k_(a as Dynamic, b as Dynamic) as Integer
+    return brsCompareTo_AnyN_AnyN_k_(b, a)
 end function

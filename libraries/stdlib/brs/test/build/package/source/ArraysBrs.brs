@@ -57,11 +57,17 @@ function plus_rArr_Arr_k_(m as Object, elements as Object) as Object
 end function
 
 sub fill_rArr_AnyN_I_I_k_(m as Object, element as Dynamic, fromIndex = 0, toIndex = m.count())
+    if fromIndex = invalid then
+        fromIndex = 0
+    end if
+    if toIndex = invalid then
+        toIndex = m.count()
+    end if
     if (fromIndex < 0) or (toIndex > m.count()) then
-        throw IndexOutOfBoundsException_create_StrN_k_((((("fromIndex: " + fromIndex) + ", toIndex: ") + toIndex) + ", size: ") + m.count())
+        throw IndexOutOfBoundsException_create_StrN_k_((((("fromIndex: " + __kotlin_numToStr_I_k_(fromIndex)) + ", toIndex: ") + __kotlin_numToStr_I_k_(toIndex)) + ", size: ") + __kotlin_numToStr_I_k_(m.count()))
     end if
     if fromIndex > toIndex then
-        throw IllegalArgumentException_create_StrN_k_((("fromIndex: " + fromIndex) + " > toIndex: ") + toIndex)
+        throw IllegalArgumentException_create_StrN_k_((("fromIndex: " + __kotlin_numToStr_I_k_(fromIndex)) + " > toIndex: ") + __kotlin_numToStr_I_k_(toIndex))
     end if
     progression = until_rI_I_k_(fromIndex, toIndex)
     inductionVariable = progression.get_first()
@@ -91,7 +97,7 @@ end function
 
 function copyOf_rArr_I_k_(m as Object, newSize as Integer) as Object
     if newSize < 0 then
-        throw IllegalArgumentException_create_StrN_k_("Invalid new array size: " + newSize)
+        throw IllegalArgumentException_create_StrN_k_("Invalid new array size: " + __kotlin_numToStr_I_k_(newSize))
     end if
     result = arrayOfNulls_I_k_(newSize)
     __when_tmp0 = invalid
@@ -127,10 +133,10 @@ end function
 
 function copyOfRange_rArr_I_I_k_(m as Object, fromIndex as Integer, toIndex as Integer) as Object
     if (fromIndex < 0) or (toIndex > m.count()) then
-        throw IndexOutOfBoundsException_create_StrN_k_((((("fromIndex: " + fromIndex) + ", toIndex: ") + toIndex) + ", size: ") + m.count())
+        throw IndexOutOfBoundsException_create_StrN_k_((((("fromIndex: " + __kotlin_numToStr_I_k_(fromIndex)) + ", toIndex: ") + __kotlin_numToStr_I_k_(toIndex)) + ", size: ") + __kotlin_numToStr_I_k_(m.count()))
     end if
     if fromIndex > toIndex then
-        throw IllegalArgumentException_create_StrN_k_((("fromIndex: " + fromIndex) + " > toIndex: ") + toIndex)
+        throw IllegalArgumentException_create_StrN_k_((("fromIndex: " + __kotlin_numToStr_I_k_(fromIndex)) + " > toIndex: ") + __kotlin_numToStr_I_k_(toIndex))
     end if
     result = arrayOfNulls_I_k_(toIndex - fromIndex)
     resultIndex = 0
@@ -176,7 +182,7 @@ end sub
 
 sub reverse_rArr_I_I_k_(m as Object, fromIndex as Integer, toIndex as Integer)
     if (fromIndex < 0) or (toIndex > m.count()) then
-        throw IndexOutOfBoundsException_create_StrN_k_((((("fromIndex: " + fromIndex) + ", toIndex: ") + toIndex) + ", size: ") + m.count())
+        throw IndexOutOfBoundsException_create_StrN_k_((((("fromIndex: " + __kotlin_numToStr_I_k_(fromIndex)) + ", toIndex: ") + __kotlin_numToStr_I_k_(toIndex)) + ", size: ") + __kotlin_numToStr_I_k_(m.count()))
     end if
     if fromIndex >= toIndex then
         return

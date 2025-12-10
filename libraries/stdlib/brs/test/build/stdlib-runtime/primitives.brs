@@ -71,7 +71,7 @@ end function
 
 function coerceIn_rI_I_I_k_(m as Integer, minimumValue as Integer, maximumValue as Integer) as Integer
     if minimumValue > maximumValue then
-        throw IllegalArgumentException_create_StrN_k_(((("Cannot coerce value to an empty range: maximum " + maximumValue) + " is less than minimum ") + minimumValue) + ".")
+        throw IllegalArgumentException_create_StrN_k_(((("Cannot coerce value to an empty range: maximum " + __kotlin_numToStr_I_k_(maximumValue)) + " is less than minimum ") + __kotlin_numToStr_I_k_(minimumValue)) + ".")
     end if
     __when_tmp2 = invalid
     if m < minimumValue then
@@ -168,9 +168,79 @@ function copyOf_rCharArray_I_k_(m as Object, newSize as Integer) as Object
 end function
 
 function iterator_rStr_k_(m as String) as Object
-    return Anon_7b5f652f_create_k_()
+    return Anon_5e741bad_create_Str_k_(m)
 end function
 
 function iterator_rCharArray_k_(m as Object) as Object
-    return Anon_ffa9646_create_k_()
+    return Anon_4c65be20_create_CharArray_k_(m)
 end function
+
+function Anon_5e741bad_create_Str_k_(_this_iterator as String) as Object
+    this = CharIterator_create_k_()
+    this._super = {}
+    this._super.hasNext_k_ = this.hasNext_k_
+    this._super.nextChar_k_ = this.nextChar_k_
+    this.__proto = ["Anon_5e741bad", this.__proto]
+    this.__type = "Anon_5e741bad"
+    this.hasNext_k_ = Anon_5e741bad_hasNext_k_
+    this.nextChar_k_ = Anon_5e741bad_nextChar_k_
+    this.get_index = Anon_5e741bad_get_index_k_
+    this.set_index = Anon_5e741bad_set_index_I_k_
+    this.index = 0
+    this._this_iterator = _this_iterator
+    return this
+end function
+
+function Anon_5e741bad_hasNext_k_() as Boolean
+    return m.get_index() < Len(m._this_iterator)
+end function
+
+function Anon_5e741bad_nextChar_k_() as Object
+    __incr_tmp_140 = m.get_index()
+    m.set_index(__incr_tmp_140 + 1)
+    return m._this_iterator.get_I_k_(__incr_tmp_140)
+
+end function
+
+function Anon_5e741bad_get_index_k_() as Integer
+    return m.index
+end function
+
+sub Anon_5e741bad_set_index_I_k_(value as Integer)
+    m.index = value
+end sub
+
+function Anon_4c65be20_create_CharArray_k_(_this_iterator as Object) as Object
+    this = CharIterator_create_k_()
+    this._super = {}
+    this._super.hasNext_k_ = this.hasNext_k_
+    this._super.nextChar_k_ = this.nextChar_k_
+    this.__proto = ["Anon_4c65be20", this.__proto]
+    this.__type = "Anon_4c65be20"
+    this.hasNext_k_ = Anon_4c65be20_hasNext_k_
+    this.nextChar_k_ = Anon_4c65be20_nextChar_k_
+    this.get_index = Anon_4c65be20_get_index_k_
+    this.set_index = Anon_4c65be20_set_index_I_k_
+    this.index = 0
+    this._this_iterator = _this_iterator
+    return this
+end function
+
+function Anon_4c65be20_hasNext_k_() as Boolean
+    return m.get_index() < m._this_iterator.get_size()
+end function
+
+function Anon_4c65be20_nextChar_k_() as Object
+    __incr_tmp_141 = m.get_index()
+    m.set_index(__incr_tmp_141 + 1)
+    return m._this_iterator.get_I_k_(__incr_tmp_141)
+
+end function
+
+function Anon_4c65be20_get_index_k_() as Integer
+    return m.index
+end function
+
+sub Anon_4c65be20_set_index_I_k_(value as Integer)
+    m.index = value
+end sub
