@@ -81,6 +81,104 @@ cd ../roku-test-app && ./rebuild-all.sh --all
 - The K2 (FIR) frontend is used; K1 is not supported
 - Entry point: `K2BrsCompiler` in `compiler/cli/cli-brs/`
 
+## Native BrightScript Type Interfaces
+
+Native BrightScript objects (roArray, roAssociativeArray, etc.) are modeled as **external interfaces** rather than wrapper classes. This allows user code to pass native BrightScript objects directly to Kotlin functions without wrapping overhead.
+
+### Key Concepts
+
+**1. External Interfaces (not wrapper classes)**
+
+Native types are declared as `external interface`, which tells the compiler the methods exist on the native object:
+
+```kotlin
+// In libraries/stdlib/brs/src/kotlin/brs/roku/NativeTypes.kt
+public external interface RoArray : IArray, IArrayJoin, IArraySort, IEnumNative {
+    companion object {
+        @BrsCreateObject("roArray")
+        fun create(size: Int = 0, resize: Boolean = true): RoArray = definedExternally
+    }
+}
+```
+
+**2. @BrsCreateObject Annotation**
+
+Marks companion object factory functions. The compiler transforms calls to `CreateObject()`:
+
+```kotlin
+// Kotlin code:
+val arr = RoArray.create(10, true)
+
+// Compiles to BrightScript:
+arr = CreateObject("roArray", 10, true)
+```
+
+**3. NativeArrayIterator Marker Type**
+
+When a type's `iterator()` returns `NativeArrayIterator`, the compiler emits native BrightScript `for each` instead of the Kotlin iterator protocol:
+
+```kotlin
+public external interface NativeArrayIterator<out T>  // Marker interface
+
+public interface NativeIterable {
+    fun iterator(): NativeArrayIterator<Dynamic>
+}
+
+// Types implementing NativeIterable get native for-each:
+for (item in roArray) { ... }  // → for each item in roArray ... end for
+```
+
+**4. Roku Interface Mappings**
+
+BrightScript interfaces map to Kotlin interfaces:
+- `ifArray` → `IArray`
+- `ifArrayGet` → `IArrayGet`
+- `ifArraySet` → `IArraySet`
+- `ifEnum` → `IEnumNative`
+- `ifAssociativeArray` → `IAssociativeArray`
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `libraries/stdlib/brs/src/kotlin/brs/annotations.kt` | `@BrsCreateObject` annotation definition |
+| `libraries/stdlib/brs/src/kotlin/brs/roku/NativeTypes.kt` | Native type interfaces (RoArray, RoAssociativeArray, etc.) |
+| `core/compiler.common.brightscript/.../BrsStandardClassIds.kt` | Class IDs for compiler recognition |
+| `compiler/ir/backend.brightscript/.../BrsIntrinsics.kt` | `isNativeIterable()`, `returnsNativeArrayIterator()` |
+| `compiler/ir/backend.brightscript/.../IrToBrsTransformer.kt` | For-each handling, @BrsCreateObject compilation |
+
+### For-Each Loop Compilation Strategies
+
+The compiler uses these strategies (in order) for `for (x in iterable)`:
+
+1. **NativeIterable check**: If type implements `NativeIterable` → native `for each`
+2. **NativeArrayIterator check**: If `iterator()` returns `NativeArrayIterator` → native `for each`
+3. **Stdlib collections with get_array()**: ArrayList, IntArray, etc. → `for each x in obj.get_array()`
+4. **Kotlin Iterable interface**: HashSet, Sequence, etc. → while loop with `iterator_k_()`, `hasNext_k_()`, `next_k_()`
+5. **Default**: Native `for each`
+
+### Adding New Native Types
+
+To add a new native BrightScript type (e.g., `RoList`):
+
+1. **Define the interface** in `NativeTypes.kt`:
+   ```kotlin
+   public external interface RoList : IEnumNative {
+       fun count(): Int
+       fun addTail(value: Dynamic)
+       // ... other methods from Roku docs
+
+       companion object {
+           @BrsCreateObject("roList")
+           fun create(): RoList = definedExternally
+       }
+   }
+   ```
+
+2. **Add class ID** (if needed for compiler recognition) in `BrsStandardClassIds.kt`
+
+3. **No wrapper class needed** - the external interface describes what the native object can do
+
 ## Key Directories
 
 ### Compiler Modules

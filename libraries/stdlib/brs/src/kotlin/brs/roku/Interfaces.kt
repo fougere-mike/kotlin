@@ -13,7 +13,7 @@ import kotlin.brs.Dynamic
  *
  * @see <a href="https://developer.roku.com/docs/references/brightscript/interfaces/ifmessageport.md">ifMessagePort</a>
  */
-public interface IMessagePort {
+public external interface IMessagePort {
     /**
      * Waits for a message on the port, with a timeout.
      *
@@ -43,13 +43,13 @@ public interface IMessagePort {
  *
  * @see <a href="https://developer.roku.com/docs/references/brightscript/interfaces/ifsetmessageport.md">ifSetMessagePort</a>
  */
-public interface ISetMessagePort {
+public external interface ISetMessagePort {
     /**
      * Sets the message port to receive events from this component.
      *
      * @param port The message port to receive events.
      */
-    public fun setMessagePort(port: RoMessagePort)
+    public fun setMessagePort(port: IMessagePort)
 }
 
 /**
@@ -58,13 +58,13 @@ public interface ISetMessagePort {
  *
  * @see <a href="https://developer.roku.com/docs/references/brightscript/interfaces/ifgetmessageport.md">ifGetMessagePort</a>
  */
-public interface IGetMessagePort {
+public external interface IGetMessagePort {
     /**
      * Returns the message port currently set on this component.
      *
      * @return The message port, or null if none is set.
      */
-    public fun getMessagePort(): RoMessagePort?
+    public fun getMessagePort(): IMessagePort?
 }
 
 /**
@@ -96,7 +96,7 @@ public interface IEnum<T> {
  *
  * @see <a href="https://developer.roku.com/docs/references/brightscript/interfaces/ifhttpagent.md">ifHttpAgent</a>
  */
-public interface IHttpAgent {
+public external interface IHttpAgent {
     /**
      * Adds a custom HTTP header to requests.
      *
@@ -122,12 +122,12 @@ public interface IHttpAgent {
     public fun initClientCertificates(): Boolean
 
     /**
-     * Sets custom HTTP headers from a map.
+     * Sets custom HTTP headers from an associative array.
      *
-     * @param headers Map of header name to value.
+     * @param headers Associative array of header name to value.
      * @return True if all headers were set successfully.
      */
-    public fun setHeaders(headers: Map<String, String>): Boolean
+    public fun setHeaders(headers: Dynamic): Boolean
 }
 
 /**
@@ -136,7 +136,7 @@ public interface IHttpAgent {
  *
  * @see <a href="https://developer.roku.com/docs/references/brightscript/interfaces/ifurltransfer.md">ifUrlTransfer</a>
  */
-public interface IUrlTransfer {
+public external interface IUrlTransfer {
     /**
      * Sets the URL to use for the transfer.
      *

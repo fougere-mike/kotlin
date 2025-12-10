@@ -5,7 +5,7 @@
 
 package kotlin.brs.roku
 
-import kotlin.brs.BrsInline
+import kotlin.brs.BrsCreateObject
 import kotlin.brs.Dynamic
 
 /**
@@ -16,7 +16,7 @@ import kotlin.brs.Dynamic
  *
  * Example usage:
  * ```kotlin
- * val bytes = RoByteArray()
+ * val bytes = RoByteArray.create()
  * bytes.fromAsciiString("Hello, World!")
  * val base64 = bytes.toBase64String()
  * println(base64)
@@ -24,53 +24,28 @@ import kotlin.brs.Dynamic
  *
  * @see <a href="https://developer.roku.com/docs/references/brightscript/components/robytearray.md">roByteArray</a>
  */
-public class RoByteArray {
-
-    private val native: Dynamic
-
-    /**
-     * Creates a new empty roByteArray.
-     */
-    public constructor() {
-        native = brsCreateByteArray()
-    }
-
-    /**
-     * Internal constructor for wrapping an existing native byte array.
-     */
-    internal constructor(nativeArray: Dynamic) {
-        native = nativeArray
-    }
-
+public external interface RoByteArray {
     // ==================== Size and Capacity ====================
 
     /**
      * Returns the number of bytes in the array.
      */
-    public fun count(): Int {
-        return brsCount(native)
-    }
+    public fun count(): Int
 
     /**
      * Returns the current capacity of the array.
      */
-    public fun capacity(): Int {
-        return brsCapacity(native)
-    }
+    public fun capacity(): Int
 
     /**
      * Returns true if the array is empty.
      */
-    public fun isEmpty(): Boolean {
-        return brsIsEmpty(native)
-    }
+    public fun isEmpty(): Boolean
 
     /**
      * Clears the array contents.
      */
-    public fun clear() {
-        brsClear(native)
-    }
+    public fun clear()
 
     // ==================== Element Access ====================
 
@@ -80,9 +55,7 @@ public class RoByteArray {
      * @param index The index to read from.
      * @return The byte value (0-255).
      */
-    public operator fun get(index: Int): Int {
-        return brsGetByte(native, index)
-    }
+    public operator fun get(index: Int): Int
 
     /**
      * Sets the byte at the specified index.
@@ -90,54 +63,42 @@ public class RoByteArray {
      * @param index The index to write to.
      * @param value The byte value (0-255).
      */
-    public operator fun set(index: Int, value: Int) {
-        brsSetByte(native, index, value)
-    }
+    public operator fun set(index: Int, value: Int)
 
     /**
      * Appends a byte to the end of the array.
      *
      * @param value The byte value (0-255).
      */
-    public fun push(value: Int) {
-        brsPush(native, value)
-    }
+    public fun push(value: Int)
 
     /**
      * Removes and returns the last byte.
      *
      * @return The byte value, or invalid if empty.
      */
-    public fun pop(): Int? {
-        return brsPop(native)
-    }
+    public fun pop(): Int?
 
     /**
      * Returns the last byte without removing it.
      *
      * @return The byte value, or invalid if empty.
      */
-    public fun peek(): Int? {
-        return brsPeek(native)
-    }
+    public fun peek(): Int?
 
     /**
      * Removes and returns the first byte.
      *
      * @return The byte value, or invalid if empty.
      */
-    public fun shift(): Int? {
-        return brsShift(native)
-    }
+    public fun shift(): Int?
 
     /**
      * Prepends a byte to the beginning of the array.
      *
      * @param value The byte value (0-255).
      */
-    public fun unshift(value: Int) {
-        brsUnshift(native, value)
-    }
+    public fun unshift(value: Int)
 
     // ==================== String Conversion ====================
 
@@ -146,54 +107,42 @@ public class RoByteArray {
      *
      * @param str The ASCII string.
      */
-    public fun fromAsciiString(str: String) {
-        brsFromAsciiString(native, str)
-    }
+    public fun fromAsciiString(str: String)
 
     /**
      * Returns the contents as an ASCII string.
      *
      * @return The ASCII string representation.
      */
-    public fun toAsciiString(): String {
-        return brsToAsciiString(native)
-    }
+    public fun toAsciiString(): String
 
     /**
      * Sets the contents from a Base64 encoded string.
      *
      * @param base64 The Base64 encoded string.
      */
-    public fun fromBase64String(base64: String) {
-        brsFromBase64String(native, base64)
-    }
+    public fun fromBase64String(base64: String)
 
     /**
      * Returns the contents as a Base64 encoded string.
      *
      * @return The Base64 encoded string.
      */
-    public fun toBase64String(): String {
-        return brsToBase64String(native)
-    }
+    public fun toBase64String(): String
 
     /**
      * Sets the contents from a hex string.
      *
      * @param hex The hex string (e.g., "48656C6C6F").
      */
-    public fun fromHexString(hex: String) {
-        brsFromHexString(native, hex)
-    }
+    public fun fromHexString(hex: String)
 
     /**
      * Returns the contents as a hex string.
      *
      * @return The hex string representation.
      */
-    public fun toHexString(): String {
-        return brsToHexString(native)
-    }
+    public fun toHexString(): String
 
     // ==================== File Operations ====================
 
@@ -203,9 +152,7 @@ public class RoByteArray {
      * @param path The file path to read.
      * @return True if successful.
      */
-    public fun readFile(path: String): Boolean {
-        return brsReadFile(native, path)
-    }
+    public fun readFile(path: String): Boolean
 
     /**
      * Writes the contents to a file.
@@ -213,9 +160,7 @@ public class RoByteArray {
      * @param path The file path to write.
      * @return True if successful.
      */
-    public fun writeFile(path: String): Boolean {
-        return brsWriteFile(native, path)
-    }
+    public fun writeFile(path: String): Boolean
 
     /**
      * Appends the contents to a file.
@@ -223,9 +168,7 @@ public class RoByteArray {
      * @param path The file path to append to.
      * @return True if successful.
      */
-    public fun appendFile(path: String): Boolean {
-        return brsAppendFile(native, path)
-    }
+    public fun appendFile(path: String): Boolean
 
     // ==================== Cryptographic Operations ====================
 
@@ -234,45 +177,35 @@ public class RoByteArray {
      *
      * @return The CRC32 checksum.
      */
-    public fun getCRC32(): Int {
-        return brsGetCRC32(native)
-    }
+    public fun getCRC32(): Int
 
     /**
      * Returns the MD5 hash as a hex string.
      *
      * @return The MD5 hash.
      */
-    public fun getMD5(): String {
-        return brsGetMD5(native)
-    }
+    public fun getMD5(): String
 
     /**
      * Returns the SHA1 hash as a hex string.
      *
      * @return The SHA1 hash.
      */
-    public fun getSHA1(): String {
-        return brsGetSHA1(native)
-    }
+    public fun getSHA1(): String
 
     /**
      * Returns the SHA256 hash as a hex string.
      *
      * @return The SHA256 hash.
      */
-    public fun getSHA256(): String {
-        return brsGetSHA256(native)
-    }
+    public fun getSHA256(): String
 
     /**
      * Returns the SHA512 hash as a hex string.
      *
      * @return The SHA512 hash.
      */
-    public fun getSHA512(): String {
-        return brsGetSHA512(native)
-    }
+    public fun getSHA512(): String
 
     // ==================== Resize and Copy ====================
 
@@ -282,107 +215,35 @@ public class RoByteArray {
      * @param newSize The new size.
      * @param fillValue The value to fill new elements with (0-255).
      */
-    public fun resize(newSize: Int, fillValue: Int = 0) {
-        brsResize(native, newSize, fillValue)
-    }
+    public fun resize(newSize: Int, fillValue: Int)
 
     /**
      * Appends the contents of another byte array.
      *
      * @param other The byte array to append.
      */
-    public fun append(other: RoByteArray) {
-        brsAppend(native, other.native)
+    public fun append(other: RoByteArray)
+
+    public companion object {
+        /**
+         * Creates a new empty roByteArray.
+         *
+         * Compiles to: `CreateObject("roByteArray")`
+         *
+         * @return A new RoByteArray instance.
+         */
+        @BrsCreateObject("roByteArray")
+        public fun create(): RoByteArray = definedExternally
     }
+}
 
-    /**
-     * Returns the native BrightScript object.
-     */
-    internal fun getNative(): Dynamic = native
+// ==================== Extension Functions ====================
 
-    // ==================== BrightScript Intrinsics ====================
-
-    @BrsInline("return CreateObject(\"roByteArray\")")
-    private external fun brsCreateByteArray(): Dynamic
-
-    @BrsInline("return ba.Count()")
-    private external fun brsCount(ba: Dynamic): Int
-
-    @BrsInline("return ba.Capacity()")
-    private external fun brsCapacity(ba: Dynamic): Int
-
-    @BrsInline("return ba.IsEmpty()")
-    private external fun brsIsEmpty(ba: Dynamic): Boolean
-
-    @BrsInline("ba.Clear()")
-    private external fun brsClear(ba: Dynamic)
-
-    @BrsInline("return ba[index]")
-    private external fun brsGetByte(ba: Dynamic, index: Int): Int
-
-    @BrsInline("ba[index] = value")
-    private external fun brsSetByte(ba: Dynamic, index: Int, value: Int)
-
-    @BrsInline("ba.Push(value)")
-    private external fun brsPush(ba: Dynamic, value: Int)
-
-    @BrsInline("return ba.Pop()")
-    private external fun brsPop(ba: Dynamic): Int?
-
-    @BrsInline("return ba.Peek()")
-    private external fun brsPeek(ba: Dynamic): Int?
-
-    @BrsInline("return ba.Shift()")
-    private external fun brsShift(ba: Dynamic): Int?
-
-    @BrsInline("ba.Unshift(value)")
-    private external fun brsUnshift(ba: Dynamic, value: Int)
-
-    @BrsInline("ba.FromAsciiString(str)")
-    private external fun brsFromAsciiString(ba: Dynamic, str: String)
-
-    @BrsInline("return ba.ToAsciiString()")
-    private external fun brsToAsciiString(ba: Dynamic): String
-
-    @BrsInline("ba.FromBase64String(base64)")
-    private external fun brsFromBase64String(ba: Dynamic, base64: String)
-
-    @BrsInline("return ba.ToBase64String()")
-    private external fun brsToBase64String(ba: Dynamic): String
-
-    @BrsInline("ba.FromHexString(hex)")
-    private external fun brsFromHexString(ba: Dynamic, hex: String)
-
-    @BrsInline("return ba.ToHexString()")
-    private external fun brsToHexString(ba: Dynamic): String
-
-    @BrsInline("return ba.ReadFile(path)")
-    private external fun brsReadFile(ba: Dynamic, path: String): Boolean
-
-    @BrsInline("return ba.WriteFile(path)")
-    private external fun brsWriteFile(ba: Dynamic, path: String): Boolean
-
-    @BrsInline("return ba.AppendFile(path)")
-    private external fun brsAppendFile(ba: Dynamic, path: String): Boolean
-
-    @BrsInline("return ba.GetCRC32()")
-    private external fun brsGetCRC32(ba: Dynamic): Int
-
-    @BrsInline("return ba.GetMD5()")
-    private external fun brsGetMD5(ba: Dynamic): String
-
-    @BrsInline("return ba.GetSHA1()")
-    private external fun brsGetSHA1(ba: Dynamic): String
-
-    @BrsInline("return ba.GetSHA256()")
-    private external fun brsGetSHA256(ba: Dynamic): String
-
-    @BrsInline("return ba.GetSHA512()")
-    private external fun brsGetSHA512(ba: Dynamic): String
-
-    @BrsInline("ba.Resize(newSize, fillValue)")
-    private external fun brsResize(ba: Dynamic, newSize: Int, fillValue: Int)
-
-    @BrsInline("ba.Append(other)")
-    private external fun brsAppend(ba: Dynamic, other: Dynamic)
+/**
+ * Resizes the array to the specified size, filling new elements with 0.
+ *
+ * @param newSize The new size.
+ */
+public fun RoByteArray.resize(newSize: Int) {
+    resize(newSize, 0)
 }
