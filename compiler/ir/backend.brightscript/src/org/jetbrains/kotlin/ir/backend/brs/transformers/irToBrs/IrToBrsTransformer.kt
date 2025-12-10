@@ -4151,19 +4151,26 @@ class IrExpressionToBrsTransformer(
                 }
 
                 // For regular method calls, determine the method name
+                val rawMethodName = function.name.asString()
+
+                // Check if the method belongs to an external interface (native BrightScript type)
+                // External interface methods use their simple names without mangling
+                // Note: parentClass is already defined above at line 4101
+                val isExternalInterfaceMethod = parentClass != null &&
+                    (parentClass.isExternal || isExternalClass(parentClass))
+
                 // Data class synthetic methods (componentN, copy, equals, hashCode, toString)
                 // are attached with simple names, so we should not mangle them
-                val rawMethodName = function.name.asString()
                 val isDataClassSyntheticMethod = rawMethodName.startsWith("component") ||
                     rawMethodName in listOf("copy", "equals", "hashCode", "toString")
 
-                val methodName = if (isDataClassSyntheticMethod) {
-                    // Use simple name for data class synthetic methods
+                val methodName = if (isExternalInterfaceMethod || isDataClassSyntheticMethod) {
+                    // Use simple name for external interface methods and data class synthetic methods
                     rawMethodName
                 } else {
                     // Use mangled name for other methods (to match how methods are attached)
                     val fullMethodName = context.getBrsName(function)
-                    val className = (function.parent as? IrClass)?.let { context.getBrsName(it) } ?: ""
+                    val className = parentClass?.let { context.getBrsName(it) } ?: ""
                     if (className.isNotEmpty()) {
                         fullMethodName.removePrefix("${className}_")
                     } else {
