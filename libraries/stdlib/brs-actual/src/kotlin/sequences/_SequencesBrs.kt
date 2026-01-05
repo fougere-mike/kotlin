@@ -733,7 +733,7 @@ public fun <T : Comparable<T>> Sequence<T>.maxOrNull(): T? {
     var max = iterator.next()
     while (iterator.hasNext()) {
         val e = iterator.next()
-        if (max < e) max = e
+        if (brsCompareTo(max, e) < 0) max = e
     }
     return max
 }
@@ -756,7 +756,7 @@ public fun <T : Comparable<T>> Sequence<T>.minOrNull(): T? {
     var min = iterator.next()
     while (iterator.hasNext()) {
         val e = iterator.next()
-        if (min > e) min = e
+        if (brsCompareTo(min, e) > 0) min = e
     }
     return min
 }

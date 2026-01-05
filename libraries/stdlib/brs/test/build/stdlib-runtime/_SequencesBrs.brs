@@ -486,11 +486,11 @@ function reduceOrNull_rSequence_Function2_k_(m as Object, operation as Object) a
 end function
 
 function scan_rSequence_AnyN_Function2_k_(m as Object, initial as Dynamic, operation as Object) as Object
-    return Anon_42b47c3_create_Sequence_AnyN_Function2_k_(m, initial, operation)
+    return Anon_94ae80e_create_Sequence_AnyN_Function2_k_(m, initial, operation)
 end function
 
 function scanIndexed_rSequence_AnyN_Function3I_k_(m as Object, initial as Dynamic, operation as Object) as Object
-    return Anon_65891190_create_Sequence_AnyN_Function3I_k_(m, initial, operation)
+    return Anon_3ecc8161_create_Sequence_AnyN_Function3I_k_(m, initial, operation)
 end function
 
 function sum_rSequenceB_k_(m as Object) as Integer
@@ -669,7 +669,7 @@ function maxOrNull_rSequence_k_(m as Object) as Dynamic
     max = iterator.next_k_()
     while iterator.hasNext_k_()
         e = iterator.next_k_()
-        if max.compareTo(e) < 0 then
+        if brsCompareTo_AnyN_AnyN_k_(max, e) < 0 then
             max = e
         end if
     end while
@@ -696,7 +696,7 @@ function minOrNull_rSequence_k_(m as Object) as Dynamic
     min = iterator.next_k_()
     while iterator.hasNext_k_()
         e = iterator.next_k_()
-        if min.compareTo(e) > 0 then
+        if brsCompareTo_AnyN_AnyN_k_(min, e) > 0 then
             min = e
         end if
     end while
@@ -866,18 +866,18 @@ function mapIndexedNotNull_rSequence_Function2I_k_(m as Object, transform as Obj
     end function})
 end function
 
-function Anon_4b9d5a20_create_Sequence_AnyN_Function2_k_(_this_scan as Object, _initial as Dynamic, _operation as Object) as Object
+function Anon_2c974286_create_Sequence_AnyN_Function2_k_(_this_scan as Object, _initial as Dynamic, _operation as Object) as Object
     this = {}
-    this.__type = "Anon_4b9d5a20"
-    this.__proto = ["Anon_4b9d5a20", "Iterator"]
+    this.__type = "Anon_2c974286"
+    this.__proto = ["Anon_2c974286", "Iterator"]
     this.__id = __kotlin_nextObjectId()
-    this.hasNext_k_ = Anon_4b9d5a20_hasNext_k_
-    this.next_k_ = Anon_4b9d5a20_next_k_
-    this.get_iterator = Anon_4b9d5a20_get_iterator_k_
-    this.get_accumulator = Anon_4b9d5a20_get_accumulator_k_
-    this.set_accumulator = Anon_4b9d5a20_set_accumulator_AnyN_k_
-    this.get_firstEmitted = Anon_4b9d5a20_get_firstEmitted_k_
-    this.set_firstEmitted = Anon_4b9d5a20_set_firstEmitted_Z_k_
+    this.hasNext_k_ = Anon_2c974286_hasNext_k_
+    this.next_k_ = Anon_2c974286_next_k_
+    this.get_iterator = Anon_2c974286_get_iterator_k_
+    this.get_accumulator = Anon_2c974286_get_accumulator_k_
+    this.set_accumulator = Anon_2c974286_set_accumulator_AnyN_k_
+    this.get_firstEmitted = Anon_2c974286_get_firstEmitted_k_
+    this.set_firstEmitted = Anon_2c974286_set_firstEmitted_Z_k_
     this.iterator = _this_scan.iterator_k_()
     this.accumulator = _initial
     this.firstEmitted = false
@@ -886,11 +886,11 @@ function Anon_4b9d5a20_create_Sequence_AnyN_Function2_k_(_this_scan as Object, _
     return this
 end function
 
-function Anon_4b9d5a20_hasNext_k_() as Boolean
+function Anon_2c974286_hasNext_k_() as Boolean
     return not m.get_firstEmitted() or m.get_iterator().hasNext_k_()
 end function
 
-function Anon_4b9d5a20_next_k_() as Dynamic
+function Anon_2c974286_next_k_() as Dynamic
     if not m.get_firstEmitted() then
         m.set_firstEmitted(true)
         return m._initial
@@ -899,56 +899,56 @@ function Anon_4b9d5a20_next_k_() as Dynamic
     return m.get_accumulator()
 end function
 
-function Anon_4b9d5a20_get_iterator_k_() as Object
+function Anon_2c974286_get_iterator_k_() as Object
     return m.iterator
 end function
 
-function Anon_4b9d5a20_get_accumulator_k_() as Dynamic
+function Anon_2c974286_get_accumulator_k_() as Dynamic
     return m.accumulator
 end function
 
-sub Anon_4b9d5a20_set_accumulator_AnyN_k_(value as Dynamic)
+sub Anon_2c974286_set_accumulator_AnyN_k_(value as Dynamic)
     m.accumulator = value
 end sub
 
-function Anon_4b9d5a20_get_firstEmitted_k_() as Boolean
+function Anon_2c974286_get_firstEmitted_k_() as Boolean
     return m.firstEmitted
 end function
 
-sub Anon_4b9d5a20_set_firstEmitted_Z_k_(value as Boolean)
+sub Anon_2c974286_set_firstEmitted_Z_k_(value as Boolean)
     m.firstEmitted = value
 end sub
 
-function Anon_42b47c3_create_Sequence_AnyN_Function2_k_(_this_scan as Object, _initial as Dynamic, _operation as Object) as Object
+function Anon_94ae80e_create_Sequence_AnyN_Function2_k_(_this_scan as Object, _initial as Dynamic, _operation as Object) as Object
     this = {}
-    this.__type = "Anon_42b47c3"
-    this.__proto = ["Anon_42b47c3", "Sequence"]
+    this.__type = "Anon_94ae80e"
+    this.__proto = ["Anon_94ae80e", "Sequence"]
     this.__id = __kotlin_nextObjectId()
-    this.iterator_k_ = Anon_42b47c3_iterator_k_
+    this.iterator_k_ = Anon_94ae80e_iterator_k_
     this._this_scan = _this_scan
     this._initial = _initial
     this._operation = _operation
     return this
 end function
 
-function Anon_42b47c3_iterator_k_() as Object
-    return Anon_4b9d5a20_create_Sequence_AnyN_Function2_k_(m._this_scan, m._initial, m._operation)
+function Anon_94ae80e_iterator_k_() as Object
+    return Anon_2c974286_create_Sequence_AnyN_Function2_k_(m._this_scan, m._initial, m._operation)
 end function
 
-function Anon_41038369_create_Sequence_AnyN_Function3I_k_(_this_scanIndexed as Object, _initial as Dynamic, _operation as Object) as Object
+function Anon_230c1ae9_create_Sequence_AnyN_Function3I_k_(_this_scanIndexed as Object, _initial as Dynamic, _operation as Object) as Object
     this = {}
-    this.__type = "Anon_41038369"
-    this.__proto = ["Anon_41038369", "Iterator"]
+    this.__type = "Anon_230c1ae9"
+    this.__proto = ["Anon_230c1ae9", "Iterator"]
     this.__id = __kotlin_nextObjectId()
-    this.hasNext_k_ = Anon_41038369_hasNext_k_
-    this.next_k_ = Anon_41038369_next_k_
-    this.get_iterator = Anon_41038369_get_iterator_k_
-    this.get_accumulator = Anon_41038369_get_accumulator_k_
-    this.set_accumulator = Anon_41038369_set_accumulator_AnyN_k_
-    this.get_index = Anon_41038369_get_index_k_
-    this.set_index = Anon_41038369_set_index_I_k_
-    this.get_firstEmitted = Anon_41038369_get_firstEmitted_k_
-    this.set_firstEmitted = Anon_41038369_set_firstEmitted_Z_k_
+    this.hasNext_k_ = Anon_230c1ae9_hasNext_k_
+    this.next_k_ = Anon_230c1ae9_next_k_
+    this.get_iterator = Anon_230c1ae9_get_iterator_k_
+    this.get_accumulator = Anon_230c1ae9_get_accumulator_k_
+    this.set_accumulator = Anon_230c1ae9_set_accumulator_AnyN_k_
+    this.get_index = Anon_230c1ae9_get_index_k_
+    this.set_index = Anon_230c1ae9_set_index_I_k_
+    this.get_firstEmitted = Anon_230c1ae9_get_firstEmitted_k_
+    this.set_firstEmitted = Anon_230c1ae9_set_firstEmitted_Z_k_
     this.iterator = _this_scanIndexed.iterator_k_()
     this.accumulator = _initial
     this.index = 0
@@ -958,11 +958,11 @@ function Anon_41038369_create_Sequence_AnyN_Function3I_k_(_this_scanIndexed as O
     return this
 end function
 
-function Anon_41038369_hasNext_k_() as Boolean
+function Anon_230c1ae9_hasNext_k_() as Boolean
     return not m.get_firstEmitted() or m.get_iterator().hasNext_k_()
 end function
 
-function Anon_41038369_next_k_() as Dynamic
+function Anon_230c1ae9_next_k_() as Dynamic
     if not m.get_firstEmitted() then
         m.set_firstEmitted(true)
         return m._initial
@@ -974,46 +974,46 @@ function Anon_41038369_next_k_() as Dynamic
     return m.get_accumulator()
 end function
 
-function Anon_41038369_get_iterator_k_() as Object
+function Anon_230c1ae9_get_iterator_k_() as Object
     return m.iterator
 end function
 
-function Anon_41038369_get_accumulator_k_() as Dynamic
+function Anon_230c1ae9_get_accumulator_k_() as Dynamic
     return m.accumulator
 end function
 
-sub Anon_41038369_set_accumulator_AnyN_k_(value as Dynamic)
+sub Anon_230c1ae9_set_accumulator_AnyN_k_(value as Dynamic)
     m.accumulator = value
 end sub
 
-function Anon_41038369_get_index_k_() as Integer
+function Anon_230c1ae9_get_index_k_() as Integer
     return m.index
 end function
 
-sub Anon_41038369_set_index_I_k_(value as Integer)
+sub Anon_230c1ae9_set_index_I_k_(value as Integer)
     m.index = value
 end sub
 
-function Anon_41038369_get_firstEmitted_k_() as Boolean
+function Anon_230c1ae9_get_firstEmitted_k_() as Boolean
     return m.firstEmitted
 end function
 
-sub Anon_41038369_set_firstEmitted_Z_k_(value as Boolean)
+sub Anon_230c1ae9_set_firstEmitted_Z_k_(value as Boolean)
     m.firstEmitted = value
 end sub
 
-function Anon_65891190_create_Sequence_AnyN_Function3I_k_(_this_scanIndexed as Object, _initial as Dynamic, _operation as Object) as Object
+function Anon_3ecc8161_create_Sequence_AnyN_Function3I_k_(_this_scanIndexed as Object, _initial as Dynamic, _operation as Object) as Object
     this = {}
-    this.__type = "Anon_65891190"
-    this.__proto = ["Anon_65891190", "Sequence"]
+    this.__type = "Anon_3ecc8161"
+    this.__proto = ["Anon_3ecc8161", "Sequence"]
     this.__id = __kotlin_nextObjectId()
-    this.iterator_k_ = Anon_65891190_iterator_k_
+    this.iterator_k_ = Anon_3ecc8161_iterator_k_
     this._this_scanIndexed = _this_scanIndexed
     this._initial = _initial
     this._operation = _operation
     return this
 end function
 
-function Anon_65891190_iterator_k_() as Object
-    return Anon_41038369_create_Sequence_AnyN_Function3I_k_(m._this_scanIndexed, m._initial, m._operation)
+function Anon_3ecc8161_iterator_k_() as Object
+    return Anon_230c1ae9_create_Sequence_AnyN_Function3I_k_(m._this_scanIndexed, m._initial, m._operation)
 end function

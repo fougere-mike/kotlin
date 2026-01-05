@@ -201,7 +201,7 @@ fun TestRunner.sequenceTests() {
             val list = listOf(1, 2, 3, 4, 5)
             assertEquals("1, 2, 3, 4, 5", list.asSequence().joinToString())
             assertEquals("1-2-3-4-5", list.asSequence().joinToString(separator = "-"))
-            assertEquals("[1, 2, 3]", list.asSequence().joinToString(prefix = "[", postfix = "]"))
+            assertEquals("[1, 2, 3, 4, 5]", list.asSequence().joinToString(prefix = "[", postfix = "]"))
             assertEquals("1, 2, ...", list.asSequence().joinToString(limit = 2))
         }
 
