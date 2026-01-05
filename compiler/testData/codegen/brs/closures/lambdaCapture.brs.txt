@@ -8,18 +8,18 @@ function simpleCapture_k_() as Integer
 end function
 
 function mutableCapture_k_() as Integer
-    counter = 0
-    increment = {counter: {value: counter}, invoke: function() as Void
+    counter = {value: 0}
+    increment = {counter: counter, invoke: function() as Void
         m.counter.value = (m.counter.value + 1)
     end function}
     increment.invoke()
     increment.invoke()
-    return counter
+    return counter.value
 end function
 
 function returnedClosure_k_() as Object
-    count = 0
-    return {count: {value: count}, invoke: function() as Integer
+    count = {value: 0}
+    return {count: count, invoke: function() as Integer
         m.count.value = (m.count.value + 1)
         return m.count.value
     end function}

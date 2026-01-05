@@ -44,12 +44,12 @@ sub standardFunctionsTests_rTestRunner_k_(m as Object)
             assertEquals_AnyN_AnyN_StrN_k_(3, result, invalid)
         end function})
         m.test_Str_Function0V_k_("also returns receiver", {invoke: function() as Void
-            sideEffect = 0
-            result = also_rAnyN_Function1V_k_("hello", {sideEffect: {value: sideEffect}, invoke: function(it as String) as Void
+            sideEffect = {value: 0}
+            result = also_rAnyN_Function1V_k_("hello", {sideEffect: sideEffect, invoke: function(it as String) as Void
                 m.sideEffect.value = Len(it)
             end function})
             assertEquals_AnyN_AnyN_StrN_k_("hello", result, invalid)
-            assertEquals_AnyN_AnyN_StrN_k_(5, sideEffect, invalid)
+            assertEquals_AnyN_AnyN_StrN_k_(5, sideEffect.value, invalid)
         end function})
         m.test_Str_Function0V_k_("also chain", {invoke: function() as Void
             list = mutableListOf_k_()

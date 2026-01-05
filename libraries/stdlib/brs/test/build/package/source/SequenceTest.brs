@@ -192,12 +192,12 @@ sub sequenceTests_rTestRunner_k_(m as Object)
         end function})
         m.test_Str_Function0V_k_("onEach", {invoke: function() as Void
             list = listOf_Arr_k_([1, 2, 3])
-            sum = 0
-            result = toList_rSequence_k_(onEach_rSequence_Function1V_k_(asSequence_rIterable_k_(list), {sum: {value: sum}, invoke: function(it as Integer) as Void
+            sum = {value: 0}
+            result = toList_rSequence_k_(onEach_rSequence_Function1V_k_(asSequence_rIterable_k_(list), {sum: sum, invoke: function(it as Integer) as Void
                 m.sum.value = (m.sum.value + it)
             end function}))
             assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_([1, 2, 3]), result, invalid)
-            assertEquals_AnyN_AnyN_StrN_k_(6, sum, invalid)
+            assertEquals_AnyN_AnyN_StrN_k_(6, sum.value, invalid)
         end function})
         m.test_Str_Function0V_k_("withIndex", {invoke: function() as Void
             list = listOf_Arr_k_(["a", "b", "c"])
