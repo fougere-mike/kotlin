@@ -1,14 +1,15 @@
 import org.gradle.api.internal.file.collections.DefaultConfigurableFileCollection
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.plugin.KotlinBasePluginWrapper
-import org.jetbrains.kotlin.gradle.targets.brs.KotlinBrsCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompileCommon
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
-// Helper to check for BRS compile task type
+// Helper to check for BRS compile task type (uses reflection to avoid compile-time dependency)
+// Check class name - handle decorated classes from Gradle (KotlinBrsCompile_Decorated)
 val isBrsCompileTask: (Any) -> Boolean = { task ->
-    task is KotlinBrsCompile
+    val className = task::class.java.name
+    className.contains("KotlinBrsCompile")
 }
 
 // Contains common configuration that should be applied to all projects

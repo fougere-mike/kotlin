@@ -148,7 +148,7 @@ internal fun Project.registerKotlinPluginExtensions() {
         register(project, KotlinJvmJarArtifact)
         register(project, KotlinJsKlibArtifact)
         register(project, KotlinNativeKlibArtifact)
-        register(project, KotlinBrsKlibArtifact)
+        // KotlinBrsKlibArtifact is NOT registered - BRS stdlib uses prebuilt klib instead
         register(project, KotlinNativeHostSpecificMetadataArtifact)
     }
 

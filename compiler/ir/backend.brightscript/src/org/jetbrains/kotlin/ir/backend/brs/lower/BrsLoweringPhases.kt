@@ -97,7 +97,12 @@ object BrsLoweringPhases {
             // Phase 15: Local declarations lowering - handles closure capture for local classes
             // This transforms local classes to properly capture variables from enclosing scopes
             // Must run after ForLoopsLowering to avoid conflicts
-            LocalDeclarationsLowering(context, suggestUniqueNames = false),
+            // Note: localNameSanitizer replaces $ with _ since BrightScript doesn't allow $ in identifiers
+            LocalDeclarationsLowering(
+                context,
+                localNameSanitizer = { it.replace("\$", "_") },
+                suggestUniqueNames = false
+            ),
 
             // Phase 16: Extract local classes to file level
             // After LocalDeclarationsLowering handles the closure capture, this pass moves

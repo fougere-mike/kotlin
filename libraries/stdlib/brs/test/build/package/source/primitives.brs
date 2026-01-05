@@ -168,79 +168,79 @@ function copyOf_rCharArray_I_k_(m as Object, newSize as Integer) as Object
 end function
 
 function iterator_rStr_k_(m as String) as Object
-    return Anon_9ae1213_create_Str_k_(m)
+    return Anon_40d9c121_create_Str_k_(m)
 end function
 
 function iterator_rCharArray_k_(m as Object) as Object
-    return Anon_2b48b98f_create_CharArray_k_(m)
+    return Anon_64f1ba94_create_CharArray_k_(m)
 end function
 
-function Anon_9ae1213_create_Str_k_(_this_iterator as String) as Object
+function Anon_40d9c121_create_Str_k_(_this_iterator as String) as Object
     this = CharIterator_create_k_()
     this._super = {}
     this._super.hasNext_k_ = this.hasNext_k_
     this._super.nextChar_k_ = this.nextChar_k_
-    this.__proto = ["Anon_9ae1213", this.__proto]
-    this.__type = "Anon_9ae1213"
-    this.hasNext_k_ = Anon_9ae1213_hasNext_k_
-    this.nextChar_k_ = Anon_9ae1213_nextChar_k_
-    this.get_index = Anon_9ae1213_get_index_k_
-    this.set_index = Anon_9ae1213_set_index_I_k_
+    this.__proto = ["Anon_40d9c121", this.__proto]
+    this.__type = "Anon_40d9c121"
+    this.hasNext_k_ = Anon_40d9c121_hasNext_k_
+    this.nextChar_k_ = Anon_40d9c121_nextChar_k_
+    this.get_index = Anon_40d9c121_get_index_k_
+    this.set_index = Anon_40d9c121_set_index_I_k_
     this.index = 0
     this._this_iterator = _this_iterator
     return this
 end function
 
-function Anon_9ae1213_hasNext_k_() as Boolean
+function Anon_40d9c121_hasNext_k_() as Boolean
     return m.get_index() < Len(m._this_iterator)
 end function
 
-function Anon_9ae1213_nextChar_k_() as Object
+function Anon_40d9c121_nextChar_k_() as Object
     __incr_tmp_185 = m.get_index()
     m.set_index(__incr_tmp_185 + 1)
     return m._this_iterator.get_I_k_(__incr_tmp_185)
 
 end function
 
-function Anon_9ae1213_get_index_k_() as Integer
+function Anon_40d9c121_get_index_k_() as Integer
     return m.index
 end function
 
-sub Anon_9ae1213_set_index_I_k_(value as Integer)
+sub Anon_40d9c121_set_index_I_k_(value as Integer)
     m.index = value
 end sub
 
-function Anon_2b48b98f_create_CharArray_k_(_this_iterator as Object) as Object
+function Anon_64f1ba94_create_CharArray_k_(_this_iterator as Object) as Object
     this = CharIterator_create_k_()
     this._super = {}
     this._super.hasNext_k_ = this.hasNext_k_
     this._super.nextChar_k_ = this.nextChar_k_
-    this.__proto = ["Anon_2b48b98f", this.__proto]
-    this.__type = "Anon_2b48b98f"
-    this.hasNext_k_ = Anon_2b48b98f_hasNext_k_
-    this.nextChar_k_ = Anon_2b48b98f_nextChar_k_
-    this.get_index = Anon_2b48b98f_get_index_k_
-    this.set_index = Anon_2b48b98f_set_index_I_k_
+    this.__proto = ["Anon_64f1ba94", this.__proto]
+    this.__type = "Anon_64f1ba94"
+    this.hasNext_k_ = Anon_64f1ba94_hasNext_k_
+    this.nextChar_k_ = Anon_64f1ba94_nextChar_k_
+    this.get_index = Anon_64f1ba94_get_index_k_
+    this.set_index = Anon_64f1ba94_set_index_I_k_
     this.index = 0
     this._this_iterator = _this_iterator
     return this
 end function
 
-function Anon_2b48b98f_hasNext_k_() as Boolean
+function Anon_64f1ba94_hasNext_k_() as Boolean
     return m.get_index() < m._this_iterator.get_size()
 end function
 
-function Anon_2b48b98f_nextChar_k_() as Object
+function Anon_64f1ba94_nextChar_k_() as Object
     __incr_tmp_186 = m.get_index()
     m.set_index(__incr_tmp_186 + 1)
     return m._this_iterator.get_I_k_(__incr_tmp_186)
 
 end function
 
-function Anon_2b48b98f_get_index_k_() as Integer
+function Anon_64f1ba94_get_index_k_() as Integer
     return m.index
 end function
 
-sub Anon_2b48b98f_set_index_I_k_(value as Integer)
+sub Anon_64f1ba94_set_index_I_k_(value as Integer)
     m.index = value
 end sub
