@@ -565,7 +565,19 @@ function IntProgressionIterator_create_I_I_I_k_(first as Integer, last as Intege
     this.set_next = IntProgressionIterator_set_next_I_k_
     this.step = step_
     this.finalElement = last
+    __when_tmp12 = invalid
+    if this.get_step() > 0 then
+        __when_tmp12 = (first <= last)
+    else if true then
+        __when_tmp12 = (first >= last)
+    end if
     this.hasNext = __when_tmp12
+    __when_tmp13 = invalid
+    if this.get_hasNext() then
+        __when_tmp13 = first
+    else if true then
+        __when_tmp13 = this.get_finalElement()
+    end if
     this.next = __when_tmp13
     return this
 end function
@@ -628,7 +640,19 @@ function LongProgressionIterator_create_J_J_J_k_(first as LongInteger, last as L
     this.set_next = LongProgressionIterator_set_next_J_k_
     this.step = step_
     this.finalElement = last
+    __when_tmp14 = invalid
+    if this.get_step() > 0 then
+        __when_tmp14 = (first <= last)
+    else if true then
+        __when_tmp14 = (first >= last)
+    end if
     this.hasNext = __when_tmp14
+    __when_tmp15 = invalid
+    if this.get_hasNext() then
+        __when_tmp15 = first
+    else if true then
+        __when_tmp15 = this.get_finalElement()
+    end if
     this.next = __when_tmp15
     return this
 end function
@@ -691,7 +715,19 @@ function CharProgressionIterator_create_C_C_I_k_(first as Object, last as Object
     this.set_next = CharProgressionIterator_set_next_I_k_
     this.step = step_
     this.finalElement = get_code_rC_k_(last)
+    __when_tmp16 = invalid
+    if this.get_step() > 0 then
+        __when_tmp16 = ((first <= last) <= 0)
+    else if true then
+        __when_tmp16 = ((first >= last) >= 0)
+    end if
     this.hasNext = __when_tmp16
+    __when_tmp17 = invalid
+    if this.get_hasNext() then
+        __when_tmp17 = get_code_rC_k_(first)
+    else if true then
+        __when_tmp17 = this.get_finalElement()
+    end if
     this.next = __when_tmp17
     return this
 end function

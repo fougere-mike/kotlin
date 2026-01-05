@@ -1516,12 +1516,16 @@ class IrToBrsTransformer(
         for (field in irClass.declarations.filterIsInstance<IrField>()) {
             field.initializer?.expression?.let { initializer ->
                 initializedFields.add(field.name.asString())
+                val transformedInit = transformExpression(initializer)
+                // Consume hoisted statements from when-lowered blocks in the initializer
+                val hoisted = takeHoistedStatements()
+                bodyStatements.addAll(hoisted)
                 bodyStatements.add(
                     BrsExpressionStatement(
                         BrsBinaryOp(
                             BrsDotAccess(BrsIdentifier("this"), field.name.asString()),
                             BrsBinaryOperator.EQ,
-                            transformExpression(initializer)
+                            transformedInit
                         )
                     )
                 )
@@ -1534,12 +1538,16 @@ class IrToBrsTransformer(
             val fieldName = property.name.asString().replace("$", "_")
             if (fieldName !in initializedFields) {
                 property.backingField?.initializer?.expression?.let { initializer ->
+                    val transformedInit = transformExpression(initializer)
+                    // Consume hoisted statements from when-lowered blocks in the initializer
+                    val hoisted = takeHoistedStatements()
+                    bodyStatements.addAll(hoisted)
                     bodyStatements.add(
                         BrsExpressionStatement(
                             BrsBinaryOp(
                                 BrsDotAccess(BrsIdentifier("this"), fieldName),
                                 BrsBinaryOperator.EQ,
-                                transformExpression(initializer)
+                                transformedInit
                             )
                         )
                     )

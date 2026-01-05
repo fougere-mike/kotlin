@@ -270,8 +270,20 @@ function UIntProgressionIterator_create_UInt_UInt_I_k_(first as Object, last as 
     this.get_next = UIntProgressionIterator_get_next_k_
     this.set_next = UIntProgressionIterator_set_next_UInt_k_
     this.finalElement = last
+    __when_tmp12 = invalid
+    if step_ > 0 then
+        __when_tmp12 = (first.compareTo_UInt_k_(last) <= 0)
+    else if true then
+        __when_tmp12 = (first.compareTo_UInt_k_(last) >= 0)
+    end if
     this.hasNext = __when_tmp12
     this.step = toUInt_rI_k_(step_)
+    __when_tmp13 = invalid
+    if this.get_hasNext() then
+        __when_tmp13 = first
+    else if true then
+        __when_tmp13 = this.get_finalElement()
+    end if
     this.next = __when_tmp13
     return this
 end function
@@ -513,8 +525,20 @@ function ULongProgressionIterator_create_ULong_ULong_J_k_(first as Object, last 
     this.get_next = ULongProgressionIterator_get_next_k_
     this.set_next = ULongProgressionIterator_set_next_ULong_k_
     this.finalElement = last
+    __when_tmp18 = invalid
+    if step_ > 0 then
+        __when_tmp18 = (first.compareTo_ULong_k_(last) <= 0)
+    else if true then
+        __when_tmp18 = (first.compareTo_ULong_k_(last) >= 0)
+    end if
     this.hasNext = __when_tmp18
     this.step = toULong_rJ_k_(step_)
+    __when_tmp19 = invalid
+    if this.get_hasNext() then
+        __when_tmp19 = first
+    else if true then
+        __when_tmp19 = this.get_finalElement()
+    end if
     this.next = __when_tmp19
     return this
 end function

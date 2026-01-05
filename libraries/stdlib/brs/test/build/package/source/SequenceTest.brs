@@ -187,7 +187,7 @@ sub sequenceTests_rTestRunner_k_(m as Object)
             list = listOf_Arr_k_([1, 2, 3, 4, 5])
             assertEquals_AnyN_AnyN_StrN_k_("1, 2, 3, 4, 5", joinToString_rtpr9o_k_(asSequence_rIterable_k_(list), invalid, invalid, invalid, invalid, invalid, invalid), invalid)
             assertEquals_AnyN_AnyN_StrN_k_("1-2-3-4-5", joinToString_rtpr9o_k_(asSequence_rIterable_k_(list), "-", invalid, invalid, invalid, invalid, invalid), invalid)
-            assertEquals_AnyN_AnyN_StrN_k_("[1, 2, 3]", joinToString_rtpr9o_k_(asSequence_rIterable_k_(list), invalid, "[", "]", invalid, invalid, invalid), invalid)
+            assertEquals_AnyN_AnyN_StrN_k_("[1, 2, 3, 4, 5]", joinToString_rtpr9o_k_(asSequence_rIterable_k_(list), invalid, "[", "]", invalid, invalid, invalid), invalid)
             assertEquals_AnyN_AnyN_StrN_k_("1, 2, ...", joinToString_rtpr9o_k_(asSequence_rIterable_k_(list), invalid, invalid, invalid, 2, invalid, invalid), invalid)
         end function})
         m.test_Str_Function0V_k_("onEach", {invoke: function() as Void
