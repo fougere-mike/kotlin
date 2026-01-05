@@ -13,6 +13,9 @@ echo ""
 # Common flags
 FLAGS="--no-configuration-cache -Dorg.gradle.dependency.verification=off"
 
+# Local bootstrap flags - tells Gradle to use Maven Local instead of build/repo
+LOCAL_BOOTSTRAP_FLAGS="-Pbootstrap.local=true -Pbootstrap.local.path=$HOME/.m2/repository/"
+
 # ============================================================================
 # PHASE 1: Remote Bootstrap
 # These steps work with the remote bootstrap KGP (which has no BRS support)
@@ -38,17 +41,18 @@ echo "4. Publishing Kotlin Gradle Plugin..."
 # After step 4, KGP with BRS support is in Maven Local.
 # The -Pbootstrap.local=true flag tells Gradle to use our locally-published KGP
 # instead of the remote bootstrap, enabling the brs {} blocks in stdlib/kotlin.test.
+# The -Pbootstrap.local.path flag points to Maven Local since that's where we published.
 # ============================================================================
 
 echo ""
 echo "5. Publishing stdlib (including BRS runtime)..."
-echo "   (Using local bootstrap with -Pbootstrap.local=true)"
-./gradlew :kotlin-stdlib:publishBrsModulePublicationToMavenLocal -Pbootstrap.local=true $FLAGS
+echo "   (Using local bootstrap from Maven Local)"
+./gradlew :kotlin-stdlib:publishBrsModulePublicationToMavenLocal $LOCAL_BOOTSTRAP_FLAGS $FLAGS
 
 echo ""
 echo "6. Publishing kotlin.test-brs..."
-echo "   (Using local bootstrap with -Pbootstrap.local=true)"
-./gradlew :kotlin-test:publishBrsModulePublicationToMavenLocal -Pbootstrap.local=true $FLAGS
+echo "   (Using local bootstrap from Maven Local)"
+./gradlew :kotlin-test:publishBrsModulePublicationToMavenLocal $LOCAL_BOOTSTRAP_FLAGS $FLAGS
 
 echo ""
 echo "=== All artifacts published to Maven Local ==="
