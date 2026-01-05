@@ -12,7 +12,7 @@ sub sequenceTests_rTestRunner_k_(m as Object)
         m.test_Str_Function0V_k_("sequence with unsigned", {invoke: function() as Void
             list = listOf_Arr_k_([UInt_create_I_k_(1), UInt_create_I_k_(2), UInt_create_I_k_(3), UInt_create_I_k_(4), UInt_create_I_k_(5)])
             result = toList_rSequence_k_(map_rSequence_Function1_k_(filter_rSequence_Function1Z_k_(asSequence_rIterable_k_(list), {invoke: function(it as Object) as Boolean
-                return (it > UInt_create_I_k_(2)) > 0
+                return it.compareTo_UInt_k_(UInt_create_I_k_(2)) > 0
             end function}), {invoke: function(it as Object) as Object
                 return it * UInt_create_I_k_(2)
             end function}))

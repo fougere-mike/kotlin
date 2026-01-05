@@ -4852,6 +4852,77 @@ class IrExpressionToBrsTransformer(
             }
             // ==================== End Structural Equals ====================
 
+            // ==================== Comparable Comparison for Non-Primitive Types ====================
+            // BrightScript's <, >, <=, >= operators can't compare roAssociativeArray objects.
+            // For non-primitive types implementing Comparable, call compareTo and compare with 0.
+            //
+            // When Kotlin FIR lowers `a > b` for Comparable types, it creates:
+            //   IrCall(origin=GT, function=compareTo, receiver=a, arg=b)
+            // The function being called is `compareTo`, and the origin indicates the comparison intent.
+            // The outer FIR lowering wraps this with `> 0` comparison.
+            //
+            // So when we see a compareTo call with GT/LT origin:
+            // - We should generate just the method call, NOT add `> 0` (the outer wrapper does that)
+            // When we see a non-compareTo function with GT/LT origin on non-primitives:
+            // - We should generate `a.compareTo(b) > 0`
+            if (binaryOp == BrsBinaryOperator.LT || binaryOp == BrsBinaryOperator.GT ||
+                binaryOp == BrsBinaryOperator.LE || binaryOp == BrsBinaryOperator.GE) {
+                val leftType = leftIr.type
+                val rightType = rightIr.type
+
+                val needsCompareTo = !leftType.isPrimitiveForComparison() || !rightType.isPrimitiveForComparison()
+
+                if (needsCompareTo) {
+                    val left = leftIr.accept(this, Unit)
+                    val right = rightIr.accept(this, Unit)
+
+                    // Find the compareTo method in the left operand's class that matches the right operand type
+                    val leftClass = leftType.classifierOrNull?.owner as? IrClass
+                    val rightClassifier = rightType.classifierOrNull
+                    val compareToMethod = leftClass?.declarations?.filterIsInstance<IrSimpleFunction>()
+                        ?.find { method ->
+                            method.name.asString() == "compareTo" &&
+                            method.valueParameters.size == 1 &&
+                            // Match the parameter type with the right operand type
+                            method.valueParameters[0].type.classifierOrNull == rightClassifier
+                        }
+                        // If no exact match, fall back to the first compareTo with the same receiver type
+                        ?: leftClass?.declarations?.filterIsInstance<IrSimpleFunction>()
+                            ?.find { method ->
+                                method.name.asString() == "compareTo" &&
+                                method.valueParameters.size == 1 &&
+                                method.valueParameters[0].type.classifierOrNull == leftType.classifierOrNull
+                            }
+
+                    val methodName = if (compareToMethod != null) {
+                        val fullMethodName = context.getBrsName(compareToMethod)
+                        val className = leftClass?.let { context.getBrsName(it) } ?: ""
+                        if (className.isNotEmpty()) {
+                            fullMethodName.removePrefix("${className}_")
+                        } else {
+                            fullMethodName
+                        }
+                    } else {
+                        // Fallback: try generic compareTo (won't be mangled correctly)
+                        "compareTo"
+                    }
+
+                    val compareToCall = BrsMethodCall(left, methodName, mutableListOf(right))
+
+                    // Check if this call is already to compareTo - if so, the outer wrapper adds > 0
+                    // If not (e.g., operator overloading on non-Comparable), we need to add > 0 ourselves
+                    val isAlreadyCompareTo = function.name.asString() == "compareTo"
+                    return if (isAlreadyCompareTo) {
+                        // Just return the compareTo call - outer wrapper adds > 0
+                        compareToCall
+                    } else {
+                        // Non-compareTo function on non-primitives - add comparison
+                        BrsBinaryOp(compareToCall, binaryOp, BrsIntLiteral(0))
+                    }
+                }
+            }
+            // ==================== End Comparable Comparison ====================
+
             var left = leftIr.accept(this, Unit)
             var right = rightIr.accept(this, Unit)
 
