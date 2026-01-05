@@ -2831,7 +2831,13 @@ class IrStatementToBrsTransformer(
                 }
                 is IrExpression -> {
                     val expr = parent.transformExpression(stmt)
-                    prependHoisted(listOf(BrsExpressionStatement(expr)))
+                    // Skip BrsInvalidLiteral - these come from empty IrComposite left behind
+                    // when LocalDeclarationsLowering hoists local functions
+                    if (expr is BrsInvalidLiteral) {
+                        emptyList()
+                    } else {
+                        prependHoisted(listOf(BrsExpressionStatement(expr)))
+                    }
                 }
                 else -> {
                     val transformed = parent.transformStatement(stmt)

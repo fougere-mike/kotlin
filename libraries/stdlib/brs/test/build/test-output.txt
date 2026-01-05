@@ -1,116 +1,66 @@
-xtensions","test":"forEachIndexed","type":"test_pass"}
-{"suite":"Collection Extensions","test":"indexOf","timestamp":1765409620481,"type":"test_start"}
-{"duration_ms":1,"suite":"Collection Extensions","test":"indexOf","type":"test_pass"}
-{"suite":"Collection Extensions","test":"indexOfFirst","timestamp":1765409620483,"type":"test_start"}
-{"duration_ms":0,"suite":"Collection Extensions","test":"indexOfFirst","type":"test_pass"}
-{"suite":"Collection Extensions","test":"indexOfLast","timestamp":1765409620484,"type":"test_start"}
-{"duration_ms":1,"suite":"Collection Extensions","test":"indexOfLast","type":"test_pass"}
-{"suite":"Collection Extensions","test":"distinct","timestamp":1765409620486,"type":"test_start"}
-{"duration_ms":1,"suite":"Collection Extensions","test":"distinct","type":"test_pass"}
-{"suite":"Collection Extensions","test":"distinctBy","timestamp":1765409620489,"type":"test_start"}
-{"duration_ms":1,"suite":"Collection Extensions","test":"distinctBy","type":"test_pass"}
-{"suite":"Collection Extensions","test":"take","timestamp":1765409620490,"type":"test_start"}
-{"duration_ms":1,"suite":"Collection Extensions","test":"take","type":"test_pass"}
-{"suite":"Collection Extensions","test":"drop","timestamp":1765409620492,"type":"test_start"}
-{"duration_ms":1,"suite":"Collection Extensions","test":"drop","type":"test_pass"}
-{"suite":"Collection Extensions","test":"takeWhile","timestamp":1765409620494,"type":"test_start"}
-{"duration_ms":1,"suite":"Collection Extensions","test":"takeWhile","type":"test_pass"}
-{"suite":"Collection Extensions","test":"dropWhile","timestamp":1765409620496,"type":"test_start"}
-{"duration_ms":1,"suite":"Collection Extensions","test":"dropWhile","type":"test_pass"}
-{"suite":"Collection Extensions","test":"reversed","timestamp":1765409620498,"type":"test_start"}
-{"duration_ms":1,"suite":"Collection Extensions","test":"reversed","type":"test_pass"}
-{"suite":"Collection Extensions","test":"zip","timestamp":1765409620500,"type":"test_start"}
-{"duration_ms":1,"suite":"Collection Extensions","test":"zip","type":"test_pass"}
-{"duration_ms":74,"failed":0,"ignored":0,"passed":40,"suite":"Collection Extensions","type":"suite_end"}
-{"suite":"Sorting","timestamp":1765409620503,"type":"suite_start"}
-{"suite":"Sorting","test":"sort integers","timestamp":1765409620503,"type":"test_start"}
-{"duration_ms":1,"suite":"Sorting","test":"sort integers","type":"test_pass"}
-{"suite":"Sorting","test":"sort strings","timestamp":1765409620505,"type":"test_start"}
-{"duration_ms":1,"suite":"Sorting","test":"sort strings","type":"test_pass"}
-{"suite":"Sorting","test":"sort with comparator","timestamp":1765409620507,"type":"test_start"}
-{"duration_ms":1,"suite":"Sorting","test":"sort with comparator","type":"test_pass"}
-{"suite":"Sorting","test":"sort descending","timestamp":1765409620510,"type":"test_start"}
-{"duration_ms":1,"suite":"Sorting","test":"sort descending","type":"test_pass"}
-{"suite":"Sorting","test":"sortBy","timestamp":1765409620512,"type":"test_start"}
-{"duration_ms":1,"suite":"Sorting","test":"sortBy","type":"test_pass"}
-{"suite":"Sorting","test":"sortByDescending","timestamp":1765409620514,"type":"test_start"}
-{"duration_ms":1,"suite":"Sorting","test":"sortByDescending","type":"test_pass"}
-{"suite":"Sorting","test":"sorted (immutable)","timestamp":1765409620515,"type":"test_start"}
-{"duration_ms":2,"suite":"Sorting","test":"sorted (immutable)","type":"test_pass"}
-{"suite":"Sorting","test":"sortedWith","timestamp":1765409620518,"type":"test_start"}
-{"duration_ms":1,"suite":"Sorting","test":"sortedWith","type":"test_pass"}
-{"suite":"Sorting","test":"sortedDescending","timestamp":1765409620520,"type":"test_start"}
-{"duration_ms":1,"suite":"Sorting","test":"sortedDescending","type":"test_pass"}
-{"suite":"Sorting","test":"sortedBy","timestamp":1765409620523,"type":"test_start"}
-{"duration_ms":1,"suite":"Sorting","test":"sortedBy","type":"test_pass"}
-{"suite":"Sorting","test":"sortedByDescending","timestamp":1765409620525,"type":"test_start"}
-{"duration_ms":1,"suite":"Sorting","test":"sortedByDescending","type":"test_pass"}
-{"suite":"Sorting","test":"sort empty list","timestamp":1765409620527,"type":"test_start"}
-{"duration_ms":0,"suite":"Sorting","test":"sort empty list","type":"test_pass"}
-{"suite":"Sorting","test":"sort single element","timestamp":1765409620528,"type":"test_start"}
-{"duration_ms":0,"suite":"Sorting","test":"sort single element","type":"test_pass"}
-{"suite":"Sorting","test":"sort large list","timestamp":1765409620529,"type":"test_start"}
-{"duration_ms":157,"suite":"Sorting","test":"sort large list","type":"test_pass"}
-{"suite":"Sorting","test":"comparator reversed","timestamp":1765409620688,"type":"test_start"}
-{"duration_ms":1,"suite":"Sorting","test":"comparator reversed","type":"test_pass"}
-{"suite":"Sorting","test":"compareValues","timestamp":1765409620690,"type":"test_start"}
-{"duration_ms":0,"suite":"Sorting","test":"compareValues","type":"test_pass"}
-{"duration_ms":188,"failed":0,"ignored":0,"passed":16,"suite":"Sorting","type":"suite_end"}
-{"suite":"Sequence","timestamp":1765409620692,"type":"suite_start"}
-{"suite":"Sequence","test":"map and filter","timestamp":1765409620693,"type":"test_start"}
-{"duration_ms":1,"suite":"Sequence","test":"map and filter","type":"test_pass"}
-{"suite":"Sequence","test":"sequence with unsigned","timestamp":1765409620695,"type":"test_start"}
-
-BrightScript Micro Debugger.
-Enter any BrightScript statement, debug commands, or HELP.
-
-
-Current Function:
-014:  function(it as Object) as Boolean
-015:*                 return (it > UInt_create_I_k_(2)) > 0
-016:              end function}), {invoke: function(it as Object) as Object
-Source Digest(s): 
-pkg:    dev 1.0.0 3c91a65f KotlinStdlibTests
-pkg: 632126 1.1.5 1f7df9df libplayready
-
-Type Mismatch. Operator ">" can't be applied to "roAssociativeArray" and "roAssociativeArray". (runtime error &h18) in pkg:/source/SequenceTest.brs(15)
-Backtrace:
-#15 Function $anon_7a3(it As Object) As Boolean
-   file/line: pkg:/source/SequenceTest.brs(15)
-#14 Function anon_17057bb2_calcnext_k_() As Void
-   file/line: pkg:/source/SequenceIteratorsBrs.brs(486)
-#13 Function anon_17057bb2_hasnext_k_() As Boolean
-   file/line: pkg:/source/SequenceIteratorsBrs.brs(510)
-#12 Function anon_7ce8c790_hasnext_k_() As Boolean
-   file/line: pkg:/source/SequenceIteratorsBrs.brs(417)
-#11 Function tocollection_rsequence_any_k_(m As Object, destination As Object) As Object
-   file/line: pkg:/source/SequenceConversionsBrs.brs(23)
-#10 Function tomutablelist_rsequence_k_(m As Object) As Object
-   file/line: pkg:/source/SequenceConversionsBrs.brs(6)
-#9  Function tolist_rsequence_k_(m As Object) As Object
-   file/line: pkg:/source/SequenceConversionsBrs.brs(2)
-#8  Function $anon_7a2() As Void
-   file/line: pkg:/source/SequenceTest.brs(18)
-#7  Function jsontestadapter_test_str_z_function0v_k_(name As String, ignored As Boolean, testfn As Object) As Void
-   file/line: pkg:/source/JsonTestAdapter.brs(93)
-#6  Function testrunner_test_str_function0v_k_(name As String, testfn As Object) As Void
-   file/line: pkg:/source/TestRunner.brs(41)
-#5  Function $anon_79e(m As Object) As Void
-   file/line: pkg:/source/SequenceTest.brs(20)
-#4  Function $anon_90c() As Void
-   file/line: pkg:/source/TestRunner.brs(36)
-#3  Function jsontestadapter_suite_str_z_function0v_k_(name As String, ignored As Boolean, suitefn As Object) As Void
-   file/line: pkg:/source/JsonTestAdapter.brs(79)
-#2  Function testrunner_run_function1testrunnerv_k_(block As Object) As Void
-   file/line: pkg:/source/TestRunner.brs(59)
-#1  Function runtests_function1testrunnerv_k_(block As Object) As Void
-   file/line: pkg:/source/TestRunner.brs(3)
-#0  Function main() As Void
-   file/line: pkg:/source/TestMain.brs(18)
-Local Variables:
-it               roAssociativeArray refcnt=3 count:63
-global           Interface:ifGlobal
-m                roAssociativeArray refcnt=3 count:1
-
-Brightscript Debugger> Note: GC - Found 81 orphaned objects (objects in a circular ref loop).
-12-10 23:35:36.020 [bs.ndk.proc.exit] plugin=dev pid=9620 status=exit retval=12 user requested=1 process name='SdkLauncher' exit code=EXIT_BRIGHTSCRIPT_CRASH
+)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'mutablecollection_retainall_collection_k_' in pkg:/source/Collection.brs(31)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'count_riterable_k_' in pkg:/source/CollectionExtensions.brs(344)
+BRIGHTSCRIPT: WARNING: unused variable 'a' in function 'comparator_compare_anyn_anyn_k_' in pkg:/source/Comparator.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'b' in function 'comparator_compare_anyn_anyn_k_' in pkg:/source/Comparator.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'builder' in function 'contract_function1contractbuilderv_k_' in pkg:/source/Contracts.brs(9)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'contractbuilder_returns_anyn_k_' in pkg:/source/Contracts.brs(15)
+BRIGHTSCRIPT: WARNING: unused variable 'lambda' in function 'contractbuilder_callsinplace_function_invocationkind_k_' in pkg:/source/Contracts.brs(21)
+BRIGHTSCRIPT: WARNING: unused variable 'booleanexpression' in function 'simpleeffect_implies_z_k_' in pkg:/source/Contracts.brs(71)
+BRIGHTSCRIPT: WARNING: unused variable 'dt' in anonymous function in pkg:/source/DateTimeTest.brs(3)
+BRIGHTSCRIPT: WARNING: unused variable 'ts' in anonymous function in pkg:/source/DateTimeTest.brs(45)
+BRIGHTSCRIPT: WARNING: unused variable 'status' in function 'hasinternetconnection_rrodeviceinfo_k_' in pkg:/source/Device.brs(16)
+BRIGHTSCRIPT: WARNING: unused variable 'm' in function 'addsuppressed_rthrowable_throwable_k_' in pkg:/source/Exceptions.brs(503)
+BRIGHTSCRIPT: WARNING: unused variable 'exception' in function 'addsuppressed_rthrowable_throwable_k_' in pkg:/source/Exceptions.brs(503)
+BRIGHTSCRIPT: WARNING: unused variable 'm' in function 'get_suppressedexceptions_rthrowable_k_' in pkg:/source/Exceptions.brs(506)
+BRIGHTSCRIPT: WARNING: unused variable 'name' in function 'frameworkadapter_suite_str_z_function0v_k_' in pkg:/source/FrameworkAdapter.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'ignored' in function 'frameworkadapter_suite_str_z_function0v_k_' in pkg:/source/FrameworkAdapter.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'suitefn' in function 'frameworkadapter_suite_str_z_function0v_k_' in pkg:/source/FrameworkAdapter.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'name' in function 'frameworkadapter_test_str_z_function0v_k_' in pkg:/source/FrameworkAdapter.brs(4)
+BRIGHTSCRIPT: WARNING: unused variable 'ignored' in function 'frameworkadapter_test_str_z_function0v_k_' in pkg:/source/FrameworkAdapter.brs(4)
+BRIGHTSCRIPT: WARNING: unused variable 'testfn' in function 'frameworkadapter_test_str_z_function0v_k_' in pkg:/source/FrameworkAdapter.brs(4)
+BRIGHTSCRIPT: WARNING: unused variable 'args' in function 'functionadapter_invoke_arr_k_' in pkg:/source/FunctionAdapter.brs(10)
+BRIGHTSCRIPT: WARNING: unused variable 'args' in function 'function0adapter_invoke_arr_k_' in pkg:/source/FunctionAdapter.brs(27)
+BRIGHTSCRIPT: WARNING: unused variable 'p1' in function 'function1adapter_invoke_anyn_k_' in pkg:/source/FunctionAdapter.brs(42)
+BRIGHTSCRIPT: WARNING: unused variable 'p1' in function 'function2adapter_invoke_anyn_anyn_k_' in pkg:/source/FunctionAdapter.brs(60)
+BRIGHTSCRIPT: WARNING: unused variable 'p2' in function 'function2adapter_invoke_anyn_anyn_k_' in pkg:/source/FunctionAdapter.brs(60)
+BRIGHTSCRIPT: WARNING: unused variable 'p1' in function 'function3adapter_invoke_anyn_anyn_anyn_k_' in pkg:/source/FunctionAdapter.brs(78)
+BRIGHTSCRIPT: WARNING: unused variable 'p2' in function 'function3adapter_invoke_anyn_anyn_anyn_k_' in pkg:/source/FunctionAdapter.brs(78)
+BRIGHTSCRIPT: WARNING: unused variable 'p3' in function 'function3adapter_invoke_anyn_anyn_anyn_k_' in pkg:/source/FunctionAdapter.brs(78)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'grouping_keyof_anyn_k_' in pkg:/source/GroupingBrs.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'keyset_add_anyn_k_' in pkg:/source/HashMap.brs(429)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'keyset_addall_collection_k_' in pkg:/source/HashMap.brs(441)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'valuecollection_add_anyn_k_' in pkg:/source/HashMap.brs(543)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'valuecollection_addall_collection_k_' in pkg:/source/HashMap.brs(558)
+BRIGHTSCRIPT: WARNING: unused variable 'key' in function 'emptymap_containskey_anyn_k_' in pkg:/source/HashMap.brs(973)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'emptymap_containsvalue_anyn_k_' in pkg:/source/HashMap.brs(977)
+BRIGHTSCRIPT: WARNING: unused variable 'key' in function 'emptymap_get_anyn_k_' in pkg:/source/HashMap.brs(981)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'emptyset_contains_anyn_k_' in pkg:/source/HashMap.brs(1038)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'emptyentryset_contains_entryanynanyn_k_' in pkg:/source/HashMap.brs(1108)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'emptyhashset_contains_anyn_k_' in pkg:/source/HashSet.brs(365)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'mutablelistiterator_set_anyn_k_' in pkg:/source/Iterator.brs(22)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'mutablelistiterator_add_anyn_k_' in pkg:/source/Iterator.brs(25)
+BRIGHTSCRIPT: WARNING: unused variable 'm' in function 'frombits_rcompanion_j_k_' in pkg:/source/Kotlin.brs(113)
+BRIGHTSCRIPT: WARNING: unused variable 'm' in function 'frombits_rcompanion_i_k_' in pkg:/source/Kotlin.brs(260)
+BRIGHTSCRIPT: WARNING: unused variable 'mode' in function 'lazy_lazythreadsafetymode_function0_k_' in pkg:/source/Kotlin.brs(326)
+BRIGHTSCRIPT: WARNING: unused variable 'lock' in function 'lazy_anyn_function0_k_' in pkg:/source/Kotlin.brs(330)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'linkedhashmap_linkedkeyset_add_anyn_k_' in pkg:/source/LinkedHashMap.brs(383)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'linkedhashmap_linkedkeyset_addall_collection_k_' in pkg:/source/LinkedHashMap.brs(387)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'linkedhashmap_linkedvaluecollection_add_anyn_k_' in pkg:/source/LinkedHashMap.brs(486)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'linkedhashmap_linkedvaluecollection_addall_collection_k_' in pkg:/source/LinkedHashMap.brs(490)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'linkedhashmap_linkedentryset_add_mutableentry_k_' in pkg:/source/LinkedHashMap.brs(603)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'linkedhashmap_linkedentryset_addall_collectionmutableentry_k_' in pkg:/source/LinkedHashMap.brs(607)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'list_contains_anyn_k_' in pkg:/source/List.brs(4)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'list_containsall_collection_k_' in pkg:/source/List.brs(10)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'list_get_i_k_' in pkg:/source/List.brs(13)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'list_indexof_anyn_k_' in pkg:/source/List.brs(16)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'list_lastindexof_anyn_k_' in pkg:/source/List.brs(19)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'list_listiterator_i_k_' in pkg:/source/List.brs(25)
+BRIGHTSCRIPT: WARNING: unused variable 'fromindex' in function 'list_sublist_i_i_k_' in pkg:/source/List.brs(28)
+BRIGHTSCRIPT: WARNING: unused variable 'toindex' in function 'list_sublist_i_i_k_' in pkg:/source/List.brs(28)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'mutablelist_add_anyn_k_' in pkg:/source/List.brs(34)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'mutablelist_remove_anyn_k_' in pkg:/source/List.brs(37)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'mutablelist_addall_collection_k_' in pkg:/source/List.brs(40)
+Displayed 100 of 171 warnings
+12-11 04:28:54.317 [scrpt.ctx.cmpl.time] Compiled 'KotlinStdlibTests', id 'dev' in 360 milliseconds (BCVer:0)
+12-11 04:28:54.322 [beacon.signal] |AppCompileComplete --------> Duration(378 ms)
