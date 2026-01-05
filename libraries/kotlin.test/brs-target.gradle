@@ -25,9 +25,10 @@ kotlin {
 
     sourceSets {
         brsMain {
-            dependsOn(assertionsCommonMain)
-            dependsOn(annotationsCommonMain)
             kotlin.srcDir("brs/src/main/kotlin")
         }
+        // Configure dependsOn after source set is accessed
+        getByName("brsMain").dependsOn(getByName("assertionsCommonMain"))
+        getByName("brsMain").dependsOn(getByName("annotationsCommonMain"))
     }
 }
