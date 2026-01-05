@@ -73,6 +73,14 @@ class IrToBrsTransformer(
     internal var currentClosureContext: List<CapturedVariable>? = null
 
     /**
+     * Set of variable symbols that are shared (captured by closures and mutable).
+     * These variables need to be boxed in {value: x} wrappers at declaration time,
+     * and all accesses (both inside and outside closures) need to use .value.
+     * This is set per-function before transforming the function body.
+     */
+    internal var sharedVariables: Set<IrValueSymbol> = emptySet()
+
+    /**
      * Current lambda extension receiver symbol.
      * When non-null, we're inside a lambda with an extension receiver and need to rewrite
      * references to this receiver as 'm' (the first parameter of the lambda).
@@ -248,6 +256,43 @@ class IrToBrsTransformer(
         return currentClosureContext?.find { it.symbol == symbol }
     }
 
+    /**
+     * Detect all shared variables in a function body.
+     * A shared variable is a mutable variable (var) that is captured by at least one closure.
+     * These variables need to be boxed in {value: x} wrappers so mutations inside closures
+     * are visible outside and vice versa.
+     *
+     * @param body The function body to analyze
+     * @return Set of variable symbols that need to be shared (boxed)
+     */
+    fun detectSharedVariables(body: IrBody): Set<IrValueSymbol> {
+        val sharedVars = mutableSetOf<IrValueSymbol>()
+
+        // Walk the body to find all function expressions (closures)
+        body.acceptVoid(object : IrElementVisitorVoid {
+            override fun visitElement(element: IrElement) {
+                element.acceptChildrenVoid(this)
+            }
+
+            override fun visitFunctionExpression(expression: IrFunctionExpression) {
+                // Detect captured variables for this closure
+                val capturedVars = detectCapturedVariables(expression.function)
+
+                // Add mutable captured variables to the shared set
+                for (captured in capturedVars) {
+                    if (captured.isMutable) {
+                        sharedVars.add(captured.symbol)
+                    }
+                }
+
+                // Continue searching for nested closures within this one
+                expression.function.body?.acceptVoid(this)
+            }
+        })
+
+        return sharedVars
+    }
+
     // ==================== Entry Points ====================
 
     /**
@@ -339,6 +384,11 @@ class IrToBrsTransformer(
 
         val parameters = normalizeParametersForBrs(deduplicateParameterNames(allParameters))
 
+        // Detect shared variables (mutable vars captured by closures) before transforming body
+        // Save and restore to handle nested function transformations
+        val previousSharedVariables = sharedVariables
+        sharedVariables = irFunction.body?.let { detectSharedVariables(it) } ?: emptySet()
+
         // Check if this function has @BrsInline - use parsed code instead of IR body
         val inlineInfo = context.inlineFunctionInfo[irFunction.symbol] as? BrsCodeOutliningLowering.BrsInlineInfo
         var body = if (inlineInfo != null) {
@@ -347,6 +397,9 @@ class IrToBrsTransformer(
         } else {
             irFunction.body?.let { transformBody(it) } ?: BrsBlock()
         }
+
+        // Restore previous shared variables
+        sharedVariables = previousSharedVariables
 
         // Check for any remaining hoisted statements and prepend them to the body
         val remainingHoisted = takeHoistedStatements()
@@ -2204,6 +2257,8 @@ class IrStatementToBrsTransformer(
 
     override fun visitVariable(declaration: IrVariable, data: Unit): BrsStatement {
         val initializer = declaration.initializer
+        // Check if this variable is shared (captured by closure and mutable)
+        val isShared = declaration.symbol in parent.sharedVariables
 
         // Handle block initializers specially - BrightScript doesn't have block expressions
         // so we need to flatten the block's statements before the variable assignment
@@ -2217,10 +2272,14 @@ class IrStatementToBrsTransformer(
             // Replace the last expression statement with the actual variable declaration
             if (statements.isNotEmpty()) {
                 val last = statements.removeLast()
-                val lastExpr = when (last) {
+                var lastExpr: BrsExpression = when (last) {
                     is BrsExpressionStatement -> last.expression
                     is BrsVariable -> last.initializer ?: BrsInvalidLiteral()
                     else -> BrsInvalidLiteral()
+                }
+                // Box shared variables
+                if (isShared) {
+                    lastExpr = BrsAALiteral(mutableListOf(BrsAAEntry("value", lastExpr)))
                 }
                 statements.add(BrsVariable(
                     name = parent.sanitizeParameterName(declaration.name.asString()),
@@ -2228,10 +2287,14 @@ class IrStatementToBrsTransformer(
                     initializer = lastExpr
                 ))
             } else {
+                var initExpr: BrsExpression = BrsInvalidLiteral()
+                if (isShared) {
+                    initExpr = BrsAALiteral(mutableListOf(BrsAAEntry("value", initExpr)))
+                }
                 statements.add(BrsVariable(
                     name = parent.sanitizeParameterName(declaration.name.asString()),
                     type = parent.mapTypeToBrs(declaration.type),
-                    initializer = BrsInvalidLiteral()
+                    initializer = initExpr
                 ))
             }
 
@@ -2242,13 +2305,21 @@ class IrStatementToBrsTransformer(
         // Transform the initializer, which may add hoisted statements
         val transformedInit = initializer?.let { parent.transformExpression(it) }
 
+        // If shared (already checked above), wrap the initializer in {value: ...} box
+        val finalInit = if (isShared && transformedInit != null) {
+            // Box the value: {value: initializer}
+            BrsAALiteral(mutableListOf(BrsAAEntry("value", transformedInit)))
+        } else {
+            transformedInit
+        }
+
         // Check for hoisted statements from when-lowered blocks
         val hoisted = parent.takeHoistedStatements()
         return if (hoisted.isEmpty()) {
             BrsVariable(
                 name = parent.sanitizeParameterName(declaration.name.asString()),
                 type = parent.mapTypeToBrs(declaration.type),
-                initializer = transformedInit
+                initializer = finalInit
             )
         } else {
             // Prepend hoisted statements before the variable declaration
@@ -2256,7 +2327,7 @@ class IrStatementToBrsTransformer(
             allStatements.add(BrsVariable(
                 name = parent.sanitizeParameterName(declaration.name.asString()),
                 type = parent.mapTypeToBrs(declaration.type),
-                initializer = transformedInit
+                initializer = finalInit
             ))
             BrsBlock(allStatements)
         }
@@ -3336,6 +3407,10 @@ class IrStatementToBrsTransformer(
         val target = if (capturedVar != null && capturedVar.isMutable) {
             // Rewrite to assign via m (the closure object): m.varName.value = newValue
             BrsDotAccess(BrsDotAccess(BrsMRef(), capturedVar.name), "value")
+        } else if (expression.symbol in parent.sharedVariables) {
+            // Shared variable accessed outside closure: varName.value = newValue
+            // Note: capturedVar is null here due to the first condition being false
+            BrsDotAccess(BrsIdentifier(parent.sanitizeParameterName(sanitizedName)), "value")
         } else {
             BrsIdentifier(sanitizedName)
         }
@@ -3580,6 +3655,14 @@ class IrExpressionToBrsTransformer(
             return BrsMRef()
         }
 
+        // Check if this is a shared variable (mutable var captured by closure) accessed outside the closure
+        // These are boxed in {value: x} and need .value access
+        // Note: capturedVar is null here because we returned early above if it wasn't
+        if (expression.symbol in parent.sharedVariables) {
+            val varName = parent.sanitizeParameterName(rawName)
+            return BrsDotAccess(BrsIdentifier(varName), "value")
+        }
+
         return when {
             // In constructor bodies, '<this>' refers to the local 'this' variable being constructed
             // In regular methods, '<this>' refers to 'm' (the object the method was called on)
@@ -3673,6 +3756,16 @@ class IrExpressionToBrsTransformer(
             rawName.startsWith("<") && rawName.endsWith(">") ->
                 rawName.removePrefix("<").removeSuffix(">").replace("-", "_")
             else -> rawName
+        }
+
+        // Check if this is a shared variable accessed outside closure
+        // Note: sharedVariables only contains mutable vars, and mutable captures returned above
+        if (expression.symbol in parent.sharedVariables) {
+            return BrsBinaryOp(
+                BrsDotAccess(BrsIdentifier(parent.sanitizeParameterName(sanitizedName)), "value"),
+                BrsBinaryOperator.EQ,
+                expression.value.accept(this, data)
+            )
         }
 
         // Generate assignment expression: varName = value
@@ -5564,11 +5657,16 @@ class IrExpressionToBrsTransformer(
             } else {
                 BrsIdentifier(capturedVar.name)
             }
-            val fieldValue = if (capturedVar.isMutable) {
+
+            // Check if this mutable capture is already boxed (part of sharedVariables)
+            // If so, pass the box directly instead of re-boxing
+            val isAlreadyBoxed = capturedVar.isMutable && capturedVar.symbol in parent.sharedVariables
+            val fieldValue = if (capturedVar.isMutable && !isAlreadyBoxed) {
                 // Wrap mutable captures in { value: x } for mutation to propagate
+                // (This case shouldn't happen anymore since all mutable captures should be in sharedVariables)
                 BrsAALiteral(mutableListOf(BrsAAEntry("value", varValue)))
             } else {
-                // Read-only captures can be stored directly
+                // Read-only captures or already-boxed mutable captures: store directly
                 varValue
             }
             entries.add(BrsAAEntry(capturedVar.name, fieldValue))
