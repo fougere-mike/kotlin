@@ -1,35 +1,115 @@
+":1767649170030,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"forEach","type":"test_pass"}
+{"suite":"Collection Extensions","test":"forEachIndexed","timestamp":1767649170032,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"forEachIndexed","type":"test_pass"}
+{"suite":"Collection Extensions","test":"indexOf","timestamp":1767649170034,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"indexOf","type":"test_pass"}
+{"suite":"Collection Extensions","test":"indexOfFirst","timestamp":1767649170036,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"indexOfFirst","type":"test_pass"}
+{"suite":"Collection Extensions","test":"indexOfLast","timestamp":1767649170037,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"indexOfLast","type":"test_pass"}
+{"suite":"Collection Extensions","test":"distinct","timestamp":1767649170039,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"distinct","type":"test_pass"}
+{"suite":"Collection Extensions","test":"distinctBy","timestamp":1767649170041,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"distinctBy","type":"test_pass"}
+{"suite":"Collection Extensions","test":"take","timestamp":1767649170043,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"take","type":"test_pass"}
+{"suite":"Collection Extensions","test":"drop","timestamp":1767649170045,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"drop","type":"test_pass"}
+{"suite":"Collection Extensions","test":"takeWhile","timestamp":1767649170047,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"takeWhile","type":"test_pass"}
+{"suite":"Collection Extensions","test":"dropWhile","timestamp":1767649170048,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"dropWhile","type":"test_pass"}
+{"suite":"Collection Extensions","test":"reversed","timestamp":1767649170051,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"reversed","type":"test_pass"}
+{"suite":"Collection Extensions","test":"zip","timestamp":1767649170052,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"zip","type":"test_pass"}
+{"duration_ms":74,"failed":0,"ignored":0,"passed":40,"suite":"Collection Extensions","type":"suite_end"}
+{"suite":"Sorting","timestamp":1767649170055,"type":"suite_start"}
+{"suite":"Sorting","test":"sort integers","timestamp":1767649170056,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sort integers","type":"test_pass"}
+{"suite":"Sorting","test":"sort strings","timestamp":1767649170058,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sort strings","type":"test_pass"}
+{"suite":"Sorting","test":"sort with comparator","timestamp":1767649170060,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sort with comparator","type":"test_pass"}
+{"suite":"Sorting","test":"sort descending","timestamp":1767649170062,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sort descending","type":"test_pass"}
+{"suite":"Sorting","test":"sortBy","timestamp":1767649170064,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sortBy","type":"test_pass"}
+{"suite":"Sorting","test":"sortByDescending","timestamp":1767649170066,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sortByDescending","type":"test_pass"}
+{"suite":"Sorting","test":"sorted (immutable)","timestamp":1767649170068,"type":"test_start"}
+{"duration_ms":2,"suite":"Sorting","test":"sorted (immutable)","type":"test_pass"}
+{"suite":"Sorting","test":"sortedWith","timestamp":1767649170070,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sortedWith","type":"test_pass"}
+{"suite":"Sorting","test":"sortedDescending","timestamp":1767649170073,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sortedDescending","type":"test_pass"}
+{"suite":"Sorting","test":"sortedBy","timestamp":1767649170075,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sortedBy","type":"test_pass"}
+{"suite":"Sorting","test":"sortedByDescending","timestamp":1767649170077,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sortedByDescending","type":"test_pass"}
+{"suite":"Sorting","test":"sort empty list","timestamp":1767649170079,"type":"test_start"}
+{"duration_ms":0,"suite":"Sorting","test":"sort empty list","type":"test_pass"}
+{"suite":"Sorting","test":"sort single element","timestamp":1767649170080,"type":"test_start"}
+{"duration_ms":0,"suite":"Sorting","test":"sort single element","type":"test_pass"}
+{"suite":"Sorting","test":"sort large list","timestamp":1767649170082,"type":"test_start"}
+{"duration_ms":159,"suite":"Sorting","test":"sort large list","type":"test_pass"}
+{"suite":"Sorting","test":"comparator reversed","timestamp":1767649170242,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"comparator reversed","type":"test_pass"}
+{"suite":"Sorting","test":"compareValues","timestamp":1767649170244,"type":"test_start"}
+{"duration_ms":0,"suite":"Sorting","test":"compareValues","type":"test_pass"}
+{"duration_ms":189,"failed":0,"ignored":0,"passed":16,"suite":"Sorting","type":"suite_end"}
+{"suite":"Sequence","timestamp":1767649170246,"type":"suite_start"}
+{"suite":"Sequence","test":"map and filter","timestamp":1767649170247,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"map and filter","type":"test_pass"}
+{"suite":"Sequence","test":"sequence with unsigned","timestamp":1767649170249,"type":"test_start"}
 
 BrightScript Micro Debugger.
 Enter any BrightScript statement, debug commands, or HELP.
 
 
 Current Function:
-006:  function TestRunner_create_k_() as Object
-007:      this = {}
-008:      this.__type = "TestRunner"
-009:      this.__proto = ["TestRunner"]
-010:*     this.__id = __kotlin_nextObjectId()
-011:      this.testClass_Any_k_ = TestRunner_testClass_Any_k_
-012:      this.suite_Str_Function1TestRunnerV_k_ = TestRunner_suite_Str_Function1TestRunnerV_k_
-013:      this.test_Str_Function0V_k_ = TestRunner_test_Str_Function0V_k_
-014:      this.xtest_Str_Str_Function0V_k_ = TestRunner_xtest_Str_Str_Function0V_k_
+016:  function(it as Object) as Object
+017:*                 return it * UInt_create_I_k_(2)
+018:              end function}))
 Source Digest(s): 
-pkg:    dev 1.0.0 fe776ae1 KotlinStdlibTests
+pkg:    dev 1.0.0 0d85ddcd KotlinStdlibTests
 pkg: 632126 1.1.5 1f7df9df libplayready
 
-Function Call Operator ( ) attempted on non-function. (runtime error &he0) in pkg:/source/TestRunner.brs(10)
+Type Mismatch. Operator "*" can't be applied to "roAssociativeArray" and "roAssociativeArray". (runtime error &h18) in pkg:/source/SequenceTest.brs(17)
 Backtrace:
-#2  Function testrunner_create_k_() As Object
-   file/line: pkg:/source/TestRunner.brs(10)
+#13 Function $anon_7a6(it As Object) As Object
+   file/line: pkg:/source/SequenceTest.brs(17)
+#12 Function anon_4440a153_next_k_() As Dynamic
+   file/line: pkg:/source/SequenceIteratorsBrs.brs(413)
+#11 Function tocollection_rsequence_any_k_(m As Object, destination As Object) As Object
+   file/line: pkg:/source/SequenceConversionsBrs.brs(24)
+#10 Function tomutablelist_rsequence_k_(m As Object) As Object
+   file/line: pkg:/source/SequenceConversionsBrs.brs(6)
+#9  Function tolist_rsequence_k_(m As Object) As Object
+   file/line: pkg:/source/SequenceConversionsBrs.brs(2)
+#8  Function $anon_7a4() As Void
+   file/line: pkg:/source/SequenceTest.brs(18)
+#7  Function jsontestadapter_test_str_z_function0v_k_(name As String, ignored As Boolean, testfn As Object) As Void
+   file/line: pkg:/source/JsonTestAdapter.brs(93)
+#6  Function testrunner_test_str_function0v_k_(name As String, testfn As Object) As Void
+   file/line: pkg:/source/TestRunner.brs(41)
+#5  Function $anon_7a0(m As Object) As Void
+   file/line: pkg:/source/SequenceTest.brs(20)
+#4  Function $anon_90e() As Void
+   file/line: pkg:/source/TestRunner.brs(36)
+#3  Function jsontestadapter_suite_str_z_function0v_k_(name As String, ignored As Boolean, suitefn As Object) As Void
+   file/line: pkg:/source/JsonTestAdapter.brs(79)
+#2  Function testrunner_run_function1testrunnerv_k_(block As Object) As Void
+   file/line: pkg:/source/TestRunner.brs(59)
 #1  Function runtests_function1testrunnerv_k_(block As Object) As Void
-   file/line: pkg:/source/TestRunner.brs(2)
+   file/line: pkg:/source/TestRunner.brs(3)
 #0  Function main() As Void
    file/line: pkg:/source/TestMain.brs(18)
 Local Variables:
+it               roAssociativeArray refcnt=2 count:63
 global           Interface:ifGlobal
-m                roAssociativeArray refcnt=4 count:0
-this             roAssociativeArray refcnt=1 count:2
-__kotlin_nextobjectid <uninitialized>
-mutablelistof_k_ <uninitialized>
+m                roAssociativeArray refcnt=3 count:1
 
-Brightscript Debugger> 
+Brightscript Debugger> Note: GC - Found 81 orphaned objects (objects in a circular ref loop).
+01-05 21:41:35.470 [bs.ndk.proc.exit] plugin=dev pid=4517 status=exit retval=12 user requested=1 process name='SdkLauncher' exit code=EXIT_BRIGHTSCRIPT_CRASH

@@ -166,6 +166,14 @@ class BrsCompiler(
         val nextObjectIdFunction = createNextObjectIdHelper()
         program.declarations.add(0, nextObjectIdFunction)
 
+        // Add Int.compareTo helper for primitive comparisons
+        val intCompareFunction = createIntCompareHelper()
+        program.declarations.add(0, intCompareFunction)
+
+        // Add unsigned right shift helper for Int.ushr
+        val ushrFunction = createUshrHelper()
+        program.declarations.add(0, ushrFunction)
+
         // Note: Exception helpers (THROW_NPE, THROW_CCE, etc.) are defined in
         // libraries/stdlib/brs/src/kotlin/ExceptionHelpers.kt - do NOT add them here
         // as that would create duplicate definitions.
@@ -547,6 +555,146 @@ class BrsCompiler(
                 BrsParameter("typeName", BrsType.STRING)
             ),
             returnType = BrsType.BOOLEAN,
+            body = body
+        )
+    }
+
+    /**
+     * Creates the __kotlin_intCompare helper function for Int.compareTo().
+     *
+     * Generated BrightScript:
+     * ```
+     * function __kotlin_intCompare(a as Integer, b as Integer) as Integer
+     *     if a < b then return -1
+     *     if a > b then return 1
+     *     return 0
+     * end function
+     * ```
+     */
+    private fun createIntCompareHelper(): BrsFunction {
+        val body = BrsBlock(mutableListOf(
+            // if a < b then return -1
+            BrsIf(
+                condition = BrsBinaryOp(
+                    BrsIdentifier("a"),
+                    BrsBinaryOperator.LT,
+                    BrsIdentifier("b")
+                ),
+                thenBranch = BrsBlock(mutableListOf(BrsReturn(BrsIntLiteral(-1)))),
+                elseBranch = null
+            ),
+            // if a > b then return 1
+            BrsIf(
+                condition = BrsBinaryOp(
+                    BrsIdentifier("a"),
+                    BrsBinaryOperator.GT,
+                    BrsIdentifier("b")
+                ),
+                thenBranch = BrsBlock(mutableListOf(BrsReturn(BrsIntLiteral(1)))),
+                elseBranch = null
+            ),
+            // return 0
+            BrsReturn(BrsIntLiteral(0))
+        ))
+
+        return BrsFunction(
+            name = "__kotlin_intCompare",
+            parameters = mutableListOf(
+                BrsParameter("a", BrsType.INTEGER),
+                BrsParameter("b", BrsType.INTEGER)
+            ),
+            returnType = BrsType.INTEGER,
+            body = body
+        )
+    }
+
+    /**
+     * Creates the __kotlin_ushr helper function for unsigned right shift.
+     *
+     * Generated BrightScript:
+     * ```
+     * function __kotlin_ushr(value as Integer, shift as Integer) as Integer
+     *     if shift >= 32 then return 0
+     *     if shift = 0 then return value
+     *     if value >= 0 then return value \ (2 ^ shift)
+     *     ' For negative values, need to handle sign bit
+     *     return ((value and &H7FFFFFFF) \ (2 ^ shift)) or (&H40000000 \ (2 ^ (shift - 1)))
+     * end function
+     * ```
+     */
+    private fun createUshrHelper(): BrsFunction {
+        val body = BrsBlock(mutableListOf(
+            // if shift >= 32 then return 0
+            BrsIf(
+                condition = BrsBinaryOp(
+                    BrsIdentifier("shift"),
+                    BrsBinaryOperator.GE,
+                    BrsIntLiteral(32)
+                ),
+                thenBranch = BrsBlock(mutableListOf(BrsReturn(BrsIntLiteral(0)))),
+                elseBranch = null
+            ),
+            // if shift = 0 then return value
+            BrsIf(
+                condition = BrsBinaryOp(
+                    BrsIdentifier("shift"),
+                    BrsBinaryOperator.EQ,
+                    BrsIntLiteral(0)
+                ),
+                thenBranch = BrsBlock(mutableListOf(BrsReturn(BrsIdentifier("value")))),
+                elseBranch = null
+            ),
+            // if value >= 0 then return value \ (2 ^ shift)
+            BrsIf(
+                condition = BrsBinaryOp(
+                    BrsIdentifier("value"),
+                    BrsBinaryOperator.GE,
+                    BrsIntLiteral(0)
+                ),
+                thenBranch = BrsBlock(mutableListOf(
+                    BrsReturn(
+                        BrsBinaryOp(
+                            BrsIdentifier("value"),
+                            BrsBinaryOperator.INT_DIV,
+                            BrsBinaryOp(BrsIntLiteral(2), BrsBinaryOperator.POW, BrsIdentifier("shift"))
+                        )
+                    )
+                )),
+                elseBranch = null
+            ),
+            // For negative values: ((value and &H7FFFFFFF) \ (2 ^ shift)) or (&H40000000 \ (2 ^ (shift - 1)))
+            BrsReturn(
+                BrsBinaryOp(
+                    BrsBinaryOp(
+                        BrsBinaryOp(
+                            BrsIdentifier("value"),
+                            BrsBinaryOperator.AND,
+                            BrsIntLiteral(0x7FFFFFFF)
+                        ),
+                        BrsBinaryOperator.INT_DIV,
+                        BrsBinaryOp(BrsIntLiteral(2), BrsBinaryOperator.POW, BrsIdentifier("shift"))
+                    ),
+                    BrsBinaryOperator.OR,
+                    BrsBinaryOp(
+                        BrsIntLiteral(0x40000000),
+                        BrsBinaryOperator.INT_DIV,
+                        BrsBinaryOp(
+                            BrsIntLiteral(2),
+                            BrsBinaryOperator.POW,
+                            BrsBinaryOp(BrsIdentifier("shift"), BrsBinaryOperator.SUB, BrsIntLiteral(1))
+                        )
+                    )
+                )
+            )
+        ))
+
+        return BrsFunction(
+            name = "__kotlin_ushr",
+            parameters = mutableListOf(
+                BrsParameter("value", BrsType.INTEGER),
+                BrsParameter("shift", BrsType.INTEGER)
+            ),
+            returnType = BrsType.INTEGER,
             body = body
         )
     }

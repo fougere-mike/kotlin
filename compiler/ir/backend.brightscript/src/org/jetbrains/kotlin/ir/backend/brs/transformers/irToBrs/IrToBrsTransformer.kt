@@ -4061,6 +4061,69 @@ class IrExpressionToBrsTransformer(
 
                 // For any call on a primitive receiver, use a function call instead of method call
                 if (isPrimitiveReceiver) {
+                    val rawName = function.name.asString()
+
+                    // Handle primitive bitwise and comparison operations as intrinsics
+                    // These operations should be compiled inline, not as function calls
+                    when (rawName) {
+                        "xor" -> {
+                            // BrightScript has NO native XOR operator
+                            // Implement as: (a or b) and not (a and b)
+                            val left = receiverExpr
+                            val right = expression.getValueArgument(0)!!.accept(this, data)
+                            // (left or right) and not (left and right)
+                            val orPart = BrsBinaryOp(left, BrsBinaryOperator.OR, right)
+                            val andPart = BrsBinaryOp(left.deepCopy(), BrsBinaryOperator.AND, right.deepCopy())
+                            val notAndPart = BrsUnaryOp(BrsUnaryOperator.NOT, andPart)
+                            return BrsBinaryOp(orPart, BrsBinaryOperator.AND, notAndPart)
+                        }
+                        "and" -> {
+                            val left = receiverExpr
+                            val right = expression.getValueArgument(0)!!.accept(this, data)
+                            return BrsBinaryOp(left, BrsBinaryOperator.AND, right)
+                        }
+                        "or" -> {
+                            val left = receiverExpr
+                            val right = expression.getValueArgument(0)!!.accept(this, data)
+                            return BrsBinaryOp(left, BrsBinaryOperator.OR, right)
+                        }
+                        "inv" -> {
+                            return BrsUnaryOp(BrsUnaryOperator.NOT, receiverExpr)
+                        }
+                        "compareTo" -> {
+                            // Use runtime helper function for Int.compareTo
+                            val left = receiverExpr
+                            val right = expression.getValueArgument(0)!!.accept(this, data)
+                            return BrsFunctionCall(
+                                BrsIdentifier("__kotlin_intCompare"),
+                                mutableListOf(left, right)
+                            )
+                        }
+                        "shl" -> {
+                            // Left shift: a * (2 ^ b)
+                            val left = receiverExpr
+                            val right = expression.getValueArgument(0)!!.accept(this, data)
+                            val powerOf2 = BrsBinaryOp(BrsIntLiteral(2), BrsBinaryOperator.POW, right)
+                            return BrsBinaryOp(left, BrsBinaryOperator.MUL, powerOf2)
+                        }
+                        "shr" -> {
+                            // Signed right shift: a \ (2 ^ b) using integer division
+                            val left = receiverExpr
+                            val right = expression.getValueArgument(0)!!.accept(this, data)
+                            val powerOf2 = BrsBinaryOp(BrsIntLiteral(2), BrsBinaryOperator.POW, right)
+                            return BrsBinaryOp(left, BrsBinaryOperator.INT_DIV, powerOf2)
+                        }
+                        "ushr" -> {
+                            // Unsigned right shift - use helper function
+                            val left = receiverExpr
+                            val right = expression.getValueArgument(0)!!.accept(this, data)
+                            return BrsFunctionCall(
+                                BrsIdentifier("__kotlin_ushr"),
+                                mutableListOf(left, right)
+                            )
+                        }
+                    }
+
                     val args = mutableListOf<BrsExpression>()
                     args.add(receiverExpr)
                     for (i in 0 until expression.valueArgumentsCount) {
