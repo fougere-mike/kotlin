@@ -17,7 +17,7 @@ kotlin {
             brsCompileTaskProvider.configure {
                 // Ensure compiler JAR is built before stdlib compilation
                 dependsOn(":compiler:cli-brs:fatJar")
-                compilerJar.set(rootDir.resolve("compiler/cli/cli-brs/build/libs/kotlinc-brs-${project.version}.jar"))
+                compilerJar.set(new File(rootDir, "compiler/cli/cli-brs/build/libs/kotlinc-brs-${project.version}.jar"))
                 stdlibCompilation.set(true)
             }
         }
