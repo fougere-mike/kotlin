@@ -61,11 +61,18 @@ function __kotlin_isInstanceOf(obj as Object, typeName as String) as Boolean
     if proto = invalid then
         return false
     end if
-    for each t in proto
-        if t = typeName then
+    stack = [proto]
+    while stack.count() > 0
+        item = stack.pop()
+        if item = invalid then
+        else if Type(item) = "roArray" then
+            for each e in item
+                stack.push(e)
+            end for
+        else if item = typeName then
             return true
         end if
-    end for
+    end while
     return false
 end function
 

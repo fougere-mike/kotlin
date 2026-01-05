@@ -477,15 +477,31 @@ class BrsCompiler(
      * Create the isInstanceOf helper function.
      *
      * Generated BrightScript:
+     * The __proto field can be either:
+     * 1. Flat array of type names (no inheritance): ["ArrayList", "MutableList", ...]
+     * 2. Array with parent proto (inheritance): ["Error", "Interface", parentProto]
+     *
+     * Uses a stack-based approach to handle both formats:
+     * - Push proto onto stack
+     * - Pop and check each item
+     * - If item is a string, compare to typeName
+     * - If item is an array, push all its elements
+     *
      * ```
      * function isInstanceOf(obj as Object, typeName as String) as Boolean
      *     if obj = invalid then return false
      *     if type(obj) <> "roAssociativeArray" then return false
      *     proto = obj.__proto
      *     if proto = invalid then return false
-     *     for each t in proto
-     *         if t = typeName then return true
-     *     end for
+     *     stack = [proto]
+     *     while stack.count() > 0
+     *         item = stack.pop()
+     *         if item = invalid then ' skip
+     *         else if Type(item) = "roArray" then
+     *             for each e in item : stack.push(e) : end for
+     *         else if item = typeName then return true
+     *         end if
+     *     end while
      *     return false
      * end function
      * ```
@@ -527,20 +543,62 @@ class BrsCompiler(
                 thenBranch = BrsBlock(mutableListOf(BrsReturn(BrsBooleanLiteral(false)))),
                 elseBranch = null
             ),
-            // for each t in proto
-            BrsForEach(
-                variable = "t",
-                iterable = BrsIdentifier("proto"),
+            // stack = [proto]
+            BrsVariable(
+                name = "stack",
+                initializer = BrsArrayLiteral(mutableListOf(BrsIdentifier("proto")))
+            ),
+            // while stack.count() > 0
+            BrsWhile(
+                condition = BrsBinaryOp(
+                    BrsMethodCall(BrsIdentifier("stack"), "count", mutableListOf()),
+                    BrsBinaryOperator.GT,
+                    BrsIntLiteral(0)
+                ),
                 body = BrsBlock(mutableListOf(
-                    // if t = typeName then return true
+                    // item = stack.pop()
+                    BrsVariable(
+                        name = "item",
+                        initializer = BrsMethodCall(BrsIdentifier("stack"), "pop", mutableListOf())
+                    ),
+                    // if item = invalid then skip (continue)
                     BrsIf(
                         condition = BrsBinaryOp(
-                            BrsIdentifier("t"),
+                            BrsIdentifier("item"),
                             BrsBinaryOperator.EQ,
-                            BrsIdentifier("typeName")
+                            BrsInvalidLiteral()
                         ),
-                        thenBranch = BrsBlock(mutableListOf(BrsReturn(BrsBooleanLiteral(true)))),
-                        elseBranch = null
+                        thenBranch = BrsBlock(mutableListOf()), // do nothing, continue loop
+                        // else if Type(item) = "roArray" then push all elements
+                        elseBranch = BrsIf(
+                            condition = BrsBinaryOp(
+                                BrsTypeOf(BrsIdentifier("item")),
+                                BrsBinaryOperator.EQ,
+                                BrsStringLiteral("roArray")
+                            ),
+                            thenBranch = BrsBlock(mutableListOf(
+                                // for each e in item : stack.push(e) : end for
+                                BrsForEach(
+                                    variable = "e",
+                                    iterable = BrsIdentifier("item"),
+                                    body = BrsBlock(mutableListOf(
+                                        BrsExpressionStatement(
+                                            BrsMethodCall(BrsIdentifier("stack"), "push", mutableListOf(BrsIdentifier("e")))
+                                        )
+                                    ))
+                                )
+                            )),
+                            // else if item = typeName then return true
+                            elseBranch = BrsIf(
+                                condition = BrsBinaryOp(
+                                    BrsIdentifier("item"),
+                                    BrsBinaryOperator.EQ,
+                                    BrsIdentifier("typeName")
+                                ),
+                                thenBranch = BrsBlock(mutableListOf(BrsReturn(BrsBooleanLiteral(true)))),
+                                elseBranch = null
+                            )
+                        )
                     )
                 ))
             ),

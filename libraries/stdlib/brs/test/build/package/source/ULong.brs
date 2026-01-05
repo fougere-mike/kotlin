@@ -111,7 +111,7 @@ function ULong_minus_UInt_k_(other as Object) as Object
 end function
 
 function ULong_minus_ULong_k_(other as Object) as Object
-    return ULong_create_J_k_(minus_rJ_J_k_(m.get_data(), other.get_data()))
+    return ULong_create_J_k_(m.get_data() - other.get_data())
 end function
 
 function ULong_times_UByte_k_(other as Object) as Object
@@ -127,7 +127,7 @@ function ULong_times_UInt_k_(other as Object) as Object
 end function
 
 function ULong_times_ULong_k_(other as Object) as Object
-    return ULong_create_J_k_(times_rJ_J_k_(m.get_data(), other.get_data()))
+    return ULong_create_J_k_(m.get_data() * other.get_data())
 end function
 
 function ULong_div_UByte_k_(other as Object) as Object

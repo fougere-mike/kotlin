@@ -169,7 +169,7 @@ function longToStringWithRadix_J_I_k_(value as LongInteger, radix as Integer) as
     while v <> 0&
         digit = v mod radix
         result.insert_I_C_k_(0, digits.get_I_k_(digit))
-        v = div_rJ_I_k_(v, radix)
+        v = (v / radix)
     end while
     if isNegative then
         result.insert_I_C_k_(0, "-")
@@ -184,7 +184,7 @@ function ulongToString_J_I_k_(value as LongInteger, base as Integer) as String
     quotient = (__kotlin_ushr(value, 1) / base) * (2 ^ 1)
     rem_ = value - (quotient * base)
     if rem_ >= base then
-        rem = minus_rJ_I_k_(rem_, base)
+        rem = (rem_ - base)
         quotient = (quotient + 1)
     end if
     return longToStringWithRadix_J_I_k_(quotient, base) + longToStringWithRadix_J_I_k_(rem_, base)

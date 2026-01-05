@@ -1,24 +1,24 @@
 function differenceModulo_UInt_UInt_UInt_k_(a as Object, b as Object, c as Object) as Object
-    ac = a mod c
-    bc = b mod c
+    ac = a.rem_UInt_k_(c)
+    bc = b.rem_UInt_k_(c)
     __when_tmp0 = invalid
     if ac.compareTo_UInt_k_(bc) >= 0 then
-        __when_tmp0 = (ac - bc)
+        __when_tmp0 = ac.minus_UInt_k_(bc)
     else if true then
-        __when_tmp0 = ((ac - bc) + c)
+        __when_tmp0 = (ac.minus_UInt_k_(bc) + c)
     end if
     return __when_tmp0
 
 end function
 
 function differenceModulo_ULong_ULong_ULong_k_(a as Object, b as Object, c as Object) as Object
-    ac = a mod c
-    bc = b mod c
+    ac = a.rem_ULong_k_(c)
+    bc = b.rem_ULong_k_(c)
     __when_tmp1 = invalid
     if ac.compareTo_ULong_k_(bc) >= 0 then
-        __when_tmp1 = (ac - bc)
+        __when_tmp1 = ac.minus_ULong_k_(bc)
     else if true then
-        __when_tmp1 = ((ac - bc) + c)
+        __when_tmp1 = (ac.minus_ULong_k_(bc) + c)
     end if
     return __when_tmp1
 
@@ -31,7 +31,7 @@ function getProgressionLastElement_UInt_UInt_I_k_(start as Object, end_ as Objec
         if start.compareTo_UInt_k_(end_) >= 0 then
             __when_tmp2 = end_
         else if true then
-            __when_tmp2 = (end_ - differenceModulo_UInt_UInt_UInt_k_(end_, start, toUInt_rI_k_(step_)))
+            __when_tmp2 = end_.minus_UInt_k_(differenceModulo_UInt_UInt_UInt_k_(end_, start, toUInt_rI_k_(step_)))
         end if
         __when_tmp4 = __when_tmp2
     else if step_ < 0 then
@@ -56,7 +56,7 @@ function getProgressionLastElement_ULong_ULong_J_k_(start as Object, end_ as Obj
         if start.compareTo_ULong_k_(end_) >= 0 then
             __when_tmp5 = end_
         else if true then
-            __when_tmp5 = (end_ - differenceModulo_ULong_ULong_ULong_k_(end_, start, toULong_rJ_k_(step_)))
+            __when_tmp5 = end_.minus_ULong_k_(differenceModulo_ULong_ULong_ULong_k_(end_, start, toULong_rJ_k_(step_)))
         end if
         __when_tmp7 = __when_tmp5
     else if step_ < 0 then
@@ -564,14 +564,14 @@ function until_rUInt_UInt_k_(m as Object, to_ as Object) as Object
     if to_.compareTo_UInt_k_(UInt_Companion_get_MIN_VALUE_k_()) <= 0 then
         return UIntRange_Companion_get_EMPTY_k_()
     end if
-    return m.rangeTo_UInt_k_(to_ - 1)
+    return m.rangeTo_UInt_k_(to_.minus_UInt_k_(1))
 end function
 
 function until_rULong_ULong_k_(m as Object, to_ as Object) as Object
     if to_.compareTo_ULong_k_(ULong_Companion_get_MIN_VALUE_k_()) <= 0 then
         return ULongRange_Companion_get_EMPTY_k_()
     end if
-    return m.rangeTo_ULong_k_(to_ - 1)
+    return m.rangeTo_ULong_k_(to_.minus_UInt_k_(1))
 end function
 
 function downTo_rUInt_UInt_k_(m as Object, to_ as Object) as Object

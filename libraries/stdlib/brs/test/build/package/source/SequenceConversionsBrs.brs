@@ -205,11 +205,11 @@ function zip_rSequence_Sequence_Function2_k_(m as Object, other as Object, trans
 end function
 
 function sorted_rSequence_k_(m as Object) as Object
-    return Anon_68cf49ac_create_Sequence_k_(m)
+    return Anon_1485c38d_create_Sequence_k_(m)
 end function
 
 function sortedWith_rSequence_Comparator_k_(m as Object, comparator as Object) as Object
-    return Anon_11b317b7_create_Sequence_Comparator_k_(m, comparator)
+    return Anon_30180e67_create_Sequence_Comparator_k_(m, comparator)
 end function
 
 function sortedDescending_rSequence_k_(m as Object) as Object
@@ -225,54 +225,54 @@ function sortedByDescending_rSequence_Function1_k_(m as Object, selector as Obje
 end function
 
 function ifEmpty_rSequence_Function0Sequence_k_(m as Object, defaultValue as Object) as Object
-    return Anon_1e77807c_create_Sequence_Function0Sequence_k_(m, defaultValue)
+    return Anon_5ca63fd8_create_Sequence_Function0Sequence_k_(m, defaultValue)
 end function
 
-function Anon_68cf49ac_create_Sequence_k_(_this_sorted as Object) as Object
+function Anon_1485c38d_create_Sequence_k_(_this_sorted as Object) as Object
     this = {}
-    this.__type = "Anon_68cf49ac"
-    this.__proto = ["Anon_68cf49ac", "Sequence"]
+    this.__type = "Anon_1485c38d"
+    this.__proto = ["Anon_1485c38d", "Sequence"]
     this.__id = __kotlin_nextObjectId()
-    this.iterator_k_ = Anon_68cf49ac_iterator_k_
+    this.iterator_k_ = Anon_1485c38d_iterator_k_
     this._this_sorted = _this_sorted
     return this
 end function
 
-function Anon_68cf49ac_iterator_k_() as Object
+function Anon_1485c38d_iterator_k_() as Object
     sortedList = toMutableList_rSequence_k_(m._this_sorted)
     sort_rMutableList_k_(sortedList)
     return sortedList.iterator_k_()
 end function
 
-function Anon_11b317b7_create_Sequence_Comparator_k_(_this_sortedWith as Object, _comparator as Object) as Object
+function Anon_30180e67_create_Sequence_Comparator_k_(_this_sortedWith as Object, _comparator as Object) as Object
     this = {}
-    this.__type = "Anon_11b317b7"
-    this.__proto = ["Anon_11b317b7", "Sequence"]
+    this.__type = "Anon_30180e67"
+    this.__proto = ["Anon_30180e67", "Sequence"]
     this.__id = __kotlin_nextObjectId()
-    this.iterator_k_ = Anon_11b317b7_iterator_k_
+    this.iterator_k_ = Anon_30180e67_iterator_k_
     this._this_sortedWith = _this_sortedWith
     this._comparator = _comparator
     return this
 end function
 
-function Anon_11b317b7_iterator_k_() as Object
+function Anon_30180e67_iterator_k_() as Object
     sortedList = toMutableList_rSequence_k_(m._this_sortedWith)
     sortWith_rMutableList_Comparator_k_(sortedList, m._comparator)
     return sortedList.iterator_k_()
 end function
 
-function Anon_1e77807c_create_Sequence_Function0Sequence_k_(_this_ifEmpty as Object, _defaultValue as Object) as Object
+function Anon_5ca63fd8_create_Sequence_Function0Sequence_k_(_this_ifEmpty as Object, _defaultValue as Object) as Object
     this = {}
-    this.__type = "Anon_1e77807c"
-    this.__proto = ["Anon_1e77807c", "Sequence"]
+    this.__type = "Anon_5ca63fd8"
+    this.__proto = ["Anon_5ca63fd8", "Sequence"]
     this.__id = __kotlin_nextObjectId()
-    this.iterator_k_ = Anon_1e77807c_iterator_k_
+    this.iterator_k_ = Anon_5ca63fd8_iterator_k_
     this._this_ifEmpty = _this_ifEmpty
     this._defaultValue = _defaultValue
     return this
 end function
 
-function Anon_1e77807c_iterator_k_() as Object
+function Anon_5ca63fd8_iterator_k_() as Object
     iterator = m._this_ifEmpty.iterator_k_()
     if iterator.hasNext_k_() then
         return iterator
