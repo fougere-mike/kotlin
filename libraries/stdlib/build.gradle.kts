@@ -80,6 +80,13 @@ val commonTestOptIns = listOf(
     "kotlin.time.ExperimentalTime",
 )
 
+// Detect if current KGP has BRS support
+// This allows the build to work with remote bootstrap (no BRS) or local bootstrap (with BRS)
+// See CLAUDE.md "Bootstrap Architecture" section for details
+val kgpHasBrsSupport = runCatching {
+    Class.forName("org.jetbrains.kotlin.gradle.targets.brs.KotlinBrsIrTarget")
+}.isSuccess
+
 kotlin {
     val renderDiagnosticNames by extra(project.kotlinBuildProperties.renderDiagnosticNames)
     val diagnosticNamesArg = if (renderDiagnosticNames) "-Xrender-internal-diagnostic-names" else null
@@ -313,9 +320,7 @@ kotlin {
 
     // BrightScript (Roku) target
     // Note: Requires Kotlin Gradle Plugin with BRS support (only available after local bootstrap)
-    //
-    // BOOTSTRAP NOTE: The BRS target configuration below is temporarily commented out while
-    // using remote bootstrap. After rebuilding local bootstrap with BRS support, uncomment this section.
+    // See CLAUDE.md "Bootstrap Architecture" section for details on how this works
     //
     // BrightScript target - compiles stdlib from source using the BRS compiler
     // Note: We do NOT use brs-prebuilt/kotlin-stdlib-brs.klib as a library here because
@@ -324,52 +329,56 @@ kotlin {
     // The prebuilt klib is only used for:
     // 1. User projects that need stdlib as a dependency
     // 2. Regenerating itself via :kotlin-stdlib-brs-prebuilt:regenerateKlib
-    brs {
-        compilations.all {
-            // Configure the BRS compiler JAR path and stdlib mode
-            (this as org.jetbrains.kotlin.gradle.targets.brs.KotlinBrsIrCompilation).brsCompileTaskProvider.configure {
-                // Ensure compiler JAR is built before stdlib compilation
-                dependsOn(":compiler:cli-brs:fatJar")
-                compilerJar.set(rootDir.resolve("compiler/cli/cli-brs/build/libs/kotlinc-brs-${project.version}.jar"))
-                stdlibCompilation.set(true)
-                // No libraries needed - compiling stdlib from source
+    if (kgpHasBrsSupport) {
+        brs {
+            compilations.all {
+                // Configure the BRS compiler JAR path and stdlib mode
+                (this as org.jetbrains.kotlin.gradle.targets.brs.KotlinBrsIrCompilation).brsCompileTaskProvider.configure {
+                    // Ensure compiler JAR is built before stdlib compilation
+                    dependsOn(":compiler:cli-brs:fatJar")
+                    compilerJar.set(rootDir.resolve("compiler/cli/cli-brs/build/libs/kotlinc-brs-${project.version}.jar"))
+                    stdlibCompilation.set(true)
+                    // No libraries needed - compiling stdlib from source
 
-                // No additional configuration needed - conflicting files removed from brs/
+                    // No additional configuration needed - conflicting files removed from brs/
+                }
             }
         }
-    }
 
-    // Add prebuilt klib artifact to BRS configurations for publishing
-    // The prebuilt klib is used by downstream projects that depend on kotlin-stdlib-brs
-    val prebuiltKlib = file("brs-prebuilt/kotlin-stdlib-brs.klib")
-    if (prebuiltKlib.exists()) {
+        // Add prebuilt klib artifact to BRS configurations for publishing
+        // The prebuilt klib is used by downstream projects that depend on kotlin-stdlib-brs
+        val prebuiltKlib = file("brs-prebuilt/kotlin-stdlib-brs.klib")
+        if (prebuiltKlib.exists()) {
+            artifacts {
+                add("brsApiElements", prebuiltKlib) {
+                    type = "klib"
+                    extension = "klib"
+                    classifier = null
+                }
+                add("brsRuntimeElements", prebuiltKlib) {
+                    type = "klib"
+                    extension = "klib"
+                    classifier = null
+                }
+            }
+        }
+
+        // Create a JAR containing the compiled .brs runtime files for packaging
+        // This is used by the kotlin-roku plugin to include stdlib in the final Roku app
+        val brsBrsJar by tasks.registering(Jar::class) {
+            archiveClassifier.set("brs-runtime")
+            from(layout.buildDirectory.dir("brs/brs/main/source"))
+            dependsOn("compileKotlinBrs")
+        }
+
+        // Add the runtime JAR to brsRuntimeElements for resolution by downstream projects
         artifacts {
-            add("brsApiElements", prebuiltKlib) {
-                type = "klib"
-                extension = "klib"
-                classifier = null
-            }
-            add("brsRuntimeElements", prebuiltKlib) {
-                type = "klib"
-                extension = "klib"
-                classifier = null
+            add("brsRuntimeElements", brsBrsJar) {
+                classifier = "brs-runtime"
             }
         }
-    }
-
-    // Create a JAR containing the compiled .brs runtime files for packaging
-    // This is used by the kotlin-roku plugin to include stdlib in the final Roku app
-    val brsBrsJar by tasks.registering(Jar::class) {
-        archiveClassifier.set("brs-runtime")
-        from(layout.buildDirectory.dir("brs/brs/main/source"))
-        dependsOn("compileKotlinBrs")
-    }
-
-    // Add the runtime JAR to brsRuntimeElements for resolution by downstream projects
-    artifacts {
-        add("brsRuntimeElements", brsBrsJar) {
-            classifier = "brs-runtime"
-        }
+    } else {
+        logger.lifecycle("BRS target not available (KGP without BRS support) - skipping brs {} block")
     }
 
     if (kotlinBuildProperties.isInIdeaSync) {
@@ -984,18 +993,24 @@ publishing {
             variant("wasmWasiSourcesElements")
         }
 
-        val brs = module("brsModule") {
-            mavenPublication {
-                artifactId = "$artifactBaseName-brs"
-                configureKotlinPomAttributes(project, "Kotlin Standard Library for BrightScript", packaging = "klib")
+        // BRS module - only available when KGP has BRS support
+        if (kgpHasBrsSupport) {
+            val brs = module("brsModule") {
+                mavenPublication {
+                    artifactId = "$artifactBaseName-brs"
+                    configureKotlinPomAttributes(project, "Kotlin Standard Library for BrightScript", packaging = "klib")
+                }
+                variant("brsApiElements")
+                variant("brsRuntimeElements")
+                variant("brsSourcesElements")
             }
-            variant("brsApiElements")
-            variant("brsRuntimeElements")
-            variant("brsSourcesElements")
-        }
 
-        // Makes all variants from accompanying artifacts visible through `available-at`
-        rootModule.include(js, wasmJs, wasmWasi, brs)
+            // Makes all variants from accompanying artifacts visible through `available-at`
+            rootModule.include(js, wasmJs, wasmWasi, brs)
+        } else {
+            // Without BRS support, only include other targets
+            rootModule.include(js, wasmJs, wasmWasi)
+        }
     }
 
     publications {
@@ -1006,10 +1021,14 @@ publishing {
 
         val wasmJsModule by existing(MavenPublication::class)
         val wasmWasiModule by existing(MavenPublication::class)
-        val brsModule by existing(MavenPublication::class)
         configureSbom("Wasm-Js", "kotlin-stdlib-wasm-js", setOf("wasmJsRuntimeClasspath"), wasmJsModule)
         configureSbom("Wasm-Wasi", "kotlin-stdlib-wasm-wasi", setOf("wasmWasiRuntimeClasspath"), wasmWasiModule)
-        configureSbom("Brs", "kotlin-stdlib-brs", setOf("brsRuntimeClasspath"), brsModule)
+
+        // BRS SBOM - only when KGP has BRS support
+        if (kgpHasBrsSupport) {
+            val brsModule by existing(MavenPublication::class)
+            configureSbom("Brs", "kotlin-stdlib-brs", setOf("brsRuntimeClasspath"), brsModule)
+        }
     }
 }
 

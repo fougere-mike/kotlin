@@ -206,6 +206,62 @@ Compiler Sources → Fat JAR → Stdlib klib → Maven Local → kotlin-roku plu
 
 The rebuild.sh script handles this entire chain correctly. Manual commands break the chain.
 
+## Bootstrap Architecture
+
+### Why BRS Requires Special Handling
+
+Unlike JS/Native which are upstream in the Kotlin compiler, BRS is a fork. The remote bootstrap compiler from JetBrains Space has no BRS support. This creates a chicken-and-egg problem:
+
+1. To compile BRS stdlib, you need KGP with BRS target support
+2. To get KGP with BRS support, you need to build and publish it locally
+3. This requires building the BRS compiler first
+
+### How rebuild.sh Handles This
+
+The build is split into two phases:
+
+**Phase 1 (Remote Bootstrap)** - Steps 1-4 work with the remote bootstrap from JetBrains:
+- Build BRS compiler fat JAR
+- Regenerate stdlib klib (uses JavaExec directly, bypasses KGP)
+- Publish compiler to Maven Local
+- Publish KGP to Maven Local (now with BRS support)
+
+**Phase 2 (Local Bootstrap)** - Steps 5-6 use `-Pbootstrap.local=true`:
+- Gradle resolves KGP from Maven Local instead of remote
+- The `brs {}` blocks in stdlib and kotlin.test now work
+- Publish stdlib and kotlin.test with full BRS support
+
+### Conditional BRS Target Configuration
+
+The `brs {}` blocks in `libraries/stdlib/build.gradle.kts` and `libraries/kotlin.test/build.gradle.kts`
+are wrapped in runtime capability detection:
+
+```kotlin
+val kgpHasBrsSupport = runCatching {
+    Class.forName("org.jetbrains.kotlin.gradle.targets.brs.KotlinBrsIrTarget")
+}.isSuccess
+
+if (kgpHasBrsSupport) {
+    brs { ... }
+}
+```
+
+This allows Gradle configuration to succeed with remote bootstrap (skipping BRS entirely),
+while still enabling full BRS compilation when local bootstrap is used.
+
+### Fresh Clone Workflow
+
+From a fresh clone, just run:
+
+```bash
+./rebuild.sh
+```
+
+This handles all the bootstrap phases automatically. After completion:
+- BRS compiler, KGP, stdlib, and kotlin.test are all in Maven Local
+- The `kotlin-roku` plugin can resolve all dependencies
+- User projects can compile Kotlin to BrightScript
+
 ## Troubleshooting
 
 ### Symptoms of Stale Cache
