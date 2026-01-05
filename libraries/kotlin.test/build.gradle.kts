@@ -39,6 +39,13 @@ enum class JvmTestFramework {
 }
 val jvmTestFrameworks = JvmTestFramework.values().toList()
 
+// Detect if current KGP has BRS support
+// This allows the build to work with remote bootstrap (no BRS) or local bootstrap (with BRS)
+// See CLAUDE.md "Bootstrap Architecture" section for details
+val kgpHasBrsSupport = runCatching {
+    Class.forName("org.jetbrains.kotlin.gradle.targets.brs.KotlinBrsIrTarget")
+}.isSuccess
+
 kotlin {
 
     explicitApi()
@@ -117,18 +124,23 @@ kotlin {
         }
     }
 
-    // BRS target
-    brs {
-        compilations.all {
-            // Configure the BRS compiler JAR path
-            (this as org.jetbrains.kotlin.gradle.targets.brs.KotlinBrsIrCompilation).brsCompileTaskProvider.configure {
-                compilerJar.set(rootDir.resolve("compiler/cli/cli-brs/build/libs/kotlinc-brs-${project.version}.jar"))
-                // No longer need bootstrap stdlib - will use normal stdlib dependency
+    // BRS target - only available when KGP has BRS support
+    // See CLAUDE.md "Bootstrap Architecture" section for details
+    if (kgpHasBrsSupport) {
+        brs {
+            compilations.all {
+                // Configure the BRS compiler JAR path
+                (this as org.jetbrains.kotlin.gradle.targets.brs.KotlinBrsIrCompilation).brsCompileTaskProvider.configure {
+                    compilerJar.set(rootDir.resolve("compiler/cli/cli-brs/build/libs/kotlinc-brs-${project.version}.jar"))
+                    // No longer need bootstrap stdlib - will use normal stdlib dependency
+                }
+            }
+            compilations["main"].compileTaskProvider.configure {
+                compilerOptions.freeCompilerArgs.add("-Xir-module-name=$KOTLINTEST_MODULE_NAME")
             }
         }
-        compilations["main"].compileTaskProvider.configure {
-            compilerOptions.freeCompilerArgs.add("-Xir-module-name=$KOTLINTEST_MODULE_NAME")
-        }
+    } else {
+        logger.lifecycle("BRS target not available in kotlin.test (KGP without BRS support) - skipping")
     }
 
     targets.all {
@@ -237,11 +249,13 @@ kotlin {
             dependsOn(wasmCommonMain)
             kotlin.srcDir("wasm/wasi/src/main/kotlin")
         }
-        // BRS source set
-        val brsMain by getting {
-            dependsOn(assertionsCommonMain)
-            dependsOn(annotationsCommonMain)
-            kotlin.srcDir("brs/src/main/kotlin")
+        // BRS source set - only when KGP has BRS support
+        if (kgpHasBrsSupport) {
+            val brsMain by getting {
+                dependsOn(assertionsCommonMain)
+                dependsOn(annotationsCommonMain)
+                kotlin.srcDir("brs/src/main/kotlin")
+            }
         }
     }
 }
@@ -531,15 +545,18 @@ publishing {
             variant("wasmWasiSourcesElements")
         }
 
-        val brs = module("brsModule") {
-            mavenPublication {
-                artifactId = "$artifactBaseName-brs"
-                configureKotlinPomAttributes(project, "Kotlin Test library for BrightScript platform", packaging = "klib")
+        // BRS module - only available when KGP has BRS support
+        val brs = if (kgpHasBrsSupport) {
+            module("brsModule") {
+                mavenPublication {
+                    artifactId = "$artifactBaseName-brs"
+                    configureKotlinPomAttributes(project, "Kotlin Test library for BrightScript platform", packaging = "klib")
+                }
+                variant("brsApiElements")
+                variant("brsRuntimeElements")
+                variant("brsSourcesElements")
             }
-            variant("brsApiElements")
-            variant("brsRuntimeElements")
-            variant("brsSourcesElements")
-        }
+        } else null
 
         module("testCommonModule") {
             mavenPublication {
@@ -559,19 +576,27 @@ publishing {
         }
 
         // Makes all variants from accompanying artifacts visible through `available-at`
-        rootModule.include(js, *frameworkModules.toTypedArray(), wasmJs, wasmWasi, brs)
+        if (brs != null) {
+            rootModule.include(js, *frameworkModules.toTypedArray(), wasmJs, wasmWasi, brs)
+        } else {
+            rootModule.include(js, *frameworkModules.toTypedArray(), wasmJs, wasmWasi)
+        }
     }
 
     publications {
-        (listOf(
+        val sbomConfigs = mutableListOf(
             listOf("rootModule", "Main", "kotlin-test", "jvmRuntimeClasspath"),
             listOf("jsModule", "Js", "kotlin-test-js", "jsRuntimeClasspath"),
             listOf("wasmJsModule", "Wasm-Js", "kotlin-test-wasm-js", "wasmJsRuntimeClasspath"),
             listOf("wasmWasiModule", "Wasm-Wasi", "kotlin-test-wasm-wasi", "wasmWasiRuntimeClasspath"),
-            listOf("brsModule", "Brs", "kotlin-test-brs", "brsRuntimeClasspath"),
             listOf("testCommonModule", "Common", "kotlin-test-common", "kotlinTestCommonDependencies"),
             listOf("testAnnotationsCommonModule", "AnnotationsCommon", "kotlin-test-annotations-common", "kotlinTestAnnotationsCommonDependencies"),
-        ) + jvmTestFrameworks.map { framework ->
+        )
+        // Add BRS SBOM config only when KGP has BRS support
+        if (kgpHasBrsSupport) {
+            sbomConfigs.add(listOf("brsModule", "Brs", "kotlin-test-brs", "brsRuntimeClasspath"))
+        }
+        (sbomConfigs + jvmTestFrameworks.map { framework ->
             listOf("${framework.lowercase()}Module", "$framework", "kotlin-test-${framework.lowercase()}", "jvm${framework}RuntimeDependencies")
         }).forEach { (module, sbomTarget, sbomDocument, classpath) ->
             configureSbom(sbomTarget, sbomDocument, setOf(classpath), named<MavenPublication>(module))
