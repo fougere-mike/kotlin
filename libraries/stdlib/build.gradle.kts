@@ -565,27 +565,7 @@ kotlin {
             }
         }
 
-        // BrightScript (Roku) source sets - using native BRS compiler
-        val brsDir = "${projectDir}/brs"
-        val brsActualDir = "${projectDir}/brs-actual"
-        val brsMain by getting {
-            // BRS now uses native compiler with actual implementations
-            dependsOn(commonMain.get())
-            kotlin {
-                // Bootstrap base implementations (builtins removed - identical to brs-actual)
-                srcDir("$brsDir/runtime")
-                srcDir("$brsDir/src")
-                // Native BRS actual implementations
-                srcDir("$brsActualDir/builtins")
-                // Note: brs-actual/runtime is empty, so not included
-                srcDir("$brsActualDir/src")
-                // Note: Conflicting files (ArraySorting.kt, StringBuilder.kt) were deleted from brs/
-            }
-        }
-        val brsTest by getting {
-            dependsOn(commonTest.get())
-            // No test sources yet in brs-actual
-        }
+        // BrightScript source sets are configured in brs-target.gradle (only when KGP has BRS support)
 
         if (kotlinBuildProperties.isInIdeaSync) {
             val nativeKotlinTestCommon by creating {

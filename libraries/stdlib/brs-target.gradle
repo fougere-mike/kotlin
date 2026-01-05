@@ -23,6 +23,31 @@ kotlin {
         }
     }
 
+    // Configure BRS source sets
+    sourceSets {
+        def brsDir = "${projectDir}/brs"
+        def brsActualDir = "${projectDir}/brs-actual"
+
+        brsMain {
+            // BRS now uses native compiler with actual implementations
+            dependsOn(commonMain.get())
+            kotlin {
+                // Bootstrap base implementations (builtins removed - identical to brs-actual)
+                srcDir("$brsDir/runtime")
+                srcDir("$brsDir/src")
+                // Native BRS actual implementations
+                srcDir("$brsActualDir/builtins")
+                // Note: brs-actual/runtime is empty, so not included
+                srcDir("$brsActualDir/src")
+                // Note: Conflicting files (ArraySorting.kt, StringBuilder.kt) were deleted from brs/
+            }
+        }
+        brsTest {
+            dependsOn(commonTest.get())
+            // No test sources yet in brs-actual
+        }
+    }
+
     // Add prebuilt klib artifact to BRS configurations for publishing
     def prebuiltKlib = file("brs-prebuilt/kotlin-stdlib-brs.klib")
     if (prebuiltKlib.exists()) {
