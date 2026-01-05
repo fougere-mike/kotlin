@@ -14,7 +14,7 @@ sub sequenceTests_rTestRunner_k_(m as Object)
             result = toList_rSequence_k_(map_rSequence_Function1_k_(filter_rSequence_Function1Z_k_(asSequence_rIterable_k_(list), {invoke: function(it as Object) as Boolean
                 return it.compareTo_UInt_k_(UInt_create_I_k_(2)) > 0
             end function}), {invoke: function(it as Object) as Object
-                return it * UInt_create_I_k_(2)
+                return it.times_UInt_k_(UInt_create_I_k_(2))
             end function}))
             assertEquals_AnyN_AnyN_StrN_k_(listOf_Arr_k_([UInt_create_I_k_(6), UInt_create_I_k_(8), UInt_create_I_k_(10)]), result, invalid)
         end function})

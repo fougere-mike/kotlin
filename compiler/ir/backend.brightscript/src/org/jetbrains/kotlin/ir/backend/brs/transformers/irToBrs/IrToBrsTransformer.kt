@@ -4063,9 +4063,35 @@ class IrExpressionToBrsTransformer(
                 if (isPrimitiveReceiver) {
                     val rawName = function.name.asString()
 
-                    // Handle primitive bitwise and comparison operations as intrinsics
+                    // Handle primitive bitwise, comparison, and arithmetic operations as intrinsics
                     // These operations should be compiled inline, not as function calls
                     when (rawName) {
+                        // Arithmetic operators - compile to native BrightScript operators
+                        "plus" -> {
+                            val left = receiverExpr
+                            val right = expression.getValueArgument(0)!!.accept(this, data)
+                            return BrsBinaryOp(left, BrsBinaryOperator.ADD, right)
+                        }
+                        "minus" -> {
+                            val left = receiverExpr
+                            val right = expression.getValueArgument(0)!!.accept(this, data)
+                            return BrsBinaryOp(left, BrsBinaryOperator.SUB, right)
+                        }
+                        "times" -> {
+                            val left = receiverExpr
+                            val right = expression.getValueArgument(0)!!.accept(this, data)
+                            return BrsBinaryOp(left, BrsBinaryOperator.MUL, right)
+                        }
+                        "div" -> {
+                            val left = receiverExpr
+                            val right = expression.getValueArgument(0)!!.accept(this, data)
+                            return BrsBinaryOp(left, BrsBinaryOperator.DIV, right)
+                        }
+                        "rem" -> {
+                            val left = receiverExpr
+                            val right = expression.getValueArgument(0)!!.accept(this, data)
+                            return BrsBinaryOp(left, BrsBinaryOperator.MOD, right)
+                        }
                         "xor" -> {
                             // BrightScript has NO native XOR operator
                             // Implement as: (a or b) and not (a and b)
@@ -4985,6 +5011,22 @@ class IrExpressionToBrsTransformer(
                 }
             }
             // ==================== End Comparable Comparison ====================
+
+            // ==================== Arithmetic Operators for Non-Primitive Types ====================
+            // BrightScript's +, -, *, /, MOD operators can't operate on roAssociativeArray objects.
+            // For non-primitive types (like UInt, ULong), fall back to method calls (plus, minus, times, div, rem).
+            if (binaryOp == BrsBinaryOperator.ADD || binaryOp == BrsBinaryOperator.SUB ||
+                binaryOp == BrsBinaryOperator.MUL || binaryOp == BrsBinaryOperator.DIV ||
+                binaryOp == BrsBinaryOperator.MOD) {
+                val leftType = leftIr.type
+                val rightType = rightIr.type
+
+                // If either operand is non-primitive, let normal method call handling take over
+                if (!leftType.isPrimitiveForArithmetic() || !rightType.isPrimitiveForArithmetic()) {
+                    return null  // Fall through to method call handling
+                }
+            }
+            // ==================== End Arithmetic Operators ====================
 
             var left = leftIr.accept(this, Unit)
             var right = rightIr.accept(this, Unit)
@@ -5957,5 +5999,28 @@ private fun IrType.isPrimitiveForComparison(): Boolean {
     }
 
     // Default to structural comparison for safety
+    return false
+}
+
+/**
+ * Check if a type is primitive for arithmetic operations.
+ * Primitive types can use BrightScript's native +, -, *, /, MOD operators.
+ * Non-primitive types (wrapper classes like UInt, ULong) need method calls.
+ */
+private fun IrType.isPrimitiveForArithmetic(): Boolean {
+    val baseType = this.makeNotNull()
+
+    // Primitive numeric types that BrightScript can operate on natively
+    if (baseType.isInt() || baseType.isLong() || baseType.isFloat() || baseType.isDouble() ||
+        baseType.isShort() || baseType.isByte()) {
+        return true
+    }
+
+    // String uses + for concatenation
+    if (baseType.isString()) {
+        return true
+    }
+
+    // Everything else (UInt, ULong, UByte, UShort, custom classes) needs method calls
     return false
 }

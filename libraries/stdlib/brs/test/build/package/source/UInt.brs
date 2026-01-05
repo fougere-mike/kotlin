@@ -107,7 +107,7 @@ function UInt_minus_UShort_k_(other as Object) as Object
 end function
 
 function UInt_minus_UInt_k_(other as Object) as Object
-    return UInt_create_I_k_(minus_rI_I_k_(m.get_data(), other.get_data()))
+    return UInt_create_I_k_(m.get_data() - other.get_data())
 end function
 
 function UInt_minus_ULong_k_(other as Object) as Object
@@ -123,7 +123,7 @@ function UInt_times_UShort_k_(other as Object) as Object
 end function
 
 function UInt_times_UInt_k_(other as Object) as Object
-    return UInt_create_I_k_(times_rI_I_k_(m.get_data(), other.get_data()))
+    return UInt_create_I_k_(m.get_data() * other.get_data())
 end function
 
 function UInt_times_ULong_k_(other as Object) as Object

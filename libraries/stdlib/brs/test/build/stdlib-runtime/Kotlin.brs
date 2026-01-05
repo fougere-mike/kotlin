@@ -60,15 +60,15 @@ function toRawBits_rD_k_(m as Double) as LongInteger
         exp = 0
         mantissa = absValue
         while mantissa >= 2.0#
-            mantissa = div_rD_D_k_(mantissa, 2.0#)
+            mantissa = (mantissa / 2.0#)
             exp = (exp + 1)
         end while
         while mantissa < 1.0#
-            mantissa = times_rD_D_k_(mantissa, 2.0#)
+            mantissa = (mantissa * 2.0#)
             exp = (exp - 1)
         end while
         biasedExp = exp + 1023
-        mantissa = minus_rD_D_k_(mantissa, 1.0#)
+        mantissa = (mantissa - 1.0#)
         mantissaBits = 0&
         progression = until_rI_I_k_(0, 52)
         inductionVariable = progression.get_first()
@@ -77,10 +77,10 @@ function toRawBits_rD_k_(m as Double) as LongInteger
                         i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            mantissa = times_rD_D_k_(mantissa, 2.0#)
+            mantissa = (mantissa * 2.0#)
             if mantissa >= 1.0# then
                 mantissaBits = (mantissaBits or (1& * (2 ^ (51 - i))))
-                mantissa = minus_rD_D_k_(mantissa, 1.0#)
+                mantissa = (mantissa - 1.0#)
             end if
 
 
@@ -88,10 +88,10 @@ function toRawBits_rD_k_(m as Double) as LongInteger
                 i = inductionVariable
                 inductionVariable = (inductionVariable + 1)
 
-                mantissa = times_rD_D_k_(mantissa, 2.0#)
+                mantissa = (mantissa * 2.0#)
                 if mantissa >= 1.0# then
                     mantissaBits = (mantissaBits or (1& * (2 ^ (51 - i))))
-                    mantissa = minus_rD_D_k_(mantissa, 1.0#)
+                    mantissa = (mantissa - 1.0#)
                 end if
 
             end while
@@ -207,15 +207,15 @@ function toRawBits_rF_k_(m as Float) as Integer
         exp = 0
         mantissa = absValue
         while mantissa >= 2.0#
-            mantissa = div_rD_D_k_(mantissa, 2.0#)
+            mantissa = (mantissa / 2.0#)
             exp = (exp + 1)
         end while
         while mantissa < 1.0#
-            mantissa = times_rD_D_k_(mantissa, 2.0#)
+            mantissa = (mantissa * 2.0#)
             exp = (exp - 1)
         end while
         biasedExp = exp + 127
-        mantissa = minus_rD_D_k_(mantissa, 1.0#)
+        mantissa = (mantissa - 1.0#)
         mantissaBits = 0
         progression = until_rI_I_k_(0, 23)
         inductionVariable = progression.get_first()
@@ -224,10 +224,10 @@ function toRawBits_rF_k_(m as Float) as Integer
                         i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            mantissa = times_rD_D_k_(mantissa, 2.0#)
+            mantissa = (mantissa * 2.0#)
             if mantissa >= 1.0# then
                 mantissaBits = (mantissaBits or (1 * (2 ^ (22 - i))))
-                mantissa = minus_rD_D_k_(mantissa, 1.0#)
+                mantissa = (mantissa - 1.0#)
             end if
 
 
@@ -235,10 +235,10 @@ function toRawBits_rF_k_(m as Float) as Integer
                 i = inductionVariable
                 inductionVariable = (inductionVariable + 1)
 
-                mantissa = times_rD_D_k_(mantissa, 2.0#)
+                mantissa = (mantissa * 2.0#)
                 if mantissa >= 1.0# then
                     mantissaBits = (mantissaBits or (1 * (2 ^ (22 - i))))
-                    mantissa = minus_rD_D_k_(mantissa, 1.0#)
+                    mantissa = (mantissa - 1.0#)
                 end if
 
             end while
