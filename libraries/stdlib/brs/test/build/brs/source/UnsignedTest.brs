@@ -10,8 +10,8 @@ sub unsignedTests_rTestRunner_k_(m as Object)
         m.test_Str_Function0V_k_("UInt comparison", {invoke: function() as Void
             a = UInt_create_I_k_(1)
             b = UInt_create_I_k_(2)
-            assertTrue_Z_StrN_k_((a < b) < 0, invalid)
-            assertTrue_Z_StrN_k_((b > a) > 0, invalid)
+            assertTrue_Z_StrN_k_(a.compareTo_UInt_k_(b) < 0, invalid)
+            assertTrue_Z_StrN_k_(b.compareTo_UInt_k_(a) > 0, invalid)
             assertEquals_AnyN_AnyN_StrN_k_(0, a.compareTo_UInt_k_(a), invalid)
         end function})
         m.test_Str_Function0V_k_("UInt arithmetic", {invoke: function() as Void
