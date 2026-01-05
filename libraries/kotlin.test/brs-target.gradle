@@ -15,7 +15,7 @@ kotlin {
         compilations.all {
             // Configure the BRS compiler JAR path
             brsCompileTaskProvider.configure {
-                compilerJar.set(rootDir.resolve("compiler/cli/cli-brs/build/libs/kotlinc-brs-${project.version}.jar"))
+                compilerJar.set(new File(rootDir, "compiler/cli/cli-brs/build/libs/kotlinc-brs-${project.version}.jar"))
             }
         }
         compilations["main"].compileTaskProvider.configure {
