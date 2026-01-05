@@ -30,7 +30,7 @@ kotlin {
 
         brsMain {
             // BRS now uses native compiler with actual implementations
-            dependsOn(commonMain.get())
+            dependsOn(commonMain)
             kotlin {
                 // Bootstrap base implementations (builtins removed - identical to brs-actual)
                 srcDir("$brsDir/runtime")
@@ -43,7 +43,7 @@ kotlin {
             }
         }
         brsTest {
-            dependsOn(commonTest.get())
+            dependsOn(commonTest)
             // No test sources yet in brs-actual
         }
     }
