@@ -44,14 +44,14 @@ function getStringHashCode_Str_k_(str as String) as Integer
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        hash = ((31 * hash) + get_code_rC_k_(str.get_I_k_(i)))
+        hash = ((31 * hash) + get_code_rC_k_(Mid(str, i + 1, 1)))
 
 
         while i <> last
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            hash = ((31 * hash) + get_code_rC_k_(str.get_I_k_(i)))
+            hash = ((31 * hash) + get_code_rC_k_(Mid(str, i + 1, 1)))
 
         end while
 
@@ -165,4 +165,15 @@ function __kotlin_numToStr_AnyN_k_(value as Dynamic) as String
         return Mid(s, 2)
     end if
     return s
+end function
+
+function __kotlin_charSequenceLength_CharSequenceN_k_(value as Dynamic) as Integer
+    if value = invalid then
+        return 0
+    end if
+    t = Type(value)
+    if (t = "String") or (t = "roString") then
+        return Len(value)
+    end if
+    return value.get_length()
 end function

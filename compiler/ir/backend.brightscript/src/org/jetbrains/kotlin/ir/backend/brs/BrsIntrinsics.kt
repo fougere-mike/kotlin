@@ -274,7 +274,7 @@ class BrsIntrinsics(
         "brsIntrinsicRound" to StdlibIntrinsic.Round,             // Int(x + 0.5)
         "brsIntrinsicAbs" to StdlibIntrinsic.SimpleCall("Abs"),
         "brsIntrinsicAbsInt" to StdlibIntrinsic.SimpleCall("Abs"),
-        "brsIntrinsicTrunc" to StdlibIntrinsic.Floor,            // Int(x) truncates toward zero
+        "brsIntrinsicTrunc" to StdlibIntrinsic.SimpleCall("Fix"),  // Fix(x) truncates toward zero
         "brsIntrinsicPow" to StdlibIntrinsic.Pow,                 // x ^ y
         "brsIntrinsicSinh" to StdlibIntrinsic.Sinh,               // (Exp(x) - Exp(-x)) / 2
         "brsIntrinsicCosh" to StdlibIntrinsic.Cosh,               // (Exp(x) + Exp(-x)) / 2
@@ -283,7 +283,7 @@ class BrsIntrinsics(
         // String intrinsics
         "brsIntrinsicUCase" to StdlibIntrinsic.SimpleCall("UCase"),
         "brsIntrinsicLCase" to StdlibIntrinsic.SimpleCall("LCase"),
-        "brsIntrinsicInstr" to StdlibIntrinsic.SimpleCall("Instr"),
+        "brsIntrinsicInstr" to StdlibIntrinsic.Instr,
         "brsIntrinsicLen" to StdlibIntrinsic.SimpleCall("Len"),
         "brsIntrinsicLeft" to StdlibIntrinsic.SimpleCall("Left"),
         "brsIntrinsicRight" to StdlibIntrinsic.SimpleCall("Right"),
@@ -332,7 +332,10 @@ class BrsIntrinsics(
         "brsIntrinsicCallCompareTo" to StdlibIntrinsic.CallCompareTo,
 
         // Comparator intrinsic
-        "brsIntrinsicCallComparator" to StdlibIntrinsic.CallComparator
+        "brsIntrinsicCallComparator" to StdlibIntrinsic.CallComparator,
+
+        // Direct method call intrinsic
+        "brsIntrinsicGetLength" to StdlibIntrinsic.GetLength
     )
 
     /**
@@ -404,6 +407,12 @@ class BrsIntrinsics(
 
         /** Call Comparator's compare method: comparator.compare_AnyN_AnyN_k_(a, b) */
         data object CallComparator : StdlibIntrinsic()
+
+        /** Instr with index conversion: 0-based Kotlin to 1-based BrightScript */
+        data object Instr : StdlibIntrinsic()
+
+        /** Call get_length() directly on an object: obj.get_length() */
+        data object GetLength : StdlibIntrinsic()
     }
 
     /**

@@ -1,13 +1,13 @@
 function reversed_rIntProgression_k_(m as Object) as Object
-    return IntProgression_Companion_getInstance().fromClosedRange(m.get_last(), m.get_first(), -m.get_step())
+    return IntProgression_Companion_getInstance().fromClosedRange_I_I_I_k_(m.get_last(), m.get_first(), -m.get_step())
 end function
 
 function reversed_rLongProgression_k_(m as Object) as Object
-    return LongProgression_Companion_getInstance().fromClosedRange(m.get_last(), m.get_first(), -m.get_step())
+    return LongProgression_Companion_getInstance().fromClosedRange_J_J_J_k_(m.get_last(), m.get_first(), -m.get_step())
 end function
 
 function reversed_rCharProgression_k_(m as Object) as Object
-    return CharProgression_Companion_getInstance().fromClosedRange(m.get_last(), m.get_first(), -m.get_step())
+    return CharProgression_Companion_getInstance().fromClosedRange_C_C_I_k_(m.get_last(), m.get_first(), -m.get_step())
 end function
 
 function coerceIn_rJ_J_J_k_(m as LongInteger, minimumValue as LongInteger, maximumValue as LongInteger) as LongInteger
@@ -59,13 +59,13 @@ function coerceIn_rJ_OpenEndRangeJ_k_(m as LongInteger, range as Object) as Long
 end function
 
 function coerceIn_rC_C_C_k_(m as Object, minimumValue as Object, maximumValue as Object) as Object
-    if (minimumValue > maximumValue) > 0 then
-        throw IllegalArgumentException_create_StrN_k_(((("Cannot coerce value to an empty range: maximum " + maximumValue.toString()) + " is less than minimum ") + minimumValue.toString()) + ".")
+    if __kotlin_stringCompare(minimumValue, maximumValue) > 0 then
+        throw IllegalArgumentException_create_StrN_k_(((("Cannot coerce value to an empty range: maximum " + maximumValue) + " is less than minimum ") + minimumValue) + ".")
     end if
-    if (m < minimumValue) < 0 then
+    if __kotlin_stringCompare(m, minimumValue) < 0 then
         return minimumValue
     end if
-    if (m > maximumValue) > 0 then
+    if __kotlin_stringCompare(m, maximumValue) > 0 then
         return maximumValue
     end if
     return m
@@ -76,9 +76,9 @@ function coerceIn_rC_ClosedRangeC_k_(m as Object, range as Object) as Object
         throw IllegalArgumentException_create_StrN_k_(("Cannot coerce value to an empty range: " + range.toString()) + ".")
     end if
     __when_tmp2 = invalid
-    if (m < range.get_start()) < 0 then
+    if __kotlin_stringCompare(m, range.get_start()) < 0 then
         __when_tmp2 = range.get_start()
-    else if (m > range.get_endInclusive()) > 0 then
+    else if __kotlin_stringCompare(m, range.get_endInclusive()) > 0 then
         __when_tmp2 = range.get_endInclusive()
     else if true then
         __when_tmp2 = m
@@ -92,10 +92,10 @@ function coerceIn_rC_OpenEndRangeC_k_(m as Object, range as Object) as Object
         throw IllegalArgumentException_create_StrN_k_(("Cannot coerce value to an empty range: " + range.toString()) + ".")
     end if
     __when_tmp3 = invalid
-    if (m < range.get_start()) < 0 then
+    if __kotlin_stringCompare(m, range.get_start()) < 0 then
         __when_tmp3 = range.get_start()
-    else if (m >= range.get_endExclusive()) >= 0 then
-        __when_tmp3 = (get_code_rC_k_(range.get_endExclusive()) - 1)
+    else if __kotlin_stringCompare(m, range.get_endExclusive()) >= 0 then
+        __when_tmp3 = Chr(get_code_rC_k_(range.get_endExclusive()) - 1)
     else if true then
         __when_tmp3 = m
     end if
@@ -127,7 +127,7 @@ end function
 
 function coerceAtLeast_rC_C_k_(m as Object, minimumValue as Object) as Object
     __when_tmp6 = invalid
-    if (m < minimumValue) < 0 then
+    if __kotlin_stringCompare(m, minimumValue) < 0 then
         __when_tmp6 = minimumValue
     else if true then
         __when_tmp6 = m
@@ -138,7 +138,7 @@ end function
 
 function coerceAtMost_rC_C_k_(m as Object, maximumValue as Object) as Object
     __when_tmp7 = invalid
-    if (m > maximumValue) > 0 then
+    if __kotlin_stringCompare(m, maximumValue) > 0 then
         __when_tmp7 = maximumValue
     else if true then
         __when_tmp7 = m

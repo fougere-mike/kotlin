@@ -12,7 +12,7 @@ function replace_rStr_Str_Str_Z_k_(m as String, oldValue as String, newValue as 
                         i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            result.append_C_k_(m.get_I_k_(i))
+            result.append_C_k_(Mid(m, i + 1, 1))
             result.append_StrN_k_(newValue)
 
 
@@ -20,7 +20,7 @@ function replace_rStr_Str_Str_Z_k_(m as String, oldValue as String, newValue as 
                 i = inductionVariable
                 inductionVariable = (inductionVariable + 1)
 
-                result.append_C_k_(m.get_I_k_(i))
+                result.append_C_k_(Mid(m, i + 1, 1))
                 result.append_StrN_k_(newValue)
 
             end while
@@ -47,7 +47,7 @@ function replace_rStr_C_C_Z_k_(m as String, oldChar as Object, newChar as Object
     if ignoreCase = invalid then
         ignoreCase = false
     end if
-    return replace_rStr_Str_Str_Z_k_(m, oldChar.toString(), newChar.toString(), ignoreCase)
+    return replace_rStr_Str_Str_Z_k_(m, oldChar, newChar, ignoreCase)
 end function
 
 function replaceFirst_rStr_Str_Str_Z_k_(m as String, oldValue as String, newValue as String, ignoreCase = false) as String
@@ -65,7 +65,7 @@ function replaceFirst_rStr_C_C_Z_k_(m as String, oldChar as Object, newChar as O
     if ignoreCase = invalid then
         ignoreCase = false
     end if
-    return replaceFirst_rStr_Str_Str_Z_k_(m, oldChar.toString(), newChar.toString(), ignoreCase)
+    return replaceFirst_rStr_Str_Str_Z_k_(m, oldChar, newChar, ignoreCase)
 end function
 
 function replaceRange_rStr_IntRange_CharSequence_k_(m as String, range as Object, replacement as Object) as String

@@ -599,11 +599,11 @@ function until_rULong_ULong_k_(m as Object, to_ as Object) as Object
 end function
 
 function downTo_rUInt_UInt_k_(m as Object, to_ as Object) as Object
-    return UIntProgression_Companion_getInstance().fromClosedRange(m, to_, -1)
+    return UIntProgression_Companion_getInstance().fromClosedRange_UInt_UInt_I_k_(m, to_, -1)
 end function
 
 function downTo_rULong_ULong_k_(m as Object, to_ as Object) as Object
-    return ULongProgression_Companion_getInstance().fromClosedRange(m, to_, -1&)
+    return ULongProgression_Companion_getInstance().fromClosedRange_ULong_ULong_J_k_(m, to_, -1&)
 end function
 
 function step_rUIntProgression_I_k_(m as Object, step_ as Integer) as Object
@@ -614,7 +614,7 @@ function step_rUIntProgression_I_k_(m as Object, step_ as Integer) as Object
     else if true then
         __when_tmp20 = -step_
     end if
-    return UIntProgression_Companion_getInstance().fromClosedRange(m.get_first(), m.get_last(), __when_tmp20)
+    return UIntProgression_Companion_getInstance().fromClosedRange_UInt_UInt_I_k_(m.get_first(), m.get_last(), __when_tmp20)
 
 end function
 
@@ -626,7 +626,7 @@ function step_rULongProgression_J_k_(m as Object, step_ as LongInteger) as Objec
     else if true then
         __when_tmp21 = -step_
     end if
-    return ULongProgression_Companion_getInstance().fromClosedRange(m.get_first(), m.get_last(), __when_tmp21)
+    return ULongProgression_Companion_getInstance().fromClosedRange_ULong_ULong_J_k_(m.get_first(), m.get_last(), __when_tmp21)
 
 end function
 

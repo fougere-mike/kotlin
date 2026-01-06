@@ -1,9 +1,9 @@
 function ClosedRange_contains_Any_k_(value as Object) as Boolean
-    return (value.compareTo(m.get_start()) >= 0) and (value.compareTo(m.get_endInclusive()) <= 0)
+    return (value.compareTo_AnyN_k_(m.get_start()) >= 0) and (value.compareTo_AnyN_k_(m.get_endInclusive()) <= 0)
 end function
 
 function ClosedRange_isEmpty_k_() as Boolean
-    return m.get_start().compareTo(m.get_endInclusive()) > 0
+    return m.get_start().compareTo_AnyN_k_(m.get_endInclusive()) > 0
 end function
 
 function ClosedRange_get_start_k_() as Object
@@ -13,11 +13,11 @@ function ClosedRange_get_endInclusive_k_() as Object
 end function
 
 function OpenEndRange_contains_Any_k_(value as Object) as Boolean
-    return (value.compareTo(m.get_start()) >= 0) and (value.compareTo(m.get_endExclusive()) < 0)
+    return (value.compareTo_AnyN_k_(m.get_start()) >= 0) and (value.compareTo_AnyN_k_(m.get_endExclusive()) < 0)
 end function
 
 function OpenEndRange_isEmpty_k_() as Boolean
-    return m.get_start().compareTo(m.get_endExclusive()) >= 0
+    return m.get_start().compareTo_AnyN_k_(m.get_endExclusive()) >= 0
 end function
 
 function OpenEndRange_get_start_k_() as Object
@@ -208,11 +208,11 @@ function CharRange_create_C_C_k_(start as Object, endInclusive as Object) as Obj
 end function
 
 function CharRange_contains_C_k_(value as Object) as Boolean
-    return ((m.get_first() <= value) <= 0) and ((value <= m.get_last()) <= 0)
+    return (__kotlin_stringCompare(m.get_first(), value) <= 0) and (__kotlin_stringCompare(value, m.get_last()) <= 0)
 end function
 
 function CharRange_isEmpty_k_() as Boolean
-    return (m.get_first() > m.get_last()) > 0
+    return __kotlin_stringCompare(m.get_first(), m.get_last()) > 0
 end function
 
 function CharRange_equals_AnyN_k_(other as Dynamic) as Boolean
@@ -231,7 +231,7 @@ function CharRange_hashCode_k_() as Integer
 end function
 
 function CharRange_toString_k_() as String
-    return (m.get_first().toString() + "..") + m.get_last().toString()
+    return (m.get_first() + "..") + m.get_last()
 end function
 
 function CharRange_get_start_k_() as Object
@@ -248,7 +248,7 @@ function CharRange_Companion_create_k_() as Object
     this.__proto = ["CharRange_Companion"]
     this.__id = __kotlin_nextObjectId()
     this.get_EMPTY = CharRange_Companion_get_EMPTY_k_
-    this.EMPTY = CharRange_create_C_C_k_(1, 0)
+    this.EMPTY = CharRange_create_C_C_k_(Chr(1), Chr(0))
     return this
 end function
 
@@ -470,7 +470,7 @@ function CharProgression_create_C_C_I_k_(start as Object, endInclusive as Object
     this.get_last = CharProgression_get_last_k_
     this.get_step = CharProgression_get_step_k_
     this.first = start
-    this.last = getProgressionLastElement_I_I_I_k_(get_code_rC_k_(start), get_code_rC_k_(endInclusive), step_)
+    this.last = Chr(getProgressionLastElement_I_I_I_k_(get_code_rC_k_(start), get_code_rC_k_(endInclusive), step_))
     this.step = step_
     return this
 end function
@@ -482,9 +482,9 @@ end function
 function CharProgression_isEmpty_k_() as Boolean
     __when_tmp9 = invalid
     if m.get_step() > 0 then
-        __when_tmp9 = ((m.get_first() > m.get_last()) > 0)
+        __when_tmp9 = (__kotlin_stringCompare(m.get_first(), m.get_last()) > 0)
     else if true then
-        __when_tmp9 = ((m.get_first() < m.get_last()) < 0)
+        __when_tmp9 = (__kotlin_stringCompare(m.get_first(), m.get_last()) < 0)
     end if
     return __when_tmp9
 
@@ -508,9 +508,9 @@ end function
 function CharProgression_toString_k_() as String
     __when_tmp11 = invalid
     if m.get_step() > 0 then
-        __when_tmp11 = ((((m.get_first().toString() + "..") + m.get_last().toString()) + " step ") + __kotlin_numToStr_I_k_(m.get_step()))
+        __when_tmp11 = ((((m.get_first() + "..") + m.get_last()) + " step ") + __kotlin_numToStr_I_k_(m.get_step()))
     else if true then
-        __when_tmp11 = ((((m.get_first().toString() + " downTo ") + m.get_last().toString()) + " step ") + __kotlin_numToStr_I_k_(-m.get_step()))
+        __when_tmp11 = ((((m.get_first() + " downTo ") + m.get_last()) + " step ") + __kotlin_numToStr_I_k_(-m.get_step()))
     end if
     return __when_tmp11
 
@@ -717,9 +717,9 @@ function CharProgressionIterator_create_C_C_I_k_(first as Object, last as Object
     this.finalElement = get_code_rC_k_(last)
     __when_tmp16 = invalid
     if this.get_step() > 0 then
-        __when_tmp16 = ((first <= last) <= 0)
+        __when_tmp16 = (__kotlin_stringCompare(first, last) <= 0)
     else if true then
-        __when_tmp16 = ((first >= last) >= 0)
+        __when_tmp16 = (__kotlin_stringCompare(first, last) >= 0)
     end if
     this.hasNext = __when_tmp16
     __when_tmp17 = invalid
@@ -746,7 +746,7 @@ function CharProgressionIterator_nextChar_k_() as Object
     else if true then
         m.set_next(m.get_next() + m.get_step())
     end if
-    return value
+    return Chr(value)
 end function
 
 function CharProgressionIterator_get_step_k_() as Integer

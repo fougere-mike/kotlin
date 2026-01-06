@@ -283,7 +283,7 @@ function ULong_equals_AnyN_k_(other as Dynamic) as Boolean
 end function
 
 function ULong_hashCode_k_() as Integer
-    return hashCode_rJ_k_(m.get_data())
+    return m.get_data()
 end function
 
 function ULong_get_data_k_() as LongInteger

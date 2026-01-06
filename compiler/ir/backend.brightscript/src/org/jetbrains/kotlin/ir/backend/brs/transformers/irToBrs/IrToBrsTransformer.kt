@@ -2156,6 +2156,9 @@ class IrToBrsTransformer(
             // String: just return the string itself (pass-through)
             receiverType.isString() -> receiverExpr
 
+            // Char: already a string in BrightScript, just pass through
+            receiverType.isChar() -> receiverExpr
+
             // Numeric types: use __kotlin_numToStr() helper function
             // BrightScript's Str() adds a leading space for positive numbers
             // We use a helper function because anonymous functions can't call global built-ins
@@ -4006,18 +4009,32 @@ class IrExpressionToBrsTransformer(
                 return BrsMethodCall(receiverExpr, "count", mutableListOf())
             }
 
-            // Handle String.length and CharSequence.length - BrightScript strings use Len() function
+            // Handle String.length - BrightScript strings use Len() function
             // Native BrightScript strings don't have methods, so str.get_length() won't work.
-            // This applies to String, CharSequence, and any nullable variants.
+            // IMPORTANT: Use isStringClassType() to handle both String and String? types.
+            // CharSequence could be implemented by StringBuilder or other classes that have
+            // a get_length property, so we need polymorphic dispatch for those cases.
             if (methodName == "<get-length>" || methodName == "length") {
-                val receiverTypeFqName = receiver.type.classFqName?.asString() ?: ""
-                val isStringOrCharSequence = receiver.type.isString() ||
-                    receiverTypeFqName == "kotlin.CharSequence" ||
-                    receiverTypeFqName == "kotlin.String"
-                if (isStringOrCharSequence) {
+                if (receiver.type.isStringClassType()) {
                     val receiverExpr = receiver.accept(this, data)
                     return BrsFunctionCall(BrsIdentifier("Len"), mutableListOf(receiverExpr))
                 }
+                // For CharSequence (interface that String implements), we need runtime polymorphism.
+                // Native BrightScript strings use Len(), while StringBuilder uses get_length().
+                // Check if the receiver type is CharSequence by checking the fqName
+                val receiverClass = receiver.type.classOrNull?.owner
+                val isCharSequence = receiverClass?.fqNameWhenAvailable?.asString() == "kotlin.CharSequence"
+                if (isCharSequence) {
+                    val receiverExpr = receiver.accept(this, data)
+                    // Generate polymorphic dispatch using __kotlin_charSequenceLength helper
+                    // Note: The mangled name includes the parameter type (_CharSequenceN_k_)
+                    return BrsFunctionCall(
+                        BrsIdentifier("__kotlin_charSequenceLength_CharSequenceN_k_"),
+                        mutableListOf(receiverExpr)
+                    )
+                }
+                // For other types, fall through to normal property access
+                // which will generate m.get_length() for proper polymorphic dispatch
             }
 
             // Handle Array.get(index) - BrightScript arrays use [] indexing, not .get() method
@@ -4025,6 +4042,22 @@ class IrExpressionToBrsTransformer(
                 val receiverExpr = receiver.accept(this, data)
                 val indexExpr = expression.getValueArgument(0)?.accept(this, data) ?: return BrsInvalidLiteral()
                 return BrsIndexAccess(receiverExpr, indexExpr)
+            }
+
+            // Handle String.get(index) - BrightScript uses Mid(string, index+1, 1) to get a character
+            // Note: BrightScript Mid() is 1-indexed, so we add 1 to the index
+            if (methodName == "get" && receiver.type.isString() && expression.valueArgumentsCount == 1) {
+                val receiverExpr = receiver.accept(this, data)
+                val indexExpr = expression.getValueArgument(0)?.accept(this, data) ?: return BrsInvalidLiteral()
+                // Mid(string, index + 1, 1) - BrightScript is 1-indexed
+                return BrsFunctionCall(
+                    BrsIdentifier("Mid"),
+                    mutableListOf(
+                        receiverExpr,
+                        BrsBinaryOp(indexExpr, BrsBinaryOperator.ADD, BrsIntLiteral(1)),
+                        BrsIntLiteral(1)
+                    )
+                )
             }
 
             // Handle Array.set(index, value) - BrightScript arrays use [] indexing, not .set() method
@@ -4036,8 +4069,20 @@ class IrExpressionToBrsTransformer(
             }
 
             when (methodName) {
-                // Type conversions - BrightScript handles these implicitly
-                "toDouble", "toFloat", "toInt", "toLong", "toShort", "toByte", "toChar" -> {
+                // Type conversions - BrightScript handles most implicitly
+                "toDouble", "toFloat", "toInt", "toLong", "toShort", "toByte" -> {
+                    return receiver.accept(this, data)
+                }
+                // Int.toChar() needs Chr() in BrightScript to convert integer code to character string
+                "toChar" -> {
+                    val receiverType = receiver.type
+                    if (receiverType.isInt() || receiverType.isLong() || receiverType.isShort() || receiverType.isByte()) {
+                        return BrsFunctionCall(
+                            BrsIdentifier("Chr"),
+                            mutableListOf(receiver.accept(this, data))
+                        )
+                    }
+                    // For Char.toChar(), it's a no-op
                     return receiver.accept(this, data)
                 }
                 // Unary minus/plus as method calls (when they don't have UMINUS/UPLUS origin)
@@ -4207,7 +4252,8 @@ class IrExpressionToBrsTransformer(
                 val isPrimitiveReceiver = actualReceiverType.isInt() || actualReceiverType.isLong() ||
                     actualReceiverType.isFloat() || actualReceiverType.isDouble() ||
                     actualReceiverType.isShort() || actualReceiverType.isByte() ||
-                    actualReceiverType.isBoolean() || actualReceiverType.isChar()
+                    actualReceiverType.isBoolean() || actualReceiverType.isChar() ||
+                    actualReceiverType.isStringClassType()
 
                 // For any call on a primitive receiver, use a function call instead of method call
                 if (isPrimitiveReceiver) {
@@ -4267,13 +4313,57 @@ class IrExpressionToBrsTransformer(
                             return BrsUnaryOp(BrsUnaryOperator.NOT, receiverExpr)
                         }
                         "compareTo" -> {
-                            // Use runtime helper function for Int.compareTo
                             val left = receiverExpr
                             val right = expression.getValueArgument(0)!!.accept(this, data)
-                            return BrsFunctionCall(
-                                BrsIdentifier("__kotlin_intCompare"),
-                                mutableListOf(left, right)
-                            )
+                            // String/Char comparison uses string comparison; numeric types use __kotlin_intCompare
+                            return if (actualReceiverType.isChar() || actualReceiverType.isStringClassType()) {
+                                // For Char and String (strings in BrightScript), use __kotlin_stringCompare
+                                // which compares strings lexicographically and returns -1, 0, or 1
+                                BrsFunctionCall(
+                                    BrsIdentifier("__kotlin_stringCompare"),
+                                    mutableListOf(left, right)
+                                )
+                            } else {
+                                // Use runtime helper function for numeric compareTo
+                                BrsFunctionCall(
+                                    BrsIdentifier("__kotlin_intCompare"),
+                                    mutableListOf(left, right)
+                                )
+                            }
+                        }
+                        "equals" -> {
+                            // String.equals(Any?) or primitive.equals(Any?) should be compiled to native =
+                            // Only for the single-argument version (not the ignoreCase extension)
+                            if (expression.valueArgumentsCount == 1) {
+                                val left = receiverExpr
+                                val right = expression.getValueArgument(0)!!.accept(this, data)
+                                return BrsBinaryOp(left, BrsBinaryOperator.EQ, right)
+                            }
+                            // For multi-argument equals (extension function), fall through
+                        }
+                        "hashCode" -> {
+                            // For strings, use a hash function; for primitives, the value itself
+                            return if (actualReceiverType.isStringClassType()) {
+                                // String hashCode needs a runtime helper
+                                BrsFunctionCall(
+                                    BrsIdentifier("__kotlin_stringHashCode"),
+                                    mutableListOf(receiverExpr)
+                                )
+                            } else {
+                                // For numeric primitives, the value is the hash
+                                receiverExpr
+                            }
+                        }
+                        "toString" -> {
+                            // For strings, just return the string; for primitives, convert
+                            return if (actualReceiverType.isStringClassType()) {
+                                receiverExpr
+                            } else {
+                                BrsFunctionCall(
+                                    BrsIdentifier("Str"),
+                                    mutableListOf(receiverExpr)
+                                )
+                            }
                         }
                         "shl" -> {
                             // Left shift: a * (2 ^ b)
@@ -4352,8 +4442,18 @@ class IrExpressionToBrsTransformer(
                     }
                     val singletonName = context.getBrsName(parentClass)
                     val singletonInstance = BrsFunctionCall(BrsIdentifier("${singletonName}_getInstance"), mutableListOf())
-                    // Use sanitizeMethodName to match how methods are attached to objects
-                    val methodName = parent.sanitizeMethodName(function.name.asString())
+                    // Property accessors are attached with simple names (get_X, set_X)
+                    // Regular methods are attached with mangled names
+                    val rawFuncName = function.name.asString()
+                    val methodName = if (rawFuncName.startsWith("<get-") && rawFuncName.endsWith(">")) {
+                        "get_" + rawFuncName.removePrefix("<get-").removeSuffix(">")
+                    } else if (rawFuncName.startsWith("<set-") && rawFuncName.endsWith(">")) {
+                        "set_" + rawFuncName.removePrefix("<set-").removeSuffix(">")
+                    } else {
+                        // Use mangled name for regular methods
+                        val fullMethodName = context.getBrsName(function)
+                        fullMethodName.removePrefix("${singletonName}_")
+                    }
                     return BrsMethodCall(singletonInstance, methodName, args.toMutableList())
                 }
 
@@ -4523,8 +4623,18 @@ class IrExpressionToBrsTransformer(
             val singletonName = context.getBrsName(parentClass)
             val singletonInstance = BrsFunctionCall(BrsIdentifier("${singletonName}_getInstance"), mutableListOf())
 
-            // Use sanitizeMethodName to match how methods are attached to objects
-            val methodName = parent.sanitizeMethodName(function.name.asString())
+            // Property accessors are attached with simple names (get_X, set_X)
+            // Regular methods are attached with mangled names
+            val rawFuncName = function.name.asString()
+            val methodName = if (rawFuncName.startsWith("<get-") && rawFuncName.endsWith(">")) {
+                "get_" + rawFuncName.removePrefix("<get-").removeSuffix(">")
+            } else if (rawFuncName.startsWith("<set-") && rawFuncName.endsWith(">")) {
+                "set_" + rawFuncName.removePrefix("<set-").removeSuffix(">")
+            } else {
+                // Use mangled name for regular methods
+                val fullMethodName = context.getBrsName(function)
+                fullMethodName.removePrefix("${singletonName}_")
+            }
 
             return BrsMethodCall(singletonInstance, methodName, arguments)
         }
@@ -4885,6 +4995,40 @@ class IrExpressionToBrsTransformer(
                 }
             }
 
+            is BrsIntrinsics.StdlibIntrinsic.Instr -> {
+                // Instr(start, source, substring) with index conversion
+                // BrightScript Instr: 1-based start, returns 0 if not found, 1-based position otherwise
+                // Kotlin indexOf: 0-based start, returns -1 if not found, 0-based position otherwise
+                // Generate: if Instr(start+1, source, substring) = 0 then -1 else Instr(start+1, source, substring) - 1
+                if (args.size >= 3) {
+                    val start = args[0]  // 0-based
+                    val source = args[1]
+                    val substring = args[2]
+                    val startPlus1 = BrsBinaryOp(start, BrsBinaryOperator.ADD, BrsIntLiteral(1))
+                    val instrCall = BrsFunctionCall(BrsIdentifier("Instr"), mutableListOf(startPlus1, source, substring))
+                    BrsConditional(
+                        BrsBinaryOp(instrCall.deepCopy(), BrsBinaryOperator.EQ, BrsIntLiteral(0)),
+                        BrsIntLiteral(-1),
+                        BrsBinaryOp(instrCall, BrsBinaryOperator.SUB, BrsIntLiteral(1))
+                    )
+                } else {
+                    BrsInvalidLiteral()
+                }
+            }
+
+            is BrsIntrinsics.StdlibIntrinsic.GetLength -> {
+                // Call get_length() directly on an object: obj.get_length()
+                // This is used by __kotlin_charSequenceLength to avoid recursion
+                if (args.isNotEmpty()) {
+                    BrsFunctionCall(
+                        BrsDotAccess(args[0], "get_length"),
+                        mutableListOf()
+                    )
+                } else {
+                    BrsInvalidLiteral()
+                }
+            }
+
             null -> {
                 // Unknown intrinsic - generate as function call with the name stripped of prefix
                 val simpleName = name.removePrefix("brsIntrinsic")
@@ -5012,6 +5156,21 @@ class IrExpressionToBrsTransformer(
             // != was converted to (a == b).not() and we're on the outer call. Skip binary handling.
             if (binaryOp == BrsBinaryOperator.NE && expression.valueArgumentsCount == 0) {
                 // This case is handled above in the special EXCLEQ handling, but just in case
+                return null
+            }
+
+            // ==================== Handle compareTo with comparison origin ====================
+            // When FIR lowers `a <= b` for types implementing Comparable (like Char), it generates:
+            //   a.compareTo(b) with origin LTEQ
+            // This gets wrapped in an outer `<= 0` comparison.
+            // We must NOT convert this to a native comparison, or we'll get `(a <= b) <= 0`.
+            // Instead, let it fall through to method call handling, which will generate
+            // an integer comparison that the outer `<= 0` can properly use.
+            if (function.name.asString() == "compareTo" &&
+                (binaryOp == BrsBinaryOperator.LT || binaryOp == BrsBinaryOperator.GT ||
+                 binaryOp == BrsBinaryOperator.LE || binaryOp == BrsBinaryOperator.GE)) {
+                // Skip binary operator handling for compareTo - let it be a method call
+                // that returns an Int for the outer comparison
                 return null
             }
 

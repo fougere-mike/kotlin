@@ -30,7 +30,7 @@ end function
 
 function trim_rCharSequence_Function1CZ_k_(m as Object, predicate as Object) as Object
     startIndex = 0
-    endIndex = Len(m) - 1
+    endIndex = __kotlin_charSequenceLength_CharSequenceN_k_(m) - 1
     while (startIndex <= endIndex) and predicate.invoke(m.get_I_k_(startIndex))
         startIndex = (startIndex + 1)
     end while
@@ -46,10 +46,10 @@ end function
 
 function trimStart_rCharSequence_Function1CZ_k_(m as Object, predicate as Object) as Object
     startIndex = 0
-    while (startIndex < Len(m)) and predicate.invoke(m.get_I_k_(startIndex))
+    while (startIndex < __kotlin_charSequenceLength_CharSequenceN_k_(m)) and predicate.invoke(m.get_I_k_(startIndex))
         startIndex = (startIndex + 1)
     end while
-    return m.subSequence_I_I_k_(startIndex, Len(m))
+    return m.subSequence_I_I_k_(startIndex, __kotlin_charSequenceLength_CharSequenceN_k_(m))
 end function
 
 function trimStart_rStr_Function1CZ_k_(m as String, predicate as Object) as String
@@ -57,7 +57,7 @@ function trimStart_rStr_Function1CZ_k_(m as String, predicate as Object) as Stri
 end function
 
 function trimEnd_rCharSequence_Function1CZ_k_(m as Object, predicate as Object) as Object
-    endIndex = Len(m) - 1
+    endIndex = __kotlin_charSequenceLength_CharSequenceN_k_(m) - 1
     while (endIndex >= 0) and predicate.invoke(m.get_I_k_(endIndex))
         endIndex = (endIndex - 1)
     end while
@@ -139,7 +139,7 @@ function replaceIndent_rStr_Str_k_(m as String, newIndent = "") as String
     while lineIndex < lines.get_size()
         line = lines.get_I_k_(lineIndex)
         indent = 0
-        while (indent < Len(line)) and isWhitespace_rC_k_(line.get_I_k_(indent))
+        while (indent < Len(line)) and isWhitespace_rC_k_(Mid(line, indent + 1, 1))
             indent = (indent + 1)
         end while
         if (indent < Len(line)) and (indent < minIndent) then
@@ -221,7 +221,7 @@ function replaceIndentByMargin_rStr_Str_Str_k_(m as String, newIndent = "", marg
             allWhitespace = true
             j = 0
             while j < Len(beforeMargin)
-                if not isWhitespace_rC_k_(beforeMargin.get_I_k_(j)) then
+                if not isWhitespace_rC_k_(Mid(beforeMargin, j + 1, 1)) then
                     allWhitespace = false
                     exit while
                 end if

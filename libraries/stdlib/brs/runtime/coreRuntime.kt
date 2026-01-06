@@ -197,9 +197,36 @@ public fun __kotlin_numToStr(value: Any?): String {
     return s
 }
 
+/**
+ * Gets the length of a CharSequence value.
+ * For native BrightScript strings, uses Len().
+ * For other CharSequence implementations (StringBuilder, etc.), uses get_length().
+ *
+ * Note: This function uses brsIntrinsicGetField to call get_length() directly,
+ * avoiding the .length property which would recursively call this function.
+ */
+public fun __kotlin_charSequenceLength(value: CharSequence?): Int {
+    if (value == null) return 0
+    val t = brsType(value)
+    // Native BrightScript string types use Len()
+    if (t == "String" || t == "roString") {
+        @Suppress("UNCHECKED_CAST")
+        return brsIntrinsicLen(value as String)
+    }
+    // Other CharSequence implementations (StringBuilder, etc.) use get_length property
+    // Use brsIntrinsicGetField to avoid recursive call back to this function
+    @Suppress("UNCHECKED_CAST")
+    return brsIntrinsicGetLength(value as Any)
+}
+
 // BrightScript global function intrinsics
 // Named with 'brsIntrinsic' prefix so the compiler recognizes them
 // and replaces calls with direct BrightScript function calls.
 internal external fun brsIntrinsicStr(x: Any?): String
 internal external fun brsIntrinsicLeft(s: String, n: Int): String
 internal external fun brsIntrinsicMid(s: String, start: Int): String
+internal external fun brsIntrinsicLen(s: String): Int
+
+// Calls obj.get_length() directly - used by __kotlin_charSequenceLength
+// to avoid recursive call through .length property
+internal external fun brsIntrinsicGetLength(obj: Any): Int

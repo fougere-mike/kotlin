@@ -77,6 +77,9 @@ val regenerateKlib by tasks.registering(JavaExec::class) {
 
     inputs.dir(brsStdlibDir)
     inputs.dir(brsActualDir)
+    // Track the compiler JAR as an input so changes to the compiler trigger a rebuild
+    inputs.file(brsCompilerFatJar).optional()
+    inputs.file(distCompilerJar).optional()
     outputs.file(outputKlib)
 }
 

@@ -15,11 +15,16 @@ This is a fork of the Kotlin compiler that adds a BrightScript backend for Roku 
 ```
 
 That's it. This script:
-1. Automatically cleans all caches (build directories, Maven Local, Gradle cache)
-2. Uses `--no-build-cache` to prevent Gradle from pulling stale cached outputs
-3. Builds compiler fat JAR
-4. Regenerates stdlib klib
-5. Publishes everything to Maven Local
+1. **Smart change detection**: Uses marker files to detect what changed since last build
+2. **Selective rebuilding**: Only rebuilds components that changed (compiler and/or stdlib)
+3. **Dependency-aware**: If compiler changes, stdlib is automatically rebuilt with the new compiler
+4. Cleans only the build directories for changed components
+5. Uses `--no-build-cache` and `--no-daemon` to prevent stale cached outputs
+6. Builds compiler fat JAR (if compiler changed)
+7. Regenerates stdlib klib using the fresh compiler (if needed)
+8. Publishes everything to Maven Local
+
+The script uses `.build-marker-compiler` and `.build-marker-stdlib` files to track when each component was last built successfully.
 
 **DO NOT** run manual cache-clearing commands. **DO NOT** run individual gradlew tasks.
 If `./rebuild.sh` doesn't work correctly, that's an **infrastructure failure** - fix the script.
@@ -44,12 +49,18 @@ When you see ANY of these, it is an **INFRASTRUCTURE FAILURE**:
 
 **MANDATORY RESPONSE:**
 
-1. **STOP** - Do not debug based on stale data
+1. **STOP** - Do not run another command. Do not try to work around it.
 2. **FIX** - Update rebuild.sh or run-tests.sh to prevent this
 3. **DOCUMENT** - Add the fix to this file
 4. **NEVER** work around infrastructure problems with manual commands
 
 The tooling must work correctly. If it doesn't, fix the tooling.
+
+### Why rebuild.sh uses git status (not file mtime)
+
+Claude Code's Edit tool may not update file modification times when editing files.
+This breaks mtime-based change detection. We use `git status --short` instead,
+which reliably detects uncommitted changes regardless of file timestamps.
 
 ## DO NOT
 

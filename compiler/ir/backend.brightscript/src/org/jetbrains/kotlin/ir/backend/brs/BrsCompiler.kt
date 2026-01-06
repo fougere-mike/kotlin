@@ -170,6 +170,10 @@ class BrsCompiler(
         val intCompareFunction = createIntCompareHelper()
         program.declarations.add(0, intCompareFunction)
 
+        // Add String.compareTo helper for Char comparisons
+        val stringCompareFunction = createStringCompareHelper()
+        program.declarations.add(0, stringCompareFunction)
+
         // Add unsigned right shift helper for Int.ushr
         val ushrFunction = createUshrHelper()
         program.declarations.add(0, ushrFunction)
@@ -660,6 +664,55 @@ class BrsCompiler(
             parameters = mutableListOf(
                 BrsParameter("a", BrsType.INTEGER),
                 BrsParameter("b", BrsType.INTEGER)
+            ),
+            returnType = BrsType.INTEGER,
+            body = body
+        )
+    }
+
+    /**
+     * Creates the __kotlin_stringCompare helper function for string/Char comparison.
+     *
+     * Generated BrightScript:
+     * ```
+     * function __kotlin_stringCompare(a as String, b as String) as Integer
+     *     if a < b then return -1
+     *     if a > b then return 1
+     *     return 0
+     * end function
+     * ```
+     */
+    private fun createStringCompareHelper(): BrsFunction {
+        val body = BrsBlock(mutableListOf(
+            // if a < b then return -1
+            BrsIf(
+                condition = BrsBinaryOp(
+                    BrsIdentifier("a"),
+                    BrsBinaryOperator.LT,
+                    BrsIdentifier("b")
+                ),
+                thenBranch = BrsBlock(mutableListOf(BrsReturn(BrsIntLiteral(-1)))),
+                elseBranch = null
+            ),
+            // if a > b then return 1
+            BrsIf(
+                condition = BrsBinaryOp(
+                    BrsIdentifier("a"),
+                    BrsBinaryOperator.GT,
+                    BrsIdentifier("b")
+                ),
+                thenBranch = BrsBlock(mutableListOf(BrsReturn(BrsIntLiteral(1)))),
+                elseBranch = null
+            ),
+            // return 0
+            BrsReturn(BrsIntLiteral(0))
+        ))
+
+        return BrsFunction(
+            name = "__kotlin_stringCompare",
+            parameters = mutableListOf(
+                BrsParameter("a", BrsType.STRING),
+                BrsParameter("b", BrsType.STRING)
             ),
             returnType = BrsType.INTEGER,
             body = body

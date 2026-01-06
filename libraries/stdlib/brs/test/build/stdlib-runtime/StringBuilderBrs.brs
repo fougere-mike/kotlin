@@ -96,7 +96,7 @@ function StringBuilder_subSequence_I_I_k_(startIndex as Integer, endIndex as Int
 end function
 
 function StringBuilder_append_C_k_(value as Object) as Object
-    m.set_string(m.get_string() + value.toString())
+    m.set_string(m.get_string() + value)
     return m
 end function
 
@@ -124,19 +124,19 @@ function StringBuilder_reverse_k_() as Object
         __incr_tmp_85 = index
         index = (__incr_tmp_85 - 1)
 
-        low = m.get_string().get_I_k_(__incr_tmp_85)
+        low = Mid(m.get_string(), __incr_tmp_85 + 1, 1)
         if isLowSurrogate_rC_k_(low) and (index >= 0) then
             __incr_tmp_86 = index
             index = (__incr_tmp_86 - 1)
 
-            high = m.get_string().get_I_k_(__incr_tmp_86)
+            high = Mid(m.get_string(), __incr_tmp_86 + 1, 1)
             if isHighSurrogate_rC_k_(high) then
-                reversed = ((reversed + high.toString()) + low.toString())
+                reversed = ((reversed + high) + low)
             else if true then
-                reversed = ((reversed + low.toString()) + high.toString())
+                reversed = ((reversed + low) + high)
             end if
         else if true then
-            reversed = (reversed + low.toString())
+            reversed = (reversed + low)
         end if
     end while
     m.set_string(reversed)
@@ -257,7 +257,7 @@ end function
 
 function StringBuilder_insert_I_C_k_(index as Integer, value as Object) as Object
     checkPositionIndex_I_I_k_(index, m.get_length())
-    m.set_string((substring_rStr_I_I_k_(m.get_string(), 0, index) + value.toString()) + substring_rStr_I_k_(m.get_string(), index))
+    m.set_string((substring_rStr_I_I_k_(m.get_string(), 0, index) + value) + substring_rStr_I_k_(m.get_string(), index))
     return m
 end function
 
@@ -308,14 +308,14 @@ sub StringBuilder_setLength_I_k_(newLength as Integer)
                         i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            m.set_string(m.get_string() + " ".toString())
+            m.set_string(m.get_string() + " ")
 
 
             while i <> last
                 i = inductionVariable
                 inductionVariable = (inductionVariable + 1)
 
-                m.set_string(m.get_string() + " ".toString())
+                m.set_string(m.get_string() + " ")
 
             end while
 
@@ -347,7 +347,7 @@ end function
 
 sub StringBuilder_set_I_C_k_(index as Integer, value as Object)
     checkElementIndex_I_I_k_(index, m.get_length())
-    m.set_string((substring_rStr_I_I_k_(m.get_string(), 0, index) + value.toString()) + substring_rStr_I_k_(m.get_string(), index + 1))
+    m.set_string((substring_rStr_I_I_k_(m.get_string(), 0, index) + value) + substring_rStr_I_k_(m.get_string(), index + 1))
 end sub
 
 function StringBuilder_setRange_I_I_Str_k_(startIndex as Integer, endIndex as Integer, value as String) as Object
@@ -400,7 +400,7 @@ sub StringBuilder_toCharArray_CharArray_I_I_I_k_(destination as Object, destinat
         __incr_tmp_87 = dstIndex
         dstIndex = (__incr_tmp_87 + 1)
 
-        destination.set_I_C_k_(__incr_tmp_87, m.get_string().get_I_k_(index))
+        destination.set_I_C_k_(__incr_tmp_87, Mid(m.get_string(), index + 1, 1))
 
 
         while index <> last
@@ -410,7 +410,7 @@ sub StringBuilder_toCharArray_CharArray_I_I_I_k_(destination as Object, destinat
             __incr_tmp_87 = dstIndex
             dstIndex = (__incr_tmp_87 + 1)
 
-            destination.set_I_C_k_(__incr_tmp_87, m.get_string().get_I_k_(index))
+            destination.set_I_C_k_(__incr_tmp_87, Mid(m.get_string(), index + 1, 1))
 
         end while
 

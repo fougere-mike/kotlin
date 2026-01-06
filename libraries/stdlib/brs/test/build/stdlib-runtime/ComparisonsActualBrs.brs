@@ -1,6 +1,6 @@
 function maxOf_Any_Any_k_(a as Object, b as Object) as Object
     __when_tmp0 = invalid
-    if a.compareTo(b) >= 0 then
+    if a.compareTo_AnyN_k_(b) >= 0 then
         __when_tmp0 = a
     else if true then
         __when_tmp0 = b
@@ -84,7 +84,7 @@ function maxOf_Any_Arr_k_(a as Object, other as Object) as Object
         e = indexedObject[inductionVariable]
         inductionVariable = (inductionVariable + 1)
 
-        if max.compareTo(e) < 0 then
+        if max.compareTo_AnyN_k_(e) < 0 then
             max = e
         end if
     end while
@@ -210,7 +210,7 @@ end function
 
 function minOf_Any_Any_k_(a as Object, b as Object) as Object
     __when_tmp3 = invalid
-    if a.compareTo(b) <= 0 then
+    if a.compareTo_AnyN_k_(b) <= 0 then
         __when_tmp3 = a
     else if true then
         __when_tmp3 = b
@@ -294,7 +294,7 @@ function minOf_Any_Arr_k_(a as Object, other as Object) as Object
         e = indexedObject[inductionVariable]
         inductionVariable = (inductionVariable + 1)
 
-        if e.compareTo(min) < 0 then
+        if e.compareTo_AnyN_k_(min) < 0 then
             min = e
         end if
     end while

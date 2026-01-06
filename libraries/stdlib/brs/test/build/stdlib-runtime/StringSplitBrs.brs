@@ -25,14 +25,14 @@ function split_rCharSequence_Str_Z_I_k_(m as Object, delimiter as String, ignore
                         i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            result.add_AnyN_k_(str.get_I_k_(i).toString())
+            result.add_AnyN_k_(Mid(str, i + 1, 1))
 
 
             while i <> last
                 i = inductionVariable
                 inductionVariable = (inductionVariable + 1)
 
-                result.add_AnyN_k_(str.get_I_k_(i).toString())
+                result.add_AnyN_k_(Mid(str, i + 1, 1))
 
             end while
 
@@ -72,7 +72,7 @@ function split_rCharSequence_C_Z_I_k_(m as Object, delimiter as Object, ignoreCa
     if limit = invalid then
         limit = 0
     end if
-    return split_rCharSequence_Str_Z_I_k_(m, delimiter.toString(), ignoreCase, limit)
+    return split_rCharSequence_Str_Z_I_k_(m, delimiter, ignoreCase, limit)
 end function
 
 function split_rCharSequence_CharArray_Z_I_k_(m as Object, delimiters as Object, ignoreCase = false, limit = 0) as Object
@@ -102,7 +102,7 @@ function split_rCharSequence_CharArray_Z_I_k_(m as Object, delimiters as Object,
         delimIndex = 0
         while delimIndex < delimiters.get_size()
             delimiter = delimiters.get_I_k_(delimIndex)
-            index = indexOf_rStr_Str_I_Z_k_(str, delimiter.toString(), currentIndex, ignoreCase)
+            index = indexOf_rStr_Str_I_Z_k_(str, delimiter, currentIndex, ignoreCase)
             if (index >= 0) and ((nextIndex < 0) or (index < nextIndex)) then
                 nextIndex = index
             end if
@@ -120,7 +120,7 @@ function split_rCharSequence_CharArray_Z_I_k_(m as Object, delimiters as Object,
         delimIndex = 0
         while delimIndex < delimiters.get_size()
             delimiter = delimiters.get_I_k_(delimIndex)
-            if endsWith_rStr_Str_Z_k_(str, delimiter.toString(), ignoreCase) then
+            if endsWith_rStr_Str_Z_k_(str, delimiter, ignoreCase) then
                 result.add_AnyN_k_("")
                 exit while
             end if
