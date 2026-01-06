@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.ir.util.getPackageFragment
 import org.jetbrains.kotlin.ir.util.isFunction
 import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.ir.util.isNullable
+import org.jetbrains.kotlin.ir.util.isUnsigned
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.name.BrsStandardClassIds
 import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
@@ -519,7 +520,7 @@ class IrToBrsTransformer(
         val className = context.getBrsName(irClass)
         val instanceVarName = "${className}_instance"
 
-        // Note: BrightScript doesn't support top-level statements, so we use m. for global storage
+        // Note: BrightScript doesn't support top-level statements, so we use GetGlobalAA() for global storage
         // Instance is lazily initialized in getInstance()
 
         // Generate the _create function (like regular class constructor)
@@ -539,20 +540,26 @@ class IrToBrsTransformer(
             "${className}_create"  // Fallback for edge cases
         }
 
-        // if m.MySingleton_instance = invalid then
-        //     m.MySingleton_instance = MySingleton_create()
+        // Helper to generate GetGlobalAA().instanceVarName
+        fun globalInstanceAccess() = BrsDotAccess(
+            BrsFunctionCall(BrsIdentifier("GetGlobalAA"), mutableListOf()),
+            instanceVarName
+        )
+
+        // if GetGlobalAA().MySingleton_instance = invalid then
+        //     GetGlobalAA().MySingleton_instance = MySingleton_create()
         // end if
         getInstanceBody.add(
             BrsIf(
                 condition = BrsBinaryOp(
-                    BrsDotAccess(BrsIdentifier("m"), instanceVarName),
+                    globalInstanceAccess(),
                     BrsBinaryOperator.EQ,
                     BrsInvalidLiteral()
                 ),
                 thenBranch = BrsBlock(mutableListOf(
                     BrsExpressionStatement(
                         BrsBinaryOp(
-                            BrsDotAccess(BrsIdentifier("m"), instanceVarName),
+                            globalInstanceAccess(),
                             BrsBinaryOperator.EQ,
                             BrsFunctionCall(BrsIdentifier(constructorName), mutableListOf())
                         )
@@ -561,8 +568,8 @@ class IrToBrsTransformer(
             )
         )
 
-        // return m.MySingleton_instance
-        getInstanceBody.add(BrsReturn(BrsDotAccess(BrsIdentifier("m"), instanceVarName)))
+        // return GetGlobalAA().MySingleton_instance
+        getInstanceBody.add(BrsReturn(globalInstanceAccess()))
 
         declarations.add(
             BrsFunction(
@@ -3604,6 +3611,37 @@ class IrExpressionToBrsTransformer(
     // ==================== Literals ====================
 
     override fun visitConst(expression: IrConst, data: Unit): BrsExpression {
+        // Handle unsigned types by wrapping in constructor calls
+        // UInt, ULong, UByte, UShort are value classes that need explicit boxing in BrightScript
+        if (expression.type.isUnsigned() && expression.kind != IrConstKind.Null) {
+            val className = expression.type.classOrNull?.owner?.name?.asString()
+            return when (className) {
+                "UInt" -> BrsFunctionCall(
+                    BrsIdentifier("UInt_create_I_k_"),
+                    mutableListOf(BrsIntLiteral(expression.value as Int))
+                )
+                "ULong" -> BrsFunctionCall(
+                    BrsIdentifier("ULong_create_J_k_"),
+                    mutableListOf(BrsLongIntLiteral(expression.value as Long))
+                )
+                "UByte" -> BrsFunctionCall(
+                    BrsIdentifier("UByte_create_B_k_"),
+                    mutableListOf(BrsIntLiteral((expression.value as Byte).toInt()))
+                )
+                "UShort" -> BrsFunctionCall(
+                    BrsIdentifier("UShort_create_S_k_"),
+                    mutableListOf(BrsIntLiteral((expression.value as Short).toInt()))
+                )
+                else -> {
+                    // Unknown unsigned type, fall through to regular handling
+                    visitConstPrimitive(expression)
+                }
+            }
+        }
+        return visitConstPrimitive(expression)
+    }
+
+    private fun visitConstPrimitive(expression: IrConst): BrsExpression {
         return when (expression.kind) {
             IrConstKind.Int -> BrsIntLiteral(expression.value as Int)
             IrConstKind.Long -> BrsLongIntLiteral(expression.value as Long)

@@ -275,53 +275,100 @@ fi
 # STALE LOG DETECTION - CRITICAL
 # The Roku debug console accumulates logs across runs. If we see old timestamps,
 # we're looking at stale data and MUST fail fast.
+#
+# We check TWO sources of timestamps:
+# 1. JSON test output: {"timestamp":1767666374446,...} (Unix epoch in milliseconds)
+# 2. Roku system logs: "01-05 23:33:33.123 [bs.ndk...]" (only appear on crashes)
 # ============================================================================
 echo "Validating log timestamps..."
 CURRENT_TIME=$(date +%s)
 CURRENT_YEAR=$(date +%Y)
+STALE_DETECTED=false
+LOG_AGE_INFO=""
 
-# Extract first timestamp from log (format: MM-DD HH:MM:SS.mmm)
-# Look for lines like "01-05 23:33:33.123"
-FIRST_LOG_TIMESTAMP=$(grep -oE '^[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}' "$TEST_OUTPUT" | head -1)
+# Method 1: Check JSON timestamps from test framework (most reliable)
+# These are Unix epoch in MILLISECONDS, so divide by 1000
+FIRST_JSON_TIMESTAMP=$(grep -oE '"timestamp":[0-9]+' "$TEST_OUTPUT" | head -1 | grep -oE '[0-9]+')
 
-if [[ -n "$FIRST_LOG_TIMESTAMP" ]]; then
-    # Parse the timestamp (MM-DD HH:MM:SS) and convert to epoch
-    # Roku logs don't include year, so we assume current year
-    LOG_MONTH=$(echo "$FIRST_LOG_TIMESTAMP" | cut -d'-' -f1)
-    LOG_DAY=$(echo "$FIRST_LOG_TIMESTAMP" | cut -d'-' -f2 | cut -d' ' -f1)
-    LOG_TIME=$(echo "$FIRST_LOG_TIMESTAMP" | cut -d' ' -f2)
-    LOG_DATETIME="${CURRENT_YEAR}-${LOG_MONTH}-${LOG_DAY} ${LOG_TIME}"
+if [[ -n "$FIRST_JSON_TIMESTAMP" ]]; then
+    # Convert milliseconds to seconds
+    LOG_EPOCH=$((FIRST_JSON_TIMESTAMP / 1000))
+    TIME_DIFF=$((CURRENT_TIME - LOG_EPOCH))
 
-    # Convert to epoch (macOS date command)
-    LOG_EPOCH=$(date -j -f "%Y-%m-%d %H:%M:%S" "$LOG_DATETIME" +%s 2>/dev/null || echo "0")
+    LOG_AGE_INFO="JSON timestamp age: ${TIME_DIFF} seconds"
 
-    if [[ "$LOG_EPOCH" != "0" ]]; then
-        TIME_DIFF=$((CURRENT_TIME - LOG_EPOCH))
+    # If logs are more than 60 seconds old, they're stale
+    if [[ $TIME_DIFF -gt 60 ]]; then
+        STALE_DETECTED=true
+        LOG_AGE_INFO="JSON timestamp: $(date -r $LOG_EPOCH '+%Y-%m-%d %H:%M:%S') (${TIME_DIFF}s old)"
+    fi
+else
+    # Method 2: Fall back to Roku system log timestamps (format: MM-DD HH:MM:SS.mmm)
+    FIRST_LOG_TIMESTAMP=$(grep -oE '^[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}' "$TEST_OUTPUT" | head -1)
 
-        # If logs are more than 60 seconds old, they're stale
-        if [[ $TIME_DIFF -gt 60 ]]; then
-            echo ""
-            echo -e "${RED}╔══════════════════════════════════════════════════════════════╗${NC}"
-            echo -e "${RED}║  INFRASTRUCTURE FAILURE: STALE LOGS DETECTED                 ║${NC}"
-            echo -e "${RED}╚══════════════════════════════════════════════════════════════╝${NC}"
-            echo ""
-            echo -e "  Log timestamp:  ${YELLOW}$FIRST_LOG_TIMESTAMP${NC}"
-            echo -e "  Current time:   ${GREEN}$(date '+%m-%d %H:%M:%S')${NC}"
-            echo -e "  Age:            ${RED}${TIME_DIFF} seconds old${NC}"
-            echo ""
-            echo "The logs you're seeing are from a PREVIOUS test run."
-            echo "Your current changes ARE deployed, but old logs are in the buffer."
-            echo ""
-            echo "This is an INFRASTRUCTURE FAILURE. The Home keypress should have"
-            echo "cleared the buffer but didn't. Re-running the tests should fix this."
-            echo ""
-            echo -e "${YELLOW}DO NOT debug based on these logs - they are STALE.${NC}"
-            echo ""
-            exit 1
-        else
-            echo -e "  Log age: ${GREEN}${TIME_DIFF} seconds (OK)${NC}"
+    if [[ -n "$FIRST_LOG_TIMESTAMP" ]]; then
+        # Parse the timestamp (MM-DD HH:MM:SS) and convert to epoch
+        LOG_MONTH=$(echo "$FIRST_LOG_TIMESTAMP" | cut -d'-' -f1)
+        LOG_DAY=$(echo "$FIRST_LOG_TIMESTAMP" | cut -d'-' -f2 | cut -d' ' -f1)
+        LOG_TIME=$(echo "$FIRST_LOG_TIMESTAMP" | cut -d' ' -f2)
+        LOG_DATETIME="${CURRENT_YEAR}-${LOG_MONTH}-${LOG_DAY} ${LOG_TIME}"
+
+        LOG_EPOCH=$(date -j -f "%Y-%m-%d %H:%M:%S" "$LOG_DATETIME" +%s 2>/dev/null || echo "0")
+
+        if [[ "$LOG_EPOCH" != "0" ]]; then
+            TIME_DIFF=$((CURRENT_TIME - LOG_EPOCH))
+            LOG_AGE_INFO="Roku log timestamp age: ${TIME_DIFF} seconds"
+
+            if [[ $TIME_DIFF -gt 60 ]]; then
+                STALE_DETECTED=true
+                LOG_AGE_INFO="Roku timestamp: $FIRST_LOG_TIMESTAMP (${TIME_DIFF}s old)"
+            fi
         fi
     fi
+fi
+
+# Also check for recent crash - if app crashed, JSON timestamps will be old but crash is fresh
+CRASH_TIMESTAMP=$(grep -oE '^[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}' "$TEST_OUTPUT" | tail -1)
+RECENT_CRASH=false
+if [[ -n "$CRASH_TIMESTAMP" ]]; then
+    CRASH_MONTH=$(echo "$CRASH_TIMESTAMP" | cut -d'-' -f1)
+    CRASH_DAY=$(echo "$CRASH_TIMESTAMP" | cut -d'-' -f2 | cut -d' ' -f1)
+    CRASH_TIME=$(echo "$CRASH_TIMESTAMP" | cut -d' ' -f2)
+    CRASH_DATETIME="${CURRENT_YEAR}-${CRASH_MONTH}-${CRASH_DAY} ${CRASH_TIME}"
+    CRASH_EPOCH=$(date -j -f "%Y-%m-%d %H:%M:%S" "$CRASH_DATETIME" +%s 2>/dev/null || echo "0")
+    if [[ "$CRASH_EPOCH" != "0" ]]; then
+        CRASH_AGE=$((CURRENT_TIME - CRASH_EPOCH))
+        if [[ $CRASH_AGE -lt 60 ]]; then
+            RECENT_CRASH=true
+        fi
+    fi
+fi
+
+if [[ "$STALE_DETECTED" == "true" && "$RECENT_CRASH" == "false" ]]; then
+    echo ""
+    echo -e "${RED}╔══════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${RED}║  INFRASTRUCTURE FAILURE: STALE LOGS DETECTED                 ║${NC}"
+    echo -e "${RED}╚══════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "  ${YELLOW}$LOG_AGE_INFO${NC}"
+    echo -e "  Current time:   ${GREEN}$(date '+%Y-%m-%d %H:%M:%S')${NC}"
+    echo ""
+    echo "The logs you're seeing are from a PREVIOUS test run."
+    echo "Your current changes ARE deployed, but old logs are in the buffer."
+    echo ""
+    echo "This is an INFRASTRUCTURE FAILURE. The Home keypress should have"
+    echo "cleared the buffer but didn't. Re-running the tests should fix this."
+    echo ""
+    echo -e "${YELLOW}DO NOT debug based on these logs - they are STALE.${NC}"
+    echo ""
+    exit 1
+elif [[ "$STALE_DETECTED" == "true" && "$RECENT_CRASH" == "true" ]]; then
+    echo -e "  ${YELLOW}Old JSON timestamps but recent crash detected - app crashed early${NC}"
+    echo -e "  ${YELLOW}The crash output below is FRESH - you can debug it${NC}"
+elif [[ -n "$LOG_AGE_INFO" ]]; then
+    echo -e "  ${GREEN}$LOG_AGE_INFO (OK)${NC}"
+else
+    echo -e "  ${YELLOW}No timestamps found in output - cannot validate freshness${NC}"
 fi
 echo ""
 

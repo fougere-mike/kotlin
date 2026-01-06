@@ -312,15 +312,35 @@ export ROKU_PASSWORD=your_password
 
 **Stale Log Detection (Automatic)**
 
-The test script automatically validates log timestamps and will **FAIL FAST** if logs are more than 60 seconds old. If you see:
+The test script validates log freshness using two timestamp sources:
 
+1. **JSON timestamps** from test output (`"timestamp":1767666374446`) - checked first
+2. **Roku system timestamps** from crash output (`01-06 02:41:12.789`) - used for crash detection
+
+The script handles three scenarios:
+
+| Scenario | JSON Age | Crash Age | Behavior |
+|----------|----------|-----------|----------|
+| Fresh logs | < 60s | - | ✅ Proceed |
+| Early crash | > 60s | < 60s | ⚠️ "Old JSON but recent crash" - crash output is valid |
+| Truly stale | > 60s | > 60s | ❌ FAIL FAST - re-run tests |
+
+If you see:
 ```
 ╔══════════════════════════════════════════════════════════════╗
 ║  INFRASTRUCTURE FAILURE: STALE LOGS DETECTED                 ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-This means the logs you're seeing are from a PREVIOUS test run. Your current code IS deployed, but old logs are still in the buffer. Simply re-run the tests.
+This means the logs are from a PREVIOUS test run. Simply re-run the tests.
+
+If you see:
+```
+Old JSON timestamps but recent crash detected - app crashed early
+The crash output below is FRESH - you can debug it
+```
+
+This means your app deployed but crashed before producing new JSON output. The crash info IS valid to debug.
 
 The test output file is saved to: `libraries/stdlib/brs/test/build/test-output.txt`
 
