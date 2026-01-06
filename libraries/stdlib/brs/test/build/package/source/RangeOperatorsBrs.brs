@@ -7,11 +7,11 @@ function rangeTo_rI_J_k_(m as Integer, other as LongInteger) as Object
 end function
 
 function downTo_rI_I_k_(m as Integer, to_ as Integer) as Object
-    return IntProgression_Companion_getInstance().fromClosedRange(m, to_, -1)
+    return IntProgression_Companion_getInstance().fromClosedRange_I_I_I_k_(m, to_, -1)
 end function
 
 function downTo_rI_J_k_(m as Integer, to_ as LongInteger) as Object
-    return LongProgression_Companion_getInstance().fromClosedRange(m, to_, -1&)
+    return LongProgression_Companion_getInstance().fromClosedRange_J_J_J_k_(m, to_, -1&)
 end function
 
 function step_rIntProgression_I_k_(m as Object, step_ as Integer) as Object
@@ -22,7 +22,7 @@ function step_rIntProgression_I_k_(m as Object, step_ as Integer) as Object
     else if true then
         __when_tmp0 = -step_
     end if
-    return IntProgression_Companion_getInstance().fromClosedRange(m.get_first(), m.get_last(), __when_tmp0)
+    return IntProgression_Companion_getInstance().fromClosedRange_I_I_I_k_(m.get_first(), m.get_last(), __when_tmp0)
 
 end function
 
@@ -31,11 +31,11 @@ function rangeTo_rJ_J_k_(m as LongInteger, other as LongInteger) as Object
 end function
 
 function downTo_rJ_I_k_(m as LongInteger, to_ as Integer) as Object
-    return LongProgression_Companion_getInstance().fromClosedRange(m, to_, -1&)
+    return LongProgression_Companion_getInstance().fromClosedRange_J_J_J_k_(m, to_, -1&)
 end function
 
 function downTo_rJ_J_k_(m as LongInteger, to_ as LongInteger) as Object
-    return LongProgression_Companion_getInstance().fromClosedRange(m, to_, -1&)
+    return LongProgression_Companion_getInstance().fromClosedRange_J_J_J_k_(m, to_, -1&)
 end function
 
 function step_rLongProgression_J_k_(m as Object, step_ as LongInteger) as Object
@@ -46,7 +46,7 @@ function step_rLongProgression_J_k_(m as Object, step_ as LongInteger) as Object
     else if true then
         __when_tmp1 = -step_
     end if
-    return LongProgression_Companion_getInstance().fromClosedRange(m.get_first(), m.get_last(), __when_tmp1)
+    return LongProgression_Companion_getInstance().fromClosedRange_J_J_J_k_(m.get_first(), m.get_last(), __when_tmp1)
 
 end function
 
@@ -55,7 +55,7 @@ function rangeTo_rC_C_k_(m as Object, other as Object) as Object
 end function
 
 function downTo_rC_C_k_(m as Object, to_ as Object) as Object
-    return CharProgression_Companion_getInstance().fromClosedRange(m, to_, -1)
+    return CharProgression_Companion_getInstance().fromClosedRange_C_C_I_k_(m, to_, -1)
 end function
 
 function step_rCharProgression_I_k_(m as Object, step_ as Integer) as Object
@@ -66,6 +66,6 @@ function step_rCharProgression_I_k_(m as Object, step_ as Integer) as Object
     else if true then
         __when_tmp2 = -step_
     end if
-    return CharProgression_Companion_getInstance().fromClosedRange(m.get_first(), m.get_last(), __when_tmp2)
+    return CharProgression_Companion_getInstance().fromClosedRange_C_C_I_k_(m.get_first(), m.get_last(), __when_tmp2)
 
 end function

@@ -11,6 +11,16 @@ function __kotlin_ushr(value as Integer, shift as Integer) as Integer
     return ((value and 2147483647) \ (2 ^ shift)) or (1073741824 \ (2 ^ (shift - 1)))
 end function
 
+function __kotlin_stringCompare(a as String, b as String) as Integer
+    if a < b then
+        return -1
+    end if
+    if a > b then
+        return 1
+    end if
+    return 0
+end function
+
 function __kotlin_intCompare(a as Integer, b as Integer) as Integer
     if a < b then
         return -1
@@ -495,9 +505,9 @@ function stackTraceToString_rThrowable_k_(m as Object) as String
     sb = StringBuilder_create_k_()
     sb.append_StrN_k_(m.toString())
     sb.append_StrN_k_(chr(10))
-    tmp0_safe_receiver = (function(__kotlin_isInstanceOf)
+    tmp0_safe_receiver = (function(__kotlin_isInstanceOf, m)
         if __kotlin_isInstanceOf(m, "Throwable") then return m else return invalid
-    end function)(__kotlin_isInstanceOf)
+    end function)(__kotlin_isInstanceOf, m)
     __when_tmp1 = invalid
     if tmp0_safe_receiver = invalid then
         __when_tmp1 = invalid

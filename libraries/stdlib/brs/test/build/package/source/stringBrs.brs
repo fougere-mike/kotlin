@@ -16,8 +16,8 @@ end function
 
 function capitalize_rStr_k_(m as String) as String
     __when_tmp0 = invalid
-    if isNotEmpty_rStr_k_(m) and isLowerCase_rC_k_(m.get_I_k_(0)) then
-        __when_tmp0 = (uppercase_rC_k_(m.get_I_k_(0)) + substring_rStr_I_k_(m, 1))
+    if isNotEmpty_rStr_k_(m) and isLowerCase_rC_k_(Mid(m, 0 + 1, 1)) then
+        __when_tmp0 = (uppercase_rC_k_(Mid(m, 0 + 1, 1)) + substring_rStr_I_k_(m, 1))
     else if true then
         __when_tmp0 = m
     end if
@@ -27,8 +27,8 @@ end function
 
 function decapitalize_rStr_k_(m as String) as String
     __when_tmp1 = invalid
-    if isNotEmpty_rStr_k_(m) and isUpperCase_rC_k_(m.get_I_k_(0)) then
-        __when_tmp1 = (lowercase_rC_k_(m.get_I_k_(0)) + substring_rStr_I_k_(m, 1))
+    if isNotEmpty_rStr_k_(m) and isUpperCase_rC_k_(Mid(m, 0 + 1, 1)) then
+        __when_tmp1 = (lowercase_rC_k_(Mid(m, 0 + 1, 1)) + substring_rStr_I_k_(m, 1))
     else if true then
         __when_tmp1 = m
     end if
@@ -43,10 +43,10 @@ function contentEquals_rCharSequenceN_CharSequenceN_k_(m as Dynamic, other as Dy
     if (m = invalid) or (other = invalid) then
         return false
     end if
-    if Len(m) <> Len(other) then
+    if __kotlin_charSequenceLength_CharSequenceN_k_(m) <> __kotlin_charSequenceLength_CharSequenceN_k_(other) then
         return false
     end if
-    progression = until_rI_I_k_(0, Len(m))
+    progression = until_rI_I_k_(0, __kotlin_charSequenceLength_CharSequenceN_k_(m))
     inductionVariable = progression.get_first()
     last = progression.get_last()
     if inductionVariable <= last then
@@ -80,11 +80,11 @@ function contentEquals_rCharSequenceN_CharSequenceN_Z_k_(m as Dynamic, other as 
     if (m = invalid) or (other = invalid) then
         return false
     end if
-    if Len(m) <> Len(other) then
+    if __kotlin_charSequenceLength_CharSequenceN_k_(m) <> __kotlin_charSequenceLength_CharSequenceN_k_(other) then
         return false
     end if
     if not ignoreCase then
-        progression = until_rI_I_k_(0, Len(m))
+        progression = until_rI_I_k_(0, __kotlin_charSequenceLength_CharSequenceN_k_(m))
         inductionVariable = progression.get_first()
         last = progression.get_last()
         if inductionVariable <= last then
@@ -108,7 +108,7 @@ function contentEquals_rCharSequenceN_CharSequenceN_Z_k_(m as Dynamic, other as 
 
         end if
     else if true then
-        progression = until_rI_I_k_(0, Len(m))
+        progression = until_rI_I_k_(0, __kotlin_charSequenceLength_CharSequenceN_k_(m))
         inductionVariable = progression.get_first()
         last = progression.get_last()
         if inductionVariable <= last then
@@ -136,14 +136,18 @@ function contentEquals_rCharSequenceN_CharSequenceN_Z_k_(m as Dynamic, other as 
 end function
 
 function nativeIndexOf_rStr_Str_I_k_(m as String, str as String, fromIndex as Integer) as Integer
-    return Instr(fromIndex, m, str)
+    return (function(fromIndex, m, str)
+        if Instr(fromIndex + 1, m, str) = 0 then return -1 else return Instr(fromIndex + 1, m, str) - 1
+    end function)(fromIndex, m, str)
 end function
 
 function nativeLastIndexOf_rStr_Str_I_k_(m as String, str as String, fromIndex as Integer) as Integer
     lastIndex = -1
     searchIndex = 0
     while searchIndex <= fromIndex
-        found = Instr(searchIndex, m, str)
+        found = (function(m, searchIndex, str)
+            if Instr(searchIndex + 1, m, str) = 0 then return -1 else return Instr(searchIndex + 1, m, str) - 1
+        end function)(m, searchIndex, str)
         if (found < 0) or (found > fromIndex) then
             exit while
         end if
@@ -234,7 +238,7 @@ function isBlank_rStr_k_(m as String) as Boolean
                 i = inductionVariable
         inductionVariable = (inductionVariable + 1)
 
-        if not isWhitespace_rC_k_(m.get_I_k_(i)) then
+        if not isWhitespace_rC_k_(Mid(m, i + 1, 1)) then
             return false
         end if
 
@@ -243,7 +247,7 @@ function isBlank_rStr_k_(m as String) as Boolean
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
-            if not isWhitespace_rC_k_(m.get_I_k_(i)) then
+            if not isWhitespace_rC_k_(Mid(m, i + 1, 1)) then
                 return false
             end if
 
@@ -265,7 +269,7 @@ end function
 function getOrElse_rStr_I_Function1IC_k_(m as String, index as Integer, defaultValue as Object) as Object
     __when_tmp3 = invalid
     if (index >= 0) and (index < Len(m)) then
-        __when_tmp3 = m.get_I_k_(index)
+        __when_tmp3 = Mid(m, index + 1, 1)
     else if true then
         __when_tmp3 = defaultValue.invoke(index)
     end if

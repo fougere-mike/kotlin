@@ -104,7 +104,7 @@ function groupByTo_rIterable_Any_Function1_Function1_k_(m as Object, destination
 end function
 
 function groupingBy_rIterable_Function1_k_(m as Object, keySelector as Object) as Object
-    return Anon_2140dd9a_create_Iterable_Function1_k_(m, keySelector)
+    return Anon_6625d4aa_create_Iterable_Function1_k_(m, keySelector)
 end function
 
 function associate_rIterable_Function1Pair_k_(m as Object, transform as Object) as Object
@@ -189,22 +189,22 @@ function associateWithTo_rIterable_Any_Function1_k_(m as Object, destination as 
     return destination
 end function
 
-function Anon_2140dd9a_create_Iterable_Function1_k_(_this_groupingBy as Object, _keySelector as Object) as Object
+function Anon_6625d4aa_create_Iterable_Function1_k_(_this_groupingBy as Object, _keySelector as Object) as Object
     this = {}
-    this.__type = "Anon_2140dd9a"
-    this.__proto = ["Anon_2140dd9a", "Grouping"]
+    this.__type = "Anon_6625d4aa"
+    this.__proto = ["Anon_6625d4aa", "Grouping"]
     this.__id = __kotlin_nextObjectId()
-    this.sourceIterator_k_ = Anon_2140dd9a_sourceIterator_k_
-    this.keyOf_AnyN_k_ = Anon_2140dd9a_keyOf_AnyN_k_
+    this.sourceIterator_k_ = Anon_6625d4aa_sourceIterator_k_
+    this.keyOf_AnyN_k_ = Anon_6625d4aa_keyOf_AnyN_k_
     this._this_groupingBy = _this_groupingBy
     this._keySelector = _keySelector
     return this
 end function
 
-function Anon_2140dd9a_sourceIterator_k_() as Object
+function Anon_6625d4aa_sourceIterator_k_() as Object
     return m._this_groupingBy.iterator_k_()
 end function
 
-function Anon_2140dd9a_keyOf_AnyN_k_(element as Dynamic) as Dynamic
+function Anon_6625d4aa_keyOf_AnyN_k_(element as Dynamic) as Dynamic
     return m._keySelector.invoke(element)
 end function

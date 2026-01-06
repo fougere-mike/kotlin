@@ -592,12 +592,16 @@ class BrsRenderer(
             override fun visitIdentifier(identifier: BrsIdentifier, data: Unit) {
                 identifiers.add(identifier.name)
             }
+            override fun visitMRef(mRef: BrsMRef, data: Unit) {
+                // BrsMRef represents 'm' - include it for IIFE capture
+                identifiers.add("m")
+            }
         }
         conditional.condition.accept(collector, Unit)
         conditional.thenExpr.accept(collector, Unit)
         conditional.elseExpr.accept(collector, Unit)
 
-        // Filter to only include simple variable names (not m, not containing dots, not built-in functions)
+        // Filter to only include simple variable names (not containing dots, not built-in functions)
         // Built-in BrightScript functions and Kotlin runtime functions that should not be captured as variables
         val builtinFunctions = setOf(
             // BrightScript built-ins
@@ -614,7 +618,7 @@ class BrsRenderer(
             "__kotlin_numToStr_AnyN_Str_k_"
         )
         val params = identifiers.filter {
-            it != "m" && !it.contains(".") && it !in builtinFunctions
+            !it.contains(".") && it !in builtinFunctions
         }.sorted()
 
         if (params.isEmpty()) {

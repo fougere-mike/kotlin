@@ -168,7 +168,7 @@ function longToStringWithRadix_J_I_k_(value as LongInteger, radix as Integer) as
     result = StringBuilder_create_k_()
     while v <> 0&
         digit = v mod radix
-        result.insert_I_C_k_(0, digits.get_I_k_(digit))
+        result.insert_I_C_k_(0, Mid(digits, digit + 1, 1))
         v = (v / radix)
     end while
     if isNegative then

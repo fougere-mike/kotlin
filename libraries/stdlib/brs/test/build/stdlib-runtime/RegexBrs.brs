@@ -151,8 +151,8 @@ function Regex_matchEntire_CharSequence_k_(input as Object) as Dynamic
 end function
 
 function Regex_matchAt_CharSequence_I_k_(input as Object, index as Integer) as Dynamic
-    if (index < 0) or (index > Len(input)) then
-        throw IndexOutOfBoundsException_create_StrN_k_((("index out of bounds: " + __kotlin_numToStr_I_k_(index)) + ", input length: ") + __kotlin_numToStr_I_k_(Len(input)))
+    if (index < 0) or (index > __kotlin_charSequenceLength_CharSequenceN_k_(input)) then
+        throw IndexOutOfBoundsException_create_StrN_k_((("index out of bounds: " + __kotlin_numToStr_I_k_(index)) + ", input length: ") + __kotlin_numToStr_I_k_(__kotlin_charSequenceLength_CharSequenceN_k_(input)))
     end if
     inputStr = toString_AnyN_k_(input)
     substring = substring_rStr_I_k_(inputStr, index)
@@ -175,8 +175,8 @@ function Regex_find_CharSequence_I_k_(input as Object, startIndex = 0) as Dynami
     if startIndex = invalid then
         startIndex = 0
     end if
-    if (startIndex < 0) or (startIndex > Len(input)) then
-        throw IndexOutOfBoundsException_create_StrN_k_((("Start index out of bounds: " + __kotlin_numToStr_I_k_(startIndex)) + ", input length: ") + __kotlin_numToStr_I_k_(Len(input)))
+    if (startIndex < 0) or (startIndex > __kotlin_charSequenceLength_CharSequenceN_k_(input)) then
+        throw IndexOutOfBoundsException_create_StrN_k_((("Start index out of bounds: " + __kotlin_numToStr_I_k_(startIndex)) + ", input length: ") + __kotlin_numToStr_I_k_(__kotlin_charSequenceLength_CharSequenceN_k_(input)))
     end if
     inputStr = toString_AnyN_k_(input)
     if startIndex = 0 then
@@ -207,8 +207,8 @@ function Regex_findAll_CharSequence_I_k_(input as Object, startIndex = 0) as Obj
     if startIndex = invalid then
         startIndex = 0
     end if
-    if (startIndex < 0) or (startIndex > Len(input)) then
-        throw IndexOutOfBoundsException_create_StrN_k_((("Start index out of bounds: " + __kotlin_numToStr_I_k_(startIndex)) + ", input length: ") + __kotlin_numToStr_I_k_(Len(input)))
+    if (startIndex < 0) or (startIndex > __kotlin_charSequenceLength_CharSequenceN_k_(input)) then
+        throw IndexOutOfBoundsException_create_StrN_k_((("Start index out of bounds: " + __kotlin_numToStr_I_k_(startIndex)) + ", input length: ") + __kotlin_numToStr_I_k_(__kotlin_charSequenceLength_CharSequenceN_k_(input)))
     end if
     firstMatch = m.find_CharSequence_I_k_(input, startIndex)
     return generateSequence_AnyN_Function1_k_(firstMatch, {invoke: function(match as Object) as Dynamic
@@ -231,7 +231,7 @@ function Regex_replace_CharSequence_Function1MatchResultCharSequence_k_(input as
         return toString_AnyN_k_(input)
     end if
     lastStart = 0
-    length = Len(input)
+    length = __kotlin_charSequenceLength_CharSequenceN_k_(input)
     sb = StringBuilder_create_I_k_(length)
     foundMatch = match
     sb.append_CharSequenceN_I_I_k_(input, lastStart, foundMatch.get_range().get_start())
@@ -299,7 +299,7 @@ function Regex_split_CharSequence_I_k_(input as Object, limit = 0) as Object
 
     end while
 
-    result.add_AnyN_k_(toString_AnyN_k_(input.subSequence_I_I_k_(lastStart, Len(input))))
+    result.add_AnyN_k_(toString_AnyN_k_(input.subSequence_I_I_k_(lastStart, __kotlin_charSequenceLength_CharSequenceN_k_(input))))
     return result
 end function
 
@@ -309,7 +309,7 @@ function Regex_splitToSequence_CharSequence_I_k_(input as Object, limit = 0) as 
     end if
     requireNonNegativeLimit_I_k_(limit)
     return Sequence_Function0Iterator_k_({this: m, _input: _input, _limit: _limit, this_0: this_0, this: m, this: m, value: value, this: m, this: m, this: m, value: value, this: m, this: m, value: value, this: m, this: m, value: value, this: m, this: m, this: m, input: input, limit: limit, invoke: function() as Object
-        return Anon_5359e290_create_Regex_CharSequence_I_k_(m.this, m.input, m.limit)
+        return Anon_333db39a_create_Regex_CharSequence_I_k_(m.this, m.input, m.limit)
     end function})
 end function
 
@@ -318,7 +318,7 @@ function Regex_toString_k_() as String
 end function
 
 function Regex_createMatchResult_Str_Arr_I_k_(input as String, matchArray as Object, matchIndex as Integer) as Object
-    return Anon_38cab2f5_create_I_Arr_Str_Regex_k_(matchIndex, matchArray, input, m)
+    return Anon_3d50f3c_create_I_Arr_Str_Regex_k_(matchIndex, matchArray, input, m)
 end function
 
 function Regex_get_pattern_k_() as String
@@ -352,7 +352,7 @@ function Regex_Companion_getInstance() as Object
 end function
 
 function Regex_Companion_fromLiteral_Str_k_(literal as String) as Object
-    return Regex_create_Str_k_(Regex_Companion_getInstance().escape(literal))
+    return Regex_create_Str_k_(Regex_Companion_getInstance().escape_Str_k_(literal))
 end function
 
 function Regex_Companion_escape_Str_k_(literal as String) as String
@@ -392,7 +392,7 @@ function substituteGroupRefs_MatchResult_Str_k_(match as Object, replacement as 
         __incr_tmp_72 = index
         index = (__incr_tmp_72 + 1)
 
-        char = replacement.get_I_k_(__incr_tmp_72)
+        char = Mid(replacement, __incr_tmp_72 + 1, 1)
         if char = "\" then
             if index = Len(replacement) then
                 throw IllegalArgumentException_create_StrN_k_("The Char to be escaped is missing")
@@ -400,22 +400,22 @@ function substituteGroupRefs_MatchResult_Str_k_(match as Object, replacement as 
             __incr_tmp_73 = index
             index = (__incr_tmp_73 + 1)
 
-            result.append_C_k_(replacement.get_I_k_(__incr_tmp_73))
+            result.append_C_k_(Mid(replacement, __incr_tmp_73 + 1, 1))
         else if char = "$" then
             if index = Len(replacement) then
                 throw IllegalArgumentException_create_StrN_k_("Capturing group index is missing")
             end if
-            if replacement.get_I_k_(index) = "{" then
+            if Mid(replacement, index + 1, 1) = "{" then
                 endIndex = readGroupName_rStr_I_k_(replacement, index)
                 if index = endIndex then
                     throw IllegalArgumentException_create_StrN_k_("Named capturing group reference should have a non-empty name")
                 end if
-                if (endIndex = Len(replacement)) or (replacement.get_I_k_(endIndex) <> "}") then
+                if (endIndex = Len(replacement)) or (Mid(replacement, endIndex + 1, 1) <> "}") then
                     throw IllegalArgumentException_create_StrN_k_("Named capturing group reference is missing trailing '}'")
                 end if
                 throw UnsupportedOperationException_create_StrN_k_("Named capturing groups are not yet supported in BrightScript regex")
             else if true then
-                if not rangeTo_rC_C_k_("0", "9").contains_C_k_(replacement.get_I_k_(index)) then
+                if not rangeTo_rC_C_k_("0", "9").contains_C_k_(Mid(replacement, index + 1, 1)) then
                     throw IllegalArgumentException_create_StrN_k_("Invalid capturing group reference")
                 end if
                 groups = match.get_groups()
@@ -454,7 +454,7 @@ end function
 function readGroupName_rStr_I_k_(m as String, startIndex as Integer) as Integer
     index = startIndex
     while index < Len(m)
-        if m.get_I_k_(index) = "}" then
+        if Mid(m, index + 1, 1) = "}" then
             exit while
         else if true then
             index = (index + 1)
@@ -465,9 +465,9 @@ end function
 
 function readGroupIndex_rStr_I_I_k_(m as String, startIndex as Integer, groupCount as Integer) as Integer
     index = startIndex + 1
-    groupIndex = m.get_I_k_(startIndex) - "0"
-    while (index < Len(m)) and rangeTo_rC_C_k_("0", "9").contains_C_k_(m.get_I_k_(index))
-        newGroupIndex = (groupIndex * 10) + (m.get_I_k_(index) - "0")
+    groupIndex = Mid(m, startIndex + 1, 1) - "0"
+    while (index < Len(m)) and rangeTo_rC_C_k_("0", "9").contains_C_k_(Mid(m, index + 1, 1))
+        newGroupIndex = (groupIndex * 10) + (Mid(m, index + 1, 1) - "0")
         if until_rI_I_k_(0, groupCount).contains_I_k_(newGroupIndex) then
             groupIndex = newGroupIndex
             index = (index + 1)
@@ -491,18 +491,18 @@ function parseIntOrThrow_Str_Str_k_(str as String, errorMessage as String) as In
     if isEmpty_rStr_k_(str) then
         throw NumberFormatException_create_StrN_k_(errorMessage)
     end if
-    if str.get_I_k_(0) = "-" then
+    if Mid(str, 0 + 1, 1) = "-" then
         negative = true
         index = 1
-    else if str.get_I_k_(0) = "+" then
+    else if Mid(str, 0 + 1, 1) = "+" then
         index = 1
     end if
     if index >= Len(str) then
         throw NumberFormatException_create_StrN_k_(errorMessage)
     end if
     while index < Len(str)
-        char = str.get_I_k_(index)
-        if ((char < "0") < 0) or ((char > "9") > 0) then
+        char = Mid(str, index + 1, 1)
+        if (__kotlin_stringCompare(char, "0") < 0) or (__kotlin_stringCompare(char, "9") > 0) then
             throw NumberFormatException_create_StrN_k_(errorMessage)
         end if
         result = ((result * 10) + (char - "0"))
@@ -518,22 +518,22 @@ function parseIntOrThrow_Str_Str_k_(str as String, errorMessage as String) as In
 
 end function
 
-function Anon_5359e290_create_Regex_CharSequence_I_k_(this_0 as Object, _input as Object, _limit as Integer) as Object
+function Anon_333db39a_create_Regex_CharSequence_I_k_(this_0 as Object, _input as Object, _limit as Integer) as Object
     this = {}
-    this.__type = "Anon_5359e290"
-    this.__proto = ["Anon_5359e290", "Iterator"]
+    this.__type = "Anon_333db39a"
+    this.__proto = ["Anon_333db39a", "Iterator"]
     this.__id = __kotlin_nextObjectId()
-    this.hasNext_k_ = Anon_5359e290_hasNext_k_
-    this.next_k_ = Anon_5359e290_next_k_
-    this.get_match = Anon_5359e290_get_match_k_
-    this.set_match = Anon_5359e290_set_match_MatchResultN_k_
-    this.get_firstMatch = Anon_5359e290_get_firstMatch_k_
-    this.get_nextStart = Anon_5359e290_get_nextStart_k_
-    this.set_nextStart = Anon_5359e290_set_nextStart_I_k_
-    this.get_splitCount = Anon_5359e290_get_splitCount_k_
-    this.set_splitCount = Anon_5359e290_set_splitCount_I_k_
-    this.get_emitted = Anon_5359e290_get_emitted_k_
-    this.set_emitted = Anon_5359e290_set_emitted_Z_k_
+    this.hasNext_k_ = Anon_333db39a_hasNext_k_
+    this.next_k_ = Anon_333db39a_next_k_
+    this.get_match = Anon_333db39a_get_match_k_
+    this.set_match = Anon_333db39a_set_match_MatchResultN_k_
+    this.get_firstMatch = Anon_333db39a_get_firstMatch_k_
+    this.get_nextStart = Anon_333db39a_get_nextStart_k_
+    this.set_nextStart = Anon_333db39a_set_nextStart_I_k_
+    this.get_splitCount = Anon_333db39a_get_splitCount_k_
+    this.set_splitCount = Anon_333db39a_set_splitCount_I_k_
+    this.get_emitted = Anon_333db39a_get_emitted_k_
+    this.set_emitted = Anon_333db39a_set_emitted_Z_k_
     this.match = this_0.find_CharSequence_I_k_(_input, invalid)
     this.firstMatch = this.get_match()
     this.nextStart = 0
@@ -544,17 +544,17 @@ function Anon_5359e290_create_Regex_CharSequence_I_k_(this_0 as Object, _input a
     return this
 end function
 
-function Anon_5359e290_hasNext_k_() as Boolean
+function Anon_333db39a_hasNext_k_() as Boolean
     if not m.get_emitted() and ((m.get_firstMatch() = invalid) or (m._limit = 1)) then
         return true
     end if
     if (m._limit > 0) and (m.get_splitCount() >= (m._limit - 1)) then
-        return not m.get_emitted() or (m.get_nextStart() < Len(m._input))
+        return not m.get_emitted() or (m.get_nextStart() < __kotlin_charSequenceLength_CharSequenceN_k_(m._input))
     end if
-    return (m.get_nextStart() < Len(m._input)) or ((m.get_match() <> invalid) and not m.get_emitted())
+    return (m.get_nextStart() < __kotlin_charSequenceLength_CharSequenceN_k_(m._input)) or ((m.get_match() <> invalid) and not m.get_emitted())
 end function
 
-function Anon_5359e290_next_k_() as String
+function Anon_333db39a_next_k_() as String
     if not m.hasNext_k_() then
         throw NoSuchElementException_create_k_()
     end if
@@ -571,68 +571,68 @@ function Anon_5359e290_next_k_() as String
         m.set_emitted(true)
         return result
     else if true then
-        result = toString_AnyN_k_(m._input.subSequence_I_I_k_(m.get_nextStart(), Len(m._input)))
-        m.set_nextStart(Len(m._input))
+        result = toString_AnyN_k_(m._input.subSequence_I_I_k_(m.get_nextStart(), __kotlin_charSequenceLength_CharSequenceN_k_(m._input)))
+        m.set_nextStart(__kotlin_charSequenceLength_CharSequenceN_k_(m._input))
         m.set_emitted(true)
         return result
     end if
 end function
 
-function Anon_5359e290_get_match_k_() as Dynamic
+function Anon_333db39a_get_match_k_() as Dynamic
     return m.match
 end function
 
-sub Anon_5359e290_set_match_MatchResultN_k_(value as Dynamic)
+sub Anon_333db39a_set_match_MatchResultN_k_(value as Dynamic)
     m.match = value
 end sub
 
-function Anon_5359e290_get_firstMatch_k_() as Dynamic
+function Anon_333db39a_get_firstMatch_k_() as Dynamic
     return m.firstMatch
 end function
 
-function Anon_5359e290_get_nextStart_k_() as Integer
+function Anon_333db39a_get_nextStart_k_() as Integer
     return m.nextStart
 end function
 
-sub Anon_5359e290_set_nextStart_I_k_(value as Integer)
+sub Anon_333db39a_set_nextStart_I_k_(value as Integer)
     m.nextStart = value
 end sub
 
-function Anon_5359e290_get_splitCount_k_() as Integer
+function Anon_333db39a_get_splitCount_k_() as Integer
     return m.splitCount
 end function
 
-sub Anon_5359e290_set_splitCount_I_k_(value as Integer)
+sub Anon_333db39a_set_splitCount_I_k_(value as Integer)
     m.splitCount = value
 end sub
 
-function Anon_5359e290_get_emitted_k_() as Boolean
+function Anon_333db39a_get_emitted_k_() as Boolean
     return m.emitted
 end function
 
-sub Anon_5359e290_set_emitted_Z_k_(value as Boolean)
+sub Anon_333db39a_set_emitted_Z_k_(value as Boolean)
     m.emitted = value
 end sub
 
-function Anon_144e466d_create_Anon_k_(this_0 as Object) as Object
+function Anon_3552ccb6_create_Anon_k_(this_0 as Object) as Object
     this = {}
-    this.__type = "Anon_144e466d"
-    this.__proto = ["Anon_144e466d", "Iterator"]
+    this.__type = "Anon_3552ccb6"
+    this.__proto = ["Anon_3552ccb6", "Iterator"]
     this.__id = __kotlin_nextObjectId()
-    this.hasNext_k_ = Anon_144e466d_hasNext_k_
-    this.next_k_ = Anon_144e466d_next_k_
-    this.get_index = Anon_144e466d_get_index_k_
-    this.set_index = Anon_144e466d_set_index_I_k_
+    this.hasNext_k_ = Anon_3552ccb6_hasNext_k_
+    this.next_k_ = Anon_3552ccb6_next_k_
+    this.get_index = Anon_3552ccb6_get_index_k_
+    this.set_index = Anon_3552ccb6_set_index_I_k_
     this.index = 0
     this.this_0 = this_0
     return this
 end function
 
-function Anon_144e466d_hasNext_k_() as Boolean
+function Anon_3552ccb6_hasNext_k_() as Boolean
     return m.get_index() < m.this_0.get_size()
 end function
 
-function Anon_144e466d_next_k_() as Dynamic
+function Anon_3552ccb6_next_k_() as Dynamic
     if not m.hasNext_k_() then
         throw NoSuchElementException_create_k_()
     end if
@@ -642,34 +642,34 @@ function Anon_144e466d_next_k_() as Dynamic
 
 end function
 
-function Anon_144e466d_get_index_k_() as Integer
+function Anon_3552ccb6_get_index_k_() as Integer
     return m.index
 end function
 
-sub Anon_144e466d_set_index_I_k_(value as Integer)
+sub Anon_3552ccb6_set_index_I_k_(value as Integer)
     m.index = value
 end sub
 
-function Anon_78707c5b_create_Arr_k_(_matchArray as Object) as Object
+function Anon_55a42882_create_Arr_k_(_matchArray as Object) as Object
     this = {}
-    this.__type = "Anon_78707c5b"
-    this.__proto = ["Anon_78707c5b", "MatchGroupCollection", "Collection", "Iterable"]
+    this.__type = "Anon_55a42882"
+    this.__proto = ["Anon_55a42882", "MatchGroupCollection", "Collection", "Iterable"]
     this.__id = __kotlin_nextObjectId()
-    this.iterator_k_ = Anon_78707c5b_iterator_k_
-    this.get_I_k_ = Anon_78707c5b_get_I_k_
-    this.contains_MatchGroupN_k_ = Anon_78707c5b_contains_MatchGroupN_k_
-    this.containsAll_CollectionMatchGroupN_k_ = Anon_78707c5b_containsAll_CollectionMatchGroupN_k_
-    this.isEmpty_k_ = Anon_78707c5b_isEmpty_k_
-    this.get_size = Anon_78707c5b_get_size_k_
+    this.iterator_k_ = Anon_55a42882_iterator_k_
+    this.get_I_k_ = Anon_55a42882_get_I_k_
+    this.contains_MatchGroupN_k_ = Anon_55a42882_contains_MatchGroupN_k_
+    this.containsAll_CollectionMatchGroupN_k_ = Anon_55a42882_containsAll_CollectionMatchGroupN_k_
+    this.isEmpty_k_ = Anon_55a42882_isEmpty_k_
+    this.get_size = Anon_55a42882_get_size_k_
     this._matchArray = _matchArray
     return this
 end function
 
-function Anon_78707c5b_iterator_k_() as Object
-    return Anon_144e466d_create_Anon_k_(m)
+function Anon_55a42882_iterator_k_() as Object
+    return Anon_3552ccb6_create_Anon_k_(m)
 end function
 
-function Anon_78707c5b_get_I_k_(index as Integer) as Dynamic
+function Anon_55a42882_get_I_k_(index as Integer) as Dynamic
     if index >= m._matchArray.count() then
         return invalid
     end if
@@ -684,7 +684,7 @@ function Anon_78707c5b_get_I_k_(index as Integer) as Dynamic
 
 end function
 
-function Anon_78707c5b_contains_MatchGroupN_k_(element as Dynamic) as Boolean
+function Anon_55a42882_contains_MatchGroupN_k_(element as Dynamic) as Boolean
     progression = until_rI_I_k_(0, m.get_size())
     inductionVariable = progression.get_first()
     last = progression.get_last()
@@ -712,7 +712,7 @@ function Anon_78707c5b_contains_MatchGroupN_k_(element as Dynamic) as Boolean
     return false
 end function
 
-function Anon_78707c5b_containsAll_CollectionMatchGroupN_k_(elements as Object) as Boolean
+function Anon_55a42882_containsAll_CollectionMatchGroupN_k_(elements as Object) as Boolean
     __iter_75 = elements.iterator_k_()
     while __iter_75.hasNext_k_()
         element = __iter_75.next_k_()
@@ -724,33 +724,33 @@ function Anon_78707c5b_containsAll_CollectionMatchGroupN_k_(elements as Object) 
     return true
 end function
 
-function Anon_78707c5b_isEmpty_k_() as Boolean
+function Anon_55a42882_isEmpty_k_() as Boolean
     return m.get_size() = 0
 end function
 
-function Anon_78707c5b_get_size_k_() as Integer
+function Anon_55a42882_get_size_k_() as Integer
     return m._matchArray.count()
 end function
 
-function Anon_52e2e8bb_create_Anon_k_(this_0 as Object) as Object
+function Anon_72b6c5b4_create_Anon_k_(this_0 as Object) as Object
     this = {}
-    this.__type = "Anon_52e2e8bb"
-    this.__proto = ["Anon_52e2e8bb", "Iterator"]
+    this.__type = "Anon_72b6c5b4"
+    this.__proto = ["Anon_72b6c5b4", "Iterator"]
     this.__id = __kotlin_nextObjectId()
-    this.hasNext_k_ = Anon_52e2e8bb_hasNext_k_
-    this.next_k_ = Anon_52e2e8bb_next_k_
-    this.get_index = Anon_52e2e8bb_get_index_k_
-    this.set_index = Anon_52e2e8bb_set_index_I_k_
+    this.hasNext_k_ = Anon_72b6c5b4_hasNext_k_
+    this.next_k_ = Anon_72b6c5b4_next_k_
+    this.get_index = Anon_72b6c5b4_get_index_k_
+    this.set_index = Anon_72b6c5b4_set_index_I_k_
     this.index = 0
     this.this_0 = this_0
     return this
 end function
 
-function Anon_52e2e8bb_hasNext_k_() as Boolean
+function Anon_72b6c5b4_hasNext_k_() as Boolean
     return m.get_index() < m.this_0.get_size()
 end function
 
-function Anon_52e2e8bb_next_k_() as String
+function Anon_72b6c5b4_next_k_() as String
     if not m.hasNext_k_() then
         throw NoSuchElementException_create_k_()
     end if
@@ -760,41 +760,41 @@ function Anon_52e2e8bb_next_k_() as String
 
 end function
 
-function Anon_52e2e8bb_get_index_k_() as Integer
+function Anon_72b6c5b4_get_index_k_() as Integer
     return m.index
 end function
 
-sub Anon_52e2e8bb_set_index_I_k_(value as Integer)
+sub Anon_72b6c5b4_set_index_I_k_(value as Integer)
     m.index = value
 end sub
 
-function Anon_44aec2db_create_I_Anon_k_(_index as Integer, this_0 as Object) as Object
+function Anon_227e568f_create_I_Anon_k_(_index as Integer, this_0 as Object) as Object
     this = {}
-    this.__type = "Anon_44aec2db"
-    this.__proto = ["Anon_44aec2db", "ListIterator", "Iterator"]
+    this.__type = "Anon_227e568f"
+    this.__proto = ["Anon_227e568f", "ListIterator", "Iterator"]
     this.__id = __kotlin_nextObjectId()
-    this.hasNext_k_ = Anon_44aec2db_hasNext_k_
-    this.hasPrevious_k_ = Anon_44aec2db_hasPrevious_k_
-    this.next_k_ = Anon_44aec2db_next_k_
-    this.nextIndex_k_ = Anon_44aec2db_nextIndex_k_
-    this.previous_k_ = Anon_44aec2db_previous_k_
-    this.previousIndex_k_ = Anon_44aec2db_previousIndex_k_
-    this.get_currentIndex = Anon_44aec2db_get_currentIndex_k_
-    this.set_currentIndex = Anon_44aec2db_set_currentIndex_I_k_
+    this.hasNext_k_ = Anon_227e568f_hasNext_k_
+    this.hasPrevious_k_ = Anon_227e568f_hasPrevious_k_
+    this.next_k_ = Anon_227e568f_next_k_
+    this.nextIndex_k_ = Anon_227e568f_nextIndex_k_
+    this.previous_k_ = Anon_227e568f_previous_k_
+    this.previousIndex_k_ = Anon_227e568f_previousIndex_k_
+    this.get_currentIndex = Anon_227e568f_get_currentIndex_k_
+    this.set_currentIndex = Anon_227e568f_set_currentIndex_I_k_
     this.currentIndex = _index
     this.this_0 = this_0
     return this
 end function
 
-function Anon_44aec2db_hasNext_k_() as Boolean
+function Anon_227e568f_hasNext_k_() as Boolean
     return m.get_currentIndex() < m.this_0.get_size()
 end function
 
-function Anon_44aec2db_hasPrevious_k_() as Boolean
+function Anon_227e568f_hasPrevious_k_() as Boolean
     return m.get_currentIndex() > 0
 end function
 
-function Anon_44aec2db_next_k_() as String
+function Anon_227e568f_next_k_() as String
     if not m.hasNext_k_() then
         throw NoSuchElementException_create_k_()
     end if
@@ -804,48 +804,48 @@ function Anon_44aec2db_next_k_() as String
 
 end function
 
-function Anon_44aec2db_nextIndex_k_() as Integer
+function Anon_227e568f_nextIndex_k_() as Integer
     return m.get_currentIndex()
 end function
 
-function Anon_44aec2db_previous_k_() as String
+function Anon_227e568f_previous_k_() as String
     if not m.hasPrevious_k_() then
         throw NoSuchElementException_create_k_()
     end if
     return m.this_0.get_I_k_(m.get_currentIndex())
 end function
 
-function Anon_44aec2db_previousIndex_k_() as Integer
+function Anon_227e568f_previousIndex_k_() as Integer
     return m.get_currentIndex() - 1
 end function
 
-function Anon_44aec2db_get_currentIndex_k_() as Integer
+function Anon_227e568f_get_currentIndex_k_() as Integer
     return m.currentIndex
 end function
 
-sub Anon_44aec2db_set_currentIndex_I_k_(value as Integer)
+sub Anon_227e568f_set_currentIndex_I_k_(value as Integer)
     m.currentIndex = value
 end sub
 
-function Anon_76e5bdcf_create_Anon_k_(this_0 as Object) as Object
+function Anon_3cd68940_create_Anon_k_(this_0 as Object) as Object
     this = {}
-    this.__type = "Anon_76e5bdcf"
-    this.__proto = ["Anon_76e5bdcf", "Iterator"]
+    this.__type = "Anon_3cd68940"
+    this.__proto = ["Anon_3cd68940", "Iterator"]
     this.__id = __kotlin_nextObjectId()
-    this.hasNext_k_ = Anon_76e5bdcf_hasNext_k_
-    this.next_k_ = Anon_76e5bdcf_next_k_
-    this.get_index = Anon_76e5bdcf_get_index_k_
-    this.set_index = Anon_76e5bdcf_set_index_I_k_
+    this.hasNext_k_ = Anon_3cd68940_hasNext_k_
+    this.next_k_ = Anon_3cd68940_next_k_
+    this.get_index = Anon_3cd68940_get_index_k_
+    this.set_index = Anon_3cd68940_set_index_I_k_
     this.index = 0
     this.this_0 = this_0
     return this
 end function
 
-function Anon_76e5bdcf_hasNext_k_() as Boolean
+function Anon_3cd68940_hasNext_k_() as Boolean
     return m.get_index() < m.this_0.get_size()
 end function
 
-function Anon_76e5bdcf_next_k_() as String
+function Anon_3cd68940_next_k_() as String
     if not m.hasNext_k_() then
         throw NoSuchElementException_create_k_()
     end if
@@ -855,41 +855,41 @@ function Anon_76e5bdcf_next_k_() as String
 
 end function
 
-function Anon_76e5bdcf_get_index_k_() as Integer
+function Anon_3cd68940_get_index_k_() as Integer
     return m.index
 end function
 
-sub Anon_76e5bdcf_set_index_I_k_(value as Integer)
+sub Anon_3cd68940_set_index_I_k_(value as Integer)
     m.index = value
 end sub
 
-function Anon_7d753aad_create_I_Anon_k_(_index as Integer, this_0 as Object) as Object
+function Anon_359a6a1_create_I_Anon_k_(_index as Integer, this_0 as Object) as Object
     this = {}
-    this.__type = "Anon_7d753aad"
-    this.__proto = ["Anon_7d753aad", "ListIterator", "Iterator"]
+    this.__type = "Anon_359a6a1"
+    this.__proto = ["Anon_359a6a1", "ListIterator", "Iterator"]
     this.__id = __kotlin_nextObjectId()
-    this.hasNext_k_ = Anon_7d753aad_hasNext_k_
-    this.hasPrevious_k_ = Anon_7d753aad_hasPrevious_k_
-    this.next_k_ = Anon_7d753aad_next_k_
-    this.nextIndex_k_ = Anon_7d753aad_nextIndex_k_
-    this.previous_k_ = Anon_7d753aad_previous_k_
-    this.previousIndex_k_ = Anon_7d753aad_previousIndex_k_
-    this.get_currentIndex = Anon_7d753aad_get_currentIndex_k_
-    this.set_currentIndex = Anon_7d753aad_set_currentIndex_I_k_
+    this.hasNext_k_ = Anon_359a6a1_hasNext_k_
+    this.hasPrevious_k_ = Anon_359a6a1_hasPrevious_k_
+    this.next_k_ = Anon_359a6a1_next_k_
+    this.nextIndex_k_ = Anon_359a6a1_nextIndex_k_
+    this.previous_k_ = Anon_359a6a1_previous_k_
+    this.previousIndex_k_ = Anon_359a6a1_previousIndex_k_
+    this.get_currentIndex = Anon_359a6a1_get_currentIndex_k_
+    this.set_currentIndex = Anon_359a6a1_set_currentIndex_I_k_
     this.currentIndex = _index
     this.this_0 = this_0
     return this
 end function
 
-function Anon_7d753aad_hasNext_k_() as Boolean
+function Anon_359a6a1_hasNext_k_() as Boolean
     return m.get_currentIndex() < m.this_0.get_size()
 end function
 
-function Anon_7d753aad_hasPrevious_k_() as Boolean
+function Anon_359a6a1_hasPrevious_k_() as Boolean
     return m.get_currentIndex() > 0
 end function
 
-function Anon_7d753aad_next_k_() as String
+function Anon_359a6a1_next_k_() as String
     if not m.hasNext_k_() then
         throw NoSuchElementException_create_k_()
     end if
@@ -899,48 +899,48 @@ function Anon_7d753aad_next_k_() as String
 
 end function
 
-function Anon_7d753aad_nextIndex_k_() as Integer
+function Anon_359a6a1_nextIndex_k_() as Integer
     return m.get_currentIndex()
 end function
 
-function Anon_7d753aad_previous_k_() as String
+function Anon_359a6a1_previous_k_() as String
     if not m.hasPrevious_k_() then
         throw NoSuchElementException_create_k_()
     end if
     return m.this_0.get_I_k_(m.get_currentIndex())
 end function
 
-function Anon_7d753aad_previousIndex_k_() as Integer
+function Anon_359a6a1_previousIndex_k_() as Integer
     return m.get_currentIndex() - 1
 end function
 
-function Anon_7d753aad_get_currentIndex_k_() as Integer
+function Anon_359a6a1_get_currentIndex_k_() as Integer
     return m.currentIndex
 end function
 
-sub Anon_7d753aad_set_currentIndex_I_k_(value as Integer)
+sub Anon_359a6a1_set_currentIndex_I_k_(value as Integer)
     m.currentIndex = value
 end sub
 
-function Anon_26a3f0ab_create_Anon_k_(this_0 as Object) as Object
+function Anon_790c07cc_create_Anon_k_(this_0 as Object) as Object
     this = {}
-    this.__type = "Anon_26a3f0ab"
-    this.__proto = ["Anon_26a3f0ab", "Iterator"]
+    this.__type = "Anon_790c07cc"
+    this.__proto = ["Anon_790c07cc", "Iterator"]
     this.__id = __kotlin_nextObjectId()
-    this.hasNext_k_ = Anon_26a3f0ab_hasNext_k_
-    this.next_k_ = Anon_26a3f0ab_next_k_
-    this.get_index = Anon_26a3f0ab_get_index_k_
-    this.set_index = Anon_26a3f0ab_set_index_I_k_
+    this.hasNext_k_ = Anon_790c07cc_hasNext_k_
+    this.next_k_ = Anon_790c07cc_next_k_
+    this.get_index = Anon_790c07cc_get_index_k_
+    this.set_index = Anon_790c07cc_set_index_I_k_
     this.index = 0
     this.this_0 = this_0
     return this
 end function
 
-function Anon_26a3f0ab_hasNext_k_() as Boolean
+function Anon_790c07cc_hasNext_k_() as Boolean
     return m.get_index() < m.this_0.get_size()
 end function
 
-function Anon_26a3f0ab_next_k_() as String
+function Anon_790c07cc_next_k_() as String
     if not m.hasNext_k_() then
         throw NoSuchElementException_create_k_()
     end if
@@ -950,41 +950,41 @@ function Anon_26a3f0ab_next_k_() as String
 
 end function
 
-function Anon_26a3f0ab_get_index_k_() as Integer
+function Anon_790c07cc_get_index_k_() as Integer
     return m.index
 end function
 
-sub Anon_26a3f0ab_set_index_I_k_(value as Integer)
+sub Anon_790c07cc_set_index_I_k_(value as Integer)
     m.index = value
 end sub
 
-function Anon_1a2be0bc_create_I_Anon_k_(_index as Integer, this_0 as Object) as Object
+function Anon_283ee5e4_create_I_Anon_k_(_index as Integer, this_0 as Object) as Object
     this = {}
-    this.__type = "Anon_1a2be0bc"
-    this.__proto = ["Anon_1a2be0bc", "ListIterator", "Iterator"]
+    this.__type = "Anon_283ee5e4"
+    this.__proto = ["Anon_283ee5e4", "ListIterator", "Iterator"]
     this.__id = __kotlin_nextObjectId()
-    this.hasNext_k_ = Anon_1a2be0bc_hasNext_k_
-    this.hasPrevious_k_ = Anon_1a2be0bc_hasPrevious_k_
-    this.next_k_ = Anon_1a2be0bc_next_k_
-    this.nextIndex_k_ = Anon_1a2be0bc_nextIndex_k_
-    this.previous_k_ = Anon_1a2be0bc_previous_k_
-    this.previousIndex_k_ = Anon_1a2be0bc_previousIndex_k_
-    this.get_currentIndex = Anon_1a2be0bc_get_currentIndex_k_
-    this.set_currentIndex = Anon_1a2be0bc_set_currentIndex_I_k_
+    this.hasNext_k_ = Anon_283ee5e4_hasNext_k_
+    this.hasPrevious_k_ = Anon_283ee5e4_hasPrevious_k_
+    this.next_k_ = Anon_283ee5e4_next_k_
+    this.nextIndex_k_ = Anon_283ee5e4_nextIndex_k_
+    this.previous_k_ = Anon_283ee5e4_previous_k_
+    this.previousIndex_k_ = Anon_283ee5e4_previousIndex_k_
+    this.get_currentIndex = Anon_283ee5e4_get_currentIndex_k_
+    this.set_currentIndex = Anon_283ee5e4_set_currentIndex_I_k_
     this.currentIndex = _index
     this.this_0 = this_0
     return this
 end function
 
-function Anon_1a2be0bc_hasNext_k_() as Boolean
+function Anon_283ee5e4_hasNext_k_() as Boolean
     return m.get_currentIndex() < m.this_0.get_size()
 end function
 
-function Anon_1a2be0bc_hasPrevious_k_() as Boolean
+function Anon_283ee5e4_hasPrevious_k_() as Boolean
     return m.get_currentIndex() > 0
 end function
 
-function Anon_1a2be0bc_next_k_() as String
+function Anon_283ee5e4_next_k_() as String
     if not m.hasNext_k_() then
         throw NoSuchElementException_create_k_()
     end if
@@ -994,59 +994,59 @@ function Anon_1a2be0bc_next_k_() as String
 
 end function
 
-function Anon_1a2be0bc_nextIndex_k_() as Integer
+function Anon_283ee5e4_nextIndex_k_() as Integer
     return m.get_currentIndex()
 end function
 
-function Anon_1a2be0bc_previous_k_() as String
+function Anon_283ee5e4_previous_k_() as String
     if not m.hasPrevious_k_() then
         throw NoSuchElementException_create_k_()
     end if
     return m.this_0.get_I_k_(m.get_currentIndex())
 end function
 
-function Anon_1a2be0bc_previousIndex_k_() as Integer
+function Anon_283ee5e4_previousIndex_k_() as Integer
     return m.get_currentIndex() - 1
 end function
 
-function Anon_1a2be0bc_get_currentIndex_k_() as Integer
+function Anon_283ee5e4_get_currentIndex_k_() as Integer
     return m.currentIndex
 end function
 
-sub Anon_1a2be0bc_set_currentIndex_I_k_(value as Integer)
+sub Anon_283ee5e4_set_currentIndex_I_k_(value as Integer)
     m.currentIndex = value
 end sub
 
-function Anon_49cb7d64_create_I_Arr_I_k_(_nestedSubSize as Integer, _matchArray as Object, _actualFromIndex as Integer) as Object
+function Anon_181c263b_create_I_Arr_I_k_(_nestedSubSize as Integer, _matchArray as Object, _actualFromIndex as Integer) as Object
     this = {}
-    this.__type = "Anon_49cb7d64"
-    this.__proto = ["Anon_49cb7d64", "List", "Collection", "Iterable"]
+    this.__type = "Anon_181c263b"
+    this.__proto = ["Anon_181c263b", "List", "Collection", "Iterable"]
     this.__id = __kotlin_nextObjectId()
-    this.get_I_k_ = Anon_49cb7d64_get_I_k_
-    this.indexOf_Str_k_ = Anon_49cb7d64_indexOf_Str_k_
-    this.lastIndexOf_Str_k_ = Anon_49cb7d64_lastIndexOf_Str_k_
-    this.isEmpty_k_ = Anon_49cb7d64_isEmpty_k_
-    this.contains_Str_k_ = Anon_49cb7d64_contains_Str_k_
-    this.containsAll_CollectionStr_k_ = Anon_49cb7d64_containsAll_CollectionStr_k_
-    this.iterator_k_ = Anon_49cb7d64_iterator_k_
-    this.listIterator_k_ = Anon_49cb7d64_listIterator_k_
-    this.listIterator_I_k_ = Anon_49cb7d64_listIterator_I_k_
-    this.subList_I_I_k_ = Anon_49cb7d64_subList_I_I_k_
-    this.get_size = Anon_49cb7d64_get_size_k_
+    this.get_I_k_ = Anon_181c263b_get_I_k_
+    this.indexOf_Str_k_ = Anon_181c263b_indexOf_Str_k_
+    this.lastIndexOf_Str_k_ = Anon_181c263b_lastIndexOf_Str_k_
+    this.isEmpty_k_ = Anon_181c263b_isEmpty_k_
+    this.contains_Str_k_ = Anon_181c263b_contains_Str_k_
+    this.containsAll_CollectionStr_k_ = Anon_181c263b_containsAll_CollectionStr_k_
+    this.iterator_k_ = Anon_181c263b_iterator_k_
+    this.listIterator_k_ = Anon_181c263b_listIterator_k_
+    this.listIterator_I_k_ = Anon_181c263b_listIterator_I_k_
+    this.subList_I_I_k_ = Anon_181c263b_subList_I_I_k_
+    this.get_size = Anon_181c263b_get_size_k_
     this.size = _nestedSubSize
     this._matchArray = _matchArray
     this._actualFromIndex = _actualFromIndex
     return this
 end function
 
-function Anon_49cb7d64_get_I_k_(index as Integer) as String
+function Anon_181c263b_get_I_k_(index as Integer) as String
     if (index < 0) or (index >= m.get_size()) then
         throw IndexOutOfBoundsException_create_k_()
     end if
     return m._matchArray[m._actualFromIndex + index]
 end function
 
-function Anon_49cb7d64_indexOf_Str_k_(element as String) as Integer
+function Anon_181c263b_indexOf_Str_k_(element as String) as Integer
     progression = until_rI_I_k_(0, m.get_size())
     inductionVariable = progression.get_first()
     last = progression.get_last()
@@ -1074,7 +1074,7 @@ function Anon_49cb7d64_indexOf_Str_k_(element as String) as Integer
     return -1
 end function
 
-function Anon_49cb7d64_lastIndexOf_Str_k_(element as String) as Integer
+function Anon_181c263b_lastIndexOf_Str_k_(element as String) as Integer
     inductionVariable = m.get_size() - 1
     if 0 <= inductionVariable then
                 i = inductionVariable
@@ -1100,15 +1100,15 @@ function Anon_49cb7d64_lastIndexOf_Str_k_(element as String) as Integer
     return -1
 end function
 
-function Anon_49cb7d64_isEmpty_k_() as Boolean
+function Anon_181c263b_isEmpty_k_() as Boolean
     return m.get_size() = 0
 end function
 
-function Anon_49cb7d64_contains_Str_k_(element as String) as Boolean
+function Anon_181c263b_contains_Str_k_(element as String) as Boolean
     return m.indexOf_Str_k_(element) >= 0
 end function
 
-function Anon_49cb7d64_containsAll_CollectionStr_k_(elements as Object) as Boolean
+function Anon_181c263b_containsAll_CollectionStr_k_(elements as Object) as Boolean
     __iter_82 = elements.iterator_k_()
     while __iter_82.hasNext_k_()
         element = __iter_82.next_k_()
@@ -1120,62 +1120,62 @@ function Anon_49cb7d64_containsAll_CollectionStr_k_(elements as Object) as Boole
     return true
 end function
 
-function Anon_49cb7d64_iterator_k_() as Object
-    return Anon_26a3f0ab_create_Anon_k_(m)
+function Anon_181c263b_iterator_k_() as Object
+    return Anon_790c07cc_create_Anon_k_(m)
 end function
 
-function Anon_49cb7d64_listIterator_k_() as Object
+function Anon_181c263b_listIterator_k_() as Object
     return m.listIterator_I_k_(0)
 end function
 
-function Anon_49cb7d64_listIterator_I_k_(index as Integer) as Object
+function Anon_181c263b_listIterator_I_k_(index as Integer) as Object
     if (index < 0) or (index > m.get_size()) then
         throw IndexOutOfBoundsException_create_k_()
     end if
-    return Anon_1a2be0bc_create_I_Anon_k_(index, m)
+    return Anon_283ee5e4_create_I_Anon_k_(index, m)
 end function
 
-function Anon_49cb7d64_subList_I_I_k_(fromIndex as Integer, toIndex as Integer) as Object
+function Anon_181c263b_subList_I_I_k_(fromIndex as Integer, toIndex as Integer) as Object
     if ((fromIndex < 0) or (toIndex > m.get_size())) or (fromIndex > toIndex) then
         throw IndexOutOfBoundsException_create_k_()
     end if
     return emptyList_k_()
 end function
 
-function Anon_49cb7d64_get_size_k_() as Integer
+function Anon_181c263b_get_size_k_() as Integer
     return m.size
 end function
 
-function Anon_258a435c_create_I_Arr_I_k_(_subSize as Integer, _matchArray as Object, _outerFromIndex as Integer) as Object
+function Anon_160b430b_create_I_Arr_I_k_(_subSize as Integer, _matchArray as Object, _outerFromIndex as Integer) as Object
     this = {}
-    this.__type = "Anon_258a435c"
-    this.__proto = ["Anon_258a435c", "List", "Collection", "Iterable"]
+    this.__type = "Anon_160b430b"
+    this.__proto = ["Anon_160b430b", "List", "Collection", "Iterable"]
     this.__id = __kotlin_nextObjectId()
-    this.get_I_k_ = Anon_258a435c_get_I_k_
-    this.indexOf_Str_k_ = Anon_258a435c_indexOf_Str_k_
-    this.lastIndexOf_Str_k_ = Anon_258a435c_lastIndexOf_Str_k_
-    this.isEmpty_k_ = Anon_258a435c_isEmpty_k_
-    this.contains_Str_k_ = Anon_258a435c_contains_Str_k_
-    this.containsAll_CollectionStr_k_ = Anon_258a435c_containsAll_CollectionStr_k_
-    this.iterator_k_ = Anon_258a435c_iterator_k_
-    this.listIterator_k_ = Anon_258a435c_listIterator_k_
-    this.listIterator_I_k_ = Anon_258a435c_listIterator_I_k_
-    this.subList_I_I_k_ = Anon_258a435c_subList_I_I_k_
-    this.get_size = Anon_258a435c_get_size_k_
+    this.get_I_k_ = Anon_160b430b_get_I_k_
+    this.indexOf_Str_k_ = Anon_160b430b_indexOf_Str_k_
+    this.lastIndexOf_Str_k_ = Anon_160b430b_lastIndexOf_Str_k_
+    this.isEmpty_k_ = Anon_160b430b_isEmpty_k_
+    this.contains_Str_k_ = Anon_160b430b_contains_Str_k_
+    this.containsAll_CollectionStr_k_ = Anon_160b430b_containsAll_CollectionStr_k_
+    this.iterator_k_ = Anon_160b430b_iterator_k_
+    this.listIterator_k_ = Anon_160b430b_listIterator_k_
+    this.listIterator_I_k_ = Anon_160b430b_listIterator_I_k_
+    this.subList_I_I_k_ = Anon_160b430b_subList_I_I_k_
+    this.get_size = Anon_160b430b_get_size_k_
     this.size = _subSize
     this._matchArray = _matchArray
     this._outerFromIndex = _outerFromIndex
     return this
 end function
 
-function Anon_258a435c_get_I_k_(index as Integer) as String
+function Anon_160b430b_get_I_k_(index as Integer) as String
     if (index < 0) or (index >= m.get_size()) then
         throw IndexOutOfBoundsException_create_k_()
     end if
     return m._matchArray[m._outerFromIndex + index]
 end function
 
-function Anon_258a435c_indexOf_Str_k_(element as String) as Integer
+function Anon_160b430b_indexOf_Str_k_(element as String) as Integer
     progression = until_rI_I_k_(0, m.get_size())
     inductionVariable = progression.get_first()
     last = progression.get_last()
@@ -1203,7 +1203,7 @@ function Anon_258a435c_indexOf_Str_k_(element as String) as Integer
     return -1
 end function
 
-function Anon_258a435c_lastIndexOf_Str_k_(element as String) as Integer
+function Anon_160b430b_lastIndexOf_Str_k_(element as String) as Integer
     inductionVariable = m.get_size() - 1
     if 0 <= inductionVariable then
                 i = inductionVariable
@@ -1229,15 +1229,15 @@ function Anon_258a435c_lastIndexOf_Str_k_(element as String) as Integer
     return -1
 end function
 
-function Anon_258a435c_isEmpty_k_() as Boolean
+function Anon_160b430b_isEmpty_k_() as Boolean
     return m.get_size() = 0
 end function
 
-function Anon_258a435c_contains_Str_k_(element as String) as Boolean
+function Anon_160b430b_contains_Str_k_(element as String) as Boolean
     return m.indexOf_Str_k_(element) >= 0
 end function
 
-function Anon_258a435c_containsAll_CollectionStr_k_(elements as Object) as Boolean
+function Anon_160b430b_containsAll_CollectionStr_k_(elements as Object) as Boolean
     __iter_83 = elements.iterator_k_()
     while __iter_83.hasNext_k_()
         element = __iter_83.next_k_()
@@ -1249,63 +1249,63 @@ function Anon_258a435c_containsAll_CollectionStr_k_(elements as Object) as Boole
     return true
 end function
 
-function Anon_258a435c_iterator_k_() as Object
-    return Anon_76e5bdcf_create_Anon_k_(m)
+function Anon_160b430b_iterator_k_() as Object
+    return Anon_3cd68940_create_Anon_k_(m)
 end function
 
-function Anon_258a435c_listIterator_k_() as Object
+function Anon_160b430b_listIterator_k_() as Object
     return m.listIterator_I_k_(0)
 end function
 
-function Anon_258a435c_listIterator_I_k_(index as Integer) as Object
+function Anon_160b430b_listIterator_I_k_(index as Integer) as Object
     if (index < 0) or (index > m.get_size()) then
         throw IndexOutOfBoundsException_create_k_()
     end if
-    return Anon_7d753aad_create_I_Anon_k_(index, m)
+    return Anon_359a6a1_create_I_Anon_k_(index, m)
 end function
 
-function Anon_258a435c_subList_I_I_k_(fromIndex as Integer, toIndex as Integer) as Object
+function Anon_160b430b_subList_I_I_k_(fromIndex as Integer, toIndex as Integer) as Object
     if ((fromIndex < 0) or (toIndex > m.get_size())) or (fromIndex > toIndex) then
         throw IndexOutOfBoundsException_create_k_()
     end if
     actualFromIndex = m._outerFromIndex + fromIndex
     actualToIndex = m._outerFromIndex + toIndex
     nestedSubSize = actualToIndex - actualFromIndex
-    return Anon_49cb7d64_create_I_Arr_I_k_(nestedSubSize, m._matchArray, actualFromIndex)
+    return Anon_181c263b_create_I_Arr_I_k_(nestedSubSize, m._matchArray, actualFromIndex)
 end function
 
-function Anon_258a435c_get_size_k_() as Integer
+function Anon_160b430b_get_size_k_() as Integer
     return m.size
 end function
 
-function Anon_27576014_create_Arr_k_(_matchArray as Object) as Object
+function Anon_2a996df9_create_Arr_k_(_matchArray as Object) as Object
     this = {}
-    this.__type = "Anon_27576014"
-    this.__proto = ["Anon_27576014", "List", "Collection", "Iterable"]
+    this.__type = "Anon_2a996df9"
+    this.__proto = ["Anon_2a996df9", "List", "Collection", "Iterable"]
     this.__id = __kotlin_nextObjectId()
-    this.get_I_k_ = Anon_27576014_get_I_k_
-    this.indexOf_Str_k_ = Anon_27576014_indexOf_Str_k_
-    this.lastIndexOf_Str_k_ = Anon_27576014_lastIndexOf_Str_k_
-    this.isEmpty_k_ = Anon_27576014_isEmpty_k_
-    this.contains_Str_k_ = Anon_27576014_contains_Str_k_
-    this.containsAll_CollectionStr_k_ = Anon_27576014_containsAll_CollectionStr_k_
-    this.iterator_k_ = Anon_27576014_iterator_k_
-    this.listIterator_k_ = Anon_27576014_listIterator_k_
-    this.listIterator_I_k_ = Anon_27576014_listIterator_I_k_
-    this.subList_I_I_k_ = Anon_27576014_subList_I_I_k_
-    this.get_size = Anon_27576014_get_size_k_
+    this.get_I_k_ = Anon_2a996df9_get_I_k_
+    this.indexOf_Str_k_ = Anon_2a996df9_indexOf_Str_k_
+    this.lastIndexOf_Str_k_ = Anon_2a996df9_lastIndexOf_Str_k_
+    this.isEmpty_k_ = Anon_2a996df9_isEmpty_k_
+    this.contains_Str_k_ = Anon_2a996df9_contains_Str_k_
+    this.containsAll_CollectionStr_k_ = Anon_2a996df9_containsAll_CollectionStr_k_
+    this.iterator_k_ = Anon_2a996df9_iterator_k_
+    this.listIterator_k_ = Anon_2a996df9_listIterator_k_
+    this.listIterator_I_k_ = Anon_2a996df9_listIterator_I_k_
+    this.subList_I_I_k_ = Anon_2a996df9_subList_I_I_k_
+    this.get_size = Anon_2a996df9_get_size_k_
     this._matchArray = _matchArray
     return this
 end function
 
-function Anon_27576014_get_I_k_(index as Integer) as String
+function Anon_2a996df9_get_I_k_(index as Integer) as String
     if (index < 0) or (index >= m._matchArray.count()) then
         throw IndexOutOfBoundsException_create_StrN_k_((("Index " + __kotlin_numToStr_I_k_(index)) + " out of bounds for size ") + __kotlin_numToStr_I_k_(m.get_size()))
     end if
     return m._matchArray[index]
 end function
 
-function Anon_27576014_indexOf_Str_k_(element as String) as Integer
+function Anon_2a996df9_indexOf_Str_k_(element as String) as Integer
     progression = until_rI_I_k_(0, m.get_size())
     inductionVariable = progression.get_first()
     last = progression.get_last()
@@ -1333,7 +1333,7 @@ function Anon_27576014_indexOf_Str_k_(element as String) as Integer
     return -1
 end function
 
-function Anon_27576014_lastIndexOf_Str_k_(element as String) as Integer
+function Anon_2a996df9_lastIndexOf_Str_k_(element as String) as Integer
     inductionVariable = m.get_size() - 1
     if 0 <= inductionVariable then
                 i = inductionVariable
@@ -1359,15 +1359,15 @@ function Anon_27576014_lastIndexOf_Str_k_(element as String) as Integer
     return -1
 end function
 
-function Anon_27576014_isEmpty_k_() as Boolean
+function Anon_2a996df9_isEmpty_k_() as Boolean
     return m.get_size() = 0
 end function
 
-function Anon_27576014_contains_Str_k_(element as String) as Boolean
+function Anon_2a996df9_contains_Str_k_(element as String) as Boolean
     return m.indexOf_Str_k_(element) >= 0
 end function
 
-function Anon_27576014_containsAll_CollectionStr_k_(elements as Object) as Boolean
+function Anon_2a996df9_containsAll_CollectionStr_k_(elements as Object) as Boolean
     __iter_84 = elements.iterator_k_()
     while __iter_84.hasNext_k_()
         element = __iter_84.next_k_()
@@ -1379,49 +1379,49 @@ function Anon_27576014_containsAll_CollectionStr_k_(elements as Object) as Boole
     return true
 end function
 
-function Anon_27576014_iterator_k_() as Object
-    return Anon_52e2e8bb_create_Anon_k_(m)
+function Anon_2a996df9_iterator_k_() as Object
+    return Anon_72b6c5b4_create_Anon_k_(m)
 end function
 
-function Anon_27576014_listIterator_k_() as Object
+function Anon_2a996df9_listIterator_k_() as Object
     return m.listIterator_I_k_(0)
 end function
 
-function Anon_27576014_listIterator_I_k_(index as Integer) as Object
+function Anon_2a996df9_listIterator_I_k_(index as Integer) as Object
     if (index < 0) or (index > m.get_size()) then
         throw IndexOutOfBoundsException_create_k_()
     end if
-    return Anon_44aec2db_create_I_Anon_k_(index, m)
+    return Anon_227e568f_create_I_Anon_k_(index, m)
 end function
 
-function Anon_27576014_subList_I_I_k_(fromIndex as Integer, toIndex as Integer) as Object
+function Anon_2a996df9_subList_I_I_k_(fromIndex as Integer, toIndex as Integer) as Object
     if ((fromIndex < 0) or (toIndex > m.get_size())) or (fromIndex > toIndex) then
         throw IndexOutOfBoundsException_create_k_()
     end if
     outerFromIndex = fromIndex
     subSize = toIndex - fromIndex
-    return Anon_258a435c_create_I_Arr_I_k_(subSize, m._matchArray, outerFromIndex)
+    return Anon_160b430b_create_I_Arr_I_k_(subSize, m._matchArray, outerFromIndex)
 end function
 
-function Anon_27576014_get_size_k_() as Integer
+function Anon_2a996df9_get_size_k_() as Integer
     return m._matchArray.count()
 end function
 
-function Anon_38cab2f5_create_I_Arr_Str_Regex_k_(_matchIndex as Integer, _matchArray as Object, _input as String, this_0 as Object) as Object
+function Anon_3d50f3c_create_I_Arr_Str_Regex_k_(_matchIndex as Integer, _matchArray as Object, _input as String, this_0 as Object) as Object
     this = {}
-    this.__type = "Anon_38cab2f5"
-    this.__proto = ["Anon_38cab2f5", "MatchResult"]
+    this.__type = "Anon_3d50f3c"
+    this.__proto = ["Anon_3d50f3c", "MatchResult"]
     this.__id = __kotlin_nextObjectId()
-    this.next_k_ = Anon_38cab2f5_next_k_
-    this.get_range = Anon_38cab2f5_get_range_k_
-    this.get_value = Anon_38cab2f5_get_value_k_
-    this.get_groups = Anon_38cab2f5_get_groups_k_
-    this.get_groupValues_ = Anon_38cab2f5_get_groupValues__k_
-    this.set_groupValues_ = Anon_38cab2f5_set_groupValues__ListStrN_k_
-    this.get_groupValues = Anon_38cab2f5_get_groupValues_k_
+    this.next_k_ = Anon_3d50f3c_next_k_
+    this.get_range = Anon_3d50f3c_get_range_k_
+    this.get_value = Anon_3d50f3c_get_value_k_
+    this.get_groups = Anon_3d50f3c_get_groups_k_
+    this.get_groupValues_ = Anon_3d50f3c_get_groupValues__k_
+    this.set_groupValues_ = Anon_3d50f3c_set_groupValues__ListStrN_k_
+    this.get_groupValues = Anon_3d50f3c_get_groupValues_k_
     this.range = until_rI_I_k_(_matchIndex, _matchIndex + Len(_matchArray[0]))
     this.value = _matchArray[0]
-    this.groups = Anon_78707c5b_create_Arr_k_(_matchArray)
+    this.groups = Anon_55a42882_create_Arr_k_(_matchArray)
     this.groupValues_ = invalid
     this._matchArray = _matchArray
     this._input = _input
@@ -1429,7 +1429,7 @@ function Anon_38cab2f5_create_I_Arr_Str_Regex_k_(_matchIndex as Integer, _matchA
     return this
 end function
 
-function Anon_38cab2f5_next_k_() as Dynamic
+function Anon_3d50f3c_next_k_() as Dynamic
     __when_tmp3 = invalid
     if m.get_range().isEmpty_k_() then
         __when_tmp3 = (m.get_range().get_start() + 1)
@@ -1444,29 +1444,29 @@ function Anon_38cab2f5_next_k_() as Dynamic
     return m.this_0.find_CharSequence_I_k_(m._input, nextStartIndex)
 end function
 
-function Anon_38cab2f5_get_range_k_() as Object
+function Anon_3d50f3c_get_range_k_() as Object
     return m.range
 end function
 
-function Anon_38cab2f5_get_value_k_() as String
+function Anon_3d50f3c_get_value_k_() as String
     return m.value
 end function
 
-function Anon_38cab2f5_get_groups_k_() as Object
+function Anon_3d50f3c_get_groups_k_() as Object
     return m.groups
 end function
 
-function Anon_38cab2f5_get_groupValues__k_() as Dynamic
+function Anon_3d50f3c_get_groupValues__k_() as Dynamic
     return m.groupValues_
 end function
 
-sub Anon_38cab2f5_set_groupValues__ListStrN_k_(value as Dynamic)
+sub Anon_3d50f3c_set_groupValues__ListStrN_k_(value as Dynamic)
     m.groupValues_ = value
 end sub
 
-function Anon_38cab2f5_get_groupValues_k_() as Object
+function Anon_3d50f3c_get_groupValues_k_() as Object
     if m.get_groupValues_() = invalid then
-        m.set_groupValues_(Anon_27576014_create_Arr_k_(m._matchArray))
+        m.set_groupValues_(Anon_2a996df9_create_Arr_k_(m._matchArray))
     end if
     return m.get_groupValues_()
 end function

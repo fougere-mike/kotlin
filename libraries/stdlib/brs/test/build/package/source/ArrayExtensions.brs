@@ -477,7 +477,7 @@ function contentToString_rCharArrayN_k_(m as Dynamic) as String
         item = indexedObject.get_I_k_(inductionVariable)
         inductionVariable = (inductionVariable + 1)
 
-        list.add_AnyN_k_(item.toString())
+        list.add_AnyN_k_(item)
 
     end while
 

@@ -3,11 +3,11 @@ function toLowerCase_rC_k_(m as Object) as Object
 end function
 
 function lowercaseChar_rC_k_(m as Object) as Object
-    return lowercase_rC_k_(m).get_I_k_(0)
+    return Mid(lowercase_rC_k_(m), 0 + 1, 1)
 end function
 
 function lowercase_rC_k_(m as Object) as String
-    return LCase(m.toString())
+    return LCase(m)
 end function
 
 function toUpperCase_rC_k_(m as Object) as Object
@@ -20,14 +20,14 @@ function uppercaseChar_rC_k_(m as Object) as Object
     if Len(uppercase) > 1 then
         __when_tmp0 = m
     else if true then
-        __when_tmp0 = uppercase.get_I_k_(0)
+        __when_tmp0 = Mid(uppercase, 0 + 1, 1)
     end if
     return __when_tmp0
 
 end function
 
 function uppercase_rC_k_(m as Object) as String
-    return UCase(m.toString())
+    return UCase(m)
 end function
 
 function titlecaseChar_rC_k_(m as Object) as Object
@@ -82,7 +82,7 @@ function isTitleCase_rC_k_(m as Object) as Boolean
 end function
 
 function isISOControl_rC_k_(m as Object) as Boolean
-    return ((m <= "") <= 0) or rangeTo_rC_C_k_("", "").contains_C_k_(m)
+    return (__kotlin_stringCompare(m, "") <= 0) or rangeTo_rC_C_k_("", "").contains_C_k_(m)
 end function
 
 function isWhitespace_rC_k_(m as Object) as Boolean

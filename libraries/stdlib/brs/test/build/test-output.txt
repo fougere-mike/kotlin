@@ -1,103 +1,102 @@
-test_pass"}
-{"suite":"Sequence","test":"all","timestamp":1767667278025,"type":"test_start"}
-{"duration_ms":1,"suite":"Sequence","test":"all","type":"test_pass"}
-{"suite":"Sequence","test":"any","timestamp":1767667278027,"type":"test_start"}
-{"duration_ms":1,"suite":"Sequence","test":"any","type":"test_pass"}
-{"suite":"Sequence","test":"none","timestamp":1767667278028,"type":"test_start"}
-{"duration_ms":1,"suite":"Sequence","test":"none","type":"test_pass"}
-{"suite":"Sequence","test":"fold","timestamp":1767667278030,"type":"test_start"}
-{"duration_ms":0,"suite":"Sequence","test":"fold","type":"test_pass"}
-{"suite":"Sequence","test":"reduce","timestamp":1767667278032,"type":"test_start"}
-{"duration_ms":0,"suite":"Sequence","test":"reduce","type":"test_pass"}
-{"suite":"Sequence","test":"first","timestamp":1767667278033,"type":"test_start"}
-{"duration_ms":0,"suite":"Sequence","test":"first","type":"test_pass"}
-{"suite":"Sequence","test":"last","timestamp":1767667278035,"type":"test_start"}
-{"duration_ms":1,"suite":"Sequence","test":"last","type":"test_pass"}
-{"suite":"Sequence","test":"firstOrNull","timestamp":1767667278036,"type":"test_start"}
-{"duration_ms":1,"suite":"Sequence","test":"firstOrNull","type":"test_pass"}
-{"suite":"Sequence","test":"single","timestamp":1767667278038,"type":"test_start"}
-{"duration_ms":1,"suite":"Sequence","test":"single","type":"test_pass"}
-{"suite":"Sequence","test":"elementAt","timestamp":1767667278040,"type":"test_start"}
-{"duration_ms":1,"suite":"Sequence","test":"elementAt","type":"test_pass"}
-{"suite":"Sequence","test":"elementAtOrNull","timestamp":1767667278042,"type":"test_start"}
-{"duration_ms":0,"suite":"Sequence","test":"elementAtOrNull","type":"test_pass"}
-{"suite":"Sequence","test":"indexOf","timestamp":1767667278043,"type":"test_start"}
-{"duration_ms":1,"suite":"Sequence","test":"indexOf","type":"test_pass"}
-{"suite":"Sequence","test":"contains","timestamp":1767667278045,"type":"test_start"}
-{"duration_ms":1,"suite":"Sequence","test":"contains","type":"test_pass"}
-{"suite":"Sequence","test":"minMax","timestamp":1767667278047,"type":"test_start"}
-{"duration_ms":1,"suite":"Sequence","test":"minMax","type":"test_pass"}
-{"suite":"Sequence","test":"partition","timestamp":1767667278049,"type":"test_start"}
-{"duration_ms":1,"suite":"Sequence","test":"partition","type":"test_pass"}
-{"suite":"Sequence","test":"joinToString","timestamp":1767667278051,"type":"test_start"}
-{"duration_ms":2,"suite":"Sequence","test":"joinToString","type":"test_pass"}
-{"suite":"Sequence","test":"onEach","timestamp":1767667278054,"type":"test_start"}
-{"duration_ms":1,"suite":"Sequence","test":"onEach","type":"test_pass"}
-{"suite":"Sequence","test":"withIndex","timestamp":1767667278056,"type":"test_start"}
-{"duration_ms":1,"suite":"Sequence","test":"withIndex","type":"test_pass"}
-{"suite":"Sequence","test":"mapNotNull","timestamp":1767667278058,"type":"test_start"}
-{"duration_ms":1,"suite":"Sequence","test":"mapNotNull","type":"test_pass"}
-{"suite":"Sequence","test":"scan","timestamp":1767667278060,"type":"test_start"}
-{"duration_ms":1,"suite":"Sequence","test":"scan","type":"test_pass"}
-{"suite":"Sequence","test":"forEach","timestamp":1767667278062,"type":"test_start"}
-{"duration_ms":1,"suite":"Sequence","test":"forEach","type":"test_pass"}
-{"suite":"Sequence","test":"forEachIndexed","timestamp":1767667278064,"type":"test_start"}
-{"duration_ms":1,"suite":"Sequence","test":"forEachIndexed","type":"test_pass"}
-{"suite":"Sequence","test":"find","timestamp":1767667278065,"type":"test_start"}
-{"duration_ms":1,"suite":"Sequence","test":"find","type":"test_pass"}
-{"suite":"Sequence","test":"indexOfFirst","timestamp":1767667278067,"type":"test_start"}
-{"duration_ms":1,"suite":"Sequence","test":"indexOfFirst","type":"test_pass"}
-{"suite":"Sequence","test":"firstNotNullOf","timestamp":1767667278069,"type":"test_start"}
-{"duration_ms":0,"suite":"Sequence","test":"firstNotNullOf","type":"test_pass"}
-{"suite":"Sequence","test":"groupBy with transform","timestamp":1767667278071,"type":"test_start"}
-{"duration_ms":1,"suite":"Sequence","test":"groupBy with transform","type":"test_pass"}
-{"duration_ms":72,"failed":0,"ignored":0,"passed":36,"suite":"Sequence","type":"suite_end"}
-{"suite":"Unsigned Basics","timestamp":1767667278074,"type":"suite_start"}
-{"suite":"Unsigned Basics","test":"UInt basics","timestamp":1767667278075,"type":"test_start"}
-{"duration_ms":1,"suite":"Unsigned Basics","test":"UInt basics","type":"test_pass"}
-{"suite":"Unsigned Basics","test":"UInt comparison","timestamp":1767667278076,"type":"test_start"}
-{"duration_ms":0,"suite":"Unsigned Basics","test":"UInt comparison","type":"test_pass"}
-{"suite":"Unsigned Basics","test":"UInt arithmetic","timestamp":1767667278078,"type":"test_start"}
-{"duration_ms":1,"suite":"Unsigned Basics","test":"UInt arithmetic","type":"test_pass"}
-{"suite":"Unsigned Basics","test":"ULong basics","timestamp":1767667278080,"type":"test_start"}
-{"duration_ms":1,"suite":"Unsigned Basics","test":"ULong basics","type":"test_pass"}
-{"suite":"Unsigned Basics","test":"UByte basics","timestamp":1767667278082,"type":"test_start"}
-{"duration_ms":1,"suite":"Unsigned Basics","test":"UByte basics","type":"test_pass"}
-{"suite":"Unsigned Basics","test":"UShort basics","timestamp":1767667278084,"type":"test_start"}
-{"duration_ms":1,"suite":"Unsigned Basics","test":"UShort basics","type":"test_pass"}
-{"duration_ms":12,"failed":0,"ignored":0,"passed":6,"suite":"Unsigned Basics","type":"suite_end"}
-{"suite":"Unsigned Ranges","timestamp":1767667278087,"type":"suite_start"}
-{"suite":"Unsigned Ranges","test":"UIntRange","timestamp":1767667278087,"type":"test_start"}
-{"duration_ms":2,"suite":"Unsigned Ranges","test":"UIntRange","type":"test_pass"}
-{"suite":"Unsigned Ranges","test":"UIntRange until","timestamp":1767667278090,"type":"test_start"}
-{"duration_ms":2,"suite":"Unsigned Ranges","test":"UIntRange until","type":"test_pass"}
-{"suite":"Unsigned Ranges","test":"UIntRange downTo","timestamp":1767667278093,"type":"test_start"}
+"StringBuilder","test":"charAt","timestamp":1767726578734,"type":"test_start"}
+{"duration_ms":0,"suite":"StringBuilder","test":"charAt","type":"test_pass"}
+{"suite":"StringBuilder","test":"substring","timestamp":1767726578735,"type":"test_start"}
+{"duration_ms":0,"suite":"StringBuilder","test":"substring","type":"test_pass"}
+{"suite":"StringBuilder","test":"reverse","timestamp":1767726578737,"type":"test_start"}
+{"duration_ms":1,"suite":"StringBuilder","test":"reverse","type":"test_pass"}
+{"suite":"StringBuilder","test":"clear","timestamp":1767726578739,"type":"test_start"}
+{"duration_ms":0,"suite":"StringBuilder","test":"clear","type":"test_pass"}
+{"suite":"StringBuilder","test":"isEmpty","timestamp":1767726578740,"type":"test_start"}
+{"duration_ms":0,"suite":"StringBuilder","test":"isEmpty","type":"test_pass"}
+{"suite":"StringBuilder","test":"isNotEmpty","timestamp":1767726578741,"type":"test_start"}
+{"duration_ms":0,"suite":"StringBuilder","test":"isNotEmpty","type":"test_pass"}
+{"suite":"StringBuilder","test":"appendLine","timestamp":1767726578743,"type":"test_start"}
+{"duration_ms":0,"suite":"StringBuilder","test":"appendLine","type":"test_pass"}
+{"duration_ms":22,"failed":0,"ignored":0,"passed":15,"suite":"StringBuilder","type":"suite_end"}
+{"suite":"String Extensions","timestamp":1767726578745,"type":"suite_start"}
+{"suite":"String Extensions","test":"length","timestamp":1767726578746,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"length","type":"test_pass"}
+{"suite":"String Extensions","test":"isEmpty and isNotEmpty","timestamp":1767726578747,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"isEmpty and isNotEmpty","type":"test_pass"}
+{"suite":"String Extensions","test":"isBlank and isNotBlank","timestamp":1767726578748,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"isBlank and isNotBlank","type":"test_pass"}
+{"suite":"String Extensions","test":"uppercase","timestamp":1767726578750,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"uppercase","type":"test_pass"}
+{"suite":"String Extensions","test":"lowercase","timestamp":1767726578751,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"lowercase","type":"test_pass"}
+{"suite":"String Extensions","test":"substring","timestamp":1767726578752,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"substring","type":"test_pass"}
+{"suite":"String Extensions","test":"contains","timestamp":1767726578754,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"contains","type":"test_pass"}
+{"suite":"String Extensions","test":"startsWith","timestamp":1767726578755,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"startsWith","type":"test_pass"}
+{"suite":"String Extensions","test":"endsWith","timestamp":1767726578756,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"endsWith","type":"test_pass"}
+{"suite":"String Extensions","test":"indexOf","timestamp":1767726578758,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"indexOf","type":"test_pass"}
+{"suite":"String Extensions","test":"lastIndexOf","timestamp":1767726578759,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"lastIndexOf","type":"test_pass"}
+{"suite":"String Extensions","test":"padStart","timestamp":1767726578760,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"padStart","type":"test_pass"}
+{"suite":"String Extensions","test":"padEnd","timestamp":1767726578762,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"padEnd","type":"test_pass"}
+{"suite":"String Extensions","test":"get char","timestamp":1767726578763,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"get char","type":"test_pass"}
+{"suite":"String Extensions","test":"equals","timestamp":1767726578765,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"equals","type":"test_pass"}
+{"suite":"String Extensions","test":"compareTo","timestamp":1767726578766,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"compareTo","type":"test_pass"}
+{"suite":"String Extensions","test":"isNullOrEmpty","timestamp":1767726578767,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"isNullOrEmpty","type":"test_pass"}
+{"suite":"String Extensions","test":"repeat","timestamp":1767726578769,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"repeat","type":"test_pass"}
+{"suite":"String Extensions","test":"lastIndex","timestamp":1767726578770,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"lastIndex","type":"test_pass"}
+{"duration_ms":26,"failed":0,"ignored":0,"passed":19,"suite":"String Extensions","type":"suite_end"}
+{"suite":"Standard Functions","timestamp":1767726578772,"type":"suite_start"}
+{"suite":"Standard Functions","test":"let returns lambda result","timestamp":1767726578773,"type":"test_start"}
+{"duration_ms":0,"suite":"Standard Functions","test":"let returns lambda result","type":"test_pass"}
+{"suite":"Standard Functions","test":"let with null","timestamp":1767726578774,"type":"test_start"}
+{"duration_ms":0,"suite":"Standard Functions","test":"let with null","type":"test_pass"}
+{"suite":"Standard Functions","test":"let chain","timestamp":1767726578775,"type":"test_start"}
+{"duration_ms":0,"suite":"Standard Functions","test":"let chain","type":"test_pass"}
+{"suite":"Standard Functions","test":"run returns lambda result","timestamp":1767726578777,"type":"test_start"}
+{"duration_ms":0,"suite":"Standard Functions","test":"run returns lambda result","type":"test_pass"}
 
 BrightScript Micro Debugger.
 Enter any BrightScript statement, debug commands, or HELP.
 
 
 Current Function:
-601:  function downTo_rUInt_UInt_k_(m as Object, to_ as Object) as Object
-602:*     return UIntProgression_Companion_getInstance().fromClosedRange(m, to_, -1)
-603:  end function
+030:              assertEquals_AnyN_AnyN_StrN_k_(11, result, invalid)
+031:          end function})
+031:  })
+032:          m.test_Str_Function0V_k_("run returns lambda result", {invoke: function() as Void
+032:  function() as Void
+033:              result = run_rAnyN_Function1_k_("hello", {invoke: function(m as String) as Integer
+033:  function(m as String) as Integer
+034:                  return Len(m)
+035:              end function})
+035:  })
+036:              assertEquals_AnyN_AnyN_StrN_k_(5, result, invalid)
+037:          end function})
+037:  })
+038:*         m.test_Str_Function0V_k_("run without receiver", {_this_suite: _this_suite, invoke: function() as Void
+038:* function() as Void
+039:              result = run_rAnyN_Function1_k_(m._this_suite, {invoke: function(m as Object) as Integer
+039:  function(m as Object) as Integer
+040:                  a = 1
+041:                  b = 2
+042:                  return a + b
 Source Digest(s): 
-pkg:    dev 1.0.0 e8debdd0 KotlinStdlibTests
-pkg: 632126 1.1.5 1f7df9df libplayready
+pkg:    dev 1.0.0 42a7e45e KotlinStdlibTests
+pkg: 632126 1.1.5 b6a75414 libplayready
 
-Member function not found in BrightScript Component or interface. (runtime error &hf4) in pkg:/source/URanges.brs(602)
+Use of uninitialized variable. (runtime error &he9) in pkg:/source/StandardTest.brs(38)
 Backtrace:
-#9  Function downto_ruint_uint_k_(m As Object, to_ As Object) As Object
-   file/line: pkg:/source/URanges.brs(602)
-#8  Function $anon_b11() As Void
-   file/line: pkg:/source/UnsignedTest.brs(64)
-#7  Function jsontestadapter_test_str_z_function0v_k_(name As String, ignored As Boolean, testfn As Object) As Void
-   file/line: pkg:/source/JsonTestAdapter.brs(93)
-#6  Function testrunner_test_str_function0v_k_(name As String, testfn As Object) As Void
-   file/line: pkg:/source/TestRunner.brs(41)
-#5  Function $anon_b0e(m As Object) As Void
-   file/line: pkg:/source/UnsignedTest.brs(69)
-#4  Function $anon_926() As Void
+#5  Function $anon_842(m As Object) As Void
+   file/line: pkg:/source/StandardTest.brs(38)
+#4  Function $anon_924() As Void
    file/line: pkg:/source/TestRunner.brs(36)
 #3  Function jsontestadapter_suite_str_z_function0v_k_(name As String, ignored As Boolean, suitefn As Object) As Void
    file/line: pkg:/source/JsonTestAdapter.brs(79)
@@ -108,10 +107,13 @@ Backtrace:
 #0  Function main() As Void
    file/line: pkg:/source/TestMain.brs(18)
 Local Variables:
-m                roAssociativeArray refcnt=1 count:63
-to_              roAssociativeArray refcnt=1 count:63
+m                roAssociativeArray refcnt=21 count:19
 global           Interface:ifGlobal
-m                roAssociativeArray refcnt=4 count:11
+m                roAssociativeArray refcnt=3 count:1
+_this_suite      <uninitialized>
+name             <uninitialized>
+value            <uninitialized>
+other            <uninitialized>
 
 Brightscript Debugger> Note: GC - Found 77 orphaned objects (objects in a circular ref loop).
-01-06 02:43:10.144 [bs.ndk.proc.exit] plugin=dev pid=29292 status=exit retval=30 user requested=1 process name='SdkLauncher' exit code=EXIT_BRIGHTSCRIPT_UNK_FUNC
+01-06 19:11:35.420 app  [bs.ndk.proc.exit] plugin=dev pid=2796 status=exit retval=12 user requested=1 process name='SdkLauncher' exit code=EXIT_BRIGHTSCRIPT_CRASH

@@ -215,7 +215,7 @@ function floor_D_k_(x as Double) as Double
 end function
 
 function truncate_D_k_(x as Double) as Double
-    return Int(x)
+    return Fix(x)
 end function
 
 function round_D_k_(x as Double) as Double

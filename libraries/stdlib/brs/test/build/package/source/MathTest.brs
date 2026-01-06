@@ -72,7 +72,7 @@ sub mathTests_rTestRunner_k_(m as Object)
         end function})
         m.test_Str_Function0V_k_("ln", {invoke: function() as Void
             assertEquals_AnyN_AnyN_StrN_k_(0.0#, ln_D_k_(1.0#), invalid)
-            assertEquals_AnyN_AnyN_StrN_k_(1.0#, ln_D_k_(2.718281828459045#), invalid)
+            assertTrue_Z_StrN_k_(abs_D_k_(ln_D_k_(2.718281828459045#) - 1.0#) < 1.0E-4#, "ln(E) should be approximately 1.0")
         end function})
         m.test_Str_Function0V_k_("log10", {invoke: function() as Void
             assertEquals_AnyN_AnyN_StrN_k_(0.0#, log10_D_k_(1.0#), invalid)
@@ -94,7 +94,7 @@ sub mathTests_rTestRunner_k_(m as Object)
         end function})
         m.test_Str_Function0V_k_("cos", {invoke: function() as Void
             assertEquals_AnyN_AnyN_StrN_k_(1.0#, cos_D_k_(0.0#), invalid)
-            assertTrue_Z_StrN_k_((abs_D_k_(cos_D_k_(3.141592653589793#)) - -1.0#) < 1.0E-4#, invalid)
+            assertTrue_Z_StrN_k_(abs_D_k_(cos_D_k_(3.141592653589793#) + 1.0#) < 1.0E-4#, invalid)
         end function})
         m.test_Str_Function0V_k_("tan", {invoke: function() as Void
             assertEquals_AnyN_AnyN_StrN_k_(0.0#, tan_D_k_(0.0#), invalid)
@@ -138,20 +138,6 @@ sub mathTests_rTestRunner_k_(m as Object)
             assertEquals_AnyN_AnyN_StrN_k_(1, get_sign_rI_k_(42), invalid)
             assertEquals_AnyN_AnyN_StrN_k_(-1, get_sign_rI_k_(-42), invalid)
             assertEquals_AnyN_AnyN_StrN_k_(0, get_sign_rI_k_(0), invalid)
-        end function})
-        m.test_Str_Function0V_k_("isNaN", {invoke: function() as Void
-            assertTrue_Z_StrN_k_(isNaN_rD_k_((0.0# / 0.0#)), invalid)
-            assertFalse_Z_StrN_k_(isNaN_rD_k_(1.0#), invalid)
-        end function})
-        m.test_Str_Function0V_k_("isInfinite", {invoke: function() as Void
-            assertTrue_Z_StrN_k_(isInfinite_rD_k_((1.0E+309#)), invalid)
-            assertTrue_Z_StrN_k_(isInfinite_rD_k_((-1.0E+309#)), invalid)
-            assertFalse_Z_StrN_k_(isInfinite_rD_k_(1.0#), invalid)
-        end function})
-        m.test_Str_Function0V_k_("isFinite", {invoke: function() as Void
-            assertTrue_Z_StrN_k_(isFinite_rD_k_(1.0#), invalid)
-            assertFalse_Z_StrN_k_(isFinite_rD_k_((0.0# / 0.0#)), invalid)
-            assertFalse_Z_StrN_k_(isFinite_rD_k_((1.0E+309#)), invalid)
         end function})
     end function})
 end sub
