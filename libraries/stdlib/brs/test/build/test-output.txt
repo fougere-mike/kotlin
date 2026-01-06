@@ -1,0 +1,117 @@
+test_pass"}
+{"suite":"Sequence","test":"all","timestamp":1767667278025,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"all","type":"test_pass"}
+{"suite":"Sequence","test":"any","timestamp":1767667278027,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"any","type":"test_pass"}
+{"suite":"Sequence","test":"none","timestamp":1767667278028,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"none","type":"test_pass"}
+{"suite":"Sequence","test":"fold","timestamp":1767667278030,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"fold","type":"test_pass"}
+{"suite":"Sequence","test":"reduce","timestamp":1767667278032,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"reduce","type":"test_pass"}
+{"suite":"Sequence","test":"first","timestamp":1767667278033,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"first","type":"test_pass"}
+{"suite":"Sequence","test":"last","timestamp":1767667278035,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"last","type":"test_pass"}
+{"suite":"Sequence","test":"firstOrNull","timestamp":1767667278036,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"firstOrNull","type":"test_pass"}
+{"suite":"Sequence","test":"single","timestamp":1767667278038,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"single","type":"test_pass"}
+{"suite":"Sequence","test":"elementAt","timestamp":1767667278040,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"elementAt","type":"test_pass"}
+{"suite":"Sequence","test":"elementAtOrNull","timestamp":1767667278042,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"elementAtOrNull","type":"test_pass"}
+{"suite":"Sequence","test":"indexOf","timestamp":1767667278043,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"indexOf","type":"test_pass"}
+{"suite":"Sequence","test":"contains","timestamp":1767667278045,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"contains","type":"test_pass"}
+{"suite":"Sequence","test":"minMax","timestamp":1767667278047,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"minMax","type":"test_pass"}
+{"suite":"Sequence","test":"partition","timestamp":1767667278049,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"partition","type":"test_pass"}
+{"suite":"Sequence","test":"joinToString","timestamp":1767667278051,"type":"test_start"}
+{"duration_ms":2,"suite":"Sequence","test":"joinToString","type":"test_pass"}
+{"suite":"Sequence","test":"onEach","timestamp":1767667278054,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"onEach","type":"test_pass"}
+{"suite":"Sequence","test":"withIndex","timestamp":1767667278056,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"withIndex","type":"test_pass"}
+{"suite":"Sequence","test":"mapNotNull","timestamp":1767667278058,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"mapNotNull","type":"test_pass"}
+{"suite":"Sequence","test":"scan","timestamp":1767667278060,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"scan","type":"test_pass"}
+{"suite":"Sequence","test":"forEach","timestamp":1767667278062,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"forEach","type":"test_pass"}
+{"suite":"Sequence","test":"forEachIndexed","timestamp":1767667278064,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"forEachIndexed","type":"test_pass"}
+{"suite":"Sequence","test":"find","timestamp":1767667278065,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"find","type":"test_pass"}
+{"suite":"Sequence","test":"indexOfFirst","timestamp":1767667278067,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"indexOfFirst","type":"test_pass"}
+{"suite":"Sequence","test":"firstNotNullOf","timestamp":1767667278069,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"firstNotNullOf","type":"test_pass"}
+{"suite":"Sequence","test":"groupBy with transform","timestamp":1767667278071,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"groupBy with transform","type":"test_pass"}
+{"duration_ms":72,"failed":0,"ignored":0,"passed":36,"suite":"Sequence","type":"suite_end"}
+{"suite":"Unsigned Basics","timestamp":1767667278074,"type":"suite_start"}
+{"suite":"Unsigned Basics","test":"UInt basics","timestamp":1767667278075,"type":"test_start"}
+{"duration_ms":1,"suite":"Unsigned Basics","test":"UInt basics","type":"test_pass"}
+{"suite":"Unsigned Basics","test":"UInt comparison","timestamp":1767667278076,"type":"test_start"}
+{"duration_ms":0,"suite":"Unsigned Basics","test":"UInt comparison","type":"test_pass"}
+{"suite":"Unsigned Basics","test":"UInt arithmetic","timestamp":1767667278078,"type":"test_start"}
+{"duration_ms":1,"suite":"Unsigned Basics","test":"UInt arithmetic","type":"test_pass"}
+{"suite":"Unsigned Basics","test":"ULong basics","timestamp":1767667278080,"type":"test_start"}
+{"duration_ms":1,"suite":"Unsigned Basics","test":"ULong basics","type":"test_pass"}
+{"suite":"Unsigned Basics","test":"UByte basics","timestamp":1767667278082,"type":"test_start"}
+{"duration_ms":1,"suite":"Unsigned Basics","test":"UByte basics","type":"test_pass"}
+{"suite":"Unsigned Basics","test":"UShort basics","timestamp":1767667278084,"type":"test_start"}
+{"duration_ms":1,"suite":"Unsigned Basics","test":"UShort basics","type":"test_pass"}
+{"duration_ms":12,"failed":0,"ignored":0,"passed":6,"suite":"Unsigned Basics","type":"suite_end"}
+{"suite":"Unsigned Ranges","timestamp":1767667278087,"type":"suite_start"}
+{"suite":"Unsigned Ranges","test":"UIntRange","timestamp":1767667278087,"type":"test_start"}
+{"duration_ms":2,"suite":"Unsigned Ranges","test":"UIntRange","type":"test_pass"}
+{"suite":"Unsigned Ranges","test":"UIntRange until","timestamp":1767667278090,"type":"test_start"}
+{"duration_ms":2,"suite":"Unsigned Ranges","test":"UIntRange until","type":"test_pass"}
+{"suite":"Unsigned Ranges","test":"UIntRange downTo","timestamp":1767667278093,"type":"test_start"}
+
+BrightScript Micro Debugger.
+Enter any BrightScript statement, debug commands, or HELP.
+
+
+Current Function:
+601:  function downTo_rUInt_UInt_k_(m as Object, to_ as Object) as Object
+602:*     return UIntProgression_Companion_getInstance().fromClosedRange(m, to_, -1)
+603:  end function
+Source Digest(s): 
+pkg:    dev 1.0.0 e8debdd0 KotlinStdlibTests
+pkg: 632126 1.1.5 1f7df9df libplayready
+
+Member function not found in BrightScript Component or interface. (runtime error &hf4) in pkg:/source/URanges.brs(602)
+Backtrace:
+#9  Function downto_ruint_uint_k_(m As Object, to_ As Object) As Object
+   file/line: pkg:/source/URanges.brs(602)
+#8  Function $anon_b11() As Void
+   file/line: pkg:/source/UnsignedTest.brs(64)
+#7  Function jsontestadapter_test_str_z_function0v_k_(name As String, ignored As Boolean, testfn As Object) As Void
+   file/line: pkg:/source/JsonTestAdapter.brs(93)
+#6  Function testrunner_test_str_function0v_k_(name As String, testfn As Object) As Void
+   file/line: pkg:/source/TestRunner.brs(41)
+#5  Function $anon_b0e(m As Object) As Void
+   file/line: pkg:/source/UnsignedTest.brs(69)
+#4  Function $anon_926() As Void
+   file/line: pkg:/source/TestRunner.brs(36)
+#3  Function jsontestadapter_suite_str_z_function0v_k_(name As String, ignored As Boolean, suitefn As Object) As Void
+   file/line: pkg:/source/JsonTestAdapter.brs(79)
+#2  Function testrunner_run_function1testrunnerv_k_(block As Object) As Void
+   file/line: pkg:/source/TestRunner.brs(59)
+#1  Function runtests_function1testrunnerv_k_(block As Object) As Void
+   file/line: pkg:/source/TestRunner.brs(3)
+#0  Function main() As Void
+   file/line: pkg:/source/TestMain.brs(18)
+Local Variables:
+m                roAssociativeArray refcnt=1 count:63
+to_              roAssociativeArray refcnt=1 count:63
+global           Interface:ifGlobal
+m                roAssociativeArray refcnt=4 count:11
+
+Brightscript Debugger> Note: GC - Found 77 orphaned objects (objects in a circular ref loop).
+01-06 02:43:10.144 [bs.ndk.proc.exit] plugin=dev pid=29292 status=exit retval=30 user requested=1 process name='SdkLauncher' exit code=EXIT_BRIGHTSCRIPT_UNK_FUNC
