@@ -173,9 +173,14 @@ echo "Package created: $PACKAGE_ZIP"
 echo "Contents:"
 unzip -l "$PACKAGE_ZIP" | head -20
 
-# Step 4: Start debug console capture BEFORE deploying
+# Step 4: Stop any running app and start debug console capture BEFORE deploying
 echo ""
 echo "Step 4: Starting debug console capture..."
+
+# Send Home keypress to stop any running app and clear stale logs from debug console
+echo "Stopping any running app..."
+curl -s -d '' "http://${ROKU_DEVICE_IP}:8060/keypress/Home" > /dev/null 2>&1 || true
+sleep 2
 
 # Clear any previous output
 rm -f "$TEST_OUTPUT" "$RESULTS_JSON"
@@ -265,6 +270,60 @@ if [[ ! -s "$TEST_OUTPUT" ]]; then
     fi
     exit 1
 fi
+
+# ============================================================================
+# STALE LOG DETECTION - CRITICAL
+# The Roku debug console accumulates logs across runs. If we see old timestamps,
+# we're looking at stale data and MUST fail fast.
+# ============================================================================
+echo "Validating log timestamps..."
+CURRENT_TIME=$(date +%s)
+CURRENT_YEAR=$(date +%Y)
+
+# Extract first timestamp from log (format: MM-DD HH:MM:SS.mmm)
+# Look for lines like "01-05 23:33:33.123"
+FIRST_LOG_TIMESTAMP=$(grep -oE '^[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}' "$TEST_OUTPUT" | head -1)
+
+if [[ -n "$FIRST_LOG_TIMESTAMP" ]]; then
+    # Parse the timestamp (MM-DD HH:MM:SS) and convert to epoch
+    # Roku logs don't include year, so we assume current year
+    LOG_MONTH=$(echo "$FIRST_LOG_TIMESTAMP" | cut -d'-' -f1)
+    LOG_DAY=$(echo "$FIRST_LOG_TIMESTAMP" | cut -d'-' -f2 | cut -d' ' -f1)
+    LOG_TIME=$(echo "$FIRST_LOG_TIMESTAMP" | cut -d' ' -f2)
+    LOG_DATETIME="${CURRENT_YEAR}-${LOG_MONTH}-${LOG_DAY} ${LOG_TIME}"
+
+    # Convert to epoch (macOS date command)
+    LOG_EPOCH=$(date -j -f "%Y-%m-%d %H:%M:%S" "$LOG_DATETIME" +%s 2>/dev/null || echo "0")
+
+    if [[ "$LOG_EPOCH" != "0" ]]; then
+        TIME_DIFF=$((CURRENT_TIME - LOG_EPOCH))
+
+        # If logs are more than 60 seconds old, they're stale
+        if [[ $TIME_DIFF -gt 60 ]]; then
+            echo ""
+            echo -e "${RED}╔══════════════════════════════════════════════════════════════╗${NC}"
+            echo -e "${RED}║  INFRASTRUCTURE FAILURE: STALE LOGS DETECTED                 ║${NC}"
+            echo -e "${RED}╚══════════════════════════════════════════════════════════════╝${NC}"
+            echo ""
+            echo -e "  Log timestamp:  ${YELLOW}$FIRST_LOG_TIMESTAMP${NC}"
+            echo -e "  Current time:   ${GREEN}$(date '+%m-%d %H:%M:%S')${NC}"
+            echo -e "  Age:            ${RED}${TIME_DIFF} seconds old${NC}"
+            echo ""
+            echo "The logs you're seeing are from a PREVIOUS test run."
+            echo "Your current changes ARE deployed, but old logs are in the buffer."
+            echo ""
+            echo "This is an INFRASTRUCTURE FAILURE. The Home keypress should have"
+            echo "cleared the buffer but didn't. Re-running the tests should fix this."
+            echo ""
+            echo -e "${YELLOW}DO NOT debug based on these logs - they are STALE.${NC}"
+            echo ""
+            exit 1
+        else
+            echo -e "  Log age: ${GREEN}${TIME_DIFF} seconds (OK)${NC}"
+        fi
+    fi
+fi
+echo ""
 
 # Show raw output for debugging
 echo "Captured $(wc -l < "$TEST_OUTPUT" | tr -d ' ') lines of output"

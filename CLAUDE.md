@@ -6,59 +6,23 @@ This is a fork of the Kotlin compiler that adds a BrightScript backend for Roku 
 
 ## MANDATORY BUILD RULES
 
-### ⚠️ CRITICAL: Stdlib Changes Require Nuclear Clean ⚠️
+### The ONE Command: `./rebuild.sh`
 
-**When editing ANY file in `libraries/stdlib/brs/` or `libraries/stdlib/brs-actual/`:**
-
-Gradle's incremental compilation and build cache DO NOT reliably detect stdlib source changes. Even `./rebuild.sh` will show "UP-TO-DATE" or "FROM-CACHE" when files changed. You MUST use this nuclear clean command:
+**For ANY change to compiler or stdlib code, run:**
 
 ```bash
-# REQUIRED for ALL stdlib changes - NO EXCEPTIONS
-rm -rf libraries/stdlib/build && \
-rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-brs && \
-rm -rf libraries/stdlib/brs/test/build && \
-./gradlew :kotlin-stdlib:compileKotlinBrs :kotlin-stdlib:brsBrsJar --no-build-cache --no-configuration-cache -Dorg.gradle.dependency.verification=off && \
-./gradlew publishBrsModulePublicationToMavenLocal --no-configuration-cache -Dorg.gradle.dependency.verification=off
+./rebuild.sh
 ```
 
-**The key flag is `--no-build-cache`** - without this, Gradle pulls from its remote/local build cache even if local files are deleted.
+That's it. This script:
+1. Automatically cleans all caches (build directories, Maven Local, Gradle cache)
+2. Uses `--no-build-cache` to prevent Gradle from pulling stale cached outputs
+3. Builds compiler fat JAR
+4. Regenerates stdlib klib
+5. Publishes everything to Maven Local
 
-**Why this matters:** There are FOUR separate caches that can hold stale stdlib code:
-1. `libraries/stdlib/build/` - Gradle's local build output
-2. Gradle build cache - Remote/local cache (bypassed only with `--no-build-cache`)
-3. `~/.m2/repository/.../kotlin-stdlib-brs` - Maven Local klib cache
-4. `libraries/stdlib/brs/test/build` - Test build extracts stdlib from klib
-
-If ANY of these are stale, your changes won't be tested. This has wasted HOURS of debugging time.
-
-### Compiler Changes
-
-**⚠️ If Gradle shows "UP-TO-DATE" or "FROM-CACHE" for compiler tasks after you made changes, your changes are NOT being built.**
-
-For compiler code changes (e.g., `compiler/ir/backend.brightscript/`), use this nuclear clean command:
-
-```bash
-# REQUIRED when compiler changes show UP-TO-DATE
-./gradlew --stop && \
-rm -rf ~/.gradle/caches/build-cache-1/* && \
-rm -rf compiler/ir/backend.brightscript/build && \
-rm -rf compiler/cli-brs/build && \
-rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-compiler-brs && \
-rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-brs && \
-./gradlew :compiler:backend.brightscript:compileKotlin :compiler:cli-brs:fatJar :kotlin-stdlib:compileKotlinBrs :kotlin-stdlib:brsBrsJar publishBrsModulePublicationToMavenLocal --no-build-cache --no-configuration-cache -Dorg.gradle.dependency.verification=off
-```
-
-**The key flags are:**
-- `--stop` - Kill Gradle daemons that may have cached classes in memory
-- `--no-build-cache` - Bypass Gradle's remote/local build cache
-- Deleting `~/.gradle/caches/build-cache-1/*` - Clear the local build cache
-
-If changes are simple and you want to try `./rebuild.sh` first, that's fine. But if it shows UP-TO-DATE for the module you changed, **immediately** use the nuclear clean above. Don't waste time debugging.
-
-The rebuild.sh script:
-- Builds the compiler fat JAR
-- Regenerates the stdlib klib (using the new compiler)
-- Publishes everything to Maven Local in the correct order
+**DO NOT** run manual cache-clearing commands. **DO NOT** run individual gradlew tasks.
+If `./rebuild.sh` doesn't work correctly, that's an **infrastructure failure** - fix the script.
 
 ### Testing with roku-test-app
 
@@ -67,12 +31,32 @@ The rebuild.sh script:
 cd ../roku-test-app && ./rebuild-all.sh --all
 ```
 
+## INFRASTRUCTURE FAILURE PROTOCOL
+
+When you see ANY of these, it is an **INFRASTRUCTURE FAILURE**:
+
+| Symptom | What It Means |
+|---------|---------------|
+| UP-TO-DATE for modules you changed | Build cache served stale output |
+| Stale timestamps in test output | Device logs from previous run |
+| Changes not in generated .brs files | Build didn't include your changes |
+| Test failures that don't match code | You're debugging the wrong version |
+
+**MANDATORY RESPONSE:**
+
+1. **STOP** - Do not debug based on stale data
+2. **FIX** - Update rebuild.sh or run-tests.sh to prevent this
+3. **DOCUMENT** - Add the fix to this file
+4. **NEVER** work around infrastructure problems with manual commands
+
+The tooling must work correctly. If it doesn't, fix the tooling.
+
 ## DO NOT
 
-- **DO NOT** run individual gradlew commands like `:compiler:cli-brs:fatJar` or `:kotlin-stdlib-brs-prebuilt:regenerateKlib`
-- **DO NOT** try to "save time" by skipping steps - you will waste MORE time debugging cache issues
-- **DO NOT** assume your change is "simple enough" to skip rebuild.sh
-- **DO NOT** run publish tasks without first running the full rebuild.sh
+- **DO NOT** run manual cache-clearing commands - rebuild.sh handles this
+- **DO NOT** run individual gradlew commands - use rebuild.sh
+- **DO NOT** debug test failures without verifying log timestamps first
+- **DO NOT** assume stale logs are showing your current code
 
 ## Compiler Architecture Context
 
@@ -269,44 +253,6 @@ This handles all the bootstrap phases automatically. After completion:
 
 ## Troubleshooting
 
-### Symptoms of Stale Cache
-
-- Changes not reflected in compiled output
-- Old error messages appearing
-- Behavior not matching source code
-- "Class not found" or missing symbol errors
-- Gradle shows "UP-TO-DATE" but your changes aren't in output
-- Generated .brs files don't contain your code changes
-
-### Solution: Nuclear Clean
-
-**For stdlib changes, ALWAYS use nuclear clean first:**
-
-```bash
-rm -rf libraries/stdlib/build/classes/kotlin/brs && \
-rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-brs && \
-rm -rf libraries/stdlib/brs/test/build && \
-./rebuild.sh
-```
-
-**For compiler changes that still show stale behavior:**
-
-```bash
-rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-compiler-brs
-rm -rf ~/.m2/repository/com/example/kotlin-roku
-./rebuild.sh
-```
-
-### DO NOT WASTE TIME
-
-If you edited stdlib and `./rebuild.sh` shows "UP-TO-DATE" for stdlib tasks, your changes are NOT being built. Stop immediately and run nuclear clean. Do not:
-- Try touching files to update timestamps
-- Try `--no-build-cache` flags
-- Try checking if klib has your changes
-- Spend time debugging why cache is stale
-
-Just run nuclear clean. It takes 30 seconds. Debugging cache issues takes hours.
-
 ### SSL Errors During Gradle Builds
 
 If you see SSL certificate errors, handshake failures, or connection reset errors during Gradle builds, **STOP and ask the user to turn off ZScaler**. This is the cause 99% of the time. Do not try to debug SSL issues yourself.
@@ -315,46 +261,12 @@ If you see SSL certificate errors, handshake failures, or connection reset error
 
 | What Changed | Run This |
 |--------------|----------|
-| Compiler backend only | `./rebuild.sh` (if UP-TO-DATE, use compiler nuclear clean) |
-| **Stdlib sources only** | **Stdlib nuclear clean command (see above)** |
-| **Both compiler AND stdlib** | **Must do BOTH nuclear cleans - see below** |
+| Compiler or stdlib code | `./rebuild.sh` |
 | Everything + test app | `cd ../roku-test-app && ./rebuild-all.sh --all` |
 | Plugin only (no compiler changes) | `cd ../roku-test-app && ./rebuild-all.sh --plugin --clean` |
+| Run stdlib tests | `./run-stdlib-tests.sh` |
 
-### ⚠️ Changed BOTH Compiler AND Stdlib? (VERY COMMON)
-
-When you edit BOTH compiler code AND stdlib code in the same session, you MUST do BOTH nuclear cleans. Running just one will leave stale code. Use this combined command:
-
-```bash
-# Step 1: Compiler nuclear clean
-./gradlew --stop && \
-rm -rf ~/.gradle/caches/build-cache-1/* && \
-rm -rf compiler/ir/backend.brightscript/build && \
-rm -rf compiler/cli-brs/build && \
-rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-compiler-brs
-
-# Step 2: Stdlib nuclear clean
-rm -rf libraries/stdlib/build && \
-rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-brs && \
-rm -rf libraries/stdlib/brs/test/build
-
-# Step 3: Rebuild everything with --no-build-cache
-./gradlew :compiler:backend.brightscript:compileKotlin :compiler:cli-brs:fatJar :kotlin-stdlib:compileKotlinBrs :kotlin-stdlib:brsBrsJar publishBrsModulePublicationToMavenLocal --no-build-cache --no-configuration-cache -Dorg.gradle.dependency.verification=off
-```
-
-**COMMON MISTAKE:** After changing compiler code, you run nuclear clean and rebuild. Then you change stdlib code and run `./rebuild.sh`. The stdlib shows UP-TO-DATE because Gradle's cache doesn't know the files changed. **Your stdlib changes are NOT built.** Always check if you edited stdlib files and run stdlib nuclear clean too.
-
-### Verifying Your Changes Are Actually Built
-
-After rebuilding, ALWAYS verify your changes are in the output before running tests:
-
-```bash
-# Check generated BrightScript for your changes
-grep -n "your_pattern" libraries/stdlib/brs/test/build/stdlib-runtime/*.brs
-
-# If the file doesn't exist or pattern not found, your changes are NOT built
-# Run nuclear clean and rebuild again
-```
+`./rebuild.sh` handles all cache cleaning automatically. No manual commands needed.
 
 ## Running Tests
 
@@ -398,27 +310,17 @@ export ROKU_PASSWORD=your_password
 ./run-stdlib-tests.sh --build-only
 ```
 
-**Important: Stale Device Logs**
+**Stale Log Detection (Automatic)**
 
-The test script reads from the Roku's debug console (port 8085), which accumulates logs across multiple runs. If you see errors in test output that don't match the current generated code:
+The test script automatically validates log timestamps and will **FAIL FAST** if logs are more than 60 seconds old. If you see:
 
-1. **Check the generated .brs files directly** - they are the source of truth:
-   ```bash
-   # View generated test files
-   ls libraries/stdlib/brs/test/build/brs/source/
+```
+╔══════════════════════════════════════════════════════════════╗
+║  INFRASTRUCTURE FAILURE: STALE LOGS DETECTED                 ║
+╚══════════════════════════════════════════════════════════════╝
+```
 
-   # Search for specific issues
-   grep -n "pattern" libraries/stdlib/brs/test/build/brs/source/*.brs
-   ```
-
-2. **Verify file timestamps** - ensure files were regenerated after your changes:
-   ```bash
-   ls -la libraries/stdlib/brs/test/build/brs/source/*.brs
-   ```
-
-3. **Reboot the Roku device** to clear accumulated logs, then re-run tests
-
-4. **Check test-output.txt timestamps** - log entries have timestamps like `12-08 17:08:55`. Compare these to when you made changes to determine if logs are stale.
+This means the logs you're seeing are from a PREVIOUS test run. Your current code IS deployed, but old logs are still in the buffer. Simply re-run the tests.
 
 The test output file is saved to: `libraries/stdlib/brs/test/build/test-output.txt`
 
@@ -473,4 +375,4 @@ cd ../roku-test-app && ./gradlew rokuTest
 | Stdlib tests (JSON) | `libraries/stdlib/brs/test/build/results.json` |
 | E2E tests (JSON) | `roku-test-app/build/test-results/roku/results.json` |
 | E2E tests (XML) | `roku-test-app/build/test-results/roku/results.xml` |
-- If the logs are stale, you must send the Home keypress to the roku to kill the app. Do not suggest rebooting the device, and do not give up when you see old logs.
+- The test script automatically detects and fails on stale logs. If it fails with "STALE LOGS DETECTED", simply re-run the tests.
