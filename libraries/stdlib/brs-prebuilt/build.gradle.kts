@@ -78,8 +78,14 @@ val regenerateKlib by tasks.registering(JavaExec::class) {
     inputs.dir(brsStdlibDir)
     inputs.dir(brsActualDir)
     // Track the compiler JAR as an input so changes to the compiler trigger a rebuild
-    inputs.file(brsCompilerFatJar).optional()
-    inputs.file(distCompilerJar).optional()
+    // Note: Only register the JAR that exists - inputs.file().optional() doesn't
+    // actually make the file optional for JavaExec tasks
+    if (brsCompilerFatJar.exists()) {
+        inputs.file(brsCompilerFatJar)
+    } else if (distCompilerJar.exists()) {
+        inputs.file(distCompilerJar)
+    }
+    // If neither exists, the doFirst block will fail with a clear error message
     outputs.file(outputKlib)
 }
 
