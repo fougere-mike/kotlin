@@ -4003,11 +4003,19 @@ class IrExpressionToBrsTransformer(
                     return receiver.accept(this, data)
                 }
                 // Unary minus/plus as method calls (when they don't have UMINUS/UPLUS origin)
+                // Only convert to unary operators if receiver is a primitive type.
+                // Non-primitive types (UInt, ULong, custom classes) need method calls.
                 "unaryMinus" -> {
-                    return BrsUnaryOp(BrsUnaryOperator.NEG, receiver.accept(this, data))
+                    if (receiver.type.isPrimitiveForArithmetic()) {
+                        return BrsUnaryOp(BrsUnaryOperator.NEG, receiver.accept(this, data))
+                    }
+                    // Fall through to normal method call handling for non-primitives
                 }
                 "unaryPlus" -> {
-                    return receiver.accept(this, data)  // No-op
+                    if (receiver.type.isPrimitiveForArithmetic()) {
+                        return receiver.accept(this, data)  // No-op for primitives
+                    }
+                    // Fall through to normal method call handling for non-primitives
                 }
                 // Boolean.not() - BrightScript uses prefix 'not' operator, not a method call
                 "not" -> {
@@ -4016,9 +4024,11 @@ class IrExpressionToBrsTransformer(
                     }
                 }
                 // Binary plus as method call (String.plus, etc.)
+                // Only convert to binary operator if receiver is a primitive type that supports +.
+                // Non-primitive types (UInt, ULong, custom classes) need method calls.
                 "plus" -> {
                     val arg = expression.getValueArgument(0)
-                    if (arg != null) {
+                    if (arg != null && receiver.type.isPrimitiveForArithmetic()) {
                         var left = receiver.accept(this, data)
                         var right = arg.accept(this, data)
 
@@ -4037,6 +4047,7 @@ class IrExpressionToBrsTransformer(
 
                         return BrsBinaryOp(left, BrsBinaryOperator.ADD, right)
                     }
+                    // Fall through to normal method call handling for non-primitives
                 }
                 // toString - handle primitives specially since BrightScript primitives don't have methods
                 "toString" -> {
@@ -4293,14 +4304,19 @@ class IrExpressionToBrsTransformer(
                     return BrsFunctionCall(BrsIdentifier(correctedFunctionName), args)
                 }
 
-                // Check if this is a call on a singleton object - use global function instead
+                // Check if this is a call on a singleton object
+                // Singleton methods that reference `m` (like property getters) need to be called
+                // as methods on the singleton instance, not as standalone functions.
                 val parentClass = function.parent as? IrClass
                 if (parentClass?.kind == ClassKind.OBJECT) {
-                    // For singleton objects, call the global function directly
                     val args = (0 until expression.valueArgumentsCount).mapNotNull { i ->
                         expression.getValueArgument(i)?.let { it.accept(this, data) }
                     }
-                    return BrsFunctionCall(BrsIdentifier(functionName), args.toMutableList())
+                    val singletonName = context.getBrsName(parentClass)
+                    val singletonInstance = BrsFunctionCall(BrsIdentifier("${singletonName}_getInstance"), mutableListOf())
+                    // Use sanitizeMethodName to match how methods are attached to objects
+                    val methodName = parent.sanitizeMethodName(function.name.asString())
+                    return BrsMethodCall(singletonInstance, methodName, args.toMutableList())
                 }
 
                 // Handle property getters and setters
@@ -4455,6 +4471,24 @@ class IrExpressionToBrsTransformer(
                 // Parameter uses default value - add invalid to preserve position
                 arguments.add(BrsInvalidLiteral())
             }
+        }
+
+        // Handle companion object/singleton function calls without a dispatch receiver.
+        // When calling a method on a companion object statically (e.g., UInt.MIN_VALUE),
+        // the IR doesn't provide a dispatch receiver, but the generated getter function
+        // expects `m` to be the companion instance. We need to call the function as a method
+        // on the singleton instance.
+        val parentClass = function.parent as? IrClass
+        if (expression.dispatchReceiver == null && parentClass?.kind == ClassKind.OBJECT) {
+            // This is a call on a singleton/companion object without a receiver.
+            // Call it as a method on the singleton instance.
+            val singletonName = context.getBrsName(parentClass)
+            val singletonInstance = BrsFunctionCall(BrsIdentifier("${singletonName}_getInstance"), mutableListOf())
+
+            // Use sanitizeMethodName to match how methods are attached to objects
+            val methodName = parent.sanitizeMethodName(function.name.asString())
+
+            return BrsMethodCall(singletonInstance, methodName, arguments)
         }
 
         return BrsFunctionCall(BrsIdentifier(functionName), arguments)

@@ -10,8 +10,25 @@ echo ""
 echo "See CLAUDE.md 'Bootstrap Architecture' section for details."
 echo ""
 
+# ============================================================================
+# CACHE CLEANUP - MANDATORY
+# Gradle's build cache is unreliable for detecting source changes.
+# We MUST clean these directories to ensure fresh builds.
+# ============================================================================
+echo "Cleaning caches to ensure fresh build..."
+rm -rf libraries/stdlib/build
+rm -rf libraries/stdlib/brs/test/build
+rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-brs
+rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-compiler-brs
+rm -rf compiler/ir/backend.brightscript/build
+rm -rf compiler/cli-brs/build
+echo "  Done."
+echo ""
+
 # Common flags
-FLAGS="--no-configuration-cache -Dorg.gradle.dependency.verification=off"
+# --no-build-cache is CRITICAL: without it, Gradle pulls from remote/local cache
+# even after we delete local build directories
+FLAGS="--no-build-cache --no-configuration-cache -Dorg.gradle.dependency.verification=off"
 
 # Local bootstrap flags - tells Gradle to use Maven Local instead of build/repo
 LOCAL_BOOTSTRAP_FLAGS="-Pbootstrap.local=true -Pbootstrap.local.path=$HOME/.m2/repository/"
