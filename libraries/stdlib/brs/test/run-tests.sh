@@ -173,11 +173,11 @@ echo "Package created: $PACKAGE_ZIP"
 echo "Contents:"
 unzip -l "$PACKAGE_ZIP" | head -20
 
-# Step 4: Stop any running app and start debug console capture BEFORE deploying
+# Step 4: Stop any running app
 echo ""
-echo "Step 4: Starting debug console capture..."
+echo "Step 4: Preparing device..."
 
-# Send Home keypress to stop any running app and clear stale logs from debug console
+# Send Home keypress to stop any running app
 echo "Stopping any running app..."
 curl -s -d '' "http://${ROKU_DEVICE_IP}:8060/keypress/Home" > /dev/null 2>&1 || true
 sleep 2
@@ -186,22 +186,7 @@ sleep 2
 rm -f "$TEST_OUTPUT" "$RESULTS_JSON"
 touch "$TEST_OUTPUT"
 
-# Connect to telnet debug port BEFORE deploying
-# This ensures we catch all output including early crashes
-echo "Connecting to debug console on port 8085..."
-
-# Use perl-based timeout for macOS compatibility (timeout command not available on macOS)
-# Start nc in background and capture its output
-(
-    # Run nc with a perl-based timeout
-    perl -e 'alarm 180; exec @ARGV' nc "$ROKU_DEVICE_IP" 8085 2>/dev/null || true
-) > "$TEST_OUTPUT" &
-NC_PID=$!
-
-# Give nc a moment to connect
-sleep 1
-
-# Step 5: Deploy to Roku device
+# Step 5: Deploy to Roku device FIRST, then connect to debug console
 echo ""
 echo "Step 5: Deploying to Roku device..."
 
@@ -221,11 +206,24 @@ else
     # Continue anyway - the app might still have installed
 fi
 
-# Give the app a moment to start
-sleep 2
+# Connect to debug console IMMEDIATELY after deploy
+# The app auto-starts on deploy, so we need to connect quickly to catch any crash
+echo ""
+echo "Step 6: Connecting to debug console..."
+
+READER_PID=""
+(
+    # Use perl alarm for macOS-compatible timeout (180 seconds)
+    # script -q captures output with line buffering (critical for crash capture)
+    perl -e 'alarm 180; exec @ARGV' script -q "$TEST_OUTPUT" nc "$ROKU_DEVICE_IP" 8085 2>/dev/null || true
+) &
+NC_PID=$!
+
+# Give nc a moment to connect and start receiving
+sleep 1
 
 echo ""
-echo "Step 6: Waiting for test output..."
+echo "Step 7: Waiting for test output..."
 
 # Wait for test completion marker or crash detection
 echo "Waiting for tests to complete..."
@@ -263,12 +261,48 @@ while [[ $ELAPSED -lt $TIMEOUT_SECONDS ]]; do
     fi
 done
 
-# Kill the nc process
+# Kill the nc/script process
 kill $NC_PID 2>/dev/null || true
+[[ -n "$READER_PID" ]] && kill $READER_PID 2>/dev/null || true
 wait $NC_PID 2>/dev/null || true
+[[ -n "$READER_PID" ]] && wait $READER_PID 2>/dev/null || true
+
+# Clean up any control characters from script output
+if [[ -f "$TEST_OUTPUT" ]]; then
+    # Remove carriage returns and other control chars that script adds
+    sed -i '' 's/\r//g' "$TEST_OUTPUT" 2>/dev/null || true
+fi
 
 if [[ $ELAPSED -ge $TIMEOUT_SECONDS ]]; then
     echo -e "${YELLOW}Warning: Timeout waiting for tests (${TIMEOUT_SECONDS}s)${NC}"
+
+    # Check if we got ANY runtime output at all
+    # The compile warnings start with "BRIGHTSCRIPT: WARNING:" and compile completion with "Compiled"
+    # If we ONLY have those and nothing else, app crashed on startup
+    RUNTIME_LINES=$(grep -v '^BRIGHTSCRIPT: WARNING:' "$TEST_OUTPUT" | grep -v 'Compiled ' | grep -v 'Displayed .* of .* warnings' | grep -v '^\s*$' | grep -v '\[scrpt\.' | grep -v '\[beacon\.' | wc -l | tr -d ' ')
+
+    if [[ "$RUNTIME_LINES" -lt 5 ]]; then
+        echo ""
+        echo -e "${RED}╔══════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${RED}║  EARLY CRASH: App crashed before producing test output       ║${NC}"
+        echo -e "${RED}╚══════════════════════════════════════════════════════════════╝${NC}"
+        echo ""
+        echo "The app compiled successfully but crashed immediately on startup."
+        echo "This usually indicates:"
+        echo "  - A syntax error in generated BrightScript code"
+        echo "  - A crash in static initializers or global code"
+        echo "  - A missing or incorrectly named function"
+        echo ""
+        echo "Full captured output (${RUNTIME_LINES} runtime lines):"
+        echo "─────────────────────────────────────────────────────────────────"
+        cat "$TEST_OUTPUT"
+        echo "─────────────────────────────────────────────────────────────────"
+        echo ""
+        echo "To debug: Check the Roku device's crash log directly via telnet:"
+        echo "  telnet $ROKU_DEVICE_IP 8085"
+        echo ""
+        exit 1
+    fi
 fi
 
 # Handle crash detection - show crash report and exit early
