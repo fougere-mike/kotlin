@@ -199,8 +199,8 @@ function LinkedHashSet_equals_AnyN_k_(other as Dynamic) as Boolean
     if other.get_size() <> m.get_size() then
         return false
     end if
-    return all_rIterable_Function1Z_k_(other, {this: m, invoke: function(it as Dynamic) as Boolean
-        return contains_rIterable_AnyN_k_(m.this, it)
+    return all_rIterable_Function1Z_k_(other, {__this: m, invoke: function(it as Dynamic) as Boolean
+        return contains_rIterable_AnyN_k_(m.__this, it)
     end function})
 end function
 

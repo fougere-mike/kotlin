@@ -54,14 +54,14 @@ function asSequence_rArr_k_(m as Object) as Object
 end function
 
 function asSequence_rIterable_k_(m as Object) as Object
-    return Sequence_Function0Iterator_k_({this: m, invoke: function() as Object
-        return m.this.iterator_k_()
+    return Sequence_Function0Iterator_k_({__this: m, invoke: function() as Object
+        return m.__this.iterator_k_()
     end function})
 end function
 
 function asSequence_rIterator_k_(m as Object) as Object
-    return Sequence_Function0Iterator_k_({this: m, invoke: function() as Object
-        return m.this
+    return Sequence_Function0Iterator_k_({__this: m, invoke: function() as Object
+        return m.__this
     end function})
 end function
 

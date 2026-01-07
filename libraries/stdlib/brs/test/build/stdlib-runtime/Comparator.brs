@@ -34,10 +34,10 @@ function reverseOrder_k_() as Object
 end function
 
 function reversed_rComparator_k_(m as Object) as Object
-    return {this: m, invoke: function(a as Dynamic, b as Dynamic) as Integer
-        return m.this.compare_AnyN_AnyN_k_(b, a)
+    return {__this: m, invoke: function(a as Dynamic, b as Dynamic) as Integer
+        return m.__this.compare_AnyN_AnyN_k_(b, a)
     end function, compare_AnyN_AnyN_k_: function(a as Dynamic, b as Dynamic) as Integer
-        return m.this.compare_AnyN_AnyN_k_(b, a)
+        return m.__this.compare_AnyN_AnyN_k_(b, a)
     end function}
 end function
 

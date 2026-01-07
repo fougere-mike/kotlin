@@ -51,6 +51,8 @@ end function
 sub JsonTestAdapter_startRun_k_()
     m.set_runStarted(true)
     m.get_runTimer().mark()
+    runId = m.currentTimeMillis_k_()
+    println_AnyN_k_(("[KOTLINTEST_RUN_ID:" + __kotlin_numToStr_J_k_(runId)) + "]")
     println_AnyN_k_("[KOTLINTEST_START]")
     m.emitJson_MapStrAnyN_k_(mapOf_Arr_k_([to_rAnyN_AnyN_k_("type", "run_start"), to_rAnyN_AnyN_k_("timestamp", m.currentTimeMillis_k_())]))
 end sub

@@ -35,8 +35,8 @@ sub standardFunctionsTests_rTestRunner_k_(m as Object)
             end function})
             assertEquals_AnyN_AnyN_StrN_k_(5, result, invalid)
         end function})
-        m.test_Str_Function0V_k_("run without receiver", {_this_suite: _this_suite, invoke: function() as Void
-            result = run_rAnyN_Function1_k_(m._this_suite, {invoke: function(m as Object) as Integer
+        m.test_Str_Function0V_k_("run without receiver", {invoke: function() as Void
+            result = run_rAnyN_Function1_k_(m, {invoke: function(m as Object) as Integer
                 a = 1
                 b = 2
                 return a + b
@@ -70,7 +70,7 @@ sub standardFunctionsTests_rTestRunner_k_(m as Object)
             end function})
             assertEquals_AnyN_AnyN_StrN_k_("hello world", sb.toString(), invalid)
         end function})
-        m.test_Str_Function0V_k_("apply for configuration", {name: name, this: m, this: m, value: value, value: value, this: m, this: m, value: value, this: m, this: m, this: m, name: name, value: value, this: m, this: m, this: m, other: other, invoke: function() as Void
+        m.test_Str_Function0V_k_("apply for configuration", {invoke: function() as Void
             config = apply_rAnyN_Function1V_k_(Config_create_Str_I_k_(), {invoke: function(m as Object) as Void
                 m.set_name("test")
                 m.set_value(42)

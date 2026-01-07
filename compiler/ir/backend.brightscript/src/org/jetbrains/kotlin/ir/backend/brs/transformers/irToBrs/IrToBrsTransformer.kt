@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.ir.backend.brs.transformers.irToBrs
 
+import org.jetbrains.kotlin.backend.common.lower.BOUND_VALUE_PARAMETER
+import org.jetbrains.kotlin.backend.common.lower.BOUND_RECEIVER_PARAMETER
 import org.jetbrains.kotlin.brs.backend.ast.*
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.ir.backend.brs.BrsIntrinsics
@@ -217,6 +219,54 @@ class IrToBrsTransformer(
                     // Only track variables and value parameters from outer scope
                     val owner = symbol.owner
                     if (owner is IrVariable || owner is IrValueParameter) {
+                        // Skip parameters added by LocalDeclarationsLowering
+                        // These are synthetic parameters for captured values and are already
+                        // available as function parameters, not outer-scope captures
+                        if (owner is IrValueParameter &&
+                            (owner.origin == BOUND_VALUE_PARAMETER ||
+                             owner.origin == BOUND_RECEIVER_PARAMETER)) {
+                            expression.acceptChildrenVoid(this)
+                            return
+                        }
+                        // Skip parameters from functions that are not ancestors of this lambda
+                        // Parameters from non-ancestor functions come from inlined code
+                        if (owner is IrValueParameter) {
+                            val paramParent = owner.parent as? IrFunction
+                            if (paramParent != null) {
+                                // Check if paramParent is an ancestor of this function
+                                var parent: IrDeclarationParent? = function.parent
+                                var isAncestor = false
+                                while (parent != null) {
+                                    if (parent === paramParent) {
+                                        isAncestor = true
+                                        break
+                                    }
+                                    parent = (parent as? IrDeclaration)?.parent
+                                }
+                                if (!isAncestor) {
+                                    // This parameter is from a non-ancestor function (inlined code)
+                                    expression.acceptChildrenVoid(this)
+                                    return
+                                }
+
+                                // Skip extension receiver of the IMMEDIATE parent (the lambda's own receiver)
+                                // But DO capture extension receivers from ANCESTOR functions - these must be captured
+                                // so the closure can access the outer function's receiver
+                                if (paramParent.extensionReceiverParameter === owner && paramParent === function) {
+                                    expression.acceptChildrenVoid(this)
+                                    return
+                                }
+
+                                // Skip captured receiver parameters (names starting with $this$)
+                                // These are value parameters created by inline function expansion to hold
+                                // the extension receiver. They're accessible via m in BrightScript.
+                                val paramName = owner.name.asString()
+                                if (paramName.startsWith("\$this\$")) {
+                                    expression.acceptChildrenVoid(this)
+                                    return
+                                }
+                            }
+                        }
                         if (symbol !in referencedSymbols) {
                             referencedSymbols[symbol] = false
                         }
@@ -228,6 +278,14 @@ class IrToBrsTransformer(
             override fun visitSetValue(expression: IrSetValue) {
                 val symbol = expression.symbol
                 if (symbol !in declaredSymbols) {
+                    // Skip parameters added by LocalDeclarationsLowering
+                    val owner = symbol.owner
+                    if (owner is IrValueParameter &&
+                        (owner.origin == BOUND_VALUE_PARAMETER ||
+                         owner.origin == BOUND_RECEIVER_PARAMETER)) {
+                        expression.acceptChildrenVoid(this)
+                        return
+                    }
                     // Mark as mutated
                     referencedSymbols[symbol] = true
                 }
@@ -236,6 +294,8 @@ class IrToBrsTransformer(
         })
 
         // Build the captured variables list
+        // Deduplicate by name - multiple IR symbols may map to the same BrightScript name
+        // (e.g., multiple receiver symbols all become "this")
         return referencedSymbols.map { (symbol, isMutated) ->
             val owner = symbol.owner
             val isMutable = when (owner) {
@@ -247,7 +307,7 @@ class IrToBrsTransformer(
                 name = sanitizeParameterName(owner.name.asString()),
                 isMutable = isMutable
             )
-        }
+        }.distinctBy { it.name }
     }
 
     /**
@@ -2059,6 +2119,8 @@ class IrToBrsTransformer(
             name.startsWith("<set-") && name.endsWith(">") -> "value"
             // Unused parameter placeholder (from _ in lambdas): <unused var> -> _unused
             name == "<unused var>" -> "_unused"
+            // Receiver reference: <this> -> __this (avoid potential BrightScript 'm.this' issues)
+            name == "<this>" -> "__this"
             // Any other special name: strip angle brackets and sanitize
             name.startsWith("<") && name.endsWith(">") ->
                 name.removePrefix("<").removeSuffix(">")
@@ -5883,7 +5945,8 @@ class IrExpressionToBrsTransformer(
         for (capturedVar in capturedVars) {
             // When capturing 'this' from an outer method, use 'm' (BrightScript's object reference)
             // instead of 'this' (which doesn't exist in BrightScript methods)
-            val varValue = if (capturedVar.name == "this") {
+            // Note: sanitizeParameterName converts <this> to __this
+            val varValue = if (capturedVar.name == "__this") {
                 BrsIdentifier("m")
             } else {
                 BrsIdentifier(capturedVar.name)
