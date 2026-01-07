@@ -11,6 +11,38 @@ echo "See CLAUDE.md 'Bootstrap Architecture' section for details."
 echo ""
 
 # ============================================================================
+# CONFIGURATION: BrightScript-Specific Modules
+# ============================================================================
+
+# BrightScript compiler source directories (for change detection)
+BRS_COMPILER_SRC_DIRS=(
+    "brightscript/brs.ast/src"
+    "core/compiler.common.brightscript/src"
+    "brs/brs.frontend/src"
+    "compiler/ir/serialization.brs/src"
+    "compiler/fir/checkers/checkers.brs/src"
+    "compiler/ir/backend.brightscript/src"
+    "compiler/cli/cli-brs/src"
+)
+
+# BrightScript compiler build directories (to clean for forced rebuild)
+BRS_COMPILER_BUILD_DIRS=(
+    "brightscript/brs.ast/build"
+    "core/compiler.common.brightscript/build"
+    "brs/brs.frontend/build"
+    "compiler/ir/serialization.brs/build"
+    "compiler/fir/checkers/checkers.brs/build"
+    "compiler/ir/backend.brightscript/build"
+    "compiler/cli/cli-brs/build"
+)
+
+# Stdlib source directories (for change detection)
+STDLIB_SRC_DIRS=(
+    "libraries/stdlib/brs"
+    "libraries/stdlib/brs-actual"
+)
+
+# ============================================================================
 # SMART CHANGE DETECTION
 # Detect what changed to determine what needs rebuilding.
 # ============================================================================
@@ -27,8 +59,8 @@ if [ ! -f "$COMPILER_MARKER" ]; then
     COMPILER_CHANGED=true
     echo "Compiler: No previous build marker found, will rebuild"
 else
-    # Check for uncommitted changes in compiler directories using git
-    for dir in "compiler/ir/backend.brightscript/src" "compiler/cli/cli-brs/src" "core/compiler.common.brightscript/src" "brightscript/brs.ast/src"; do
+    # Check for uncommitted changes in BRS compiler directories using git
+    for dir in "${BRS_COMPILER_SRC_DIRS[@]}"; do
         if [ -d "$dir" ]; then
             CHANGED=$(git status --short "$dir" 2>/dev/null | head -1)
             if [ -n "$CHANGED" ]; then
@@ -46,7 +78,7 @@ if [ ! -f "$STDLIB_MARKER" ]; then
     STDLIB_CHANGED=true
     echo "Stdlib: No previous build marker found, will rebuild"
 else
-    for dir in "libraries/stdlib/brs" "libraries/stdlib/brs-actual"; do
+    for dir in "${STDLIB_SRC_DIRS[@]}"; do
         if [ -d "$dir" ]; then
             CHANGED=$(git status --short "$dir" 2>/dev/null | head -1)
             if [ -n "$CHANGED" ]; then
@@ -67,18 +99,27 @@ fi
 echo ""
 
 # ============================================================================
-# CACHE CLEANUP - Only for components that changed
+# CACHE CLEANUP - Only BRS module build directories
+# This forces Gradle to recompile BRS modules while keeping cached outputs
+# for unchanged core Kotlin compiler modules (major speedup).
 # ============================================================================
 echo "Cleaning caches for changed components..."
 
 if [ "$COMPILER_CHANGED" = true ]; then
-    echo "  Cleaning compiler build directories..."
-    rm -rf compiler/ir/backend.brightscript/build
-    rm -rf compiler/ir/backend.brightscript/.gradle
-    rm -rf compiler/cli/cli-brs/build
-    rm -rf compiler/cli/cli-brs/.gradle
-    rm -rf brightscript/brs.ast/build
-    rm -rf brightscript/brs.ast/.gradle
+    echo "  Cleaning BRS compiler build directories..."
+    for dir in "${BRS_COMPILER_BUILD_DIRS[@]}"; do
+        if [ -d "$dir" ]; then
+            rm -rf "$dir"
+        fi
+    done
+    # Also clean .gradle dirs for BRS modules
+    for dir in "${BRS_COMPILER_BUILD_DIRS[@]}"; do
+        gradle_dir="${dir%/build}/.gradle"
+        if [ -d "$gradle_dir" ]; then
+            rm -rf "$gradle_dir"
+        fi
+    done
+    # Clean Maven local cache for BRS compiler
     rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-compiler-brs
 fi
 
@@ -94,10 +135,25 @@ fi
 echo "  Done."
 echo ""
 
-# Common flags
+# ============================================================================
+# BUILD FLAGS
+# ============================================================================
+# Base flags (always used):
 # --no-build-cache prevents Gradle from pulling stale cached outputs
 # --no-daemon ensures fresh task configurations between steps
-FLAGS="--no-build-cache --no-configuration-cache --no-daemon -Dorg.gradle.dependency.verification=off"
+BASE_FLAGS="--no-build-cache --no-configuration-cache --no-daemon -Dorg.gradle.dependency.verification=off"
+
+# First build (no marker): use --rerun-tasks for reliability
+# Incremental builds: rely on build directory cleanup to force BRS recompilation
+# This avoids rebuilding the entire Kotlin compiler (~645 tasks) when only BRS modules (~42 tasks) changed
+if [ ! -f "$COMPILER_MARKER" ]; then
+    FLAGS="$BASE_FLAGS --rerun-tasks"
+    echo "Build mode: Full rebuild (first build, using --rerun-tasks)"
+else
+    FLAGS="$BASE_FLAGS"
+    echo "Build mode: Incremental (BRS modules cleaned, skipping --rerun-tasks)"
+fi
+echo ""
 
 # Local bootstrap flags - tells Gradle to use Maven Local instead of build/repo
 LOCAL_BOOTSTRAP_FLAGS="-Pbootstrap.local=true -Pbootstrap.local.path=$HOME/.m2/repository/"
