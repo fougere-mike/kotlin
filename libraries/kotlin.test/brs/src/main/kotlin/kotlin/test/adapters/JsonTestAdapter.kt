@@ -58,6 +58,10 @@ public class JsonTestAdapter : FrameworkAdapter {
     public fun startRun() {
         runStarted = true
         runTimer.mark()
+        // Emit unique run ID for stale log detection
+        // The timestamp in milliseconds is unique enough per run
+        val runId = currentTimeMillis()
+        println("[KOTLINTEST_RUN_ID:$runId]")
         println("[KOTLINTEST_START]")
         emitJson(mapOf(
             "type" to "run_start",

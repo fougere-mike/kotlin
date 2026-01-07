@@ -227,16 +227,33 @@ sleep 2
 echo ""
 echo "Step 6: Waiting for test output..."
 
-# Wait for test completion marker
+# Wait for test completion marker or crash detection
 echo "Waiting for tests to complete..."
 TIMEOUT_SECONDS=90
 ELAPSED=0
+CRASH_DETECTED=false
 
 while [[ $ELAPSED -lt $TIMEOUT_SECONDS ]]; do
+    # Check for normal completion
     if grep -q '\[KOTLINTEST_END\]' "$TEST_OUTPUT" 2>/dev/null; then
         echo "Test completion marker found!"
         break
     fi
+
+    # Check for crash indicators (exit early)
+    if grep -q 'BrightScript Micro Debugger\.' "$TEST_OUTPUT" 2>/dev/null; then
+        echo -e "${RED}CRASH DETECTED: BrightScript debugger entered${NC}"
+        CRASH_DETECTED=true
+        # Wait a moment to capture full crash output
+        sleep 2
+        break
+    fi
+    if grep -qE '\[bs\.ndk\.proc\.exit\]' "$TEST_OUTPUT" 2>/dev/null; then
+        echo -e "${RED}CRASH DETECTED: Process exited${NC}"
+        CRASH_DETECTED=true
+        break
+    fi
+
     sleep 1
     ELAPSED=$((ELAPSED + 1))
 
@@ -252,6 +269,38 @@ wait $NC_PID 2>/dev/null || true
 
 if [[ $ELAPSED -ge $TIMEOUT_SECONDS ]]; then
     echo -e "${YELLOW}Warning: Timeout waiting for tests (${TIMEOUT_SECONDS}s)${NC}"
+fi
+
+# Handle crash detection - show crash report and exit early
+if [[ "$CRASH_DETECTED" == "true" ]]; then
+    echo ""
+    echo -e "${RED}╔══════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${RED}║  APP CRASHED DURING TESTS                                     ║${NC}"
+    echo -e "${RED}╚══════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+
+    # Find the last test that started (to identify where the crash occurred)
+    LAST_TEST=$(grep '"type":"test_start"' "$TEST_OUTPUT" | tail -1)
+    if [[ -n "$LAST_TEST" ]]; then
+        SUITE=$(echo "$LAST_TEST" | sed -n 's/.*"suite":"\([^"]*\)".*/\1/p')
+        TEST=$(echo "$LAST_TEST" | sed -n 's/.*"test":"\([^"]*\)".*/\1/p')
+        echo -e "  ${YELLOW}Crash occurred during: $SUITE > $TEST${NC}"
+        echo ""
+    fi
+
+    # Show crash details - extract debugger output
+    echo "Crash details:"
+    echo "─────────────────────────────────────────────────────────────────"
+    if grep -q 'BrightScript Micro Debugger\.' "$TEST_OUTPUT"; then
+        # Show from debugger entry to end of backtrace
+        sed -n '/BrightScript Micro Debugger\./,/^Brightscript Debugger>/p' "$TEST_OUTPUT" | head -60
+    elif grep -qE '\[bs\.ndk\.proc\.exit\]' "$TEST_OUTPUT"; then
+        grep -E '\[bs\.ndk\.proc\.exit\]' "$TEST_OUTPUT"
+    fi
+    echo "─────────────────────────────────────────────────────────────────"
+    echo ""
+    echo "Full output saved to: $TEST_OUTPUT"
+    exit 1
 fi
 
 # Step 7: Parse and display results
@@ -276,7 +325,7 @@ fi
 # The Roku debug console accumulates logs across runs. If we see old timestamps,
 # we're looking at stale data and MUST fail fast.
 #
-# We check TWO sources of timestamps:
+# We check for the unique run ID marker first (most reliable), then fall back to:
 # 1. JSON test output: {"timestamp":1767666374446,...} (Unix epoch in milliseconds)
 # 2. Roku system logs: "01-05 23:33:33.123 [bs.ndk...]" (only appear on crashes)
 # ============================================================================
@@ -286,42 +335,59 @@ CURRENT_YEAR=$(date +%Y)
 STALE_DETECTED=false
 LOG_AGE_INFO=""
 
-# Method 1: Check JSON timestamps from test framework (most reliable)
-# These are Unix epoch in MILLISECONDS, so divide by 1000
-FIRST_JSON_TIMESTAMP=$(grep -oE '"timestamp":[0-9]+' "$TEST_OUTPUT" | head -1 | grep -oE '[0-9]+')
+# Method 1: Check for unique run ID marker (most reliable)
+# Format: [KOTLINTEST_RUN_ID:timestamp] where timestamp is milliseconds since epoch
+FOUND_RUN_ID=$(grep -oE '\[KOTLINTEST_RUN_ID:[0-9]+\]' "$TEST_OUTPUT" | tail -1 | sed 's/\[KOTLINTEST_RUN_ID://' | sed 's/\]//')
 
-if [[ -n "$FIRST_JSON_TIMESTAMP" ]]; then
-    # Convert milliseconds to seconds
-    LOG_EPOCH=$((FIRST_JSON_TIMESTAMP / 1000))
-    TIME_DIFF=$((CURRENT_TIME - LOG_EPOCH))
+if [[ -n "$FOUND_RUN_ID" ]]; then
+    # Run ID is timestamp in milliseconds
+    RUN_EPOCH=$((FOUND_RUN_ID / 1000))
+    TIME_DIFF=$((CURRENT_TIME - RUN_EPOCH))
 
-    LOG_AGE_INFO="JSON timestamp age: ${TIME_DIFF} seconds"
-
-    # If logs are more than 60 seconds old, they're stale
     if [[ $TIME_DIFF -gt 60 ]]; then
         STALE_DETECTED=true
-        LOG_AGE_INFO="JSON timestamp: $(date -r $LOG_EPOCH '+%Y-%m-%d %H:%M:%S') (${TIME_DIFF}s old)"
+        LOG_AGE_INFO="Run ID timestamp: $(date -r $RUN_EPOCH '+%Y-%m-%d %H:%M:%S') (${TIME_DIFF}s old)"
+    else
+        LOG_AGE_INFO="Run ID: $FOUND_RUN_ID (${TIME_DIFF}s ago - FRESH)"
     fi
 else
-    # Method 2: Fall back to Roku system log timestamps (format: MM-DD HH:MM:SS.mmm)
-    FIRST_LOG_TIMESTAMP=$(grep -oE '^[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}' "$TEST_OUTPUT" | head -1)
+    # Method 2: Check JSON timestamps from test framework
+    # These are Unix epoch in MILLISECONDS, so divide by 1000
+    FIRST_JSON_TIMESTAMP=$(grep -oE '"timestamp":[0-9]+' "$TEST_OUTPUT" | head -1 | grep -oE '[0-9]+')
 
-    if [[ -n "$FIRST_LOG_TIMESTAMP" ]]; then
-        # Parse the timestamp (MM-DD HH:MM:SS) and convert to epoch
-        LOG_MONTH=$(echo "$FIRST_LOG_TIMESTAMP" | cut -d'-' -f1)
-        LOG_DAY=$(echo "$FIRST_LOG_TIMESTAMP" | cut -d'-' -f2 | cut -d' ' -f1)
-        LOG_TIME=$(echo "$FIRST_LOG_TIMESTAMP" | cut -d' ' -f2)
-        LOG_DATETIME="${CURRENT_YEAR}-${LOG_MONTH}-${LOG_DAY} ${LOG_TIME}"
+    if [[ -n "$FIRST_JSON_TIMESTAMP" ]]; then
+        # Convert milliseconds to seconds
+        LOG_EPOCH=$((FIRST_JSON_TIMESTAMP / 1000))
+        TIME_DIFF=$((CURRENT_TIME - LOG_EPOCH))
 
-        LOG_EPOCH=$(date -j -f "%Y-%m-%d %H:%M:%S" "$LOG_DATETIME" +%s 2>/dev/null || echo "0")
+        LOG_AGE_INFO="JSON timestamp age: ${TIME_DIFF} seconds"
 
-        if [[ "$LOG_EPOCH" != "0" ]]; then
-            TIME_DIFF=$((CURRENT_TIME - LOG_EPOCH))
-            LOG_AGE_INFO="Roku log timestamp age: ${TIME_DIFF} seconds"
+        # If logs are more than 60 seconds old, they're stale
+        if [[ $TIME_DIFF -gt 60 ]]; then
+            STALE_DETECTED=true
+            LOG_AGE_INFO="JSON timestamp: $(date -r $LOG_EPOCH '+%Y-%m-%d %H:%M:%S') (${TIME_DIFF}s old)"
+        fi
+    else
+        # Method 3: Fall back to Roku system log timestamps (format: MM-DD HH:MM:SS.mmm)
+        FIRST_LOG_TIMESTAMP=$(grep -oE '^[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}' "$TEST_OUTPUT" | head -1)
 
-            if [[ $TIME_DIFF -gt 60 ]]; then
-                STALE_DETECTED=true
-                LOG_AGE_INFO="Roku timestamp: $FIRST_LOG_TIMESTAMP (${TIME_DIFF}s old)"
+        if [[ -n "$FIRST_LOG_TIMESTAMP" ]]; then
+            # Parse the timestamp (MM-DD HH:MM:SS) and convert to epoch
+            LOG_MONTH=$(echo "$FIRST_LOG_TIMESTAMP" | cut -d'-' -f1)
+            LOG_DAY=$(echo "$FIRST_LOG_TIMESTAMP" | cut -d'-' -f2 | cut -d' ' -f1)
+            LOG_TIME=$(echo "$FIRST_LOG_TIMESTAMP" | cut -d' ' -f2)
+            LOG_DATETIME="${CURRENT_YEAR}-${LOG_MONTH}-${LOG_DAY} ${LOG_TIME}"
+
+            LOG_EPOCH=$(date -j -f "%Y-%m-%d %H:%M:%S" "$LOG_DATETIME" +%s 2>/dev/null || echo "0")
+
+            if [[ "$LOG_EPOCH" != "0" ]]; then
+                TIME_DIFF=$((CURRENT_TIME - LOG_EPOCH))
+                LOG_AGE_INFO="Roku log timestamp age: ${TIME_DIFF} seconds"
+
+                if [[ $TIME_DIFF -gt 60 ]]; then
+                    STALE_DETECTED=true
+                    LOG_AGE_INFO="Roku timestamp: $FIRST_LOG_TIMESTAMP (${TIME_DIFF}s old)"
+                fi
             fi
         fi
     fi

@@ -86,8 +86,8 @@ function StringBuilder_create_k_() as Object
 end function
 
 function StringBuilder_get_I_k_(index as Integer) as Object
-    return getOrElse_rStr_I_Function1IC_k_(m.get_string(), index, {index: index, this: m, invoke: function(it as Integer) as Object
-        throw IndexOutOfBoundsException_create_StrN_k_(((("index: " + __kotlin_numToStr_I_k_(m.index)) + ", length: ") + __kotlin_numToStr_I_k_(m.this.get_length())) + "}")
+    return getOrElse_rStr_I_Function1IC_k_(m.get_string(), index, {index: index, __this: m, invoke: function(it as Integer) as Object
+        throw IndexOutOfBoundsException_create_StrN_k_(((("index: " + __kotlin_numToStr_I_k_(m.index)) + ", length: ") + __kotlin_numToStr_I_k_(m.__this.get_length())) + "}")
     end function})
 end function
 

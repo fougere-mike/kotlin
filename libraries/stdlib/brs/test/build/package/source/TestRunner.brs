@@ -32,8 +32,8 @@ sub TestRunner_testClass_Any_k_(instance as Object)
 end sub
 
 sub TestRunner_suite_Str_Function1TestRunnerV_k_(name as String, suiteFn as Object)
-    m.get_directSuites().add_AnyN_k_(Pair_create_AnyN_AnyN_k_(name, {suiteFn: suiteFn, this: m, invoke: function() as Void
-        m.suiteFn.invoke(m.this)
+    m.get_directSuites().add_AnyN_k_(Pair_create_AnyN_AnyN_k_(name, {suiteFn: suiteFn, __this: m, invoke: function() as Void
+        m.suiteFn.invoke(m.__this)
     end function}))
 end sub
 
@@ -74,18 +74,18 @@ sub TestRunner_executeTestClass_Any_k_(instance as Object)
     className = m.getClassName_Any_k_(instance)
     testMethods = m.getTestMethods_Any_k_(instance)
     if testMethods.isEmpty_k_() then
-        m.get_adapter().suite_Str_Z_Function0V_k_(className, false, {this: m, instance: instance, invoke: function() as Void
-            m.this.tryRunAsTestClass_Any_k_(m.instance)
+        m.get_adapter().suite_Str_Z_Function0V_k_(className, false, {__this: m, instance: instance, invoke: function() as Void
+            m.__this.tryRunAsTestClass_Any_k_(m.instance)
         end function})
         return
     end if
-    m.get_adapter().suite_Str_Z_Function0V_k_(className, false, {testMethods: testMethods, this: m, invoke: function() as Void
+    m.get_adapter().suite_Str_Z_Function0V_k_(className, false, {testMethods: testMethods, __this: m, invoke: function() as Void
         __iter_2 = m.testMethods.iterator_k_()
         while __iter_2.hasNext_k_()
             method = __iter_2.next_k_()
             methodName = method.first
             methodFn = method.second
-            m.this.get_adapter().test_Str_Z_Function0V_k_(methodName, false, {methodFn: methodFn, invoke: function() as Void
+            m.__this.get_adapter().test_Str_Z_Function0V_k_(methodName, false, {methodFn: methodFn, invoke: function() as Void
                 m.methodFn.invoke()
             end function})
 

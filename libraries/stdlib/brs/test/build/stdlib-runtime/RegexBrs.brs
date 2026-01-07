@@ -308,8 +308,8 @@ function Regex_splitToSequence_CharSequence_I_k_(input as Object, limit = 0) as 
         limit = 0
     end if
     requireNonNegativeLimit_I_k_(limit)
-    return Sequence_Function0Iterator_k_({this: m, _input: _input, _limit: _limit, this_0: this_0, this: m, this: m, value: value, this: m, this: m, this: m, value: value, this: m, this: m, value: value, this: m, this: m, value: value, this: m, this: m, this: m, input: input, limit: limit, invoke: function() as Object
-        return Anon_333db39a_create_Regex_CharSequence_I_k_(m.this, m.input, m.limit)
+    return Sequence_Function0Iterator_k_({__this: m, input: input, limit: limit, invoke: function() as Object
+        return Anon_333db39a_create_Regex_CharSequence_I_k_(m, m.input, m.limit)
     end function})
 end function
 
