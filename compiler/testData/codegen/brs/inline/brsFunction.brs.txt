@@ -1,0 +1,16 @@
+// --- File: brsFunction.brs ---
+function testBrsExpression_k_() as Object
+    return 1 + 2
+end function
+
+sub testBrsAssignment_k_()
+    x = 3 * 4
+end sub
+
+sub testBrsMethodCall_k_()
+    m.top.visible = true
+end sub
+
+function testBrsReturnStatement_k_() as Object
+    return 42
+end function

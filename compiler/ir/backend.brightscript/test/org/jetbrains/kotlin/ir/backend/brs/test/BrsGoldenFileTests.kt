@@ -71,3 +71,11 @@ class BrsClosureGoldenFileTests : AbstractBrsGoldenFileTest() {
     @Test
     fun lambdaCapture() = runTest("closures/lambdaCapture.kt")
 }
+
+// ==================== Inline BrightScript Tests ====================
+
+class BrsInlineGoldenFileTests : AbstractBrsGoldenFileTest() {
+
+    @Test
+    fun brsFunction() = runTest("inline/brsFunction.kt")
+}
