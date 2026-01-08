@@ -62,6 +62,35 @@ Claude Code's Edit tool may not update file modification times when editing file
 This breaks mtime-based change detection. We use `git status --short` instead,
 which reliably detects uncommitted changes regardless of file timestamps.
 
+### How rebuild.sh optimizes incremental builds
+
+The rebuild.sh script uses **selective build directory cleanup** instead of `--rerun-tasks` for incremental builds. This provides a major speedup:
+
+- **First build**: Uses `--rerun-tasks` for reliability (all 687 Gradle tasks)
+- **Incremental builds**: Deletes only BrightScript module build directories, then runs without `--rerun-tasks`
+
+This allows the ~645 core Kotlin compiler tasks to use cached outputs while forcing the ~42 BrightScript-specific tasks to recompile. Result: BRS-only changes build in ~5-8 minutes instead of 30+ minutes.
+
+**BrightScript modules cleaned on each incremental build:**
+- `brightscript/brs.ast/build`
+- `core/compiler.common.brightscript/build`
+- `brs/brs.frontend/build`
+- `compiler/ir/serialization.brs/build`
+- `compiler/fir/checkers/checkers.brs/build`
+- `compiler/ir/backend.brightscript/build`
+- `compiler/cli/cli-brs/build`
+
+### Forcing a full rebuild
+
+If you need to rebuild the entire Kotlin compiler (rare - only after pulling upstream changes), delete the compiler marker file:
+
+```bash
+rm .build-marker-compiler
+./rebuild.sh
+```
+
+This triggers the first-build path with `--rerun-tasks`.
+
 ## DO NOT
 
 - **DO NOT** run manual cache-clearing commands - rebuild.sh handles this
@@ -273,11 +302,12 @@ If you see SSL certificate errors, handshake failures, or connection reset error
 | What Changed | Run This |
 |--------------|----------|
 | Compiler or stdlib code | `./rebuild.sh` |
+| Full clean rebuild (nuclear option) | `./rebuild.sh --clean` |
 | Everything + test app | `cd ../roku-test-app && ./rebuild-all.sh --all` |
 | Plugin only (no compiler changes) | `cd ../roku-test-app && ./rebuild-all.sh --plugin --clean` |
 | Run stdlib tests | `./run-stdlib-tests.sh` |
 
-`./rebuild.sh` handles all cache cleaning automatically. No manual commands needed.
+`./rebuild.sh` handles all cache cleaning automatically. Use `--clean` when things are in a bad state.
 
 ## Running Tests
 
@@ -321,37 +351,34 @@ export ROKU_PASSWORD=your_password
 ./run-stdlib-tests.sh --build-only
 ```
 
-**Stale Log Detection (Automatic)**
+**Stale Log Handling (Sentinel-Based Filtering)**
 
-The test script validates log freshness using two timestamp sources:
+The Roku debug console (telnet port 8085) has an internal buffer that retains logs from previous runs. The test infrastructure handles this using a **flood + sentinel** approach:
 
-1. **JSON timestamps** from test output (`"timestamp":1767666374446`) - checked first
-2. **Roku system timestamps** from crash output (`01-06 02:41:12.789`) - used for crash detection
+1. **At app startup**: The test adapter prints a unique sentinel marker (`===KOTLINTEST_SENTINEL_<timestamp>===`)
+2. **Buffer flood**: 100 lines are printed to push stale logs through the buffer
+3. **Filtering**: The test runner finds the sentinel and discards all output before it
 
-The script handles three scenarios:
+This guarantees you only see logs from the current run, regardless of what's in the device buffer.
 
-| Scenario | JSON Age | Crash Age | Behavior |
-|----------|----------|-----------|----------|
-| Fresh logs | < 60s | - | ✅ Proceed |
-| Early crash | > 60s | < 60s | ⚠️ "Old JSON but recent crash" - crash output is valid |
-| Truly stale | > 60s | > 60s | ❌ FAIL FAST - re-run tests |
+**Why telnet instead of nc (netcat)?**
 
-If you see:
+The test runner uses `telnet` to connect to the Roku debug console, NOT `nc`. This is because `nc` exits immediately after receiving the initial buffer dump from the Roku (about 65 lines), while `telnet` stays connected waiting for more data. When run from a script (vs interactive terminal), `nc` doesn't keep the connection open for incoming data.
+
+**What you'll see:**
 ```
-╔══════════════════════════════════════════════════════════════╗
-║  INFRASTRUCTURE FAILURE: STALE LOGS DETECTED                 ║
-╚══════════════════════════════════════════════════════════════╝
-```
-
-This means the logs are from a PREVIOUS test run. Simply re-run the tests.
-
-If you see:
-```
-Old JSON timestamps but recent crash detected - app crashed early
-The crash output below is FRESH - you can debug it
+Filtering output by sentinel...
+  Sentinel found at line 847 (3s ago - FRESH)
+  Filtered: 156 lines (discarded 846 stale lines from buffer)
 ```
 
-This means your app deployed but crashed before producing new JSON output. The crash info IS valid to debug.
+**If sentinel is stale** (> 120s old):
+- The current app didn't start correctly
+- Try: Re-run tests, or reboot the Roku device
+
+**If no sentinel found:**
+- App crashed before `startRun()` was called
+- Check the unfiltered output for crash details
 
 The test output file is saved to: `libraries/stdlib/brs/test/build/test-output.txt`
 
@@ -406,4 +433,3 @@ cd ../roku-test-app && ./gradlew rokuTest
 | Stdlib tests (JSON) | `libraries/stdlib/brs/test/build/results.json` |
 | E2E tests (JSON) | `roku-test-app/build/test-results/roku/results.json` |
 | E2E tests (XML) | `roku-test-app/build/test-results/roku/results.xml` |
-- The test script automatically detects and fails on stale logs. If it fails with "STALE LOGS DETECTED", simply re-run the tests.
