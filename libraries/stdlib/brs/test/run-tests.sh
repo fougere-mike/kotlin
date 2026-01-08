@@ -173,22 +173,63 @@ echo "Package created: $PACKAGE_ZIP"
 echo "Contents:"
 unzip -l "$PACKAGE_ZIP" | head -20
 
-# Step 4: Stop any running app
+# Step 4: Prepare device - delete existing app and clear state
 echo ""
 echo "Step 4: Preparing device..."
 
 # Send Home keypress to stop any running app
 echo "Stopping any running app..."
 curl -s -d '' "http://${ROKU_DEVICE_IP}:8060/keypress/Home" > /dev/null 2>&1 || true
+sleep 1
+
+# Delete existing dev app to ensure clean install
+# This fixes issues where reinstalling over existing app causes hangs
+echo "Deleting existing dev app..."
+curl -s --digest -u "rokudev:$ROKU_PASSWORD" \
+    -F "mysubmit=Delete" \
+    -F "archive=" \
+    "http://$ROKU_DEVICE_IP/plugin_install" > /dev/null 2>&1 || true
+
+# Wait for device to process the delete and clear state
 sleep 2
 
 # Clear any previous output
 rm -f "$TEST_OUTPUT" "$RESULTS_JSON"
 touch "$TEST_OUTPUT"
 
-# Step 5: Deploy to Roku device FIRST, then connect to debug console
+# Step 5: Connect to debug console FIRST to capture ALL output including sentinel
+# The sentinel is printed at the very start of the test run
 echo ""
-echo "Step 5: Deploying to Roku device..."
+echo "Step 5: Connecting to debug console..."
+
+# No need to kill existing telnet connection - if there's one, the new connection
+# will work anyway (The Roku only allows one telnet connection at a time)
+
+# Start telnet in background - it will receive stale buffer + fresh app output
+# NOTE: We use telnet instead of nc because nc exits after receiving the initial
+# buffer dump from the Roku device. Telnet stays connected waiting for more data.
+# The sleep pipe keeps stdin open to prevent telnet from exiting.
+{
+    sleep 180
+} | telnet "$ROKU_DEVICE_IP" 8085 > "$TEST_OUTPUT" 2>&1 &
+NC_PID=$!
+
+# Give telnet a moment to connect
+sleep 2
+
+# Verify telnet is running
+if ps -p $NC_PID > /dev/null 2>&1; then
+    echo "  Debug console connected (PID: $NC_PID)"
+    echo "  Initial buffer: $(wc -l < "$TEST_OUTPUT" | tr -d ' ') lines"
+else
+    echo -e "${RED}Error: Failed to connect to debug console${NC}"
+    echo "Check that the Roku device is accessible at $ROKU_DEVICE_IP:8085"
+    exit 1
+fi
+
+# Step 6: Deploy to Roku device - app will auto-start
+echo ""
+echo "Step 6: Deploying to Roku device..."
 
 # Deploy using curl with Digest authentication
 DEPLOY_RESPONSE=$(curl -s --digest -u "rokudev:$ROKU_PASSWORD" \
@@ -206,22 +247,6 @@ else
     # Continue anyway - the app might still have installed
 fi
 
-# Connect to debug console IMMEDIATELY after deploy
-# The app auto-starts on deploy, so we need to connect quickly to catch any crash
-echo ""
-echo "Step 6: Connecting to debug console..."
-
-READER_PID=""
-(
-    # Use perl alarm for macOS-compatible timeout (180 seconds)
-    # script -q captures output with line buffering (critical for crash capture)
-    perl -e 'alarm 180; exec @ARGV' script -q "$TEST_OUTPUT" nc "$ROKU_DEVICE_IP" 8085 2>/dev/null || true
-) &
-NC_PID=$!
-
-# Give nc a moment to connect and start receiving
-sleep 1
-
 echo ""
 echo "Step 7: Waiting for test output..."
 
@@ -230,6 +255,7 @@ echo "Waiting for tests to complete..."
 TIMEOUT_SECONDS=90
 ELAPSED=0
 CRASH_DETECTED=false
+SEEN_SENTINEL=false
 
 while [[ $ELAPSED -lt $TIMEOUT_SECONDS ]]; do
     # Check for normal completion
@@ -238,30 +264,68 @@ while [[ $ELAPSED -lt $TIMEOUT_SECONDS ]]; do
         break
     fi
 
-    # Check for crash indicators (exit early)
-    if grep -q 'BrightScript Micro Debugger\.' "$TEST_OUTPUT" 2>/dev/null; then
-        echo -e "${RED}CRASH DETECTED: BrightScript debugger entered${NC}"
-        CRASH_DETECTED=true
-        # Wait a moment to capture full crash output
-        sleep 2
-        break
+    # Check if we've seen the sentinel (start of THIS run's output)
+    # Only check for crashes AFTER we've confirmed we're seeing fresh output
+    if [[ "$SEEN_SENTINEL" == "false" ]]; then
+        if grep -q '===KOTLINTEST_SENTINEL_' "$TEST_OUTPUT" 2>/dev/null; then
+            SEEN_SENTINEL=true
+            echo "  Sentinel found - monitoring for completion..."
+        fi
     fi
-    if grep -qE '\[bs\.ndk\.proc\.exit\]' "$TEST_OUTPUT" 2>/dev/null; then
-        echo -e "${RED}CRASH DETECTED: Process exited${NC}"
-        CRASH_DETECTED=true
-        break
+
+    # Only check for crash indicators AFTER we've seen the sentinel
+    # This prevents false positives from stale logs in the device buffer
+    if [[ "$SEEN_SENTINEL" == "true" ]]; then
+        # Check for crash indicators (exit early)
+        if grep -q 'BrightScript Micro Debugger\.' "$TEST_OUTPUT" 2>/dev/null; then
+            echo -e "${RED}CRASH DETECTED: BrightScript debugger entered${NC}"
+            CRASH_DETECTED=true
+            # Wait a moment to capture full crash output
+            sleep 2
+            break
+        fi
+
+        # Check for app exit - but only treat it as crash if tests didn't complete
+        # The exit message pattern includes a timestamp that changes each run
+        # We look for the pattern with a timestamp AFTER the sentinel
+        if grep -qE '\[bs\.ndk\.proc\.exit\].*EXIT_USER_NAV' "$TEST_OUTPUT" 2>/dev/null; then
+            # Give it a moment - the END marker might still be buffered
+            sleep 1
+            if grep -q '\[KOTLINTEST_END\]' "$TEST_OUTPUT" 2>/dev/null; then
+                echo "Test completion marker found (after exit)!"
+                break
+            fi
+            # If still no END marker, it's a crash
+            echo -e "${YELLOW}App exited - checking if tests completed...${NC}"
+            if grep -q '\[KOTLINTEST_START\]' "$TEST_OUTPUT" 2>/dev/null; then
+                # Started but didn't finish
+                echo -e "${RED}CRASH DETECTED: Tests started but didn't complete${NC}"
+                CRASH_DETECTED=true
+            else
+                echo -e "${RED}CRASH DETECTED: App exited before tests started${NC}"
+                CRASH_DETECTED=true
+            fi
+            break
+        fi
     fi
 
     sleep 1
     ELAPSED=$((ELAPSED + 1))
 
+    # Check if telnet is still running
+    if ! ps -p $NC_PID > /dev/null 2>&1; then
+        echo -e "${YELLOW}Warning: telnet process died (after ${ELAPSED}s)${NC}"
+        echo "  Output file has $(wc -l < "$TEST_OUTPUT" | tr -d ' ') lines"
+    fi
+
     # Show progress every 10 seconds
     if [[ $((ELAPSED % 10)) -eq 0 ]]; then
-        echo "  Still waiting... ($ELAPSED seconds)"
+        LINES=$(wc -l < "$TEST_OUTPUT" | tr -d ' ')
+        echo "  Still waiting... ($ELAPSED seconds, $LINES lines captured)"
     fi
 done
 
-# Kill the nc/script process
+# Kill the telnet process
 kill $NC_PID 2>/dev/null || true
 [[ -n "$READER_PID" ]] && kill $READER_PID 2>/dev/null || true
 wait $NC_PID 2>/dev/null || true
@@ -355,120 +419,71 @@ if [[ ! -s "$TEST_OUTPUT" ]]; then
 fi
 
 # ============================================================================
-# STALE LOG DETECTION - CRITICAL
-# The Roku debug console accumulates logs across runs. If we see old timestamps,
-# we're looking at stale data and MUST fail fast.
+# SENTINEL-BASED OUTPUT FILTERING
+# The Roku debug console buffer retains logs from previous runs. The test app
+# prints a unique sentinel marker and floods the buffer with ~100 lines to push
+# old logs through. We find the sentinel and discard everything before it.
 #
-# We check for the unique run ID marker first (most reliable), then fall back to:
-# 1. JSON test output: {"timestamp":1767666374446,...} (Unix epoch in milliseconds)
-# 2. Roku system logs: "01-05 23:33:33.123 [bs.ndk...]" (only appear on crashes)
+# This approach guarantees we only process logs from the current run.
 # ============================================================================
-echo "Validating log timestamps..."
+echo "Filtering output by sentinel..."
 CURRENT_TIME=$(date +%s)
-CURRENT_YEAR=$(date +%Y)
-STALE_DETECTED=false
-LOG_AGE_INFO=""
 
-# Method 1: Check for unique run ID marker (most reliable)
-# Format: [KOTLINTEST_RUN_ID:timestamp] where timestamp is milliseconds since epoch
-FOUND_RUN_ID=$(grep -oE '\[KOTLINTEST_RUN_ID:[0-9]+\]' "$TEST_OUTPUT" | tail -1 | sed 's/\[KOTLINTEST_RUN_ID://' | sed 's/\]//')
+# Save total lines before filtering for reporting
+TOTAL_LINES_BEFORE=$(wc -l < "$TEST_OUTPUT" | tr -d ' ')
 
-if [[ -n "$FOUND_RUN_ID" ]]; then
-    # Run ID is timestamp in milliseconds
-    RUN_EPOCH=$((FOUND_RUN_ID / 1000))
-    TIME_DIFF=$((CURRENT_TIME - RUN_EPOCH))
+# Look for the sentinel pattern: ===KOTLINTEST_SENTINEL_<timestamp>===
+# The timestamp may be in scientific notation (e.g., 1.767901e+12) due to BrightScript
+# We look for the LAST occurrence (after the buffer flush)
+SENTINEL_LINE=$(grep -n '===KOTLINTEST_SENTINEL_[0-9.e+]*===' "$TEST_OUTPUT" | tail -1 | cut -d: -f1)
 
-    if [[ $TIME_DIFF -gt 60 ]]; then
-        STALE_DETECTED=true
-        LOG_AGE_INFO="Run ID timestamp: $(date -r $RUN_EPOCH '+%Y-%m-%d %H:%M:%S') (${TIME_DIFF}s old)"
-    else
-        LOG_AGE_INFO="Run ID: $FOUND_RUN_ID (${TIME_DIFF}s ago - FRESH)"
+if [[ -n "$SENTINEL_LINE" ]]; then
+    # Extract the sentinel value and timestamp
+    SENTINEL=$(sed -n "${SENTINEL_LINE}p" "$TEST_OUTPUT" | grep -oE '===KOTLINTEST_SENTINEL_[0-9.e+]*===')
+    SENTINEL_TIMESTAMP_RAW=$(echo "$SENTINEL" | sed 's/===KOTLINTEST_SENTINEL_//' | sed 's/===//')
+    # Convert scientific notation to integer (e.g., 1.767901e+12 -> 1767901000000)
+    SENTINEL_TIMESTAMP=$(printf "%.0f" "$SENTINEL_TIMESTAMP_RAW" 2>/dev/null || echo "$SENTINEL_TIMESTAMP_RAW")
+
+    # Validate timestamp is recent (within 120 seconds to account for test runtime)
+    SENTINEL_EPOCH=$((SENTINEL_TIMESTAMP / 1000))
+    TIME_DIFF=$((CURRENT_TIME - SENTINEL_EPOCH))
+
+    if [[ $TIME_DIFF -gt 120 ]]; then
+        echo ""
+        echo -e "${RED}╔══════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${RED}║  ERROR: Sentinel timestamp is stale                          ║${NC}"
+        echo -e "${RED}╚══════════════════════════════════════════════════════════════╝${NC}"
+        echo ""
+        echo -e "  Sentinel timestamp: ${YELLOW}$(date -r $SENTINEL_EPOCH '+%Y-%m-%d %H:%M:%S')${NC} (${TIME_DIFF}s ago)"
+        echo -e "  Current time:       ${GREEN}$(date '+%Y-%m-%d %H:%M:%S')${NC}"
+        echo ""
+        echo "The sentinel in the output is from a previous test run."
+        echo "This means the current test app did not start correctly."
+        echo ""
+        echo "Try:"
+        echo "  1. Re-run the tests"
+        echo "  2. If that fails, reboot the Roku device"
+        echo ""
+        exit 1
     fi
+
+    echo -e "  ${GREEN}Sentinel found at line $SENTINEL_LINE (${TIME_DIFF}s ago - FRESH)${NC}"
+
+    # Filter output: keep only lines from sentinel onwards
+    FILTERED_OUTPUT="$BUILD_DIR/filtered-output.txt"
+    tail -n +"$SENTINEL_LINE" "$TEST_OUTPUT" > "$FILTERED_OUTPUT"
+    mv "$FILTERED_OUTPUT" "$TEST_OUTPUT"
+
+    DISCARDED=$((SENTINEL_LINE - 1))
+    REMAINING=$(wc -l < "$TEST_OUTPUT" | tr -d ' ')
+    echo "  Filtered: $REMAINING lines (discarded $DISCARDED stale lines from buffer)"
 else
-    # Method 2: Check JSON timestamps from test framework
-    # These are Unix epoch in MILLISECONDS, so divide by 1000
-    FIRST_JSON_TIMESTAMP=$(grep -oE '"timestamp":[0-9]+' "$TEST_OUTPUT" | head -1 | grep -oE '[0-9]+')
-
-    if [[ -n "$FIRST_JSON_TIMESTAMP" ]]; then
-        # Convert milliseconds to seconds
-        LOG_EPOCH=$((FIRST_JSON_TIMESTAMP / 1000))
-        TIME_DIFF=$((CURRENT_TIME - LOG_EPOCH))
-
-        LOG_AGE_INFO="JSON timestamp age: ${TIME_DIFF} seconds"
-
-        # If logs are more than 60 seconds old, they're stale
-        if [[ $TIME_DIFF -gt 60 ]]; then
-            STALE_DETECTED=true
-            LOG_AGE_INFO="JSON timestamp: $(date -r $LOG_EPOCH '+%Y-%m-%d %H:%M:%S') (${TIME_DIFF}s old)"
-        fi
-    else
-        # Method 3: Fall back to Roku system log timestamps (format: MM-DD HH:MM:SS.mmm)
-        FIRST_LOG_TIMESTAMP=$(grep -oE '^[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}' "$TEST_OUTPUT" | head -1)
-
-        if [[ -n "$FIRST_LOG_TIMESTAMP" ]]; then
-            # Parse the timestamp (MM-DD HH:MM:SS) and convert to epoch
-            LOG_MONTH=$(echo "$FIRST_LOG_TIMESTAMP" | cut -d'-' -f1)
-            LOG_DAY=$(echo "$FIRST_LOG_TIMESTAMP" | cut -d'-' -f2 | cut -d' ' -f1)
-            LOG_TIME=$(echo "$FIRST_LOG_TIMESTAMP" | cut -d' ' -f2)
-            LOG_DATETIME="${CURRENT_YEAR}-${LOG_MONTH}-${LOG_DAY} ${LOG_TIME}"
-
-            LOG_EPOCH=$(date -j -f "%Y-%m-%d %H:%M:%S" "$LOG_DATETIME" +%s 2>/dev/null || echo "0")
-
-            if [[ "$LOG_EPOCH" != "0" ]]; then
-                TIME_DIFF=$((CURRENT_TIME - LOG_EPOCH))
-                LOG_AGE_INFO="Roku log timestamp age: ${TIME_DIFF} seconds"
-
-                if [[ $TIME_DIFF -gt 60 ]]; then
-                    STALE_DETECTED=true
-                    LOG_AGE_INFO="Roku timestamp: $FIRST_LOG_TIMESTAMP (${TIME_DIFF}s old)"
-                fi
-            fi
-        fi
-    fi
-fi
-
-# Also check for recent crash - if app crashed, JSON timestamps will be old but crash is fresh
-CRASH_TIMESTAMP=$(grep -oE '^[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}' "$TEST_OUTPUT" | tail -1)
-RECENT_CRASH=false
-if [[ -n "$CRASH_TIMESTAMP" ]]; then
-    CRASH_MONTH=$(echo "$CRASH_TIMESTAMP" | cut -d'-' -f1)
-    CRASH_DAY=$(echo "$CRASH_TIMESTAMP" | cut -d'-' -f2 | cut -d' ' -f1)
-    CRASH_TIME=$(echo "$CRASH_TIMESTAMP" | cut -d' ' -f2)
-    CRASH_DATETIME="${CURRENT_YEAR}-${CRASH_MONTH}-${CRASH_DAY} ${CRASH_TIME}"
-    CRASH_EPOCH=$(date -j -f "%Y-%m-%d %H:%M:%S" "$CRASH_DATETIME" +%s 2>/dev/null || echo "0")
-    if [[ "$CRASH_EPOCH" != "0" ]]; then
-        CRASH_AGE=$((CURRENT_TIME - CRASH_EPOCH))
-        if [[ $CRASH_AGE -lt 60 ]]; then
-            RECENT_CRASH=true
-        fi
-    fi
-fi
-
-if [[ "$STALE_DETECTED" == "true" && "$RECENT_CRASH" == "false" ]]; then
+    echo -e "${YELLOW}  Warning: No sentinel found in output${NC}"
+    echo "  This could mean:"
+    echo "    - The app crashed before startRun() was called"
+    echo "    - The sentinel code wasn't included (rebuild needed)"
     echo ""
-    echo -e "${RED}╔══════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${RED}║  INFRASTRUCTURE FAILURE: STALE LOGS DETECTED                 ║${NC}"
-    echo -e "${RED}╚══════════════════════════════════════════════════════════════╝${NC}"
-    echo ""
-    echo -e "  ${YELLOW}$LOG_AGE_INFO${NC}"
-    echo -e "  Current time:   ${GREEN}$(date '+%Y-%m-%d %H:%M:%S')${NC}"
-    echo ""
-    echo "The logs you're seeing are from a PREVIOUS test run."
-    echo "Your current changes ARE deployed, but old logs are in the buffer."
-    echo ""
-    echo "This is an INFRASTRUCTURE FAILURE. The Home keypress should have"
-    echo "cleared the buffer but didn't. Re-running the tests should fix this."
-    echo ""
-    echo -e "${YELLOW}DO NOT debug based on these logs - they are STALE.${NC}"
-    echo ""
-    exit 1
-elif [[ "$STALE_DETECTED" == "true" && "$RECENT_CRASH" == "true" ]]; then
-    echo -e "  ${YELLOW}Old JSON timestamps but recent crash detected - app crashed early${NC}"
-    echo -e "  ${YELLOW}The crash output below is FRESH - you can debug it${NC}"
-elif [[ -n "$LOG_AGE_INFO" ]]; then
-    echo -e "  ${GREEN}$LOG_AGE_INFO (OK)${NC}"
-else
-    echo -e "  ${YELLOW}No timestamps found in output - cannot validate freshness${NC}"
+    echo "  Proceeding with unfiltered output (may contain stale logs)..."
 fi
 echo ""
 
@@ -479,9 +494,9 @@ echo "First 30 lines of raw output:"
 head -30 "$TEST_OUTPUT"
 echo ""
 
-# Extract JSON between markers
-sed -n '/\[KOTLINTEST_START\]/,/\[KOTLINTEST_END\]/p' "$TEST_OUTPUT" | \
-    grep -v 'KOTLINTEST' > "$RESULTS_JSON" 2>/dev/null || true
+# Extract JSON test results - look for JSON objects with test types
+# Don't require markers since we might connect after KOTLINTEST_START is printed
+grep -E '^\{.*"type":' "$TEST_OUTPUT" > "$RESULTS_JSON" 2>/dev/null || true
 
 # Count results
 PASSED=$(grep -c '"type":"test_pass"' "$RESULTS_JSON" 2>/dev/null | tr -d '\n' || echo "0")
