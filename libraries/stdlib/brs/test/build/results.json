@@ -1,10 +1,4 @@
-===KOTLINTEST_SENTINEL_1767911865237===
-[KOTLINTEST_RUN_ID:1767911865237]
-[KOTLINTEST_START]
 {"timestamp":1767911865263,"type":"run_start"}
-[DEBUG] adapter.startRun() complete
-[DEBUG] About to execute registration block
-[DEBUG] Registration block complete
 {"suite":"ArrayList","timestamp":1767911865264,"type":"suite_start"}
 {"suite":"ArrayList","test":"create empty","timestamp":1767911865265,"type":"test_start"}
 {"duration_ms":0,"suite":"ArrayList","test":"create empty","type":"test_pass"}
@@ -590,7 +584,3 @@
 {"duration_ms":0,"suite":"JSON Formatting","test":"format null","type":"test_pass"}
 {"duration_ms":10,"failed":0,"ignored":0,"passed":7,"suite":"JSON Formatting","type":"suite_end"}
 {"duration_ms":689,"failed":0,"ignored":0,"passed":276,"total_suites":16,"total_tests":276,"type":"run_complete"}
-[KOTLINTEST_END]
-[DEBUG] runTests complete
-Note: GC - Found 77 orphaned objects (objects in a circular ref loop).
-01-08 22:37:45.970 app  [bs.ndk.proc.exit] plugin=dev pid=7607 status=exit retval=2 user requested=0 process name='SdkLauncher' exit code=EXIT_USER_NAV

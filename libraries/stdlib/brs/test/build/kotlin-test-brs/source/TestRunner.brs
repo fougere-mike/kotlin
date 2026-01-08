@@ -1,6 +1,9 @@
 sub runTests_Function1TestRunnerV_k_(block as Object)
+    println_AnyN_k_("[DEBUG] runTests starting")
     runner = TestRunner_create_k_()
+    println_AnyN_k_("[DEBUG] TestRunner created")
     runner.run_Function1TestRunnerV_k_(block)
+    println_AnyN_k_("[DEBUG] runTests complete")
 end sub
 
 function TestRunner_create_k_() as Object
@@ -49,8 +52,13 @@ sub TestRunner_xtest_Str_Str_Function0V_k_(name as String, reason = "", testFn =
 end sub
 
 sub TestRunner_run_Function1TestRunnerV_k_(block as Object)
+    println_AnyN_k_("[DEBUG] TestRunner.run starting")
+    println_AnyN_k_("[DEBUG] About to call adapter.startRun()")
     m.get_adapter().startRun_k_()
+    println_AnyN_k_("[DEBUG] adapter.startRun() complete")
+    println_AnyN_k_("[DEBUG] About to execute registration block")
     block.invoke(m)
+    println_AnyN_k_("[DEBUG] Registration block complete")
     __iter_0 = m.get_directSuites().iterator_k_()
     while __iter_0.hasNext_k_()
         __destruct_0 = __iter_0.next_k_()

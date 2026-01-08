@@ -54,13 +54,30 @@ public class JsonTestAdapter : FrameworkAdapter {
     /**
      * Starts the test run and outputs the start marker.
      * Must be called before running any tests.
+     *
+     * This method implements a "flood + sentinel" strategy to handle stale logs
+     * in the Roku debug console buffer:
+     * 1. Print a unique sentinel with timestamp
+     * 2. Flood with ~100 lines to push stale logs through the buffer
+     * 3. Print sentinel again (test runner looks for the last occurrence)
      */
     public fun startRun() {
         runStarted = true
         runTimer.mark()
-        // Emit unique run ID for stale log detection
-        // The timestamp in milliseconds is unique enough per run
+
+        // Generate unique sentinel using timestamp
         val runId = currentTimeMillis()
+        val sentinel = "===KOTLINTEST_SENTINEL_${runId}==="
+
+        // Print sentinel and flood to push out stale logs from device buffer
+        // The Roku buffer can hold old logs from previous runs; flooding pushes them out
+        println(sentinel)
+        for (i in 0 until 100) {
+            println("[KOTLINTEST_BUFFER_FLUSH:$runId:$i]")
+        }
+        println(sentinel)  // Print again after flush - test runner looks for the LAST occurrence
+
+        // Now emit the actual test markers
         println("[KOTLINTEST_RUN_ID:$runId]")
         println("[KOTLINTEST_START]")
         emitJson(mapOf(

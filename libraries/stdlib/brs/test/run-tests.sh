@@ -209,8 +209,9 @@ echo "Step 5: Connecting to debug console..."
 # NOTE: We use telnet instead of nc because nc exits after receiving the initial
 # buffer dump from the Roku device. Telnet stays connected waiting for more data.
 # The sleep pipe keeps stdin open to prevent telnet from exiting.
+# 120s is enough for tests to complete (timeout is 90s) plus some buffer.
 {
-    sleep 180
+    sleep 120
 } | telnet "$ROKU_DEVICE_IP" 8085 > "$TEST_OUTPUT" 2>&1 &
 NC_PID=$!
 
@@ -258,18 +259,21 @@ CRASH_DETECTED=false
 SEEN_SENTINEL=false
 
 while [[ $ELAPSED -lt $TIMEOUT_SECONDS ]]; do
-    # Check for normal completion
-    if grep -q '\[KOTLINTEST_END\]' "$TEST_OUTPUT" 2>/dev/null; then
-        echo "Test completion marker found!"
-        break
-    fi
-
     # Check if we've seen the sentinel (start of THIS run's output)
-    # Only check for crashes AFTER we've confirmed we're seeing fresh output
+    # We must see a sentinel BEFORE we can trust any other markers
     if [[ "$SEEN_SENTINEL" == "false" ]]; then
         if grep -q '===KOTLINTEST_SENTINEL_' "$TEST_OUTPUT" 2>/dev/null; then
             SEEN_SENTINEL=true
             echo "  Sentinel found - monitoring for completion..."
+        fi
+    fi
+
+    # Only check for completion AFTER we've seen a sentinel
+    # This prevents false positives from stale [KOTLINTEST_END] in the device buffer
+    if [[ "$SEEN_SENTINEL" == "true" ]]; then
+        if grep -q '\[KOTLINTEST_END\]' "$TEST_OUTPUT" 2>/dev/null; then
+            echo "Test completion marker found!"
+            break
         fi
     fi
 
