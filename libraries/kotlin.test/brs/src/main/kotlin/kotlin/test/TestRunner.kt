@@ -40,8 +40,11 @@ import kotlin.test.adapters.JsonTestAdapter
  * markers that can be parsed by the Gradle test runner task.
  */
 public fun runTests(block: TestRunner.() -> Unit) {
+    println("[DEBUG] runTests starting")
     val runner = TestRunner()
+    println("[DEBUG] TestRunner created")
     runner.run(block)
+    println("[DEBUG] runTests complete")
 }
 
 /**
@@ -98,10 +101,15 @@ public class TestRunner internal constructor() {
     }
 
     internal fun run(block: TestRunner.() -> Unit) {
+        println("[DEBUG] TestRunner.run starting")
+        println("[DEBUG] About to call adapter.startRun()")
         adapter.startRun()
+        println("[DEBUG] adapter.startRun() complete")
 
         // Execute the registration block
+        println("[DEBUG] About to execute registration block")
         this.block()
+        println("[DEBUG] Registration block complete")
 
         // Run direct suites
         for ((name, suiteFn) in directSuites) {

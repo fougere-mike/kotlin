@@ -6,7 +6,6 @@
 package test
 
 import kotlin.test.runTests
-import kotlin.test.TestRunner
 
 // Collections tests
 import test.collections.arrayListTests
@@ -39,9 +38,6 @@ import test.roku.jsonTests
 
 /**
  * Main entry point for stdlib runtime tests.
- *
- * Runs all test suites and outputs results in JSON format
- * between [KOTLINTEST_START] and [KOTLINTEST_END] markers.
  */
 fun main() {
     runTests {

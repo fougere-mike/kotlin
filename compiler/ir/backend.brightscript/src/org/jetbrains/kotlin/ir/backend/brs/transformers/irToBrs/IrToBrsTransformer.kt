@@ -3942,8 +3942,10 @@ class IrExpressionToBrsTransformer(
         if (runtimePackageFqName == "kotlin.brs.runtime") {
             when (runtimeFunctionName) {
                 "brsFormatJson" -> {
+                    // Convert Kotlin collections to plain BrightScript types before JSON serialization
                     val arg = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
-                    return BrsFunctionCall(BrsIdentifier("FormatJson"), mutableListOf(arg))
+                    val converted = BrsFunctionCall(BrsIdentifier("__kotlin_toJsonValue_AnyN_k_"), mutableListOf(arg))
+                    return BrsFunctionCall(BrsIdentifier("FormatJson"), mutableListOf(converted))
                 }
                 "brsParseJson" -> {
                     val arg = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
@@ -3990,6 +3992,97 @@ class IrExpressionToBrsTransformer(
                 "brsPrint" -> {
                     val arg = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
                     return BrsFunctionCall(BrsIdentifier("print"), mutableListOf(arg))
+                }
+                // AA/Array intrinsics for JSON serialization
+                "brsHasField" -> {
+                    // DoesExist on AA
+                    val obj = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                    val field = expression.getValueArgument(1)?.accept(this, data) ?: BrsStringLiteral("")
+                    return BrsMethodCall(obj, "DoesExist", mutableListOf(field))
+                }
+                "brsGetField" -> {
+                    // Direct field access via Lookup
+                    val obj = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                    val field = expression.getValueArgument(1)?.accept(this, data) ?: BrsStringLiteral("")
+                    return BrsMethodCall(obj, "Lookup", mutableListOf(field))
+                }
+                "brsIntrinsicCreateObject" -> {
+                    val typeArg = expression.getValueArgument(0)
+                    val objectType = (typeArg as? IrConst)?.let { it.value.toString() } ?: "roAssociativeArray"
+                    // roArray needs size and resize flag arguments
+                    val args = if (objectType == "roArray") {
+                        mutableListOf<BrsExpression>(BrsIntLiteral(0), BrsBooleanLiteral(true))
+                    } else {
+                        mutableListOf()
+                    }
+                    return BrsCreateObject(objectType, args)
+                }
+                "brsIntrinsicKeys" -> {
+                    val aa = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                    return BrsMethodCall(aa, "Keys", mutableListOf())
+                }
+                "brsIntrinsicGetField" -> {
+                    // Same as brsGetField but named differently
+                    val obj = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                    val field = expression.getValueArgument(1)?.accept(this, data) ?: BrsStringLiteral("")
+                    return BrsMethodCall(obj, "Lookup", mutableListOf(field))
+                }
+                "brsIntrinsicAddReplace" -> {
+                    val aa = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                    val key = expression.getValueArgument(1)?.accept(this, data) ?: BrsStringLiteral("")
+                    val value = expression.getValueArgument(2)?.accept(this, data) ?: BrsInvalidLiteral()
+                    return BrsMethodCall(aa, "AddReplace", mutableListOf(key, value))
+                }
+                "brsIntrinsicCallGetArray" -> {
+                    val collection = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                    return BrsMethodCall(collection, "get_array", mutableListOf())
+                }
+                "brsIntrinsicCount" -> {
+                    val array = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                    return BrsMethodCall(array, "count", mutableListOf())
+                }
+                "brsIntrinsicArrayGet" -> {
+                    val array = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                    val index = expression.getValueArgument(1)?.accept(this, data) ?: BrsIntLiteral(0)
+                    return BrsIndexAccess(array, index)
+                }
+                "brsIntrinsicArrayPush" -> {
+                    val array = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                    val value = expression.getValueArgument(1)?.accept(this, data) ?: BrsInvalidLiteral()
+                    return BrsMethodCall(array, "push", mutableListOf(value))
+                }
+                "brsIntrinsicCallMethod" -> {
+                    val obj = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                    val methodArg = expression.getValueArgument(1)
+                    val methodName = (methodArg as? IrConst)?.let { it.value.toString() } ?: "unknown"
+                    return BrsMethodCall(obj, methodName, mutableListOf())
+                }
+                "brsStringEquals" -> {
+                    // Simple string comparison: (a = b)
+                    val a = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                    val b = expression.getValueArgument(1)?.accept(this, data) ?: BrsStringLiteral("")
+                    return BrsBinaryOp(a, BrsBinaryOperator.EQ, b)
+                }
+                "brsToString" -> {
+                    // Convert value to string using the existing runtime function
+                    val value = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                    return BrsFunctionCall(BrsIdentifier("toString_AnyN_k_"), mutableListOf(value))
+                }
+                "brsIntrinsicStartsWith" -> {
+                    // Left(str, Len(prefix)) = prefix
+                    val str = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                    val prefix = expression.getValueArgument(1)?.accept(this, data) ?: BrsStringLiteral("")
+                    val lenCall = BrsFunctionCall(BrsIdentifier("Len"), mutableListOf(prefix))
+                    val leftCall = BrsFunctionCall(BrsIdentifier("Left"), mutableListOf(str, lenCall))
+                    return BrsBinaryOp(leftCall, BrsBinaryOperator.EQ, prefix)
+                }
+                "brsIntrinsicEndsWith" -> {
+                    // Right(str, Len(suffix)) = suffix
+                    val str = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                    val suffix = expression.getValueArgument(1)?.accept(this, data) ?: BrsStringLiteral("")
+                    val lenCall = BrsFunctionCall(BrsIdentifier("Len"), mutableListOf(suffix))
+                    val rightCall = BrsFunctionCall(BrsIdentifier("Right"), mutableListOf(str, lenCall))
+                    return BrsBinaryOp(rightCall, BrsBinaryOperator.EQ, suffix)
                 }
             }
         }
@@ -4552,14 +4645,27 @@ class IrExpressionToBrsTransformer(
                 if (rawName.startsWith("<set-") && rawName.endsWith(">")) {
                     val fieldName = rawName.removePrefix("<set-").removeSuffix(">")
                     val property = function.correspondingPropertySymbol?.owner
-                    val hasBackingField = property?.backingField != null
+                    val backingField = property?.backingField
                     val value = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
 
-                    // For backing field properties, this code path shouldn't typically be reached
-                    // because IrSetField is used instead. But if we do get here, fall through
-                    // to the setter call which will fail at runtime if there's no setter attached.
-                    // For computed properties, call the setter method.
-                    return BrsMethodCall(receiverExpr, "set_$fieldName", mutableListOf(value))
+                    // Mirror the getter logic: use direct field assignment for data classes
+                    // with simple backing fields, call setter method otherwise
+                    val isOverridden = function.overriddenSymbols.isNotEmpty()
+                    val parentClass = function.parent as? IrClass
+                    val isDataClass = parentClass?.isData == true
+                    val hasSimpleBackingField = backingField != null && !isOverridden && isDataClass
+
+                    return if (hasSimpleBackingField) {
+                        // Direct field assignment for simple backing field properties
+                        BrsBinaryOp(
+                            BrsDotAccess(receiverExpr, fieldName),
+                            BrsBinaryOperator.EQ,
+                            value
+                        )
+                    } else {
+                        // Call setter for computed properties, overridden properties, etc.
+                        BrsMethodCall(receiverExpr, "set_$fieldName", mutableListOf(value))
+                    }
                 }
 
                 // For regular method calls, determine the method name

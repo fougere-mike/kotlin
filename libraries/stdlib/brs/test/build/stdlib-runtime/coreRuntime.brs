@@ -133,11 +133,43 @@ function __kotlin_numToStr_I_k_(value as Integer) as String
 end function
 
 function __kotlin_numToStr_J_k_(value as LongInteger) as String
+    if (value >= 10000000000&) or (value <= -10000000000&) then
+        return __kotlin_longToFixedStr_J_k_(value)
+    end if
     s = Str(value)
     if Left(s, 1) = " " then
         return Mid(s, 2)
     end if
     return s
+end function
+
+function __kotlin_longToFixedStr_J_k_(value as LongInteger) as String
+    if value = 0& then
+        return "0"
+    end if
+    isNegative = value < 0
+    __when_tmp2 = invalid
+    if isNegative then
+        __when_tmp2 = -value
+    else if true then
+        __when_tmp2 = value
+    end if
+    remaining = __when_tmp2
+
+    result = ""
+    while remaining > 0
+        digit = remaining mod 10
+        result = (__kotlin_numToStr_I_k_(digit) + result)
+        remaining = (remaining / 10)
+    end while
+    __when_tmp3 = invalid
+    if isNegative then
+        __when_tmp3 = ("-" + result)
+    else if true then
+        __when_tmp3 = result
+    end if
+    return __when_tmp3
+
 end function
 
 function __kotlin_numToStr_F_k_(value as Float) as String
@@ -176,4 +208,101 @@ function __kotlin_charSequenceLength_CharSequenceN_k_(value as Dynamic) as Integ
         return Len(value)
     end if
     return value.get_length()
+end function
+
+function __kotlin_toJsonValue_AnyN_k_(value as Dynamic) as Dynamic
+    if value = invalid then
+        return invalid
+    end if
+    t = Type(value)
+    if ((((((((((((t = "String") or (t = "roString")) or (t = "Integer")) or (t = "LongInteger")) or (t = "Float")) or (t = "Double")) or (t = "roInt")) or (t = "roFloat")) or (t = "roDouble")) or (t = "roInteger")) or (t = "roLongInteger")) or (t = "Boolean")) or (t = "roBoolean") then
+        return value
+    end if
+    if t = "roAssociativeArray" then
+        if value.DoesExist("__type") then
+            type_ = value.Lookup("__type")
+            if (type_ = "LinkedHashMap") or (type_ = "HashMap") then
+                return __kotlin_mapToPlainAA_Any_k_(value)
+            end if
+            if ((type_ = "ArrayList") or (type_ = "LinkedHashSet")) or (type_ = "HashSet") then
+                return __kotlin_collectionToPlainArray_Any_k_(value)
+            end if
+            if type_ = "EmptyMap" then
+                return CreateObject("roAssociativeArray")
+            end if
+            if type_ = "EmptyList" then
+                return CreateObject("roArray", 0, true)
+            end if
+        end if
+        if value.DoesExist("get_map") then
+            return __kotlin_mapToPlainAA_Any_k_(value)
+        end if
+        return value
+    end if
+    if t = "roArray" then
+        return __kotlin_arrayToPlainArray_Any_k_(value)
+    end if
+    return value
+end function
+
+function __kotlin_mapToPlainAA_Any_k_(map as Object) as Object
+    result = CreateObject("roAssociativeArray")
+    if map.DoesExist("get_map") then
+        internalMap = map.get_map()
+        keys = internalMap.Keys()
+        indexedObject = keys
+        inductionVariable = 0
+        last = indexedObject.count()
+        while inductionVariable < last
+            internalKey = indexedObject[inductionVariable]
+            inductionVariable = (inductionVariable + 1)
+
+            entry = internalMap.Lookup(internalKey)
+            originalKey = entry.Lookup("k")
+            value = entry.Lookup("v")
+            keyStr = toString_AnyN_k_(originalKey)
+            convertedValue = __kotlin_toJsonValue_AnyN_k_(value)
+            result.AddReplace(keyStr, convertedValue)
+
+        end while
+    else if true then
+        keys = map.Keys()
+        indexedObject = keys
+        inductionVariable = 0
+        last = indexedObject.count()
+        while inductionVariable < last
+            key = indexedObject[inductionVariable]
+            inductionVariable = (inductionVariable + 1)
+
+            value = map.Lookup(key)
+            valueType = Type(value)
+            if (valueType <> "Function") and (valueType <> "roFunction") then
+                isInternalKey = ((((((((Left(key, Len("__")) = "__") or (Right(key, Len("_k_")) = "_k_")) or (Left(key, Len("get_")) = "get_")) or (Left(key, Len("set_")) = "set_")) or (key = "equals")) or (key = "hashCode")) or (key = "toString")) or (key = "copy")) or (key = "_size")
+                if not isInternalKey then
+                    convertedValue = __kotlin_toJsonValue_AnyN_k_(value)
+                    result.AddReplace(key, convertedValue)
+                end if
+            end if
+
+        end while
+    end if
+    return result
+end function
+
+function __kotlin_collectionToPlainArray_Any_k_(collection as Object) as Object
+    array = collection.get_array()
+    return __kotlin_arrayToPlainArray_Any_k_(array)
+end function
+
+function __kotlin_arrayToPlainArray_Any_k_(array as Object) as Object
+    count = array.count()
+    result = CreateObject("roArray", 0, true)
+    i = 0
+    while i < count
+        element = array[i]
+        convertedElement = __kotlin_toJsonValue_AnyN_k_(element)
+        result.push(convertedElement)
+        i = (i + 1)
+    end while
+    return result
 end function

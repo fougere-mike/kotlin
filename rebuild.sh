@@ -1,6 +1,13 @@
 #!/bin/bash
 set -e
 
+# ============================================================================
+# USAGE
+# ============================================================================
+# ./rebuild.sh          - Smart incremental build (only rebuilds what changed)
+# ./rebuild.sh --clean  - Full clean build (removes all markers and caches)
+# ============================================================================
+
 echo "=== Building and publishing Kotlin BRS artifacts to Maven Local ==="
 echo ""
 echo "This script handles the two-phase bootstrap process:"
@@ -43,13 +50,49 @@ STDLIB_SRC_DIRS=(
 )
 
 # ============================================================================
+# MARKER FILES
+# ============================================================================
+COMPILER_MARKER=".build-marker-compiler"
+STDLIB_MARKER=".build-marker-stdlib"
+
+# ============================================================================
+# --clean FLAG: Full reset when things are in a bad state
+# ============================================================================
+if [[ "$1" == "--clean" ]]; then
+    echo "Full clean requested - removing all build state..."
+    echo ""
+
+    # Remove markers
+    rm -f "$COMPILER_MARKER" "$STDLIB_MARKER"
+
+    # Clean Maven Local BRS artifacts
+    echo "  Cleaning Maven Local BRS artifacts..."
+    rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-compiler-brs
+    rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-brs
+    rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-test-brs
+
+    # Clean BRS compiler build directories
+    echo "  Cleaning BRS compiler build directories..."
+    for dir in "${BRS_COMPILER_BUILD_DIRS[@]}"; do
+        rm -rf "$dir"
+    done
+
+    # Clean stdlib build directories
+    echo "  Cleaning stdlib build directories..."
+    rm -rf libraries/stdlib/build
+    rm -rf libraries/stdlib/brs/test/build
+    rm -rf libraries/stdlib/brs-prebuilt/build
+    rm -rf libraries/stdlib/brs-prebuilt/.gradle
+
+    echo ""
+    echo "Clean complete. Proceeding with full rebuild..."
+    echo ""
+fi
+
+# ============================================================================
 # SMART CHANGE DETECTION
 # Detect what changed to determine what needs rebuilding.
 # ============================================================================
-
-# Get the last build timestamps (stored in marker files)
-COMPILER_MARKER=".build-marker-compiler"
-STDLIB_MARKER=".build-marker-stdlib"
 
 # Check if compiler sources changed since last build
 # NOTE: We use git status instead of file mtime because some editors/tools
@@ -179,6 +222,17 @@ if [ "$COMPILER_CHANGED" = true ]; then
     echo "4. Publishing Kotlin Gradle Plugin..."
     ./gradlew :kotlin-gradle-plugin:publishToMavenLocal $FLAGS
 
+    # Verify compiler JAR was created
+    COMPILER_JAR="compiler/cli/cli-brs/build/libs/kotlinc-brs-2.1.255-SNAPSHOT.jar"
+    if [[ ! -f "$COMPILER_JAR" ]]; then
+        echo ""
+        echo "ERROR: Compiler JAR not created at $COMPILER_JAR"
+        echo "Build failed - not updating marker."
+        rm -f "$COMPILER_MARKER"
+        exit 1
+    fi
+    echo "  Verified: Compiler JAR exists"
+
     # Update compiler build marker
     touch "$COMPILER_MARKER"
 else
@@ -200,6 +254,18 @@ if [ "$STDLIB_CHANGED" = true ]; then
     echo "6. Publishing kotlin.test-brs..."
     echo "   (Using local bootstrap from Maven Local)"
     ./gradlew :kotlin-test:publishBrsModulePublicationToMavenLocal $LOCAL_BOOTSTRAP_FLAGS $FLAGS
+
+    # Verify stdlib was published
+    STDLIB_POM="$HOME/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-brs/2.1.255-SNAPSHOT/kotlin-stdlib-brs-2.1.255-SNAPSHOT.pom"
+    if [[ ! -f "$STDLIB_POM" ]]; then
+        echo ""
+        echo "ERROR: Stdlib not published to Maven Local"
+        echo "Expected: $STDLIB_POM"
+        echo "Build failed - not updating marker."
+        rm -f "$STDLIB_MARKER"
+        exit 1
+    fi
+    echo "  Verified: kotlin-stdlib-brs published to Maven Local"
 
     # Update stdlib build marker
     touch "$STDLIB_MARKER"

@@ -72,8 +72,8 @@ sub standardFunctionsTests_rTestRunner_k_(m as Object)
         end function})
         m.test_Str_Function0V_k_("apply for configuration", {invoke: function() as Void
             config = apply_rAnyN_Function1V_k_(Config_create_Str_I_k_(), {invoke: function(m as Object) as Void
-                m.set_name("test")
-                m.set_value(42)
+                m.name = "test"
+                m.value = 42
             end function})
             assertEquals_AnyN_AnyN_StrN_k_("test", config.name, invalid)
             assertEquals_AnyN_AnyN_StrN_k_(42, config.value, invalid)

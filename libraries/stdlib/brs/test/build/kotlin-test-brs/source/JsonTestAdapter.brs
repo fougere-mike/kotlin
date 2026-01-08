@@ -52,6 +52,29 @@ sub JsonTestAdapter_startRun_k_()
     m.set_runStarted(true)
     m.get_runTimer().mark()
     runId = m.currentTimeMillis_k_()
+    sentinel = ("===KOTLINTEST_SENTINEL_" + __kotlin_numToStr_J_k_(runId)) + "==="
+    println_AnyN_k_(sentinel)
+    progression = until_rI_I_k_(0, 100)
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
+        println_AnyN_k_(((("[KOTLINTEST_BUFFER_FLUSH:" + __kotlin_numToStr_J_k_(runId)) + ":") + __kotlin_numToStr_I_k_(i)) + "]")
+
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            println_AnyN_k_(((("[KOTLINTEST_BUFFER_FLUSH:" + __kotlin_numToStr_J_k_(runId)) + ":") + __kotlin_numToStr_I_k_(i)) + "]")
+
+        end while
+
+    end if
+
+    println_AnyN_k_(sentinel)
     println_AnyN_k_(("[KOTLINTEST_RUN_ID:" + __kotlin_numToStr_J_k_(runId)) + "]")
     println_AnyN_k_("[KOTLINTEST_START]")
     m.emitJson_MapStrAnyN_k_(mapOf_Arr_k_([to_rAnyN_AnyN_k_("type", "run_start"), to_rAnyN_AnyN_k_("timestamp", m.currentTimeMillis_k_())]))
@@ -101,7 +124,7 @@ end sub
 
 sub JsonTestAdapter_emitJson_MapStrAnyN_k_(data as Object)
     plainAA = mapToPlainAA_MapStrAnyN_k_(data)
-    json = FormatJson(plainAA)
+    json = FormatJson(__kotlin_toJsonValue_AnyN_k_(plainAA))
     println_AnyN_k_(json)
 end sub
 
