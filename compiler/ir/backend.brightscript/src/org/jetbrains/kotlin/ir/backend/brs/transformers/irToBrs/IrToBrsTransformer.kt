@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.ir.backend.brs.transformers.irToBrs
 import org.jetbrains.kotlin.backend.common.lower.BOUND_VALUE_PARAMETER
 import org.jetbrains.kotlin.backend.common.lower.BOUND_RECEIVER_PARAMETER
 import org.jetbrains.kotlin.brs.backend.ast.*
+import org.jetbrains.kotlin.brs.backend.ast.parser.parseBrightScriptStatements
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.ir.backend.brs.BrsIntrinsics
 import org.jetbrains.kotlin.ir.backend.brs.lower.BrsCodeOutliningLowering
@@ -4873,7 +4874,66 @@ class IrExpressionToBrsTransformer(
                 }
                 BrsFunctionCall(BrsIdentifier("print"), args.toMutableList())
             }
+            "brs" -> {
+                // Handle inline BrightScript code: brs("code here")
+                val codeArg = expression.getValueArgument(0)
+                val codeString = foldBrsCodeString(codeArg)
+                if (codeString == null) {
+                    System.err.println("brs() argument must be a compile-time constant string")
+                    return BrsInvalidLiteral()
+                }
+
+                // Parse the BrightScript code
+                val parseResult = parseBrightScriptStatements(codeString)
+                if (parseResult.hasErrors) {
+                    for (error in parseResult.errors) {
+                        System.err.println("Error in brs() code: $error")
+                    }
+                    return BrsInvalidLiteral()
+                }
+
+                // Extract expression from parsed statements
+                val statements = parseResult.result
+                when {
+                    statements.isEmpty() -> BrsInvalidLiteral()
+                    statements.size == 1 && statements[0] is BrsReturn ->
+                        (statements[0] as BrsReturn).value ?: BrsInvalidLiteral()
+                    statements.size == 1 && statements[0] is BrsExpressionStatement ->
+                        (statements[0] as BrsExpressionStatement).expression
+                    else -> {
+                        // For multiple statements, try to extract expression from last one
+                        val lastStmt = statements.last()
+                        if (lastStmt is BrsExpressionStatement) lastStmt.expression
+                        else if (lastStmt is BrsReturn) lastStmt.value ?: BrsInvalidLiteral()
+                        else BrsInvalidLiteral()
+                    }
+                }
+            }
             else -> BrsFunctionCall(BrsIdentifier(name), mutableListOf())
+        }
+    }
+
+    /**
+     * Constant-fold a string expression for brs() inline code.
+     * Returns null if the expression is not a compile-time constant string.
+     */
+    private fun foldBrsCodeString(expression: IrExpression?): String? {
+        if (expression == null) return null
+        return when (expression) {
+            is IrConst -> {
+                if (expression.kind == IrConstKind.String) expression.value as String
+                else null
+            }
+            is IrStringConcatenation -> {
+                // Support string templates like brs("print ${someConstant}")
+                val builder = StringBuilder()
+                for (arg in expression.arguments) {
+                    val part = foldBrsCodeString(arg) ?: return null
+                    builder.append(part)
+                }
+                builder.toString()
+            }
+            else -> null
         }
     }
 

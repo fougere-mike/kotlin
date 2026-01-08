@@ -23,10 +23,18 @@ public external interface Dynamic
 /**
  * Executes inline BrightScript code and returns the result.
  *
- * @param code The BrightScript code to execute.
+ * The code argument must be a compile-time constant string.
+ * The BrightScript code is parsed and embedded directly in the output.
+ *
+ * Example:
+ * ```kotlin
+ * val result = brs("1 + 2")  // Generates: result = 1 + 2
+ * brs("print \"hello\"")     // Generates: print "hello"
+ * ```
+ *
+ * @param code The BrightScript code to execute (must be a compile-time constant).
  * @return The result of evaluating the code.
  */
-@BrsInline("")
 public external fun brs(code: String): Dynamic
 
 /**
