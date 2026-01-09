@@ -127,7 +127,7 @@ public external interface IHttpAgent {
      * @param headers Associative array of header name to value.
      * @return True if all headers were set successfully.
      */
-    public fun setHeaders(headers: Dynamic): Boolean
+    public fun setHeaders(headers: Any?): Boolean
 }
 
 /**

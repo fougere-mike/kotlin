@@ -61,7 +61,7 @@ public external interface RoUrlTransfer : ISetMessagePort, IGetMessagePort, IHtt
     override fun addHeader(name: String, value: String): Boolean
     override fun setCertificatesFile(path: String): Boolean
     override fun initClientCertificates(): Boolean
-    override fun setHeaders(headers: Dynamic): Boolean
+    override fun setHeaders(headers: Any?): Boolean
 
     // ==================== ISetMessagePort / IGetMessagePort ====================
 
@@ -177,7 +177,7 @@ public external interface RoUrlTransfer : ISetMessagePort, IGetMessagePort, IHtt
      * @param elements List of form elements.
      * @return True if started successfully.
      */
-    public fun asyncPostFromFileToString(elements: Dynamic): Boolean
+    public fun asyncPostFromFileToString(elements: Any?): Boolean
 
     // ==================== Response Information ====================
 

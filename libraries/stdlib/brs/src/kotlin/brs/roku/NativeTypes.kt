@@ -75,7 +75,7 @@ public external interface IArraySet {
      * @param index The zero-based index of the element.
      * @param value The value to set.
      */
-    public operator fun set(index: Int, value: Dynamic)
+    public operator fun set(index: Int, value: Any?)
 }
 
 /**
@@ -95,7 +95,7 @@ public external interface IArray : IArrayGet, IArraySet {
      *
      * @param value The value to append.
      */
-    public fun push(value: Dynamic)
+    public fun push(value: Any?)
 
     /**
      * Removes and returns the last element of the array.
@@ -116,7 +116,7 @@ public external interface IArray : IArrayGet, IArraySet {
      *
      * @param value The value to insert.
      */
-    public fun unshift(value: Dynamic)
+    public fun unshift(value: Any?)
 
     /**
      * Deletes the element at the specified index.
@@ -253,7 +253,7 @@ public external interface IAssociativeArray {
      * @param key The key.
      * @param value The value to associate with the key.
      */
-    public fun addReplace(key: String, value: Dynamic)
+    public fun addReplace(key: String, value: Any?)
 
     /**
      * Deletes a key-value pair.
