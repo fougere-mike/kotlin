@@ -211,6 +211,85 @@ object BrsStandardClassIds {
         @JvmField
         val BrsSceneGraphComponent = "BrsSceneGraphComponent".brsId()
 
+        // ==================== Type-Safe SceneGraph Field Annotations ====================
+
+        /** Marks a property as a SceneGraph string field. */
+        @JvmField
+        val SGStringField = "SGStringField".brsId()
+
+        /** Marks a property as a SceneGraph integer field. */
+        @JvmField
+        val SGIntegerField = "SGIntegerField".brsId()
+
+        /** Marks a property as a SceneGraph long integer field. */
+        @JvmField
+        val SGLongIntegerField = "SGLongIntegerField".brsId()
+
+        /** Marks a property as a SceneGraph float field. */
+        @JvmField
+        val SGFloatField = "SGFloatField".brsId()
+
+        /** Marks a property as a SceneGraph double field. */
+        @JvmField
+        val SGDoubleField = "SGDoubleField".brsId()
+
+        /** Marks a property as a SceneGraph boolean field. */
+        @JvmField
+        val SGBooleanField = "SGBooleanField".brsId()
+
+        /** Marks a property as a SceneGraph array field. */
+        @JvmField
+        val SGArrayField = "SGArrayField".brsId()
+
+        /** Marks a property as a SceneGraph associative array field. */
+        @JvmField
+        val SGAssocArrayField = "SGAssocArrayField".brsId()
+
+        /** Marks a property as a SceneGraph node field. */
+        @JvmField
+        val SGNodeField = "SGNodeField".brsId()
+
+        /** Marks a property as a SceneGraph function reference field. */
+        @JvmField
+        val SGFunctionField = "SGFunctionField".brsId()
+
+        /** Marks a property as a SceneGraph URI field. */
+        @JvmField
+        val SGUriField = "SGUriField".brsId()
+
+        /** Marks a property as a SceneGraph time field. */
+        @JvmField
+        val SGTimeField = "SGTimeField".brsId()
+
+        /** Marks a property as a SceneGraph 2D vector field. */
+        @JvmField
+        val SGVector2DField = "SGVector2DField".brsId()
+
+        /** Marks a property as a SceneGraph color field. */
+        @JvmField
+        val SGColorField = "SGColorField".brsId()
+
+        /**
+         * Map of type-safe field annotation ClassIds to their BrightScript type strings.
+         */
+        @JvmField
+        val sgFieldAnnotationTypes = mapOf(
+            SGStringField to "string",
+            SGIntegerField to "integer",
+            SGLongIntegerField to "longinteger",
+            SGFloatField to "float",
+            SGDoubleField to "double",
+            SGBooleanField to "boolean",
+            SGArrayField to "array",
+            SGAssocArrayField to "assocarray",
+            SGNodeField to "node",
+            SGFunctionField to "function",
+            SGUriField to "uri",
+            SGTimeField to "time",
+            SGVector2DField to "vector2d",
+            SGColorField to "color"
+        )
+
         /**
          * Annotations that must be on external declarations.
          */

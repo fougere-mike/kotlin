@@ -68,10 +68,209 @@ public annotation class BrsField(
  * Specifies the onChange handler for a field.
  *
  * @property handler The name of the function to call when the field changes.
+ *                   Specify the Kotlin function name; the compiler will resolve
+ *                   it to the mangled BrightScript name automatically.
  */
 @Target(AnnotationTarget.PROPERTY)
 @Retention(AnnotationRetention.BINARY)
 public annotation class BrsOnChange(val handler: String)
+
+// ==================== Type-Safe SceneGraph Field Annotations ====================
+//
+// These annotations provide type-safe alternatives to @BrsField for declaring
+// SceneGraph component interface fields. Each annotation corresponds to a
+// BrightScript field type and enforces the correct Kotlin property type.
+//
+// Example usage:
+// ```kotlin
+// class MyComponent : SceneComponent() {
+//     @SGStringField(defaultValue = "Hello")
+//     var title: String = ""
+//
+//     @SGBooleanField(alwaysNotify = true)
+//     @BrsOnChange("onFocusedChanged")
+//     var focused: Boolean = false
+// }
+// ```
+
+/**
+ * Marks a property as a SceneGraph string field.
+ *
+ * @property alwaysNotify If true, observers are notified even when the value doesn't change.
+ * @property defaultValue The default value for this field in the XML.
+ */
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.BINARY)
+public annotation class SGStringField(
+    val alwaysNotify: Boolean = false,
+    val defaultValue: String = ""
+)
+
+/**
+ * Marks a property as a SceneGraph integer field.
+ *
+ * @property alwaysNotify If true, observers are notified even when the value doesn't change.
+ * @property defaultValue The default value for this field in the XML.
+ */
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.BINARY)
+public annotation class SGIntegerField(
+    val alwaysNotify: Boolean = false,
+    val defaultValue: Int = 0
+)
+
+/**
+ * Marks a property as a SceneGraph long integer field.
+ *
+ * @property alwaysNotify If true, observers are notified even when the value doesn't change.
+ * @property defaultValue The default value for this field in the XML.
+ */
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.BINARY)
+public annotation class SGLongIntegerField(
+    val alwaysNotify: Boolean = false,
+    val defaultValue: Long = 0L
+)
+
+/**
+ * Marks a property as a SceneGraph float field.
+ *
+ * @property alwaysNotify If true, observers are notified even when the value doesn't change.
+ * @property defaultValue The default value for this field in the XML.
+ */
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.BINARY)
+public annotation class SGFloatField(
+    val alwaysNotify: Boolean = false,
+    val defaultValue: Float = 0.0f
+)
+
+/**
+ * Marks a property as a SceneGraph double field.
+ *
+ * @property alwaysNotify If true, observers are notified even when the value doesn't change.
+ * @property defaultValue The default value for this field in the XML.
+ */
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.BINARY)
+public annotation class SGDoubleField(
+    val alwaysNotify: Boolean = false,
+    val defaultValue: Double = 0.0
+)
+
+/**
+ * Marks a property as a SceneGraph boolean field.
+ *
+ * @property alwaysNotify If true, observers are notified even when the value doesn't change.
+ * @property defaultValue The default value for this field in the XML.
+ */
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.BINARY)
+public annotation class SGBooleanField(
+    val alwaysNotify: Boolean = false,
+    val defaultValue: Boolean = false
+)
+
+/**
+ * Marks a property as a SceneGraph array field.
+ *
+ * @property alwaysNotify If true, observers are notified even when the value doesn't change.
+ */
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.BINARY)
+public annotation class SGArrayField(
+    val alwaysNotify: Boolean = false
+)
+
+/**
+ * Marks a property as a SceneGraph associative array field.
+ *
+ * @property alwaysNotify If true, observers are notified even when the value doesn't change.
+ */
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.BINARY)
+public annotation class SGAssocArrayField(
+    val alwaysNotify: Boolean = false
+)
+
+/**
+ * Marks a property as a SceneGraph node field.
+ *
+ * @property alwaysNotify If true, observers are notified even when the value doesn't change.
+ * @property nodeType Optional: the specific node type (e.g., "Label", "Poster", "ContentNode").
+ *                    If empty, accepts any node type.
+ */
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.BINARY)
+public annotation class SGNodeField(
+    val alwaysNotify: Boolean = false,
+    val nodeType: String = ""
+)
+
+/**
+ * Marks a property as a SceneGraph function reference field.
+ *
+ * @property alwaysNotify If true, observers are notified even when the value doesn't change.
+ */
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.BINARY)
+public annotation class SGFunctionField(
+    val alwaysNotify: Boolean = false
+)
+
+/**
+ * Marks a property as a SceneGraph URI field.
+ *
+ * URI fields are used for resource paths like images, fonts, and other assets.
+ *
+ * @property alwaysNotify If true, observers are notified even when the value doesn't change.
+ * @property defaultValue The default URI value for this field in the XML.
+ */
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.BINARY)
+public annotation class SGUriField(
+    val alwaysNotify: Boolean = false,
+    val defaultValue: String = ""
+)
+
+/**
+ * Marks a property as a SceneGraph time field.
+ *
+ * @property alwaysNotify If true, observers are notified even when the value doesn't change.
+ */
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.BINARY)
+public annotation class SGTimeField(
+    val alwaysNotify: Boolean = false
+)
+
+/**
+ * Marks a property as a SceneGraph 2D vector field.
+ *
+ * Vector2D fields contain [x, y] coordinates.
+ *
+ * @property alwaysNotify If true, observers are notified even when the value doesn't change.
+ */
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.BINARY)
+public annotation class SGVector2DField(
+    val alwaysNotify: Boolean = false
+)
+
+/**
+ * Marks a property as a SceneGraph color field.
+ *
+ * Color fields use RGBA hex format (e.g., "0xFF0000FF" for red with full opacity).
+ *
+ * @property alwaysNotify If true, observers are notified even when the value doesn't change.
+ * @property defaultValue The default color in hex format (e.g., "0xFFFFFFFF").
+ */
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.BINARY)
+public annotation class SGColorField(
+    val alwaysNotify: Boolean = false,
+    val defaultValue: String = ""
+)
 
 /**
  * Marks a class as a SceneGraph component.
