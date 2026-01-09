@@ -29,6 +29,15 @@ object BrsStandardClassIds {
         val roSGNode = "roSGNode".brsInternalId()
 
         @JvmField
+        val roSGScreen = "roSGScreen".brsInternalId()
+
+        @JvmField
+        val roSGScreenEvent = "roSGScreenEvent".brsInternalId()
+
+        @JvmField
+        val roSGNodeEvent = "roSGNodeEvent".brsInternalId()
+
+        @JvmField
         val roString = "roString".brsInternalId()
 
         @JvmField
@@ -98,6 +107,19 @@ object BrsStandardClassIds {
 
         @JvmField
         val iEnumNative = "IEnumNative".brsRokuId()
+
+        // SceneGraph type interfaces (kotlin.brs.roku package)
+        @JvmField
+        val roSGScreenInterface = "RoSGScreen".brsRokuId()
+
+        @JvmField
+        val roSGNodeInterface = "RoSGNode".brsRokuId()
+
+        @JvmField
+        val roSGScreenEventInterface = "RoSGScreenEvent".brsRokuId()
+
+        @JvmField
+        val roSGNodeEventInterface = "RoSGNodeEvent".brsRokuId()
     }
 
     /**
