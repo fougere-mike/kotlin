@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.ir.backend.brs
 
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.InternalSymbolFinderAPI
+import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.expressions.IrConst
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.util.getAnnotation
+import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.superTypes
 import org.jetbrains.kotlin.name.BrsStandardClassIds
 import org.jetbrains.kotlin.name.FqName
@@ -99,6 +101,82 @@ class BrsIntrinsics(
     val roAssociativeArrayInterfaceClass: IrClassSymbol? by lazy {
         val classId = BrsStandardClassIds.BuiltIns.roAssociativeArrayInterface
         symbolFinder.findClass(classId.shortClassName, classId.packageFqName)
+    }
+
+    // =============================================================================
+    // SceneGraph Component Support
+    // =============================================================================
+
+    /**
+     * FqName for the @BrsSceneGraphComponent annotation.
+     */
+    private val brsSceneGraphComponentFqn = FqName("kotlin.brs.BrsSceneGraphComponent")
+
+    /**
+     * The SceneComponent base class symbol.
+     */
+    val sceneComponentClass: IrClassSymbol? by lazy {
+        val classId = BrsStandardClassIds.Components.SceneComponent
+        symbolFinder.findClass(classId.shortClassName, classId.packageFqName)
+    }
+
+    /**
+     * The TaskComponent base class symbol.
+     */
+    val taskComponentClass: IrClassSymbol? by lazy {
+        val classId = BrsStandardClassIds.Components.TaskComponent
+        symbolFinder.findClass(classId.shortClassName, classId.packageFqName)
+    }
+
+    /**
+     * The SceneNodeComponent base class symbol.
+     */
+    val sceneNodeComponentClass: IrClassSymbol? by lazy {
+        val classId = BrsStandardClassIds.Components.SceneNodeComponent
+        symbolFinder.findClass(classId.shortClassName, classId.packageFqName)
+    }
+
+    /**
+     * Checks if a class is a SceneGraph component.
+     *
+     * A class is a component if it or any of its supertypes has @BrsSceneGraphComponent.
+     * This includes user classes that extend SceneComponent, TaskComponent, etc.
+     */
+    fun isSceneGraphComponent(irClass: IrClass): Boolean {
+        // Traverse class hierarchy looking for @BrsSceneGraphComponent
+        val visited = mutableSetOf<IrClass>()
+        val queue = ArrayDeque<IrClass>()
+        queue.add(irClass)
+
+        while (queue.isNotEmpty()) {
+            val current = queue.removeFirst()
+            if (current in visited) continue
+            visited.add(current)
+
+            // Check for @BrsSceneGraphComponent annotation
+            if (current.hasAnnotation(brsSceneGraphComponentFqn)) {
+                return true
+            }
+
+            // Check supertypes
+            for (superType in current.superTypes) {
+                val superClass = superType.classOrNull?.owner ?: continue
+                queue.add(superClass)
+            }
+        }
+        return false
+    }
+
+    /**
+     * Checks if a property name is a component scope property.
+     *
+     * These properties compile to m.<name> instead of generating accessor calls:
+     * - top -> m.top
+     * - global -> m.global
+     * - m -> m
+     */
+    fun isComponentScopeProperty(propertyName: String): Boolean {
+        return propertyName in setOf("top", "global", "m")
     }
 
     /**

@@ -98,6 +98,20 @@ class IrToBrsTransformer(
     internal var isInConstructorBody: Boolean = false
 
     /**
+     * Flag to indicate we're inside a SceneGraph component class transformation.
+     * When true:
+     * - 'top', 'global', and 'm' property accesses compile to m.top, m.global, m
+     * - 'this' references are not used (component doesn't create an object)
+     */
+    internal var isInComponentContext: Boolean = false
+
+    /**
+     * The current SceneGraph component class being transformed, if any.
+     * Used to determine which property accesses should compile to m.<name>.
+     */
+    internal var currentComponentClass: IrClass? = null
+
+    /**
      * Temp variable substitution map for increment/decrement inlining.
      * When transforming increment blocks, we need to inline the temp variable's
      * initializer instead of outputting a reference to the temp var.
@@ -542,6 +556,12 @@ class IrToBrsTransformer(
             return
         }
 
+        // Handle SceneGraph component classes specially
+        if (context.intrinsics.isSceneGraphComponent(irClass)) {
+            transformSceneGraphComponent(irClass, declarations)
+            return
+        }
+
         // Generate constructor function
         for (constructor in irClass.declarations.filterIsInstance<IrConstructor>()) {
             transformConstructor(irClass, constructor)?.let { declarations.add(it) }
@@ -563,6 +583,183 @@ class IrToBrsTransformer(
         for (nested in irClass.declarations.filterIsInstance<IrClass>()) {
             transformClassDeclarations(nested, declarations, statements)
         }
+    }
+
+    /**
+     * Transform a SceneGraph component class to BrightScript.
+     *
+     * Component classes are compiled differently from regular classes:
+     * - No constructor function is generated (component lifecycle is managed by SceneGraph)
+     * - The init {} block compiles to BrightScript's sub init()
+     * - Property accessors for inherited properties (top, global, m) are NOT generated
+     * - Member functions become top-level functions in the component script
+     *
+     * Example input:
+     * ```kotlin
+     * class MyComponent : SceneComponent() {
+     *     init {
+     *         top.setFocus(true)
+     *     }
+     *     fun handleButton() { println("pressed") }
+     * }
+     * ```
+     *
+     * Example output:
+     * ```brightscript
+     * sub init()
+     *     m.top.setFocus(true)
+     * end sub
+     *
+     * sub handleButton_k_()
+     *     println_AnyN_k_("pressed")
+     * end sub
+     * ```
+     */
+    private fun transformSceneGraphComponent(
+        irClass: IrClass,
+        declarations: MutableList<BrsDeclaration>
+    ) {
+        // Set component context flags
+        val previousInComponent = isInComponentContext
+        val previousComponentClass = currentComponentClass
+        isInComponentContext = true
+        currentComponentClass = irClass
+
+        try {
+            // Find the primary constructor to extract init block content
+            val primaryConstructor = irClass.declarations.filterIsInstance<IrConstructor>().firstOrNull()
+
+            // Generate sub init() from the constructor body (which contains init block code)
+            if (primaryConstructor != null) {
+                val initSub = transformComponentInitBlock(irClass, primaryConstructor)
+                if (initSub != null) {
+                    declarations.add(initSub)
+                }
+            }
+
+            // Generate member functions (but not inherited property accessors like get_top)
+            for (function in irClass.declarations.filterIsInstance<IrSimpleFunction>()) {
+                if (!function.isFakeOverride && !isComponentScopeAccessor(function)) {
+                    transformFunction(function)?.let { declarations.add(it) }
+                }
+            }
+
+            // Process nested classes (companion objects, etc.)
+            for (nested in irClass.declarations.filterIsInstance<IrClass>()) {
+                val nestedDeclarations = mutableListOf<BrsDeclaration>()
+                val nestedStatements = mutableListOf<BrsStatement>()
+                transformClassDeclarations(nested, nestedDeclarations, nestedStatements)
+                declarations.addAll(nestedDeclarations)
+            }
+        } finally {
+            // Restore context flags
+            isInComponentContext = previousInComponent
+            currentComponentClass = previousComponentClass
+        }
+    }
+
+    /**
+     * Check if a function is a component scope property accessor (top, global, m)
+     * that should not be emitted as we handle these specially.
+     */
+    private fun isComponentScopeAccessor(function: IrSimpleFunction): Boolean {
+        val property = function.correspondingPropertySymbol?.owner ?: return false
+        val propName = property.name.asString()
+        return context.intrinsics.isComponentScopeProperty(propName)
+    }
+
+    /**
+     * Transform the component's init {} block to BrightScript's sub init().
+     *
+     * Extracts statements from the constructor body, filtering out:
+     * - Delegating constructor calls (super())
+     * - Instance initializer calls
+     */
+    private fun transformComponentInitBlock(
+        irClass: IrClass,
+        constructor: IrConstructor
+    ): BrsSub? {
+        val bodyStatements = mutableListOf<BrsStatement>()
+
+        // Initialize property backing fields on m (like regular classes do with 'this')
+        // This must happen BEFORE init block statements execute
+        for (property in irClass.declarations.filterIsInstance<IrProperty>()) {
+            // Skip inherited component scope properties (top, global, m)
+            if (context.intrinsics.isComponentScopeProperty(property.name.asString())) {
+                continue
+            }
+
+            val fieldName = property.name.asString().replace("$", "_")
+            property.backingField?.initializer?.expression?.let { initializer ->
+                val transformedInit = transformExpression(initializer)
+                val hoisted = takeHoistedStatements()
+                bodyStatements.addAll(hoisted)
+                bodyStatements.add(
+                    BrsExpressionStatement(
+                        BrsBinaryOp(
+                            BrsDotAccess(BrsMRef(), fieldName),
+                            BrsBinaryOperator.EQ,
+                            transformedInit
+                        )
+                    )
+                )
+            }
+        }
+
+        // Attach member functions to m (like regular classes attach to 'this')
+        // This must happen BEFORE init block statements so methods are available
+        val className = context.getBrsName(irClass)
+        for (function in irClass.declarations.filterIsInstance<IrSimpleFunction>()) {
+            if (function.isFakeOverride) continue
+            if (isComponentScopeAccessor(function)) continue  // Skip top/global/m accessors
+
+            val methodName = context.getBrsName(function)
+            val shortName = methodName.removePrefix("${className}_")
+
+            bodyStatements.add(
+                BrsExpressionStatement(
+                    BrsBinaryOp(
+                        BrsDotAccess(BrsMRef(), shortName),
+                        BrsBinaryOperator.EQ,
+                        BrsIdentifier(methodName)
+                    )
+                )
+            )
+        }
+
+        // Extract init block statements from IrAnonymousInitializer declarations on the class
+        // (These haven't been lowered/inlined into the constructor for BRS backend)
+        for (declaration in irClass.declarations) {
+            if (declaration is IrAnonymousInitializer && !declaration.isStatic) {
+                val initBody = declaration.body
+                for (stmt in initBody.statements) {
+                    transformStatement(stmt)?.let { bodyStatements.add(it) }
+                }
+            }
+        }
+
+        // Also check constructor body for any statements after delegating call
+        val body = constructor.body
+        if (body is IrBlockBody) {
+            for (stmt in body.statements) {
+                when (stmt) {
+                    is IrDelegatingConstructorCall -> continue
+                    is IrInstanceInitializerCall -> continue
+                    else -> {
+                        transformStatement(stmt)?.let { bodyStatements.add(it) }
+                    }
+                }
+            }
+        }
+
+        // Only generate init() if there's actual code
+        if (bodyStatements.isEmpty()) return null
+
+        return BrsSub(
+            name = "init",
+            parameters = mutableListOf(),
+            body = BrsBlock(bodyStatements)
+        )
     }
 
     /**
@@ -4624,6 +4821,24 @@ class IrExpressionToBrsTransformer(
                     val property = function.correspondingPropertySymbol?.owner
                     val backingField = property?.backingField
 
+                    // Special handling for SceneGraph component scope properties (top, global, m)
+                    // When in component context, these compile to m.top, m.global, m
+                    if (parent.isInComponentContext && context.intrinsics.isComponentScopeProperty(fieldName)) {
+                        return when (fieldName) {
+                            "m" -> BrsMRef()  // Just m
+                            else -> BrsDotAccess(BrsMRef(), fieldName)  // m.top, m.global
+                        }
+                    }
+
+                    // Handle user-defined properties in component context
+                    // These compile to direct m.fieldName access instead of getter calls
+                    if (parent.isInComponentContext && backingField != null) {
+                        val parentClass = function.parent as? IrClass
+                        if (parentClass != null && context.intrinsics.isSceneGraphComponent(parentClass)) {
+                            return BrsDotAccess(BrsMRef(), fieldName)
+                        }
+                    }
+
                     // Determine if we should use direct field access or call the getter method
                     // Use direct access ONLY if:
                     // 1. There is a backing field
@@ -4649,6 +4864,19 @@ class IrExpressionToBrsTransformer(
                     val property = function.correspondingPropertySymbol?.owner
                     val backingField = property?.backingField
                     val value = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+
+                    // Handle user-defined properties in component context
+                    // These compile to direct m.fieldName = value assignment instead of setter calls
+                    if (parent.isInComponentContext && backingField != null) {
+                        val parentClass = function.parent as? IrClass
+                        if (parentClass != null && context.intrinsics.isSceneGraphComponent(parentClass)) {
+                            return BrsBinaryOp(
+                                BrsDotAccess(BrsMRef(), fieldName),
+                                BrsBinaryOperator.EQ,
+                                value
+                            )
+                        }
+                    }
 
                     // Mirror the getter logic: use direct field assignment for data classes
                     // with simple backing fields, call setter method otherwise
