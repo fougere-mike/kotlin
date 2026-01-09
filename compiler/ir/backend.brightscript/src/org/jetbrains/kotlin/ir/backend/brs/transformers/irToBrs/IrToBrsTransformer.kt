@@ -694,10 +694,16 @@ class IrToBrsTransformer(
                 val transformedInit = transformExpression(initializer)
                 val hoisted = takeHoistedStatements()
                 bodyStatements.addAll(hoisted)
+                // Interface fields (with SGField annotations) go on m.top, internal state goes on m
+                val target = if (expressionTransformer.hasInterfaceFieldAnnotation(property)) {
+                    BrsDotAccess(BrsDotAccess(BrsMRef(), "top"), fieldName)  // m.top.fieldName
+                } else {
+                    BrsDotAccess(BrsMRef(), fieldName)  // m.fieldName
+                }
                 bodyStatements.add(
                     BrsExpressionStatement(
                         BrsBinaryOp(
-                            BrsDotAccess(BrsMRef(), fieldName),
+                            target,
                             BrsBinaryOperator.EQ,
                             transformedInit
                         )
@@ -4831,11 +4837,18 @@ class IrExpressionToBrsTransformer(
                     }
 
                     // Handle user-defined properties in component context
-                    // These compile to direct m.fieldName access instead of getter calls
-                    if (parent.isInComponentContext && backingField != null) {
+                    // Interface fields (with @SGField or @BrsField) compile to m.top.fieldName
+                    // Internal state (no annotation) compiles to m.fieldName
+                    if (parent.isInComponentContext && property != null && backingField != null) {
                         val parentClass = function.parent as? IrClass
                         if (parentClass != null && context.intrinsics.isSceneGraphComponent(parentClass)) {
-                            return BrsDotAccess(BrsMRef(), fieldName)
+                            return if (hasInterfaceFieldAnnotation(property)) {
+                                // Interface field - access via m.top
+                                BrsDotAccess(BrsDotAccess(BrsMRef(), "top"), fieldName)
+                            } else {
+                                // Internal state - access via m
+                                BrsDotAccess(BrsMRef(), fieldName)
+                            }
                         }
                     }
 
@@ -4866,15 +4879,19 @@ class IrExpressionToBrsTransformer(
                     val value = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
 
                     // Handle user-defined properties in component context
-                    // These compile to direct m.fieldName = value assignment instead of setter calls
-                    if (parent.isInComponentContext && backingField != null) {
+                    // Interface fields (with @SGField or @BrsField) compile to m.top.fieldName = value
+                    // Internal state (no annotation) compiles to m.fieldName = value
+                    if (parent.isInComponentContext && property != null && backingField != null) {
                         val parentClass = function.parent as? IrClass
                         if (parentClass != null && context.intrinsics.isSceneGraphComponent(parentClass)) {
-                            return BrsBinaryOp(
-                                BrsDotAccess(BrsMRef(), fieldName),
-                                BrsBinaryOperator.EQ,
-                                value
-                            )
+                            val target = if (hasInterfaceFieldAnnotation(property)) {
+                                // Interface field - access via m.top
+                                BrsDotAccess(BrsDotAccess(BrsMRef(), "top"), fieldName)
+                            } else {
+                                // Internal state - access via m
+                                BrsDotAccess(BrsMRef(), fieldName)
+                            }
+                            return BrsBinaryOp(target, BrsBinaryOperator.EQ, value)
                         }
                     }
 
@@ -6032,6 +6049,25 @@ class IrExpressionToBrsTransformer(
         return irClass.annotations.any { annotation ->
             val annotationClass = annotation.type.classifierOrNull?.owner as? IrClass
             annotationClass?.name?.asString() == "BrsExternal"
+        }
+    }
+
+    /**
+     * Checks if a property is a SceneGraph interface field.
+     *
+     * Interface fields are accessed via m.top.fieldName instead of m.fieldName.
+     * This includes properties annotated with any @SG*Field annotation or @BrsField.
+     */
+    internal fun hasInterfaceFieldAnnotation(property: IrProperty): Boolean {
+        val sgFieldAnnotations = setOf(
+            "SGStringField", "SGIntegerField", "SGLongIntegerField", "SGFloatField",
+            "SGDoubleField", "SGBooleanField", "SGArrayField", "SGAssocArrayField",
+            "SGNodeField", "SGFunctionField", "SGUriField", "SGTimeField",
+            "SGVector2DField", "SGColorField", "BrsField"
+        )
+        return property.annotations.any { annotation ->
+            val annotationClass = annotation.type.classifierOrNull?.owner as? IrClass
+            annotationClass?.name?.asString() in sgFieldAnnotations
         }
     }
 

@@ -851,15 +851,7 @@ class BrsCompiler(
         builder.appendLine("""<?xml version="1.0" encoding="utf-8" ?>""")
         builder.appendLine("""<component name="${component.name}" extends="${component.extendsComponent}">""")
 
-        // Add script reference
-        builder.appendLine("""    <script type="text/brightscript" uri="pkg:/source/${component.name}.brs" />""")
-
-        // Add additional scripts
-        for (script in component.additionalScripts) {
-            builder.appendLine("""    <script type="text/brightscript" uri="$script" />""")
-        }
-
-        // Generate interface section
+        // Generate interface section FIRST - fields must be defined before scripts run
         builder.appendLine("    <interface>")
 
         // Add fields
@@ -891,6 +883,15 @@ class BrsCompiler(
         }
 
         builder.appendLine("    </interface>")
+
+        // Add script references AFTER interface so fields are defined before init() runs
+        builder.appendLine("""    <script type="text/brightscript" uri="pkg:/source/${component.name}.brs" />""")
+
+        // Add additional scripts
+        for (script in component.additionalScripts) {
+            builder.appendLine("""    <script type="text/brightscript" uri="$script" />""")
+        }
+
         builder.appendLine("</component>")
 
         return builder.toString()
