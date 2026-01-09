@@ -546,7 +546,7 @@ public external interface RoSGNode : ISGNodeField, ISGNodeChildren, ISGNodeDict,
     override fun addFields(fields: RoAssociativeArray): Boolean
     override fun getFieldType(fieldName: String): String
     override fun getFieldTypes(): RoAssociativeArray
-    override fun setField(fieldName: String, value: Dynamic): Boolean
+    override fun setField(fieldName: String, value: Any?): Boolean
     override fun setFields(fields: RoAssociativeArray): Boolean
     override fun removeField(fieldName: String): Boolean
     override fun removeFields(fieldNames: RoArray): Boolean
