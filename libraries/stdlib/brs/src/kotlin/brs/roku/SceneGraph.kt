@@ -123,7 +123,7 @@ public external interface ISGNodeField {
      * @param value The value to set.
      * @return True if the field was set successfully.
      */
-    public fun setField(fieldName: String, value: Dynamic): Boolean
+    public fun setField(fieldName: String, value: Any?): Boolean
 
     /**
      * Sets multiple field values from an associative array.

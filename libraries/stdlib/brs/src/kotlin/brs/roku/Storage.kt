@@ -129,7 +129,7 @@ public external interface RoRegistrySection {
      * @param keys List of keys to read.
      * @return Map of key to value.
      */
-    public fun readMulti(keys: Dynamic): Dynamic
+    public fun readMulti(keys: Any?): Dynamic
 
     /**
      * Writes multiple keys at once.
@@ -137,7 +137,7 @@ public external interface RoRegistrySection {
      * @param keyValues Map of key to value.
      * @return True if successful.
      */
-    public fun writeMulti(keyValues: Dynamic): Boolean
+    public fun writeMulti(keyValues: Any?): Boolean
 
     public companion object {
         /**

@@ -183,7 +183,7 @@ public external interface RoDeviceInfo {
      * @param codec Audio codec parameters to check.
      * @return Map with "result" key indicating support.
      */
-    public fun canDecodeAudio(codec: Dynamic): Dynamic
+    public fun canDecodeAudio(codec: Any?): Dynamic
 
     /**
      * Checks if the device supports the specified video format.
@@ -191,7 +191,7 @@ public external interface RoDeviceInfo {
      * @param video Video format parameters to check.
      * @return Map with "result" key indicating support.
      */
-    public fun canDecodeVideo(video: Dynamic): Dynamic
+    public fun canDecodeVideo(video: Any?): Dynamic
 
     /**
      * Returns a list of supported audio codecs.
