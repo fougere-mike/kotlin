@@ -1,0 +1,12 @@
+// --- File: basicComponent.brs ---
+function init_k_() as Integer
+    return 42
+end function
+
+function handleButton_I_k_(value as Integer) as Integer
+    return value + 1
+end function
+
+function updateLabel_Str_k_(text as String) as String
+    return "Label: " + text
+end function

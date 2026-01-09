@@ -205,10 +205,40 @@ object BrsStandardClassIds {
         val BrsInternal = "BrsInternal".brsInternalId()
 
         /**
+         * Marks a class as a SceneGraph component base class.
+         * Used on abstract classes like SceneComponent, TaskComponent, etc.
+         */
+        @JvmField
+        val BrsSceneGraphComponent = "BrsSceneGraphComponent".brsId()
+
+        /**
          * Annotations that must be on external declarations.
          */
         @JvmField
         val annotationsRequiringExternal = setOf(BrsExternal)
+    }
+
+    /**
+     * SceneGraph component base classes.
+     */
+    object Components {
+        /**
+         * Base class for SceneGraph components that extend Group.
+         */
+        @JvmField
+        val SceneComponent = "SceneComponent".brsId()
+
+        /**
+         * Base class for SceneGraph Task components.
+         */
+        @JvmField
+        val TaskComponent = "TaskComponent".brsId()
+
+        /**
+         * Base class for SceneGraph Scene components.
+         */
+        @JvmField
+        val SceneNodeComponent = "SceneNodeComponent".brsId()
     }
 
     /**

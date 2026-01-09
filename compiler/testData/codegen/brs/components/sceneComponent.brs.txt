@@ -1,0 +1,8 @@
+// --- File: sceneComponent.brs ---
+function init_k_() as Boolean
+    return true
+end function
+
+function onKeyEvent_Str_Z_k_(key as String, press as Boolean) as Boolean
+    return press
+end function

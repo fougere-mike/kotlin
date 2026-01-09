@@ -166,3 +166,23 @@ public annotation class BrsSuppress(vararg val warnings: String)
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.BINARY)
 public annotation class BrsCreateObject(val typeName: String)
+
+/**
+ * Marks a class as a SceneGraph component base class.
+ *
+ * Classes annotated with this annotation (and their subclasses) are compiled
+ * differently from regular Kotlin classes:
+ * - No constructor function is generated (component lifecycle is managed by SceneGraph)
+ * - The `init { }` block compiles to BrightScript's `sub init()`
+ * - Property accesses to inherited members like `top`, `global` compile to `m.top`, `m.global`
+ *
+ * This annotation is typically used on abstract base classes like [SceneComponent].
+ * User code should extend those base classes rather than using this annotation directly.
+ *
+ * @property extends The BrightScript component type this extends (e.g., "Group", "Task", "Scene").
+ */
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.BINARY)
+public annotation class BrsSceneGraphComponent(
+    val extends: String = "Group"
+)

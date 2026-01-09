@@ -79,3 +79,17 @@ class BrsInlineGoldenFileTests : AbstractBrsGoldenFileTest() {
     @Test
     fun brsFunction() = runTest("inline/brsFunction.kt")
 }
+
+// ==================== SceneGraph Component Tests ====================
+
+class BrsComponentGoldenFileTests : AbstractBrsGoldenFileTest() {
+
+    @Test
+    fun basicComponent() = runTest("components/basicComponent.kt")
+
+    @Test
+    fun sceneComponent() = runTest("components/sceneComponent.kt")
+
+    @Test
+    fun componentWithMAccess() = runTest("components/componentWithMAccess.kt")
+}
