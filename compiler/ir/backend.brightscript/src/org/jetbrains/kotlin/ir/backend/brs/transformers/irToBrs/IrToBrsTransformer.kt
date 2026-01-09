@@ -2098,14 +2098,15 @@ class IrToBrsTransformer(
     }
 
     // BrightScript reserved keywords that cannot be used as identifiers
+    // Includes language keywords plus special identifiers like 'global' (m.global), 'm' (this), 'top' (m.top)
     private val brsReservedKeywords = setOf(
         "and", "as", "boolean", "box", "catch", "class", "dim", "double", "dynamic",
         "each", "else", "elseif", "end", "endfor", "endif", "endsub", "endwhile",
-        "exit", "extends", "false", "float", "for", "function", "goto", "if", "in",
+        "exit", "extends", "false", "float", "for", "function", "global", "goto", "if", "in",
         "integer", "interface", "invalid", "let", "library", "line_num", "longinteger",
-        "mod", "next", "not", "object", "or", "override", "print", "private", "protected",
+        "m", "mod", "next", "not", "object", "or", "override", "print", "private", "protected",
         "public", "rem", "return", "run", "step", "stop", "string", "sub", "then",
-        "throw", "to", "true", "try", "type", "while"
+        "throw", "to", "top", "true", "try", "type", "while"
     )
 
     /**
@@ -3473,7 +3474,7 @@ class IrStatementToBrsTransformer(
             rawName.startsWith("<set-") && rawName.endsWith(">") -> "value"
             rawName.startsWith("<") && rawName.endsWith(">") ->
                 rawName.removePrefix("<").removeSuffix(">").replace("-", "_")
-            else -> rawName
+            else -> parent.sanitizeParameterName(rawName)
         }
 
         // Build the target expression (LHS of assignment)
@@ -3859,7 +3860,7 @@ class IrExpressionToBrsTransformer(
             rawName.startsWith("<set-") && rawName.endsWith(">") -> "value"
             rawName.startsWith("<") && rawName.endsWith(">") ->
                 rawName.removePrefix("<").removeSuffix(">").replace("-", "_")
-            else -> rawName
+            else -> parent.sanitizeParameterName(rawName)
         }
 
         // Check if this is a shared variable accessed outside closure
