@@ -22,7 +22,11 @@ open class KotlinBrsIrTargetPreset(
     project: Project,
 ) : KotlinOnlyTargetPreset<KotlinBrsIrTarget, KotlinBrsIrCompilation>(project) {
 
-    override val platformType: KotlinPlatformType = KotlinPlatformType.brs
+    // Report as 'native' platform for IDE compatibility.
+    // The bundled Kotlin IDE plugin doesn't include BRS in IdePlatformKind.ALL_KINDS,
+    // so using KotlinPlatformType.brs causes "Unsupported platform kind: BRS" errors.
+    // Native is the closest match since BRS uses klib format with NATIVE builtins.
+    override val platformType: KotlinPlatformType = KotlinPlatformType.native
 
     override fun instantiateTarget(name: String): KotlinBrsIrTarget =
         project.objects.newInstance(KotlinBrsIrTarget::class.java, project, platformType)

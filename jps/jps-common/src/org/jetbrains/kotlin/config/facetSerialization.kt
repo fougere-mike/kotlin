@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.arguments.CompilerArgumentsSerializerV5
 import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.platform.*
+import org.jetbrains.kotlin.platform.brs.isBrs
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -46,6 +47,7 @@ fun TargetPlatform.createArguments(init: (CommonCompilerArguments).() -> Unit = 
         isJs() -> K2JSCompilerArguments().apply { init() }
         isWasm() -> K2JSCompilerArguments().apply { init() }
         isNative() -> K2NativeCompilerArguments().apply { init() }
+        isBrs() -> K2BrsCompilerArguments().apply { init() }
         else -> error("Unknown platform $this")
     }
 }

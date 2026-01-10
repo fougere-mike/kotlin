@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.IdePlatform
 import org.jetbrains.kotlin.platform.JsPlatform
 import org.jetbrains.kotlin.platform.WasmPlatform
+import org.jetbrains.kotlin.platform.brs.BrsPlatform
+import org.jetbrains.kotlin.platform.brs.BrsPlatforms
 import org.jetbrains.kotlin.platform.impl.*
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
@@ -29,6 +31,8 @@ fun NewPlatform.toOldPlatform(): OldPlatform = when (val single = singleOrNull()
     is JvmPlatform -> JvmPlatforms.CompatJvmPlatform
     is JsPlatform -> JsPlatforms.CompatJsPlatform
     is NativePlatform -> NativePlatforms.CompatNativePlatform
+    // BRS is a new platform that doesn't need legacy API compatibility
+    is BrsPlatform -> error("BRS platform does not support legacy TargetPlatform conversion")
     else -> error("Unknown platform $single")
 }
 
@@ -37,6 +41,7 @@ fun OldPlatform.toNewPlatform(): NewPlatform = when (this) {
     is JvmPlatforms.CompatJvmPlatform -> this
     is JsPlatforms.CompatJsPlatform -> this
     is NativePlatforms.CompatNativePlatform -> this
+    // BRS doesn't have legacy compat types since it's a new platform
     else -> error(
         "Can't convert org.jetbrains.kotlin.resolve.TargetPlatform to org.jetbrains.kotlin.platform.TargetPlatform: " +
                 "non-Compat instance passed\n" +
@@ -52,6 +57,7 @@ fun IdePlatform<*, *>.toNewPlatform(): NewPlatform = when (this) {
     is JsIdePlatformKind.Platform -> JsPlatforms.defaultJsPlatform
     is WasmIdePlatformKind.Platform -> WasmPlatforms.wasmJs
     is NativeIdePlatformKind.Platform -> NativePlatforms.unspecifiedNativePlatform
+    is BrsIdePlatformKind.Platform -> BrsPlatforms.defaultBrsPlatform
     else -> error("Unknown platform $this")
 }
 
@@ -62,5 +68,6 @@ fun NewPlatform.toIdePlatform(): IdePlatform<*, *> = when (val single = singleOr
     is JsPlatform -> JsIdePlatformKind.Platform
     is WasmPlatform -> WasmIdePlatformKind.Platform
     is NativePlatform -> NativeIdePlatformKind.Platform
+    is BrsPlatform -> BrsIdePlatformKind.Platform
     else -> error("Unknown platform $single")
 }

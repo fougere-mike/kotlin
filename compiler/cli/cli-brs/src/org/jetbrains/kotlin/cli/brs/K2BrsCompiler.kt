@@ -313,9 +313,13 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
     ): ExitCode {
         val moduleName = configuration.get(CommonConfigurationKeys.MODULE_NAME) ?: "main"
 
+        // Use "stdlib" as the module name when compiling stdlib for proper IDE resolution
+        val isStdlibCompilation = configuration.languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation)
+        val effectiveModuleName = if (isStdlibCompilation) "stdlib" else moduleName
+
         messageCollector.report(
             CompilerMessageSeverity.INFO,
-            "Serializing module '$moduleName' to klib: $outputPath"
+            "Serializing module '$effectiveModuleName' to klib: $outputPath"
         )
 
         val diagnosticReporter = DiagnosticReporterFactory.createReporter(messageCollector)
@@ -331,7 +335,7 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
 
         // Serialize IR and metadata
         val serializerOutput = serializeModuleIntoKlib(
-            moduleName = moduleName,
+            moduleName = effectiveModuleName,
             irModuleFragment = irResult.irModuleFragment,
             irBuiltins = irResult.irBuiltIns,
             configuration = configuration,
@@ -373,11 +377,11 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
                 ?: error("Expected serialized IR"),
             versions = versions,
             output = outputPath,
-            moduleName = moduleName,
+            moduleName = effectiveModuleName,
             nopack = false,
             perFile = false,
             manifestProperties = Properties(),
-            builtInsPlatform = BuiltInsPlatform.COMMON
+            builtInsPlatform = BuiltInsPlatform.NATIVE  // Use NATIVE for IDE compatibility
         )
 
         messageCollector.report(

@@ -53,7 +53,8 @@ abstract class IdePlatformKind {
                 WasmJsIdePlatformKind,
                 WasmWasiIdePlatformKind,
                 CommonIdePlatformKind,
-                NativeIdePlatformKind
+                NativeIdePlatformKind,
+                BrsIdePlatformKind
             )
 
         val ALL_KINDS by lazy {

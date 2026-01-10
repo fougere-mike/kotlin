@@ -46,8 +46,30 @@ fun brsLegacyTargetPlatform(): TargetPlatform = BrsPlatformLegacy.toTargetPlatfo
 /**
  * Checks if a platform is BrightScript.
  */
-val TargetPlatform.isBrs: Boolean
-    get() = componentPlatforms.any { it is BrsPlatform }
+fun TargetPlatform?.isBrs(): Boolean = this?.isNotEmpty() == true && all { it is BrsPlatform }
+
+/**
+ * BrightScript platforms registry, similar to JvmPlatforms, NativePlatforms, etc.
+ */
+@Suppress("DEPRECATION_ERROR")
+object BrsPlatforms {
+    val defaultBrsPlatform: TargetPlatform = BrsPlatformDefault.toTargetPlatform()
+    val legacyBrsPlatform: TargetPlatform = BrsPlatformLegacy.toTargetPlatform()
+
+    val unspecifiedBrsPlatform: TargetPlatform
+        get() = CompatBrsPlatform
+
+    val allBrsPlatforms: List<TargetPlatform> = listOf(
+        defaultBrsPlatform,
+        legacyBrsPlatform
+    )
+
+    @Deprecated(
+        message = "Should be accessed only by compatibility layer, other clients should use 'defaultBrsPlatform'",
+        level = DeprecationLevel.ERROR
+    )
+    object CompatBrsPlatform : TargetPlatform(setOf(BrsPlatformDefault))
+}
 
 /**
  * Extension to create singleton TargetPlatform.

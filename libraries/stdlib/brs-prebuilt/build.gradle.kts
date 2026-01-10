@@ -70,7 +70,8 @@ val regenerateKlib by tasks.registering(JavaExec::class) {
         "-Xproduce=library",
         "-Xallow-kotlin-package",
         "-Xexpect-actual-classes",
-        "-Xir-module-name=kotlin-stdlib-brs",
+        "-Xstdlib-compilation",  // Enable stdlib compilation mode for proper klib metadata
+        "-module-name", "stdlib",  // Use "stdlib" to match Native convention
         "-output", outputKlib.absolutePath,
         *sourceDirs.map { it.absolutePath }.toTypedArray()
     )

@@ -97,6 +97,23 @@ abstract class KotlinBrsCompile @Inject constructor(
         description = "Compiles Kotlin sources to BrightScript"
     }
 
+    /**
+     * Returns the destination directory as a File.
+     * Required for IntelliJ IDE tooling compatibility.
+     */
+    @get:Internal
+    val destinationDir: java.io.File
+        get() = outputDirectory.get().asFile
+
+    /**
+     * Returns the output file (the destination directory for BRS).
+     * Required for IntelliJ IDE tooling compatibility.
+     * For BRS, this returns the output directory since we produce multiple files.
+     */
+    @get:Internal
+    val outputFile: java.io.File
+        get() = outputDirectory.get().asFile
+
     @TaskAction
     fun compile() {
         // Check if compiler JAR is configured

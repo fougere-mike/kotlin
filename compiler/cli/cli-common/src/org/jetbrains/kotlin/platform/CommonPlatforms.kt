@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.platform
 
+import org.jetbrains.kotlin.platform.brs.BrsPlatforms.allBrsPlatforms
 import org.jetbrains.kotlin.platform.js.JsPlatforms.allJsPlatforms
 import org.jetbrains.kotlin.platform.js.JsPlatforms.defaultJsPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms.allJvmPlatforms
@@ -44,6 +45,7 @@ object CommonPlatforms {
             yieldAll(allNativePlatforms)
             yieldAll(allJsPlatforms)
             yieldAll(allWasmPlatforms)
+            yieldAll(allBrsPlatforms)
 
             // TODO(dsavvinov): extensions points?
         }.toList()
