@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.backend.common.serialization.IrSerializationSettings
 import org.jetbrains.kotlin.ir.declarations.IrAnnotationContainer
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.library.encodings.WobblyTF8
-import org.jetbrains.kotlin.library.impl.IrArrayMemoryReader
-import org.jetbrains.kotlin.library.impl.IrMemoryStringWriter
+import org.jetbrains.kotlin.library.impl.IrArrayReader
+import org.jetbrains.kotlin.library.impl.IrStringWriter
 import org.jetbrains.kotlin.library.impl.toArray
 
 /**
@@ -22,13 +22,13 @@ import org.jetbrains.kotlin.library.impl.toArray
  */
 class BrsIrFileMetadata(val exportedNames: List<String>) : IrFileSerializer.FileBackendSpecificMetadata {
     override fun toByteArray(): ByteArray {
-        return IrMemoryStringWriter(exportedNames).writeIntoMemory()
+        return IrStringWriter(exportedNames).writeIntoMemory()
     }
 
     companion object {
         fun fromByteArray(data: ByteArray): BrsIrFileMetadata {
             return BrsIrFileMetadata(
-                exportedNames = IrArrayMemoryReader(data).toArray().map(WobblyTF8::decode)
+                exportedNames = IrArrayReader(data).toArray().map(WobblyTF8::decode)
             )
         }
     }

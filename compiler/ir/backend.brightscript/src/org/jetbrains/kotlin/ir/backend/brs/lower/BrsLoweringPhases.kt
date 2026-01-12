@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
-import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
+import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 
 /**
  * BrightScript-specific IR lowering phases.
@@ -128,7 +128,7 @@ class ValidateSuspendUsageLowering(
 ) : FileLoweringPass {
     override fun lower(irFile: IrFile) {
         // Check for suspend functions and report errors
-        irFile.accept(object : org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid {
+        irFile.accept(object : IrVisitorVoid() {
             override fun visitElement(element: org.jetbrains.kotlin.ir.IrElement) {
                 element.acceptChildren(this, null)
             }

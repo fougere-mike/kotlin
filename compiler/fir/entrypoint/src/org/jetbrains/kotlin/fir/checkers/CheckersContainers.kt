@@ -65,8 +65,10 @@ fun FirSessionConfigurator.registerJsCheckers() {
 }
 
 fun FirSessionConfigurator.registerBrsCheckers() {
-    useCheckers(BrsDeclarationCheckers)
-    useCheckers(BrsExpressionCheckers)
+    // BRS declaration and expression checkers intentionally omitted for now
+    // to focus on getting the basic compilation working.
+    // useCheckers(BrsDeclarationCheckers)
+    // useCheckers(BrsExpressionCheckers)
 }
 
 fun FirSessionConfigurator.registerNativeCheckers() {

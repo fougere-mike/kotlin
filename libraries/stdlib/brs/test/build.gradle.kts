@@ -9,7 +9,8 @@ plugins {
 
 description = "BrightScript stdlib runtime tests"
 
-val kotlincBrsJar = rootProject.file("compiler/cli/cli-brs/build/libs/kotlinc-brs-2.1.255-SNAPSHOT.jar")
+// Use dist compiler (includes all runtime dependencies in the distribution)
+val distLibDir = rootProject.file("dist/kotlinc/lib")
 val stdlibKlib = rootProject.file("libraries/stdlib/brs-prebuilt/kotlin-stdlib-brs.klib")
 val kotlinTestKlib = rootProject.file("libraries/kotlin.test/brs/build/kotlin-test-brs.klib")
 val outputDir = file("build/brs")
@@ -21,16 +22,17 @@ val compileTests by tasks.registering(JavaExec::class) {
     group = "build"
     description = "Compile stdlib tests to BrightScript"
 
-    classpath = files(kotlincBrsJar)
+    classpath = fileTree(distLibDir) { include("*.jar") }
     mainClass.set("org.jetbrains.kotlin.cli.brs.K2BrsCompiler")
 
     val testSources = file("kotlin")
 
     doFirst {
-        if (!kotlincBrsJar.exists()) {
+        val compilerJar = distLibDir.resolve("kotlin-compiler.jar")
+        if (!compilerJar.exists()) {
             throw GradleException(
-                "BRS compiler not found: ${kotlincBrsJar.absolutePath}\n" +
-                "Build it with: ./rebuild.sh"
+                "Kotlin distribution not found at: ${distLibDir.absolutePath}\n" +
+                "Build it with: ./gradlew dist"
             )
         }
         if (!stdlibKlib.exists()) {
@@ -48,7 +50,7 @@ val compileTests by tasks.registering(JavaExec::class) {
 
         outputDir.mkdirs()
         logger.lifecycle("Compiling stdlib tests...")
-        logger.lifecycle("  Compiler: ${kotlincBrsJar.name}")
+        logger.lifecycle("  Compiler: dist/kotlinc/lib")
         logger.lifecycle("  Stdlib: ${stdlibKlib.name}")
         logger.lifecycle("  kotlin.test: ${kotlinTestKlib.name}")
         logger.lifecycle("  Output: ${outputDir.absolutePath}")

@@ -28,13 +28,14 @@ import org.jetbrains.kotlin.ir.util.getPackageFragment
 import org.jetbrains.kotlin.ir.util.isFunction
 import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.ir.util.isNullable
+import org.jetbrains.kotlin.ir.util.isTypeParameter
 import org.jetbrains.kotlin.ir.util.isUnsigned
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.name.BrsStandardClassIds
 import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
-import org.jetbrains.kotlin.ir.visitors.IrElementVisitor
-import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
+import org.jetbrains.kotlin.ir.visitors.IrVisitor
+import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 
@@ -47,7 +48,7 @@ import org.jetbrains.kotlin.ir.visitors.acceptVoid
  */
 class IrToBrsTransformer(
     private val context: BrsIrBackendContext
-) : IrElementVisitor<BrsNode?, Unit> {
+) : IrVisitor<BrsNode?, Unit>() {
 
     private val statementTransformer = IrStatementToBrsTransformer(this, context)
     private val expressionTransformer = IrExpressionToBrsTransformer(this, context)
@@ -211,7 +212,7 @@ class IrToBrsTransformer(
         function.extensionReceiverParameter?.let { declaredSymbols.add(it.symbol) }
 
         // Walk the function body to find declared and referenced variables
-        function.body?.acceptVoid(object : IrElementVisitorVoid {
+        function.body?.acceptVoid(object : IrVisitorVoid() {
             override fun visitElement(element: IrElement) {
                 element.acceptChildrenVoid(this)
             }
@@ -345,7 +346,7 @@ class IrToBrsTransformer(
         val sharedVars = mutableSetOf<IrValueSymbol>()
 
         // Walk the body to find all function expressions (closures)
-        body.acceptVoid(object : IrElementVisitorVoid {
+        body.acceptVoid(object : IrVisitorVoid() {
             override fun visitElement(element: IrElement) {
                 element.acceptChildrenVoid(this)
             }
@@ -2455,9 +2456,11 @@ class IrToBrsTransformer(
                 )
             }
 
-            // Any?, Dynamic, or nullable types: use runtime type checking
-            // since BrightScript primitives don't have .toString() method
-            receiverType.isNullable() || receiverType.isAny() -> {
+            // Any?, Dynamic, nullable types, or type parameters: use runtime type checking
+            // since BrightScript primitives don't have .toString() method.
+            // Type parameters must use runtime checking because at runtime T could be
+            // a primitive (Int, String, Boolean, etc.) which don't have .toString() methods.
+            receiverType.isNullable() || receiverType.isAny() || receiverType.isTypeParameter() -> {
                 generateRuntimeToString(receiverExpr)
             }
 
@@ -2499,7 +2502,7 @@ class IrToBrsTransformer(
 class IrStatementToBrsTransformer(
     private val parent: IrToBrsTransformer,
     private val context: BrsIrBackendContext
-) : IrElementVisitor<BrsStatement?, Unit> {
+) : IrVisitor<BrsStatement?, Unit>() {
 
     override fun visitElement(element: IrElement, data: Unit): BrsStatement? = null
 
@@ -2776,9 +2779,8 @@ class IrStatementToBrsTransformer(
 
     override fun visitTry(aTry: IrTry, data: Unit): BrsStatement {
         return if (context.supportsExceptions) {
-            // Transform try block - can be IrBlock or IrBody
+            // Transform try block - tryResult is an IrExpression (often IrBlock)
             val tryBlock = when (val tryResult = aTry.tryResult) {
-                is IrBody -> parent.transformBody(tryResult)
                 is IrBlock -> {
                     val statements = tryResult.statements.mapNotNull { stmt ->
                         when (stmt) {
@@ -2794,7 +2796,6 @@ class IrStatementToBrsTransformer(
             // Transform catch block
             val catchBlock = aTry.catches.firstOrNull()?.let { catch ->
                 when (val catchResult = catch.result) {
-                    is IrBody -> parent.transformBody(catchResult)
                     is IrBlock -> {
                         val statements = catchResult.statements.mapNotNull { stmt ->
                             when (stmt) {
@@ -2813,7 +2814,6 @@ class IrStatementToBrsTransformer(
         } else {
             // Without exception support, just execute the try block
             when (val tryResult = aTry.tryResult) {
-                is IrBody -> parent.transformBody(tryResult)
                 is IrBlock -> {
                     val statements = tryResult.statements.mapNotNull { stmt ->
                         when (stmt) {
@@ -3830,7 +3830,7 @@ class IrStatementToBrsTransformer(
 class IrExpressionToBrsTransformer(
     private val parent: IrToBrsTransformer,
     private val context: BrsIrBackendContext
-) : IrElementVisitor<BrsExpression, Unit> {
+) : IrVisitor<BrsExpression, Unit>() {
 
     override fun visitElement(element: IrElement, data: Unit): BrsExpression {
         return BrsStringLiteral("/* Unsupported: ${element::class.simpleName} */")

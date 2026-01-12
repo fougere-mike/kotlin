@@ -118,6 +118,16 @@ class BrsSymbols(
             else error("THROW_IAE not found - ensure stdlib is linked")
     }
 
+    val throwUnsupportedOperationExceptionOrNull: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(kotlinPackageFqn, "THROW_UOE")
+    }
+
+    override val throwUnsupportedOperationException: IrSimpleFunctionSymbol by lazy {
+        throwUnsupportedOperationExceptionOrNull
+            ?: if (isStdlibCompilation) error("THROW_UOE accessed during stdlib compilation - use throwUnsupportedOperationExceptionOrNull")
+            else error("THROW_UOE not found - ensure stdlib is linked")
+    }
+
     // ==================== Default Constructor Marker ====================
 
     val defaultConstructorMarkerOrNull: IrClassSymbol? by lazy {

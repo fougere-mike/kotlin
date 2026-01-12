@@ -47,13 +47,7 @@ interface KotlinTargetContainerWithPresetFunctions : KotlinTargetsContainer {
     fun brs(
         name: String = "brs",
         configure: KotlinBrsIrTarget.() -> Unit = { }
-    ): KotlinBrsIrTarget =
-        configureOrCreate(
-            name,
-            @Suppress("DEPRECATION_ERROR")
-            presets.getByName("brs") as KotlinBrsIrTargetPreset,
-            configure
-        )
+    ): KotlinBrsIrTarget
 
     fun brs() = brs("brs") { }
     fun brs(name: String) = brs(name) { }
@@ -442,6 +436,16 @@ internal abstract class DefaultKotlinTargetContainerWithPresetFunctions @Inject 
         configureOrCreate(
             name,
             presets.getByName("jvm") as KotlinJvmTargetPreset,
+            configure
+        )
+
+    override fun brs(
+        name: String,
+        configure: KotlinBrsIrTarget.() -> Unit
+    ): KotlinBrsIrTarget =
+        configureOrCreate(
+            name,
+            presets.getByName("brs") as KotlinBrsIrTargetPreset,
             configure
         )
 

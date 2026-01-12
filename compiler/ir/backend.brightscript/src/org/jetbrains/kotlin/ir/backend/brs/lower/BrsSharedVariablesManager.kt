@@ -39,7 +39,7 @@ import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
  */
 class BrsSharedVariablesManager(
     private val irBuiltIns: IrBuiltIns
-) : SharedVariablesManager {
+) : SharedVariablesManager() {
 
     /**
      * Declares a shared variable by wrapping it in an associative array.

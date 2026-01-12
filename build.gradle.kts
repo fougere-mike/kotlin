@@ -125,13 +125,17 @@ val irCompilerModules = arrayOf(
     ":compiler:ir.serialization.js",
     ":compiler:ir.serialization.jvm",
     ":compiler:ir.serialization.native",
+    ":compiler:ir.serialization.brs",
     ":compiler:ir.objcinterop",
     ":compiler:ir.backend.common",
     ":compiler:ir.backend.native",
+    ":compiler:backend.brightscript",
     ":compiler:ir.actualization",
     ":compiler:ir.interpreter",
     ":compiler:ir.inline",
-    ":wasm:wasm.ir"
+    ":wasm:wasm.ir",
+    ":brightscript:brs.ast",
+    ":brs:brs.frontend",
 ).also { extra["irCompilerModules"] = it }
 
 val irCompilerModulesForIDE = arrayOf(
@@ -218,6 +222,7 @@ val firCompilerCoreModules = arrayOf(
     ":compiler:fir:checkers:checkers.js",
     ":compiler:fir:checkers:checkers.native",
     ":compiler:fir:checkers:checkers.wasm",
+    ":compiler:fir:checkers:checkers.brs",
     ":compiler:fir:checkers:checkers.web.common",
     ":compiler:fir:entrypoint", // TODO should not be in core modules but FIR IDE uses DependencyListForCliModule from this module
     ":compiler:fir:fir2ir:jvm-backend",  // TODO should not be in core modules but FIR IDE uses Fir2IrSignatureComposer from this module
@@ -259,6 +264,7 @@ val fe10CompilerModules = arrayOf(
     ":compiler:cli-base",
     ":compiler:cli",
     ":compiler:cli-js",
+    ":compiler:cli-brs",
     ":compiler:incremental-compilation-impl",
     ":js:js.ast",
     ":js:js.sourcemap",

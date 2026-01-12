@@ -9,7 +9,8 @@ plugins {
 
 description = "Kotlin test framework for BrightScript"
 
-val kotlincBrsJar = rootProject.file("compiler/cli/cli-brs/build/libs/kotlinc-brs-2.1.255-SNAPSHOT.jar")
+// Use dist compiler (includes all runtime dependencies in the distribution)
+val distLibDir = rootProject.file("dist/kotlinc/lib")
 val stdlibKlib = rootProject.file("libraries/stdlib/brs-prebuilt/kotlin-stdlib-brs.klib")
 val outputKlib = file("build/kotlin-test-brs.klib")
 
@@ -17,16 +18,17 @@ val buildKlib by tasks.registering(JavaExec::class) {
     group = "build"
     description = "Build kotlin.test klib for BRS target"
 
-    classpath = files(kotlincBrsJar)
+    classpath = fileTree(distLibDir) { include("*.jar") }
     mainClass.set("org.jetbrains.kotlin.cli.brs.K2BrsCompiler")
 
     val brsSrc = file("src/main/kotlin")
 
     doFirst {
-        if (!kotlincBrsJar.exists()) {
+        val compilerJar = distLibDir.resolve("kotlin-compiler.jar")
+        if (!compilerJar.exists()) {
             throw GradleException(
-                "BRS compiler not found: ${kotlincBrsJar.absolutePath}\n" +
-                "Build it with: ./gradlew :compiler:cli-brs:fatJar"
+                "Kotlin distribution not found at: ${distLibDir.absolutePath}\n" +
+                "Build it with: ./gradlew dist"
             )
         }
         if (!stdlibKlib.exists()) {
@@ -36,7 +38,7 @@ val buildKlib by tasks.registering(JavaExec::class) {
             )
         }
         logger.lifecycle("Building kotlin.test klib for BRS...")
-        logger.lifecycle("  Compiler: ${kotlincBrsJar.name}")
+        logger.lifecycle("  Compiler: dist/kotlinc/lib")
         logger.lifecycle("  Stdlib: ${stdlibKlib.name}")
         logger.lifecycle("  Output: ${outputKlib.name}")
     }

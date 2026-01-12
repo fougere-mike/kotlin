@@ -5,6 +5,7 @@
 
 plugins {
     kotlin("jvm")
+    id("jps-compatible")
     `maven-publish`
 }
 
@@ -30,20 +31,20 @@ dependencies {
     implementation(project(":compiler:fir:tree"))
     implementation(project(":compiler:fir:resolve"))
 
+    // These must be implementation (not compileOnly) for the fat JAR to include them
     implementation(intellijCore())
-    implementation(commonDependency("org.jetbrains.intellij.deps:trove4j"))
+    implementation(libs.intellij.fastutil)
 
-    // Runtime dependencies needed for CLI (from prepare/compiler)
+    // Runtime dependencies needed for CLI
     runtimeOnly(kotlinStdlib())
     runtimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
-    runtimeOnly(commonDependency("org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil"))
-    runtimeOnly(commonDependency("org.codehaus.woodstox:stax2-api")) { isTransitive = false }
-    runtimeOnly(commonDependency("com.fasterxml:aalto-xml")) { isTransitive = false }
 }
 
 sourceSets {
     "main" { projectDefault() }
 }
+
+optInToK1Deprecation()
 
 kotlin {
     compilerOptions {

@@ -1,0 +1,3 @@
+# Enable local bootstrap to use locally built KGP with BRS support
+bootstrap.local=true
+bootstrap.local.path=/Users/Mike.Fougere/.m2/repository

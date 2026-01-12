@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.util.*
-import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
+import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.name.FqName
@@ -54,7 +54,7 @@ class BrsCodeOutliningLowering(
     /**
      * Processes functions with @BrsInline annotations.
      */
-    private inner class BrsInlineProcessor : IrElementVisitorVoid {
+    private inner class BrsInlineProcessor : IrVisitorVoid() {
 
         override fun visitElement(element: IrElement) {
             element.acceptChildrenVoid(this)
@@ -322,10 +322,3 @@ class BrsInlineCallTransformer(
     }
 }
 
-/**
- * Extension function to report errors during lowering.
- */
-private fun BrsIrBackendContext.reportError(element: IrElement, message: String) {
-    // In a real implementation, this would use the proper diagnostic reporting mechanism
-    System.err.println("BrightScript compiler error: $message")
-}

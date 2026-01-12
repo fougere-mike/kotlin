@@ -237,34 +237,12 @@ fun <F> prepareBrsSessions(
     extensionRegistrars: List<FirExtensionRegistrar>,
     isCommonSource: (F) -> Boolean,
     fileBelongsToModule: (F, String) -> Boolean,
-    lookupTracker: LookupTracker?,
     icData: KlibIcData?,
 ): List<SessionWithSources<F>> {
-    return SessionConstructionUtils.prepareSessions(
-        files, configuration, rootModuleName, brsTargetPlatform(),
-        metadataCompilationMode = false, libraryList, isCommonSource, isScript = { false },
-        fileBelongsToModule,
-        createLibrarySession = { sessionProvider ->
-            FirBrsSessionFactory.createLibrarySession(
-                rootModuleName,
-                resolvedLibraries,
-                sessionProvider,
-                libraryList.moduleDataProvider,
-                extensionRegistrars,
-                configuration,
-            )
-        }
-    ) { _, moduleData, sessionProvider, sessionConfigurator ->
-        FirBrsSessionFactory.createModuleBasedSession(
-            moduleData,
-            sessionProvider,
-            extensionRegistrars,
-            configuration,
-            lookupTracker,
-            icData = icData,
-            init = sessionConfigurator,
-        )
-    }
+    return prepareKlibSessions(
+        FirBrsSessionFactory, brsTargetPlatform(), files, configuration, rootModuleName, resolvedLibraries,
+        libraryList, extensionRegistrars, isCommonSource, fileBelongsToModule, metadataCompilationMode = false, icData
+    )
 }
 
 /**

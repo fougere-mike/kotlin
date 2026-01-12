@@ -21,9 +21,7 @@ import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporterFactory
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
-import org.jetbrains.kotlin.fir.BinaryModuleData
 import org.jetbrains.kotlin.fir.DependencyListForCliModule
-import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.backend.Fir2IrConfiguration
 import org.jetbrains.kotlin.fir.backend.Fir2IrExtensions
 import org.jetbrains.kotlin.fir.backend.Fir2IrVisibilityConverter
@@ -37,7 +35,6 @@ import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.platform.brs.brsTargetPlatform
 import org.jetbrains.kotlin.psi.KtFile
 
 /**
@@ -124,12 +121,8 @@ object BrsFirFrontendFacade {
         val moduleName = configuration.get(CommonConfigurationKeys.MODULE_NAME) ?: "main"
         val escapedModuleName = Name.special("<$moduleName>")
 
-        // Use BrightScript platform
-        val platform = brsTargetPlatform()
-        val binaryModuleData = BinaryModuleData.initialize(escapedModuleName, platform)
-
         // Build dependency list (no library dependencies for now)
-        val dependencyList = DependencyListForCliModule.build(binaryModuleData) {
+        val dependencyList = DependencyListForCliModule.build(escapedModuleName) {
             // TODO: Add BrightScript standard library dependencies when available
         }
 
@@ -147,7 +140,6 @@ object BrsFirFrontendFacade {
                 extensionRegistrars = extensionRegistrars,
                 isCommonSource = { false }, // No common sources for MVP
                 fileBelongsToModule = { _, _ -> true }, // All files belong to the module
-                lookupTracker = null,
                 icData = null,
             )
 
@@ -193,6 +185,11 @@ object BrsFirFrontendFacade {
                 firResult = firResult
             )
         } catch (e: Exception) {
+            // Print full stack trace for debugging
+            System.err.println("=== FIR ANALYSIS EXCEPTION ===")
+            e.printStackTrace(System.err)
+            System.err.println("=== END EXCEPTION ===")
+
             messageCollector.report(
                 CompilerMessageSeverity.ERROR,
                 "FIR analysis failed: ${e.message}"

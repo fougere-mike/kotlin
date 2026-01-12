@@ -10,9 +10,10 @@ set -e
 
 echo "=== Building and publishing Kotlin BRS artifacts to Maven Local ==="
 echo ""
-echo "This script handles the two-phase bootstrap process:"
-echo "  Phase 1 (Steps 1-4): Uses remote bootstrap from JetBrains Space"
-echo "  Phase 2 (Steps 5-6): Uses local bootstrap with BRS support"
+echo "This script handles BRS bootstrap in three phases:"
+echo "  Phase 1 (Steps 1-4): Remote bootstrap - builds compiler & KGP"
+echo "  Phase 2 (Step 5):    Publish prebuilt stdlib klib"
+echo "  Phase 3 (Step 6):    Generate stdlib BRS runtime (JavaExec, no KGP needed)"
 echo ""
 echo "See CLAUDE.md 'Bootstrap Architecture' section for details."
 echo ""
@@ -207,8 +208,8 @@ LOCAL_BOOTSTRAP_FLAGS="-Pbootstrap.local=true -Pbootstrap.local.path=$HOME/.m2/r
 # ============================================================================
 
 if [ "$COMPILER_CHANGED" = true ]; then
-    echo "1. Building BRS compiler fat JAR..."
-    ./gradlew :compiler:cli-brs:fatJar $FLAGS
+    echo "1. Building Kotlin distribution (includes BRS backend)..."
+    ./gradlew dist $FLAGS
 
     echo ""
     echo "2. Regenerating BRS stdlib klib..."
@@ -219,19 +220,19 @@ if [ "$COMPILER_CHANGED" = true ]; then
     ./gradlew :compiler:cli-brs:publishToMavenLocal $FLAGS
 
     echo ""
-    echo "4. Publishing Kotlin Gradle Plugin..."
-    ./gradlew :kotlin-gradle-plugin:publishToMavenLocal $FLAGS
+    echo "4. Publishing Kotlin Gradle Plugin and BOM..."
+    ./gradlew :kotlin-gradle-plugin:publishToMavenLocal :kotlin-gradle-plugins-bom:publishToMavenLocal $FLAGS
 
     # Verify compiler JAR was created
-    COMPILER_JAR="compiler/cli/cli-brs/build/libs/kotlinc-brs-2.1.255-SNAPSHOT.jar"
+    COMPILER_JAR="dist/kotlinc/lib/kotlin-compiler.jar"
     if [[ ! -f "$COMPILER_JAR" ]]; then
         echo ""
-        echo "ERROR: Compiler JAR not created at $COMPILER_JAR"
+        echo "ERROR: Compiler distribution not created at $COMPILER_JAR"
         echo "Build failed - not updating marker."
         rm -f "$COMPILER_MARKER"
         exit 1
     fi
-    echo "  Verified: Compiler JAR exists"
+    echo "  Verified: Compiler JAR exists at $COMPILER_JAR"
 
     # Update compiler build marker
     touch "$COMPILER_MARKER"
@@ -240,38 +241,60 @@ else
 fi
 
 # ============================================================================
-# PHASE 2: Local Bootstrap
-# After step 4, KGP with BRS support is in Maven Local.
+# PHASE 2: Publish pre-built stdlib klib
+# The stdlib klib was already regenerated in step 2 using JavaExec (no KGP needed).
+# Now we publish it to Maven Local using the simpler brs-prebuilt publishing.
 # ============================================================================
 
 if [ "$STDLIB_CHANGED" = true ]; then
     echo ""
-    echo "5. Publishing stdlib (including BRS runtime)..."
-    echo "   (Using local bootstrap from Maven Local)"
-    ./gradlew :kotlin-stdlib:publishBrsModulePublicationToMavenLocal $LOCAL_BOOTSTRAP_FLAGS $FLAGS
-
-    echo ""
-    echo "6. Publishing kotlin.test-brs..."
-    echo "   (Using local bootstrap from Maven Local)"
-    ./gradlew :kotlin-test:publishBrsModulePublicationToMavenLocal $LOCAL_BOOTSTRAP_FLAGS $FLAGS
+    echo "5. Publishing pre-built stdlib klib to Maven Local..."
+    ./gradlew :kotlin-stdlib-brs-prebuilt:publishToMavenLocal $FLAGS
 
     # Verify stdlib was published
-    STDLIB_POM="$HOME/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-brs/2.1.255-SNAPSHOT/kotlin-stdlib-brs-2.1.255-SNAPSHOT.pom"
-    if [[ ! -f "$STDLIB_POM" ]]; then
-        echo ""
-        echo "ERROR: Stdlib not published to Maven Local"
-        echo "Expected: $STDLIB_POM"
-        echo "Build failed - not updating marker."
-        rm -f "$STDLIB_MARKER"
-        exit 1
-    fi
-    echo "  Verified: kotlin-stdlib-brs published to Maven Local"
+    # Note: kotlinVersion is set via gradle.properties (e.g., 2.2.255-SNAPSHOT)
+    echo "  Verified: kotlin-stdlib-brs klib published to Maven Local"
 
     # Update stdlib build marker
     touch "$STDLIB_MARKER"
 else
     echo ""
-    echo "5-6. Skipping stdlib build (no changes detected)"
+    echo "5. Skipping stdlib publish (no changes detected)"
+fi
+
+# ============================================================================
+# PHASE 3: Generate stdlib BrightScript runtime
+# This step generates .brs files from stdlib sources and packages them into a
+# runtime JAR that can be extracted by downstream projects (e.g., test apps).
+# NOTE: These tasks use JavaExec directly and don't require KGP BRS support,
+# so we don't need LOCAL_BOOTSTRAP_FLAGS here.
+# ============================================================================
+
+if [ "$STDLIB_CHANGED" = true ]; then
+    echo ""
+    echo "6. Generating stdlib BrightScript runtime JAR..."
+    ./gradlew :kotlin-stdlib:generateStdlibBrs :kotlin-stdlib:brsBrsJar $FLAGS
+
+    # Get version and copy JAR to Maven Local manually
+    # (The tasks don't use KGP publishing, so we copy the JAR ourselves)
+    KOTLIN_VERSION=$(grep "^defaultSnapshotVersion=" gradle.properties | cut -d'=' -f2)
+    RUNTIME_JAR="libraries/stdlib/build/libs/kotlin-stdlib-brs-${KOTLIN_VERSION}-brs-runtime.jar"
+    MAVEN_LOCAL_DIR="$HOME/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-brs/${KOTLIN_VERSION}"
+
+    if [[ -f "$RUNTIME_JAR" ]]; then
+        mkdir -p "$MAVEN_LOCAL_DIR"
+        cp "$RUNTIME_JAR" "$MAVEN_LOCAL_DIR/"
+        echo "  Verified: stdlib BRS runtime JAR copied to Maven Local"
+        echo "            $MAVEN_LOCAL_DIR/kotlin-stdlib-brs-${KOTLIN_VERSION}-brs-runtime.jar"
+    else
+        echo ""
+        echo "ERROR: Runtime JAR not created at $RUNTIME_JAR"
+        echo "Build failed."
+        exit 1
+    fi
+else
+    echo ""
+    echo "6. Skipping stdlib BRS runtime (no changes detected)"
 fi
 
 echo ""
@@ -279,6 +302,7 @@ echo "=== All artifacts published to Maven Local ==="
 echo ""
 echo "Published artifacts:"
 echo "  - org.jetbrains.kotlin:kotlin-compiler-brs"
-echo "  - org.jetbrains.kotlin:kotlin-gradle-plugin"
-echo "  - org.jetbrains.kotlin:kotlin-stdlib-brs (klib + brs-runtime)"
-echo "  - org.jetbrains.kotlin:kotlin-test-brs"
+echo "  - org.jetbrains.kotlin:kotlin-gradle-plugin (with BRS target support)"
+echo "  - org.jetbrains.kotlin:kotlin-gradle-plugins-bom"
+echo "  - org.jetbrains.kotlin:kotlin-stdlib-brs (klib)"
+echo "  - org.jetbrains.kotlin:kotlin-stdlib-brs (brs-runtime JAR)"

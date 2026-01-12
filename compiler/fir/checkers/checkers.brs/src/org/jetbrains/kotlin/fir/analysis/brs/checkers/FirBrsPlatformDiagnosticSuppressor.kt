@@ -16,5 +16,6 @@ import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
  * diagnostics for BrightScript-specific constructs as needed.
  */
 class FirBrsPlatformDiagnosticSuppressor : FirPlatformDiagnosticSuppressor {
-    override fun shouldReportNoBody(declaration: FirCallableDeclaration, context: CheckerContext): Boolean = true
+    context(context: CheckerContext)
+    override fun shouldReportNoBody(declaration: FirCallableDeclaration): Boolean = true
 }

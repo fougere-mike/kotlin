@@ -28,11 +28,7 @@ class KotlinBrsIrCompilationFactory internal constructor(
                 target.project.files()
             }
         ),
-        compilationDependencyConfigurationsFactory = DefaultKotlinCompilationDependencyConfigurationsFactory.WithRuntime(
-            withResourcesConfigurationExtending = { runtimeDependencyConfiguration, _ ->
-                runtimeDependencyConfiguration
-            }
-        ),
+        compilationDependencyConfigurationsFactory = DefaultKotlinCompilationDependencyConfigurationsFactory.WithRuntime(),
     )
 
     override fun create(name: String): KotlinBrsIrCompilation = target.project.objects.newInstance(

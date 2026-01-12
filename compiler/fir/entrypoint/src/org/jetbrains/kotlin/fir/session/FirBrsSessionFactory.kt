@@ -6,8 +6,6 @@
 package org.jetbrains.kotlin.fir.session
 
 import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.SessionConfiguration
@@ -17,21 +15,15 @@ import org.jetbrains.kotlin.fir.analysis.checkers.FirIdentityLessPlatformDetermi
 import org.jetbrains.kotlin.fir.analysis.checkers.FirPlatformDiagnosticSuppressor
 import org.jetbrains.kotlin.fir.checkers.registerBrsCheckers
 import org.jetbrains.kotlin.fir.declarations.FirTypeSpecificityComparatorProvider
-import org.jetbrains.kotlin.fir.deserialization.ModuleDataProvider
-import org.jetbrains.kotlin.fir.deserialization.SingleModuleDataProvider
-import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
-import org.jetbrains.kotlin.fir.java.FirProjectSessionProvider
+import org.jetbrains.kotlin.fir.deserialization.FirTypeDeserializer
 import org.jetbrains.kotlin.fir.resolve.calls.overloads.ConeCallConflictResolverFactory
-import org.jetbrains.kotlin.fir.resolve.providers.impl.FirBuiltinSyntheticFunctionInterfaceProvider
+import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.impl.FirFallbackBuiltinSymbolProvider
 import org.jetbrains.kotlin.fir.scopes.FirDefaultImportProviderHolder
 import org.jetbrains.kotlin.fir.scopes.FirKotlinScopeProvider
 import org.jetbrains.kotlin.fir.types.typeContext
-import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.brs.resolve.BrsPlatformAnalyzerServices
 import org.jetbrains.kotlin.brs.resolve.BrsTypeSpecificityComparatorWithoutDelegate
-import org.jetbrains.kotlin.library.KotlinLibrary
-import org.jetbrains.kotlin.name.Name
 
 /**
  * Factory for creating FIR sessions for BrightScript compilation.
@@ -40,113 +32,53 @@ import org.jetbrains.kotlin.name.Name
  * library sessions for dependencies and module-based sessions for source compilation.
  */
 @OptIn(SessionConfiguration::class)
-object FirBrsSessionFactory : FirAbstractSessionFactory<FirBrsSessionFactory.Context, FirBrsSessionFactory.Context>() {
+object FirBrsSessionFactory : AbstractFirKlibSessionFactory<FirBrsSessionFactory.Context, FirBrsSessionFactory.Context>() {
 
     // ==================================== Library session ====================================
 
-    /**
-     * Create a library session for BrightScript compilation.
-     *
-     * This handles dependencies and pre-compiled libraries.
-     */
-    fun createLibrarySession(
-        mainModuleName: Name,
-        resolvedLibraries: List<KotlinLibrary>,
-        sessionProvider: FirProjectSessionProvider,
-        moduleDataProvider: ModuleDataProvider,
-        extensionRegistrars: List<FirExtensionRegistrar>,
-        compilerConfiguration: CompilerConfiguration,
-    ): FirSession {
-        val context = Context(compilerConfiguration)
-        return createLibrarySession(
-            mainModuleName,
-            context,
-            sessionProvider,
-            moduleDataProvider,
-            compilerConfiguration.languageVersionSettings,
-            extensionRegistrars,
-            createProviders = { session, builtinsModuleData, kotlinScopeProvider, syntheticFunctionInterfaceProvider ->
-                listOfNotNull(
-                    // Fallback builtins provider - provides Int, String, etc. from compiler resources
-                    FirFallbackBuiltinSymbolProvider(session, builtinsModuleData, kotlinScopeProvider),
-                    // For MVP with no pre-compiled libraries, just use the klib provider if libraries exist
-                    if (resolvedLibraries.isNotEmpty()) {
-                        KlibBasedSymbolProvider(
-                            session, moduleDataProvider, kotlinScopeProvider, resolvedLibraries,
-                            flexibleTypeFactory = BrsFlexibleTypeFactory(session),
-                        )
-                    } else null,
-                    FirBuiltinSyntheticFunctionInterfaceProvider(session, builtinsModuleData, kotlinScopeProvider),
-                    syntheticFunctionInterfaceProvider
-                )
-            }
-        )
+    override fun createLibraryContext(configuration: CompilerConfiguration): Context {
+        return Context(configuration)
     }
 
-    override fun createKotlinScopeProviderForLibrarySession(): FirKotlinScopeProvider {
-        return FirKotlinScopeProvider()
+    override fun createFlexibleTypeFactory(session: FirSession): FirTypeDeserializer.FlexibleTypeFactory {
+        return BrsFlexibleTypeFactory(session)
     }
 
     override fun FirSession.registerLibrarySessionComponents(c: Context) {
         registerComponents(c.configuration)
     }
 
-    // ==================================== Platform session ====================================
-
     /**
-     * Create a module-based session for BrightScript source compilation.
+     * Creates platform-specific shared providers for BrightScript.
+     * This includes the FirFallbackBuiltinSymbolProvider which is needed to resolve
+     * built-in types (Any, Nothing, Unit, Int, Boolean, etc.) during compilation.
      *
-     * This is used to compile Kotlin source files to BrightScript.
+     * Unlike JVM which loads builtins from classfiles, BRS (like JS/Native/Wasm) uses
+     * the fallback provider which loads builtins from serialized .kotlin_builtins files
+     * embedded in the compiler resources.
      */
-    fun createModuleBasedSession(
+    override fun createPlatformSpecificSharedProviders(
+        session: FirSession,
         moduleData: FirModuleData,
-        sessionProvider: FirProjectSessionProvider,
-        extensionRegistrars: List<FirExtensionRegistrar>,
-        compilerConfiguration: CompilerConfiguration,
-        lookupTracker: LookupTracker?,
-        icData: KlibIcData? = null,
-        init: FirSessionConfigurator.() -> Unit
-    ): FirSession {
-        val context = Context(compilerConfiguration)
-        return createModuleBasedSession(
-            moduleData,
-            context,
-            sessionProvider,
-            extensionRegistrars,
-            compilerConfiguration.languageVersionSettings,
-            lookupTracker,
-            enumWhenTracker = null,
-            importTracker = null,
-            init,
-            createProviders = { session, kotlinScopeProvider, symbolProvider, generatedSymbolsProvider, dependencies ->
-                listOfNotNull(
-                    symbolProvider,
-                    generatedSymbolsProvider,
-                    icData?.let {
-                        KlibIcCacheBasedSymbolProvider(
-                            session,
-                            SingleModuleDataProvider(moduleData),
-                            kotlinScopeProvider,
-                            it,
-                            flexibleTypeFactory = BrsFlexibleTypeFactory(session),
-                        )
-                    },
-                    *dependencies.toTypedArray(),
-                )
-            }
+        scopeProvider: FirKotlinScopeProvider,
+        context: Context,
+    ): List<FirSymbolProvider> {
+        return listOf(
+            FirFallbackBuiltinSymbolProvider(session, moduleData, scopeProvider)
         )
     }
 
-    override fun createKotlinScopeProviderForSourceSession(
-        moduleData: FirModuleData,
-        languageVersionSettings: LanguageVersionSettings,
-    ): FirKotlinScopeProvider {
-        return FirKotlinScopeProvider()
+    // ==================================== Platform session ====================================
+
+    override fun createSourceContext(configuration: CompilerConfiguration): Context {
+        return Context(configuration)
     }
 
     override fun FirSessionConfigurator.registerPlatformCheckers(c: Context) {
         registerBrsCheckers()
     }
+
+    override fun FirSessionConfigurator.registerExtraPlatformCheckers(c: Context) {}
 
     override fun FirSession.registerSourceSessionComponents(c: Context) {
         registerComponents(c.configuration)

@@ -1025,3 +1025,62 @@ for (name in listOf("sources", "distSources")) {
 tasks.withType<Kotlin2JsCompile>().configureEach {
     incremental = false
 }
+
+// =============================================================================
+// BrightScript Runtime Generation (no KGP BRS support needed)
+// =============================================================================
+// These tasks compile Kotlin stdlib sources to BrightScript .brs files using
+// JavaExec directly. They don't require local bootstrap or KGP with BRS support.
+// See CLAUDE.md "Bootstrap Architecture" section for why this matters.
+//
+// We use the dist compiler (kotlin-compiler.jar) rather than the cli-brs fat JAR
+// because it includes all necessary IntelliJ Platform dependencies bundled correctly.
+
+val generateStdlibBrs = tasks.register<JavaExec>("generateStdlibBrs") {
+    group = "build"
+    description = "Generate BrightScript source files from stdlib Kotlin sources"
+
+    // Use the dist compiler JAR which includes all dependencies
+    val compilerJar = rootDir.resolve("dist/kotlinc/lib/kotlin-compiler.jar")
+    val brsOutputDir = layout.buildDirectory.dir("brs-runtime")
+
+    // Depends on dist task to ensure compiler is built
+    dependsOn(":dist")
+
+    classpath = files(compilerJar)
+    mainClass.set("org.jetbrains.kotlin.cli.brs.K2BrsCompiler")
+
+    val brsDir = "$projectDir/brs"
+    val brsActualDir = "$projectDir/brs-actual"
+    val sourceDirs = listOf(
+        file("$brsDir/runtime"),
+        file("$brsDir/src"),
+        file("$brsActualDir/builtins"),
+        file("$brsActualDir/src"),
+    ).filter { it.exists() }
+
+    doFirst {
+        require(compilerJar.exists()) {
+            "BRS Compiler not found at $compilerJar. Run ':dist' first."
+        }
+    }
+
+    args(
+        "-output-dir", brsOutputDir.get().asFile.absolutePath,
+        "-Xstdlib-compilation",
+        "-Xallow-kotlin-package",
+        "-module-name", "kotlin-stdlib-brs",
+        *sourceDirs.map { it.absolutePath }.toTypedArray()
+    )
+
+    inputs.files(sourceDirs)
+    outputs.dir(brsOutputDir)
+}
+
+// JAR containing compiled .brs runtime files for packaging in Roku apps
+val brsBrsJar = tasks.register<Jar>("brsBrsJar") {
+    archiveBaseName.set("kotlin-stdlib-brs")
+    archiveClassifier.set("brs-runtime")
+    from(layout.buildDirectory.dir("brs-runtime/source"))
+    dependsOn(generateStdlibBrs)
+}

@@ -9,7 +9,6 @@ import com.intellij.openapi.Disposable
 import org.jetbrains.kotlin.brs.BrsTargetConfig
 import org.jetbrains.kotlin.brs.RokuOSVersion
 import org.jetbrains.kotlin.cli.common.CLICompiler
-import org.jetbrains.kotlin.cli.common.CommonCompilerPerformanceManager
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.common.arguments.K2BrsCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2BrsArgumentConstants
@@ -25,15 +24,15 @@ import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.ir.backend.brs.BrsCompiler
-import org.jetbrains.kotlin.backend.common.CommonKLibResolver
-import org.jetbrains.kotlin.cli.common.messages.getLogger
+import org.jetbrains.kotlin.library.loader.KlibLoader
+import org.jetbrains.kotlin.library.loader.KlibPlatformChecker
+import org.jetbrains.kotlin.platform.brs.brsTargetPlatform
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.uniqueName
 import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.KotlinPaths
 import java.io.File
-import org.jetbrains.kotlin.backend.common.serialization.CompatibilityMode
 import org.jetbrains.kotlin.backend.common.serialization.IrSerializationSettings
 import org.jetbrains.kotlin.backend.common.serialization.serializeModuleIntoKlib
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporterFactory
@@ -43,7 +42,8 @@ import org.jetbrains.kotlin.ir.backend.brs.lower.serialization.ir.BrsIrFileEmpty
 import org.jetbrains.kotlin.library.*
 import org.jetbrains.kotlin.library.impl.BuiltInsPlatform
 import org.jetbrains.kotlin.library.impl.buildKotlinLibrary
-import org.jetbrains.kotlin.library.metadata.KlibMetadataVersion
+import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.util.klibMetadataVersionOrDefault
 import java.util.Properties
 
 /**
@@ -53,10 +53,8 @@ import java.util.Properties
  * suitable for Roku application development.
  */
 class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
-
-    class K2BrsCompilerPerformanceManager : CommonCompilerPerformanceManager("Kotlin to BrightScript Compiler")
-
-    override val defaultPerformanceManager: CommonCompilerPerformanceManager = K2BrsCompilerPerformanceManager()
+    override val platform: TargetPlatform
+        get() = brsTargetPlatform()
 
     override fun createArguments(): K2BrsCompilerArguments = K2BrsCompilerArguments()
 
@@ -337,25 +335,15 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
         val serializerOutput = serializeModuleIntoKlib(
             moduleName = effectiveModuleName,
             irModuleFragment = irResult.irModuleFragment,
-            irBuiltins = irResult.irBuiltIns,
             configuration = configuration,
             diagnosticReporter = diagnosticReporter,
-            compatibilityMode = CompatibilityMode.CURRENT,
             cleanFiles = emptyList(),
             dependencies = libraries,
-            createModuleSerializer = { irDiagnosticReporter, irBuiltins, compatibilityMode,
-                                       normalizeAbsolutePaths, sourceBaseDirs,
-                                       languageVersionSettings, shouldCheckSignaturesOnUniqueness ->
+            createModuleSerializer = { irDiagnosticReporter ->
                 BrsIrModuleSerializer(
-                    settings = IrSerializationSettings(
-                        languageVersionSettings = languageVersionSettings,
-                        compatibilityMode = compatibilityMode,
-                        normalizeAbsolutePaths = normalizeAbsolutePaths,
-                        sourceBaseDirs = sourceBaseDirs,
-                        shouldCheckSignaturesOnUniqueness = shouldCheckSignaturesOnUniqueness
-                    ),
+                    settings = IrSerializationSettings(configuration),
                     diagnosticReporter = irDiagnosticReporter,
-                    irBuiltIns = irBuiltins,
+                    irBuiltIns = irResult.irBuiltIns,
                     brsIrFileMetadataFactory = BrsIrFileEmptyMetadataFactory
                 )
             },
@@ -366,7 +354,7 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
         val versions = KotlinLibraryVersioning(
             abiVersion = KotlinAbiVersion.CURRENT,
             compilerVersion = KotlinCompilerVersion.VERSION,
-            metadataVersion = KlibMetadataVersion.INSTANCE.toString()
+            metadataVersion = configuration.klibMetadataVersionOrDefault()
         )
 
         buildKotlinLibrary(
@@ -379,7 +367,6 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
             output = outputPath,
             moduleName = effectiveModuleName,
             nopack = false,
-            perFile = false,
             manifestProperties = Properties(),
             builtInsPlatform = BuiltInsPlatform.NATIVE  // Use NATIVE for IDE compatibility
         )
@@ -532,13 +519,15 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
         }
 
         return try {
-            // Use CommonKLibResolver like the JS backend does
-            val resolved = CommonKLibResolver.resolve(
-                libraries = libraryPaths,
-                logger = configuration.getLogger(treatWarningsAsErrors = false),
-                lenient = true  // Lenient for dependencies (e.g., 'kotlin' stdlib)
-            )
-            val libraries = resolved.getFullResolvedList().map { it.library }
+            // Use KlibLoader like the JS backend does
+            // BRS uses Native builtins platform, so we accept Native klibs
+            val result = KlibLoader {
+                libraryPaths(libraryPaths)
+                platformChecker(KlibPlatformChecker.Native())
+                maxPermittedAbiVersion(KotlinAbiVersion.CURRENT)
+            }.load()
+
+            val libraries = result.librariesStdlibFirst
 
             messageCollector.report(
                 CompilerMessageSeverity.LOGGING,

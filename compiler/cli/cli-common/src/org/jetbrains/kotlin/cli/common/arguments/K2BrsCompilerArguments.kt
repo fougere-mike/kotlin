@@ -18,6 +18,8 @@ class K2BrsCompilerArguments : CommonKlibBasedCompilerArguments() {
         private val serialVersionUID = 0L
     }
 
+    override val configurator: CommonCompilerArgumentsConfigurator = K2BrsCompilerArgumentsConfigurator()
+
     @Argument(
         value = "-output-dir",
         valueDescription = "<directory>",
@@ -169,19 +171,6 @@ class K2BrsCompilerArguments : CommonKlibBasedCompilerArguments() {
             checkFrozen()
             field = if (value.isNullOrEmpty()) null else value
         }
-
-    override fun configureAnalysisFlags(collector: MessageCollector, languageVersion: LanguageVersion): MutableMap<AnalysisFlag<*>, Any> {
-        return super.configureAnalysisFlags(collector, languageVersion).also { map ->
-            // BrightScript-specific analysis flags can be added here
-        }
-    }
-
-    override fun configureLanguageFeatures(collector: MessageCollector): MutableMap<LanguageFeature, LanguageFeature.State> {
-        return super.configureLanguageFeatures(collector).also { map ->
-            // Disable features not supported in BrightScript
-            map[LanguageFeature.Coroutines] = LanguageFeature.State.DISABLED
-        }
-    }
 
     override fun copyOf(): Freezable = copyK2BrsCompilerArguments(this, K2BrsCompilerArguments())
 }

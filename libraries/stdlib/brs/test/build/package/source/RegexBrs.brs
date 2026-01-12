@@ -1,0 +1,1472 @@
+function RegexOption_create_Str_k_(__name as String, __ordinal as Integer, flag as String) as Object
+    this = {}
+    this.__type = "RegexOption"
+    this.name = __name
+    this.ordinal = __ordinal
+    this.__proto = ["RegexOption", "Comparable"]
+    this.__id = __kotlin_nextObjectId()
+    this.flag = flag
+    this.values_k_ = RegexOption_values_k_
+    this.valueOf_Str_k_ = RegexOption_valueOf_Str_k_
+    this.get_flag = RegexOption_get_flag_k_
+    this.get_entries = RegexOption_get_entries_k_
+    return this
+end function
+
+sub RegexOption_initEntries()
+    if m.RegexOption_entriesInitialized then
+        return
+    end if
+    m.RegexOption_entriesInitialized = true
+    m.RegexOption_IGNORE_CASE = RegexOption_create_Str_k_("IGNORE_CASE", 0, "i")
+    m.RegexOption_MULTILINE = RegexOption_create_Str_k_("MULTILINE", 1, "m")
+end sub
+
+function RegexOption_values() as Object
+    RegexOption_initEntries()
+    return [m.RegexOption_IGNORE_CASE, m.RegexOption_MULTILINE]
+end function
+
+function RegexOption_valueOf(name as String) as Object
+    RegexOption_initEntries()
+    if name = "IGNORE_CASE" then
+        return m.RegexOption_IGNORE_CASE
+    else if name = "MULTILINE" then
+        return m.RegexOption_MULTILINE
+    else
+        return invalid
+    end if
+end function
+
+function MatchGroup_create_Str_k_(value as String) as Object
+    this = {}
+    this.__type = "MatchGroup"
+    this.__proto = ["MatchGroup"]
+    this.__id = __kotlin_nextObjectId()
+    this.value = value
+    this.equals = MatchGroup_equals
+    this.hashCode = MatchGroup_hashCode
+    this.toString = MatchGroup_toString
+    this.copy = MatchGroup_copy
+    this.component1 = MatchGroup_component1
+    return this
+end function
+
+function MatchGroup_equals(other as Object) as Boolean
+    if Type(other) <> "roAssociativeArray" then
+        return false
+    end if
+    if other.__type <> "MatchGroup" then
+        return false
+    end if
+    if m.value <> other.value then
+        return false
+    end if
+    return true
+end function
+
+function MatchGroup_hashCode() as Integer
+    result = 1
+    result = ((result * 31) + m.value)
+    return result
+end function
+
+function MatchGroup_toString() as String
+    return ("MatchGroup(value=" + m.value) + ")"
+end function
+
+function MatchGroup_copy(value = invalid) as Object
+    if value = invalid then
+        value = m.value
+    end if
+    return MatchGroup_create_Str_k_(value)
+end function
+
+function MatchGroup_component1() as String
+    return m.value
+end function
+
+function Regex_create_Str_SetRegexOption_k_(pattern as String, options as Object) as Object
+    this = {}
+    this.__type = "Regex"
+    this.__proto = ["Regex"]
+    this.__id = __kotlin_nextObjectId()
+    this.matches_CharSequence_k_ = Regex_matches_CharSequence_k_
+    this.containsMatchIn_CharSequence_k_ = Regex_containsMatchIn_CharSequence_k_
+    this.matchEntire_CharSequence_k_ = Regex_matchEntire_CharSequence_k_
+    this.matchAt_CharSequence_I_k_ = Regex_matchAt_CharSequence_I_k_
+    this.matchesAt_CharSequence_I_k_ = Regex_matchesAt_CharSequence_I_k_
+    this.find_CharSequence_I_k_ = Regex_find_CharSequence_I_k_
+    this.findAll_CharSequence_I_k_ = Regex_findAll_CharSequence_I_k_
+    this.replace_CharSequence_Str_k_ = Regex_replace_CharSequence_Str_k_
+    this.replace_CharSequence_Function1MatchResultCharSequence_k_ = Regex_replace_CharSequence_Function1MatchResultCharSequence_k_
+    this.replaceFirst_CharSequence_Str_k_ = Regex_replaceFirst_CharSequence_Str_k_
+    this.split_CharSequence_I_k_ = Regex_split_CharSequence_I_k_
+    this.splitToSequence_CharSequence_I_k_ = Regex_splitToSequence_CharSequence_I_k_
+    this.toString_k_ = Regex_toString_k_
+    this.toString = Regex_toString_k_
+    this.createMatchResult_Str_Arr_I_k_ = Regex_createMatchResult_Str_Arr_I_k_
+    this.get_pattern = Regex_get_pattern_k_
+    this.get_options = Regex_get_options_k_
+    this.get_nativePattern = Regex_get_nativePattern_k_
+    this.pattern = pattern
+    this.options = toSet_rIterable_k_(options)
+    this.nativePattern = CreateObject("roRegex", pattern, joinToString_v4kj63_k_(options, "", invalid, invalid, invalid, invalid, {invoke: function(it as Object) as Object
+        return it.get_flag()
+    end function}))
+    return this
+end function
+
+function Regex_create_Str_RegexOption_k_(pattern as String, option as Object) as Object
+    return Regex_create_Str_SetRegexOption_k_(pattern, setOf_Arr_k_([option]))
+end function
+
+function Regex_create_Str_k_(pattern as String) as Object
+    return Regex_create_Str_SetRegexOption_k_(pattern, emptySet_k_())
+end function
+
+function Regex_matches_CharSequence_k_(input as Object) as Boolean
+    inputStr = toString_AnyN_k_(input)
+    match = m.get_nativePattern().Match(inputStr)
+    if isEmpty_rArr_k_(match) then
+        return false
+    end if
+    return match[0] = inputStr
+end function
+
+function Regex_containsMatchIn_CharSequence_k_(input as Object) as Boolean
+    return m.get_nativePattern().IsMatch(toString_AnyN_k_(input))
+end function
+
+function Regex_matchEntire_CharSequence_k_(input as Object) as Dynamic
+    inputStr = toString_AnyN_k_(input)
+    match = m.get_nativePattern().Match(inputStr)
+    if isEmpty_rArr_k_(match) then
+        return invalid
+    end if
+    if match[0] <> inputStr then
+        return invalid
+    end if
+    return m.createMatchResult_Str_Arr_I_k_(inputStr, match, 0)
+end function
+
+function Regex_matchAt_CharSequence_I_k_(input as Object, index as Integer) as Dynamic
+    if (index < 0) or (index > __kotlin_charSequenceLength_CharSequenceN_k_(input)) then
+        throw IndexOutOfBoundsException_create_StrN_k_((("index out of bounds: " + __kotlin_numToStr_I_k_(index)) + ", input length: ") + __kotlin_numToStr_I_k_(__kotlin_charSequenceLength_CharSequenceN_k_(input)))
+    end if
+    inputStr = toString_AnyN_k_(input)
+    substring = substring_rStr_I_k_(inputStr, index)
+    match = m.get_nativePattern().Match(substring)
+    if isEmpty_rArr_k_(match) then
+        return invalid
+    end if
+    matchIndex = indexOf_rStr_Str_I_Z_k_(substring, match[0], invalid, invalid)
+    if matchIndex <> 0 then
+        return invalid
+    end if
+    return m.createMatchResult_Str_Arr_I_k_(inputStr, match, index)
+end function
+
+function Regex_matchesAt_CharSequence_I_k_(input as Object, index as Integer) as Boolean
+    return m.matchAt_CharSequence_I_k_(input, index) <> invalid
+end function
+
+function Regex_find_CharSequence_I_k_(input as Object, startIndex = 0) as Dynamic
+    if startIndex = invalid then
+        startIndex = 0
+    end if
+    if (startIndex < 0) or (startIndex > __kotlin_charSequenceLength_CharSequenceN_k_(input)) then
+        throw IndexOutOfBoundsException_create_StrN_k_((("Start index out of bounds: " + __kotlin_numToStr_I_k_(startIndex)) + ", input length: ") + __kotlin_numToStr_I_k_(__kotlin_charSequenceLength_CharSequenceN_k_(input)))
+    end if
+    inputStr = toString_AnyN_k_(input)
+    if startIndex = 0 then
+        match = m.get_nativePattern().Match(inputStr)
+        if isEmpty_rArr_k_(match) then
+            return invalid
+        end if
+        matchIndex = indexOf_rStr_Str_I_Z_k_(inputStr, match[0], invalid, invalid)
+        if matchIndex < 0 then
+            return invalid
+        end if
+        return m.createMatchResult_Str_Arr_I_k_(inputStr, match, matchIndex)
+    else if true then
+        substring = substring_rStr_I_k_(inputStr, startIndex)
+        match = m.get_nativePattern().Match(substring)
+        if isEmpty_rArr_k_(match) then
+            return invalid
+        end if
+        matchIndex = indexOf_rStr_Str_I_Z_k_(substring, match[0], invalid, invalid)
+        if matchIndex < 0 then
+            return invalid
+        end if
+        return m.createMatchResult_Str_Arr_I_k_(inputStr, match, startIndex + matchIndex)
+    end if
+end function
+
+function Regex_findAll_CharSequence_I_k_(input as Object, startIndex = 0) as Object
+    if startIndex = invalid then
+        startIndex = 0
+    end if
+    if (startIndex < 0) or (startIndex > __kotlin_charSequenceLength_CharSequenceN_k_(input)) then
+        throw IndexOutOfBoundsException_create_StrN_k_((("Start index out of bounds: " + __kotlin_numToStr_I_k_(startIndex)) + ", input length: ") + __kotlin_numToStr_I_k_(__kotlin_charSequenceLength_CharSequenceN_k_(input)))
+    end if
+    firstMatch = m.find_CharSequence_I_k_(input, startIndex)
+    return generateSequence_AnyN_Function1_k_(firstMatch, {invoke: function(match as Object) as Dynamic
+        return match.next_k_()
+    end function})
+end function
+
+function Regex_replace_CharSequence_Str_k_(input as Object, replacement as String) as String
+    if not contains_rStr_Str_Z_k_(replacement, "\", invalid) and not contains_rStr_Str_Z_k_(replacement, "$", invalid) then
+        return m.get_nativePattern().ReplaceAll(toString_AnyN_k_(input), replacement)
+    end if
+    return m.replace_CharSequence_Function1MatchResultCharSequence_k_(input, {replacement: replacement, invoke: function(it as Object) as Object
+        return substituteGroupRefs_MatchResult_Str_k_(it, m.replacement)
+    end function})
+end function
+
+function Regex_replace_CharSequence_Function1MatchResultCharSequence_k_(input as Object, transform as Object) as String
+    match = m.find_CharSequence_I_k_(input, invalid)
+    if match = invalid then
+        return toString_AnyN_k_(input)
+    end if
+    lastStart = 0
+    length = __kotlin_charSequenceLength_CharSequenceN_k_(input)
+    sb = StringBuilder_create_I_k_(length)
+    foundMatch = match
+    sb.append_CharSequenceN_I_I_k_(input, lastStart, foundMatch.get_range().get_start())
+    sb.append_CharSequenceN_k_(transform.invoke(foundMatch))
+    lastStart = (foundMatch.get_range().get_endInclusive() + 1)
+    match = foundMatch.next_k_()
+
+    while (lastStart < length) and (match <> invalid)
+        foundMatch = match
+        sb.append_CharSequenceN_I_I_k_(input, lastStart, foundMatch.get_range().get_start())
+        sb.append_CharSequenceN_k_(transform.invoke(foundMatch))
+        lastStart = (foundMatch.get_range().get_endInclusive() + 1)
+        match = foundMatch.next_k_()
+    end while
+
+
+    if lastStart < length then
+        sb.append_CharSequenceN_I_I_k_(input, lastStart, length)
+    end if
+    return sb.toString()
+end function
+
+function Regex_replaceFirst_CharSequence_Str_k_(input as Object, replacement as String) as String
+    tmp0_elvis_lhs = m.find_CharSequence_I_k_(input, invalid)
+    __when_tmp0 = invalid
+    if tmp0_elvis_lhs = invalid then
+        return toString_AnyN_k_(input)
+    else if true then
+        __when_tmp0 = tmp0_elvis_lhs
+    end if
+    match = __when_tmp0
+
+    if not contains_rStr_Str_Z_k_(replacement, "\", invalid) and not contains_rStr_Str_Z_k_(replacement, "$", invalid) then
+        return m.get_nativePattern().Replace(toString_AnyN_k_(input), replacement)
+    end if
+    inputStr = toString_AnyN_k_(input)
+    sb = StringBuilder_create_k_()
+    sb.append_StrN_k_(substring_rStr_I_I_k_(inputStr, 0, match.get_range().get_first()))
+    sb.append_StrN_k_(substituteGroupRefs_MatchResult_Str_k_(match, replacement))
+    sb.append_StrN_k_(substring_rStr_I_I_k_(inputStr, match.get_range().get_last() + 1, Len(inputStr)))
+    return sb.toString()
+end function
+
+function Regex_split_CharSequence_I_k_(input as Object, limit = 0) as Object
+    if limit = invalid then
+        limit = 0
+    end if
+    requireNonNegativeLimit_I_k_(limit)
+    allMatches = m.findAll_CharSequence_I_k_(input, invalid)
+    __when_tmp1 = invalid
+    if limit = 0 then
+        __when_tmp1 = allMatches
+    else if true then
+        __when_tmp1 = take_rSequence_I_k_(allMatches, limit - 1)
+    end if
+    matches = __when_tmp1
+
+    result = mutableListOf_k_()
+    lastStart = 0
+    __iter_71 = matches.iterator_k_()
+    while __iter_71.hasNext_k_()
+        match = __iter_71.next_k_()
+        result.add_AnyN_k_(toString_AnyN_k_(input.subSequence_I_I_k_(lastStart, match.get_range().get_start())))
+        lastStart = (match.get_range().get_endInclusive() + 1)
+
+    end while
+
+    result.add_AnyN_k_(toString_AnyN_k_(input.subSequence_I_I_k_(lastStart, __kotlin_charSequenceLength_CharSequenceN_k_(input))))
+    return result
+end function
+
+function Regex_splitToSequence_CharSequence_I_k_(input as Object, limit = 0) as Object
+    if limit = invalid then
+        limit = 0
+    end if
+    requireNonNegativeLimit_I_k_(limit)
+    return Sequence_Function0Iterator_k_({__this: m, input: input, limit: limit, invoke: function() as Object
+        return Anon_314927b7_create_Regex_CharSequence_I_k_(m, m.input, m.limit)
+    end function})
+end function
+
+function Regex_toString_k_() as String
+    return ((("Regex(" + m.get_pattern()) + ", options=") + m.get_options().toString()) + ")"
+end function
+
+function Regex_createMatchResult_Str_Arr_I_k_(input as String, matchArray as Object, matchIndex as Integer) as Object
+    return Anon_6e848fd1_create_I_Arr_Str_Regex_k_(matchIndex, matchArray, input, m)
+end function
+
+function Regex_get_pattern_k_() as String
+    return m.pattern
+end function
+
+function Regex_get_options_k_() as Object
+    return m.options
+end function
+
+function Regex_get_nativePattern_k_() as Object
+    return m.nativePattern
+end function
+
+function Regex_Companion_create_k_() as Object
+    this = {}
+    this.__type = "Regex_Companion"
+    this.__proto = ["Regex_Companion"]
+    this.__id = __kotlin_nextObjectId()
+    this.fromLiteral_Str_k_ = Regex_Companion_fromLiteral_Str_k_
+    this.escape_Str_k_ = Regex_Companion_escape_Str_k_
+    this.escapeReplacement_Str_k_ = Regex_Companion_escapeReplacement_Str_k_
+    return this
+end function
+
+function Regex_Companion_getInstance() as Object
+    if GetGlobalAA().Regex_Companion_instance = invalid then
+        GetGlobalAA().Regex_Companion_instance = Regex_Companion_create_k_()
+    end if
+    return GetGlobalAA().Regex_Companion_instance
+end function
+
+function Regex_Companion_fromLiteral_Str_k_(literal as String) as Object
+    return Regex_create_Str_k_(Regex_Companion_getInstance().escape_Str_k_(literal))
+end function
+
+function Regex_Companion_escape_Str_k_(literal as String) as String
+    sb = StringBuilder_create_k_()
+    for each c in literal
+        tmp0_subject = c
+        if (((tmp0_subject = "\") or ((tmp0_subject = "^") or (tmp0_subject = "$"))) or (((tmp0_subject = "*") or (tmp0_subject = "+")) or ((tmp0_subject = "?") or (tmp0_subject = ".")))) or (((tmp0_subject = "(") or ((tmp0_subject = ")") or (tmp0_subject = "["))) or (((tmp0_subject = "]") or (tmp0_subject = "{")) or ((tmp0_subject = "}") or (tmp0_subject = "|")))) then
+            sb.append_C_k_("\")
+            sb.append_C_k_(c)
+        else if true then
+            sb.append_C_k_(c)
+        end if
+
+    end for
+    return sb.toString()
+end function
+
+function Regex_Companion_escapeReplacement_Str_k_(literal as String) as String
+    sb = StringBuilder_create_k_()
+    for each c in literal
+        tmp0_subject = c
+        if (tmp0_subject = "\") or (tmp0_subject = "$") then
+            sb.append_C_k_("\")
+            sb.append_C_k_(c)
+        else if true then
+            sb.append_C_k_(c)
+        end if
+
+    end for
+    return sb.toString()
+end function
+
+function substituteGroupRefs_MatchResult_Str_k_(match as Object, replacement as String) as String
+    index = 0
+    result = StringBuilder_create_k_()
+    while index < Len(replacement)
+        __incr_tmp_72 = index
+        index = (__incr_tmp_72 + 1)
+
+        char = Mid(replacement, __incr_tmp_72 + 1, 1)
+        if char = "\" then
+            if index = Len(replacement) then
+                throw IllegalArgumentException_create_StrN_k_("The Char to be escaped is missing")
+            end if
+            __incr_tmp_73 = index
+            index = (__incr_tmp_73 + 1)
+
+            result.append_C_k_(Mid(replacement, __incr_tmp_73 + 1, 1))
+        else if char = "$" then
+            if index = Len(replacement) then
+                throw IllegalArgumentException_create_StrN_k_("Capturing group index is missing")
+            end if
+            if Mid(replacement, index + 1, 1) = "{" then
+                endIndex = readGroupName_rStr_I_k_(replacement, index)
+                if index = endIndex then
+                    throw IllegalArgumentException_create_StrN_k_("Named capturing group reference should have a non-empty name")
+                end if
+                if (endIndex = Len(replacement)) or (Mid(replacement, endIndex + 1, 1) <> "}") then
+                    throw IllegalArgumentException_create_StrN_k_("Named capturing group reference is missing trailing '}'")
+                end if
+                throw UnsupportedOperationException_create_StrN_k_("Named capturing groups are not yet supported in BrightScript regex")
+            else if true then
+                if not rangeTo_rC_C_k_("0", "9").contains_C_k_(Mid(replacement, index + 1, 1)) then
+                    throw IllegalArgumentException_create_StrN_k_("Invalid capturing group reference")
+                end if
+                groups = match.get_groups()
+                endIndex = readGroupIndex_rStr_I_I_k_(replacement, index, groups.get_size())
+                groupIndexStr = substring_rStr_I_I_k_(replacement, index, endIndex)
+                groupIndex = parseIntOrThrow_Str_Str_k_(groupIndexStr, "Invalid group index: " + groupIndexStr)
+                if groupIndex >= groups.get_size() then
+                    throw IndexOutOfBoundsException_create_StrN_k_(("Group with index " + __kotlin_numToStr_I_k_(groupIndex)) + " does not exist")
+                end if
+                group = groups.get_I_k_(groupIndex)
+                tmp0_safe_receiver = group
+                __when_tmp4 = invalid
+                if tmp0_safe_receiver = invalid then
+                    __when_tmp4 = invalid
+                else if true then
+                    __when_tmp4 = tmp0_safe_receiver.value
+                end if
+                tmp1_elvis_lhs = __when_tmp4
+                __when_tmp5 = invalid
+                if tmp1_elvis_lhs = invalid then
+                    __when_tmp5 = ""
+                else if true then
+                    __when_tmp5 = tmp1_elvis_lhs
+                end if
+                result.append_StrN_k_(__when_tmp5)
+
+                index = endIndex
+            end if
+        else if true then
+            result.append_C_k_(char)
+        end if
+    end while
+    return result.toString()
+end function
+
+function readGroupName_rStr_I_k_(m as String, startIndex as Integer) as Integer
+    index = startIndex
+    while index < Len(m)
+        if Mid(m, index + 1, 1) = "}" then
+            exit while
+        else if true then
+            index = (index + 1)
+        end if
+    end while
+    return index
+end function
+
+function readGroupIndex_rStr_I_I_k_(m as String, startIndex as Integer, groupCount as Integer) as Integer
+    index = startIndex + 1
+    groupIndex = Mid(m, startIndex + 1, 1) - "0"
+    while (index < Len(m)) and rangeTo_rC_C_k_("0", "9").contains_C_k_(Mid(m, index + 1, 1))
+        newGroupIndex = (groupIndex * 10) + (Mid(m, index + 1, 1) - "0")
+        if until_rI_I_k_(0, groupCount).contains_I_k_(newGroupIndex) then
+            groupIndex = newGroupIndex
+            index = (index + 1)
+        else if true then
+            exit while
+        end if
+    end while
+    return index
+end function
+
+sub requireNonNegativeLimit_I_k_(limit as Integer)
+    require_Z_Function0Any_k_(limit >= 0, {limit: limit, invoke: function() as Object
+        return ("Limit must be non-negative, but was " + __kotlin_numToStr_I_k_(m.limit)) + "."
+    end function})
+end sub
+
+function parseIntOrThrow_Str_Str_k_(str as String, errorMessage as String) as Integer
+    result = 0
+    negative = false
+    index = 0
+    if isEmpty_rStr_k_(str) then
+        throw NumberFormatException_create_StrN_k_(errorMessage)
+    end if
+    if Mid(str, 0 + 1, 1) = "-" then
+        negative = true
+        index = 1
+    else if Mid(str, 0 + 1, 1) = "+" then
+        index = 1
+    end if
+    if index >= Len(str) then
+        throw NumberFormatException_create_StrN_k_(errorMessage)
+    end if
+    while index < Len(str)
+        char = Mid(str, index + 1, 1)
+        if (__kotlin_stringCompare(char, "0") < 0) or (__kotlin_stringCompare(char, "9") > 0) then
+            throw NumberFormatException_create_StrN_k_(errorMessage)
+        end if
+        result = ((result * 10) + (char - "0"))
+        index = (index + 1)
+    end while
+    __when_tmp6 = invalid
+    if negative then
+        __when_tmp6 = -result
+    else if true then
+        __when_tmp6 = result
+    end if
+    return __when_tmp6
+
+end function
+
+function Anon_314927b7_create_Regex_CharSequence_I_k_(this_0 as Object, _input as Object, _limit as Integer) as Object
+    this = {}
+    this.__type = "Anon_314927b7"
+    this.__proto = ["Anon_314927b7", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.hasNext_k_ = Anon_314927b7_hasNext_k_
+    this.next_k_ = Anon_314927b7_next_k_
+    this.get_match = Anon_314927b7_get_match_k_
+    this.set_match = Anon_314927b7_set_match_MatchResultN_k_
+    this.get_firstMatch = Anon_314927b7_get_firstMatch_k_
+    this.get_nextStart = Anon_314927b7_get_nextStart_k_
+    this.set_nextStart = Anon_314927b7_set_nextStart_I_k_
+    this.get_splitCount = Anon_314927b7_get_splitCount_k_
+    this.set_splitCount = Anon_314927b7_set_splitCount_I_k_
+    this.get_emitted = Anon_314927b7_get_emitted_k_
+    this.set_emitted = Anon_314927b7_set_emitted_Z_k_
+    this.match = this_0.find_CharSequence_I_k_(_input, invalid)
+    this.firstMatch = this.get_match()
+    this.nextStart = 0
+    this.splitCount = 0
+    this.emitted = false
+    this._input = _input
+    this._limit = _limit
+    return this
+end function
+
+function Anon_314927b7_hasNext_k_() as Boolean
+    if not m.get_emitted() and ((m.get_firstMatch() = invalid) or (m._limit = 1)) then
+        return true
+    end if
+    if (m._limit > 0) and (m.get_splitCount() >= (m._limit - 1)) then
+        return not m.get_emitted() or (m.get_nextStart() < __kotlin_charSequenceLength_CharSequenceN_k_(m._input))
+    end if
+    return (m.get_nextStart() < __kotlin_charSequenceLength_CharSequenceN_k_(m._input)) or ((m.get_match() <> invalid) and not m.get_emitted())
+end function
+
+function Anon_314927b7_next_k_() as String
+    if not m.hasNext_k_() then
+        throw NoSuchElementException_create_k_()
+    end if
+    if not m.get_emitted() and ((m.get_firstMatch() = invalid) or (m._limit = 1)) then
+        m.set_emitted(true)
+        return toString_AnyN_k_(m._input)
+    end if
+    if (m.get_match() <> invalid) and ((m._limit = 0) or (m.get_splitCount() < (m._limit - 1))) then
+        foundMatch = m.get_match()
+        result = toString_AnyN_k_(m._input.subSequence_I_I_k_(m.get_nextStart(), foundMatch.get_range().get_first()))
+        m.set_nextStart(foundMatch.get_range().get_endInclusive() + 1)
+        m.set_match(foundMatch.next_k_())
+        m.set_splitCount(m.get_splitCount() + 1)
+        m.set_emitted(true)
+        return result
+    else if true then
+        result = toString_AnyN_k_(m._input.subSequence_I_I_k_(m.get_nextStart(), __kotlin_charSequenceLength_CharSequenceN_k_(m._input)))
+        m.set_nextStart(__kotlin_charSequenceLength_CharSequenceN_k_(m._input))
+        m.set_emitted(true)
+        return result
+    end if
+end function
+
+function Anon_314927b7_get_match_k_() as Dynamic
+    return m.match
+end function
+
+sub Anon_314927b7_set_match_MatchResultN_k_(value as Dynamic)
+    m.match = value
+end sub
+
+function Anon_314927b7_get_firstMatch_k_() as Dynamic
+    return m.firstMatch
+end function
+
+function Anon_314927b7_get_nextStart_k_() as Integer
+    return m.nextStart
+end function
+
+sub Anon_314927b7_set_nextStart_I_k_(value as Integer)
+    m.nextStart = value
+end sub
+
+function Anon_314927b7_get_splitCount_k_() as Integer
+    return m.splitCount
+end function
+
+sub Anon_314927b7_set_splitCount_I_k_(value as Integer)
+    m.splitCount = value
+end sub
+
+function Anon_314927b7_get_emitted_k_() as Boolean
+    return m.emitted
+end function
+
+sub Anon_314927b7_set_emitted_Z_k_(value as Boolean)
+    m.emitted = value
+end sub
+
+function Anon_20a65860_create_Anon_k_(this_0 as Object) as Object
+    this = {}
+    this.__type = "Anon_20a65860"
+    this.__proto = ["Anon_20a65860", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.hasNext_k_ = Anon_20a65860_hasNext_k_
+    this.next_k_ = Anon_20a65860_next_k_
+    this.get_index = Anon_20a65860_get_index_k_
+    this.set_index = Anon_20a65860_set_index_I_k_
+    this.index = 0
+    this.this_0 = this_0
+    return this
+end function
+
+function Anon_20a65860_hasNext_k_() as Boolean
+    return m.get_index() < m.this_0.get_size()
+end function
+
+function Anon_20a65860_next_k_() as Dynamic
+    if not m.hasNext_k_() then
+        throw NoSuchElementException_create_k_()
+    end if
+    __incr_tmp_74 = m.get_index()
+    m.set_index(__incr_tmp_74 + 1)
+    return m.this_0.get_I_k_(__incr_tmp_74)
+
+end function
+
+function Anon_20a65860_get_index_k_() as Integer
+    return m.index
+end function
+
+sub Anon_20a65860_set_index_I_k_(value as Integer)
+    m.index = value
+end sub
+
+function Anon_6f05b4ea_create_Arr_k_(_matchArray as Object) as Object
+    this = {}
+    this.__type = "Anon_6f05b4ea"
+    this.__proto = ["Anon_6f05b4ea", "MatchGroupCollection", "Collection", "Iterable"]
+    this.__id = __kotlin_nextObjectId()
+    this.iterator_k_ = Anon_6f05b4ea_iterator_k_
+    this.get_I_k_ = Anon_6f05b4ea_get_I_k_
+    this.contains_MatchGroupN_k_ = Anon_6f05b4ea_contains_MatchGroupN_k_
+    this.containsAll_CollectionMatchGroupN_k_ = Anon_6f05b4ea_containsAll_CollectionMatchGroupN_k_
+    this.isEmpty_k_ = Anon_6f05b4ea_isEmpty_k_
+    this.get_size = Anon_6f05b4ea_get_size_k_
+    this._matchArray = _matchArray
+    return this
+end function
+
+function Anon_6f05b4ea_iterator_k_() as Object
+    return Anon_20a65860_create_Anon_k_(m)
+end function
+
+function Anon_6f05b4ea_get_I_k_(index as Integer) as Dynamic
+    if index >= m._matchArray.count() then
+        return invalid
+    end if
+    groupValue = m._matchArray[index]
+    __when_tmp2 = invalid
+    if isEmpty_rStr_k_(groupValue) and (index > 0) then
+        __when_tmp2 = invalid
+    else if true then
+        __when_tmp2 = MatchGroup_create_Str_k_(groupValue)
+    end if
+    return __when_tmp2
+
+end function
+
+function Anon_6f05b4ea_contains_MatchGroupN_k_(element as Dynamic) as Boolean
+    progression = until_rI_I_k_(0, m.get_size())
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
+        if brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), element) then
+            return true
+        end if
+
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            if brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), element) then
+                return true
+            end if
+
+        end while
+
+    end if
+
+    return false
+end function
+
+function Anon_6f05b4ea_containsAll_CollectionMatchGroupN_k_(elements as Object) as Boolean
+    __iter_75 = elements.iterator_k_()
+    while __iter_75.hasNext_k_()
+        element = __iter_75.next_k_()
+        if not m.contains_MatchGroupN_k_(element) then
+            return false
+        end if
+    end while
+
+    return true
+end function
+
+function Anon_6f05b4ea_isEmpty_k_() as Boolean
+    return m.get_size() = 0
+end function
+
+function Anon_6f05b4ea_get_size_k_() as Integer
+    return m._matchArray.count()
+end function
+
+function Anon_5e467904_create_Anon_k_(this_0 as Object) as Object
+    this = {}
+    this.__type = "Anon_5e467904"
+    this.__proto = ["Anon_5e467904", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.hasNext_k_ = Anon_5e467904_hasNext_k_
+    this.next_k_ = Anon_5e467904_next_k_
+    this.get_index = Anon_5e467904_get_index_k_
+    this.set_index = Anon_5e467904_set_index_I_k_
+    this.index = 0
+    this.this_0 = this_0
+    return this
+end function
+
+function Anon_5e467904_hasNext_k_() as Boolean
+    return m.get_index() < m.this_0.get_size()
+end function
+
+function Anon_5e467904_next_k_() as String
+    if not m.hasNext_k_() then
+        throw NoSuchElementException_create_k_()
+    end if
+    __incr_tmp_76 = m.get_index()
+    m.set_index(__incr_tmp_76 + 1)
+    return m.this_0.get_I_k_(__incr_tmp_76)
+
+end function
+
+function Anon_5e467904_get_index_k_() as Integer
+    return m.index
+end function
+
+sub Anon_5e467904_set_index_I_k_(value as Integer)
+    m.index = value
+end sub
+
+function Anon_26938022_create_I_Anon_k_(_index as Integer, this_0 as Object) as Object
+    this = {}
+    this.__type = "Anon_26938022"
+    this.__proto = ["Anon_26938022", "ListIterator", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.hasNext_k_ = Anon_26938022_hasNext_k_
+    this.hasPrevious_k_ = Anon_26938022_hasPrevious_k_
+    this.next_k_ = Anon_26938022_next_k_
+    this.nextIndex_k_ = Anon_26938022_nextIndex_k_
+    this.previous_k_ = Anon_26938022_previous_k_
+    this.previousIndex_k_ = Anon_26938022_previousIndex_k_
+    this.get_currentIndex = Anon_26938022_get_currentIndex_k_
+    this.set_currentIndex = Anon_26938022_set_currentIndex_I_k_
+    this.currentIndex = _index
+    this.this_0 = this_0
+    return this
+end function
+
+function Anon_26938022_hasNext_k_() as Boolean
+    return m.get_currentIndex() < m.this_0.get_size()
+end function
+
+function Anon_26938022_hasPrevious_k_() as Boolean
+    return m.get_currentIndex() > 0
+end function
+
+function Anon_26938022_next_k_() as String
+    if not m.hasNext_k_() then
+        throw NoSuchElementException_create_k_()
+    end if
+    __incr_tmp_77 = m.get_currentIndex()
+    m.set_currentIndex(__incr_tmp_77 + 1)
+    return m.this_0.get_I_k_(__incr_tmp_77)
+
+end function
+
+function Anon_26938022_nextIndex_k_() as Integer
+    return m.get_currentIndex()
+end function
+
+function Anon_26938022_previous_k_() as String
+    if not m.hasPrevious_k_() then
+        throw NoSuchElementException_create_k_()
+    end if
+    return m.this_0.get_I_k_(m.get_currentIndex())
+end function
+
+function Anon_26938022_previousIndex_k_() as Integer
+    return m.get_currentIndex() - 1
+end function
+
+function Anon_26938022_get_currentIndex_k_() as Integer
+    return m.currentIndex
+end function
+
+sub Anon_26938022_set_currentIndex_I_k_(value as Integer)
+    m.currentIndex = value
+end sub
+
+function Anon_676fe49a_create_Anon_k_(this_0 as Object) as Object
+    this = {}
+    this.__type = "Anon_676fe49a"
+    this.__proto = ["Anon_676fe49a", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.hasNext_k_ = Anon_676fe49a_hasNext_k_
+    this.next_k_ = Anon_676fe49a_next_k_
+    this.get_index = Anon_676fe49a_get_index_k_
+    this.set_index = Anon_676fe49a_set_index_I_k_
+    this.index = 0
+    this.this_0 = this_0
+    return this
+end function
+
+function Anon_676fe49a_hasNext_k_() as Boolean
+    return m.get_index() < m.this_0.get_size()
+end function
+
+function Anon_676fe49a_next_k_() as String
+    if not m.hasNext_k_() then
+        throw NoSuchElementException_create_k_()
+    end if
+    __incr_tmp_78 = m.get_index()
+    m.set_index(__incr_tmp_78 + 1)
+    return m.this_0.get_I_k_(__incr_tmp_78)
+
+end function
+
+function Anon_676fe49a_get_index_k_() as Integer
+    return m.index
+end function
+
+sub Anon_676fe49a_set_index_I_k_(value as Integer)
+    m.index = value
+end sub
+
+function Anon_7248fa10_create_I_Anon_k_(_index as Integer, this_0 as Object) as Object
+    this = {}
+    this.__type = "Anon_7248fa10"
+    this.__proto = ["Anon_7248fa10", "ListIterator", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.hasNext_k_ = Anon_7248fa10_hasNext_k_
+    this.hasPrevious_k_ = Anon_7248fa10_hasPrevious_k_
+    this.next_k_ = Anon_7248fa10_next_k_
+    this.nextIndex_k_ = Anon_7248fa10_nextIndex_k_
+    this.previous_k_ = Anon_7248fa10_previous_k_
+    this.previousIndex_k_ = Anon_7248fa10_previousIndex_k_
+    this.get_currentIndex = Anon_7248fa10_get_currentIndex_k_
+    this.set_currentIndex = Anon_7248fa10_set_currentIndex_I_k_
+    this.currentIndex = _index
+    this.this_0 = this_0
+    return this
+end function
+
+function Anon_7248fa10_hasNext_k_() as Boolean
+    return m.get_currentIndex() < m.this_0.get_size()
+end function
+
+function Anon_7248fa10_hasPrevious_k_() as Boolean
+    return m.get_currentIndex() > 0
+end function
+
+function Anon_7248fa10_next_k_() as String
+    if not m.hasNext_k_() then
+        throw NoSuchElementException_create_k_()
+    end if
+    __incr_tmp_79 = m.get_currentIndex()
+    m.set_currentIndex(__incr_tmp_79 + 1)
+    return m.this_0.get_I_k_(__incr_tmp_79)
+
+end function
+
+function Anon_7248fa10_nextIndex_k_() as Integer
+    return m.get_currentIndex()
+end function
+
+function Anon_7248fa10_previous_k_() as String
+    if not m.hasPrevious_k_() then
+        throw NoSuchElementException_create_k_()
+    end if
+    return m.this_0.get_I_k_(m.get_currentIndex())
+end function
+
+function Anon_7248fa10_previousIndex_k_() as Integer
+    return m.get_currentIndex() - 1
+end function
+
+function Anon_7248fa10_get_currentIndex_k_() as Integer
+    return m.currentIndex
+end function
+
+sub Anon_7248fa10_set_currentIndex_I_k_(value as Integer)
+    m.currentIndex = value
+end sub
+
+function Anon_14bdd8a6_create_Anon_k_(this_0 as Object) as Object
+    this = {}
+    this.__type = "Anon_14bdd8a6"
+    this.__proto = ["Anon_14bdd8a6", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.hasNext_k_ = Anon_14bdd8a6_hasNext_k_
+    this.next_k_ = Anon_14bdd8a6_next_k_
+    this.get_index = Anon_14bdd8a6_get_index_k_
+    this.set_index = Anon_14bdd8a6_set_index_I_k_
+    this.index = 0
+    this.this_0 = this_0
+    return this
+end function
+
+function Anon_14bdd8a6_hasNext_k_() as Boolean
+    return m.get_index() < m.this_0.get_size()
+end function
+
+function Anon_14bdd8a6_next_k_() as String
+    if not m.hasNext_k_() then
+        throw NoSuchElementException_create_k_()
+    end if
+    __incr_tmp_80 = m.get_index()
+    m.set_index(__incr_tmp_80 + 1)
+    return m.this_0.get_I_k_(__incr_tmp_80)
+
+end function
+
+function Anon_14bdd8a6_get_index_k_() as Integer
+    return m.index
+end function
+
+sub Anon_14bdd8a6_set_index_I_k_(value as Integer)
+    m.index = value
+end sub
+
+function Anon_1c553585_create_I_Anon_k_(_index as Integer, this_0 as Object) as Object
+    this = {}
+    this.__type = "Anon_1c553585"
+    this.__proto = ["Anon_1c553585", "ListIterator", "Iterator"]
+    this.__id = __kotlin_nextObjectId()
+    this.hasNext_k_ = Anon_1c553585_hasNext_k_
+    this.hasPrevious_k_ = Anon_1c553585_hasPrevious_k_
+    this.next_k_ = Anon_1c553585_next_k_
+    this.nextIndex_k_ = Anon_1c553585_nextIndex_k_
+    this.previous_k_ = Anon_1c553585_previous_k_
+    this.previousIndex_k_ = Anon_1c553585_previousIndex_k_
+    this.get_currentIndex = Anon_1c553585_get_currentIndex_k_
+    this.set_currentIndex = Anon_1c553585_set_currentIndex_I_k_
+    this.currentIndex = _index
+    this.this_0 = this_0
+    return this
+end function
+
+function Anon_1c553585_hasNext_k_() as Boolean
+    return m.get_currentIndex() < m.this_0.get_size()
+end function
+
+function Anon_1c553585_hasPrevious_k_() as Boolean
+    return m.get_currentIndex() > 0
+end function
+
+function Anon_1c553585_next_k_() as String
+    if not m.hasNext_k_() then
+        throw NoSuchElementException_create_k_()
+    end if
+    __incr_tmp_81 = m.get_currentIndex()
+    m.set_currentIndex(__incr_tmp_81 + 1)
+    return m.this_0.get_I_k_(__incr_tmp_81)
+
+end function
+
+function Anon_1c553585_nextIndex_k_() as Integer
+    return m.get_currentIndex()
+end function
+
+function Anon_1c553585_previous_k_() as String
+    if not m.hasPrevious_k_() then
+        throw NoSuchElementException_create_k_()
+    end if
+    return m.this_0.get_I_k_(m.get_currentIndex())
+end function
+
+function Anon_1c553585_previousIndex_k_() as Integer
+    return m.get_currentIndex() - 1
+end function
+
+function Anon_1c553585_get_currentIndex_k_() as Integer
+    return m.currentIndex
+end function
+
+sub Anon_1c553585_set_currentIndex_I_k_(value as Integer)
+    m.currentIndex = value
+end sub
+
+function Anon_67b95f82_create_I_Arr_I_k_(_nestedSubSize as Integer, _matchArray as Object, _actualFromIndex as Integer) as Object
+    this = {}
+    this.__type = "Anon_67b95f82"
+    this.__proto = ["Anon_67b95f82", "List", "Collection", "Iterable"]
+    this.__id = __kotlin_nextObjectId()
+    this.get_I_k_ = Anon_67b95f82_get_I_k_
+    this.indexOf_Str_k_ = Anon_67b95f82_indexOf_Str_k_
+    this.lastIndexOf_Str_k_ = Anon_67b95f82_lastIndexOf_Str_k_
+    this.isEmpty_k_ = Anon_67b95f82_isEmpty_k_
+    this.contains_Str_k_ = Anon_67b95f82_contains_Str_k_
+    this.containsAll_CollectionStr_k_ = Anon_67b95f82_containsAll_CollectionStr_k_
+    this.iterator_k_ = Anon_67b95f82_iterator_k_
+    this.listIterator_k_ = Anon_67b95f82_listIterator_k_
+    this.listIterator_I_k_ = Anon_67b95f82_listIterator_I_k_
+    this.subList_I_I_k_ = Anon_67b95f82_subList_I_I_k_
+    this.get_size = Anon_67b95f82_get_size_k_
+    this.size = _nestedSubSize
+    this._matchArray = _matchArray
+    this._actualFromIndex = _actualFromIndex
+    return this
+end function
+
+function Anon_67b95f82_get_I_k_(index as Integer) as String
+    if (index < 0) or (index >= m.get_size()) then
+        throw IndexOutOfBoundsException_create_k_()
+    end if
+    return m._matchArray[m._actualFromIndex + index]
+end function
+
+function Anon_67b95f82_indexOf_Str_k_(element as String) as Integer
+    progression = until_rI_I_k_(0, m.get_size())
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
+        if m.get_I_k_(i) = element then
+            return i
+        end if
+
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            if m.get_I_k_(i) = element then
+                return i
+            end if
+
+        end while
+
+    end if
+
+    return -1
+end function
+
+function Anon_67b95f82_lastIndexOf_Str_k_(element as String) as Integer
+    inductionVariable = m.get_size() - 1
+    if 0 <= inductionVariable then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + -1)
+
+        if m.get_I_k_(i) = element then
+            return i
+        end if
+
+
+        while 0 <= inductionVariable
+            i = inductionVariable
+            inductionVariable = (inductionVariable + -1)
+
+            if m.get_I_k_(i) = element then
+                return i
+            end if
+
+        end while
+
+    end if
+
+    return -1
+end function
+
+function Anon_67b95f82_isEmpty_k_() as Boolean
+    return m.get_size() = 0
+end function
+
+function Anon_67b95f82_contains_Str_k_(element as String) as Boolean
+    return m.indexOf_Str_k_(element) >= 0
+end function
+
+function Anon_67b95f82_containsAll_CollectionStr_k_(elements as Object) as Boolean
+    __iter_82 = elements.iterator_k_()
+    while __iter_82.hasNext_k_()
+        element = __iter_82.next_k_()
+        if not m.contains_Str_k_(element) then
+            return false
+        end if
+    end while
+
+    return true
+end function
+
+function Anon_67b95f82_iterator_k_() as Object
+    return Anon_14bdd8a6_create_Anon_k_(m)
+end function
+
+function Anon_67b95f82_listIterator_k_() as Object
+    return m.listIterator_I_k_(0)
+end function
+
+function Anon_67b95f82_listIterator_I_k_(index as Integer) as Object
+    if (index < 0) or (index > m.get_size()) then
+        throw IndexOutOfBoundsException_create_k_()
+    end if
+    return Anon_1c553585_create_I_Anon_k_(index, m)
+end function
+
+function Anon_67b95f82_subList_I_I_k_(fromIndex as Integer, toIndex as Integer) as Object
+    if ((fromIndex < 0) or (toIndex > m.get_size())) or (fromIndex > toIndex) then
+        throw IndexOutOfBoundsException_create_k_()
+    end if
+    return emptyList_k_()
+end function
+
+function Anon_67b95f82_get_size_k_() as Integer
+    return m.size
+end function
+
+function Anon_56bb8198_create_I_Arr_I_k_(_subSize as Integer, _matchArray as Object, _outerFromIndex as Integer) as Object
+    this = {}
+    this.__type = "Anon_56bb8198"
+    this.__proto = ["Anon_56bb8198", "List", "Collection", "Iterable"]
+    this.__id = __kotlin_nextObjectId()
+    this.get_I_k_ = Anon_56bb8198_get_I_k_
+    this.indexOf_Str_k_ = Anon_56bb8198_indexOf_Str_k_
+    this.lastIndexOf_Str_k_ = Anon_56bb8198_lastIndexOf_Str_k_
+    this.isEmpty_k_ = Anon_56bb8198_isEmpty_k_
+    this.contains_Str_k_ = Anon_56bb8198_contains_Str_k_
+    this.containsAll_CollectionStr_k_ = Anon_56bb8198_containsAll_CollectionStr_k_
+    this.iterator_k_ = Anon_56bb8198_iterator_k_
+    this.listIterator_k_ = Anon_56bb8198_listIterator_k_
+    this.listIterator_I_k_ = Anon_56bb8198_listIterator_I_k_
+    this.subList_I_I_k_ = Anon_56bb8198_subList_I_I_k_
+    this.get_size = Anon_56bb8198_get_size_k_
+    this.size = _subSize
+    this._matchArray = _matchArray
+    this._outerFromIndex = _outerFromIndex
+    return this
+end function
+
+function Anon_56bb8198_get_I_k_(index as Integer) as String
+    if (index < 0) or (index >= m.get_size()) then
+        throw IndexOutOfBoundsException_create_k_()
+    end if
+    return m._matchArray[m._outerFromIndex + index]
+end function
+
+function Anon_56bb8198_indexOf_Str_k_(element as String) as Integer
+    progression = until_rI_I_k_(0, m.get_size())
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
+        if m.get_I_k_(i) = element then
+            return i
+        end if
+
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            if m.get_I_k_(i) = element then
+                return i
+            end if
+
+        end while
+
+    end if
+
+    return -1
+end function
+
+function Anon_56bb8198_lastIndexOf_Str_k_(element as String) as Integer
+    inductionVariable = m.get_size() - 1
+    if 0 <= inductionVariable then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + -1)
+
+        if m.get_I_k_(i) = element then
+            return i
+        end if
+
+
+        while 0 <= inductionVariable
+            i = inductionVariable
+            inductionVariable = (inductionVariable + -1)
+
+            if m.get_I_k_(i) = element then
+                return i
+            end if
+
+        end while
+
+    end if
+
+    return -1
+end function
+
+function Anon_56bb8198_isEmpty_k_() as Boolean
+    return m.get_size() = 0
+end function
+
+function Anon_56bb8198_contains_Str_k_(element as String) as Boolean
+    return m.indexOf_Str_k_(element) >= 0
+end function
+
+function Anon_56bb8198_containsAll_CollectionStr_k_(elements as Object) as Boolean
+    __iter_83 = elements.iterator_k_()
+    while __iter_83.hasNext_k_()
+        element = __iter_83.next_k_()
+        if not m.contains_Str_k_(element) then
+            return false
+        end if
+    end while
+
+    return true
+end function
+
+function Anon_56bb8198_iterator_k_() as Object
+    return Anon_676fe49a_create_Anon_k_(m)
+end function
+
+function Anon_56bb8198_listIterator_k_() as Object
+    return m.listIterator_I_k_(0)
+end function
+
+function Anon_56bb8198_listIterator_I_k_(index as Integer) as Object
+    if (index < 0) or (index > m.get_size()) then
+        throw IndexOutOfBoundsException_create_k_()
+    end if
+    return Anon_7248fa10_create_I_Anon_k_(index, m)
+end function
+
+function Anon_56bb8198_subList_I_I_k_(fromIndex as Integer, toIndex as Integer) as Object
+    if ((fromIndex < 0) or (toIndex > m.get_size())) or (fromIndex > toIndex) then
+        throw IndexOutOfBoundsException_create_k_()
+    end if
+    actualFromIndex = m._outerFromIndex + fromIndex
+    actualToIndex = m._outerFromIndex + toIndex
+    nestedSubSize = actualToIndex - actualFromIndex
+    return Anon_67b95f82_create_I_Arr_I_k_(nestedSubSize, m._matchArray, actualFromIndex)
+end function
+
+function Anon_56bb8198_get_size_k_() as Integer
+    return m.size
+end function
+
+function Anon_34a8facf_create_Arr_k_(_matchArray as Object) as Object
+    this = {}
+    this.__type = "Anon_34a8facf"
+    this.__proto = ["Anon_34a8facf", "List", "Collection", "Iterable"]
+    this.__id = __kotlin_nextObjectId()
+    this.get_I_k_ = Anon_34a8facf_get_I_k_
+    this.indexOf_Str_k_ = Anon_34a8facf_indexOf_Str_k_
+    this.lastIndexOf_Str_k_ = Anon_34a8facf_lastIndexOf_Str_k_
+    this.isEmpty_k_ = Anon_34a8facf_isEmpty_k_
+    this.contains_Str_k_ = Anon_34a8facf_contains_Str_k_
+    this.containsAll_CollectionStr_k_ = Anon_34a8facf_containsAll_CollectionStr_k_
+    this.iterator_k_ = Anon_34a8facf_iterator_k_
+    this.listIterator_k_ = Anon_34a8facf_listIterator_k_
+    this.listIterator_I_k_ = Anon_34a8facf_listIterator_I_k_
+    this.subList_I_I_k_ = Anon_34a8facf_subList_I_I_k_
+    this.get_size = Anon_34a8facf_get_size_k_
+    this._matchArray = _matchArray
+    return this
+end function
+
+function Anon_34a8facf_get_I_k_(index as Integer) as String
+    if (index < 0) or (index >= m._matchArray.count()) then
+        throw IndexOutOfBoundsException_create_StrN_k_((("Index " + __kotlin_numToStr_I_k_(index)) + " out of bounds for size ") + __kotlin_numToStr_I_k_(m.get_size()))
+    end if
+    return m._matchArray[index]
+end function
+
+function Anon_34a8facf_indexOf_Str_k_(element as String) as Integer
+    progression = until_rI_I_k_(0, m.get_size())
+    inductionVariable = progression.get_first()
+    last = progression.get_last()
+    if inductionVariable <= last then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
+        if m._matchArray[i] = element then
+            return i
+        end if
+
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            if m._matchArray[i] = element then
+                return i
+            end if
+
+        end while
+
+    end if
+
+    return -1
+end function
+
+function Anon_34a8facf_lastIndexOf_Str_k_(element as String) as Integer
+    inductionVariable = m.get_size() - 1
+    if 0 <= inductionVariable then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + -1)
+
+        if m._matchArray[i] = element then
+            return i
+        end if
+
+
+        while 0 <= inductionVariable
+            i = inductionVariable
+            inductionVariable = (inductionVariable + -1)
+
+            if m._matchArray[i] = element then
+                return i
+            end if
+
+        end while
+
+    end if
+
+    return -1
+end function
+
+function Anon_34a8facf_isEmpty_k_() as Boolean
+    return m.get_size() = 0
+end function
+
+function Anon_34a8facf_contains_Str_k_(element as String) as Boolean
+    return m.indexOf_Str_k_(element) >= 0
+end function
+
+function Anon_34a8facf_containsAll_CollectionStr_k_(elements as Object) as Boolean
+    __iter_84 = elements.iterator_k_()
+    while __iter_84.hasNext_k_()
+        element = __iter_84.next_k_()
+        if not m.contains_Str_k_(element) then
+            return false
+        end if
+    end while
+
+    return true
+end function
+
+function Anon_34a8facf_iterator_k_() as Object
+    return Anon_5e467904_create_Anon_k_(m)
+end function
+
+function Anon_34a8facf_listIterator_k_() as Object
+    return m.listIterator_I_k_(0)
+end function
+
+function Anon_34a8facf_listIterator_I_k_(index as Integer) as Object
+    if (index < 0) or (index > m.get_size()) then
+        throw IndexOutOfBoundsException_create_k_()
+    end if
+    return Anon_26938022_create_I_Anon_k_(index, m)
+end function
+
+function Anon_34a8facf_subList_I_I_k_(fromIndex as Integer, toIndex as Integer) as Object
+    if ((fromIndex < 0) or (toIndex > m.get_size())) or (fromIndex > toIndex) then
+        throw IndexOutOfBoundsException_create_k_()
+    end if
+    outerFromIndex = fromIndex
+    subSize = toIndex - fromIndex
+    return Anon_56bb8198_create_I_Arr_I_k_(subSize, m._matchArray, outerFromIndex)
+end function
+
+function Anon_34a8facf_get_size_k_() as Integer
+    return m._matchArray.count()
+end function
+
+function Anon_6e848fd1_create_I_Arr_Str_Regex_k_(_matchIndex as Integer, _matchArray as Object, _input as String, this_0 as Object) as Object
+    this = {}
+    this.__type = "Anon_6e848fd1"
+    this.__proto = ["Anon_6e848fd1", "MatchResult"]
+    this.__id = __kotlin_nextObjectId()
+    this.next_k_ = Anon_6e848fd1_next_k_
+    this.get_range = Anon_6e848fd1_get_range_k_
+    this.get_value = Anon_6e848fd1_get_value_k_
+    this.get_groups = Anon_6e848fd1_get_groups_k_
+    this.get_groupValues_ = Anon_6e848fd1_get_groupValues__k_
+    this.set_groupValues_ = Anon_6e848fd1_set_groupValues__ListStrN_k_
+    this.get_groupValues = Anon_6e848fd1_get_groupValues_k_
+    this.range = until_rI_I_k_(_matchIndex, _matchIndex + Len(_matchArray[0]))
+    this.value = _matchArray[0]
+    this.groups = Anon_6f05b4ea_create_Arr_k_(_matchArray)
+    this.groupValues_ = invalid
+    this._matchArray = _matchArray
+    this._input = _input
+    this.this_0 = this_0
+    return this
+end function
+
+function Anon_6e848fd1_next_k_() as Dynamic
+    __when_tmp3 = invalid
+    if m.get_range().isEmpty_k_() then
+        __when_tmp3 = (m.get_range().get_start() + 1)
+    else if true then
+        __when_tmp3 = (m.get_range().get_endInclusive() + 1)
+    end if
+    nextStartIndex = __when_tmp3
+
+    if nextStartIndex > Len(m._input) then
+        return invalid
+    end if
+    return m.this_0.find_CharSequence_I_k_(m._input, nextStartIndex)
+end function
+
+function Anon_6e848fd1_get_range_k_() as Object
+    return m.range
+end function
+
+function Anon_6e848fd1_get_value_k_() as String
+    return m.value
+end function
+
+function Anon_6e848fd1_get_groups_k_() as Object
+    return m.groups
+end function
+
+function Anon_6e848fd1_get_groupValues__k_() as Dynamic
+    return m.groupValues_
+end function
+
+sub Anon_6e848fd1_set_groupValues__ListStrN_k_(value as Dynamic)
+    m.groupValues_ = value
+end sub
+
+function Anon_6e848fd1_get_groupValues_k_() as Object
+    if m.get_groupValues_() = invalid then
+        m.set_groupValues_(Anon_34a8facf_create_Arr_k_(m._matchArray))
+    end if
+    return m.get_groupValues_()
+end function

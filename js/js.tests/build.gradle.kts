@@ -267,8 +267,8 @@ val prepareNpmTestData by task<Copy> {
     from(packageJsonFile)
     into(node.nodeProjectDir)
 }
-tasks.named("npmSetRegistry").configure {
-    mustRunAfter(prepareNpmTestData)
+tasks.findByName("npmSetRegistry")?.let { task ->
+    task.mustRunAfter(prepareNpmTestData)
 }
 
 val npmInstall by tasks.getting(NpmTask::class) {

@@ -20,9 +20,13 @@ dependencies {
     testImplementation(project(":compiler:cli-brs"))
     testRuntimeOnly(project(":compiler:cli-common"))
     testRuntimeOnly(intellijCore())
+    // Required for IntelliJ plugin loading in Kotlin 2.2.x
+    testRuntimeOnly(commonDependency("org.codehaus.woodstox:stax2-api"))
+    testRuntimeOnly(commonDependency("com.fasterxml:aalto-xml"))
 }
 
 optInToUnsafeDuringIrConstructionAPI()
+optInTo("org.jetbrains.kotlin.DeprecatedForRemovalCompilerApi")
 
 sourceSets {
     "main" { projectDefault() }

@@ -1,0 +1,548 @@
+function __kotlin_ushr(value as Integer, shift as Integer) as Integer
+    if shift >= 32 then
+        return 0
+    end if
+    if shift = 0 then
+        return value
+    end if
+    if value >= 0 then
+        return value \ (2 ^ shift)
+    end if
+    return ((value and 2147483647) \ (2 ^ shift)) or (1073741824 \ (2 ^ (shift - 1)))
+end function
+
+function __kotlin_stringCompare(a as String, b as String) as Integer
+    if a < b then
+        return -1
+    end if
+    if a > b then
+        return 1
+    end if
+    return 0
+end function
+
+function __kotlin_intCompare(a as Integer, b as Integer) as Integer
+    if a < b then
+        return -1
+    end if
+    if a > b then
+        return 1
+    end if
+    return 0
+end function
+
+function __kotlin_nextObjectId() as Integer
+    if m.__kotlin_objectIdCounter = invalid then
+        m.__kotlin_objectIdCounter = 0
+    end if
+    m.__kotlin_objectIdCounter = (m.__kotlin_objectIdCounter + 1)
+    return m.__kotlin_objectIdCounter
+end function
+
+function __kotlin_identityEquals(a as Dynamic, b as Dynamic) as Boolean
+    if (a = invalid) and (b = invalid) then
+        return true
+    end if
+    if (a = invalid) or (b = invalid) then
+        return false
+    end if
+    aType = Type(a)
+    bType = Type(b)
+    if (aType <> "roAssociativeArray") and (bType <> "roAssociativeArray") then
+        return a = b
+    end if
+    if (aType <> "roAssociativeArray") or (bType <> "roAssociativeArray") then
+        return false
+    end if
+    if (a.__id = invalid) or (b.__id = invalid) then
+        return false
+    end if
+    return a.__id = b.__id
+end function
+
+function __kotlin_isInstanceOf(obj as Object, typeName as String) as Boolean
+    if obj = invalid then
+        return false
+    end if
+    if Type(obj) <> "roAssociativeArray" then
+        return false
+    end if
+    proto = obj.__proto
+    if proto = invalid then
+        return false
+    end if
+    stack = [proto]
+    while stack.count() > 0
+        item = stack.pop()
+        if item = invalid then
+        else if Type(item) = "roArray" then
+            for each e in item
+                stack.push(e)
+            end for
+        else if item = typeName then
+            return true
+        end if
+    end while
+    return false
+end function
+
+function Error_create_k_() as Object
+    this = Throwable_create_k_()
+    this._super = {}
+    this.__proto = ["Error", this.__proto]
+    this.__type = "Error"
+    return this
+end function
+
+function Error_create_StrN_k_(message as Dynamic) as Object
+    this = Throwable_create_StrN_k_(message)
+    this._super = {}
+    this.__proto = ["Error", this.__proto]
+    this.__type = "Error"
+    return this
+end function
+
+function Error_create_StrN_ThrowableN_k_(message as Dynamic, cause as Dynamic) as Object
+    this = Throwable_create_StrN_ThrowableN_k_(message, cause)
+    this._super = {}
+    this.__proto = ["Error", this.__proto]
+    this.__type = "Error"
+    return this
+end function
+
+function Error_create_ThrowableN_k_(cause as Dynamic) as Object
+    this = Throwable_create_ThrowableN_k_(cause)
+    this._super = {}
+    this.__proto = ["Error", this.__proto]
+    this.__type = "Error"
+    return this
+end function
+
+function Exception_create_k_() as Object
+    this = Throwable_create_k_()
+    this._super = {}
+    this.__proto = ["Exception", this.__proto]
+    this.__type = "Exception"
+    return this
+end function
+
+function Exception_create_StrN_k_(message as Dynamic) as Object
+    this = Throwable_create_StrN_k_(message)
+    this._super = {}
+    this.__proto = ["Exception", this.__proto]
+    this.__type = "Exception"
+    return this
+end function
+
+function Exception_create_StrN_ThrowableN_k_(message as Dynamic, cause as Dynamic) as Object
+    this = Throwable_create_StrN_ThrowableN_k_(message, cause)
+    this._super = {}
+    this.__proto = ["Exception", this.__proto]
+    this.__type = "Exception"
+    return this
+end function
+
+function Exception_create_ThrowableN_k_(cause as Dynamic) as Object
+    this = Throwable_create_ThrowableN_k_(cause)
+    this._super = {}
+    this.__proto = ["Exception", this.__proto]
+    this.__type = "Exception"
+    return this
+end function
+
+function RuntimeException_create_k_() as Object
+    this = Exception_create_k_()
+    this._super = {}
+    this.__proto = ["RuntimeException", this.__proto]
+    this.__type = "RuntimeException"
+    return this
+end function
+
+function RuntimeException_create_StrN_k_(message as Dynamic) as Object
+    this = Exception_create_StrN_k_(message)
+    this._super = {}
+    this.__proto = ["RuntimeException", this.__proto]
+    this.__type = "RuntimeException"
+    return this
+end function
+
+function RuntimeException_create_StrN_ThrowableN_k_(message as Dynamic, cause as Dynamic) as Object
+    this = Exception_create_StrN_ThrowableN_k_(message, cause)
+    this._super = {}
+    this.__proto = ["RuntimeException", this.__proto]
+    this.__type = "RuntimeException"
+    return this
+end function
+
+function RuntimeException_create_ThrowableN_k_(cause as Dynamic) as Object
+    this = Exception_create_ThrowableN_k_(cause)
+    this._super = {}
+    this.__proto = ["RuntimeException", this.__proto]
+    this.__type = "RuntimeException"
+    return this
+end function
+
+function IllegalArgumentException_create_k_() as Object
+    this = RuntimeException_create_k_()
+    this._super = {}
+    this.__proto = ["IllegalArgumentException", this.__proto]
+    this.__type = "IllegalArgumentException"
+    return this
+end function
+
+function IllegalArgumentException_create_StrN_k_(message as Dynamic) as Object
+    this = RuntimeException_create_StrN_k_(message)
+    this._super = {}
+    this.__proto = ["IllegalArgumentException", this.__proto]
+    this.__type = "IllegalArgumentException"
+    return this
+end function
+
+function IllegalArgumentException_create_StrN_ThrowableN_k_(message as Dynamic, cause as Dynamic) as Object
+    this = RuntimeException_create_StrN_ThrowableN_k_(message, cause)
+    this._super = {}
+    this.__proto = ["IllegalArgumentException", this.__proto]
+    this.__type = "IllegalArgumentException"
+    return this
+end function
+
+function IllegalArgumentException_create_ThrowableN_k_(cause as Dynamic) as Object
+    this = RuntimeException_create_ThrowableN_k_(cause)
+    this._super = {}
+    this.__proto = ["IllegalArgumentException", this.__proto]
+    this.__type = "IllegalArgumentException"
+    return this
+end function
+
+function IllegalStateException_create_k_() as Object
+    this = RuntimeException_create_k_()
+    this._super = {}
+    this.__proto = ["IllegalStateException", this.__proto]
+    this.__type = "IllegalStateException"
+    return this
+end function
+
+function IllegalStateException_create_StrN_k_(message as Dynamic) as Object
+    this = RuntimeException_create_StrN_k_(message)
+    this._super = {}
+    this.__proto = ["IllegalStateException", this.__proto]
+    this.__type = "IllegalStateException"
+    return this
+end function
+
+function IllegalStateException_create_StrN_ThrowableN_k_(message as Dynamic, cause as Dynamic) as Object
+    this = RuntimeException_create_StrN_ThrowableN_k_(message, cause)
+    this._super = {}
+    this.__proto = ["IllegalStateException", this.__proto]
+    this.__type = "IllegalStateException"
+    return this
+end function
+
+function IllegalStateException_create_ThrowableN_k_(cause as Dynamic) as Object
+    this = RuntimeException_create_ThrowableN_k_(cause)
+    this._super = {}
+    this.__proto = ["IllegalStateException", this.__proto]
+    this.__type = "IllegalStateException"
+    return this
+end function
+
+function IndexOutOfBoundsException_create_k_() as Object
+    this = RuntimeException_create_k_()
+    this._super = {}
+    this.__proto = ["IndexOutOfBoundsException", this.__proto]
+    this.__type = "IndexOutOfBoundsException"
+    return this
+end function
+
+function IndexOutOfBoundsException_create_StrN_k_(message as Dynamic) as Object
+    this = RuntimeException_create_StrN_k_(message)
+    this._super = {}
+    this.__proto = ["IndexOutOfBoundsException", this.__proto]
+    this.__type = "IndexOutOfBoundsException"
+    return this
+end function
+
+function ConcurrentModificationException_create_k_() as Object
+    this = RuntimeException_create_k_()
+    this._super = {}
+    this.__proto = ["ConcurrentModificationException", this.__proto]
+    this.__type = "ConcurrentModificationException"
+    return this
+end function
+
+function ConcurrentModificationException_create_StrN_k_(message as Dynamic) as Object
+    this = RuntimeException_create_StrN_k_(message)
+    this._super = {}
+    this.__proto = ["ConcurrentModificationException", this.__proto]
+    this.__type = "ConcurrentModificationException"
+    return this
+end function
+
+function ConcurrentModificationException_create_StrN_ThrowableN_k_(message as Dynamic, cause as Dynamic) as Object
+    this = RuntimeException_create_StrN_ThrowableN_k_(message, cause)
+    this._super = {}
+    this.__proto = ["ConcurrentModificationException", this.__proto]
+    this.__type = "ConcurrentModificationException"
+    return this
+end function
+
+function ConcurrentModificationException_create_ThrowableN_k_(cause as Dynamic) as Object
+    this = RuntimeException_create_ThrowableN_k_(cause)
+    this._super = {}
+    this.__proto = ["ConcurrentModificationException", this.__proto]
+    this.__type = "ConcurrentModificationException"
+    return this
+end function
+
+function UnsupportedOperationException_create_k_() as Object
+    this = RuntimeException_create_k_()
+    this._super = {}
+    this.__proto = ["UnsupportedOperationException", this.__proto]
+    this.__type = "UnsupportedOperationException"
+    return this
+end function
+
+function UnsupportedOperationException_create_StrN_k_(message as Dynamic) as Object
+    this = RuntimeException_create_StrN_k_(message)
+    this._super = {}
+    this.__proto = ["UnsupportedOperationException", this.__proto]
+    this.__type = "UnsupportedOperationException"
+    return this
+end function
+
+function UnsupportedOperationException_create_StrN_ThrowableN_k_(message as Dynamic, cause as Dynamic) as Object
+    this = RuntimeException_create_StrN_ThrowableN_k_(message, cause)
+    this._super = {}
+    this.__proto = ["UnsupportedOperationException", this.__proto]
+    this.__type = "UnsupportedOperationException"
+    return this
+end function
+
+function UnsupportedOperationException_create_ThrowableN_k_(cause as Dynamic) as Object
+    this = RuntimeException_create_ThrowableN_k_(cause)
+    this._super = {}
+    this.__proto = ["UnsupportedOperationException", this.__proto]
+    this.__type = "UnsupportedOperationException"
+    return this
+end function
+
+function NoSuchElementException_create_k_() as Object
+    this = RuntimeException_create_k_()
+    this._super = {}
+    this.__proto = ["NoSuchElementException", this.__proto]
+    this.__type = "NoSuchElementException"
+    return this
+end function
+
+function NoSuchElementException_create_StrN_k_(message as Dynamic) as Object
+    this = RuntimeException_create_StrN_k_(message)
+    this._super = {}
+    this.__proto = ["NoSuchElementException", this.__proto]
+    this.__type = "NoSuchElementException"
+    return this
+end function
+
+function NumberFormatException_create_k_() as Object
+    this = IllegalArgumentException_create_k_()
+    this._super = {}
+    this.__proto = ["NumberFormatException", this.__proto]
+    this.__type = "NumberFormatException"
+    return this
+end function
+
+function NumberFormatException_create_StrN_k_(message as Dynamic) as Object
+    this = IllegalArgumentException_create_StrN_k_(message)
+    this._super = {}
+    this.__proto = ["NumberFormatException", this.__proto]
+    this.__type = "NumberFormatException"
+    return this
+end function
+
+function NullPointerException_create_k_() as Object
+    this = RuntimeException_create_k_()
+    this._super = {}
+    this.__proto = ["NullPointerException", this.__proto]
+    this.__type = "NullPointerException"
+    return this
+end function
+
+function NullPointerException_create_StrN_k_(message as Dynamic) as Object
+    this = RuntimeException_create_StrN_k_(message)
+    this._super = {}
+    this.__proto = ["NullPointerException", this.__proto]
+    this.__type = "NullPointerException"
+    return this
+end function
+
+function ClassCastException_create_k_() as Object
+    this = RuntimeException_create_k_()
+    this._super = {}
+    this.__proto = ["ClassCastException", this.__proto]
+    this.__type = "ClassCastException"
+    return this
+end function
+
+function ClassCastException_create_StrN_k_(message as Dynamic) as Object
+    this = RuntimeException_create_StrN_k_(message)
+    this._super = {}
+    this.__proto = ["ClassCastException", this.__proto]
+    this.__type = "ClassCastException"
+    return this
+end function
+
+function AssertionError_create_k_() as Object
+    this = Error_create_k_()
+    this._super = {}
+    this.__proto = ["AssertionError", this.__proto]
+    this.__type = "AssertionError"
+    return this
+end function
+
+function AssertionError_create_AnyN_k_(message as Dynamic) as Object
+    tmp0_safe_receiver = message
+    __when_tmp0 = invalid
+    if tmp0_safe_receiver = invalid then
+        __when_tmp0 = invalid
+    else if true then
+        __when_tmp0 = toString_AnyN_k_(tmp0_safe_receiver)
+    end if
+    this = Error_create_StrN_k_(__when_tmp0)
+    this._super = {}
+    this.__proto = ["AssertionError", this.__proto]
+    this.__type = "AssertionError"
+    return this
+end function
+
+function AssertionError_create_StrN_ThrowableN_k_(message as Dynamic, cause as Dynamic) as Object
+    this = Error_create_StrN_ThrowableN_k_(message, cause)
+    this._super = {}
+    this.__proto = ["AssertionError", this.__proto]
+    this.__type = "AssertionError"
+    return this
+end function
+
+function ArithmeticException_create_k_() as Object
+    this = RuntimeException_create_k_()
+    this._super = {}
+    this.__proto = ["ArithmeticException", this.__proto]
+    this.__type = "ArithmeticException"
+    return this
+end function
+
+function ArithmeticException_create_StrN_k_(message as Dynamic) as Object
+    this = RuntimeException_create_StrN_k_(message)
+    this._super = {}
+    this.__proto = ["ArithmeticException", this.__proto]
+    this.__type = "ArithmeticException"
+    return this
+end function
+
+function NoWhenBranchMatchedException_create_k_() as Object
+    this = RuntimeException_create_k_()
+    this._super = {}
+    this.__proto = ["NoWhenBranchMatchedException", this.__proto]
+    this.__type = "NoWhenBranchMatchedException"
+    return this
+end function
+
+function NoWhenBranchMatchedException_create_StrN_k_(message as Dynamic) as Object
+    this = RuntimeException_create_StrN_k_(message)
+    this._super = {}
+    this.__proto = ["NoWhenBranchMatchedException", this.__proto]
+    this.__type = "NoWhenBranchMatchedException"
+    return this
+end function
+
+function NoWhenBranchMatchedException_create_StrN_ThrowableN_k_(message as Dynamic, cause as Dynamic) as Object
+    this = RuntimeException_create_StrN_ThrowableN_k_(message, cause)
+    this._super = {}
+    this.__proto = ["NoWhenBranchMatchedException", this.__proto]
+    this.__type = "NoWhenBranchMatchedException"
+    return this
+end function
+
+function NoWhenBranchMatchedException_create_ThrowableN_k_(cause as Dynamic) as Object
+    this = RuntimeException_create_ThrowableN_k_(cause)
+    this._super = {}
+    this.__proto = ["NoWhenBranchMatchedException", this.__proto]
+    this.__type = "NoWhenBranchMatchedException"
+    return this
+end function
+
+function UninitializedPropertyAccessException_create_k_() as Object
+    this = RuntimeException_create_k_()
+    this._super = {}
+    this.__proto = ["UninitializedPropertyAccessException", this.__proto]
+    this.__type = "UninitializedPropertyAccessException"
+    return this
+end function
+
+function UninitializedPropertyAccessException_create_StrN_k_(message as Dynamic) as Object
+    this = RuntimeException_create_StrN_k_(message)
+    this._super = {}
+    this.__proto = ["UninitializedPropertyAccessException", this.__proto]
+    this.__type = "UninitializedPropertyAccessException"
+    return this
+end function
+
+function UninitializedPropertyAccessException_create_StrN_ThrowableN_k_(message as Dynamic, cause as Dynamic) as Object
+    this = RuntimeException_create_StrN_ThrowableN_k_(message, cause)
+    this._super = {}
+    this.__proto = ["UninitializedPropertyAccessException", this.__proto]
+    this.__type = "UninitializedPropertyAccessException"
+    return this
+end function
+
+function UninitializedPropertyAccessException_create_ThrowableN_k_(cause as Dynamic) as Object
+    this = RuntimeException_create_ThrowableN_k_(cause)
+    this._super = {}
+    this.__proto = ["UninitializedPropertyAccessException", this.__proto]
+    this.__type = "UninitializedPropertyAccessException"
+    return this
+end function
+
+function stackTraceToString_rThrowable_k_(m as Object) as String
+    sb = StringBuilder_create_k_()
+    sb.append_StrN_k_(m.toString())
+    sb.append_StrN_k_(chr(10))
+    tmp0_safe_receiver = (function(__kotlin_isInstanceOf, m)
+        if __kotlin_isInstanceOf(m, "Throwable") then return m else return invalid
+    end function)(__kotlin_isInstanceOf, m)
+    __when_tmp1 = invalid
+    if tmp0_safe_receiver = invalid then
+        __when_tmp1 = invalid
+    else if true then
+        __when_tmp1 = tmp0_safe_receiver.getStack_k_()
+    end if
+    stack = __when_tmp1
+
+    if stack <> invalid then
+        sb.append_StrN_k_(stack)
+    end if
+    suppressed = get_suppressedExceptions_rThrowable_k_(m)
+    if suppressed.count() > 0 then
+        i = 0
+        while i < suppressed.count()
+            sb.append_StrN_k_(chr(10) + "Suppressed: ")
+            sb.append_StrN_k_(stackTraceToString_rThrowable_k_(suppressed[i]))
+            i = (i + 1)
+        end while
+    end if
+    cause = m.get_cause()
+    if cause <> invalid then
+        sb.append_StrN_k_(chr(10) + "Caused by: ")
+        sb.append_StrN_k_(stackTraceToString_rThrowable_k_(cause))
+    end if
+    return sb.toString()
+end function
+
+sub printStackTrace_rThrowable_k_(m as Object)
+    println_AnyN_k_(stackTraceToString_rThrowable_k_(m))
+end sub
+
+sub addSuppressed_rThrowable_Throwable_k_(m as Object, exception as Object)
+end sub
+
+function get_suppressedExceptions_rThrowable_k_(m as Object) as Object
+    return arrayOf_Arr_k_(invalid)
+end function

@@ -65,65 +65,7 @@ kotlin {
         }
     }
 
-    // Task to compile stdlib Kotlin sources to BrightScript source files
-    // This runs the compiler in executable mode (default) to generate .brs files
-    // The regenerateKlib task produces a klib (IR bytecode), but downstream projects
-    // need the actual .brs source files to include in Roku packages
-    def generateStdlibBrs = tasks.register("generateStdlibBrs", JavaExec) {
-        group = "build"
-        description = "Generate BrightScript source files from stdlib Kotlin sources"
-
-        def compilerJar = new File(rootDir, "compiler/cli/cli-brs/build/libs/kotlinc-brs-${project.version}.jar")
-        def brsOutputDir = layout.buildDirectory.dir("brs-runtime")
-
-        dependsOn(":compiler:cli-brs:fatJar")
-
-        classpath = files(compilerJar)
-        mainClass.set("org.jetbrains.kotlin.cli.brs.K2BrsCompiler")
-
-        // Collect source directories - same as regenerateKlib and brsMain source set
-        def brsDir = "${projectDir}/brs"
-        def brsActualDir = "${projectDir}/brs-actual"
-        def sourceDirs = [
-            file("${brsDir}/runtime"),
-            file("${brsDir}/src"),
-            file("${brsActualDir}/builtins"),
-            file("${brsActualDir}/src"),
-        ].findAll { it.exists() }
-
-        doFirst {
-            if (!compilerJar.exists()) {
-                throw new GradleException(
-                    "BRS Compiler not found at ${compilerJar}. " +
-                    "Run ':compiler:cli-brs:fatJar' first."
-                )
-            }
-        }
-
-        args(
-            "-output-dir", brsOutputDir.get().asFile.absolutePath,
-            "-Xstdlib-compilation",
-            "-Xallow-kotlin-package",
-            "-module-name", "kotlin-stdlib-brs",
-            *sourceDirs.collect { it.absolutePath }
-        )
-
-        inputs.files(sourceDirs)
-        outputs.dir(brsOutputDir)
-    }
-
-    // Create a JAR containing the compiled .brs runtime files for packaging
-    // The compiler outputs .brs files to <output-dir>/source/ per BrsCompiler.writeOutput()
-    def brsBrsJar = tasks.register("brsBrsJar", Jar) {
-        archiveClassifier.set("brs-runtime")
-        from(layout.buildDirectory.dir("brs-runtime/source"))
-        dependsOn(generateStdlibBrs)
-    }
-
-    // Add the runtime JAR to brsRuntimeElements for resolution by downstream projects
-    artifacts {
-        add("brsRuntimeElements", brsBrsJar) {
-            classifier = "brs-runtime"
-        }
-    }
+    // NOTE: generateStdlibBrs and brsBrsJar tasks are now defined in build.gradle.kts
+    // They use JavaExec directly and don't require KGP BRS support, which allows
+    // them to run without local bootstrap. See the main build file for details.
 }

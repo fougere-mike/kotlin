@@ -1,7 +1,8 @@
 // BrightScript Test Project
 // Standalone project to test Kotlin-to-BrightScript compilation
 
-val kotlincBrsJar = file("../compiler/cli/cli-brs/build/libs/kotlinc-brs-2.1.255-SNAPSHOT.jar")
+// Use dist compiler (includes all runtime dependencies in the distribution)
+val distLibDir = file("../dist/kotlinc/lib")
 val stdlibKlib = file("../libraries/stdlib/brs-prebuilt/kotlin-stdlib-brs.klib")
 
 tasks.register<JavaExec>("compileBrs") {
@@ -9,13 +10,20 @@ tasks.register<JavaExec>("compileBrs") {
     description = "Compile Kotlin sources to BrightScript with stdlib"
 
     mainClass.set("org.jetbrains.kotlin.cli.brs.K2BrsCompiler")
-    classpath = files(kotlincBrsJar)
+    classpath = fileTree(distLibDir) { include("*.jar") }
 
     val srcDir = file("src/main/kotlin")
     val outDir = file("build/output")
 
-    // Verify stdlib klib exists before compilation
+    // Verify compiler and stdlib klib exist before compilation
     doFirst {
+        val compilerJar = distLibDir.resolve("kotlin-compiler.jar")
+        if (!compilerJar.exists()) {
+            throw GradleException(
+                "Kotlin distribution not found at: ${distLibDir.absolutePath}\n" +
+                "Run: ./gradlew dist (from parent project)"
+            )
+        }
         if (!stdlibKlib.exists()) {
             throw GradleException(
                 "Stdlib klib not found: ${stdlibKlib.absolutePath}\n" +

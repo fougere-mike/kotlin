@@ -6,9 +6,9 @@
 package org.jetbrains.kotlin.ir.backend.brs
 
 import org.jetbrains.kotlin.backend.common.CommonBackendContext
-import org.jetbrains.kotlin.backend.common.ir.Ir
 import org.jetbrains.kotlin.backend.common.ir.SharedVariablesManager
 import org.jetbrains.kotlin.backend.common.linkage.partial.createPartialLinkageSupportForLowerings
+import org.jetbrains.kotlin.backend.common.linkage.partial.partialLinkageConfig
 import org.jetbrains.kotlin.backend.common.lower.InnerClassesSupport
 import org.jetbrains.kotlin.brs.BrsTargetConfig
 import org.jetbrains.kotlin.brs.RokuOSVersion
@@ -16,18 +16,19 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.ir.IrBuiltIns
+import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.backend.brs.lower.BrsInnerClassesSupport
 import org.jetbrains.kotlin.ir.backend.brs.lower.BrsSharedVariablesManager
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrExternalPackageFragmentImpl
-import org.jetbrains.kotlin.ir.linkage.partial.partialLinkageConfig
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.impl.DescriptorlessExternalPackageFragmentSymbol
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.ir.expressions.IrConst
+import org.jetbrains.kotlin.backend.common.getCompilerMessageLocation
 import org.jetbrains.kotlin.ir.util.getAnnotation
 import org.jetbrains.kotlin.ir.util.isNullable
 import org.jetbrains.kotlin.name.BrsStandardClassIds
@@ -69,12 +70,12 @@ class BrsIrBackendContext(
 
     val intrinsics: BrsIntrinsics = BrsIntrinsics(irBuiltIns)
 
-    val symbols: BrsSymbols = BrsSymbols(irBuiltIns, intrinsics, isStdlibCompilation)
+    val brsSymbols: BrsSymbols = BrsSymbols(irBuiltIns, intrinsics, isStdlibCompilation)
 
-    override val ir = object : Ir() {
-        override val symbols = this@BrsIrBackendContext.symbols
-        override fun shouldGenerateHandlerParameterForDefaultBodyFun() = true
-    }
+    override val symbols: BrsSymbols = brsSymbols
+
+    override val shouldGenerateHandlerParameterForDefaultBodyFun: Boolean
+        get() = true
 
     // ==================== Package Fragments ====================
 
@@ -135,7 +136,7 @@ class BrsIrBackendContext(
 
     // ==================== Mapping and Caching ====================
 
-    override val mapping: BrsMapping = BrsMapping()
+    val mapping: BrsMapping = BrsMapping()
 
     /**
      * Cache for generated class names.
@@ -451,12 +452,27 @@ class BrsIrBackendContext(
      */
     fun getEnumConstantProperties(entry: IrEnumEntry): Map<String, Any?>? =
         mapping.enumEntryConstantProperties[entry]
+
+    // ==================== Error Reporting ====================
+
+    /**
+     * Report an error on an IR element.
+     */
+    fun reportError(element: IrElement, message: String) {
+        val file = (element as? IrDeclaration)?.let { it.parent as? IrFile }
+        val location = if (file != null) element.getCompilerMessageLocation(file) else null
+        messageCollector.report(
+            org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.ERROR,
+            message,
+            location
+        )
+    }
 }
 
 /**
  * Mapping data for BrightScript code generation.
  */
-class BrsMapping : org.jetbrains.kotlin.backend.common.Mapping() {
+class BrsMapping {
     /**
      * Map from IR classes to their generated field data.
      */

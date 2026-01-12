@@ -45,9 +45,9 @@ echo ""
 echo "Step 1: Compiling stdlib tests..."
 cd "$KOTLIN_ROOT"
 
-# First ensure the compiler and stdlib are built
-if [[ ! -f "compiler/cli/cli-brs/build/libs/kotlinc-brs-2.1.255-SNAPSHOT.jar" ]]; then
-    echo -e "${YELLOW}Compiler not found. Running rebuild.sh...${NC}"
+# First ensure the dist compiler exists
+if [[ ! -f "dist/kotlinc/lib/kotlin-compiler.jar" ]]; then
+    echo -e "${YELLOW}Compiler distribution not found. Running rebuild.sh...${NC}"
     ./rebuild.sh
 fi
 
@@ -112,12 +112,23 @@ mkdir -p "$PACKAGE_DIR/source"
 # Copy manifest
 cp "$SCRIPT_DIR/manifest" "$PACKAGE_DIR/"
 
+# Get the Kotlin version from gradle.properties
+KOTLIN_VERSION=$(grep "^defaultSnapshotVersion=" "$KOTLIN_ROOT/gradle.properties" | cut -d'=' -f2)
+if [[ -z "$KOTLIN_VERSION" ]]; then
+    echo -e "${RED}Error: Could not determine Kotlin version from gradle.properties${NC}"
+    exit 1
+fi
+echo "Kotlin version: $KOTLIN_VERSION"
+
 # Get stdlib runtime .brs files from Maven Local
-STDLIB_RUNTIME_JAR="$HOME/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-brs/2.1.255-SNAPSHOT/kotlin-stdlib-brs-2.1.255-SNAPSHOT-brs-runtime.jar"
+# The runtime JAR contains pre-compiled .brs files from stdlib sources
+STDLIB_RUNTIME_JAR="$HOME/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-brs/${KOTLIN_VERSION}/kotlin-stdlib-brs-${KOTLIN_VERSION}-brs-runtime.jar"
 
 if [[ ! -f "$STDLIB_RUNTIME_JAR" ]]; then
     echo -e "${RED}Error: Stdlib runtime JAR not found: $STDLIB_RUNTIME_JAR${NC}"
-    echo "Run ./rebuild.sh to build and publish the stdlib."
+    echo ""
+    echo "This JAR contains pre-compiled BrightScript files for the stdlib."
+    echo "Run ./rebuild.sh to build and publish all required artifacts."
     exit 1
 fi
 
@@ -128,40 +139,58 @@ mkdir -p "$STDLIB_EXTRACT_DIR"
 unzip -q "$STDLIB_RUNTIME_JAR" -d "$STDLIB_EXTRACT_DIR"
 
 # Copy stdlib .brs files (excluding META-INF)
+STDLIB_COUNT=0
 for brsfile in "$STDLIB_EXTRACT_DIR/"*.brs; do
     if [[ -f "$brsfile" ]]; then
         cp "$brsfile" "$PACKAGE_DIR/source/"
+        STDLIB_COUNT=$((STDLIB_COUNT + 1))
     fi
 done
-echo "  Copied $(ls -1 "$STDLIB_EXTRACT_DIR/"*.brs 2>/dev/null | wc -l | tr -d ' ') stdlib files"
+echo "  Copied $STDLIB_COUNT stdlib files"
 
 # Compile kotlin.test source to .brs
+# Note: kotlin.test depends on stdlib, so we use the klib for compilation
 echo "Compiling kotlin.test to BrightScript..."
 KOTLIN_TEST_SRC="$KOTLIN_ROOT/libraries/kotlin.test/brs/src/main/kotlin"
 KOTLIN_TEST_BRS_DIR="$BUILD_DIR/kotlin-test-brs"
 STDLIB_KLIB="$KOTLIN_ROOT/libraries/stdlib/brs-prebuilt/kotlin-stdlib-brs.klib"
-COMPILER_JAR="$KOTLIN_ROOT/compiler/cli/cli-brs/build/libs/kotlinc-brs-2.1.255-SNAPSHOT.jar"
+COMPILER_JAR="$KOTLIN_ROOT/dist/kotlinc/lib/kotlin-compiler.jar"
+
+if [[ ! -f "$COMPILER_JAR" ]]; then
+    # Fall back to fat JAR if dist not available
+    COMPILER_JAR="$KOTLIN_ROOT/compiler/cli/cli-brs/build/libs/kotlinc-brs-${KOTLIN_VERSION}.jar"
+fi
+
+if [[ ! -f "$COMPILER_JAR" ]]; then
+    echo -e "${RED}Error: Compiler not found${NC}"
+    echo "Expected: $COMPILER_JAR"
+    echo "Run ./rebuild.sh first"
+    exit 1
+fi
 
 rm -rf "$KOTLIN_TEST_BRS_DIR"
 mkdir -p "$KOTLIN_TEST_BRS_DIR"
 
-java -jar "$COMPILER_JAR" \
-    -Xproduce=executable \
+# Use -cp with explicit main class because -jar uses the JAR's default main class (JVM compiler)
+java -cp "$COMPILER_JAR" org.jetbrains.kotlin.cli.brs.K2BrsCompiler \
     -Xallow-kotlin-package \
     -libraries "$STDLIB_KLIB" \
     -output-dir "$KOTLIN_TEST_BRS_DIR" \
     "$KOTLIN_TEST_SRC"
 
 # Copy kotlin.test .brs files
+KOTLIN_TEST_COUNT=0
 for brsfile in "$KOTLIN_TEST_BRS_DIR/source/"*.brs; do
     if [[ -f "$brsfile" ]]; then
         cp "$brsfile" "$PACKAGE_DIR/source/"
+        KOTLIN_TEST_COUNT=$((KOTLIN_TEST_COUNT + 1))
     fi
 done
-echo "  Copied $(ls -1 "$KOTLIN_TEST_BRS_DIR/source/"*.brs 2>/dev/null | wc -l | tr -d ' ') kotlin.test files"
+echo "  Copied $KOTLIN_TEST_COUNT kotlin.test files"
 
 # Copy compiled test files (will overwrite any with same names)
 cp "$BRS_OUTPUT/source/"*.brs "$PACKAGE_DIR/source/"
+echo "  Copied test files"
 
 # Create ZIP package
 cd "$PACKAGE_DIR"

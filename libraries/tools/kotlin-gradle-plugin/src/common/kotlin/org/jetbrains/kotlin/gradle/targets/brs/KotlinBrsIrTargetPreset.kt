@@ -6,7 +6,7 @@
 package org.jetbrains.kotlin.gradle.targets.brs
 
 import org.gradle.api.Project
-import org.jetbrains.kotlin.gradle.DeprecatedTargetPresetApi
+import org.jetbrains.kotlin.gradle.InternalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.plugin.AbstractKotlinTargetConfigurator
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinCompilationFactory
@@ -17,8 +17,8 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinOnlyTargetPreset
  *
  * This preset is used to add BrightScript (Roku) target support to Kotlin Multiplatform projects.
  */
-@OptIn(DeprecatedTargetPresetApi::class)
-open class KotlinBrsIrTargetPreset(
+@OptIn(InternalKotlinGradlePluginApi::class)
+internal class KotlinBrsIrTargetPreset(
     project: Project,
 ) : KotlinOnlyTargetPreset<KotlinBrsIrTarget, KotlinBrsIrCompilation>(project) {
 
@@ -37,7 +37,7 @@ open class KotlinBrsIrTargetPreset(
     override fun createCompilationFactory(forTarget: KotlinBrsIrTarget): KotlinCompilationFactory<KotlinBrsIrCompilation> =
         KotlinBrsIrCompilationFactory(forTarget)
 
-    override fun getName(): String = BRS_PRESET_NAME
+    override val name: String = BRS_PRESET_NAME
 
     companion object {
         const val BRS_PRESET_NAME = "brs"

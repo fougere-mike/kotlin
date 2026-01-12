@@ -3,7 +3,7 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-@file:Suppress("DEPRECATION")
+@file:Suppress("DEPRECATION", "DEPRECATION_ERROR", "OVERRIDE_DEPRECATION")
 
 package org.jetbrains.kotlin.gradle.targets.brs
 
@@ -31,12 +31,15 @@ abstract class KotlinBrsCompile @Inject constructor(
     private val execOperations: ExecOperations,
 ) : DefaultTask(), KotlinBrsCompileInterface {
 
+    private val kotlinBrsOptionsCompat by lazy { KotlinBrsOptionsCompat(compilerOptions) }
+
     /**
      * Deprecated kotlinOptions for compatibility.
      */
     @Deprecated("Use compilerOptions instead")
     @get:Internal
-    override val kotlinOptions: KotlinCommonOptions by lazy { KotlinBrsOptionsCompat(compilerOptions) }
+    override val kotlinOptions: KotlinCommonOptions
+        get() = kotlinBrsOptionsCompat
 
     /**
      * The Kotlin source files to compile.

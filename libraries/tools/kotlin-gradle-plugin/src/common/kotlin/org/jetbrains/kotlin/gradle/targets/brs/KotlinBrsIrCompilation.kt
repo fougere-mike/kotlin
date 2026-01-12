@@ -3,12 +3,12 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-@file:Suppress("DEPRECATION", "TYPEALIAS_EXPANSION_DEPRECATION")
+@file:Suppress("DEPRECATION", "TYPEALIAS_EXPANSION_DEPRECATION", "DEPRECATION_ERROR", "TYPEALIAS_EXPANSION_DEPRECATION_ERROR")
 
 package org.jetbrains.kotlin.gradle.targets.brs
 
 import org.gradle.api.tasks.TaskProvider
-import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
+import org.jetbrains.kotlin.gradle.plugin.KotlinAnyOptionsDeprecated
 import org.jetbrains.kotlin.gradle.plugin.mpp.DeprecatedAbstractKotlinCompilationToRunnableFiles
 import org.jetbrains.kotlin.gradle.plugin.mpp.compilationImpl.KotlinCompilationImpl
 import javax.inject.Inject
@@ -22,7 +22,7 @@ import javax.inject.Inject
  */
 open class KotlinBrsIrCompilation @Inject internal constructor(
     compilation: KotlinCompilationImpl
-) : DeprecatedAbstractKotlinCompilationToRunnableFiles<KotlinCommonOptions>(compilation) {
+) : DeprecatedAbstractKotlinCompilationToRunnableFiles<KotlinAnyOptionsDeprecated>(compilation) {
 
     override val target: KotlinBrsIrTarget
         get() = super.target as KotlinBrsIrTarget

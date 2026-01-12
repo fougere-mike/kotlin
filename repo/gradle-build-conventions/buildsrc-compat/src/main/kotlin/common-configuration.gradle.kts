@@ -152,7 +152,7 @@ fun Project.configureKotlinCompilationOptions() {
                 !project.path.startsWith(":native:external-projects-test-utils")
             ) {
                 doFirst {
-                    if (!useAbsolutePathsInKlib && this !is KotlinJvmCompile && this !is KotlinCompileCommon && this !is KotlinBrsCompile) {
+                    if (!useAbsolutePathsInKlib && this !is KotlinJvmCompile && this !is KotlinCompileCommon && !isBrsCompileTask(this)) {
                         @Suppress("DEPRECATION_ERROR", "DEPRECATION")
                         (this as KotlinCompile<*>).kotlinOptions.freeCompilerArgs +=
                             "-Xklib-relative-path-base=${layout.buildDirectory.get().asFile},${layout.projectDirectory.asFile},$rootDir"

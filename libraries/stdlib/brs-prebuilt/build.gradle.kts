@@ -5,6 +5,7 @@
 
 plugins {
     base
+    `maven-publish`
 }
 
 description = "Pre-compiled BrightScript stdlib klib for bootstrapping"
@@ -13,10 +14,7 @@ val brsStdlibDir = file("../brs")
 val brsActualDir = file("../brs-actual")
 val outputKlib = file("kotlin-stdlib-brs.klib")
 
-// The BRS compiler CLI can be found in multiple locations:
-// 1. Fat JAR built by :compiler:cli-brs:fatJar
-// 2. Dist location after ./gradlew dist
-val brsCompilerFatJar = rootProject.file("compiler/cli/cli-brs/build/libs/kotlinc-brs-2.1.255-SNAPSHOT.jar")
+// The BRS compiler uses the Kotlin distribution built by ./gradlew dist
 val distCompilerJar = rootProject.file("dist/kotlinc/lib/kotlin-compiler.jar")
 
 /**
@@ -33,9 +31,9 @@ val regenerateKlib by tasks.registering(JavaExec::class) {
     group = "build"
     description = "Regenerate BRS stdlib klib using the development compiler"
 
-    // Prefer the BRS-specific fat JAR if available, otherwise use dist compiler
-    val compilerJar = if (brsCompilerFatJar.exists()) brsCompilerFatJar else distCompilerJar
-    classpath = files(compilerJar)
+    // Use dist compiler (includes all runtime dependencies in the distribution)
+    val distLibDir = rootProject.file("dist/kotlinc/lib")
+    classpath = fileTree(distLibDir) { include("*.jar") }
     mainClass.set("org.jetbrains.kotlin.cli.brs.K2BrsCompiler")
 
     // Collect all source directories from brs/ and brs-actual/
@@ -49,19 +47,17 @@ val regenerateKlib by tasks.registering(JavaExec::class) {
     ).filter { it.exists() }
 
     doFirst {
-        val selectedJar = if (brsCompilerFatJar.exists()) brsCompilerFatJar else distCompilerJar
-        if (!selectedJar.exists()) {
+        if (!distCompilerJar.exists()) {
             throw GradleException(
-                "BRS Compiler not found. Please build it first:\n" +
-                "  ./gradlew :compiler:cli-brs:fatJar\n" +
-                "Expected locations:\n" +
-                "  - ${brsCompilerFatJar}\n" +
+                "BRS Compiler not found. Please build the distribution first:\n" +
+                "  ./gradlew dist\n" +
+                "Expected location:\n" +
                 "  - ${distCompilerJar}"
             )
         }
 
         logger.lifecycle("Regenerating BRS stdlib klib...")
-        logger.lifecycle("  Compiler: ${selectedJar}")
+        logger.lifecycle("  Compiler: ${distCompilerJar}")
         logger.lifecycle("  Sources: ${sourceDirs.map { it.name }}")
         logger.lifecycle("  Output: $outputKlib")
     }
@@ -79,14 +75,10 @@ val regenerateKlib by tasks.registering(JavaExec::class) {
     inputs.dir(brsStdlibDir)
     inputs.dir(brsActualDir)
     // Track the compiler JAR as an input so changes to the compiler trigger a rebuild
-    // Note: Only register the JAR that exists - inputs.file().optional() doesn't
-    // actually make the file optional for JavaExec tasks
-    if (brsCompilerFatJar.exists()) {
-        inputs.file(brsCompilerFatJar)
-    } else if (distCompilerJar.exists()) {
+    if (distCompilerJar.exists()) {
         inputs.file(distCompilerJar)
     }
-    // If neither exists, the doFirst block will fail with a clear error message
+    // If dist doesn't exist, the doFirst block will fail with a clear error message
     outputs.file(outputKlib)
 }
 
@@ -127,4 +119,31 @@ tasks.named("check") {
 tasks.named<Delete>("clean") {
     // Don't delete the klib on clean - it's a checked-in artifact
     // Only delete build directory
+}
+
+/**
+ * Publishing configuration for the pre-built stdlib klib.
+ *
+ * This publishes the pre-compiled klib to Maven Local so it can be used by
+ * consumer projects without requiring the full local bootstrap.
+ */
+val kotlinVersion: String by rootProject.extra
+
+publishing {
+    publications {
+        create<MavenPublication>("brsStdlib") {
+            groupId = "org.jetbrains.kotlin"
+            artifactId = "kotlin-stdlib-brs"
+            version = kotlinVersion
+
+            artifact(outputKlib) {
+                extension = "klib"
+            }
+
+            pom {
+                name.set("Kotlin Standard Library for BrightScript")
+                description.set("Kotlin Standard Library compiled for the BrightScript (Roku) platform")
+            }
+        }
+    }
 }

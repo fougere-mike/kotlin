@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.library.IrLibrary
 import org.jetbrains.kotlin.library.KotlinAbiVersion
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.containsErrorCode
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.memoryOptimizedMap
 
 /**
@@ -41,13 +42,15 @@ class BrsIrLinker(
     builtIns = builtIns,
     symbolTable = symbolTable,
     exportedDependencies = emptyList(),
-    symbolProcessor = { symbol, idSig ->
-        if (idSig.isLocal) {
-            symbol.privateSignature = IdSignature.CompositeSignature(IdSignature.FileSignature(fileSymbol), idSig)
+    deserializedSymbolPostProcessor = { symbol, signature, fileSymbol ->
+        runIf(signature.isLocal) {
+            symbol.privateSignature = IdSignature.CompositeSignature(IdSignature.FileSignature(fileSymbol), signature)
         }
         symbol
     }
 ) {
+
+    override val moduleDependencyTracker: IrModuleDependencyTracker = IrModuleDependencyTrackerImpl()
 
     override val fakeOverrideBuilder = IrLinkerFakeOverrideProvider(
         linker = this,
@@ -88,8 +91,7 @@ class BrsIrLinker(
         klib,
         strategyResolver,
         libraryAbiVersion,
-        allowErrorCode,
-        true
+        allowErrorCode
     ) {
         override fun init(delegate: IrModuleDeserializer) {
             super.init(delegate)
