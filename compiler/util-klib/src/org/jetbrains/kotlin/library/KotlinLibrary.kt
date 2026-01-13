@@ -134,9 +134,13 @@ val BaseKotlinLibrary.isJsStdlib: Boolean
 val BaseKotlinLibrary.isWasmStdlib: Boolean
     get() = uniqueName == KOTLIN_WASM_STDLIB_NAME && builtInsPlatform == BuiltInsPlatform.WASM
 
-/** Whether [this] is either Kotlin/Native, Kotlin/JS or Kotlin/Wasm stdlib. */
+/** Whether [this] is a Kotlin/BRS stdlib. */
+val BaseKotlinLibrary.isBrsStdlib: Boolean
+    get() = uniqueName == "stdlib" && builtInsPlatform == BuiltInsPlatform.BRS
+
+/** Whether [this] is either Kotlin/Native, Kotlin/JS, Kotlin/Wasm or Kotlin/BRS stdlib. */
 val BaseKotlinLibrary.isAnyPlatformStdlib: Boolean
-    get() = isNativeStdlib || isJsStdlib || isWasmStdlib
+    get() = isNativeStdlib || isJsStdlib || isWasmStdlib || isBrsStdlib
 
 /** Whether [this] is a Kotlin/JS kotlin-test. */
 val BaseKotlinLibrary.isJsKotlinTest: Boolean
