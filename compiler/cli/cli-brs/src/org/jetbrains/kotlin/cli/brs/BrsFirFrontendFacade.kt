@@ -121,9 +121,9 @@ object BrsFirFrontendFacade {
         val moduleName = configuration.get(CommonConfigurationKeys.MODULE_NAME) ?: "main"
         val escapedModuleName = Name.special("<$moduleName>")
 
-        // Build dependency list (no library dependencies for now)
+        // Build dependency list with library dependencies
         val dependencyList = DependencyListForCliModule.build(escapedModuleName) {
-            // TODO: Add BrightScript standard library dependencies when available
+            dependencies(libraries.map { it.libraryFile.absolutePath })
         }
 
         // Create FIR session using prepareBrsSessions
