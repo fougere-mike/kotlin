@@ -36,10 +36,16 @@ val regenerateKlib by tasks.registering(JavaExec::class) {
     classpath = fileTree(distLibDir) { include("*.jar") }
     mainClass.set("org.jetbrains.kotlin.cli.brs.K2BrsCompiler")
 
-    // Collect all source directories from brs/ and brs-actual/
-    // Both are needed - brs/ has base implementations, brs-actual/ has platform-specific ones
-    // Note: brs-actual/builtins is excluded (duplicates brs/builtins)
+    // BRS-specific source directories
+    // brs/builtins contains actual implementations for core types (Any, Unit, Nothing, Double.*, Float.*, etc.)
+    // brs/src contains BRS-specific implementations of stdlib functions
+    // brs-actual/src contains additional platform-specific actual implementations
+    //
+    // Note: We do NOT include:
+    // - common sources (src/, unsigned/src, common/src) because BRS has its own implementations
+    // - brs-actual/builtins because it duplicates brs/builtins (same Double.*, Float.* functions)
     val sourceDirs = listOf(
+        // BRS-specific sources with actual implementations
         file("${brsStdlibDir}/builtins"),
         file("${brsStdlibDir}/runtime"),
         file("${brsStdlibDir}/src"),

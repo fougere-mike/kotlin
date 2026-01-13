@@ -7,17 +7,23 @@
 
 package org.jetbrains.kotlin.gradle.targets.brs
 
-import org.gradle.api.DefaultTask
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
 import org.gradle.process.ExecOperations
+import org.gradle.work.Incremental
+import org.jetbrains.kotlin.cli.common.arguments.K2BrsCompilerArguments
 import org.jetbrains.kotlin.gradle.dsl.KotlinBrsCompilerOptions
+import org.jetbrains.kotlin.gradle.dsl.KotlinBrsCompilerOptionsHelper
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinBrsCompile as KotlinBrsCompileInterface
+import org.jetbrains.kotlin.gradle.plugin.KotlinCompilerArgumentsProducer.CreateCompilerArgumentsContext
+import org.jetbrains.kotlin.gradle.plugin.KotlinCompilerArgumentsProducer.CreateCompilerArgumentsContext.Companion.create
 import org.jetbrains.kotlin.gradle.targets.brs.internal.KotlinBrsOptionsCompat
+import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompileTool
 import javax.inject.Inject
 
 /**
@@ -28,10 +34,22 @@ import javax.inject.Inject
 @CacheableTask
 abstract class KotlinBrsCompile @Inject constructor(
     final override val compilerOptions: KotlinBrsCompilerOptions,
+    objectFactory: ObjectFactory,
     private val execOperations: ExecOperations,
-) : DefaultTask(), KotlinBrsCompileInterface {
+) : AbstractKotlinCompileTool<K2BrsCompilerArguments>(objectFactory),
+    KotlinBrsCompileInterface {
 
     private val kotlinBrsOptionsCompat by lazy { KotlinBrsOptionsCompat(compilerOptions) }
+
+    // Required by AbstractKotlinCompileTool - BRS doesn't use build tools API
+    @get:Internal
+    override val runViaBuildToolsApi: Property<Boolean> = objectFactory
+        .property(Boolean::class.java)
+        .convention(false)
+
+    // Required by TaskWithLocalState - BRS doesn't maintain local state directories
+    @get:Internal
+    override val localStateDirectories: ConfigurableFileCollection = objectFactory.fileCollection()
 
     /**
      * Deprecated kotlinOptions for compatibility.
@@ -42,20 +60,11 @@ abstract class KotlinBrsCompile @Inject constructor(
         get() = kotlinBrsOptionsCompat
 
     /**
-     * The Kotlin source files to compile.
-     */
-    @get:InputFiles
-    @get:SkipWhenEmpty
-    @get:PathSensitive(PathSensitivity.RELATIVE)
-    abstract val sources: ConfigurableFileCollection
-
-    /**
      * The klib libraries to use during compilation.
      */
-    @get:InputFiles
-    @get:PathSensitive(PathSensitivity.RELATIVE)
-    @get:Optional
-    abstract val libraries: ConfigurableFileCollection
+    @get:Classpath
+    @get:Incremental
+    abstract override val libraries: ConfigurableFileCollection
 
     /**
      * The compiler JAR file (kotlinc-brs fat jar).
@@ -78,6 +87,14 @@ abstract class KotlinBrsCompile @Inject constructor(
      */
     @get:OutputDirectory
     abstract val outputDirectory: DirectoryProperty
+
+    /**
+     * Provides the destination directory for the KotlinCompileTool interface.
+     * Delegates to outputDirectory for compatibility.
+     */
+    @get:Internal
+    override val destinationDirectory: DirectoryProperty
+        get() = outputDirectory
 
     /**
      * Enable stdlib compilation mode.
@@ -117,6 +134,45 @@ abstract class KotlinBrsCompile @Inject constructor(
     val outputFile: java.io.File
         get() = outputDirectory.get().asFile
 
+    /**
+     * Creates compiler arguments for the BRS compiler.
+     * Used by the IDE for import and by other Kotlin Gradle plugin infrastructure.
+     */
+    override fun createCompilerArguments(
+        context: CreateCompilerArgumentsContext
+    ): K2BrsCompilerArguments = context.create<K2BrsCompilerArguments> {
+        primitive { args ->
+            KotlinBrsCompilerOptionsHelper.fillCompilerArguments(compilerOptions, args)
+            args.outputDir = outputDirectory.get().asFile.absolutePath
+
+            if (stdlibCompilation.getOrElse(false)) {
+                args.freeArgs = args.freeArgs + listOf("-Xstdlib-compilation", "-Xallow-kotlin-package")
+            }
+        }
+
+        dependencyClasspath { args ->
+            if (libraries.files.isNotEmpty()) {
+                args.libraries = libraries.files.joinToString(java.io.File.pathSeparator) { it.absolutePath }
+            }
+        }
+
+        sources { args ->
+            val excludes = excludePatterns.orNull ?: emptySet()
+            val sourceFiles = sources.files.flatMap { sourceFile ->
+                if (sourceFile.isDirectory) {
+                    sourceFile.walkTopDown()
+                        .filter { it.isFile && it.extension == "kt" && it.name !in excludes }
+                        .toList()
+                } else if (sourceFile.name !in excludes) {
+                    listOf(sourceFile)
+                } else {
+                    emptyList()
+                }
+            }
+            args.freeArgs = args.freeArgs + sourceFiles.map { it.absolutePath }
+        }
+    }
+
     @TaskAction
     fun compile() {
         // Check if compiler JAR is configured
@@ -140,6 +196,7 @@ abstract class KotlinBrsCompile @Inject constructor(
         }
 
         // Add source files - expand directories into individual .kt files
+        // Use the inherited sources property from AbstractKotlinCompileTool
         sources.files.forEach { sourceFile ->
             if (sourceFile.isDirectory) {
                 // Recursively find all .kt files in directory

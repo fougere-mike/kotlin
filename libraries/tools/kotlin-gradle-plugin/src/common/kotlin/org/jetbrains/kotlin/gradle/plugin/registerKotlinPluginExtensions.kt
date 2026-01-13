@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.gradle.targets.native.ConfigureFrameworkExportSideEf
 import org.jetbrains.kotlin.gradle.targets.native.CreateFatFrameworksSetupAction
 import org.jetbrains.kotlin.gradle.targets.native.KotlinNativeConfigureBinariesSideEffect
 import org.jetbrains.kotlin.gradle.targets.native.SetupEmbedAndSignAppleFrameworkTaskSideEffect
+import org.jetbrains.kotlin.gradle.targets.brs.SetupKotlinBrsStdlibExclusion
 import org.jetbrains.kotlin.gradle.targets.native.internal.*
 import org.jetbrains.kotlin.gradle.targets.native.tasks.artifact.KotlinArtifactsExtensionSetupAction
 import org.jetbrains.kotlin.gradle.targets.brs.KotlinCreateBrsCompileTasksSideEffect
@@ -96,6 +97,7 @@ internal fun Project.registerKotlinPluginExtensions() {
             register(project, IdeMultiplatformImportActionSetupAction)
             register(project, KotlinLLDBScriptSetupAction)
             register(project, SetupKotlinNativePlatformDependenciesAndStdlib)
+            register(project, SetupKotlinBrsStdlibExclusion)
             register(project, SetupConsistentMetadataDependenciesResolution)
             register(project, RegisterMultiplatformResourcesPublicationExtensionAction)
             register(project, SetUpMultiplatformJvmResourcesPublicationAction)

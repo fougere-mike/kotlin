@@ -66,6 +66,15 @@ interface KlibPlatformChecker {
         }
     }
 
+    /**
+     * Checks if a library is a Kotlin/BRS (BrightScript) library.
+     */
+    object Brs : KlibPlatformChecker {
+        override fun check(library: BaseKotlinLibrary): PlatformCheckMismatch? {
+            return checkPlatform(BuiltInsPlatform.BRS, library.builtInsPlatform)
+        }
+    }
+
     companion object {
         private fun checkPlatform(
             expectedPlatform: BuiltInsPlatform,

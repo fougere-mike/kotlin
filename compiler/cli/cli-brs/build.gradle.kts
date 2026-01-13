@@ -38,6 +38,9 @@ dependencies {
     // Runtime dependencies needed for CLI
     runtimeOnly(kotlinStdlib())
     runtimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
+    // Required for IntelliJ plugin loading in Kotlin 2.2.x
+    runtimeOnly(commonDependency("org.codehaus.woodstox:stax2-api"))
+    runtimeOnly(commonDependency("com.fasterxml:aalto-xml"))
 }
 
 sourceSets {

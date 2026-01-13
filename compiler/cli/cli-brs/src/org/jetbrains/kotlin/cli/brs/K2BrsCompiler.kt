@@ -368,7 +368,7 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
             moduleName = effectiveModuleName,
             nopack = false,
             manifestProperties = Properties(),
-            builtInsPlatform = BuiltInsPlatform.NATIVE  // Use NATIVE for IDE compatibility
+            builtInsPlatform = BuiltInsPlatform.BRS
         )
 
         messageCollector.report(
@@ -520,10 +520,9 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
 
         return try {
             // Use KlibLoader like the JS backend does
-            // BRS uses Native builtins platform, so we accept Native klibs
             val result = KlibLoader {
                 libraryPaths(libraryPaths)
-                platformChecker(KlibPlatformChecker.Native())
+                platformChecker(KlibPlatformChecker.Brs)
                 maxPermittedAbiVersion(KotlinAbiVersion.CURRENT)
             }.load()
 

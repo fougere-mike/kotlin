@@ -1052,10 +1052,20 @@ val generateStdlibBrs = tasks.register<JavaExec>("generateStdlibBrs") {
 
     val brsDir = "$projectDir/brs"
     val brsActualDir = "$projectDir/brs-actual"
+
+    // BRS-specific source directories
+    // brs/builtins contains actual implementations for core types (Any, Unit, Nothing, Double.*, Float.*, etc.)
+    // brs/src contains BRS-specific implementations of stdlib functions
+    // brs-actual/src contains additional platform-specific actual implementations
+    //
+    // Note: We do NOT include:
+    // - common sources (src/, unsigned/src, common/src) because BRS has its own implementations
+    // - brs-actual/builtins because it duplicates brs/builtins (same Double.*, Float.* functions)
     val sourceDirs = listOf(
+        // BRS-specific sources with actual implementations
+        file("$brsDir/builtins"),
         file("$brsDir/runtime"),
         file("$brsDir/src"),
-        file("$brsActualDir/builtins"),
         file("$brsActualDir/src"),
     ).filter { it.exists() }
 

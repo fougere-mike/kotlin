@@ -11,9 +11,11 @@ import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.plugin.*
+import org.jetbrains.kotlin.gradle.targets.brs.KotlinBrsCompile
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompileTool
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinNativeCompile
+import org.jetbrains.kotlin.gradle.tasks.CompilerPluginOptions
 import org.jetbrains.kotlin.gradle.tasks.toSingleCompilerPluginOptions
 import org.jetbrains.kotlin.gradle.utils.*
 import javax.inject.Inject
@@ -119,6 +121,7 @@ internal open class DefaultLanguageSettingsBuilder @Inject constructor(
             return when (pluginOptionsTask) {
                 is AbstractKotlinCompile<*> -> pluginOptionsTask.pluginOptions.toSingleCompilerPluginOptions()
                 is AbstractKotlinNativeCompile<*, *> -> pluginOptionsTask.compilerPluginOptions
+                is KotlinBrsCompile -> CompilerPluginOptions() // BRS doesn't support compiler plugins yet
                 else -> error("Unexpected task: $pluginOptionsTask")
             }.arguments
         }
@@ -130,6 +133,7 @@ internal open class DefaultLanguageSettingsBuilder @Inject constructor(
             return when (pluginClasspathTask) {
                 is AbstractKotlinCompile<*> -> pluginClasspathTask.pluginClasspath
                 is AbstractKotlinNativeCompile<*, *> -> pluginClasspathTask.compilerPluginClasspath ?: pluginClasspathTask.project.files()
+                is KotlinBrsCompile -> pluginClasspathTask.project.files() // BRS doesn't support compiler plugins yet
                 else -> error("Unexpected task: $pluginClasspathTask")
             }
         }

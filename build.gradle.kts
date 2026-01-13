@@ -274,6 +274,7 @@ val fe10CompilerModules = arrayOf(
     ":js:js.translator",
     ":native:frontend.native",
     ":wasm:wasm.frontend",
+    ":brs:brs.frontend",
     ":compiler:backend.common.jvm",
 ).also { extra["fe10CompilerModules"] = it }
 

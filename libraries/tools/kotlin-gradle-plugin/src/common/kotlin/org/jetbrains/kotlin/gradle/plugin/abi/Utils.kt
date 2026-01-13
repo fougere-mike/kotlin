@@ -35,6 +35,7 @@ internal fun KotlinTarget.toKlibTarget(): KlibTarget {
             KotlinWasmTargetType.JS -> "wasmJs"
             else -> throw IllegalStateException("Unreachable")
         }
+        KotlinPlatformType.brs -> "brs"
         else -> throw IllegalArgumentException("Unsupported platform type: $platformType")
     }
     return KlibTarget(name, targetName)
@@ -48,7 +49,8 @@ internal val KotlinTarget.emitsKlib: Boolean
         val platformType = this.platformType
         return platformType == KotlinPlatformType.native ||
                 platformType == KotlinPlatformType.wasm ||
-                platformType == KotlinPlatformType.js
+                platformType == KotlinPlatformType.js ||
+                platformType == KotlinPlatformType.brs
     }
 
 @Suppress("TYPEALIAS_EXPANSION_DEPRECATION")

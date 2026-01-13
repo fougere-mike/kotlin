@@ -47,12 +47,9 @@ abstract class KotlinBrsIrTarget @Inject constructor(
         .convention(false)
 
     init {
-        // Use 'common' platform type for IDE compatibility.
-        // The bundled Kotlin IDE plugin doesn't include BRS in IdePlatformKind.ALL_KINDS,
-        // so using KotlinPlatformType.brs causes "Unsupported platform kind: BRS" errors.
-        // Using 'native' triggers kotlin-native-prebuilt dependency which we don't have.
-        // Common works for semantic analysis while our BrsTargetPlatformDetector
-        // provides BRS-specific behavior at the file level.
-        attributes.attribute(KotlinPlatformType.attribute, KotlinPlatformType.common)
+        // Use BRS platform type for RokuStudio IDE integration.
+        // RokuStudio (forked IntelliJ) includes BRS in IdePlatformKind.ALL_KINDS
+        // and provides proper tooling for semantic analysis.
+        attributes.attribute(KotlinPlatformType.attribute, KotlinPlatformType.brs)
     }
 }
