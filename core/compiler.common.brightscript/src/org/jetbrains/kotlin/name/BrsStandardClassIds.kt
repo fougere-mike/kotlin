@@ -218,6 +218,13 @@ object BrsStandardClassIds {
         @JvmField
         val BrsSceneGraphComponent = "BrsSceneGraphComponent".brsId()
 
+        /**
+         * Marks a function to use its unmangled name for BrightScript interop.
+         * Valid on top-level functions, object members, and companion object members.
+         */
+        @JvmField
+        val BrsStatic = "BrsStatic".brsId()
+
         // ==================== Type-Safe SceneGraph Field Annotations ====================
 
         /** Marks a property as a SceneGraph string field. */

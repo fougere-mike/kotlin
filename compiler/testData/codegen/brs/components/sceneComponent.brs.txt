@@ -1,4 +1,4 @@
-// --- File: sceneComponent.brs ---
+// --- File: sceneComponentKt.brs ---
 function init_k_() as Boolean
     return true
 end function

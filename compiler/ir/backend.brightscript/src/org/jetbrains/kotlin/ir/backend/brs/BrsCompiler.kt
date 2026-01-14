@@ -12,14 +12,19 @@ import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.backend.brs.lower.BrsLoweringPhases
 import org.jetbrains.kotlin.ir.backend.brs.transformers.irToBrs.IrToBrsTransformer
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
+import org.jetbrains.kotlin.ir.declarations.IrPackageFragment
 import org.jetbrains.kotlin.ir.declarations.IrProperty
+import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.name
 import org.jetbrains.kotlin.ir.declarations.path
 import org.jetbrains.kotlin.ir.util.SymbolTable
+import org.jetbrains.kotlin.ir.util.getAnnotation
+import org.jetbrains.kotlin.name.FqName
 import java.io.File
 
 /**
@@ -127,6 +132,9 @@ class BrsCompiler(
         // Create component extractor
         val componentExtractor = BrsComponentExtractor(context)
 
+        // Validate @BrsStatic annotations before lowering
+        validateBrsStaticAnnotations(irModule, context)
+
         // Run lowering phases
         val loweredModule = BrsLoweringPhases.lower(irModule, context)
 
@@ -144,7 +152,7 @@ class BrsCompiler(
                 outputs.add(output)
 
                 // Build function-to-file manifest for this file
-                val outputFileName = File(file.path).nameWithoutExtension + ".brs"
+                val outputFileName = File(file.path).nameWithoutExtension + "Kt.brs"
                 collectFunctionManifest(file, outputFileName, context, functionManifest)
 
                 // Generate component XML and deps.json for each component class in this file
@@ -158,6 +166,88 @@ class BrsCompiler(
         }
 
         return BrsModuleCompilationResult(outputs, componentXml, componentDepsJson, functionManifest, errors)
+    }
+
+    private val brsStaticFqn = FqName("kotlin.brs.BrsStatic")
+
+    /**
+     * Validate all @BrsStatic annotations in the module.
+     * Reports errors for:
+     * - @BrsStatic on regular class members (only top-level, object, or companion object allowed)
+     * - @BrsStatic on functions that have overloads (same name in same scope)
+     */
+    private fun validateBrsStaticAnnotations(irModule: IrModuleFragment, context: BrsIrBackendContext) {
+        for (file in irModule.files) {
+            // Collect all @BrsStatic functions grouped by their scope
+            val staticFunctionsByScope = mutableMapOf<Any, MutableList<IrSimpleFunction>>()
+
+            // Check top-level functions
+            for (declaration in file.declarations) {
+                when (declaration) {
+                    is IrSimpleFunction -> {
+                        if (declaration.getAnnotation(brsStaticFqn) != null) {
+                            staticFunctionsByScope.getOrPut(file) { mutableListOf() }.add(declaration)
+                        }
+                    }
+                    is IrClass -> {
+                        validateBrsStaticInClass(declaration, context, staticFunctionsByScope)
+                    }
+                }
+            }
+
+            // Check for overloads within each scope
+            for ((scope, functions) in staticFunctionsByScope) {
+                val functionsByName = functions.groupBy { it.name.asString() }
+                for ((name, overloads) in functionsByName) {
+                    if (overloads.size > 1) {
+                        // Report error on each function with the same name
+                        for (func in overloads) {
+                            context.reportError(
+                                func,
+                                "@BrsStatic function '$name' cannot have overloads. " +
+                                "Found ${overloads.size} functions with the same name in the same scope."
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Recursively validate @BrsStatic annotations in a class and its nested declarations.
+     */
+    private fun validateBrsStaticInClass(
+        irClass: IrClass,
+        context: BrsIrBackendContext,
+        staticFunctionsByScope: MutableMap<Any, MutableList<IrSimpleFunction>>
+    ) {
+        val isValidContext = irClass.kind == ClassKind.OBJECT || irClass.isCompanion
+
+        for (declaration in irClass.declarations) {
+            when (declaration) {
+                is IrSimpleFunction -> {
+                    if (declaration.getAnnotation(brsStaticFqn) != null) {
+                        if (!isValidContext) {
+                            // @BrsStatic on a regular class member - error
+                            context.reportError(
+                                declaration,
+                                "@BrsStatic is only valid on top-level functions, " +
+                                "object members, or companion object members. " +
+                                "Found on member of class '${irClass.name.asString()}'."
+                            )
+                        } else {
+                            // Valid context - track for overload detection
+                            staticFunctionsByScope.getOrPut(irClass) { mutableListOf() }.add(declaration)
+                        }
+                    }
+                }
+                is IrClass -> {
+                    // Recurse into nested classes
+                    validateBrsStaticInClass(declaration, context, staticFunctionsByScope)
+                }
+            }
+        }
     }
 
     /**
@@ -906,7 +996,7 @@ class BrsCompiler(
     }
 
     private fun computeOutputPath(originalPath: String, context: BrsIrBackendContext): String {
-        val fileName = File(originalPath).nameWithoutExtension + ".brs"
+        val fileName = File(originalPath).nameWithoutExtension + "Kt.brs"
         return File(context.targetConfig.outputDir, fileName).path
     }
 
@@ -1074,7 +1164,7 @@ class BrsCompiler(
         builder.appendLine("    </interface>")
 
         // Add script references AFTER interface so fields are defined before init() runs
-        builder.appendLine("""    <script type="text/brightscript" uri="pkg:/source/${component.name}.brs" />""")
+        builder.appendLine("""    <script type="text/brightscript" uri="pkg:/source/${component.name}Kt.brs" />""")
 
         // Add additional scripts
         for (script in component.additionalScripts) {

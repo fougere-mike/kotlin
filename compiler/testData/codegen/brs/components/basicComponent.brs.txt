@@ -1,4 +1,4 @@
-// --- File: basicComponent.brs ---
+// --- File: basicComponentKt.brs ---
 function init_k_() as Integer
     return 42
 end function

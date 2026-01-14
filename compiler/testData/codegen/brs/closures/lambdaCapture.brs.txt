@@ -1,4 +1,4 @@
-// --- File: lambdaCapture.brs ---
+// --- File: lambdaCaptureKt.brs ---
 function simpleCapture_k_() as Integer
     multiplier = 5
     multiply = {multiplier: multiplier, invoke: function(x as Integer) as Integer

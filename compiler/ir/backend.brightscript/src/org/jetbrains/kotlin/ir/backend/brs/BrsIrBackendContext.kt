@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.backend.brs.lower.BrsInnerClassesSupport
 import org.jetbrains.kotlin.ir.backend.brs.lower.BrsSharedVariablesManager
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrExternalPackageFragmentImpl
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
@@ -108,6 +109,7 @@ class BrsIrBackendContext(
 
     private val brsNameFqn = FqName("kotlin.brs.BrsName")
     private val brsExternalFqn = FqName("kotlin.brs.BrsExternal")
+    private val brsStaticFqn = FqName("kotlin.brs.BrsStatic")
 
     // ==================== Name Mangling ====================
 
@@ -409,14 +411,42 @@ class BrsIrBackendContext(
             }
         }
 
-        // 2. Handle constructors - generate ClassName_create with mangling
+        // 2. @BrsStatic - use raw name without mangling (but with parent prefix for objects)
+        val brsStaticAnnotation = irFunction.getAnnotation(brsStaticFqn)
+        if (brsStaticAnnotation != null) {
+            val rawName = irFunction.name.asString()
+            // For object/companion object members, include parent name prefix
+            return when (val parent = irFunction.parent) {
+                is IrClass -> {
+                    if (parent.isCompanion) {
+                        // companion object of Foo -> Foo_functionName
+                        val outerClass = parent.parent as? IrClass
+                        if (outerClass != null) {
+                            "${getBrsName(outerClass)}_$rawName"
+                        } else {
+                            rawName
+                        }
+                    } else if (parent.kind == ClassKind.OBJECT) {
+                        // singleton object Foo -> Foo_functionName
+                        "${getBrsName(parent)}_$rawName"
+                    } else {
+                        // Regular class member - shouldn't happen (validation should catch this)
+                        rawName
+                    }
+                }
+                is IrPackageFragment -> rawName  // top-level
+                else -> rawName
+            }
+        }
+
+        // 3. Handle constructors - generate ClassName_create with mangling
         if (irFunction is IrConstructor) {
             val irClass = irFunction.parent as IrClass
             val className = getBrsName(irClass)
             return calculateBrsFunctionSignature(irFunction, "${className}_create")
         }
 
-        // 3. Regular functions - calculate base name then apply mangling
+        // 4. Regular functions - calculate base name then apply mangling
         val rawName = irFunction.name.asString()
         // Sanitize property accessor names: <get-foo> -> get_foo, <set-foo> -> set_foo
         val sanitizedName = when {
@@ -572,7 +602,7 @@ class BrsDependencyCollector {
      */
     fun recordDependency(fromFile: String, toBrsFile: String) {
         // Don't record self-dependencies
-        val fromFileName = java.io.File(fromFile).nameWithoutExtension + ".brs"
+        val fromFileName = java.io.File(fromFile).nameWithoutExtension + "Kt.brs"
         if (fromFileName != toBrsFile) {
             fileDependencies.getOrPut(fromFile) { mutableSetOf() }.add(toBrsFile)
         }
@@ -613,7 +643,7 @@ class BrsDependencyCollector {
      */
     fun getAllFileDependencies(): Map<String, Set<String>> {
         return fileDependencies.entries.associate { (fullPath, deps) ->
-            java.io.File(fullPath).nameWithoutExtension + ".brs" to deps.toSet()
+            java.io.File(fullPath).nameWithoutExtension + "Kt.brs" to deps.toSet()
         }
     }
 

@@ -1,4 +1,4 @@
-// --- File: simpleClass.brs ---
+// --- File: simpleClassKt.brs ---
 function Person_create_Str_I_k_(name as String, age as Integer) as Object
     this = {}
     this.__type = "Person"

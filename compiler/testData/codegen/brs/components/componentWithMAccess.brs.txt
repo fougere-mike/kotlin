@@ -1,4 +1,4 @@
-// --- File: componentWithMAccess.brs ---
+// --- File: componentWithMAccessKt.brs ---
 function Counter_create_k_() as Object
     this = {}
     this.__type = "Counter"

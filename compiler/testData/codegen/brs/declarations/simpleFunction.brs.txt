@@ -1,4 +1,4 @@
-// --- File: simpleFunction.brs ---
+// --- File: simpleFunctionKt.brs ---
 function add_I_I_k_(a as Integer, b as Integer) as Integer
     return a + b
 end function

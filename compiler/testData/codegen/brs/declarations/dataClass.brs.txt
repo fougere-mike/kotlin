@@ -1,4 +1,4 @@
-// --- File: dataClass.brs ---
+// --- File: dataClassKt.brs ---
 function Point_create_I_I_k_(x as Integer, y as Integer) as Object
     this = {}
     this.__type = "Point"

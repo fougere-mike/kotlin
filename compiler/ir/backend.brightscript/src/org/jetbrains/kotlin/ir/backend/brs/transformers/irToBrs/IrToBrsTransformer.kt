@@ -6870,12 +6870,12 @@ class IrExpressionToBrsTransformer(
 
         return when (functionParent) {
             is IrClass -> {
-                // Function belongs to a class - use class name
-                context.getBrsName(functionParent) + ".brs"
+                // Function belongs to a class - use class name with Kt suffix
+                context.getBrsName(functionParent) + "Kt.brs"
             }
             is IrFile -> {
-                // Top-level function in same module - use source file name
-                File(functionParent.path).nameWithoutExtension + ".brs"
+                // Top-level function in same module - use source file name with Kt suffix
+                File(functionParent.path).nameWithoutExtension + "Kt.brs"
             }
             is IrPackageFragment -> {
                 // Top-level function from klib (IrExternalPackageFragment)

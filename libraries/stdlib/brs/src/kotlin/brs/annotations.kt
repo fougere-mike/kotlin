@@ -437,3 +437,36 @@ public annotation class BrsSceneGraphComponent(
  */
 @BrsIntrinsic("brsIntrinsicFunctionName")
 public external fun <T : Function<*>> brsName(function: T): String
+
+/**
+ * Marks a function to use its unmangled name in generated BrightScript.
+ *
+ * Use this annotation for functions that need stable, predictable names
+ * for interoperability with BrightScript code. The function name will be
+ * used without any signature suffix or `_k_` suffix.
+ *
+ * Valid targets:
+ * - Top-level functions: compiled as `functionName`
+ * - Functions in object declarations (singletons): compiled as `ObjectName_functionName`
+ * - Functions in companion objects: compiled as `ClassName_functionName`
+ *
+ * Example:
+ * ```kotlin
+ * @BrsStatic
+ * fun myHelper() { }
+ * // Compiles to: sub myHelper()
+ *
+ * object Utils {
+ *     @BrsStatic
+ *     fun format(value: String): String { ... }
+ * }
+ * // Compiles to: function Utils_format(value as String)
+ * ```
+ *
+ * Restrictions:
+ * - Functions marked `@BrsStatic` cannot have overloads (same name, different signatures)
+ * - Not valid on member functions of regular classes (only top-level, object, or companion object)
+ */
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.BINARY)
+public annotation class BrsStatic
