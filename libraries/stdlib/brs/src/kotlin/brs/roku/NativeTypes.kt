@@ -346,12 +346,15 @@ public external interface RoArray : IArray, IArrayJoin, IArraySort, IEnumNative 
          *
          * Compiles to: `CreateObject("roArray", size, resize)`
          *
+         * Note: Parameters are required because external functions with @BrsCreateObject
+         * cannot have default values (they compile directly to CreateObject() calls).
+         *
          * @param size Initial capacity of the array.
          * @param resize If true, the array will automatically resize when needed.
          * @return A new roArray instance.
          */
         @BrsCreateObject("roArray")
-        public fun create(size: Int = 0, resize: Boolean = true): RoArray = definedExternally
+        public fun create(size: Int, resize: Boolean): RoArray = definedExternally
     }
 }
 
