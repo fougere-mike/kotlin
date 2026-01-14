@@ -5503,6 +5503,26 @@ class IrExpressionToBrsTransformer(
                 }
             }
 
+            is BrsIntrinsics.StdlibIntrinsic.FunctionName -> {
+                // Extract the mangled BrightScript name from a function reference
+                // brsName(::myFunction) -> "ClassName_myFunction_k_"
+                val arg = expression.getValueArgument(0)
+                when (arg) {
+                    is IrFunctionReference -> {
+                        val function = arg.symbol.owner
+                        val mangledName = context.getBrsName(function)
+                        BrsStringLiteral(mangledName)
+                    }
+                    else -> {
+                        context.reportError(
+                            expression,
+                            "brsName() requires a function reference (::functionName), got ${arg?.javaClass?.simpleName}"
+                        )
+                        BrsStringLiteral("invalid_function_reference")
+                    }
+                }
+            }
+
             null -> {
                 // Unknown intrinsic - generate as function call with the name stripped of prefix
                 val simpleName = name.removePrefix("brsIntrinsic")

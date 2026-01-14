@@ -93,3 +93,11 @@ class BrsComponentGoldenFileTests : AbstractBrsGoldenFileTest() {
     @Test
     fun componentWithMAccess() = runTest("components/componentWithMAccess.kt")
 }
+
+// ==================== Intrinsics Tests ====================
+
+class BrsIntrinsicsGoldenFileTests : AbstractBrsGoldenFileTest() {
+
+    @Test
+    fun brsName() = runTest("intrinsics/brsName.kt")
+}

@@ -413,7 +413,10 @@ class BrsIntrinsics(
         "brsIntrinsicCallComparator" to StdlibIntrinsic.CallComparator,
 
         // Direct method call intrinsic
-        "brsIntrinsicGetLength" to StdlibIntrinsic.GetLength
+        "brsIntrinsicGetLength" to StdlibIntrinsic.GetLength,
+
+        // Function name intrinsic
+        "brsIntrinsicFunctionName" to StdlibIntrinsic.FunctionName
     )
 
     /**
@@ -491,6 +494,9 @@ class BrsIntrinsics(
 
         /** Call get_length() directly on an object: obj.get_length() */
         data object GetLength : StdlibIntrinsic()
+
+        /** Extract the mangled BrightScript name from a function reference */
+        data object FunctionName : StdlibIntrinsic()
     }
 
     /**

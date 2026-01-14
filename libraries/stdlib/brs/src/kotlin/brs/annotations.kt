@@ -385,3 +385,29 @@ public annotation class BrsCreateObject(val typeName: String)
 public annotation class BrsSceneGraphComponent(
     val extends: String = "Group"
 )
+
+/**
+ * Returns the mangled BrightScript name of a function reference.
+ *
+ * This intrinsic is resolved at compile time to produce the actual
+ * BrightScript function name, accounting for name mangling.
+ *
+ * Example:
+ * ```kotlin
+ * class MyComponent : SceneNodeComponent() {
+ *     init {
+ *         button.observeField("buttonSelected", brsName(::onButtonPressed))
+ *     }
+ *
+ *     private fun onButtonPressed(event: RoSGNodeEvent) { ... }
+ * }
+ * ```
+ *
+ * The call `brsName(::onButtonPressed)` compiles to the string literal
+ * `"MyComponent_onButtonPressed_RoSGNodeEvent_k_"`.
+ *
+ * @param function A function reference (e.g., `::myFunction`, `this::myMethod`)
+ * @return The mangled BrightScript function name as a String
+ */
+@BrsIntrinsic("brsIntrinsicFunctionName")
+public external fun <T : Function<*>> brsName(function: T): String
