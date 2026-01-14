@@ -53,7 +53,19 @@ class BrsIrBackendContext(
     val symbolTable: SymbolTable,
     override val configuration: CompilerConfiguration,
     val targetConfig: BrsTargetConfig = BrsTargetConfig.DEFAULT,
-    val isStdlibCompilation: Boolean = false
+    val isStdlibCompilation: Boolean = false,
+    /**
+     * Function-to-file manifest loaded from klib dependencies.
+     * Maps BrightScript function names to their .brs output files.
+     * Used by IrToBrsTransformer to resolve dependencies accurately.
+     */
+    val dependencyFunctionManifest: Map<String, String> = emptyMap(),
+    /**
+     * File-to-file dependency graph loaded from klib dependencies.
+     * Maps .brs file names to the set of .brs files they depend on.
+     * Used by BrsCompiler to resolve transitive dependencies.
+     */
+    val dependencyFileDeps: Map<String, Set<String>> = emptyMap()
 ) : CommonBackendContext {
 
     // ==================== Type System ====================
@@ -137,6 +149,12 @@ class BrsIrBackendContext(
     // ==================== Mapping and Caching ====================
 
     val mapping: BrsMapping = BrsMapping()
+
+    /**
+     * Dependency collector for tracking which files call functions from other files.
+     * Used to generate accurate deps.json for SceneGraph components.
+     */
+    val dependencyCollector: BrsDependencyCollector = BrsDependencyCollector()
 
     /**
      * Cache for generated class names.
@@ -518,4 +536,85 @@ class BrsMapping {
      * Key is property name, value is the constant value.
      */
     val enumEntryConstantProperties = WeakHashMap<IrEnumEntry, Map<String, Any?>>()
+}
+
+/**
+ * Collects dependency information during IR-to-BrightScript transformation.
+ *
+ * This tracks which .brs files are called from each source file, enabling
+ * accurate dependency injection for SceneGraph components.
+ */
+class BrsDependencyCollector {
+    /**
+     * Map: source file path → set of dependency .brs file names.
+     * Records which output files are called from each source file.
+     */
+    private val fileDependencies = mutableMapOf<String, MutableSet<String>>()
+
+    /**
+     * Map: source file path → set of runtime functions used.
+     * Records __kotlin_* functions called from each source file.
+     */
+    private val fileRuntimeFunctions = mutableMapOf<String, MutableSet<String>>()
+
+    /**
+     * Record a dependency from one file to another.
+     *
+     * @param fromFile The source file making the call (full path)
+     * @param toBrsFile The dependency .brs file name (e.g., "ArrayList.brs")
+     */
+    fun recordDependency(fromFile: String, toBrsFile: String) {
+        // Don't record self-dependencies
+        val fromFileName = java.io.File(fromFile).nameWithoutExtension + ".brs"
+        if (fromFileName != toBrsFile) {
+            fileDependencies.getOrPut(fromFile) { mutableSetOf() }.add(toBrsFile)
+        }
+    }
+
+    /**
+     * Record usage of a runtime helper function.
+     *
+     * @param fromFile The source file using the runtime function (full path)
+     * @param functionName The runtime function name (e.g., "__kotlin_nextObjectId")
+     */
+    fun recordRuntimeFunction(fromFile: String, functionName: String) {
+        fileRuntimeFunctions.getOrPut(fromFile) { mutableSetOf() }.add(functionName)
+    }
+
+    /**
+     * Get all dependencies for a file.
+     *
+     * @param filePath The source file path
+     * @return Set of .brs file names this file depends on
+     */
+    fun getDependencies(filePath: String): Set<String> =
+        fileDependencies[filePath] ?: emptySet()
+
+    /**
+     * Get all runtime functions used by a file.
+     *
+     * @param filePath The source file path
+     * @return Set of __kotlin_* function names used
+     */
+    fun getRuntimeFunctions(filePath: String): Set<String> =
+        fileRuntimeFunctions[filePath] ?: emptySet()
+
+    /**
+     * Get the complete file dependency graph for all files in this compilation.
+     * Keys are .brs filenames (not full paths), values are sets of dependency .brs filenames.
+     * Used to resolve transitive dependencies for user code files.
+     */
+    fun getAllFileDependencies(): Map<String, Set<String>> {
+        return fileDependencies.entries.associate { (fullPath, deps) ->
+            java.io.File(fullPath).nameWithoutExtension + ".brs" to deps.toSet()
+        }
+    }
+
+    /**
+     * Clear all collected dependency data.
+     */
+    fun clear() {
+        fileDependencies.clear()
+        fileRuntimeFunctions.clear()
+    }
 }

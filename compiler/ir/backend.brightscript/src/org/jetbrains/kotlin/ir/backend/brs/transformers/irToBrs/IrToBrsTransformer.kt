@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.dump
+import org.jetbrains.kotlin.ir.util.fileOrNull
 import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.util.getAnnotation
 import org.jetbrains.kotlin.ir.util.getPackageFragment
@@ -38,6 +39,7 @@ import org.jetbrains.kotlin.ir.visitors.IrVisitor
 import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
+import java.io.File
 
 /**
  * Transforms Kotlin IR to BrightScript AST.
@@ -111,6 +113,12 @@ class IrToBrsTransformer(
      * Used to determine which property accesses should compile to m.<name>.
      */
     internal var currentComponentClass: IrClass? = null
+
+    /**
+     * The current file path being transformed.
+     * Used for dependency tracking - we record which files each source depends on.
+     */
+    internal var currentFilePath: String? = null
 
     /**
      * Temp variable substitution map for increment/decrement inlining.
@@ -378,6 +386,9 @@ class IrToBrsTransformer(
     fun transformFile(irFile: IrFile): BrsProgram {
         val declarations = mutableListOf<BrsDeclaration>()
         val statements = mutableListOf<BrsStatement>()
+
+        // Track current file for dependency collection
+        currentFilePath = irFile.path
 
         // Clear tracked enums from any previous transformation
         enumClassNames.clear()
@@ -4554,6 +4565,21 @@ class IrExpressionToBrsTransformer(
         }
 
         val functionName = context.getBrsName(function)
+
+        // Record dependency for this function call
+        parent.currentFilePath?.let { currentFile ->
+            // Record runtime helper functions
+            if (functionName.startsWith("__kotlin_")) {
+                context.dependencyCollector.recordRuntimeFunction(currentFile, functionName)
+            }
+
+            // Record file dependency for this function call
+            val calledBrsFile = determineBrsFileName(function, functionName)
+            if (calledBrsFile != null) {
+                context.dependencyCollector.recordDependency(currentFile, calledBrsFile)
+            }
+        }
+
         val arguments = mutableListOf<BrsExpression>()
 
         // Add dispatch receiver if present
@@ -6816,6 +6842,48 @@ class IrExpressionToBrsTransformer(
             } else {
                 BrsInvalidLiteral()
             }
+        }
+    }
+
+    /**
+     * Determine the .brs file name a function will be compiled to.
+     * Works for both local functions (from source) and klib functions.
+     */
+    private fun determineBrsFileName(function: IrFunction, functionName: String): String? {
+        // Runtime helpers (__kotlin_*) should be looked up in the manifest
+        // They are defined in the first stdlib file during compilation
+        if (functionName.startsWith("__kotlin_")) {
+            return context.dependencyFunctionManifest[functionName]
+        }
+
+        val functionParent = function.parent
+
+        return when (functionParent) {
+            is IrClass -> {
+                // Function belongs to a class - use class name
+                context.getBrsName(functionParent) + ".brs"
+            }
+            is IrFile -> {
+                // Top-level function in same module - use source file name
+                File(functionParent.path).nameWithoutExtension + ".brs"
+            }
+            is IrPackageFragment -> {
+                // Top-level function from klib (IrExternalPackageFragment)
+                // Look up in dependency function manifest first for accurate resolution
+                context.dependencyFunctionManifest[functionName]
+                    ?: run {
+                        // Fallback for compatibility with older klibs without manifests
+                        // Use function name prefix as a heuristic
+                        // E.g., mutableListOf_k_ -> mutableListOf.brs
+                        val prefix = functionName.substringBefore("_k_")
+                        if (prefix.isNotEmpty() && prefix != functionName) {
+                            "$prefix.brs"
+                        } else {
+                            null
+                        }
+                    }
+            }
+            else -> null
         }
     }
 }

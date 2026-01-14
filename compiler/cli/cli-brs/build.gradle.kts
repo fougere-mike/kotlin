@@ -52,7 +52,8 @@ optInToK1Deprecation()
 kotlin {
     compilerOptions {
         freeCompilerArgs.addAll(
-            "-opt-in=org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI"
+            "-opt-in=org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI",
+            "-opt-in=org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI"
         )
     }
 }

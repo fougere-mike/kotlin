@@ -14,7 +14,9 @@ import org.jetbrains.kotlin.ir.backend.brs.lower.BrsLoweringPhases
 import org.jetbrains.kotlin.ir.backend.brs.transformers.irToBrs.IrToBrsTransformer
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFile
+import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
+import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.name
 import org.jetbrains.kotlin.ir.declarations.path
 import org.jetbrains.kotlin.ir.util.SymbolTable
@@ -56,8 +58,22 @@ data class BrsModuleCompilationResult(
 
     /**
      * Any generated SceneGraph component XML files.
+     * Key is component name, value is XML content.
      */
     val componentXml: Map<String, String>,
+
+    /**
+     * Dependency manifests for SceneGraph components.
+     * Key is component name, value is deps.json content.
+     */
+    val componentDepsJson: Map<String, String>,
+
+    /**
+     * Function-to-file manifest mapping BrightScript function names to their output .brs files.
+     * This is used by consuming modules to resolve dependencies when calling klib functions.
+     * Key is the mangled function name (e.g., "mutableListOf_k_"), value is the .brs filename (e.g., "ArrayList.brs").
+     */
+    val functionManifest: Map<String, String>,
 
     /**
      * Errors encountered during compilation.
@@ -79,7 +95,19 @@ class BrsCompiler(
     private val symbolTable: SymbolTable,
     private val configuration: CompilerConfiguration,
     private val targetConfig: BrsTargetConfig = BrsTargetConfig.DEFAULT,
-    private val isStdlibCompilation: Boolean = false
+    private val isStdlibCompilation: Boolean = false,
+    /**
+     * Function-to-file manifest loaded from klib dependencies.
+     * Maps BrightScript function names to their .brs output files.
+     * Used to resolve dependencies accurately when calling klib functions.
+     */
+    private val dependencyFunctionManifest: Map<String, String> = emptyMap(),
+    /**
+     * File-to-file dependency graph loaded from klib dependencies.
+     * Maps .brs file names to the set of .brs files they depend on.
+     * Used to resolve transitive dependencies for deps.json.
+     */
+    private val dependencyFileDeps: Map<String, Set<String>> = emptyMap()
 ) {
     /**
      * Compile a Kotlin IR module to BrightScript.
@@ -91,7 +119,9 @@ class BrsCompiler(
             symbolTable = symbolTable,
             configuration = configuration,
             targetConfig = targetConfig,
-            isStdlibCompilation = isStdlibCompilation
+            isStdlibCompilation = isStdlibCompilation,
+            dependencyFunctionManifest = dependencyFunctionManifest,
+            dependencyFileDeps = dependencyFileDeps
         )
 
         // Create component extractor
@@ -105,22 +135,87 @@ class BrsCompiler(
         val outputs = mutableListOf<BrsCompilationOutput>()
         val errors = mutableListOf<String>()
         val componentXml = mutableMapOf<String, String>()
+        val componentDepsJson = mutableMapOf<String, String>()
+        val functionManifest = mutableMapOf<String, String>()
 
         for (file in loweredModule.files) {
             try {
                 val output = compileFile(file, transformer, context)
                 outputs.add(output)
 
-                // Generate component XML for each component class in this file
-                generateComponentXmlForFile(file, componentExtractor, context).forEach { (name, xml) ->
+                // Build function-to-file manifest for this file
+                val outputFileName = File(file.path).nameWithoutExtension + ".brs"
+                collectFunctionManifest(file, outputFileName, context, functionManifest)
+
+                // Generate component XML and deps.json for each component class in this file
+                generateComponentOutputForFile(file, componentExtractor, context).forEach { (name, xml, depsJson) ->
                     componentXml[name] = xml
+                    componentDepsJson[name] = depsJson
                 }
             } catch (e: Exception) {
                 errors.add("Error compiling ${file.name}: ${e.message}")
             }
         }
 
-        return BrsModuleCompilationResult(outputs, componentXml, errors)
+        return BrsModuleCompilationResult(outputs, componentXml, componentDepsJson, functionManifest, errors)
+    }
+
+    /**
+     * Collect function-to-file mappings for all declarations in this file.
+     * This builds a manifest that maps BrightScript function names to their output .brs files,
+     * enabling consuming modules to resolve dependencies correctly.
+     */
+    private fun collectFunctionManifest(
+        file: IrFile,
+        outputFileName: String,
+        context: BrsIrBackendContext,
+        manifest: MutableMap<String, String>
+    ) {
+        for (declaration in file.declarations) {
+            when (declaration) {
+                is IrFunction -> {
+                    val brsName = context.getBrsName(declaration)
+                    manifest[brsName] = outputFileName
+                }
+                is IrClass -> {
+                    // Record the class itself
+                    val className = context.getBrsName(declaration)
+                    manifest[className] = outputFileName
+
+                    // Record all methods in the class
+                    for (member in declaration.declarations) {
+                        when (member) {
+                            is IrFunction -> {
+                                val methodName = context.getBrsName(member)
+                                manifest[methodName] = outputFileName
+                            }
+                            is IrProperty -> {
+                                // Record getter and setter if present
+                                member.getter?.let { getter ->
+                                    val getterName = context.getBrsName(getter)
+                                    manifest[getterName] = outputFileName
+                                }
+                                member.setter?.let { setter ->
+                                    val setterName = context.getBrsName(setter)
+                                    manifest[setterName] = outputFileName
+                                }
+                            }
+                        }
+                    }
+                }
+                is IrProperty -> {
+                    // Top-level property - record getter and setter
+                    declaration.getter?.let { getter ->
+                        val getterName = context.getBrsName(getter)
+                        manifest[getterName] = outputFileName
+                    }
+                    declaration.setter?.let { setter ->
+                        val setterName = context.getBrsName(setter)
+                        manifest[setterName] = outputFileName
+                    }
+                }
+            }
+        }
     }
 
     private fun compileFile(
@@ -816,14 +911,23 @@ class BrsCompiler(
     }
 
     /**
-     * Generate component XML for all component classes in a file.
+     * Output data for a SceneGraph component.
      */
-    private fun generateComponentXmlForFile(
+    private data class BrsComponentOutput(
+        val name: String,
+        val xml: String,
+        val depsJson: String
+    )
+
+    /**
+     * Generate component XML and deps.json for all component classes in a file.
+     */
+    private fun generateComponentOutputForFile(
         irFile: IrFile,
         extractor: BrsComponentExtractor,
         context: BrsIrBackendContext
-    ): Map<String, String> {
-        val result = mutableMapOf<String, String>()
+    ): List<BrsComponentOutput> {
+        val result = mutableListOf<BrsComponentOutput>()
 
         // Find component classes in this file
         val componentClasses = irFile.declarations.filterIsInstance<IrClass>()
@@ -832,11 +936,96 @@ class BrsCompiler(
         for (componentClass in componentClasses) {
             val componentInfo = extractor.extractComponent(componentClass)
             if (componentInfo != null) {
-                result[componentInfo.name] = generateComponentXmlContent(componentInfo, context)
+                val xml = generateComponentXmlContent(componentInfo, context)
+                val depsJson = generateComponentDepsJson(
+                    componentInfo.name,
+                    irFile.path,
+                    context
+                )
+                result.add(BrsComponentOutput(componentInfo.name, xml, depsJson))
             }
         }
 
         return result
+    }
+
+    /**
+     * Generate deps.json content for a SceneGraph component.
+     *
+     * This manifest lists all .brs files that this component depends on,
+     * enabling the Gradle plugin to inject the correct <script> tags.
+     */
+    private fun generateComponentDepsJson(
+        componentName: String,
+        filePath: String,
+        context: BrsIrBackendContext
+    ): String {
+        // Get direct dependencies from the collector
+        val directDeps = context.dependencyCollector.getDependencies(filePath)
+
+        // Build complete file deps graph by merging:
+        // 1. Stdlib file deps (from klib)
+        // 2. User code file deps (from current compilation)
+        val userFileDeps = context.dependencyCollector.getAllFileDependencies()
+        val mergedFileDeps = context.dependencyFileDeps.toMutableMap<String, Set<String>>()
+        for ((file, deps) in userFileDeps) {
+            mergedFileDeps.merge(file, deps) { existing, new -> existing + new }
+        }
+
+        // Resolve transitive dependencies using the merged graph
+        val allDeps = resolveTransitiveDependencies(directDeps, mergedFileDeps).sorted()
+
+        val runtimeFuncs = context.dependencyCollector.getRuntimeFunctions(filePath).sorted()
+
+        return buildString {
+            appendLine("{")
+            appendLine("""  "version": 1,""")
+            appendLine("""  "component": "$componentName",""")
+            appendLine("""  "dependencies": [""")
+            allDeps.forEachIndexed { i, dep ->
+                val comma = if (i < allDeps.size - 1) "," else ""
+                appendLine("""    "$dep"$comma""")
+            }
+            appendLine("  ],")
+            appendLine("""  "runtimeFunctions": [""")
+            runtimeFuncs.forEachIndexed { i, func ->
+                val comma = if (i < runtimeFuncs.size - 1) "," else ""
+                appendLine("""    "$func"$comma""")
+            }
+            appendLine("  ]")
+            appendLine("}")
+        }
+    }
+
+    /**
+     * Resolve transitive dependencies using a file dependency graph.
+     * Starting from a set of direct dependencies, recursively includes
+     * all files that those files depend on.
+     *
+     * @param directDeps The set of directly used .brs files
+     * @param fileDepsGraph Map from each .brs file to its own dependencies
+     * @return Complete set of all dependencies including transitive ones
+     */
+    private fun resolveTransitiveDependencies(
+        directDeps: Set<String>,
+        fileDepsGraph: Map<String, Set<String>>
+    ): Set<String> {
+        val allDeps = mutableSetOf<String>()
+        val queue = ArrayDeque(directDeps)
+
+        while (queue.isNotEmpty()) {
+            val dep = queue.removeFirst()
+            if (allDeps.add(dep)) {
+                // Add transitive dependencies of this file
+                fileDepsGraph[dep]?.forEach { transitiveDep ->
+                    if (transitiveDep !in allDeps) {
+                        queue.add(transitiveDep)
+                    }
+                }
+            }
+        }
+
+        return allDeps
     }
 
     /**
@@ -957,15 +1146,54 @@ class BrsCompiler(
                 outputFile.writeText(output.sourceCode)
             }
 
-            // Write component XML files
+            // Write function manifest for klib consumers
+            if (result.functionManifest.isNotEmpty()) {
+                val manifestFile = File(sourceDir, "function-manifest.json")
+                manifestFile.writeText(buildFunctionManifestJson(result.functionManifest))
+            }
+
+            // Write component XML and deps.json files
             val componentsDir = File(outputDir, "components")
             if (result.componentXml.isNotEmpty()) {
                 componentsDir.mkdirs()
                 for ((name, xml) in result.componentXml) {
-                    val xmlFile = File(componentsDir, "$name.xml")
+                    // Create component subdirectory (e.g., components/ShelfView/)
+                    val componentDir = File(componentsDir, name)
+                    componentDir.mkdirs()
+
+                    // Write XML file
+                    val xmlFile = File(componentDir, "$name.xml")
                     xmlFile.writeText(xml)
+
+                    // Write deps.json file if available
+                    result.componentDepsJson[name]?.let { depsJson ->
+                        val depsFile = File(componentDir, "$name.deps.json")
+                        depsFile.writeText(depsJson)
+                    }
                 }
             }
+        }
+
+        /**
+         * Build JSON content for the function manifest.
+         */
+        private fun buildFunctionManifestJson(manifest: Map<String, String>): String {
+            val sb = StringBuilder()
+            sb.appendLine("{")
+            sb.appendLine("  \"version\": 1,")
+            sb.appendLine("  \"functions\": {")
+
+            val entries = manifest.entries.sortedBy { it.key }
+            entries.forEachIndexed { index, (functionName, fileName) ->
+                val comma = if (index < entries.size - 1) "," else ""
+                // Escape any special characters in the function name
+                val escapedName = functionName.replace("\\", "\\\\").replace("\"", "\\\"")
+                sb.appendLine("    \"$escapedName\": \"$fileName\"$comma")
+            }
+
+            sb.appendLine("  }")
+            sb.appendLine("}")
+            return sb.toString()
         }
     }
 }

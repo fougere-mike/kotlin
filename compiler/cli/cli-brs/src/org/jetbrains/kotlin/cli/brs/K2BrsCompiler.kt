@@ -45,6 +45,18 @@ import org.jetbrains.kotlin.library.impl.buildKotlinLibrary
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.util.klibMetadataVersionOrDefault
 import java.util.Properties
+import java.util.zip.ZipFile
+import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
+import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrFunction
+import org.jetbrains.kotlin.ir.declarations.IrProperty
+import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
+import org.jetbrains.kotlin.ir.declarations.path
+import org.jetbrains.kotlin.ir.expressions.IrCall
+import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
+import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
+import org.jetbrains.kotlin.ir.visitors.acceptVoid
 
 /**
  * CLI compiler for Kotlin to BrightScript.
@@ -256,6 +268,10 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
             )
         }
 
+        // Load function manifests and file dependencies from klib dependencies
+        val dependencyFunctionManifest = loadDependencyFunctionManifests(libraries, messageCollector)
+        val dependencyFileDeps = loadDependencyFileDeps(libraries, messageCollector)
+
         val moduleDescriptor = irResult.irModuleFragment.descriptor
         val brsCompiler = BrsCompiler(
             module = moduleDescriptor,
@@ -263,7 +279,9 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
             symbolTable = irResult.symbolTable,
             configuration = configuration,
             targetConfig = targetConfig,
-            isStdlibCompilation = isStdlibCompilation
+            isStdlibCompilation = isStdlibCompilation,
+            dependencyFunctionManifest = dependencyFunctionManifest,
+            dependencyFileDeps = dependencyFileDeps
         )
 
         val compilationResult = brsCompiler.compile(irResult.irModuleFragment)
@@ -357,6 +375,49 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
             metadataVersion = configuration.klibMetadataVersionOrDefault()
         )
 
+        // Generate function manifest for this module
+        val functionManifest = generateFunctionManifest(
+            irResult.irModuleFragment,
+            irResult.irBuiltIns,
+            irResult.symbolTable,
+            configuration
+        )
+
+        // Create context for file dependency collection
+        val context = BrsIrBackendContext(
+            module = irResult.irModuleFragment.descriptor,
+            irBuiltIns = irResult.irBuiltIns,
+            symbolTable = irResult.symbolTable,
+            configuration = configuration,
+            isStdlibCompilation = configuration.languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation)
+        )
+
+        // Generate file dependency graph
+        val fileDependencies = collectFileDependencies(
+            irResult.irModuleFragment,
+            functionManifest,
+            context
+        )
+
+        // Store both manifest and file dependencies in klib properties
+        val manifestProperties = Properties().apply {
+            if (functionManifest.isNotEmpty()) {
+                setProperty(KLIB_PROPERTY_BRS_FUNCTION_MANIFEST, serializeFunctionManifest(functionManifest))
+            }
+            if (fileDependencies.isNotEmpty()) {
+                setProperty(KLIB_PROPERTY_BRS_FILE_DEPENDENCIES, serializeFileDependencies(fileDependencies))
+            }
+        }
+
+        messageCollector.report(
+            CompilerMessageSeverity.LOGGING,
+            "Generated function manifest with ${functionManifest.size} entries"
+        )
+        messageCollector.report(
+            CompilerMessageSeverity.LOGGING,
+            "Generated file dependencies for ${fileDependencies.size} files"
+        )
+
         buildKotlinLibrary(
             linkDependencies = serializerOutput.neededLibraries,
             metadata = serializerOutput.serializedMetadata
@@ -367,7 +428,7 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
             output = outputPath,
             moduleName = effectiveModuleName,
             nopack = false,
-            manifestProperties = Properties(),
+            manifestProperties = manifestProperties,
             builtInsPlatform = BuiltInsPlatform.BRS
         )
 
@@ -550,7 +611,318 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
         }
     }
 
+    // ==================== Function Manifest ====================
+
+    /**
+     * Generate function-to-file manifest for the IR module.
+     * Maps BrightScript function names to their output .brs filenames.
+     * This manifest is stored in the klib and used by consuming modules
+     * to resolve dependencies accurately.
+     */
+    private fun generateFunctionManifest(
+        irModule: IrModuleFragment,
+        irBuiltIns: org.jetbrains.kotlin.ir.IrBuiltIns,
+        symbolTable: org.jetbrains.kotlin.ir.util.SymbolTable,
+        configuration: CompilerConfiguration
+    ): Map<String, String> {
+        val manifest = mutableMapOf<String, String>()
+
+        // Create a minimal context for name generation
+        val context = BrsIrBackendContext(
+            module = irModule.descriptor,
+            irBuiltIns = irBuiltIns,
+            symbolTable = symbolTable,
+            configuration = configuration,
+            isStdlibCompilation = configuration.languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation)
+        )
+
+        // Determine the first file name (runtime helpers are added to the first file)
+        val firstFileName = irModule.files.firstOrNull()?.let {
+            File(it.path).nameWithoutExtension + ".brs"
+        }
+
+        // Add runtime helper functions to manifest (they're in the first file)
+        // These are internal helpers used by stdlib classes like ArrayList, Any, etc.
+        if (firstFileName != null && configuration.languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation)) {
+            RUNTIME_HELPER_FUNCTIONS.forEach { helperName ->
+                manifest[helperName] = firstFileName
+            }
+        }
+
+        for (file in irModule.files) {
+            val outputFileName = File(file.path).nameWithoutExtension + ".brs"
+            collectDeclarationNames(file.declarations, outputFileName, context, manifest)
+        }
+
+        return manifest
+    }
+
+    /**
+     * Names of runtime helper functions added to the first stdlib file.
+     * These must match the function names generated by BrsCompiler.addRuntimeHelpers()
+     */
+    private val RUNTIME_HELPER_FUNCTIONS = listOf(
+        "__kotlin_isInstanceOf",
+        "__kotlin_identityEquals",
+        "__kotlin_nextObjectId"
+    )
+
+    /**
+     * Recursively collect BrightScript names for all declarations in a file.
+     */
+    private fun collectDeclarationNames(
+        declarations: List<org.jetbrains.kotlin.ir.declarations.IrDeclaration>,
+        outputFileName: String,
+        context: BrsIrBackendContext,
+        manifest: MutableMap<String, String>
+    ) {
+        for (declaration in declarations) {
+            when (declaration) {
+                is IrFunction -> {
+                    val brsName = context.getBrsName(declaration)
+                    manifest[brsName] = outputFileName
+                }
+                is IrClass -> {
+                    // Record the class itself
+                    val className = context.getBrsName(declaration)
+                    manifest[className] = outputFileName
+
+                    // Record all methods in the class
+                    for (member in declaration.declarations) {
+                        when (member) {
+                            is IrFunction -> {
+                                val methodName = context.getBrsName(member)
+                                manifest[methodName] = outputFileName
+                            }
+                            is IrProperty -> {
+                                // Record getter and setter if present
+                                member.getter?.let { getter ->
+                                    val getterName = context.getBrsName(getter)
+                                    manifest[getterName] = outputFileName
+                                }
+                                member.setter?.let { setter ->
+                                    val setterName = context.getBrsName(setter)
+                                    manifest[setterName] = outputFileName
+                                }
+                            }
+                        }
+                    }
+                }
+                is IrProperty -> {
+                    // Top-level property - record getter and setter
+                    declaration.getter?.let { getter ->
+                        val getterName = context.getBrsName(getter)
+                        manifest[getterName] = outputFileName
+                    }
+                    declaration.setter?.let { setter ->
+                        val setterName = context.getBrsName(setter)
+                        manifest[setterName] = outputFileName
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Collect file-to-file dependencies by analyzing IR call sites.
+     * Returns a map of outputFileName → set of dependent fileNames.
+     *
+     * This walks the IR to find function calls and maps them to their target files
+     * using the function manifest. The resulting dependency graph is stored in the
+     * klib so that transitive dependencies can be resolved during user code compilation.
+     */
+    private fun collectFileDependencies(
+        irModule: IrModuleFragment,
+        functionManifest: Map<String, String>,
+        context: BrsIrBackendContext
+    ): Map<String, Set<String>> {
+        val fileDeps = mutableMapOf<String, MutableSet<String>>()
+
+        for (file in irModule.files) {
+            val thisFileName = File(file.path).nameWithoutExtension + ".brs"
+            val deps = mutableSetOf<String>()
+
+            // Walk all declarations to find function calls
+            file.acceptVoid(object : IrVisitorVoid() {
+                override fun visitElement(element: IrElement) {
+                    element.acceptChildrenVoid(this)
+                }
+
+                override fun visitCall(expression: IrCall) {
+                    val calledFunction = expression.symbol.owner
+                    val calledBrsName = context.getBrsName(calledFunction)
+                    val targetFile = functionManifest[calledBrsName]
+                    if (targetFile != null && targetFile != thisFileName) {
+                        deps.add(targetFile)
+                    }
+                    expression.acceptChildrenVoid(this)
+                }
+            })
+
+            if (deps.isNotEmpty()) {
+                fileDeps[thisFileName] = deps
+            }
+        }
+
+        return fileDeps
+    }
+
+    /**
+     * Serialize the function manifest to a JSON string for storage in klib properties.
+     */
+    private fun serializeFunctionManifest(manifest: Map<String, String>): String {
+        val sb = StringBuilder()
+        sb.append("{")
+        val entries = manifest.entries.sortedBy { it.key }
+        entries.forEachIndexed { index, (functionName, fileName) ->
+            val escapedName = functionName.replace("\\", "\\\\").replace("\"", "\\\"")
+            val escapedFile = fileName.replace("\\", "\\\\").replace("\"", "\\\"")
+            sb.append("\"$escapedName\":\"$escapedFile\"")
+            if (index < entries.size - 1) sb.append(",")
+        }
+        sb.append("}")
+        return sb.toString()
+    }
+
+    /**
+     * Serialize file dependencies to a compact JSON string for storage in klib properties.
+     * Format: {"file.brs":["dep1.brs","dep2.brs"],...}
+     */
+    private fun serializeFileDependencies(deps: Map<String, Set<String>>): String {
+        val sb = StringBuilder()
+        sb.append("{")
+        val entries = deps.entries.sortedBy { it.key }
+        entries.forEachIndexed { index, (fileName, fileDeps) ->
+            val escapedFile = fileName.replace("\\", "\\\\").replace("\"", "\\\"")
+            val depsArray = fileDeps.sorted().joinToString(",") { dep ->
+                val escapedDep = dep.replace("\\", "\\\\").replace("\"", "\\\"")
+                "\"$escapedDep\""
+            }
+            sb.append("\"$escapedFile\":[$depsArray]")
+            if (index < entries.size - 1) sb.append(",")
+        }
+        sb.append("}")
+        return sb.toString()
+    }
+
+    /**
+     * Load function-to-file manifests from all klib dependencies.
+     * Each klib may contain a brs_function_manifest property that maps
+     * BrightScript function names to their output .brs files.
+     */
+    private fun loadDependencyFunctionManifests(
+        libraries: List<KotlinLibrary>,
+        messageCollector: MessageCollector
+    ): Map<String, String> {
+        val manifest = mutableMapOf<String, String>()
+
+        for (library in libraries) {
+            try {
+                // Read the manifest property from the klib's manifest file
+                val manifestJson = library.manifestProperties.getProperty(KLIB_PROPERTY_BRS_FUNCTION_MANIFEST)
+                if (manifestJson != null) {
+                    parseAndMergeFunctionManifest(manifestJson, manifest)
+                    messageCollector.report(
+                        CompilerMessageSeverity.LOGGING,
+                        "Loaded function manifest from ${library.uniqueName}"
+                    )
+                }
+            } catch (e: Exception) {
+                messageCollector.report(
+                    CompilerMessageSeverity.WARNING,
+                    "Failed to load function manifest from ${library.uniqueName}: ${e.message}"
+                )
+            }
+        }
+
+        messageCollector.report(
+            CompilerMessageSeverity.LOGGING,
+            "Total dependency function manifest entries: ${manifest.size}"
+        )
+
+        return manifest
+    }
+
+    /**
+     * Parse JSON function manifest and merge into the target map.
+     * JSON format: {"name":"file.brs","name2":"file2.brs",...}
+     */
+    private fun parseAndMergeFunctionManifest(json: String, target: MutableMap<String, String>) {
+        // Simple JSON parsing without external dependencies
+        // Format: {"key1":"value1","key2":"value2",...}
+        val entryPattern = Regex(""""([^"]+)"\s*:\s*"([^"]+)"""")
+        for (match in entryPattern.findAll(json)) {
+            val functionName = match.groupValues[1]
+            val fileName = match.groupValues[2]
+            target[functionName] = fileName
+        }
+    }
+
+    /**
+     * Load file-to-file dependency graphs from all klib dependencies.
+     * Each klib may contain a brs_file_dependencies property that maps
+     * .brs files to the other .brs files they depend on.
+     */
+    private fun loadDependencyFileDeps(
+        libraries: List<KotlinLibrary>,
+        messageCollector: MessageCollector
+    ): Map<String, Set<String>> {
+        val fileDeps = mutableMapOf<String, MutableSet<String>>()
+
+        for (library in libraries) {
+            try {
+                val depsJson = library.manifestProperties.getProperty(KLIB_PROPERTY_BRS_FILE_DEPENDENCIES)
+                if (depsJson != null) {
+                    parseAndMergeFileDeps(depsJson, fileDeps)
+                    messageCollector.report(
+                        CompilerMessageSeverity.LOGGING,
+                        "Loaded file dependencies from ${library.uniqueName}"
+                    )
+                }
+            } catch (e: Exception) {
+                messageCollector.report(
+                    CompilerMessageSeverity.WARNING,
+                    "Failed to load file dependencies from ${library.uniqueName}: ${e.message}"
+                )
+            }
+        }
+
+        messageCollector.report(
+            CompilerMessageSeverity.LOGGING,
+            "Total file dependency entries: ${fileDeps.size}"
+        )
+
+        return fileDeps
+    }
+
+    /**
+     * Parse JSON file dependencies and merge into the target map.
+     * JSON format: {"file1.brs":["dep1.brs","dep2.brs"],...}
+     */
+    private fun parseAndMergeFileDeps(json: String, target: MutableMap<String, MutableSet<String>>) {
+        // Format: {"file.brs":["dep1.brs","dep2.brs"],...}
+        val entryPattern = Regex(""""([^"]+)"\s*:\s*\[([^\]]*)\]""")
+        for (match in entryPattern.findAll(json)) {
+            val fileName = match.groupValues[1]
+            val depsArray = match.groupValues[2]
+
+            // Parse the array of dependencies
+            val deps = Regex(""""([^"]+)"""").findAll(depsArray)
+                .map { it.groupValues[1] }
+                .toMutableSet()
+
+            // Merge with existing deps for this file
+            target.getOrPut(fileName) { mutableSetOf() }.addAll(deps)
+        }
+    }
+
     companion object {
+        /** Klib manifest property key for BrightScript function-to-file manifest */
+        const val KLIB_PROPERTY_BRS_FUNCTION_MANIFEST = "brs_function_manifest"
+
+        /** Klib manifest property key for BrightScript file-to-file dependency graph */
+        const val KLIB_PROPERTY_BRS_FILE_DEPENDENCIES = "brs_file_dependencies"
+
         @JvmStatic
         fun main(args: Array<String>) {
             doMain(K2BrsCompiler(), args)
