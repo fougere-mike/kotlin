@@ -2876,8 +2876,14 @@ class IrStatementToBrsTransformer(
                     }
                 }
                 else -> {
-                    val body = parent.transformExpression(branchResult)
-                    BrsExpressionStatement(body)
+                    // Null constants in statement context should produce no code.
+                    // This handles safe-call null branches: a?.foo() where null branch does nothing.
+                    if (branchResult is IrConst && (branchResult as IrConst).value == null) {
+                        BrsEmpty()
+                    } else {
+                        val body = parent.transformExpression(branchResult)
+                        BrsExpressionStatement(body)
+                    }
                 }
             }
 

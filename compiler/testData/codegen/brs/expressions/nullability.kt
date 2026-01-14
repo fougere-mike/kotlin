@@ -25,3 +25,16 @@ fun chainedSafeCall(holder: Holder?): Int? {
 
 class Holder(val inner: Inner?)
 class Inner(val value: Int)
+
+// Safe call as statement (not expression) - tests that null branch produces valid BrightScript
+class Printer {
+    fun print(msg: String) { }
+}
+
+fun safeCallStatement(printer: Printer?) {
+    printer?.print("hello")
+}
+
+fun chainedSafeCallStatement(holder: Holder?) {
+    holder?.inner?.value
+}

@@ -83,3 +83,42 @@ end function
 function Inner_get_value_k_() as Integer
     return m.value
 end function
+
+function Printer_create_k_() as Object
+    this = {}
+    this.__type = "Printer"
+    this.__proto = ["Printer"]
+    this.__id = __kotlin_nextObjectId()
+    this.print_Str_k_ = Printer_print_Str_k_
+    return this
+end function
+
+sub Printer_print_Str_k_(msg as String)
+end sub
+
+sub safeCallStatement_PrinterN_k_(printer as Dynamic)
+    tmp0_safe_receiver = printer
+    if tmp0_safe_receiver = invalid then
+
+    else if true then
+        tmp0_safe_receiver.print_Str_k_("hello")
+    end if
+
+end sub
+
+sub chainedSafeCallStatement_HolderN_k_(holder as Dynamic)
+    tmp0_safe_receiver = holder
+    __when_tmp5 = invalid
+    if tmp0_safe_receiver = invalid then
+        __when_tmp5 = invalid
+    else if true then
+        __when_tmp5 = tmp0_safe_receiver.get_inner()
+    end if
+    tmp1_safe_receiver = __when_tmp5
+    if tmp1_safe_receiver = invalid then
+
+    else if true then
+        tmp1_safe_receiver.get_value()
+    end if
+
+end sub
