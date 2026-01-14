@@ -32,3 +32,10 @@ public annotation class JvmSynthetic
 @Target(AnnotationTarget.FILE)
 @Retention(AnnotationRetention.SOURCE)
 public annotation class JvmMultifileClass
+
+/**
+ * Marks a value class as inline for the JVM. For BrightScript, this is ignored.
+ */
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+public annotation class JvmInline
