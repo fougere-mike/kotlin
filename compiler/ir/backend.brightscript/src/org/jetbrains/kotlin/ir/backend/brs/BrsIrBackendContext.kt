@@ -188,6 +188,13 @@ class BrsIrBackendContext(
      */
     val inlineFunctionInfo = mutableMapOf<IrFunctionSymbol, Any>()
 
+    /**
+     * Map from IrCall expressions to their resolved namespace-style function names.
+     * Populated by BrsExternalLowering for @BrsNamespace calls.
+     * Key: IrCall expression, Value: resolved name like "Utils_getMessage"
+     */
+    val namespaceCallNames = mutableMapOf<IrElement, String>()
+
     // ==================== Target Configuration ====================
 
     /**

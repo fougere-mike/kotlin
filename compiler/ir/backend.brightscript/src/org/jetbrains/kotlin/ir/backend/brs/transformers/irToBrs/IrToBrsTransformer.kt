@@ -4332,6 +4332,16 @@ class IrExpressionToBrsTransformer(
             return transformBrsInlineCall(expression)
         }
 
+        // Check for @BrsNamespace object calls - these were preprocessed by BrsExternalLowering
+        // and the resolved name is stored in context.namespaceCallNames
+        context.namespaceCallNames[expression]?.let { resolvedName ->
+            val args = mutableListOf<BrsExpression>()
+            for (i in 0 until expression.valueArgumentsCount) {
+                expression.getValueArgument(i)?.let { args.add(it.accept(this, data)) }
+            }
+            return BrsFunctionCall(BrsIdentifier(resolvedName), args)
+        }
+
         // ==================== Enum Property Inlining Optimization ====================
         // When accessing ordinal, name, or constant properties on a compile-time-known
         // enum value, inline the value directly to avoid runtime lookup overhead.

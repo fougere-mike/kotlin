@@ -133,6 +133,13 @@ object BrsStandardClassIds {
         val BrsExternal = "BrsExternal".brsId()
 
         /**
+         * Marks an external object as a BrighterScript namespace.
+         * Calls compile to Namespace_functionName format.
+         */
+        @JvmField
+        val BrsNamespace = "BrsNamespace".brsId()
+
+        /**
          * Specifies a custom BrightScript name for a declaration.
          */
         @JvmField

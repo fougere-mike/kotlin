@@ -22,6 +22,32 @@ package kotlin.brs
 public annotation class BrsExternal
 
 /**
+ * Marks an external object as a BrighterScript namespace.
+ *
+ * BrighterScript namespaces compile to functions with a naming convention
+ * of `Namespace_functionName`. This annotation tells the Kotlin compiler
+ * to generate calls in that format.
+ *
+ * Example:
+ * ```kotlin
+ * @BrsNamespace("Utils")
+ * external object Utils {
+ *     fun getMessage(port: Dynamic, sleepInterval: Int = 20): Dynamic
+ *     fun toString(value: Dynamic): String
+ * }
+ *
+ * // Usage:
+ * val msg = Utils.getMessage(port, 100)
+ * // Compiles to: Utils_getMessage(port, 100)
+ * ```
+ *
+ * @property name The BrighterScript namespace name. If empty, uses the object name.
+ */
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.BINARY)
+public annotation class BrsNamespace(val name: String = "")
+
+/**
  * Specifies a custom BrightScript name for a declaration.
  *
  * By default, Kotlin names are used directly. Use this annotation

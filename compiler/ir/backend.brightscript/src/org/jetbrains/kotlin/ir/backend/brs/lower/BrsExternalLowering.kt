@@ -35,6 +35,7 @@ class BrsExternalLowering(
     private val brsExternalFqn = FqName("kotlin.brs.BrsExternal")
     private val brsNameFqn = FqName("kotlin.brs.BrsName")
     private val brsInlineFqn = FqName("kotlin.brs.BrsInline")
+    private val brsNamespaceFqn = FqName("kotlin.brs.BrsNamespace")
 
     override fun lower(irFile: IrFile) {
         irFile.transformChildrenVoid(ExternalCallTransformer())
@@ -77,6 +78,10 @@ class BrsExternalLowering(
                 val receiverType = dispatchReceiver.type
                 if (isExternalType(receiverType)) {
                     return transformExternalMemberCall(expression, function)
+                }
+                // Check for calls on @BrsNamespace objects
+                if (isNamespaceType(receiverType)) {
+                    return transformNamespaceCall(expression, function)
                 }
             }
 
@@ -188,6 +193,61 @@ class BrsExternalLowering(
         }
 
         /**
+         * Transforms a call on a @BrsNamespace object.
+         *
+         * BrighterScript namespaces compile to functions with Namespace_functionName format.
+         *
+         * Example:
+         * ```kotlin
+         * @BrsNamespace("Utils")
+         * external object Utils {
+         *     fun getMessage(port: Dynamic): Dynamic
+         * }
+         *
+         * val msg = Utils.getMessage(port)
+         * ```
+         * Compiles to:
+         * ```brightscript
+         * msg = Utils_getMessage(port)
+         * ```
+         */
+        private fun transformNamespaceCall(
+            expression: IrCall,
+            function: IrFunction
+        ): IrExpression {
+            val dispatchReceiver = expression.dispatchReceiver ?: return expression
+            val receiverType = dispatchReceiver.type
+            val irClass = (receiverType.classifierOrNull as? IrClassSymbol)?.owner ?: return expression
+
+            // Get namespace name from @BrsNamespace annotation or object name
+            val namespaceName = getNamespaceName(irClass)
+            val functionName = getBrsFunctionName(function)
+
+            // Store the resolved name for IrToBrsTransformer to use
+            context.namespaceCallNames[expression] = "${namespaceName}_$functionName"
+
+            return expression
+        }
+
+        /**
+         * Gets the namespace name from @BrsNamespace annotation or object name.
+         */
+        private fun getNamespaceName(irClass: IrClass): String {
+            val namespaceAnnotation = irClass.getAnnotation(brsNamespaceFqn)
+            if (namespaceAnnotation != null) {
+                val nameArg = namespaceAnnotation.getValueArgument(0)
+                if (nameArg is IrConst) {
+                    val name = nameArg.value as String
+                    if (name.isNotEmpty()) {
+                        return name
+                    }
+                }
+            }
+            // Default: use object name
+            return irClass.name.asString()
+        }
+
+        /**
          * Transforms field access on an external object.
          *
          * Example:
@@ -229,6 +289,16 @@ class BrsExternalLowering(
             if (classifier !is IrClassSymbol) return false
             val irClass = classifier.owner
             return irClass.isExternal || irClass.hasAnnotation(brsExternalFqn)
+        }
+
+        /**
+         * Checks if a type is a @BrsNamespace object.
+         */
+        private fun isNamespaceType(type: IrType): Boolean {
+            val classifier = type.classifierOrNull ?: return false
+            if (classifier !is IrClassSymbol) return false
+            val irClass = classifier.owner
+            return irClass.hasAnnotation(brsNamespaceFqn)
         }
 
         /**
