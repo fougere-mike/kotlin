@@ -225,6 +225,13 @@ object BrsStandardClassIds {
         @JvmField
         val BrsStatic = "BrsStatic".brsId()
 
+        /**
+         * Marks an object declaration as containing compile-time constants.
+         * Properties are evaluated at compile time and inlined at usage sites.
+         */
+        @JvmField
+        val BrsConstant = "BrsConstant".brsId()
+
         // ==================== Type-Safe SceneGraph Field Annotations ====================
 
         /** Marks a property as a SceneGraph string field. */

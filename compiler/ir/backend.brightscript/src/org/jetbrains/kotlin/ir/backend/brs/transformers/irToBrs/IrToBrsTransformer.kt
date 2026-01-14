@@ -551,6 +551,10 @@ class IrToBrsTransformer(
     ) {
         // Handle object singletons specially
         if (irClass.kind == ClassKind.OBJECT) {
+            // Skip @BrsConstant objects - their properties are inlined at usage sites
+            if (context.isConstantObject(irClass)) {
+                return
+            }
             transformObjectDeclaration(irClass, declarations, statements)
             return
         }
@@ -3943,6 +3947,25 @@ class IrExpressionToBrsTransformer(
         }
     }
 
+    /**
+     * Transform an IrConst to a BrightScript literal expression.
+     * Used for @BrsConstant property inlining.
+     */
+    fun transformConstToLiteral(const: IrConst): BrsExpression {
+        return when (const.kind) {
+            IrConstKind.Int -> BrsIntLiteral(const.value as Int)
+            IrConstKind.Long -> BrsLongIntLiteral(const.value as Long)
+            IrConstKind.Float -> BrsFloatLiteral(const.value as Float)
+            IrConstKind.Double -> BrsDoubleLiteral(const.value as Double)
+            IrConstKind.Boolean -> BrsBooleanLiteral(const.value as Boolean)
+            IrConstKind.String -> BrsStringLiteral(const.value as String)
+            IrConstKind.Char -> BrsStringLiteral((const.value as Char).toString())
+            IrConstKind.Byte -> BrsIntLiteral((const.value as Byte).toInt())
+            IrConstKind.Short -> BrsIntLiteral((const.value as Short).toInt())
+            IrConstKind.Null -> BrsInvalidLiteral()
+        }
+    }
+
     // ==================== References ====================
 
     override fun visitGetValue(expression: IrGetValue, data: Unit): BrsExpression {
@@ -4341,6 +4364,24 @@ class IrExpressionToBrsTransformer(
             }
             return BrsFunctionCall(BrsIdentifier(resolvedName), args)
         }
+
+        // ==================== @BrsConstant Property Inlining Optimization ====================
+        // When accessing properties on @BrsConstant objects, inline the evaluated constant value
+        // directly to avoid runtime getInstance() calls and property lookups.
+        val constDispatchReceiver = expression.dispatchReceiver
+        if (constDispatchReceiver is IrGetObjectValue) {
+            val objectClass = constDispatchReceiver.symbol.owner
+            if (context.isConstantObject(objectClass)) {
+                val functionName = function.name.asString()
+                if (functionName.startsWith("<get-")) {
+                    val propName = functionName.removePrefix("<get-").removeSuffix(">")
+                    context.getConstantObjectProperty(objectClass, propName)?.let { constValue ->
+                        return transformConstToLiteral(constValue)
+                    }
+                }
+            }
+        }
+        // ==================== End @BrsConstant Property Inlining ====================
 
         // ==================== Enum Property Inlining Optimization ====================
         // When accessing ordinal, name, or constant properties on a compile-time-known

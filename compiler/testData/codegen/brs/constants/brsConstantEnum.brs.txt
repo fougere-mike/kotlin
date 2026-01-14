@@ -1,0 +1,61 @@
+// --- File: brsConstantEnumKt.brs ---
+function BrsConstant_create_k_() as Object
+    this = {}
+    this.__type = "BrsConstant"
+    this.__proto = ["BrsConstant", "Annotation"]
+    this.__id = __kotlin_nextObjectId()
+    return this
+end function
+
+function Color_create_k_(__name as String, __ordinal as Integer) as Object
+    this = {}
+    this.__type = "Color"
+    this.name = __name
+    this.ordinal = __ordinal
+    this.__proto = ["Color", "Comparable"]
+    this.__id = __kotlin_nextObjectId()
+    this.values_k_ = Color_values_k_
+    this.valueOf_Str_k_ = Color_valueOf_Str_k_
+    this.get_entries = Color_get_entries_k_
+    return this
+end function
+
+sub Color_initEntries()
+    if m.Color_entriesInitialized then
+        return
+    end if
+    m.Color_entriesInitialized = true
+    m.Color_RED = Color_create_k_("RED", 0)
+    m.Color_GREEN = Color_create_k_("GREEN", 1)
+    m.Color_BLUE = Color_create_k_("BLUE", 2)
+end sub
+
+function Color_values() as Object
+    Color_initEntries()
+    return [m.Color_RED, m.Color_GREEN, m.Color_BLUE]
+end function
+
+function Color_valueOf(name as String) as Object
+    Color_initEntries()
+    if name = "RED" then
+        return m.Color_RED
+    else if name = "GREEN" then
+        return m.Color_GREEN
+    else if name = "BLUE" then
+        return m.Color_BLUE
+    else
+        return invalid
+    end if
+end function
+
+function getDefaultColorOrdinal_k_() as Integer
+    return 1
+end function
+
+function getDefaultColorName_k_() as String
+    return "GREEN"
+end function
+
+function getFirstOrdinal_k_() as Integer
+    return 0
+end function

@@ -101,3 +101,23 @@ class BrsIntrinsicsGoldenFileTests : AbstractBrsGoldenFileTest() {
     @Test
     fun brsName() = runTest("intrinsics/brsName.kt")
 }
+
+// ==================== @BrsConstant Tests ====================
+
+class BrsConstantGoldenFileTests : AbstractBrsGoldenFileTest() {
+
+    @Test
+    fun brsConstantBasic() = runTest("constants/brsConstantBasic.kt")
+
+    @Test
+    fun brsConstantTransitive() = runTest("constants/brsConstantTransitive.kt")
+
+    @Test
+    fun brsConstantArithmetic() = runTest("constants/brsConstantArithmetic.kt")
+
+    @Test
+    fun brsConstantBoolean() = runTest("constants/brsConstantBoolean.kt")
+
+    @Test
+    fun brsConstantEnum() = runTest("constants/brsConstantEnum.kt")
+}

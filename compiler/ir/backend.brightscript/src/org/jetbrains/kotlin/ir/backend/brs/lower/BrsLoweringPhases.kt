@@ -32,6 +32,14 @@ object BrsLoweringPhases {
             // Phase 1: Validate and prepare
             ValidateSuspendUsageLowering(context),
 
+            // Phase 1.3: Pre-compute enum ordinals for constant evaluation
+            // Must run before BrsConstantEvaluationLowering so enum ordinals are available
+            BrsEnumOrdinalPrecomputeLowering(context),
+
+            // Phase 1.5: Evaluate @BrsConstant objects
+            // Must run early before other lowerings transform the IR
+            BrsConstantEvaluationLowering(context),
+
             // Phase 2: Parse @BrsInline code into AST (like JsCodeOutliningLowering)
             BrsCodeOutliningLowering(context),
 

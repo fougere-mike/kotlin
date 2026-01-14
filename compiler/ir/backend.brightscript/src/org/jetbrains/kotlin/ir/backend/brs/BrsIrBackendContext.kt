@@ -508,6 +508,21 @@ class BrsIrBackendContext(
     fun getEnumConstantProperties(entry: IrEnumEntry): Map<String, Any?>? =
         mapping.enumEntryConstantProperties[entry]
 
+    // ==================== @BrsConstant Object Optimization ====================
+
+    /**
+     * Check if a class is marked with @BrsConstant.
+     * These objects are not emitted to BrightScript - their properties are inlined at usage sites.
+     */
+    fun isConstantObject(irClass: IrClass): Boolean = irClass in mapping.constantObjectClasses
+
+    /**
+     * Get the evaluated constant value for a property in a @BrsConstant object.
+     * Returns null if not a constant object or property not found.
+     */
+    fun getConstantObjectProperty(irClass: IrClass, propertyName: String): IrConst? =
+        mapping.constantObjectProperties[irClass]?.get(propertyName)
+
     // ==================== Error Reporting ====================
 
     /**
@@ -573,6 +588,22 @@ class BrsMapping {
      * Key is property name, value is the constant value.
      */
     val enumEntryConstantProperties = WeakHashMap<IrEnumEntry, Map<String, Any?>>()
+
+    // ==================== @BrsConstant Object Tracking ====================
+
+    /**
+     * Map from @BrsConstant object classes to their evaluated constant property values.
+     * Populated during BrsConstantEvaluationLowering, used during code generation for inlining.
+     * Key: IrClass of the @BrsConstant object
+     * Value: Map of property name to its evaluated constant value (as IrConst)
+     */
+    val constantObjectProperties = WeakHashMap<IrClass, Map<String, IrConst>>()
+
+    /**
+     * Set of @BrsConstant object classes.
+     * These objects are not emitted to BrightScript - their properties are inlined at usage sites.
+     */
+    val constantObjectClasses = mutableSetOf<IrClass>()
 }
 
 /**

@@ -470,3 +470,37 @@ public external fun <T : Function<*>> brsName(function: T): String
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.BINARY)
 public annotation class BrsStatic
+
+/**
+ * Marks an object declaration as containing compile-time constants.
+ *
+ * All properties in a @BrsConstant object must be val properties with
+ * constant initializers. The compiler will:
+ * 1. Evaluate all property values at compile time
+ * 2. Inline the values at all usage sites
+ * 3. Not emit the object declaration to BrightScript
+ *
+ * Supported expressions:
+ * - Primitive literals (Int, Long, Float, Double, String, Boolean)
+ * - String concatenation
+ * - Arithmetic operations (+, -, *, /)
+ * - Boolean operations (&&, ||, !)
+ * - References to other @BrsConstant properties
+ * - Enum ordinal and name values
+ *
+ * Example:
+ * ```kotlin
+ * @BrsConstant
+ * object Config {
+ *     val API_VERSION = 1
+ *     val API_URL = "https://api.example.com/v" + API_VERSION
+ *     val TIMEOUT_MS = 30 * 1000
+ * }
+ *
+ * // Usage compiles to literal values:
+ * print(Config.API_URL)  // → print "https://api.example.com/v1"
+ * ```
+ */
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.BINARY)
+public annotation class BrsConstant
