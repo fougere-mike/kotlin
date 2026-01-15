@@ -5887,6 +5887,10 @@ class IrExpressionToBrsTransformer(
             is BrsIntrinsics.StdlibIntrinsic.ToString -> {
                 // Type-aware toString for Any? values
                 // Generate runtime type checking to handle primitives properly
+                // This calls toString_AnyN_k_ which is in coreRuntimeKt.brs
+                parent.currentFilePath?.let { currentFile ->
+                    context.dependencyCollector.recordDependency(currentFile, "coreRuntimeKt.brs")
+                }
                 if (args.isNotEmpty()) {
                     parent.generateRuntimeToString(args[0])
                 } else {
@@ -7320,8 +7324,14 @@ class IrExpressionToBrsTransformer(
 
         return when (functionParent) {
             is IrClass -> {
-                // Function belongs to a class - use class name with Kt suffix
-                context.getBrsName(functionParent) + "Kt.brs"
+                // External classes/interfaces (e.g., RoSGNodeEvent) don't produce output files
+                // They're just declarations of native BrightScript types
+                if (functionParent.isExternal) {
+                    null
+                } else {
+                    // Function belongs to a class - use class name with Kt suffix
+                    context.getBrsName(functionParent) + "Kt.brs"
+                }
             }
             is IrFile -> {
                 // Top-level function in same module - use source file name with Kt suffix
@@ -7334,10 +7344,10 @@ class IrExpressionToBrsTransformer(
                     ?: run {
                         // Fallback for compatibility with older klibs without manifests
                         // Use function name prefix as a heuristic
-                        // E.g., mutableListOf_k_ -> mutableListOf.brs
+                        // E.g., mutableListOf_k_ -> mutableListOfKt.brs
                         val prefix = functionName.substringBefore("_k_")
                         if (prefix.isNotEmpty() && prefix != functionName) {
-                            "$prefix.brs"
+                            "${prefix}Kt.brs"
                         } else {
                             null
                         }

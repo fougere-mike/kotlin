@@ -1023,14 +1023,18 @@ class BrsCompiler(
         val componentClasses = irFile.declarations.filterIsInstance<IrClass>()
             .filter { extractor.isComponent(it) }
 
+        // Compute dependencies once for all components in this file
+        // (they share the same file path, so dependencies are the same)
+        val dependencies = computeComponentDependencies(irFile.path, context)
+
         for (componentClass in componentClasses) {
             val componentInfo = extractor.extractComponent(componentClass)
             if (componentInfo != null) {
-                val xml = generateComponentXmlContent(componentInfo, context)
+                val xml = generateComponentXmlContent(componentInfo, context, dependencies)
                 val depsJson = generateComponentDepsJson(
                     componentInfo.name,
-                    irFile.path,
-                    context
+                    dependencies,
+                    context.dependencyCollector.getRuntimeFunctions(irFile.path)
                 )
                 result.add(BrsComponentOutput(componentInfo.name, xml, depsJson))
             }
@@ -1040,16 +1044,13 @@ class BrsCompiler(
     }
 
     /**
-     * Generate deps.json content for a SceneGraph component.
-     *
-     * This manifest lists all .brs files that this component depends on,
-     * enabling the Gradle plugin to inject the correct <script> tags.
+     * Compute the set of dependencies for a component file.
+     * Resolves transitive dependencies from both stdlib and user code.
      */
-    private fun generateComponentDepsJson(
-        componentName: String,
+    private fun computeComponentDependencies(
         filePath: String,
         context: BrsIrBackendContext
-    ): String {
+    ): Set<String> {
         // Get direct dependencies from the collector
         val directDeps = context.dependencyCollector.getDependencies(filePath)
 
@@ -1063,9 +1064,26 @@ class BrsCompiler(
         }
 
         // Resolve transitive dependencies using the merged graph
-        val allDeps = resolveTransitiveDependencies(directDeps, mergedFileDeps).sorted()
+        return resolveTransitiveDependencies(directDeps, mergedFileDeps)
+    }
 
-        val runtimeFuncs = context.dependencyCollector.getRuntimeFunctions(filePath).sorted()
+    /**
+     * Generate deps.json content for a SceneGraph component.
+     *
+     * This manifest lists all .brs files that this component depends on,
+     * enabling the Gradle plugin to inject the correct <script> tags.
+     *
+     * @param componentName The name of the component
+     * @param dependencies Pre-computed set of dependencies for this component
+     * @param runtimeFunctions Set of __kotlin_* functions used by this component
+     */
+    private fun generateComponentDepsJson(
+        componentName: String,
+        dependencies: Set<String>,
+        runtimeFunctions: Set<String>
+    ): String {
+        val allDeps = dependencies.sorted()
+        val runtimeFuncs = runtimeFunctions.sorted()
 
         return buildString {
             appendLine("{")
@@ -1120,10 +1138,15 @@ class BrsCompiler(
 
     /**
      * Generate the XML content for a SceneGraph component.
+     *
+     * @param component The component info extracted from the class
+     * @param context The backend context
+     * @param dependencies Set of .brs file names this component depends on (for script imports)
      */
     private fun generateComponentXmlContent(
         component: BrsComponentInfo,
-        context: BrsIrBackendContext
+        context: BrsIrBackendContext,
+        dependencies: Set<String> = emptySet()
     ): String {
         val builder = StringBuilder()
 
@@ -1164,7 +1187,13 @@ class BrsCompiler(
         builder.appendLine("    </interface>")
 
         // Add script references AFTER interface so fields are defined before init() runs
-        builder.appendLine("""    <script type="text/brightscript" uri="pkg:/source/${component.name}Kt.brs" />""")
+        // Dependencies first (stdlib, etc.) so functions are available when component init() runs
+        for (dep in dependencies.sorted()) {
+            builder.appendLine("""    <script type="text/brightscript" uri="pkg:/source/$dep" />""")
+        }
+
+        // Component's own BRS file LAST (can now call stdlib functions in init())
+        builder.appendLine("""    <script type="text/brightscript" uri="pkg:/components/${component.name}/${component.name}Kt.brs" />""")
 
         // Add additional scripts
         for (script in component.additionalScripts) {
@@ -1259,12 +1288,28 @@ class BrsCompiler(
         fun writeOutput(result: BrsModuleCompilationResult, outputDir: File) {
             outputDir.mkdirs()
 
-            // Write .brs files
+            // Create output directories
             val sourceDir = File(outputDir, "source")
             sourceDir.mkdirs()
+            val componentsDir = File(outputDir, "components")
 
+            // Get component names for routing BRS files
+            val componentNames = result.componentXml.keys
+
+            // Write .brs files - route component files to component directories
             for (output in result.outputs) {
-                val outputFile = File(sourceDir, File(output.outputFilePath).name)
+                val fileName = File(output.outputFilePath).name
+                val baseName = fileName.removeSuffix("Kt.brs")
+
+                val outputFile = if (componentNames.contains(baseName)) {
+                    // Component BRS goes to components/<ComponentName>/
+                    val componentDir = File(componentsDir, baseName)
+                    componentDir.mkdirs()
+                    File(componentDir, fileName)
+                } else {
+                    // Regular BRS goes to source/
+                    File(sourceDir, fileName)
+                }
                 outputFile.writeText(output.sourceCode)
             }
 
@@ -1275,7 +1320,6 @@ class BrsCompiler(
             }
 
             // Write component XML and deps.json files
-            val componentsDir = File(outputDir, "components")
             if (result.componentXml.isNotEmpty()) {
                 componentsDir.mkdirs()
                 for ((name, xml) in result.componentXml) {

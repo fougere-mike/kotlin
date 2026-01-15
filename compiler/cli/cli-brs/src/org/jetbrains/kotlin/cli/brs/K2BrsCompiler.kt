@@ -637,8 +637,9 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
         )
 
         // Determine the first file name (runtime helpers are added to the first file)
+        // Note: BRS compiler appends "Kt" suffix to all output files
         val firstFileName = irModule.files.firstOrNull()?.let {
-            File(it.path).nameWithoutExtension + ".brs"
+            File(it.path).nameWithoutExtension + "Kt.brs"
         }
 
         // Add runtime helper functions to manifest (they're in the first file)
@@ -650,7 +651,8 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
         }
 
         for (file in irModule.files) {
-            val outputFileName = File(file.path).nameWithoutExtension + ".brs"
+            // Note: BRS compiler appends "Kt" suffix to all output files
+            val outputFileName = File(file.path).nameWithoutExtension + "Kt.brs"
             collectDeclarationNames(file.declarations, outputFileName, context, manifest)
         }
 
@@ -739,7 +741,8 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
         val fileDeps = mutableMapOf<String, MutableSet<String>>()
 
         for (file in irModule.files) {
-            val thisFileName = File(file.path).nameWithoutExtension + ".brs"
+            // Note: BRS compiler appends "Kt" suffix to all output files
+            val thisFileName = File(file.path).nameWithoutExtension + "Kt.brs"
             val deps = mutableSetOf<String>()
 
             // Walk all declarations to find function calls
@@ -755,6 +758,14 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
                     if (targetFile != null && targetFile != thisFileName) {
                         deps.add(targetFile)
                     }
+
+                    // Special handling for intrinsics that generate calls to runtime functions
+                    // brsIntrinsicToString calls toString_AnyN_k_ which is in coreRuntimeKt.brs
+                    val functionName = calledFunction.name.asString()
+                    if (functionName == "brsIntrinsicToString") {
+                        deps.add("coreRuntimeKt.brs")
+                    }
+
                     expression.acceptChildrenVoid(this)
                 }
             })

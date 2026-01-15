@@ -12,6 +12,7 @@ plugins {
 dependencies {
     implementation(project(":compiler:cli"))
     implementation(project(":compiler:cli-common"))
+    implementation(project(":compiler:plugin-api"))  // For CompilerPluginRegistrar
     implementation(project(":core:compiler.common.brightscript"))
     implementation(project(":compiler:backend.brightscript"))
     implementation(project(":brightscript:brs.ast"))
@@ -45,7 +46,15 @@ dependencies {
 }
 
 sourceSets {
-    "main" { projectDefault() }
+    "main" {
+        projectDefault()
+        resources.srcDir("resources")
+    }
+}
+
+// Handle duplicate service files from dependencies
+tasks.named<ProcessResources>("processResources") {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 
 optInToK1Deprecation()
@@ -54,7 +63,8 @@ kotlin {
     compilerOptions {
         freeCompilerArgs.addAll(
             "-opt-in=org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI",
-            "-opt-in=org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI"
+            "-opt-in=org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI",
+            "-opt-in=org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi"
         )
     }
 }
