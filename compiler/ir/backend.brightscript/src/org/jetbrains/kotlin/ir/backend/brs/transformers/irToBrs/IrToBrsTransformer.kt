@@ -642,12 +642,24 @@ class IrToBrsTransformer(
         currentComponentClass = irClass
 
         try {
+            // Extract layout info from companion @SGLayout function (new pattern)
+            // Falls back to legacy @SGLayout property pattern for backwards compatibility
+            val layoutInfo = extractLayoutInfoFromCompanion(irClass)
+                ?: irClass.declarations.filterIsInstance<IrProperty>()
+                    .find { context.intrinsics.hasSGLayoutAnnotation(it) }
+                    ?.let { extractLayoutInfo(irClass, it) }
+
+            // Generate layout accessor class if we have @SGLayout
+            if (layoutInfo != null) {
+                declarations.addAll(generateLayoutAccessorClass(layoutInfo))
+            }
+
             // Find the primary constructor to extract init block content
             val primaryConstructor = irClass.declarations.filterIsInstance<IrConstructor>().firstOrNull()
 
             // Generate sub init() from the constructor body (which contains init block code)
             if (primaryConstructor != null) {
-                val initSub = transformComponentInitBlock(irClass, primaryConstructor)
+                val initSub = transformComponentInitBlock(irClass, primaryConstructor, layoutInfo)
                 if (initSub != null) {
                     declarations.add(initSub)
                 }
@@ -661,7 +673,12 @@ class IrToBrsTransformer(
             }
 
             // Process nested classes (companion objects, etc.)
+            // Skip FIR-generated Layout class if we already generated our own layout accessor
             for (nested in irClass.declarations.filterIsInstance<IrClass>()) {
+                // Skip the FIR-generated Layout class - we already generated our own implementation
+                if (layoutInfo != null && nested.name.asString() == "Layout" && isFirGeneratedLayoutClass(nested)) {
+                    continue
+                }
                 val nestedDeclarations = mutableListOf<BrsDeclaration>()
                 val nestedStatements = mutableListOf<BrsStatement>()
                 transformClassDeclarations(nested, nestedDeclarations, nestedStatements)
@@ -690,10 +707,13 @@ class IrToBrsTransformer(
      * Extracts statements from the constructor body, filtering out:
      * - Delegating constructor calls (super())
      * - Instance initializer calls
+     *
+     * @param layoutInfo Optional layout info for @SGLayout property initialization
      */
     private fun transformComponentInitBlock(
         irClass: IrClass,
-        constructor: IrConstructor
+        constructor: IrConstructor,
+        layoutInfo: LayoutAccessorInfo? = null
     ): BrsSub? {
         val bodyStatements = mutableListOf<BrsStatement>()
 
@@ -702,6 +722,17 @@ class IrToBrsTransformer(
         for (property in irClass.declarations.filterIsInstance<IrProperty>()) {
             // Skip inherited component scope properties (top, global, m)
             if (context.intrinsics.isComponentScopeProperty(property.name.asString())) {
+                continue
+            }
+
+            // Skip @SGLayout properties - we'll initialize them separately
+            if (context.intrinsics.hasSGLayoutAnnotation(property)) {
+                continue
+            }
+
+            // Skip properties whose type is the generated Layout class
+            // These are initialized via layoutInfo using ComponentName_Layout_create
+            if (layoutInfo != null && isLayoutClassProperty(property, irClass)) {
                 continue
             }
 
@@ -726,6 +757,23 @@ class IrToBrsTransformer(
                     )
                 )
             }
+        }
+
+        // Initialize @SGLayout property with the accessor class instance
+        if (layoutInfo != null) {
+            // m._layout = ComponentName_Layout_create(m.top)
+            bodyStatements.add(
+                BrsExpressionStatement(
+                    BrsBinaryOp(
+                        BrsDotAccess(BrsMRef(), "_${layoutInfo.propertyName}"),
+                        BrsBinaryOperator.EQ,
+                        BrsFunctionCall(
+                            BrsIdentifier("${layoutInfo.className}_create"),
+                            mutableListOf(BrsDotAccess(BrsMRef(), "top"))
+                        )
+                    )
+                )
+            )
         }
 
         // Attach member functions to m (like regular classes attach to 'this')
@@ -781,6 +829,367 @@ class IrToBrsTransformer(
             name = "init",
             parameters = mutableListOf(),
             body = BrsBlock(bodyStatements)
+        )
+    }
+
+    // ==================== Layout Accessor Generation ====================
+
+    /**
+     * Information about a layout accessor class to generate.
+     */
+    data class LayoutAccessorInfo(
+        /** The name of the property (e.g., "layout") */
+        val propertyName: String,
+        /** The name of the generated accessor class (e.g., "MainScreen_Layout") */
+        val className: String,
+        /** List of all node IDs that need accessor properties */
+        val nodeIds: List<String>
+    )
+
+    /**
+     * Extract layout accessor info from an @SGLayout property.
+     *
+     * This extracts the node IDs from the sceneLayout { } DSL call to generate
+     * the appropriate accessor class.
+     */
+    private fun extractLayoutInfo(irClass: IrClass, property: IrProperty): LayoutAccessorInfo? {
+        val componentName = context.getBrsName(irClass)
+        val propertyName = property.name.asString()
+        val className = "${componentName}_Layout"
+
+        // Get the backing field initializer
+        val backingField = property.backingField ?: return null
+        val initializer = backingField.initializer?.expression ?: return null
+
+        // The initializer should be a call to sceneLayout { }
+        val sceneLayoutCall = initializer as? IrCall ?: return null
+        if (sceneLayoutCall.symbol.owner.name.asString() != "sceneLayout") return null
+
+        // Extract node IDs from the DSL lambda
+        val nodeIds = extractNodeIdsFromLayoutDsl(sceneLayoutCall)
+        if (nodeIds.isEmpty()) return null
+
+        return LayoutAccessorInfo(propertyName, className, nodeIds)
+    }
+
+    /**
+     * Extract layout accessor info from a companion object's @SGLayout function.
+     *
+     * This pattern uses @SGLayout as a marker annotation:
+     * ```kotlin
+     * companion object {
+     *     @SGLayout
+     *     fun defineLayout() = sceneLayout {
+     *         button(id = "myButton")
+     *         label(id = "myLabel")
+     *     }
+     * }
+     * ```
+     *
+     * The node IDs are extracted from the DSL body by finding calls like `button(id = "xyz")`.
+     */
+    private fun extractLayoutInfoFromCompanion(irClass: IrClass): LayoutAccessorInfo? {
+        // Find companion object
+        val companion = irClass.declarations
+            .filterIsInstance<IrClass>()
+            .find { it.isCompanion }
+            ?: return null
+
+        // Find function with @SGLayout annotation
+        val layoutFunction = companion.declarations
+            .filterIsInstance<IrSimpleFunction>()
+            .find { context.intrinsics.hasSGLayoutAnnotation(it) }
+            ?: return null
+
+        // Extract node IDs from function body by traversing the DSL
+        val nodeIds = extractNodeIdsFromFunctionBody(layoutFunction)
+        if (nodeIds.isEmpty()) return null
+
+        val componentName = context.getBrsName(irClass)
+        val className = "${componentName}_Layout"
+
+        return LayoutAccessorInfo("layout", className, nodeIds)
+    }
+
+    /**
+     * Extract node IDs from a @SGLayout function body.
+     * Finds the sceneLayout { } call and extracts IDs from DSL builder calls inside.
+     */
+    private fun extractNodeIdsFromFunctionBody(function: IrSimpleFunction): List<String> {
+        val body = function.body ?: return emptyList()
+
+        // Find the sceneLayout { } call
+        val sceneLayoutCall = findSceneLayoutCall(body) ?: return emptyList()
+
+        // Extract node IDs from the DSL
+        return extractNodeIdsFromLayoutDsl(sceneLayoutCall)
+    }
+
+    /**
+     * Find the sceneLayout { } call within a function body.
+     */
+    private fun findSceneLayoutCall(body: IrBody): IrCall? {
+        return when (body) {
+            is IrBlockBody -> {
+                for (statement in body.statements) {
+                    // Check direct return statement
+                    if (statement is IrReturn) {
+                        val call = statement.value as? IrCall
+                        if (call?.symbol?.owner?.name?.asString() == "sceneLayout") {
+                            return call
+                        }
+                    }
+                    // Check direct call statement
+                    if (statement is IrCall && statement.symbol.owner.name.asString() == "sceneLayout") {
+                        return statement
+                    }
+                }
+                null
+            }
+            is IrExpressionBody -> {
+                val call = body.expression as? IrCall
+                if (call?.symbol?.owner?.name?.asString() == "sceneLayout") call else null
+            }
+            else -> null
+        }
+    }
+
+    /**
+     * Check if a property has the generated Layout class type.
+     *
+     * This is used to identify properties like `val layout = Layout(top)` that should
+     * be initialized via the generated Layout_create function instead of direct constructor call.
+     */
+    private fun isLayoutClassProperty(property: IrProperty, ownerClass: IrClass): Boolean {
+        val propertyType = property.getter?.returnType ?: property.backingField?.type ?: return false
+        val typeClass = propertyType.classOrNull?.owner ?: return false
+
+        // Check if the type is a nested class named "Layout" within the owner class
+        if (typeClass.name.asString() == "Layout" && typeClass.parent == ownerClass) {
+            return true
+        }
+
+        return false
+    }
+
+    /**
+     * Check if a class is the FIR-generated Layout class (from SceneGraphLayoutGenerator).
+     * These have origin IrDeclarationOrigin.GeneratedByPlugin with the SGLayoutKey.
+     */
+    private fun isFirGeneratedLayoutClass(irClass: IrClass): Boolean {
+        val origin = irClass.origin
+        return origin is IrDeclarationOrigin.GeneratedByPlugin &&
+               origin.pluginId.contains("SGLayoutKey")
+    }
+
+    /**
+     * Extract all node IDs from a sceneLayout { } DSL call.
+     */
+    private fun extractNodeIdsFromLayoutDsl(call: IrCall): List<String> {
+        val nodeIds = mutableListOf<String>()
+
+        // The lambda is the last argument
+        val lambdaArg = call.getValueArgument(call.valueArgumentsCount - 1)
+        val lambdaBody = extractLambdaBody(lambdaArg) ?: return emptyList()
+
+        // Recursively extract node IDs from the lambda body
+        extractNodeIdsFromStatements(lambdaBody.statements, nodeIds)
+
+        return nodeIds
+    }
+
+    /**
+     * Extract the body from a lambda expression.
+     */
+    private fun extractLambdaBody(arg: IrExpression?): IrBlockBody? {
+        return when (arg) {
+            is IrFunctionExpression -> arg.function.body as? IrBlockBody
+            is IrBlock -> {
+                val functionRef = arg.statements.filterIsInstance<IrFunctionReference>().firstOrNull()
+                val function = functionRef?.symbol?.owner ?: return null
+                function.body as? IrBlockBody
+            }
+            else -> null
+        }
+    }
+
+    /**
+     * Recursively extract node IDs from builder method calls.
+     */
+    private fun extractNodeIdsFromStatements(statements: List<IrStatement>, nodeIds: MutableList<String>) {
+        for (statement in statements) {
+            val call = statement as? IrCall ?: continue
+            val functionName = call.symbol.owner.name.asString()
+
+            // Check if this is a DSL builder method
+            val isBuilderMethod = functionName in setOf(
+                "group", "layoutGroup", "label", "poster", "rectangle",
+                "button", "buttonGroup", "textEditBox", "keyboard"
+            )
+            if (!isBuilderMethod) continue
+
+            // Extract the id argument (first argument)
+            val idArg = call.getValueArgument(0) as? IrConst ?: continue
+            val id = idArg.value as? String ?: continue
+            nodeIds.add(id)
+
+            // Check for children lambda (last argument for container nodes)
+            val function = call.symbol.owner
+            val initParamIndex = function.valueParameters.indexOfFirst { it.name.asString() == "init" }
+            if (initParamIndex >= 0) {
+                val childLambda = call.getValueArgument(initParamIndex)
+                val childBody = extractLambdaBody(childLambda)
+                if (childBody != null) {
+                    extractNodeIdsFromStatements(childBody.statements, nodeIds)
+                }
+            }
+        }
+    }
+
+    /**
+     * Generate the layout accessor class declarations.
+     *
+     * For a component with @SGLayout property, generates:
+     * - A _create function that initializes the accessor instance
+     * - A getter function for each declared node ID
+     *
+     * Example output for MainScreen with nodes "mainLayout" and "counterLabel":
+     * ```brightscript
+     * function MainScreen_Layout_create(top)
+     *     instance = {}
+     *     instance._top = top
+     *     instance._mainLayout = invalid
+     *     instance._counterLabel = invalid
+     *     instance.get_mainLayout = MainScreen_Layout_get_mainLayout
+     *     instance.get_counterLabel = MainScreen_Layout_get_counterLabel
+     *     return instance
+     * end function
+     *
+     * function MainScreen_Layout_get_mainLayout(this)
+     *     if this._mainLayout = invalid then
+     *         this._mainLayout = this._top.findNode("mainLayout")
+     *     end if
+     *     return this._mainLayout
+     * end function
+     * ```
+     */
+    private fun generateLayoutAccessorClass(info: LayoutAccessorInfo): List<BrsDeclaration> {
+        val declarations = mutableListOf<BrsDeclaration>()
+
+        // Generate _create function
+        declarations.add(generateLayoutCreateFunction(info))
+
+        // Generate getter for each node ID
+        for (nodeId in info.nodeIds) {
+            declarations.add(generateLayoutNodeGetter(info.className, nodeId))
+        }
+
+        return declarations
+    }
+
+    /**
+     * Generate the _create function for the layout accessor class.
+     */
+    private fun generateLayoutCreateFunction(info: LayoutAccessorInfo): BrsFunction {
+        val statements = mutableListOf<BrsStatement>()
+
+        // instance = {}
+        statements.add(
+            BrsVariable(
+                name = "instance",
+                initializer = BrsAALiteral(mutableListOf())
+            )
+        )
+
+        // instance._top = top
+        statements.add(
+            BrsExpressionStatement(
+                BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier("instance"), "_top"),
+                    BrsBinaryOperator.EQ,
+                    BrsIdentifier("top")
+                )
+            )
+        )
+
+        // For each node ID: instance._nodeId = invalid
+        for (nodeId in info.nodeIds) {
+            statements.add(
+                BrsExpressionStatement(
+                    BrsBinaryOp(
+                        BrsDotAccess(BrsIdentifier("instance"), "_$nodeId"),
+                        BrsBinaryOperator.EQ,
+                        BrsInvalidLiteral()
+                    )
+                )
+            )
+        }
+
+        // Attach getter functions: instance.get_nodeId = ClassName_get_nodeId
+        for (nodeId in info.nodeIds) {
+            statements.add(
+                BrsExpressionStatement(
+                    BrsBinaryOp(
+                        BrsDotAccess(BrsIdentifier("instance"), "get_$nodeId"),
+                        BrsBinaryOperator.EQ,
+                        BrsIdentifier("${info.className}_get_$nodeId")
+                    )
+                )
+            )
+        }
+
+        // return instance
+        statements.add(BrsReturn(BrsIdentifier("instance")))
+
+        return BrsFunction(
+            name = "${info.className}_create",
+            parameters = mutableListOf(BrsParameter("top", BrsType.OBJECT)),
+            returnType = BrsType.OBJECT,
+            body = BrsBlock(statements)
+        )
+    }
+
+    /**
+     * Generate a getter function for a specific node ID.
+     */
+    private fun generateLayoutNodeGetter(className: String, nodeId: String): BrsFunction {
+        val statements = mutableListOf<BrsStatement>()
+
+        // if this._nodeId = invalid then
+        //     this._nodeId = this._top.findNode("nodeId")
+        // end if
+        statements.add(
+            BrsIf(
+                condition = BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier("this"), "_$nodeId"),
+                    BrsBinaryOperator.EQ,
+                    BrsInvalidLiteral()
+                ),
+                thenBranch = BrsBlock(mutableListOf(
+                    BrsExpressionStatement(
+                        BrsBinaryOp(
+                            BrsDotAccess(BrsIdentifier("this"), "_$nodeId"),
+                            BrsBinaryOperator.EQ,
+                            BrsMethodCall(
+                                BrsDotAccess(BrsIdentifier("this"), "_top"),
+                                "findNode",
+                                mutableListOf(BrsStringLiteral(nodeId))
+                            )
+                        )
+                    )
+                )),
+                elseBranch = null
+            )
+        )
+
+        // return this._nodeId
+        statements.add(BrsReturn(BrsDotAccess(BrsIdentifier("this"), "_$nodeId")))
+
+        return BrsFunction(
+            name = "${className}_get_$nodeId",
+            parameters = mutableListOf(BrsParameter("this", BrsType.OBJECT)),
+            returnType = BrsType.OBJECT,
+            body = BrsBlock(statements)
         )
     }
 

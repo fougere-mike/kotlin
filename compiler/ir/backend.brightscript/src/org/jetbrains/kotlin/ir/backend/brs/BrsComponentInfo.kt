@@ -11,6 +11,58 @@ import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 
 /**
+ * Information about a SceneGraph node entry extracted from the DSL.
+ *
+ * This represents a single node in the component's children hierarchy.
+ */
+data class NodeEntryInfo(
+    /**
+     * The SceneGraph node type (e.g., "Label", "LayoutGroup", "Button").
+     */
+    val nodeType: String,
+
+    /**
+     * The unique ID for this node within the component.
+     */
+    val id: String,
+
+    /**
+     * XML attributes for this node (key-value pairs).
+     */
+    val attributes: Map<String, String>,
+
+    /**
+     * Child nodes within this node.
+     */
+    val children: List<NodeEntryInfo>
+) {
+    /**
+     * Recursively collects all node IDs from this node and its descendants.
+     */
+    fun allNodeIds(): List<String> = listOf(id) + children.flatMap { it.allNodeIds() }
+}
+
+/**
+ * Information about a layout definition extracted from @SGLayout property.
+ */
+data class BrsLayoutInfo(
+    /**
+     * The property name (e.g., "layout").
+     */
+    val propertyName: String,
+
+    /**
+     * The top-level nodes declared in the layout DSL.
+     */
+    val nodes: List<NodeEntryInfo>,
+
+    /**
+     * Flattened list of all node IDs for accessor generation.
+     */
+    val allNodeIds: List<String>
+)
+
+/**
  * Metadata about a SceneGraph component extracted from a Kotlin class.
  *
  * This captures all information needed to generate both the XML component
@@ -45,7 +97,13 @@ data class BrsComponentInfo(
     /**
      * Additional script URIs to include.
      */
-    val additionalScripts: List<String> = emptyList()
+    val additionalScripts: List<String> = emptyList(),
+
+    /**
+     * Layout information extracted from @SGLayout property, if present.
+     * Contains the DSL-declared node hierarchy for XML <children> generation.
+     */
+    val layout: BrsLayoutInfo? = null
 )
 
 /**

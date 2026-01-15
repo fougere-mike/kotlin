@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.fir.backend.Fir2IrVisibilityConverter
 import org.jetbrains.kotlin.fir.pipeline.Fir2IrActualizedResult
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.pipeline.FirResult
+import org.jetbrains.kotlin.cli.brs.extensions.BrsFirExtensionRegistrar
 import org.jetbrains.kotlin.fir.pipeline.ModuleCompilerAnalyzedOutput
 import org.jetbrains.kotlin.fir.pipeline.buildResolveAndCheckFirFromKtFiles
 import org.jetbrains.kotlin.fir.pipeline.convertToIrAndActualize
@@ -127,7 +128,8 @@ object BrsFirFrontendFacade {
         }
 
         // Create FIR session using prepareBrsSessions
-        val extensionRegistrars = FirExtensionRegistrar.getInstances(project)
+        // Include BRS-specific extension registrar along with any project-level registrars
+        val extensionRegistrars = FirExtensionRegistrar.getInstances(project) + BrsFirExtensionRegistrar()
 
         try {
             // Use the new prepareBrsSessions function to create sessions

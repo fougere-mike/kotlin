@@ -30,6 +30,7 @@ dependencies {
     implementation(project(":compiler:fir:cones"))
     implementation(project(":compiler:fir:tree"))
     implementation(project(":compiler:fir:resolve"))
+    implementation(project(":compiler:fir:checkers:checkers.brs"))  // For BRS FIR extensions
 
     // These must be implementation (not compileOnly) for the fat JAR to include them
     implementation(intellijCore())

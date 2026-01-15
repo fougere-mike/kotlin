@@ -548,4 +548,27 @@ class BrsIntrinsics(
             BrsStandardClassIds.BASE_BRS_PACKAGE.asString()
         ).firstOrNull()
     }
+
+    // =============================================================================
+    // SceneGraph Layout DSL Support
+    // =============================================================================
+
+    /**
+     * FqName for the @SGLayout annotation.
+     */
+    private val sgLayoutFqn = FqName("kotlin.brs.scenegraph.SGLayout")
+
+    /**
+     * Check if a property has the @SGLayout annotation.
+     */
+    fun hasSGLayoutAnnotation(property: org.jetbrains.kotlin.ir.declarations.IrProperty): Boolean {
+        return property.hasAnnotation(sgLayoutFqn)
+    }
+
+    /**
+     * Check if a function has the @SGLayout annotation.
+     */
+    fun hasSGLayoutAnnotation(function: IrSimpleFunction): Boolean {
+        return function.hasAnnotation(sgLayoutFqn)
+    }
 }

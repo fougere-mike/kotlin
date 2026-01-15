@@ -1171,9 +1171,41 @@ class BrsCompiler(
             builder.appendLine("""    <script type="text/brightscript" uri="$script" />""")
         }
 
+        // Generate children section from @SGLayout DSL
+        val layout = component.layout
+        if (layout != null && layout.nodes.isNotEmpty()) {
+            builder.appendLine("    <children>")
+            for (child in layout.nodes) {
+                generateNodeXml(child, builder, indent = "        ")
+            }
+            builder.appendLine("    </children>")
+        }
+
         builder.appendLine("</component>")
 
         return builder.toString()
+    }
+
+    /**
+     * Generate XML for a single node entry and its children.
+     */
+    private fun generateNodeXml(node: NodeEntryInfo, builder: StringBuilder, indent: String) {
+        builder.append("$indent<${node.nodeType} id=\"${node.id}\"")
+
+        // Add all attributes
+        for ((key, value) in node.attributes) {
+            builder.append(" $key=\"$value\"")
+        }
+
+        if (node.children.isEmpty()) {
+            builder.appendLine("/>")
+        } else {
+            builder.appendLine(">")
+            for (child in node.children) {
+                generateNodeXml(child, builder, "$indent    ")
+            }
+            builder.appendLine("$indent</${node.nodeType}>")
+        }
     }
 
     /**

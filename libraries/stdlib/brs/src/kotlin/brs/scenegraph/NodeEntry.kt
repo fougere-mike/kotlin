@@ -17,31 +17,41 @@ import kotlin.jvm.JvmInline
 public annotation class SGNodeDsl
 
 /**
- * Marks a property as a SceneGraph layout definition.
+ * Marks a companion object function as a SceneGraph layout definition.
  *
- * Properties annotated with @SGLayout are processed by the compiler to:
+ * Functions annotated with @SGLayout are processed by the compiler to:
  * 1. Generate the XML `<children>` section for the component
- * 2. Generate a typed layout accessor class with lazy-cached node references
+ * 2. Generate a nested `Layout` class on the outer class with typed node accessors
+ *
+ * The compiler inspects the DSL body to extract node IDs from calls like `button(id = "xyz")`.
+ * For each node ID found, a property is generated in the `Layout` class that returns
+ * an `RoSGNode` reference, lazily looked up via `findNode()`.
  *
  * Example:
  * ```kotlin
  * class MainScreen : SceneNodeComponent() {
- *     @SGLayout
- *     val layout = sceneLayout {
- *         layoutGroup(id = "mainLayout") {
- *             button(id = "myButton", text = "Click me")
- *             label(id = "myLabel", text = "Hello")
+ *     companion object {
+ *         @SGLayout
+ *         fun defineLayout() = sceneLayout {
+ *             layoutGroup(id = "mainLayout") {
+ *                 button(id = "myButton", text = "Click me")
+ *                 label(id = "myLabel", text = "Hello")
+ *             }
  *         }
  *     }
+ *
+ *     // Compiler generates: class Layout(top: RoSGNode) { val mainLayout, myButton, myLabel: RoSGNode }
+ *     val layout = Layout(top)
  *
  *     init {
  *         // Type-safe access to declared nodes
  *         layout.myButton.observeField("buttonSelected", "onButtonSelected")
+ *         layout.myLabel.setField("text", "Updated")
  *     }
  * }
  * ```
  */
-@Target(AnnotationTarget.PROPERTY)
+@Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.BINARY)
 public annotation class SGLayout
 
