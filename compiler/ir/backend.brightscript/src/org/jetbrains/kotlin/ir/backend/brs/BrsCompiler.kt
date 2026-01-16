@@ -1189,7 +1189,19 @@ class BrsCompiler(
         // Add script references AFTER interface so fields are defined before init() runs
         // Dependencies first (stdlib, etc.) so functions are available when component init() runs
         for (dep in dependencies.sorted()) {
-            builder.appendLine("""    <script type="text/brightscript" uri="pkg:/source/$dep" />""")
+            // Layout files go to component directory, others to source
+            val depBaseName = dep.removeSuffix("Kt.brs")
+            val uri = if (depBaseName.endsWith("_Layout")) {
+                val possibleComponent = depBaseName.removeSuffix("_Layout")
+                if (possibleComponent == component.name) {
+                    "pkg:/components/${component.name}/$dep"
+                } else {
+                    "pkg:/source/$dep"
+                }
+            } else {
+                "pkg:/source/$dep"
+            }
+            builder.appendLine("""    <script type="text/brightscript" uri="$uri" />""")
         }
 
         // Component's own BRS file LAST (can now call stdlib functions in init())
@@ -1301,9 +1313,20 @@ class BrsCompiler(
                 val fileName = File(output.outputFilePath).name
                 val baseName = fileName.removeSuffix("Kt.brs")
 
-                val outputFile = if (componentNames.contains(baseName)) {
+                // Check for exact component match OR layout file for a component
+                val componentName = when {
+                    componentNames.contains(baseName) -> baseName
+                    baseName.endsWith("_Layout") -> {
+                        // Check if this is a layout file for a known component
+                        val possibleComponent = baseName.removeSuffix("_Layout")
+                        if (componentNames.contains(possibleComponent)) possibleComponent else null
+                    }
+                    else -> null
+                }
+
+                val outputFile = if (componentName != null) {
                     // Component BRS goes to components/<ComponentName>/
-                    val componentDir = File(componentsDir, baseName)
+                    val componentDir = File(componentsDir, componentName)
                     componentDir.mkdirs()
                     File(componentDir, fileName)
                 } else {
