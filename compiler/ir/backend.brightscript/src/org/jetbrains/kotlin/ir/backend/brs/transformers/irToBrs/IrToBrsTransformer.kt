@@ -2316,10 +2316,12 @@ class IrToBrsTransformer(
 
         // Also initialize property backing fields (may not be direct members of declarations)
         for (property in irClass.declarations.filterIsInstance<IrProperty>()) {
-            // Sanitize field name - LocalDeclarationsLowering uses $ prefix for captured vars
-            val fieldName = property.name.asString().replace("$", "_")
+            val backingField = property.backingField ?: continue
+            // Use backing field name, not property name - for delegated properties, the backing field
+            // is named <propertyName>$delegate (e.g., lazyValue$delegate)
+            val fieldName = backingField.name.asString().replace("$", "_")
             if (fieldName !in initializedFields) {
-                property.backingField?.initializer?.expression?.let { initializer ->
+                backingField.initializer?.expression?.let { initializer ->
                     val transformedInit = transformExpression(initializer)
                     // Consume hoisted statements from when-lowered blocks in the initializer
                     val hoisted = takeHoistedStatements()

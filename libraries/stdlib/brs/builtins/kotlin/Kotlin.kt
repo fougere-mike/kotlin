@@ -6,6 +6,7 @@
 package kotlin
 
 import kotlin.brs.BrsInline
+import kotlin.reflect.KProperty
 
 /**
  * Actual implementations of core Kotlin functions for BrightScript target.
@@ -311,6 +312,19 @@ private class UnsafeLazyImpl<out T>(private val initializer: () -> T) : Lazy<T> 
 }
 
 private object UNINITIALIZED_VALUE
+
+// ============================================
+// Lazy Delegate Support
+// ============================================
+
+/**
+ * An extension to delegate a read-only property of type [T] to an instance of [Lazy].
+ *
+ * This extension allows to use instances of Lazy for property delegation:
+ * `val property: String by lazy { initializer }`
+ */
+@Suppress("NOTHING_TO_INLINE")
+public inline operator fun <T> Lazy<T>.getValue(thisRef: Any?, property: KProperty<*>): T = value
 
 // ============================================
 // Structural Equality

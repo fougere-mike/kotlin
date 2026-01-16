@@ -32,6 +32,9 @@ import test.text.stringExtensionsTests
 // Standard function tests
 import test.standard.standardFunctionsTests
 
+// Lazy delegate tests
+import test.lazy.lazyDelegateTests
+
 // Roku API tests
 import test.roku.dateTimeTests
 import test.roku.jsonTests
@@ -65,6 +68,9 @@ fun main() {
 
         // Standard functions
         standardFunctionsTests()
+
+        // Lazy delegates
+        lazyDelegateTests()
 
         // Roku APIs
         dateTimeTests()
