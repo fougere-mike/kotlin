@@ -39,6 +39,16 @@ import org.jetbrains.kotlin.name.SpecialNames
 /**
  * FIR extension that generates a top-level Layout class for classes with @SGLayout companion functions.
  *
+ * @deprecated This FIR generator has been replaced by Gradle-based source generation.
+ * Layout classes are now generated as actual `.kt` source files by GenerateLayoutStubsTask
+ * in the kotlin-roku Gradle plugin. This provides:
+ * 1. Full IDE support (code completion, navigation, type checking)
+ * 2. No duplicate class conflicts
+ * 3. Easier debugging (can inspect generated source files)
+ *
+ * This file is kept for reference. See BrsFirExtensionRegistrar for the removal note.
+ *
+ * Original design:
  * For a class like:
  * ```kotlin
  * class MainScreen : SceneNodeComponent() {

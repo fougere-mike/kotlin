@@ -6,20 +6,23 @@
 package org.jetbrains.kotlin.cli.brs.extensions
 
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
-import org.jetbrains.kotlin.fir.extensions.brs.SceneGraphLayoutGenerator
 
 /**
  * FIR extension registrar for BrightScript-specific extensions.
  *
- * Registers the SceneGraph layout generator which creates synthetic
- * nested classes and properties for @SGLayout annotated properties.
+ * Note: SceneGraphLayoutGenerator has been removed.
+ * Layout classes (e.g., MainScreen_Layout) are now generated as actual Kotlin source files
+ * by the Gradle plugin's GenerateLayoutStubsTask. This provides:
+ * 1. Full IDE support (code completion, navigation, type checking)
+ * 2. No duplicate class conflicts between FIR-generated and source-generated classes
+ * 3. The IR backend (IrToBrsTransformer) still generates the optimized BrightScript
+ *    implementation with caching by detecting @SGLayout annotations.
  *
- * This registrar is in cli-brs (not checkers.brs) because FirExtensionRegistrar
- * is in fir:entrypoint, which would create a circular dependency if referenced
- * from checkers.brs.
+ * This registrar is kept for future FIR extensions (e.g., DSL validators, checkers).
  */
 class BrsFirExtensionRegistrar : FirExtensionRegistrar() {
     override fun ExtensionRegistrarContext.configurePlugin() {
-        +::SceneGraphLayoutGenerator
+        // Currently no FIR extensions registered.
+        // Layout class generation moved to Gradle plugin (GenerateLayoutStubsTask).
     }
 }

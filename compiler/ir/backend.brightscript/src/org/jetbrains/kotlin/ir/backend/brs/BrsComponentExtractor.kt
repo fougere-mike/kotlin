@@ -512,23 +512,8 @@ class BrsComponentExtractor(
      * Extract nodes from a layout function's body.
      */
     private fun extractLayoutNodesFromFunction(function: IrSimpleFunction): List<NodeEntryInfo> {
-        val body = function.body as? IrBlockBody ?: return emptyList()
-
-        // Find the return expression containing sceneLayout { } call
-        for (statement in body.statements) {
-            val returnExpr = statement as? IrReturn ?: continue
-            val sceneLayoutCall = returnExpr.value as? IrCall ?: continue
-            val calleeName = sceneLayoutCall.symbol.owner.name.asString()
-            if (calleeName != "sceneLayout") continue
-
-            // The lambda is the last argument
-            val lambdaArg = sceneLayoutCall.getValueArgument(sceneLayoutCall.valueArgumentsCount - 1)
-            val lambda = extractLambdaBody(lambdaArg) ?: continue
-
-            return extractNodesFromLambda(lambda)
-        }
-
-        // Also check for expression body (single expression function)
+        // Check for expression body (single expression function) first
+        // e.g., fun defineLayout() = sceneLayout { ... }
         val expressionBody = function.body as? IrExpressionBody
         if (expressionBody != null) {
             val sceneLayoutCall = expressionBody.expression as? IrCall ?: return emptyList()
@@ -537,6 +522,25 @@ class BrsComponentExtractor(
 
             val lambdaArg = sceneLayoutCall.getValueArgument(sceneLayoutCall.valueArgumentsCount - 1)
             val lambda = extractLambdaBody(lambdaArg) ?: return emptyList()
+
+            return extractNodesFromLambda(lambda)
+        }
+
+        // Check for block body with return statement
+        // e.g., fun defineLayout(): SceneLayout { return sceneLayout { ... } }
+        // Note: K2 compiles expression body functions to block body with return
+        val blockBody = function.body as? IrBlockBody ?: return emptyList()
+
+        // Find the return expression containing sceneLayout { } call
+        for (statement in blockBody.statements) {
+            val returnExpr = statement as? IrReturn ?: continue
+            val sceneLayoutCall = returnExpr.value as? IrCall ?: continue
+            val calleeName = sceneLayoutCall.symbol.owner.name.asString()
+            if (calleeName != "sceneLayout") continue
+
+            // The lambda is the last argument
+            val lambdaArg = sceneLayoutCall.getValueArgument(sceneLayoutCall.valueArgumentsCount - 1)
+            val lambda = extractLambdaBody(lambdaArg) ?: continue
 
             return extractNodesFromLambda(lambda)
         }
@@ -565,15 +569,26 @@ class BrsComponentExtractor(
      */
     private fun extractNodesFromLambda(body: IrBlockBody): List<NodeEntryInfo> {
         val nodes = mutableListOf<NodeEntryInfo>()
+        extractNodesFromStatements(body.statements, nodes)
+        return nodes
+    }
 
-        for (statement in body.statements) {
+    /**
+     * Recursively extract node entries from statements.
+     * Handles IrBlock wrappers that K2 generates around DSL calls.
+     */
+    private fun extractNodesFromStatements(statements: List<IrStatement>, nodes: MutableList<NodeEntryInfo>) {
+        for (statement in statements) {
+            // Handle IrBlock - the K2 compiler may wrap DSL calls in blocks
+            if (statement is IrBlock) {
+                extractNodesFromStatements(statement.statements, nodes)
+                continue
+            }
             val node = extractNodeFromStatement(statement)
             if (node != null) {
                 nodes.add(node)
             }
         }
-
-        return nodes
     }
 
     /**

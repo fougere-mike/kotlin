@@ -135,6 +135,19 @@ class BrsCompiler(
         // Validate @BrsStatic annotations before lowering
         validateBrsStaticAnnotations(irModule, context)
 
+        // Extract component information BEFORE lowering.
+        // Lowering phases transform lambdas and DSL calls, which would break
+        // the layout DSL extraction logic in BrsComponentExtractor.extractLayout().
+        val preExtractedComponents = mutableMapOf<String, BrsComponentInfo>()
+        for (file in irModule.files) {
+            for (irClass in file.declarations.filterIsInstance<IrClass>()) {
+                val componentInfo = componentExtractor.extractComponent(irClass)
+                if (componentInfo != null) {
+                    preExtractedComponents[componentInfo.name] = componentInfo
+                }
+            }
+        }
+
         // Run lowering phases
         val loweredModule = BrsLoweringPhases.lower(irModule, context)
 
@@ -146,8 +159,14 @@ class BrsCompiler(
         val componentDepsJson = mutableMapOf<String, String>()
         val functionManifest = mutableMapOf<String, String>()
 
+        // Track which file receives runtime helpers (for manifest)
+        var runtimeHelpersFile: String? = null
+
         for (file in loweredModule.files) {
             try {
+                // Check if this file will receive runtime helpers
+                val willReceiveHelpers = context.needsRuntimeHelpers && context.isStdlibCompilation
+
                 val output = compileFile(file, transformer, context)
                 outputs.add(output)
 
@@ -155,8 +174,14 @@ class BrsCompiler(
                 val outputFileName = File(file.path).nameWithoutExtension + "Kt.brs"
                 collectFunctionManifest(file, outputFileName, context, functionManifest)
 
-                // Generate component XML and deps.json for each component class in this file
-                generateComponentOutputForFile(file, componentExtractor, context).forEach { (name, xml, depsJson) ->
+                // If this file received runtime helpers, record it and add helper functions to manifest
+                if (willReceiveHelpers && !context.needsRuntimeHelpers) {
+                    runtimeHelpersFile = outputFileName
+                    addRuntimeHelperFunctionsToManifest(functionManifest, outputFileName)
+                }
+
+                // Generate component XML and deps.json using pre-extracted component info
+                generateComponentOutputForFile(file, preExtractedComponents, context).forEach { (name, xml, depsJson) ->
                     componentXml[name] = xml
                     componentDepsJson[name] = depsJson
                 }
@@ -305,6 +330,29 @@ class BrsCompiler(
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Add runtime helper function names to the manifest.
+     * These functions are generated directly as BrightScript (not from IR),
+     * so we need to add them manually to the manifest.
+     */
+    private fun addRuntimeHelperFunctionsToManifest(
+        manifest: MutableMap<String, String>,
+        outputFileName: String
+    ) {
+        // These must match the function names generated in addRuntimeHelpers()
+        val runtimeHelperNames = listOf(
+            "__kotlin_ushr",
+            "__kotlin_stringCompare",
+            "__kotlin_intCompare",
+            "__kotlin_nextObjectId",
+            "__kotlin_identityEquals",
+            "__kotlin_isInstanceOf"
+        )
+        for (name in runtimeHelperNames) {
+            manifest[name] = outputFileName
         }
     }
 
@@ -1011,33 +1059,40 @@ class BrsCompiler(
 
     /**
      * Generate component XML and deps.json for all component classes in a file.
+     *
+     * Uses pre-extracted component info (extracted before lowering) to ensure
+     * the @SGLayout DSL structure is preserved for XML generation.
+     *
+     * @param irFile The lowered IR file (used for dependency computation)
+     * @param preExtractedComponents Map of component name to pre-extracted BrsComponentInfo
+     * @param context The backend context
      */
     private fun generateComponentOutputForFile(
         irFile: IrFile,
-        extractor: BrsComponentExtractor,
+        preExtractedComponents: Map<String, BrsComponentInfo>,
         context: BrsIrBackendContext
     ): List<BrsComponentOutput> {
         val result = mutableListOf<BrsComponentOutput>()
 
-        // Find component classes in this file
-        val componentClasses = irFile.declarations.filterIsInstance<IrClass>()
-            .filter { extractor.isComponent(it) }
+        // Find component classes in this file by name match
+        // (the IrClass instances may differ between pre-lowered and lowered modules)
+        val componentClassNames = irFile.declarations.filterIsInstance<IrClass>()
+            .map { context.getBrsName(it) }
+            .filter { it in preExtractedComponents }
 
         // Compute dependencies once for all components in this file
         // (they share the same file path, so dependencies are the same)
         val dependencies = computeComponentDependencies(irFile.path, context)
 
-        for (componentClass in componentClasses) {
-            val componentInfo = extractor.extractComponent(componentClass)
-            if (componentInfo != null) {
-                val xml = generateComponentXmlContent(componentInfo, context, dependencies)
-                val depsJson = generateComponentDepsJson(
-                    componentInfo.name,
-                    dependencies,
-                    context.dependencyCollector.getRuntimeFunctions(irFile.path)
-                )
-                result.add(BrsComponentOutput(componentInfo.name, xml, depsJson))
-            }
+        for (componentName in componentClassNames) {
+            val componentInfo = preExtractedComponents[componentName] ?: continue
+            val xml = generateComponentXmlContent(componentInfo, context, dependencies)
+            val depsJson = generateComponentDepsJson(
+                componentInfo.name,
+                dependencies,
+                context.dependencyCollector.getRuntimeFunctions(irFile.path)
+            )
+            result.add(BrsComponentOutput(componentInfo.name, xml, depsJson))
         }
 
         return result
@@ -1046,6 +1101,7 @@ class BrsCompiler(
     /**
      * Compute the set of dependencies for a component file.
      * Resolves transitive dependencies from both stdlib and user code.
+     * Also resolves runtime functions (e.g., __kotlin_nextObjectId) to their source files.
      */
     private fun computeComponentDependencies(
         filePath: String,
@@ -1053,6 +1109,16 @@ class BrsCompiler(
     ): Set<String> {
         // Get direct dependencies from the collector
         val directDeps = context.dependencyCollector.getDependencies(filePath)
+
+        // Resolve runtime functions to their file locations
+        // Runtime functions like __kotlin_nextObjectId are defined in stdlib files (e.g., KotlinKt.brs)
+        // but are tracked separately. We need to include their source files in the dependencies.
+        val runtimeFunctionDeps = context.dependencyCollector.getRuntimeFunctions(filePath)
+            .mapNotNull { functionName -> context.dependencyFunctionManifest[functionName] }
+            .toSet()
+
+        // Merge runtime function files with direct deps
+        val allDirectDeps = directDeps + runtimeFunctionDeps
 
         // Build complete file deps graph by merging:
         // 1. Stdlib file deps (from klib)
@@ -1064,7 +1130,7 @@ class BrsCompiler(
         }
 
         // Resolve transitive dependencies using the merged graph
-        return resolveTransitiveDependencies(directDeps, mergedFileDeps)
+        return resolveTransitiveDependencies(allDirectDeps, mergedFileDeps)
     }
 
     /**

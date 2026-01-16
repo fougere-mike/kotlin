@@ -10,6 +10,10 @@ import org.jetbrains.kotlin.name.FqName
 
 /**
  * Predicates for identifying SceneGraph DSL elements in FIR.
+ *
+ * Note: Layout class generation has been moved to Gradle plugin (GenerateLayoutStubsTask).
+ * This file is kept for reference but is no longer used by the compiler.
+ * See BrsFirExtensionRegistrar for details.
  */
 object SceneGraphPredicates {
     private val SGLAYOUT_FQN = FqName("kotlin.brs.scenegraph.SGLayout")

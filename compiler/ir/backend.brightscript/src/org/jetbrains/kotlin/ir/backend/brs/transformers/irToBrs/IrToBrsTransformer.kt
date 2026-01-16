@@ -549,11 +549,14 @@ class IrToBrsTransformer(
         declarations: MutableList<BrsDeclaration>,
         statements: MutableList<BrsStatement>
     ) {
-        // Skip FIR-generated top-level Layout classes (e.g., MainScreen_Layout)
-        // These are synthetic classes created by SceneGraphLayoutGenerator.
+        // Skip top-level Layout classes (e.g., MainScreen_Layout)
+        // These can be:
+        // 1. FIR-generated (from SceneGraphLayoutGenerator - legacy)
+        // 2. Gradle-generated stubs (from GenerateLayoutStubsTask)
+        //
         // The actual BrightScript implementation is generated via generateLayoutAccessorClass()
-        // when processing the owner component class.
-        if (isFirGeneratedTopLevelLayoutClass(irClass)) {
+        // when processing the owner component class (which has the @SGLayout annotation).
+        if (isLayoutStubClass(irClass)) {
             return
         }
 
@@ -681,12 +684,8 @@ class IrToBrsTransformer(
             }
 
             // Process nested classes (companion objects, etc.)
-            // Skip FIR-generated Layout class if we already generated our own layout accessor
+            // Note: Layout stubs are handled at the top level by isLayoutStubClass()
             for (nested in irClass.declarations.filterIsInstance<IrClass>()) {
-                // Skip the FIR-generated Layout class - we already generated our own implementation
-                if (layoutInfo != null && nested.name.asString() == "Layout" && isFirGeneratedLayoutClass(nested)) {
-                    continue
-                }
                 val nestedDeclarations = mutableListOf<BrsDeclaration>()
                 val nestedStatements = mutableListOf<BrsStatement>()
                 transformClassDeclarations(nested, nestedDeclarations, nestedStatements)
@@ -993,12 +992,11 @@ class IrToBrsTransformer(
     }
 
     /**
-     * Check if a class is the FIR-generated Layout class (from SceneGraphLayoutGenerator).
-     * These have origin IrDeclarationOrigin.GeneratedByPlugin with the SGLayoutKey.
+     * Check if a class is a FIR-generated Layout class.
      *
-     * Supports both:
-     * 1. Top-level class: `MainScreen_Layout` (new pattern)
-     * 2. Nested class: `MainScreen.Layout` (legacy pattern)
+     * Note: FIR generation via SceneGraphLayoutGenerator has been removed.
+     * This function is kept for backwards compatibility with any existing
+     * compiled artifacts that may still have FIR-generated Layout classes.
      */
     private fun isFirGeneratedLayoutClass(irClass: IrClass): Boolean {
         val origin = irClass.origin
@@ -1013,6 +1011,26 @@ class IrToBrsTransformer(
         return isFirGeneratedLayoutClass(irClass) &&
                irClass.name.asString().endsWith("_Layout") &&
                irClass.parent !is IrClass
+    }
+
+    /**
+     * Check if a class is a Layout stub class that should be skipped.
+     *
+     * Only FIR-generated Layout classes are skipped (legacy path - now removed).
+     * Gradle-generated Layout stubs are compiled normally since user code
+     * may reference them directly (e.g., `val layout = MainScreen_Layout(top)`).
+     */
+    private fun isLayoutStubClass(irClass: IrClass): Boolean {
+        // Must be a top-level class (not nested)
+        if (irClass.parent is IrClass) return false
+
+        // Must have name ending with _Layout
+        val className = irClass.name.asString()
+        if (!className.endsWith("_Layout")) return false
+
+        // Only skip FIR-generated classes (legacy path - no longer generated)
+        // Gradle-generated stubs should be compiled normally
+        return isFirGeneratedLayoutClass(irClass)
     }
 
     /**
@@ -1184,12 +1202,20 @@ class IrToBrsTransformer(
 
     /**
      * Generate a getter function for a specific node ID.
+     *
+     * Generates code that:
+     * 1. Lazily looks up the node on first access
+     * 2. Caches the result for subsequent accesses
+     * 3. Throws a descriptive error if the node is not found
      */
     private fun generateLayoutNodeGetter(className: String, nodeId: String): BrsFunction {
         val statements = mutableListOf<BrsStatement>()
 
         // if this._nodeId = invalid then
         //     this._nodeId = this._top.findNode("nodeId")
+        //     if this._nodeId = invalid then
+        //         throw "Layout node 'nodeId' not found in component"
+        //     end if
         // end if
         statements.add(
             BrsIf(
@@ -1199,6 +1225,7 @@ class IrToBrsTransformer(
                     BrsInvalidLiteral()
                 ),
                 thenBranch = BrsBlock(mutableListOf(
+                    // this._nodeId = this._top.findNode("nodeId")
                     BrsExpressionStatement(
                         BrsBinaryOp(
                             BrsDotAccess(BrsIdentifier("this"), "_$nodeId"),
@@ -1209,6 +1236,18 @@ class IrToBrsTransformer(
                                 mutableListOf(BrsStringLiteral(nodeId))
                             )
                         )
+                    ),
+                    // if this._nodeId = invalid then throw "..." end if
+                    BrsIf(
+                        condition = BrsBinaryOp(
+                            BrsDotAccess(BrsIdentifier("this"), "_$nodeId"),
+                            BrsBinaryOperator.EQ,
+                            BrsInvalidLiteral()
+                        ),
+                        thenBranch = BrsBlock(mutableListOf(
+                            BrsThrow(BrsStringLiteral("Layout node '$nodeId' not found in component"))
+                        )),
+                        elseBranch = null
                     )
                 )),
                 elseBranch = null
