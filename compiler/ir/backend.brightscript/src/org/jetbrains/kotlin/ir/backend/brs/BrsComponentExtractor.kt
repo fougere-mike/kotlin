@@ -673,6 +673,10 @@ class BrsComponentExtractor(
 
     /**
      * Extract the value of an attribute from an IR expression.
+     *
+     * K2 (FIR) may introduce temporary variables for named arguments, wrapping
+     * the actual values. This method handles both direct values and these
+     * variable indirections by tracing through to the initializer.
      */
     private fun extractAttributeValue(expr: IrExpression, paramName: String): String? {
         return when (expr) {
@@ -689,6 +693,17 @@ class BrsComponentExtractor(
                     }
                 }
                 if (elements.isNotEmpty()) "[${elements.joinToString(", ")}]" else null
+            }
+            // Handle K2's temporary variable indirection for named arguments
+            is IrGetValue -> {
+                val owner = expr.symbol.owner
+                if (owner is IrVariable) {
+                    val initializer = owner.initializer
+                    if (initializer != null) {
+                        // Recursively extract from the initializer
+                        extractAttributeValue(initializer, paramName)
+                    } else null
+                } else null
             }
             else -> null
         }
