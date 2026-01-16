@@ -549,6 +549,14 @@ class IrToBrsTransformer(
         declarations: MutableList<BrsDeclaration>,
         statements: MutableList<BrsStatement>
     ) {
+        // Skip FIR-generated top-level Layout classes (e.g., MainScreen_Layout)
+        // These are synthetic classes created by SceneGraphLayoutGenerator.
+        // The actual BrightScript implementation is generated via generateLayoutAccessorClass()
+        // when processing the owner component class.
+        if (isFirGeneratedTopLevelLayoutClass(irClass)) {
+            return
+        }
+
         // Handle object singletons specially
         if (irClass.kind == ClassKind.OBJECT) {
             // Skip @BrsConstant objects - their properties are inlined at usage sites
@@ -957,15 +965,27 @@ class IrToBrsTransformer(
     /**
      * Check if a property has the generated Layout class type.
      *
-     * This is used to identify properties like `val layout = Layout(top)` that should
+     * This is used to identify properties like `val layout = MainScreen_Layout(top)` that should
      * be initialized via the generated Layout_create function instead of direct constructor call.
+     *
+     * Supports two patterns:
+     * 1. Top-level class: `MainScreen_Layout` (new pattern)
+     * 2. Nested class: `MainScreen.Layout` (legacy pattern, for backwards compatibility)
      */
     private fun isLayoutClassProperty(property: IrProperty, ownerClass: IrClass): Boolean {
         val propertyType = property.getter?.returnType ?: property.backingField?.type ?: return false
         val typeClass = propertyType.classOrNull?.owner ?: return false
 
-        // Check if the type is a nested class named "Layout" within the owner class
-        if (typeClass.name.asString() == "Layout" && typeClass.parent == ownerClass) {
+        val ownerClassName = ownerClass.name.asString()
+        val typeClassName = typeClass.name.asString()
+
+        // New pattern: top-level class named OwnerClassName_Layout
+        if (typeClassName == "${ownerClassName}_Layout" && typeClass.parent !is IrClass) {
+            return true
+        }
+
+        // Legacy pattern: nested class named "Layout" within the owner class
+        if (typeClassName == "Layout" && typeClass.parent == ownerClass) {
             return true
         }
 
@@ -975,11 +995,24 @@ class IrToBrsTransformer(
     /**
      * Check if a class is the FIR-generated Layout class (from SceneGraphLayoutGenerator).
      * These have origin IrDeclarationOrigin.GeneratedByPlugin with the SGLayoutKey.
+     *
+     * Supports both:
+     * 1. Top-level class: `MainScreen_Layout` (new pattern)
+     * 2. Nested class: `MainScreen.Layout` (legacy pattern)
      */
     private fun isFirGeneratedLayoutClass(irClass: IrClass): Boolean {
         val origin = irClass.origin
         return origin is IrDeclarationOrigin.GeneratedByPlugin &&
                origin.pluginId.contains("SGLayoutKey")
+    }
+
+    /**
+     * Check if a class is a FIR-generated top-level Layout class.
+     */
+    private fun isFirGeneratedTopLevelLayoutClass(irClass: IrClass): Boolean {
+        return isFirGeneratedLayoutClass(irClass) &&
+               irClass.name.asString().endsWith("_Layout") &&
+               irClass.parent !is IrClass
     }
 
     /**
