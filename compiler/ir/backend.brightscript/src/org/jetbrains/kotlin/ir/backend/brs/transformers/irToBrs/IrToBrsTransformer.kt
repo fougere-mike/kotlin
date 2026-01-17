@@ -971,7 +971,7 @@ class IrToBrsTransformer(
      * 1. Top-level class: `MainScreen_Layout` (new pattern)
      * 2. Nested class: `MainScreen.Layout` (legacy pattern, for backwards compatibility)
      */
-    private fun isLayoutClassProperty(property: IrProperty, ownerClass: IrClass): Boolean {
+    internal fun isLayoutClassProperty(property: IrProperty, ownerClass: IrClass): Boolean {
         val propertyType = property.getter?.returnType ?: property.backingField?.type ?: return false
         val typeClass = propertyType.classOrNull?.owner ?: return false
 
@@ -1116,11 +1116,11 @@ class IrToBrsTransformer(
      *     return instance
      * end function
      *
-     * function MainScreen_Layout_get_mainLayout(this)
-     *     if this._mainLayout = invalid then
-     *         this._mainLayout = this._top.findNode("mainLayout")
+     * function MainScreen_Layout_get_mainLayout()
+     *     if m._mainLayout = invalid then
+     *         m._mainLayout = m._top.findNode("mainLayout")
      *     end if
-     *     return this._mainLayout
+     *     return m._mainLayout
      * end function
      * ```
      */
@@ -1211,36 +1211,36 @@ class IrToBrsTransformer(
     private fun generateLayoutNodeGetter(className: String, nodeId: String): BrsFunction {
         val statements = mutableListOf<BrsStatement>()
 
-        // if this._nodeId = invalid then
-        //     this._nodeId = this._top.findNode("nodeId")
-        //     if this._nodeId = invalid then
+        // if m._nodeId = invalid then
+        //     m._nodeId = m._top.findNode("nodeId")
+        //     if m._nodeId = invalid then
         //         throw "Layout node 'nodeId' not found in component"
         //     end if
         // end if
         statements.add(
             BrsIf(
                 condition = BrsBinaryOp(
-                    BrsDotAccess(BrsIdentifier("this"), "_$nodeId"),
+                    BrsDotAccess(BrsMRef(), "_$nodeId"),
                     BrsBinaryOperator.EQ,
                     BrsInvalidLiteral()
                 ),
                 thenBranch = BrsBlock(mutableListOf(
-                    // this._nodeId = this._top.findNode("nodeId")
+                    // m._nodeId = m._top.findNode("nodeId")
                     BrsExpressionStatement(
                         BrsBinaryOp(
-                            BrsDotAccess(BrsIdentifier("this"), "_$nodeId"),
+                            BrsDotAccess(BrsMRef(), "_$nodeId"),
                             BrsBinaryOperator.EQ,
                             BrsMethodCall(
-                                BrsDotAccess(BrsIdentifier("this"), "_top"),
+                                BrsDotAccess(BrsMRef(), "_top"),
                                 "findNode",
                                 mutableListOf(BrsStringLiteral(nodeId))
                             )
                         )
                     ),
-                    // if this._nodeId = invalid then throw "..." end if
+                    // if m._nodeId = invalid then throw "..." end if
                     BrsIf(
                         condition = BrsBinaryOp(
-                            BrsDotAccess(BrsIdentifier("this"), "_$nodeId"),
+                            BrsDotAccess(BrsMRef(), "_$nodeId"),
                             BrsBinaryOperator.EQ,
                             BrsInvalidLiteral()
                         ),
@@ -1254,12 +1254,12 @@ class IrToBrsTransformer(
             )
         )
 
-        // return this._nodeId
-        statements.add(BrsReturn(BrsDotAccess(BrsIdentifier("this"), "_$nodeId")))
+        // return m._nodeId
+        statements.add(BrsReturn(BrsDotAccess(BrsMRef(), "_$nodeId")))
 
         return BrsFunction(
             name = "${className}_get_$nodeId",
-            parameters = mutableListOf(BrsParameter("this", BrsType.OBJECT)),
+            parameters = mutableListOf(),  // No parameters - uses m scope
             returnType = BrsType.OBJECT,
             body = BrsBlock(statements)
         )
@@ -5413,7 +5413,13 @@ class IrExpressionToBrsTransformer(
                                 BrsDotAccess(BrsDotAccess(BrsMRef(), "top"), fieldName)
                             } else {
                                 // Internal state - access via m
-                                BrsDotAccess(BrsMRef(), fieldName)
+                                // Layout properties are stored with underscore prefix (see layout initialization code)
+                                val actualFieldName = if (parent.isLayoutClassProperty(property, parentClass)) {
+                                    "_$fieldName"
+                                } else {
+                                    fieldName
+                                }
+                                BrsDotAccess(BrsMRef(), actualFieldName)
                             }
                         }
                     }
@@ -5455,7 +5461,13 @@ class IrExpressionToBrsTransformer(
                                 BrsDotAccess(BrsDotAccess(BrsMRef(), "top"), fieldName)
                             } else {
                                 // Internal state - access via m
-                                BrsDotAccess(BrsMRef(), fieldName)
+                                // Layout properties are stored with underscore prefix (see layout initialization code)
+                                val actualFieldName = if (parent.isLayoutClassProperty(property, parentClass)) {
+                                    "_$fieldName"
+                                } else {
+                                    fieldName
+                                }
+                                BrsDotAccess(BrsMRef(), actualFieldName)
                             }
                             return BrsBinaryOp(target, BrsBinaryOperator.EQ, value)
                         }
