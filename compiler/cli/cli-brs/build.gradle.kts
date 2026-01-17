@@ -64,7 +64,8 @@ kotlin {
         freeCompilerArgs.addAll(
             "-opt-in=org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI",
             "-opt-in=org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI",
-            "-opt-in=org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi"
+            "-opt-in=org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi",
+            "-opt-in=org.jetbrains.kotlin.DeprecatedForRemovalCompilerApi"
         )
     }
 }

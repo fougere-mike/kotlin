@@ -57,6 +57,14 @@ import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
+import org.jetbrains.kotlin.ir.types.isInt
+import org.jetbrains.kotlin.ir.types.isLong
+import org.jetbrains.kotlin.ir.types.isFloat
+import org.jetbrains.kotlin.ir.types.isDouble
+import org.jetbrains.kotlin.ir.types.isShort
+import org.jetbrains.kotlin.ir.types.isByte
+import org.jetbrains.kotlin.ir.types.isBoolean
+import org.jetbrains.kotlin.ir.types.isChar
 import org.jetbrains.kotlin.descriptors.ClassKind
 
 /**
@@ -774,7 +782,51 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
 
                 override fun visitCall(expression: IrCall) {
                     val calledFunction = expression.symbol.owner
-                    val calledBrsName = context.getBrsName(calledFunction)
+                    var calledBrsName = context.getBrsName(calledFunction)
+
+                    // For method calls on primitives, the BRS code generator transforms them into
+                    // function calls with the receiver as the first argument, using extension function
+                    // naming: functionName_rReceiverType_ParamTypes_k_
+                    //
+                    // The issue is getBrsName returns a name based on the function's parent class (e.g., Int_rangeTo_I_k_),
+                    // but the code generator uses the receiver type to build the function name (e.g., rangeTo_rI_I_k_).
+                    //
+                    // We need to match this behavior for correct dependency tracking.
+                    val primitiveClassPrefixes = listOf("Int_", "Long_", "Float_", "Double_", "Short_", "Byte_", "Boolean_", "Char_")
+                    val hasWrongClassPrefix = primitiveClassPrefixes.any { calledBrsName.startsWith(it) }
+
+                    // Check for dispatch receiver (method call on an object)
+                    val dispatchReceiver = expression.dispatchReceiver
+                    if (hasWrongClassPrefix && dispatchReceiver != null) {
+                        val receiverType = dispatchReceiver.type
+                        // Check if receiver is a primitive type
+                        val isPrimitiveReceiver = receiverType.isInt() || receiverType.isLong() ||
+                            receiverType.isFloat() || receiverType.isDouble() ||
+                            receiverType.isShort() || receiverType.isByte() ||
+                            receiverType.isBoolean() || receiverType.isChar()
+
+                        if (isPrimitiveReceiver) {
+                            // Rebuild the function name with correct format:
+                            // functionName_rReceiverType_ParamTypes_k_
+                            val rawName = calledFunction.name.asString()
+
+                            // Build signature parts
+                            val signatureParts = mutableListOf<String>()
+
+                            // Add receiver type with 'r' prefix
+                            signatureParts.add("r" + context.typeToMangledString(receiverType))
+
+                            // Add parameter types
+                            calledFunction.valueParameters.forEach { param ->
+                                signatureParts.add(context.typeToMangledString(param.type))
+                            }
+
+                            // Build the full name (no return type)
+                            val signature = signatureParts.joinToString("_")
+                            calledBrsName = "${rawName}_${signature}_k_"
+                        }
+                    }
+
                     val targetFile = functionManifest[calledBrsName]
                     if (targetFile != null && targetFile != thisFileName) {
                         deps.add(targetFile)
