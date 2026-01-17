@@ -115,6 +115,13 @@ class IrToBrsTransformer(
     internal var currentComponentClass: IrClass? = null
 
     /**
+     * Flag to indicate we're inside a lambda that was created in component context.
+     * When true, component state accesses use m._componentM instead of m directly,
+     * because 'm' inside the lambda refers to the closure object, not the component.
+     */
+    internal var isInComponentLambda: Boolean = false
+
+    /**
      * The current file path being transformed.
      * Used for dependency tracking - we record which files each source depends on.
      */
@@ -204,6 +211,23 @@ class IrToBrsTransformer(
     fun clearHoistedScopes() {
         hoistedScopes.clear()
         hoistedScopes.add(mutableListOf()) // Reset to global scope
+    }
+
+    /**
+     * Get the correct BrightScript expression to access the component's 'm' reference.
+     *
+     * When inside a lambda in component context, 'm' refers to the closure object,
+     * not the component. In this case, we use 'm._componentM' to access the captured
+     * component reference. Otherwise, we use 'm' directly.
+     */
+    fun getComponentMRef(): BrsExpression {
+        return if (isInComponentLambda) {
+            // Inside a lambda, access the captured component m via m._componentM
+            BrsDotAccess(BrsMRef(), "_componentM")
+        } else {
+            // Direct m access when not in a lambda
+            BrsMRef()
+        }
     }
 
     /**
@@ -683,6 +707,13 @@ class IrToBrsTransformer(
                 }
             }
 
+            // Generate property accessor functions (for delegated properties, custom getters/setters, etc.)
+            for (property in irClass.declarations.filterIsInstance<IrProperty>()) {
+                if (context.intrinsics.isComponentScopeProperty(property.name.asString())) continue
+                if (layoutInfo != null && isLayoutClassProperty(property, irClass)) continue
+                transformProperty(property, declarations, mutableListOf())
+            }
+
             // Process nested classes (companion objects, etc.)
             // Note: Layout stubs are handled at the top level by isLayoutStubClass()
             for (nested in irClass.declarations.filterIsInstance<IrClass>()) {
@@ -743,8 +774,9 @@ class IrToBrsTransformer(
                 continue
             }
 
-            val fieldName = property.name.asString().replace("$", "_")
-            property.backingField?.initializer?.expression?.let { initializer ->
+            val backingField = property.backingField ?: continue
+            val fieldName = backingField.name.asString().replace("$", "_")
+            backingField.initializer?.expression?.let { initializer ->
                 val transformedInit = transformExpression(initializer)
                 val hoisted = takeHoistedStatements()
                 bodyStatements.addAll(hoisted)
@@ -802,6 +834,44 @@ class IrToBrsTransformer(
                     )
                 )
             )
+        }
+
+        // Attach property accessor methods to m
+        for (property in irClass.declarations.filterIsInstance<IrProperty>()) {
+            if (context.intrinsics.isComponentScopeProperty(property.name.asString())) continue
+            if (layoutInfo != null && isLayoutClassProperty(property, irClass)) continue
+
+            property.getter?.let { getter ->
+                if (!getter.isFakeOverride) {
+                    val getterName = context.getBrsName(getter)
+                    val shortName = getterName.removePrefix("${className}_")
+                    bodyStatements.add(
+                        BrsExpressionStatement(
+                            BrsBinaryOp(
+                                BrsDotAccess(BrsMRef(), shortName),
+                                BrsBinaryOperator.EQ,
+                                BrsIdentifier(getterName)
+                            )
+                        )
+                    )
+                }
+            }
+
+            property.setter?.let { setter ->
+                if (!setter.isFakeOverride) {
+                    val setterName = context.getBrsName(setter)
+                    val shortName = setterName.removePrefix("${className}_")
+                    bodyStatements.add(
+                        BrsExpressionStatement(
+                            BrsBinaryOp(
+                                BrsDotAccess(BrsMRef(), shortName),
+                                BrsBinaryOperator.EQ,
+                                BrsIdentifier(setterName)
+                            )
+                        )
+                    )
+                }
+            }
         }
 
         // Extract init block statements from IrAnonymousInitializer declarations on the class
@@ -5395,22 +5465,33 @@ class IrExpressionToBrsTransformer(
 
                     // Special handling for SceneGraph component scope properties (top, global, m)
                     // When in component context, these compile to m.top, m.global, m
+                    // When inside a lambda, use getComponentMRef() to get the captured component reference
                     if (parent.isInComponentContext && context.intrinsics.isComponentScopeProperty(fieldName)) {
+                        val componentM = parent.getComponentMRef()
                         return when (fieldName) {
-                            "m" -> BrsMRef()  // Just m
-                            else -> BrsDotAccess(BrsMRef(), fieldName)  // m.top, m.global
+                            "m" -> componentM  // Just m (or m._componentM in lambda)
+                            else -> BrsDotAccess(componentM, fieldName)  // m.top, m.global
                         }
                     }
 
                     // Handle user-defined properties in component context
                     // Interface fields (with @SGField or @BrsField) compile to m.top.fieldName
                     // Internal state (no annotation) compiles to m.fieldName
+                    // Delegated properties must call the getter to unwrap the delegate
+                    // When inside a lambda, use getComponentMRef() to get the captured component reference
                     if (parent.isInComponentContext && property != null && backingField != null) {
                         val parentClass = function.parent as? IrClass
                         if (parentClass != null && context.intrinsics.isSceneGraphComponent(parentClass)) {
+                            val componentM = parent.getComponentMRef()
+
+                            // Delegated properties must call the getter to unwrap the delegate
+                            if (property.isDelegated) {
+                                return BrsMethodCall(componentM, "get_${fieldName}_k_", mutableListOf())
+                            }
+
                             return if (hasInterfaceFieldAnnotation(property)) {
                                 // Interface field - access via m.top
-                                BrsDotAccess(BrsDotAccess(BrsMRef(), "top"), fieldName)
+                                BrsDotAccess(BrsDotAccess(componentM, "top"), fieldName)
                             } else {
                                 // Internal state - access via m
                                 // Layout properties are stored with underscore prefix (see layout initialization code)
@@ -5419,7 +5500,7 @@ class IrExpressionToBrsTransformer(
                                 } else {
                                     fieldName
                                 }
-                                BrsDotAccess(BrsMRef(), actualFieldName)
+                                BrsDotAccess(componentM, actualFieldName)
                             }
                         }
                     }
@@ -5453,12 +5534,21 @@ class IrExpressionToBrsTransformer(
                     // Handle user-defined properties in component context
                     // Interface fields (with @SGField or @BrsField) compile to m.top.fieldName = value
                     // Internal state (no annotation) compiles to m.fieldName = value
+                    // Delegated properties must call the setter
+                    // When inside a lambda, use getComponentMRef() to get the captured component reference
                     if (parent.isInComponentContext && property != null && backingField != null) {
                         val parentClass = function.parent as? IrClass
                         if (parentClass != null && context.intrinsics.isSceneGraphComponent(parentClass)) {
+                            val componentM = parent.getComponentMRef()
+
+                            // Delegated properties must call the setter
+                            if (property.isDelegated) {
+                                return BrsMethodCall(componentM, "set_${fieldName}_k_", mutableListOf(value))
+                            }
+
                             val target = if (hasInterfaceFieldAnnotation(property)) {
                                 // Interface field - access via m.top
-                                BrsDotAccess(BrsDotAccess(BrsMRef(), "top"), fieldName)
+                                BrsDotAccess(BrsDotAccess(componentM, "top"), fieldName)
                             } else {
                                 // Internal state - access via m
                                 // Layout properties are stored with underscore prefix (see layout initialization code)
@@ -5467,7 +5557,7 @@ class IrExpressionToBrsTransformer(
                                 } else {
                                     fieldName
                                 }
-                                BrsDotAccess(BrsMRef(), actualFieldName)
+                                BrsDotAccess(componentM, actualFieldName)
                             }
                             return BrsBinaryOp(target, BrsBinaryOperator.EQ, value)
                         }
@@ -6953,6 +7043,10 @@ class IrExpressionToBrsTransformer(
         // Save previous closure context and lambda extension receiver
         val previousContext = parent.currentClosureContext
         val previousLambdaReceiver = parent.currentLambdaExtensionReceiver
+        val previousInComponentLambda = parent.isInComponentLambda
+
+        // Check if we're in component context - if so, we need to capture the component's m
+        val needsComponentCapture = parent.isInComponentContext && !parent.isInComponentLambda
 
         // Set closure context for body transformation (if there are captures)
         if (capturedVars.isNotEmpty()) {
@@ -6965,15 +7059,27 @@ class IrExpressionToBrsTransformer(
             parent.currentLambdaExtensionReceiver = it.symbol
         }
 
+        // If we're in component context, mark that we're now inside a component lambda
+        // so that component state accesses use m._componentM instead of bare m
+        if (needsComponentCapture) {
+            parent.isInComponentLambda = true
+        }
+
         // Transform body with closure context active (variable accesses will be rewritten)
         val body = function.body?.let { parent.transformBody(it) } ?: BrsBlock()
 
         // Restore previous context and lambda receiver
         parent.currentClosureContext = previousContext
         parent.currentLambdaExtensionReceiver = previousLambdaReceiver
+        parent.isInComponentLambda = previousInComponentLambda
 
         // Build closure object fields for captured variables
         val entries = mutableListOf<BrsAAEntry>()
+
+        // If we're in component context, capture the component's m reference
+        if (needsComponentCapture) {
+            entries.add(BrsAAEntry("_componentM", BrsMRef()))
+        }
 
         for (capturedVar in capturedVars) {
             // When capturing 'this' from an outer method, use 'm' (BrightScript's object reference)
