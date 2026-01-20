@@ -38,6 +38,7 @@ import test.lazy.lazyDelegateTests
 // Roku API tests
 import test.roku.dateTimeTests
 import test.roku.jsonTests
+import test.roku.globalFunctionsTests
 
 // Reflection tests
 import test.reflect.kclassTests
@@ -78,6 +79,7 @@ fun main() {
         // Roku APIs
         dateTimeTests()
         jsonTests()
+        globalFunctionsTests()
 
         // Reflection
         kclassTests()

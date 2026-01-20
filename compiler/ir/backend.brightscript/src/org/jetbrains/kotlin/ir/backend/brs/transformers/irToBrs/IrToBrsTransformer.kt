@@ -6272,6 +6272,11 @@ class IrExpressionToBrsTransformer(
                 }
             }
 
+            is BrsIntrinsics.StdlibIntrinsic.UpTime -> {
+                // UpTime(dummy) - requires an integer argument per BrightScript docs
+                BrsFunctionCall(BrsIdentifier("UpTime"), mutableListOf(BrsIntLiteral(0)))
+            }
+
             null -> {
                 // Unknown intrinsic - generate as function call with the name stripped of prefix
                 val simpleName = name.removePrefix("brsIntrinsic")

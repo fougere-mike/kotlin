@@ -416,7 +416,34 @@ class BrsIntrinsics(
         "brsIntrinsicGetLength" to StdlibIntrinsic.GetLength,
 
         // Function name intrinsic
-        "brsIntrinsicFunctionName" to StdlibIntrinsic.FunctionName
+        "brsIntrinsicFunctionName" to StdlibIntrinsic.FunctionName,
+
+        // Core utility intrinsics
+        "brsIntrinsicSleep" to StdlibIntrinsic.SimpleCall("Sleep"),
+        "brsIntrinsicWait" to StdlibIntrinsic.SimpleCall("Wait"),
+        "brsIntrinsicUpTime" to StdlibIntrinsic.UpTime,
+        "brsIntrinsicGetInterface" to StdlibIntrinsic.SimpleCall("GetInterface"),
+        "brsIntrinsicFindMemberFunction" to StdlibIntrinsic.SimpleCall("FindMemberFunction"),
+
+        // File system intrinsics
+        "brsIntrinsicListDir" to StdlibIntrinsic.SimpleCall("ListDir"),
+        "brsIntrinsicReadAsciiFile" to StdlibIntrinsic.SimpleCall("ReadAsciiFile"),
+        "brsIntrinsicWriteAsciiFile" to StdlibIntrinsic.SimpleCall("WriteAsciiFile"),
+        "brsIntrinsicCopyFile" to StdlibIntrinsic.SimpleCall("CopyFile"),
+        "brsIntrinsicMoveFile" to StdlibIntrinsic.SimpleCall("MoveFile"),
+        "brsIntrinsicDeleteFile" to StdlibIntrinsic.SimpleCall("DeleteFile"),
+        "brsIntrinsicDeleteDirectory" to StdlibIntrinsic.SimpleCall("DeleteDirectory"),
+        "brsIntrinsicCreateDirectory" to StdlibIntrinsic.SimpleCall("CreateDirectory"),
+        "brsIntrinsicMatchFiles" to StdlibIntrinsic.SimpleCall("MatchFiles"),
+        "brsIntrinsicFormatDrive" to StdlibIntrinsic.SimpleCall("FormatDrive"),
+
+        // String conversion intrinsics
+        "brsIntrinsicStrToI" to StdlibIntrinsic.SimpleCall("StrToI"),
+
+        // System intrinsics
+        "brsIntrinsicRunGarbageCollector" to StdlibIntrinsic.SimpleCall("RunGarbageCollector"),
+        "brsIntrinsicTr" to StdlibIntrinsic.SimpleCall("Tr"),
+        "brsIntrinsicRebootSystem" to StdlibIntrinsic.SimpleCall("RebootSystem")
     )
 
     /**
@@ -497,6 +524,9 @@ class BrsIntrinsics(
 
         /** Extract the mangled BrightScript name from a function reference */
         data object FunctionName : StdlibIntrinsic()
+
+        /** UpTime requires a dummy integer argument per BrightScript docs */
+        data object UpTime : StdlibIntrinsic()
     }
 
     /**
