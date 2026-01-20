@@ -26,6 +26,9 @@ class BrsDeclarationGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun dataClass() = runTest("declarations/dataClass.kt")
+
+    @Test
+    fun dataClassWithCompanion() = runTest("declarations/dataClassWithCompanion.kt")
 }
 
 // ==================== Expression Tests ====================

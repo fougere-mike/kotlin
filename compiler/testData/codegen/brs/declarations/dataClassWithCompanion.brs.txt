@@ -1,0 +1,95 @@
+// --- File: dataClassWithCompanionKt.brs ---
+function Response_create_I_Str_k_(code as Integer, message as String) as Object
+    this = {}
+    this.__type = "Response"
+    this.__proto = ["Response"]
+    this.__id = __kotlin_nextObjectId()
+    this.code = code
+    this.message = message
+    this.equals = Response_equals
+    this.hashCode = Response_hashCode
+    this.toString = Response_toString
+    this.copy = Response_copy
+    this.component1 = Response_component1
+    this.component2 = Response_component2
+    return this
+end function
+
+function Response_equals(other as Object) as Boolean
+    if Type(other) <> "roAssociativeArray" then
+        return false
+    end if
+    if other.__type <> "Response" then
+        return false
+    end if
+    if m.code <> other.code then
+        return false
+    end if
+    if m.message <> other.message then
+        return false
+    end if
+    return true
+end function
+
+function Response_hashCode() as Integer
+    result = 1
+    result = ((result * 31) + m.code)
+    result = ((result * 31) + m.message)
+    return result
+end function
+
+function Response_toString() as String
+    return ((("Response(code=" + m.code) + ", message=") + m.message) + ")"
+end function
+
+function Response_copy(code = invalid, message = invalid) as Object
+    if code = invalid then
+        code = m.code
+    end if
+    if message = invalid then
+        message = m.message
+    end if
+    return Response_create_I_Str_k_(code, message)
+end function
+
+function Response_component1() as Integer
+    return m.code
+end function
+
+function Response_component2() as String
+    return m.message
+end function
+
+function Response_Companion_create_k_() as Object
+    this = {}
+    this.__type = "Response_Companion"
+    this.__proto = ["Response_Companion"]
+    this.__id = __kotlin_nextObjectId()
+    this.fromCode_I_k_ = Response_Companion_fromCode_I_k_
+    this.get_DEFAULT_CODE = Response_Companion_get_DEFAULT_CODE_k_
+    this.DEFAULT_CODE = 200
+    return this
+end function
+
+function Response_Companion_getInstance() as Object
+    if GetGlobalAA().Response_Companion_instance = invalid then
+        GetGlobalAA().Response_Companion_instance = Response_Companion_create_k_()
+    end if
+    return GetGlobalAA().Response_Companion_instance
+end function
+
+function Response_Companion_fromCode_I_k_(code as Integer) as Object
+    return Response_create_I_Str_k_(code, "Message for code " + __kotlin_numToStr_I_k_(code))
+end function
+
+function Response_Companion_get_DEFAULT_CODE_k_() as Integer
+    return m.DEFAULT_CODE
+end function
+
+function createFromCompanion_k_() as Object
+    return Response_Companion_getInstance().fromCode_I_k_(404)
+end function
+
+function getDefaultCode_k_() as Integer
+    return Response_Companion_getInstance().get_DEFAULT_CODE()
+end function

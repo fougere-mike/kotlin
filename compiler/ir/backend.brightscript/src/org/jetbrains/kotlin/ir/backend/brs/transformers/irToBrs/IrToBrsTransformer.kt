@@ -1836,6 +1836,11 @@ class IrToBrsTransformer(
                 transformFunction(function)?.let { declarations.add(it) }
             }
         }
+
+        // Process nested classes (companion objects, etc.)
+        for (nested in irClass.declarations.filterIsInstance<IrClass>()) {
+            transformClassDeclarations(nested, declarations, statements)
+        }
     }
 
     /**
