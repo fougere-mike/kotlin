@@ -43,6 +43,9 @@ class BrsExpressionGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun nullability() = runTest("expressions/nullability.kt")
+
+    @Test
+    fun safeCast() = runTest("expressions/safeCast.kt")
 }
 
 // ==================== Control Flow Tests ====================

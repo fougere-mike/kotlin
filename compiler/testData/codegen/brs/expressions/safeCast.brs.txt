@@ -1,0 +1,79 @@
+// --- File: safeCastKt.brs ---
+function safeCastIdentifier_Any_k_(x as Object) as Dynamic
+    return (function(__kotlin_isPrimitiveType, x)
+        if __kotlin_isPrimitiveType(x, "String") then return x else return invalid
+    end function)(__kotlin_isPrimitiveType, x)
+end function
+
+function getValue_k_() as Object
+    return "hello"
+end function
+
+function safeCastFunctionCall_k_() as Dynamic
+    __safeCast_tmp0 = getValue_k_()
+    return (function(__kotlin_isPrimitiveType, __safeCast_tmp0)
+        if __kotlin_isPrimitiveType(__safeCast_tmp0, "String") then return __safeCast_tmp0 else return invalid
+    end function)(__kotlin_isPrimitiveType, __safeCast_tmp0)
+
+end function
+
+function safeCastToInt_Any_k_(x as Object) as Dynamic
+    return (function(__kotlin_isPrimitiveType, x)
+        if __kotlin_isPrimitiveType(x, "Integer") then return x else return invalid
+    end function)(__kotlin_isPrimitiveType, x)
+end function
+
+function safeCastNullable_AnyN_k_(x as Dynamic) as Dynamic
+    return (function(__kotlin_isPrimitiveType, x)
+        if __kotlin_isPrimitiveType(x, "String") then return x else return invalid
+    end function)(__kotlin_isPrimitiveType, x)
+end function
+
+function safeCastElvis_Any_k_(x as Object) as String
+    tmp0_elvis_lhs = (function(__kotlin_isPrimitiveType, x)
+        if __kotlin_isPrimitiveType(x, "String") then return x else return invalid
+    end function)(__kotlin_isPrimitiveType, x)
+    __when_tmp0 = invalid
+    if tmp0_elvis_lhs = invalid then
+        __when_tmp0 = "default"
+    else if true then
+        __when_tmp0 = tmp0_elvis_lhs
+    end if
+    return __when_tmp0
+
+end function
+
+function chainedSafeCast_Any_k_(x as Object) as Dynamic
+    str = (function(__kotlin_isPrimitiveType, x)
+        if __kotlin_isPrimitiveType(x, "String") then return x else return invalid
+    end function)(__kotlin_isPrimitiveType, x)
+    tmp0_safe_receiver = str
+    __when_tmp1 = invalid
+    if tmp0_safe_receiver = invalid then
+        __when_tmp1 = invalid
+    else if true then
+        __when_tmp1 = Len(tmp0_safe_receiver)
+    end if
+    return __when_tmp1
+
+end function
+
+function MyClass_create_I_k_(value as Integer) as Object
+    this = {}
+    this.__type = "MyClass"
+    this.__proto = ["MyClass"]
+    this.__id = __kotlin_nextObjectId()
+    this.get_value = MyClass_get_value_k_
+    this.value = value
+    return this
+end function
+
+function MyClass_get_value_k_() as Integer
+    return m.value
+end function
+
+function safeCastToClass_Any_k_(x as Object) as Dynamic
+    return (function(__kotlin_isInstanceOf, x)
+        if __kotlin_isInstanceOf(x, "MyClass") then return x else return invalid
+    end function)(__kotlin_isInstanceOf, x)
+end function

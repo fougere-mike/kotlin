@@ -678,7 +678,8 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
         "__kotlin_intCompare",
         "__kotlin_nextObjectId",
         "__kotlin_identityEquals",
-        "__kotlin_isInstanceOf"
+        "__kotlin_isInstanceOf",
+        "__kotlin_isPrimitiveType"
     )
 
     /**

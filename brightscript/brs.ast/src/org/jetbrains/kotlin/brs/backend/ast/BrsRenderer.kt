@@ -617,9 +617,12 @@ class BrsRenderer(
             "__kotlin_numToStr_F_Str_k_", "__kotlin_numToStr_D_Str_k_",
             "__kotlin_numToStr_AnyN_Str_k_"
         )
-        val params = identifiers.filter {
-            !it.contains(".") && it !in builtinFunctions
-        }.sorted()
+        // BrightScript identifiers are case-insensitive, so deduplicate case-insensitively
+        // to avoid collisions like JSON vs json becoming duplicate parameters
+        val params = identifiers
+            .filter { !it.contains(".") && it !in builtinFunctions }
+            .distinctBy { it.lowercase() }  // Keep first occurrence, ignore case duplicates
+            .sorted()
 
         if (params.isEmpty()) {
             // No variables to capture - use simple IIFE

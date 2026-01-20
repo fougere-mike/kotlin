@@ -351,7 +351,8 @@ class BrsCompiler(
             "__kotlin_identityEquals",
             "__kotlin_isInstanceOf",
             "__kotlin_KClass_create",
-            "__kotlin_getClass"
+            "__kotlin_getClass",
+            "__kotlin_isPrimitiveType"
         )
         for (name in runtimeHelperNames) {
             manifest[name] = outputFileName
@@ -420,6 +421,10 @@ class BrsCompiler(
         // Add getClass helper for instance::class expressions
         val getClassFunction = createGetClassHelper()
         program.declarations.add(0, getClassFunction)
+
+        // Add primitive type check helper for is/as? expressions
+        val primitiveTypeCheckFunction = createPrimitiveTypeCheckHelper()
+        program.declarations.add(0, primitiveTypeCheckFunction)
 
         // Note: Exception helpers (THROW_NPE, THROW_CCE, etc.) are defined in
         // libraries/stdlib/brs/src/kotlin/ExceptionHelpers.kt - do NOT add them here
@@ -1360,6 +1365,109 @@ class BrsCompiler(
             name = "__kotlin_getClass",
             parameters = mutableListOf(BrsParameter("obj", BrsType.DYNAMIC)),
             returnType = BrsType.OBJECT,
+            body = body
+        )
+    }
+
+    /**
+     * Creates the __kotlin_isPrimitiveType helper function for checking primitive types.
+     *
+     * BrightScript's Type() function returns different values depending on whether a value
+     * is boxed or unboxed:
+     * - String literals: "String" (unboxed), after operations: "roString" (boxed)
+     * - Integer literals: "Integer" (unboxed), after operations: "roInt" or "roInteger" (boxed)
+     * - etc.
+     *
+     * This helper checks both boxed and unboxed type names to handle all cases.
+     *
+     * Generated BrightScript:
+     * ```
+     * function __kotlin_isPrimitiveType(value as Dynamic, typeName as String) as Boolean
+     *     t = Type(value)
+     *     if typeName = "String" then
+     *         return t = "String" or t = "roString"
+     *     else if typeName = "Integer" then
+     *         return t = "Integer" or t = "roInteger" or t = "roInt"
+     *     else if typeName = "LongInteger" then
+     *         return t = "LongInteger"
+     *     else if typeName = "Float" then
+     *         return t = "Float" or t = "roFloat"
+     *     else if typeName = "Double" then
+     *         return t = "Double" or t = "roDouble"
+     *     else if typeName = "Boolean" then
+     *         return t = "Boolean" or t = "roBoolean"
+     *     end if
+     *     return false
+     * end function
+     * ```
+     */
+    private fun createPrimitiveTypeCheckHelper(): BrsFunction {
+        // Helper to create: t = "X" or t = "Y"
+        fun orCheck(vararg types: String): BrsExpression {
+            return types.map { type ->
+                BrsBinaryOp(BrsIdentifier("t"), BrsBinaryOperator.EQ, BrsStringLiteral(type))
+            }.reduce { acc, expr ->
+                BrsBinaryOp(acc, BrsBinaryOperator.OR, expr)
+            }
+        }
+
+        val body = BrsBlock(mutableListOf(
+            // t = Type(value)
+            BrsVariable(name = "t", initializer = BrsTypeOf(BrsIdentifier("value"))),
+            // if typeName = "String" then return t = "String" or t = "roString"
+            BrsIf(
+                condition = BrsBinaryOp(BrsIdentifier("typeName"), BrsBinaryOperator.EQ, BrsStringLiteral("String")),
+                thenBranch = BrsBlock(mutableListOf(
+                    BrsReturn(orCheck("String", "roString"))
+                )),
+                // else if typeName = "Integer" then return t = "Integer" or t = "roInteger" or t = "roInt"
+                elseBranch = BrsIf(
+                    condition = BrsBinaryOp(BrsIdentifier("typeName"), BrsBinaryOperator.EQ, BrsStringLiteral("Integer")),
+                    thenBranch = BrsBlock(mutableListOf(
+                        BrsReturn(orCheck("Integer", "roInteger", "roInt"))
+                    )),
+                    // else if typeName = "LongInteger" then return t = "LongInteger"
+                    elseBranch = BrsIf(
+                        condition = BrsBinaryOp(BrsIdentifier("typeName"), BrsBinaryOperator.EQ, BrsStringLiteral("LongInteger")),
+                        thenBranch = BrsBlock(mutableListOf(
+                            BrsReturn(BrsBinaryOp(BrsIdentifier("t"), BrsBinaryOperator.EQ, BrsStringLiteral("LongInteger")))
+                        )),
+                        // else if typeName = "Float" then return t = "Float" or t = "roFloat"
+                        elseBranch = BrsIf(
+                            condition = BrsBinaryOp(BrsIdentifier("typeName"), BrsBinaryOperator.EQ, BrsStringLiteral("Float")),
+                            thenBranch = BrsBlock(mutableListOf(
+                                BrsReturn(orCheck("Float", "roFloat"))
+                            )),
+                            // else if typeName = "Double" then return t = "Double" or t = "roDouble"
+                            elseBranch = BrsIf(
+                                condition = BrsBinaryOp(BrsIdentifier("typeName"), BrsBinaryOperator.EQ, BrsStringLiteral("Double")),
+                                thenBranch = BrsBlock(mutableListOf(
+                                    BrsReturn(orCheck("Double", "roDouble"))
+                                )),
+                                // else if typeName = "Boolean" then return t = "Boolean" or t = "roBoolean"
+                                elseBranch = BrsIf(
+                                    condition = BrsBinaryOp(BrsIdentifier("typeName"), BrsBinaryOperator.EQ, BrsStringLiteral("Boolean")),
+                                    thenBranch = BrsBlock(mutableListOf(
+                                        BrsReturn(orCheck("Boolean", "roBoolean"))
+                                    )),
+                                    elseBranch = null
+                                )
+                            )
+                        )
+                    )
+                )
+            ),
+            // return false
+            BrsReturn(BrsBooleanLiteral(false))
+        ))
+
+        return BrsFunction(
+            name = "__kotlin_isPrimitiveType",
+            parameters = mutableListOf(
+                BrsParameter("value", BrsType.DYNAMIC),
+                BrsParameter("typeName", BrsType.STRING)
+            ),
+            returnType = BrsType.BOOLEAN,
             body = body
         )
     }

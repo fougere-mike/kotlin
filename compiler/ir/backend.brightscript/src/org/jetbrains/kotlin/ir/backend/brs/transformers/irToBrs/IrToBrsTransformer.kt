@@ -6892,11 +6892,26 @@ class IrExpressionToBrsTransformer(
             IrTypeOperator.CAST, IrTypeOperator.IMPLICIT_CAST -> argument
             IrTypeOperator.SAFE_CAST -> {
                 // Safe cast returns invalid if type doesn't match
-                BrsConditional(
-                    generateInstanceCheck(argument.deepCopy(), expression.typeOperand),
-                    argument,
-                    BrsInvalidLiteral()
-                )
+                // For trivial expressions (identifiers, literals), it's safe to evaluate twice.
+                // For non-trivial expressions (function calls, etc.), hoist to a temp var
+                // to avoid double evaluation of side effects.
+                if (isTrivialExpression(argument)) {
+                    BrsConditional(
+                        generateInstanceCheck(argument.deepCopy(), expression.typeOperand),
+                        argument,
+                        BrsInvalidLiteral()
+                    )
+                } else {
+                    // Hoist non-trivial expression to temp variable to avoid double evaluation
+                    val tempName = "__safeCast_tmp${parent.nextTempId()}"
+                    parent.addHoistedStatement(BrsVariable(tempName, null, argument))
+                    val tempRef = BrsIdentifier(tempName)
+                    BrsConditional(
+                        generateInstanceCheck(tempRef.deepCopy(), expression.typeOperand),
+                        tempRef,
+                        BrsInvalidLiteral()
+                    )
+                }
             }
             IrTypeOperator.INSTANCEOF -> {
                 generateInstanceCheck(argument, expression.typeOperand)
@@ -6938,26 +6953,57 @@ class IrExpressionToBrsTransformer(
     }
 
     /**
+     * Check if a BrsExpression is trivial (safe to evaluate multiple times without side effects).
+     * Trivial expressions include identifiers, 'm' reference, and all literal types.
+     */
+    private fun isTrivialExpression(expr: BrsExpression): Boolean = when (expr) {
+        is BrsIdentifier, is BrsMRef,
+        is BrsIntLiteral, is BrsLongIntLiteral, is BrsFloatLiteral, is BrsDoubleLiteral,
+        is BrsStringLiteral, is BrsBooleanLiteral, is BrsInvalidLiteral -> true
+        else -> false
+    }
+
+    /**
      * Generate a type check expression for the given argument and target type.
      *
-     * For primitive types, uses typeof() comparison.
+     * For primitive types, uses the __kotlin_isPrimitiveType helper which handles
+     * both boxed and unboxed BrightScript type names (e.g., "String" vs "roString").
      * For class types, checks the __proto chain for the class name.
      */
     private fun generateInstanceCheck(argument: BrsExpression, targetType: IrType): BrsExpression {
-        // For primitive types, use typeof
+        // For primitive types, use __kotlin_isPrimitiveType helper which handles
+        // both boxed and unboxed type names (e.g., "String" vs "roString")
         when {
             targetType.isInt() || targetType.isShort() || targetType.isByte() ->
-                return BrsBinaryOp(BrsTypeOf(argument), BrsBinaryOperator.EQ, BrsStringLiteral("roInt"))
+                return BrsFunctionCall(
+                    BrsIdentifier("__kotlin_isPrimitiveType"),
+                    mutableListOf(argument, BrsStringLiteral("Integer"))
+                )
             targetType.isLong() ->
-                return BrsBinaryOp(BrsTypeOf(argument), BrsBinaryOperator.EQ, BrsStringLiteral("LongInteger"))
+                return BrsFunctionCall(
+                    BrsIdentifier("__kotlin_isPrimitiveType"),
+                    mutableListOf(argument, BrsStringLiteral("LongInteger"))
+                )
             targetType.isFloat() ->
-                return BrsBinaryOp(BrsTypeOf(argument), BrsBinaryOperator.EQ, BrsStringLiteral("roFloat"))
+                return BrsFunctionCall(
+                    BrsIdentifier("__kotlin_isPrimitiveType"),
+                    mutableListOf(argument, BrsStringLiteral("Float"))
+                )
             targetType.isDouble() ->
-                return BrsBinaryOp(BrsTypeOf(argument), BrsBinaryOperator.EQ, BrsStringLiteral("roDouble"))
+                return BrsFunctionCall(
+                    BrsIdentifier("__kotlin_isPrimitiveType"),
+                    mutableListOf(argument, BrsStringLiteral("Double"))
+                )
             targetType.isBoolean() ->
-                return BrsBinaryOp(BrsTypeOf(argument), BrsBinaryOperator.EQ, BrsStringLiteral("roBoolean"))
+                return BrsFunctionCall(
+                    BrsIdentifier("__kotlin_isPrimitiveType"),
+                    mutableListOf(argument, BrsStringLiteral("Boolean"))
+                )
             targetType.isString() ->
-                return BrsBinaryOp(BrsTypeOf(argument), BrsBinaryOperator.EQ, BrsStringLiteral("roString"))
+                return BrsFunctionCall(
+                    BrsIdentifier("__kotlin_isPrimitiveType"),
+                    mutableListOf(argument, BrsStringLiteral("String"))
+                )
             targetType.isArray() ->
                 return BrsBinaryOp(BrsTypeOf(argument), BrsBinaryOperator.EQ, BrsStringLiteral("roArray"))
         }
@@ -6978,14 +7024,18 @@ class IrExpressionToBrsTransformer(
         )
     }
 
+    /**
+     * Maps Kotlin IR types to canonical BrightScript type names.
+     * These names are used with __kotlin_isPrimitiveType for type checking.
+     */
     private fun mapTypeToString(type: IrType): String {
         return when {
-            type.isInt() || type.isShort() || type.isByte() -> "roInt"
+            type.isInt() || type.isShort() || type.isByte() -> "Integer"
             type.isLong() -> "LongInteger"
-            type.isFloat() -> "roFloat"
-            type.isDouble() -> "roDouble"
-            type.isBoolean() -> "roBoolean"
-            type.isString() -> "roString"
+            type.isFloat() -> "Float"
+            type.isDouble() -> "Double"
+            type.isBoolean() -> "Boolean"
+            type.isString() -> "String"
             type.isArray() -> "roArray"
             else -> "roAssociativeArray"
         }
