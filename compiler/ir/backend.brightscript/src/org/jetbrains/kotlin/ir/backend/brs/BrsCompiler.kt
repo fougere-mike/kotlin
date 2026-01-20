@@ -349,7 +349,9 @@ class BrsCompiler(
             "__kotlin_intCompare",
             "__kotlin_nextObjectId",
             "__kotlin_identityEquals",
-            "__kotlin_isInstanceOf"
+            "__kotlin_isInstanceOf",
+            "__kotlin_KClass_create",
+            "__kotlin_getClass"
         )
         for (name in runtimeHelperNames) {
             manifest[name] = outputFileName
@@ -410,6 +412,14 @@ class BrsCompiler(
         // Add unsigned right shift helper for Int.ushr
         val ushrFunction = createUshrHelper()
         program.declarations.add(0, ushrFunction)
+
+        // Add KClass creation helper for ::class expressions
+        val kclassCreateFunction = createKClassCreateHelper()
+        program.declarations.add(0, kclassCreateFunction)
+
+        // Add getClass helper for instance::class expressions
+        val getClassFunction = createGetClassHelper()
+        program.declarations.add(0, getClassFunction)
 
         // Note: Exception helpers (THROW_NPE, THROW_CCE, etc.) are defined in
         // libraries/stdlib/brs/src/kotlin/ExceptionHelpers.kt - do NOT add them here
@@ -1039,6 +1049,317 @@ class BrsCompiler(
                 BrsParameter("shift", BrsType.INTEGER)
             ),
             returnType = BrsType.INTEGER,
+            body = body
+        )
+    }
+
+    /**
+     * Creates the __kotlin_KClass_create helper function for creating KClass instances.
+     *
+     * Generated BrightScript:
+     * ```
+     * function __kotlin_KClass_create(typeName as String) as Object
+     *     kclass = {}
+     *     kclass.__type = "KClass"
+     *     kclass._typeName = typeName
+     *     kclass.get_simpleName = function()
+     *         return m._typeName
+     *     end function
+     *     kclass.get_qualifiedName = function()
+     *         return invalid
+     *     end function
+     *     kclass.isInstance = function(value as Dynamic) as Boolean
+     *         return __kotlin_isInstanceOf(value, m._typeName)
+     *     end function
+     *     kclass.equals = function(other as Dynamic) as Boolean
+     *         if other = invalid then return false
+     *         if Type(other) <> "roAssociativeArray" then return false
+     *         if other.__type <> "KClass" then return false
+     *         return m._typeName = other._typeName
+     *     end function
+     *     kclass.hashCode = function() as Integer
+     *         ' Simple string hash for the type name
+     *         hash = 0
+     *         for i = 0 to m._typeName.len() - 1
+     *             hash = hash * 31 + Asc(m._typeName.mid(i, 1))
+     *         end for
+     *         return hash
+     *     end function
+     *     kclass.toString = function() as String
+     *         return "class " + m._typeName
+     *     end function
+     *     return kclass
+     * end function
+     * ```
+     */
+    private fun createKClassCreateHelper(): BrsFunction {
+        // Build the function body
+        val body = BrsBlock(mutableListOf(
+            // kclass = {}
+            BrsVariable(name = "kclass", initializer = BrsAALiteral()),
+            // kclass.__type = "KClass"
+            BrsExpressionStatement(
+                BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier("kclass"), "__type"),
+                    BrsBinaryOperator.EQ,
+                    BrsStringLiteral("KClass")
+                )
+            ),
+            // kclass._typeName = typeName
+            BrsExpressionStatement(
+                BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier("kclass"), "_typeName"),
+                    BrsBinaryOperator.EQ,
+                    BrsIdentifier("typeName")
+                )
+            ),
+            // kclass.get_simpleName = function() return m._typeName end function
+            BrsExpressionStatement(
+                BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier("kclass"), "get_simpleName"),
+                    BrsBinaryOperator.EQ,
+                    BrsAnonymousFunction(
+                        parameters = mutableListOf(),
+                        returnType = BrsType.STRING,
+                        body = BrsBlock(mutableListOf(
+                            BrsReturn(BrsDotAccess(BrsMRef(), "_typeName"))
+                        ))
+                    )
+                )
+            ),
+            // kclass.get_qualifiedName = function() return invalid end function
+            BrsExpressionStatement(
+                BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier("kclass"), "get_qualifiedName"),
+                    BrsBinaryOperator.EQ,
+                    BrsAnonymousFunction(
+                        parameters = mutableListOf(),
+                        returnType = BrsType.DYNAMIC,
+                        body = BrsBlock(mutableListOf(
+                            BrsReturn(BrsInvalidLiteral())
+                        ))
+                    )
+                )
+            ),
+            // kclass.isInstance_AnyN_k_ = function(value) return __kotlin_isInstanceOf(value, m._typeName) end function
+            // Note: Using mangled name to match how Kotlin compiler generates method calls
+            BrsExpressionStatement(
+                BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier("kclass"), "isInstance_AnyN_k_"),
+                    BrsBinaryOperator.EQ,
+                    BrsAnonymousFunction(
+                        parameters = mutableListOf(BrsParameter("value", BrsType.DYNAMIC)),
+                        returnType = BrsType.BOOLEAN,
+                        body = BrsBlock(mutableListOf(
+                            BrsReturn(
+                                BrsFunctionCall(
+                                    BrsIdentifier("__kotlin_isInstanceOf"),
+                                    mutableListOf(
+                                        BrsIdentifier("value"),
+                                        BrsDotAccess(BrsMRef(), "_typeName")
+                                    )
+                                )
+                            )
+                        ))
+                    )
+                )
+            ),
+            // kclass.equals = function(other) ...
+            BrsExpressionStatement(
+                BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier("kclass"), "equals"),
+                    BrsBinaryOperator.EQ,
+                    BrsAnonymousFunction(
+                        parameters = mutableListOf(BrsParameter("other", BrsType.DYNAMIC)),
+                        returnType = BrsType.BOOLEAN,
+                        body = BrsBlock(mutableListOf(
+                            // if other = invalid then return false
+                            BrsIf(
+                                condition = BrsBinaryOp(BrsIdentifier("other"), BrsBinaryOperator.EQ, BrsInvalidLiteral()),
+                                thenBranch = BrsBlock(mutableListOf(BrsReturn(BrsBooleanLiteral(false)))),
+                                elseBranch = null
+                            ),
+                            // if Type(other) <> "roAssociativeArray" then return false
+                            BrsIf(
+                                condition = BrsBinaryOp(BrsTypeOf(BrsIdentifier("other")), BrsBinaryOperator.NE, BrsStringLiteral("roAssociativeArray")),
+                                thenBranch = BrsBlock(mutableListOf(BrsReturn(BrsBooleanLiteral(false)))),
+                                elseBranch = null
+                            ),
+                            // if other.__type <> "KClass" then return false
+                            BrsIf(
+                                condition = BrsBinaryOp(BrsDotAccess(BrsIdentifier("other"), "__type"), BrsBinaryOperator.NE, BrsStringLiteral("KClass")),
+                                thenBranch = BrsBlock(mutableListOf(BrsReturn(BrsBooleanLiteral(false)))),
+                                elseBranch = null
+                            ),
+                            // return m._typeName = other._typeName
+                            BrsReturn(
+                                BrsBinaryOp(
+                                    BrsDotAccess(BrsMRef(), "_typeName"),
+                                    BrsBinaryOperator.EQ,
+                                    BrsDotAccess(BrsIdentifier("other"), "_typeName")
+                                )
+                            )
+                        ))
+                    )
+                )
+            ),
+            // kclass.hashCode = function() ...
+            BrsExpressionStatement(
+                BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier("kclass"), "hashCode"),
+                    BrsBinaryOperator.EQ,
+                    BrsAnonymousFunction(
+                        parameters = mutableListOf(),
+                        returnType = BrsType.INTEGER,
+                        body = BrsBlock(mutableListOf(
+                            // hash = 0
+                            BrsVariable(name = "hash", initializer = BrsIntLiteral(0)),
+                            // for i = 0 to m._typeName.len() - 1
+                            BrsFor(
+                                variable = "i",
+                                start = BrsIntLiteral(0),
+                                end = BrsBinaryOp(
+                                    BrsMethodCall(BrsDotAccess(BrsMRef(), "_typeName"), "len", mutableListOf()),
+                                    BrsBinaryOperator.SUB,
+                                    BrsIntLiteral(1)
+                                ),
+                                step = null,
+                                body = BrsBlock(mutableListOf(
+                                    // hash = hash * 31 + Asc(m._typeName.mid(i, 1))
+                                    BrsExpressionStatement(
+                                        BrsBinaryOp(
+                                            BrsIdentifier("hash"),
+                                            BrsBinaryOperator.EQ,
+                                            BrsBinaryOp(
+                                                BrsBinaryOp(BrsIdentifier("hash"), BrsBinaryOperator.MUL, BrsIntLiteral(31)),
+                                                BrsBinaryOperator.ADD,
+                                                BrsFunctionCall(
+                                                    BrsIdentifier("Asc"),
+                                                    mutableListOf(
+                                                        BrsMethodCall(
+                                                            BrsDotAccess(BrsMRef(), "_typeName"),
+                                                            "mid",
+                                                            mutableListOf(BrsIdentifier("i"), BrsIntLiteral(1))
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                ))
+                            ),
+                            // return hash
+                            BrsReturn(BrsIdentifier("hash"))
+                        ))
+                    )
+                )
+            ),
+            // kclass.toString = function() return "class " + m._typeName end function
+            BrsExpressionStatement(
+                BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier("kclass"), "toString"),
+                    BrsBinaryOperator.EQ,
+                    BrsAnonymousFunction(
+                        parameters = mutableListOf(),
+                        returnType = BrsType.STRING,
+                        body = BrsBlock(mutableListOf(
+                            BrsReturn(
+                                BrsBinaryOp(
+                                    BrsStringLiteral("class "),
+                                    BrsBinaryOperator.CONCAT,
+                                    BrsDotAccess(BrsMRef(), "_typeName")
+                                )
+                            )
+                        ))
+                    )
+                )
+            ),
+            // return kclass
+            BrsReturn(BrsIdentifier("kclass"))
+        ))
+
+        return BrsFunction(
+            name = "__kotlin_KClass_create",
+            parameters = mutableListOf(BrsParameter("typeName", BrsType.STRING)),
+            returnType = BrsType.OBJECT,
+            body = body
+        )
+    }
+
+    /**
+     * Creates the __kotlin_getClass helper function for getting KClass from an instance.
+     *
+     * This handles BOTH Kotlin-created objects AND native BrightScript objects:
+     * - Kotlin objects: have __type field (e.g., __type = "Dog")
+     * - Native objects: no __type, use Type() (e.g., Type(event) = "roSGScreenEvent")
+     *
+     * Generated BrightScript:
+     * ```
+     * function __kotlin_getClass(obj as Dynamic) as Object
+     *     typeName = invalid
+     *     if obj <> invalid and Type(obj) = "roAssociativeArray" and obj.__type <> invalid then
+     *         ' Kotlin-created object - use __type
+     *         typeName = obj.__type
+     *     else if obj <> invalid then
+     *         ' Native BrightScript object - use Type()
+     *         typeName = Type(obj)
+     *     else
+     *         typeName = "Nothing"
+     *     end if
+     *     return __kotlin_KClass_create(typeName)
+     * end function
+     * ```
+     */
+    private fun createGetClassHelper(): BrsFunction {
+        val body = BrsBlock(mutableListOf(
+            // typeName = invalid
+            BrsVariable(name = "typeName", initializer = BrsInvalidLiteral()),
+            // if obj <> invalid and Type(obj) = "roAssociativeArray" and obj.__type <> invalid then
+            BrsIf(
+                condition = BrsBinaryOp(
+                    BrsBinaryOp(
+                        BrsBinaryOp(BrsIdentifier("obj"), BrsBinaryOperator.NE, BrsInvalidLiteral()),
+                        BrsBinaryOperator.AND,
+                        BrsBinaryOp(BrsTypeOf(BrsIdentifier("obj")), BrsBinaryOperator.EQ, BrsStringLiteral("roAssociativeArray"))
+                    ),
+                    BrsBinaryOperator.AND,
+                    BrsBinaryOp(BrsDotAccess(BrsIdentifier("obj"), "__type"), BrsBinaryOperator.NE, BrsInvalidLiteral())
+                ),
+                thenBranch = BrsBlock(mutableListOf(
+                    // typeName = obj.__type
+                    BrsExpressionStatement(
+                        BrsBinaryOp(BrsIdentifier("typeName"), BrsBinaryOperator.EQ, BrsDotAccess(BrsIdentifier("obj"), "__type"))
+                    )
+                )),
+                // else if obj <> invalid then typeName = Type(obj)
+                elseBranch = BrsIf(
+                    condition = BrsBinaryOp(BrsIdentifier("obj"), BrsBinaryOperator.NE, BrsInvalidLiteral()),
+                    thenBranch = BrsBlock(mutableListOf(
+                        BrsExpressionStatement(
+                            BrsBinaryOp(BrsIdentifier("typeName"), BrsBinaryOperator.EQ, BrsTypeOf(BrsIdentifier("obj")))
+                        )
+                    )),
+                    // else typeName = "Nothing"
+                    elseBranch = BrsBlock(mutableListOf(
+                        BrsExpressionStatement(
+                            BrsBinaryOp(BrsIdentifier("typeName"), BrsBinaryOperator.EQ, BrsStringLiteral("Nothing"))
+                        )
+                    ))
+                )
+            ),
+            // return __kotlin_KClass_create(typeName)
+            BrsReturn(
+                BrsFunctionCall(
+                    BrsIdentifier("__kotlin_KClass_create"),
+                    mutableListOf(BrsIdentifier("typeName"))
+                )
+            )
+        ))
+
+        return BrsFunction(
+            name = "__kotlin_getClass",
+            parameters = mutableListOf(BrsParameter("obj", BrsType.DYNAMIC)),
+            returnType = BrsType.OBJECT,
             body = body
         )
     }

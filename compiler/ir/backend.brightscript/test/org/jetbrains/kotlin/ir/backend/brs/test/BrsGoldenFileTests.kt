@@ -121,3 +121,20 @@ class BrsConstantGoldenFileTests : AbstractBrsGoldenFileTest() {
     @Test
     fun brsConstantEnum() = runTest("constants/brsConstantEnum.kt")
 }
+
+// ==================== Reflection Tests ====================
+
+class BrsReflectionGoldenFileTests : AbstractBrsGoldenFileTest() {
+
+    @Test
+    fun classReference() = runTest("reflection/classReference.kt")
+
+    @Test
+    fun getClass() = runTest("reflection/getClass.kt")
+
+    @Test
+    fun kclassEquality() = runTest("reflection/kclassEquality.kt")
+
+    @Test
+    fun nativeTypeClass() = runTest("reflection/nativeTypeClass.kt")
+}

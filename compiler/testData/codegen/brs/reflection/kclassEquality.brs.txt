@@ -1,0 +1,32 @@
+// --- File: kclassEqualityKt.brs ---
+function Foo_create_k_() as Object
+    this = {}
+    this.__type = "Foo"
+    this.__proto = ["Foo"]
+    this.__id = __kotlin_nextObjectId()
+    return this
+end function
+
+function Bar_create_k_() as Object
+    this = {}
+    this.__type = "Bar"
+    this.__proto = ["Bar"]
+    this.__id = __kotlin_nextObjectId()
+    return this
+end function
+
+function testClassEquality_k_() as Boolean
+    return brsStructuralEquals_AnyN_AnyN_k_(__kotlin_KClass_create("Foo"), __kotlin_KClass_create("Foo"))
+end function
+
+function testClassInequality_k_() as Boolean
+    return not brsStructuralEquals_AnyN_AnyN_k_(__kotlin_KClass_create("Foo"), __kotlin_KClass_create("Bar"))
+end function
+
+function testClassHashCode_k_() as Integer
+    return __kotlin_KClass_create("Foo").hashCode()
+end function
+
+function testClassToString_k_() as String
+    return toString_AnyN_k_(__kotlin_KClass_create("Foo"))
+end function

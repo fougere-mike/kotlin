@@ -21,13 +21,49 @@ public interface KType {
 public interface KClassifier
 
 /**
- * Represents a class. This is a minimal stub for BrightScript.
+ * Represents a class at runtime.
+ *
+ * Instances are created by:
+ * - Class literal references: `Person::class`
+ * - Getting class from instance: `person::class`
+ *
+ * The runtime implementation supports:
+ * - [simpleName]: Returns the class name (e.g., "Person" or "roArray")
+ * - [qualifiedName]: Always returns null (not supported in BrightScript)
+ * - [isInstance]: Checks if a value is an instance of this class
+ * - [equals]/[hashCode]: For use as map keys (e.g., `MutableMap<KClass<*>, Handler>`)
  */
 public interface KClass<T : Any> : KClassifier {
     /**
-     * Simple name of the class.
+     * The simple name of the class as declared in the source code,
+     * or the BrightScript type name for native types (e.g., "roArray").
      */
     public val simpleName: String?
+
+    /**
+     * The fully qualified name of the class.
+     * Always returns null in BrightScript as qualified names are not tracked.
+     */
+    public val qualifiedName: String? get() = null
+
+    /**
+     * Returns true if [value] is an instance of this class.
+     *
+     * For Kotlin classes, checks the __proto chain.
+     * For native BrightScript types, compares against the Type() result.
+     */
+    public fun isInstance(value: Any?): Boolean
+
+    /**
+     * Checks equality with another KClass.
+     * Two KClass instances are equal if they represent the same class.
+     */
+    override fun equals(other: Any?): Boolean
+
+    /**
+     * Returns a hash code for this KClass, consistent with equals.
+     */
+    override fun hashCode(): Int
 }
 
 /**

@@ -4695,6 +4695,78 @@ class IrExpressionToBrsTransformer(
         return BrsIdentifier("${className}_${entryName}")
     }
 
+    // ==================== KClass / Reflection ====================
+
+    /**
+     * Handles class literal references like `Person::class`.
+     *
+     * For Kotlin classes: generates `__kotlin_KClass_create("ClassName")`
+     * For external interfaces (native Roku types): generates `__kotlin_KClass_create("roTypeName")`
+     *   where roTypeName matches BrightScript's Type() return value (e.g., "roArray", "roSGScreenEvent")
+     */
+    override fun visitClassReference(expression: IrClassReference, data: Unit): BrsExpression {
+        val classType = expression.classType
+        val typeName = getTypeNameForKClass(classType)
+
+        // Generate: __kotlin_KClass_create("TypeName")
+        return BrsFunctionCall(
+            BrsIdentifier("__kotlin_KClass_create"),
+            mutableListOf(BrsStringLiteral(typeName))
+        )
+    }
+
+    /**
+     * Handles getting the class of an instance like `dog::class` or `animal::class`.
+     *
+     * At runtime, this checks if the object is a Kotlin-created object (has __type field)
+     * or a native BrightScript object (uses Type() function).
+     */
+    override fun visitGetClass(expression: IrGetClass, data: Unit): BrsExpression {
+        val argument = expression.argument.accept(this, data)
+
+        // Generate: __kotlin_getClass(argument)
+        return BrsFunctionCall(
+            BrsIdentifier("__kotlin_getClass"),
+            mutableListOf(argument)
+        )
+    }
+
+    /**
+     * Gets the type name string for a KClass based on the IR type.
+     *
+     * For native Roku types (external interfaces), the name should match
+     * what BrightScript's Type() function returns (e.g., "roArray", "roSGScreenEvent").
+     * For Kotlin classes, uses the BRS-mangled class name.
+     */
+    private fun getTypeNameForKClass(type: IrType): String {
+        val classifier = type.classifierOrNull ?: return "Object"
+
+        // Handle type parameters - use "Object" as a fallback
+        if (classifier is IrTypeParameterSymbol) {
+            return "Object"
+        }
+
+        val irClass = type.classOrNull?.owner ?: return "Object"
+
+        // For native Roku types (external interfaces), use the BrightScript type name
+        // that matches what Type() returns at runtime
+        if (irClass.isExternal) {
+            val className = irClass.name.asString()
+            // External interfaces in kotlin.brs.roku use PascalCase (e.g., RoArray, RoSGScreenEvent)
+            // BrightScript Type() returns "roArray", "roSGScreenEvent", etc.
+            // Convert: RoArray -> roArray, RoSGScreenEvent -> roSGScreenEvent
+            if (className.startsWith("Ro") && className.length > 2) {
+                return "ro${className.substring(2)}"
+            }
+            // For interfaces like IEnumNative, IArray, etc., use the raw name
+            // These typically won't be used as map keys directly
+            return className
+        }
+
+        // For Kotlin classes, use the BRS-mangled class name
+        return context.getBrsName(irClass)
+    }
+
     // ==================== Function Calls ====================
 
     override fun visitCall(expression: IrCall, data: Unit): BrsExpression {

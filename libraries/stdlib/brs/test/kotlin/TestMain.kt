@@ -39,6 +39,9 @@ import test.lazy.lazyDelegateTests
 import test.roku.dateTimeTests
 import test.roku.jsonTests
 
+// Reflection tests
+import test.reflect.kclassTests
+
 /**
  * Main entry point for stdlib runtime tests.
  */
@@ -75,5 +78,8 @@ fun main() {
         // Roku APIs
         dateTimeTests()
         jsonTests()
+
+        // Reflection
+        kclassTests()
     }
 }
