@@ -508,6 +508,7 @@ class BrsIntrinsics(
 
         // Structural equality intrinsics
         "brsIntrinsicIsAA" to StdlibIntrinsic.IsAssociativeArray,
+        "brsIntrinsicIsSGNode" to StdlibIntrinsic.IsSGNode,
         "brsIntrinsicCallEquals" to StdlibIntrinsic.CallEquals,
         "brsIntrinsicNativeEquals" to StdlibIntrinsic.NativeEquals,
 
@@ -606,6 +607,9 @@ class BrsIntrinsics(
 
         /** Check if value is roAssociativeArray: Type(a) = "roAssociativeArray" */
         data object IsAssociativeArray : StdlibIntrinsic()
+
+        /** Check if value is roSGNode: Type(a) = "roSGNode" */
+        data object IsSGNode : StdlibIntrinsic()
 
         /** Call equals method on object: a.equals(b) */
         data object CallEquals : StdlibIntrinsic()

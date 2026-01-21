@@ -43,7 +43,9 @@ data class NodeEntryInfo(
 }
 
 /**
- * Information about an interface field alias extracted from interfaceField() calls.
+ * Information about an interface field extracted from interfaceField() calls.
+ *
+ * Fields can either alias a child node's field or be standalone fields.
  */
 data class InterfaceFieldInfo(
     /**
@@ -52,14 +54,30 @@ data class InterfaceFieldInfo(
     val name: String,
 
     /**
-     * The path to the child node's field (e.g., "buttonId.buttonSelected").
+     * The path to the child node's field (e.g., "buttonId.buttonSelected"),
+     * or null for standalone fields.
      */
-    val alias: String,
+    val alias: String? = null,
 
     /**
      * The field type (default: "node").
      */
-    val type: String = "node"
+    val type: String = "node",
+
+    /**
+     * The default value for the field (optional).
+     */
+    val value: String? = null,
+
+    /**
+     * The callback function name to invoke when the field changes (optional).
+     */
+    val onChange: String? = null,
+
+    /**
+     * Whether to notify observers even when the value is unchanged (default: false).
+     */
+    val alwaysNotify: Boolean = false
 )
 
 /**

@@ -350,8 +350,13 @@ public fun brsStructuralEquals(a: Any?, b: Any?): Boolean {
     if (a === null || b === null) return false
     // For objects (roAssociativeArray), use equals method
     // For primitives, use native comparison via brsNativeEquals intrinsic
+    // For roSGNode, return false (identity was already checked above)
+    // Note: roSGNode cannot use = operator in BrightScript - causes Type Mismatch
     return if (brsIsAssociativeArray(a)) {
         brsCallEquals(a, b)
+    } else if (brsIsSGNode(a) || brsIsSGNode(b)) {
+        // roSGNode doesn't support structural equality - only identity
+        false
     } else {
         brsNativeEquals(a, b)
     }
@@ -363,6 +368,14 @@ public fun brsStructuralEquals(a: Any?, b: Any?): Boolean {
  */
 @kotlin.brs.BrsIntrinsic("brsIntrinsicIsAA")
 private external fun brsIsAssociativeArray(a: Any?): Boolean
+
+/**
+ * Check if a value is a roSGNode (SceneGraph node).
+ * This is an intrinsic that compiles to: Type(a) = "roSGNode"
+ * roSGNode cannot be compared with = operator - causes Type Mismatch error.
+ */
+@kotlin.brs.BrsIntrinsic("brsIntrinsicIsSGNode")
+private external fun brsIsSGNode(a: Any?): Boolean
 
 /**
  * Call the equals method on an object.

@@ -6287,6 +6287,20 @@ class IrExpressionToBrsTransformer(
                 }
             }
 
+            is BrsIntrinsics.StdlibIntrinsic.IsSGNode -> {
+                // Type(a) = "roSGNode"
+                // roSGNode cannot be compared with = operator - causes Type Mismatch error
+                if (args.isNotEmpty()) {
+                    BrsBinaryOp(
+                        BrsFunctionCall(BrsIdentifier("Type"), mutableListOf(args[0])),
+                        BrsBinaryOperator.EQ,
+                        BrsStringLiteral("roSGNode")
+                    )
+                } else {
+                    BrsBooleanLiteral(false)
+                }
+            }
+
             is BrsIntrinsics.StdlibIntrinsic.CallEquals -> {
                 // a.equals(b) - direct method call on roAssociativeArray
                 if (args.size >= 2) {
@@ -7786,6 +7800,12 @@ class IrExpressionToBrsTransformer(
             return context.dependencyFunctionManifest[functionName]
         }
 
+        // ALWAYS check manifest first for any function
+        // This handles stdlib classes/interfaces correctly (e.g., MutableList.add → CollectionsKt.brs)
+        // Methods on interfaces like MutableList are compiled into CollectionsKt.brs,
+        // not MutableListKt.brs (which doesn't exist)
+        context.dependencyFunctionManifest[functionName]?.let { return it }
+
         val functionParent = function.parent
 
         return when (functionParent) {
@@ -7795,7 +7815,7 @@ class IrExpressionToBrsTransformer(
                 if (functionParent.isExternal) {
                     null
                 } else {
-                    // Function belongs to a class - use class name with Kt suffix
+                    // Function belongs to a class in current module - use class name with Kt suffix
                     context.getBrsName(functionParent) + "Kt.brs"
                 }
             }
@@ -7805,19 +7825,15 @@ class IrExpressionToBrsTransformer(
             }
             is IrPackageFragment -> {
                 // Top-level function from klib (IrExternalPackageFragment)
-                // Look up in dependency function manifest first for accurate resolution
-                context.dependencyFunctionManifest[functionName]
-                    ?: run {
-                        // Fallback for compatibility with older klibs without manifests
-                        // Use function name prefix as a heuristic
-                        // E.g., mutableListOf_k_ -> mutableListOfKt.brs
-                        val prefix = functionName.substringBefore("_k_")
-                        if (prefix.isNotEmpty() && prefix != functionName) {
-                            "${prefix}Kt.brs"
-                        } else {
-                            null
-                        }
-                    }
+                // Manifest was already checked above, this is fallback for older klibs
+                // Use function name prefix as a heuristic
+                // E.g., mutableListOf_k_ -> mutableListOfKt.brs
+                val prefix = functionName.substringBefore("_k_")
+                if (prefix.isNotEmpty() && prefix != functionName) {
+                    "${prefix}Kt.brs"
+                } else {
+                    null
+                }
             }
             else -> null
         }

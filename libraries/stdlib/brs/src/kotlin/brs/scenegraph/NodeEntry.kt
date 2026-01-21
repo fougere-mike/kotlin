@@ -101,13 +101,57 @@ public data class Vector4D(val x: Float, val y: Float, val width: Float, val hei
 }
 
 /**
- * Represents an interface field declaration with an alias to a child node's field.
- * Used to expose child node fields through m.top for observer compatibility.
+ * Enum representing valid BrightScript SceneGraph field types.
+ * These correspond to the field types defined in the Roku SceneGraph XSD schema.
+ *
+ * Example usage:
+ * ```kotlin
+ * interfaceField("title", alias = "titleLabel.text", type = InterfaceFieldType.STRING)
+ * interfaceField("rowIndex", alias = "grid.rowIndex", type = InterfaceFieldType.INTEGER)
+ * ```
+ */
+public enum class InterfaceFieldType(public val brsType: String) {
+    // Scalar types
+    STRING("string"),
+    INTEGER("integer"),
+    LONG_INTEGER("longinteger"),
+    FLOAT("float"),
+    DOUBLE("double"),
+    BOOLEAN("boolean"),
+    COLOR("color"),
+    TIME("time"),
+    URI("uri"),
+    NODE("node"),
+    VECTOR_2D("vector2d"),
+    RECT_2D("rect2D"),
+    ASSOC_ARRAY("assocarray"),
+    ARRAY("array"),
+
+    // Array types
+    INT_ARRAY("intarray"),
+    FLOAT_ARRAY("floatarray"),
+    BOOL_ARRAY("boolarray"),
+    STRING_ARRAY("stringarray"),
+    COLOR_ARRAY("colorarray"),
+    TIME_ARRAY("timearray"),
+    VECTOR_2D_ARRAY("vector2darray"),
+    RECT_2D_ARRAY("rect2DArray"),
+    NODE_ARRAY("nodearray");
+}
+
+/**
+ * Represents an interface field declaration.
+ *
+ * Interface fields can either alias a child node's field or be standalone
+ * fields for component state/communication.
  *
  * Example:
  * ```kotlin
  * sceneLayout {
+ *     // Aliased field
  *     interfaceField("buttonSelected", alias = "incrementButton.buttonSelected")
+ *     // Standalone field
+ *     interfaceField("counter", type = InterfaceFieldType.INTEGER, onChange = "onCounterChanged")
  *     button(id = "incrementButton", text = "Click")
  * }
  * ```
@@ -116,17 +160,24 @@ public data class Vector4D(val x: Float, val y: Float, val width: Float, val hei
  * ```xml
  * <interface>
  *     <field id="buttonSelected" alias="incrementButton.buttonSelected" />
+ *     <field id="counter" type="integer" onChange="onCounterChanged" />
  * </interface>
  * ```
  *
  * @property name The field name exposed on this component's interface
- * @property alias The path to the child node's field (e.g., "buttonId.buttonSelected")
- * @property type The field type (default: "node")
+ * @property alias The path to the child node's field (e.g., "buttonId.buttonSelected"), or null for standalone fields
+ * @property type The field type (default: NODE)
+ * @property value The default value for the field (optional)
+ * @property onChange The callback function name to invoke when the field changes (optional)
+ * @property alwaysNotify Whether to notify observers even when the value is unchanged (default: false)
  */
 public data class InterfaceFieldEntry(
     val name: String,
-    val alias: String,
-    val type: String = "node"
+    val alias: String? = null,
+    val type: InterfaceFieldType = InterfaceFieldType.NODE,
+    val value: String? = null,
+    val onChange: String? = null,
+    val alwaysNotify: Boolean = false
 )
 
 /**

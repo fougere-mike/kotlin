@@ -64,7 +64,10 @@ class BrsComponentExtractor(
             BrsFieldInfo(
                 name = fieldInfo.name,
                 type = fieldInfo.type,
-                alias = fieldInfo.alias
+                alias = fieldInfo.alias,
+                defaultValue = fieldInfo.value,
+                onChange = fieldInfo.onChange,
+                alwaysNotify = fieldInfo.alwaysNotify
             )
         }
 
@@ -660,7 +663,14 @@ class BrsComponentExtractor(
     /**
      * Extract interface field info from an interfaceField() call.
      *
-     * interfaceField(name: String, alias: String, type: String = "node")
+     * interfaceField(
+     *     name: String,
+     *     alias: String? = null,
+     *     type: InterfaceFieldType = InterfaceFieldType.NODE,
+     *     value: String? = null,
+     *     onChange: String? = null,
+     *     alwaysNotify: Boolean = false
+     * )
      */
     private fun extractInterfaceFieldFromCall(call: IrCall): InterfaceFieldInfo? {
         val function = call.symbol.owner
@@ -669,27 +679,88 @@ class BrsComponentExtractor(
         val nameArg = call.getValueArgument(0) as? IrConst ?: return null
         val name = nameArg.value as? String ?: return null
 
-        // Extract 'alias' (second argument)
-        val aliasArg = call.getValueArgument(1) as? IrConst ?: return null
-        val alias = aliasArg.value as? String ?: return null
+        // Extract 'alias' (second argument, optional)
+        var alias: String? = null
+        val aliasArg = call.getValueArgument(1) as? IrConst
+        if (aliasArg != null) {
+            alias = aliasArg.value as? String
+        }
 
-        // Extract 'type' (third argument, optional with default "node")
+        // Extract 'type' (third argument) - enum with brsType property
         var type = "node"
-        if (call.valueArgumentsCount > 2) {
-            val typeArg = call.getValueArgument(2) as? IrConst
-            if (typeArg != null) {
-                val typeValue = typeArg.value as? String
-                if (typeValue != null) {
-                    type = typeValue
-                }
+        val typeArg = call.getValueArgument(2)
+        if (typeArg != null) {
+            // Type argument is an IrGetEnumValue for InterfaceFieldType
+            val enumValue = typeArg as? IrGetEnumValue
+            if (enumValue != null) {
+                // Map enum name to brsType string
+                type = mapInterfaceFieldTypeEnumToBrsType(enumValue.symbol.owner.name.asString())
             }
+        }
+
+        // Extract 'value' (fourth argument, optional)
+        var value: String? = null
+        val valueArg = call.getValueArgument(3) as? IrConst
+        if (valueArg != null) {
+            value = valueArg.value as? String
+        }
+
+        // Extract 'onChange' (fifth argument, optional)
+        var onChange: String? = null
+        val onChangeArg = call.getValueArgument(4) as? IrConst
+        if (onChangeArg != null) {
+            onChange = onChangeArg.value as? String
+        }
+
+        // Extract 'alwaysNotify' (sixth argument, optional with default false)
+        var alwaysNotify = false
+        val alwaysNotifyArg = call.getValueArgument(5) as? IrConst
+        if (alwaysNotifyArg != null) {
+            alwaysNotify = alwaysNotifyArg.value as? Boolean ?: false
         }
 
         return InterfaceFieldInfo(
             name = name,
             alias = alias,
-            type = type
+            type = type,
+            value = value,
+            onChange = onChange,
+            alwaysNotify = alwaysNotify
         )
+    }
+
+    /**
+     * Map InterfaceFieldType enum name to its BrightScript type string.
+     */
+    private fun mapInterfaceFieldTypeEnumToBrsType(enumName: String): String {
+        return when (enumName) {
+            // Scalar types
+            "STRING" -> "string"
+            "INTEGER" -> "integer"
+            "LONG_INTEGER" -> "longinteger"
+            "FLOAT" -> "float"
+            "DOUBLE" -> "double"
+            "BOOLEAN" -> "boolean"
+            "COLOR" -> "color"
+            "TIME" -> "time"
+            "URI" -> "uri"
+            "NODE" -> "node"
+            "VECTOR_2D" -> "vector2d"
+            "RECT_2D" -> "rect2D"
+            "ASSOC_ARRAY" -> "assocarray"
+            "ARRAY" -> "array"
+            // Array types
+            "INT_ARRAY" -> "intarray"
+            "FLOAT_ARRAY" -> "floatarray"
+            "BOOL_ARRAY" -> "boolarray"
+            "STRING_ARRAY" -> "stringarray"
+            "COLOR_ARRAY" -> "colorarray"
+            "TIME_ARRAY" -> "timearray"
+            "VECTOR_2D_ARRAY" -> "vector2darray"
+            "RECT_2D_ARRAY" -> "rect2DArray"
+            "NODE_ARRAY" -> "nodearray"
+            else -> "node" // Default fallback
+        }
     }
 
     /**

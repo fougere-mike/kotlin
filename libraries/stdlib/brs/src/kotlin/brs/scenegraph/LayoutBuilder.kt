@@ -93,13 +93,42 @@ public class LayoutBuilder {
     // =========================================================================
 
     /**
-     * Declares an interface field that aliases a child node's field.
-     * This makes the child's field observable on m.top.
+     * Declares an interface field on this component.
+     *
+     * Interface fields can either:
+     * 1. Alias a child node's field (making it observable on m.top)
+     * 2. Be a standalone field with no alias (for component state/communication)
      *
      * Example:
      * ```kotlin
      * sceneLayout {
+     *     // Simple alias to child field
      *     interfaceField("buttonSelected", alias = "incrementButton.buttonSelected")
+     *
+     *     // Standalone field with onChange (no alias)
+     *     interfaceField(
+     *         "counter",
+     *         type = InterfaceFieldType.INTEGER,
+     *         onChange = "onCounterChanged"
+     *     )
+     *
+     *     // Aliased field with type and onChange
+     *     interfaceField(
+     *         "rowItemSelected",
+     *         alias = "gridScreen.rowItemSelected",
+     *         type = InterfaceFieldType.INT_ARRAY,
+     *         alwaysNotify = true,
+     *         onChange = "onRowItemSelected"
+     *     )
+     *
+     *     // With default value
+     *     interfaceField(
+     *         "title",
+     *         alias = "titleLabel.text",
+     *         type = InterfaceFieldType.STRING,
+     *         value = "Default Title"
+     *     )
+     *
      *     button(id = "incrementButton", text = "Click")
      * }
      * ```
@@ -113,19 +142,28 @@ public class LayoutBuilder {
      * ```xml
      * <interface>
      *     <field id="buttonSelected" alias="incrementButton.buttonSelected" />
+     *     <field id="counter" type="integer" onChange="onCounterChanged" />
+     *     <field id="rowItemSelected" alias="gridScreen.rowItemSelected" alwaysNotify="true" onChange="onRowItemSelected" />
+     *     <field id="title" alias="titleLabel.text" value="Default Title" />
      * </interface>
      * ```
      *
      * @param name The field name exposed on this component's interface
-     * @param alias The path to the child node's field (e.g., "buttonId.buttonSelected")
-     * @param type The field type (default: "node")
+     * @param alias The path to the child node's field (e.g., "buttonId.buttonSelected"), or null for standalone fields
+     * @param type The field type (default: NODE)
+     * @param value The default value for the field (optional)
+     * @param onChange The callback function name to invoke when the field changes (optional)
+     * @param alwaysNotify Whether to notify observers even when the value is unchanged (default: false)
      */
     public fun interfaceField(
         name: String,
-        alias: String,
-        type: String = "node"
+        alias: String? = null,
+        type: InterfaceFieldType = InterfaceFieldType.NODE,
+        value: String? = null,
+        onChange: String? = null,
+        alwaysNotify: Boolean = false
     ) {
-        _interfaceFields.add(InterfaceFieldEntry(name, alias, type))
+        _interfaceFields.add(InterfaceFieldEntry(name, alias, type, value, onChange, alwaysNotify))
     }
 
     // =========================================================================

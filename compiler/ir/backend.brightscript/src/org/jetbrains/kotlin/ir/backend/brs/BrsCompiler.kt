@@ -632,10 +632,16 @@ class BrsCompiler(
      *     if a = invalid and b = invalid then return true
      *     ' One is invalid
      *     if a = invalid or b = invalid then return false
-     *     ' Both are primitives - use value equality
      *     aType = type(a)
      *     bType = type(b)
+     *     ' roSGNode types require isSameNode() for identity comparison
+     *     if aType = "roSGNode" and bType = "roSGNode" then
+     *         return a.isSameNode(b)
+     *     end if
+     *     ' Both are primitives - use value equality (works for strings, numbers, booleans)
      *     if aType <> "roAssociativeArray" and bType <> "roAssociativeArray" then
+     *         ' Different types can't be identical
+     *         if aType <> bType then return false
      *         return a = b
      *     end if
      *     ' Both must be objects for identity comparison
@@ -674,7 +680,22 @@ class BrsCompiler(
             BrsVariable(name = "aType", initializer = BrsTypeOf(BrsIdentifier("a"))),
             // bType = type(b)
             BrsVariable(name = "bType", initializer = BrsTypeOf(BrsIdentifier("b"))),
-            // if aType <> "roAssociativeArray" and bType <> "roAssociativeArray" then return a = b
+            // if aType = "roSGNode" and bType = "roSGNode" then return a.isSameNode(b)
+            BrsIf(
+                condition = BrsBinaryOp(
+                    BrsBinaryOp(BrsIdentifier("aType"), BrsBinaryOperator.EQ, BrsStringLiteral("roSGNode")),
+                    BrsBinaryOperator.AND,
+                    BrsBinaryOp(BrsIdentifier("bType"), BrsBinaryOperator.EQ, BrsStringLiteral("roSGNode"))
+                ),
+                thenBranch = BrsBlock(mutableListOf(
+                    BrsReturn(BrsFunctionCall(
+                        BrsDotAccess(BrsIdentifier("a"), "isSameNode"),
+                        mutableListOf(BrsIdentifier("b"))
+                    ))
+                )),
+                elseBranch = null
+            ),
+            // if aType <> "roAssociativeArray" and bType <> "roAssociativeArray" then ...
             BrsIf(
                 condition = BrsBinaryOp(
                     BrsBinaryOp(BrsIdentifier("aType"), BrsBinaryOperator.NE, BrsStringLiteral("roAssociativeArray")),
@@ -682,6 +703,12 @@ class BrsCompiler(
                     BrsBinaryOp(BrsIdentifier("bType"), BrsBinaryOperator.NE, BrsStringLiteral("roAssociativeArray"))
                 ),
                 thenBranch = BrsBlock(mutableListOf(
+                    // if aType <> bType then return false
+                    BrsIf(
+                        condition = BrsBinaryOp(BrsIdentifier("aType"), BrsBinaryOperator.NE, BrsIdentifier("bType")),
+                        thenBranch = BrsBlock(mutableListOf(BrsReturn(BrsBooleanLiteral(false)))),
+                        elseBranch = null
+                    ),
                     BrsReturn(BrsBinaryOp(BrsIdentifier("a"), BrsBinaryOperator.EQ, BrsIdentifier("b")))
                 )),
                 elseBranch = null
@@ -1653,9 +1680,22 @@ class BrsCompiler(
 
         // Add fields
         for (field in component.fields) {
-            // For aliased fields, only output id and alias (type is inherited from the aliased field)
+            // For aliased fields, output id, alias, and optional attributes
             if (field.alias != null) {
-                builder.appendLine("        <field id=\"${field.name}\" alias=\"${field.alias}\" />")
+                builder.append("        <field id=\"${field.name}\" alias=\"${field.alias}\"")
+
+                // Add optional value attribute
+                field.defaultValue?.let { builder.append(" value=\"$it\"") }
+
+                // Add optional onChange attribute
+                field.onChange?.let { builder.append(" onChange=\"$it\"") }
+
+                // Add alwaysNotify if true
+                if (field.alwaysNotify) {
+                    builder.append(" alwaysNotify=\"true\"")
+                }
+
+                builder.appendLine(" />")
                 continue
             }
 
