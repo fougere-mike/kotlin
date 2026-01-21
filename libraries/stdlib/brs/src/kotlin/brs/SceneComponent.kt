@@ -24,6 +24,7 @@ import kotlin.brs.roku.RoAssociativeArray
  * @see TaskComponent For background task components
  * @see LayoutComponent For auto-layout components (LayoutGroup)
  * @see ContentNodeComponent For data model components (ContentNode)
+ * @see RectangleComponent For visual rectangle components
  */
 public abstract class ComponentBase {
     /**
@@ -235,6 +236,34 @@ public abstract class TaskComponent : ComponentBase()
  */
 @BrsSceneGraphComponent(extends = "ContentNode")
 public abstract class ContentNodeComponent : ComponentBase()
+
+/**
+ * Base class for SceneGraph components that extend Rectangle.
+ *
+ * Rectangle components are visual nodes that render a colored rectangle.
+ * They can have custom colors, dimensions, and can serve as backgrounds
+ * or visual containers for other components.
+ *
+ * Rectangle nodes support these key properties:
+ * - `color` - The fill color (hex format, e.g., "0xFF0000FF" for red)
+ * - `width` / `height` - Dimensions in pixels
+ * - `opacity` - Transparency (0.0 to 1.0)
+ *
+ * Example:
+ * ```kotlin
+ * class ColoredPanel : RectangleComponent() {
+ *     init {
+ *         top.setField("color", "0x0000FFFF")  // Blue
+ *         top.setField("width", 200)
+ *         top.setField("height", 100)
+ *     }
+ * }
+ * ```
+ *
+ * @see GroupComponent For container components without rendering
+ */
+@BrsSceneGraphComponent(extends = "Rectangle")
+public abstract class RectangleComponent : ComponentBase()
 
 // ==================== Deprecated Type Aliases ====================
 // These are provided for backwards compatibility during migration.
