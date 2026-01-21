@@ -55,8 +55,32 @@ internal fun toString(obj: Any?): String {
         return "false"
     }
 
-    // Object - call toString method directly (using inline to avoid recursive dispatch)
-    return brsObjectToString(obj)
+    // Handle roAssociativeArray - check if it's a Kotlin object or native AA
+    if (t == "roAssociativeArray") {
+        if (brsHasField(obj, "__type")) {
+            // Kotlin object - check if it actually has toString method
+            if (brsHasField(obj, "toString")) {
+                return brsObjectToString(obj)
+            }
+            // No toString method (e.g., anonymous class) - return type name
+            return brsGetField(obj, "__type") as String
+        }
+        // Native AA - format manually
+        return __kotlin_nativeAAToString(obj, 0)
+    }
+
+    // Handle roArray - native arrays without toString method
+    if (t == "roArray") {
+        return __kotlin_nativeArrayToString(obj, 0)
+    }
+
+    // Function types - return placeholder
+    if (t == "Function" || t == "roFunction") {
+        return "[Function]"
+    }
+
+    // Unknown native types - return type name instead of crashing
+    return "[" + t + "]"
 }
 
 /**
@@ -70,6 +94,81 @@ private external fun brsType(obj: Any?): String
  */
 @kotlin.brs.BrsInline("return obj.toString()")
 private external fun brsObjectToString(obj: Any?): String
+
+/**
+ * Converts native roAssociativeArray to string: {key=value, key2=value2}
+ * Uses depth tracking to prevent infinite recursion on deeply nested structures.
+ */
+private fun __kotlin_nativeAAToString(aa: Any, depth: Int): String {
+    if (depth > 3) return "{...}"
+    val keys = brsIntrinsicKeys(aa)
+    val count = brsIntrinsicCount(keys)
+    if (count == 0) return "{}"
+    var result = "{"
+    var i = 0
+    while (i < count) {
+        if (i > 0) result = result + ", "
+        @Suppress("UNCHECKED_CAST")
+        val key = brsIntrinsicArrayGet(keys, i) as String
+        result = result + key + "="
+        val value = brsIntrinsicGetField(aa, key)
+        result = result + __kotlin_valueToStringWithDepth(value, depth + 1)
+        i = i + 1
+    }
+    return result + "}"
+}
+
+/**
+ * Converts native roArray to string: [elem, elem, elem]
+ * Uses depth tracking to prevent infinite recursion on deeply nested structures.
+ */
+private fun __kotlin_nativeArrayToString(arr: Any, depth: Int): String {
+    if (depth > 3) return "[...]"
+    val count = brsIntrinsicCount(arr)
+    if (count == 0) return "[]"
+    var result = "["
+    var i = 0
+    while (i < count) {
+        if (i > 0) result = result + ", "
+        val element = brsIntrinsicArrayGet(arr, i)
+        result = result + __kotlin_valueToStringWithDepth(element, depth + 1)
+        i = i + 1
+    }
+    return result + "]"
+}
+
+/**
+ * Internal helper for recursive toString with depth tracking.
+ * Handles all value types for use in nested structure formatting.
+ */
+private fun __kotlin_valueToStringWithDepth(obj: Any?, depth: Int): String {
+    if (obj == null) return "null"
+    val t = brsType(obj)
+
+    if (t == "String" || t == "roString") {
+        @Suppress("UNCHECKED_CAST")
+        return obj as String
+    }
+    if (t == "Integer" || t == "LongInteger" || t == "Float" || t == "Double" ||
+        t == "roInt" || t == "roFloat" || t == "roDouble" || t == "roInteger" || t == "roLongInteger") {
+        return __kotlin_numToStr(obj)
+    }
+    if (t == "Boolean" || t == "roBoolean") {
+        @Suppress("UNCHECKED_CAST")
+        if (obj as Boolean) return "true"
+        return "false"
+    }
+    if (t == "roAssociativeArray") {
+        if (brsHasField(obj, "__type")) {
+            if (brsHasField(obj, "toString")) return brsObjectToString(obj)
+            return brsGetField(obj, "__type") as String
+        }
+        return __kotlin_nativeAAToString(obj, depth)
+    }
+    if (t == "roArray") return __kotlin_nativeArrayToString(obj, depth)
+    if (t == "Function" || t == "roFunction") return "[Function]"
+    return "[" + t + "]"
+}
 
 /**
  * Computes the hash code for an object.

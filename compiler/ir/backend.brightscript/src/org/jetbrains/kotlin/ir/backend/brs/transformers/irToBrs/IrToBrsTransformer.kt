@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.ir.util.isTypeParameter
 import org.jetbrains.kotlin.ir.util.isUnsigned
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.name.BrsStandardClassIds
+import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
 import org.jetbrains.kotlin.ir.visitors.IrVisitor
@@ -3037,6 +3038,12 @@ class IrToBrsTransformer(
                 generateRuntimeToString(receiverExpr)
             }
 
+            // Dynamic type and external interfaces: use runtime type checking
+            // These are native BrightScript types that don't have a toString() method
+            isDynamicType(receiverType) || isExternalInterfaceType(receiverType) -> {
+                generateRuntimeToString(receiverExpr)
+            }
+
             // Non-nullable objects: call toString method
             else -> {
                 BrsMethodCall(receiverExpr, "toString", mutableListOf())
@@ -3059,6 +3066,35 @@ class IrToBrsTransformer(
             BrsIdentifier("toString_AnyN_k_"),
             mutableListOf(valueExpr)
         )
+    }
+
+    /**
+     * Checks if a type is the Dynamic type (kotlin.brs.Dynamic).
+     * Dynamic type needs runtime type checking for toString since it can hold any value.
+     */
+    private fun isDynamicType(type: IrType): Boolean {
+        val classifier = type.classifierOrNull
+        if (classifier !is IrClassSymbol) return false
+        return classifier.owner.fqNameWhenAvailable?.asString() == "kotlin.brs.Dynamic"
+    }
+
+    /**
+     * Checks if a type is an external interface (native BrightScript type).
+     * External interfaces don't have Kotlin methods like toString().
+     */
+    private fun isExternalInterfaceType(type: IrType): Boolean {
+        val irClass = type.classOrNull?.owner ?: return false
+        return irClass.isExternal || isExternalClass(irClass)
+    }
+
+    /**
+     * Checks if a class is marked with @BrsExternal annotation.
+     */
+    private fun isExternalClass(irClass: IrClass): Boolean {
+        return irClass.annotations.any { annotation ->
+            val annotationClass = annotation.type.classifierOrNull?.owner as? IrClass
+            annotationClass?.name?.asString() == "BrsExternal"
+        }
     }
 
     // ==================== Visitor Implementation ====================
@@ -7013,8 +7049,21 @@ class IrExpressionToBrsTransformer(
                 return BrsBinaryOp(BrsTypeOf(argument), BrsBinaryOperator.EQ, BrsStringLiteral("roArray"))
         }
 
-        // For class types, check the __proto chain
+        // For class types, check type or __proto chain
         val classType = targetType.classOrNull?.owner
+
+        if (classType != null && (classType.isExternal || isExternalClass(classType))) {
+            // For external classes (native BrightScript types like RoArray, RoAssociativeArray),
+            // use Type() comparison directly since they don't have __proto chains
+            val brsTypeName = getBrsExternalTypeName(classType)
+            return BrsBinaryOp(
+                BrsTypeOf(argument),
+                BrsBinaryOperator.EQ,
+                BrsStringLiteral(brsTypeName)
+            )
+        }
+
+        // For Kotlin classes, check the __proto chain
         val className = if (classType != null) {
             context.getBrsName(classType)
         } else {
