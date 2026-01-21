@@ -152,3 +152,48 @@ public data class LayoutGroupEntry(
 ) : ContainerNodeEntry {
     override val nodeType: String get() = "LayoutGroup"
 }
+
+/**
+ * Custom component node - embeds a user-defined Roku component with arbitrary attributes.
+ *
+ * Use this for embedding custom SceneGraph components that aren't built into the DSL.
+ * Custom attributes can be set using the `attr()` method in the builder lambda.
+ *
+ * Example:
+ * ```kotlin
+ * component("MyCustomButton", id = "btn1") {
+ *     attr("customField", "value")
+ *     attr("iconSize", 48)
+ * }
+ *
+ * component("CustomContainer", id = "container") {
+ *     attr("padding", 20)
+ *     children {
+ *         label(id = "nested", text = "Inside container")
+ *     }
+ * }
+ * ```
+ */
+@SGNodeDsl
+public data class CustomComponentEntry(
+    override val id: String,
+    /** The name of the custom component type (e.g., "MyCustomButton") */
+    val componentType: String,
+    /** Custom attributes set via attr() calls */
+    val customAttributes: Map<String, String> = emptyMap(),
+    override val translation: Vector2D? = null,
+    override val rotation: Float? = null,
+    override val scale: Vector2D? = null,
+    override val scaleRotateCenter: Vector2D? = null,
+    override val opacity: Float? = null,
+    override val visible: Boolean? = null,
+    override val inheritParentOpacity: Boolean? = null,
+    override val inheritParentTransform: Boolean? = null,
+    override val clippingRect: Vector4D? = null,
+    override val renderGroup: Boolean? = null,
+    override val focusable: Boolean? = null,
+    override val renderPass: Int? = null,
+    override val children: List<NodeEntry> = emptyList()
+) : ContainerNodeEntry {
+    override val nodeType: String get() = componentType
+}

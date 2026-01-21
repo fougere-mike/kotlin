@@ -12,8 +12,7 @@ import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.expressions.IrConst
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
-import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.types.classOrNull
+import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.getAnnotation
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.superTypes
@@ -113,7 +112,32 @@ class BrsIntrinsics(
     private val brsSceneGraphComponentFqn = FqName("kotlin.brs.BrsSceneGraphComponent")
 
     /**
-     * The SceneComponent base class symbol.
+     * The ComponentBase abstract class symbol.
+     * This is the shared base for all component types.
+     */
+    val componentBaseClass: IrClassSymbol? by lazy {
+        val classId = BrsStandardClassIds.Components.ComponentBase
+        symbolFinder.findClass(classId.shortClassName, classId.packageFqName)
+    }
+
+    /**
+     * The GroupComponent base class symbol (extends Group).
+     */
+    val groupComponentClass: IrClassSymbol? by lazy {
+        val classId = BrsStandardClassIds.Components.GroupComponent
+        symbolFinder.findClass(classId.shortClassName, classId.packageFqName)
+    }
+
+    /**
+     * The LayoutComponent base class symbol (extends LayoutGroup).
+     */
+    val layoutComponentClass: IrClassSymbol? by lazy {
+        val classId = BrsStandardClassIds.Components.LayoutComponent
+        symbolFinder.findClass(classId.shortClassName, classId.packageFqName)
+    }
+
+    /**
+     * The SceneComponent base class symbol (extends Scene).
      */
     val sceneComponentClass: IrClassSymbol? by lazy {
         val classId = BrsStandardClassIds.Components.SceneComponent
@@ -121,7 +145,7 @@ class BrsIntrinsics(
     }
 
     /**
-     * The TaskComponent base class symbol.
+     * The TaskComponent base class symbol (extends Task).
      */
     val taskComponentClass: IrClassSymbol? by lazy {
         val classId = BrsStandardClassIds.Components.TaskComponent
@@ -129,18 +153,26 @@ class BrsIntrinsics(
     }
 
     /**
-     * The SceneNodeComponent base class symbol.
+     * The ContentNodeComponent base class symbol (extends ContentNode).
      */
-    val sceneNodeComponentClass: IrClassSymbol? by lazy {
-        val classId = BrsStandardClassIds.Components.SceneNodeComponent
+    val contentNodeComponentClass: IrClassSymbol? by lazy {
+        val classId = BrsStandardClassIds.Components.ContentNodeComponent
         symbolFinder.findClass(classId.shortClassName, classId.packageFqName)
+    }
+
+    /**
+     * @deprecated Use [sceneComponentClass] instead.
+     */
+    @Deprecated("Use sceneComponentClass instead", ReplaceWith("sceneComponentClass"))
+    val sceneNodeComponentClass: IrClassSymbol? by lazy {
+        sceneComponentClass
     }
 
     /**
      * Checks if a class is a SceneGraph component.
      *
      * A class is a component if it or any of its supertypes has @BrsSceneGraphComponent.
-     * This includes user classes that extend SceneComponent, TaskComponent, etc.
+     * This includes user classes that extend GroupComponent, SceneComponent, TaskComponent, etc.
      */
     fun isSceneGraphComponent(irClass: IrClass): Boolean {
         // Traverse class hierarchy looking for @BrsSceneGraphComponent
@@ -159,6 +191,80 @@ class BrsIntrinsics(
             }
 
             // Check supertypes
+            for (superType in current.superTypes) {
+                val superClass = superType.classOrNull?.owner ?: continue
+                queue.add(superClass)
+            }
+        }
+        return false
+    }
+
+    /**
+     * Checks if a class is a Task component.
+     *
+     * Task components don't support onKeyEvent as they run on a separate thread.
+     */
+    fun isTaskComponent(irClass: IrClass): Boolean {
+        val taskSym = taskComponentClass ?: return false
+        return checkClassHierarchy(irClass) { it.symbol == taskSym }
+    }
+
+    /**
+     * Checks if a class is a ContentNode component.
+     *
+     * ContentNode components don't support onKeyEvent as they're data containers.
+     */
+    fun isContentNodeComponent(irClass: IrClass): Boolean {
+        val contentNodeSym = contentNodeComponentClass ?: return false
+        return checkClassHierarchy(irClass) { it.symbol == contentNodeSym }
+    }
+
+    /**
+     * Checks if a component needs an onKeyEvent function.
+     *
+     * Returns true for GroupComponent, LayoutComponent, and SceneComponent.
+     * Returns false for TaskComponent and ContentNodeComponent (they don't receive key events).
+     */
+    fun componentNeedsOnKeyEvent(irClass: IrClass): Boolean {
+        if (!isSceneGraphComponent(irClass)) return false
+        if (isTaskComponent(irClass)) return false
+        if (isContentNodeComponent(irClass)) return false
+        return true
+    }
+
+    /**
+     * Checks if a class has overridden the onKeyEvent method.
+     *
+     * @return The overriding function if found, null otherwise.
+     */
+    fun findOnKeyEventOverride(irClass: IrClass): IrSimpleFunction? {
+        return irClass.declarations
+            .filterIsInstance<IrSimpleFunction>()
+            .find { function ->
+                function.name.asString() == "onKeyEvent" &&
+                !function.isFakeOverride &&
+                function.valueParameters.size == 2 &&
+                function.valueParameters[0].type.isString() &&
+                function.valueParameters[1].type.isBoolean() &&
+                function.returnType.isBoolean()
+            }
+    }
+
+    /**
+     * Helper to check class hierarchy.
+     */
+    private fun checkClassHierarchy(irClass: IrClass, predicate: (IrClass) -> Boolean): Boolean {
+        val visited = mutableSetOf<IrClass>()
+        val queue = ArrayDeque<IrClass>()
+        queue.add(irClass)
+
+        while (queue.isNotEmpty()) {
+            val current = queue.removeFirst()
+            if (current in visited) continue
+            visited.add(current)
+
+            if (predicate(current)) return true
+
             for (superType in current.superTypes) {
                 val superClass = superType.classOrNull?.owner ?: continue
                 queue.add(superClass)

@@ -323,7 +323,27 @@ object BrsStandardClassIds {
      */
     object Components {
         /**
+         * Abstract base class for all SceneGraph components.
+         * Provides top, global, m properties and onKeyEvent.
+         */
+        @JvmField
+        val ComponentBase = "ComponentBase".brsId()
+
+        /**
          * Base class for SceneGraph components that extend Group.
+         */
+        @JvmField
+        val GroupComponent = "GroupComponent".brsId()
+
+        /**
+         * Base class for SceneGraph components that extend LayoutGroup.
+         * Use for components that need automatic layout of children.
+         */
+        @JvmField
+        val LayoutComponent = "LayoutComponent".brsId()
+
+        /**
+         * Base class for SceneGraph Scene components.
          */
         @JvmField
         val SceneComponent = "SceneComponent".brsId()
@@ -335,8 +355,16 @@ object BrsStandardClassIds {
         val TaskComponent = "TaskComponent".brsId()
 
         /**
-         * Base class for SceneGraph Scene components.
+         * Base class for SceneGraph ContentNode components.
+         * Use for data models in lists, grids, etc.
          */
+        @JvmField
+        val ContentNodeComponent = "ContentNodeComponent".brsId()
+
+        /**
+         * @deprecated Use [SceneComponent] instead.
+         */
+        @Deprecated("Use SceneComponent instead", ReplaceWith("SceneComponent"))
         @JvmField
         val SceneNodeComponent = "SceneNodeComponent".brsId()
     }

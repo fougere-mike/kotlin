@@ -420,7 +420,7 @@ public annotation class BrsSceneGraphComponent(
  *
  * Example:
  * ```kotlin
- * class MyComponent : SceneNodeComponent() {
+ * class MyComponent : SceneComponent() {
  *     init {
  *         button.observeField("buttonSelected", brsName(::onButtonPressed))
  *     }

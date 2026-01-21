@@ -702,10 +702,18 @@ class IrToBrsTransformer(
             }
 
             // Generate member functions (but not inherited property accessors like get_top)
+            // Skip onKeyEvent - we handle it specially below
             for (function in irClass.declarations.filterIsInstance<IrSimpleFunction>()) {
-                if (!function.isFakeOverride && !isComponentScopeAccessor(function)) {
+                if (!function.isFakeOverride && !isComponentScopeAccessor(function) && !isOnKeyEventMethod(function)) {
                     transformFunction(function)?.let { declarations.add(it) }
                 }
+            }
+
+            // Generate onKeyEvent function for components that need it
+            // This must be named exactly "onKeyEvent" (no mangling) to work with SceneGraph
+            val onKeyEventFunction = generateOnKeyEventFunction(irClass)
+            if (onKeyEventFunction != null) {
+                declarations.add(onKeyEventFunction)
             }
 
             // Generate property accessor functions (for delegated properties, custom getters/setters, etc.)
@@ -738,6 +746,85 @@ class IrToBrsTransformer(
         val property = function.correspondingPropertySymbol?.owner ?: return false
         val propName = property.name.asString()
         return context.intrinsics.isComponentScopeProperty(propName)
+    }
+
+    /**
+     * Check if a function is the onKeyEvent method from ComponentBase.
+     */
+    private fun isOnKeyEventMethod(function: IrSimpleFunction): Boolean {
+        return function.name.asString() == "onKeyEvent" &&
+               function.valueParameters.size == 2 &&
+               function.valueParameters[0].type.isString() &&
+               function.valueParameters[1].type.isBoolean() &&
+               function.returnType.isBoolean()
+    }
+
+    /**
+     * Generate the onKeyEvent function for a SceneGraph component.
+     *
+     * For components that extend GroupComponent, LayoutComponent, or SceneComponent,
+     * we generate an onKeyEvent function that:
+     * - Returns false by default (allowing events to propagate to focused children)
+     * - Calls the Kotlin override if present
+     *
+     * This is required for proper key event handling in SceneGraph. Without an
+     * onKeyEvent function, Group components may block key events from reaching
+     * focused children.
+     *
+     * Generated BrightScript:
+     * ```brightscript
+     * function onKeyEvent(key as String, press as Boolean) as Boolean
+     *     return false  ' or: return m.onKeyEvent_String_Boolean_k_(key, press)
+     * end function
+     * ```
+     *
+     * @return The generated function, or null if this component doesn't need onKeyEvent
+     */
+    private fun generateOnKeyEventFunction(irClass: IrClass): BrsFunction? {
+        // Only generate for components that can receive key events
+        if (!context.intrinsics.componentNeedsOnKeyEvent(irClass)) {
+            return null
+        }
+
+        // Don't generate for abstract base classes (GroupComponent, SceneComponent, etc.)
+        // Only concrete user classes should have onKeyEvent generated
+        if (irClass.modality == org.jetbrains.kotlin.descriptors.Modality.ABSTRACT) {
+            return null
+        }
+
+        val parameters = mutableListOf(
+            BrsParameter("key", BrsType.STRING),
+            BrsParameter("press", BrsType.BOOLEAN)
+        )
+
+        // Check if the user has overridden onKeyEvent
+        val override = context.intrinsics.findOnKeyEventOverride(irClass)
+
+        val body = if (override != null) {
+            // Call the user's override: return m.onKeyEvent_String_Boolean_k_(key, press)
+            val mangledName = context.getBrsName(override)
+            val className = context.getBrsName(irClass)
+            val shortName = mangledName.removePrefix("${className}_")
+
+            BrsBlock(mutableListOf(
+                BrsReturn(
+                    BrsFunctionCall(
+                        BrsDotAccess(BrsMRef(), shortName),
+                        mutableListOf(BrsIdentifier("key"), BrsIdentifier("press"))
+                    )
+                )
+            ))
+        } else {
+            // Default: return false (allow event to propagate to children)
+            BrsBlock(mutableListOf(BrsReturn(BrsBooleanLiteral(false))))
+        }
+
+        return BrsFunction(
+            name = "onKeyEvent",
+            parameters = parameters,
+            returnType = BrsType.BOOLEAN,
+            body = body
+        )
     }
 
     /**
@@ -6291,6 +6378,12 @@ class IrExpressionToBrsTransformer(
             is BrsIntrinsics.StdlibIntrinsic.FunctionName -> {
                 // Extract the mangled BrightScript name from a function reference
                 // brsName(::myFunction) -> "ClassName_myFunction_k_"
+                //
+                // IMPORTANT: Always return the FULL mangled name (with class prefix).
+                // Roku's observeFieldScoped looks for callback functions at module/script level,
+                // NOT in m scope. The function exists at module level with its full name:
+                //   sub TestLayout_onButtonPressed_RoSGNodeEvent_k_(message as Object)
+                // So the observer must use that full name for Roku to find it.
                 val arg = expression.getValueArgument(0)
                 when (arg) {
                     is IrFunctionReference -> {

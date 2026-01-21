@@ -51,7 +51,7 @@ import org.jetbrains.kotlin.name.SpecialNames
  * Original design:
  * For a class like:
  * ```kotlin
- * class MainScreen : SceneNodeComponent() {
+ * class MainScreen : SceneComponent() {
  *     companion object {
  *         @SGLayout
  *         fun defineLayout() = sceneLayout {
@@ -297,10 +297,11 @@ class SceneGraphLayoutGenerator(session: FirSession) : FirDeclarationGenerationE
 
     /**
      * DSL builder method names that take an `id` parameter.
+     * Note: "component" has `id` as its 2nd parameter (after componentType).
      */
     private val dslBuilderMethods = setOf(
         "group", "layoutGroup", "label", "poster", "rectangle",
-        "button", "buttonGroup", "textEditBox", "keyboard"
+        "button", "buttonGroup", "textEditBox", "keyboard", "component"
     )
 
     /**
@@ -333,11 +334,15 @@ class SceneGraphLayoutGenerator(session: FirSession) : FirDeclarationGenerationE
          * Extract the string value of the "id" named argument from a function call.
          *
          * At raw FIR stage, named arguments are FirNamedArgumentExpression nodes.
-         * Also handles positional arguments where `id` is the first parameter.
+         * Also handles positional arguments where `id` is typically the first parameter.
+         * For `component()` calls, `id` is the second parameter (after componentType).
          */
         private fun extractIdArgument(call: FirFunctionCall): String? {
             val arguments = call.argumentList.arguments
             if (arguments.isEmpty()) return null
+
+            val callName = (call.calleeReference as? FirNamedReference)?.name?.asString()
+            val isComponentCall = callName == "component"
 
             // Check for named argument `id = "value"`
             for (arg in arguments) {
@@ -349,7 +354,26 @@ class SceneGraphLayoutGenerator(session: FirSession) : FirDeclarationGenerationE
                 }
             }
 
-            // Check first positional argument (id is always the first parameter in our DSL)
+            // For component(), id is the second positional argument
+            if (isComponentCall) {
+                if (arguments.size >= 2) {
+                    val secondArg = arguments[1]
+                    // Direct literal
+                    if (secondArg is FirLiteralExpression && secondArg.value is String) {
+                        return secondArg.value as String
+                    }
+                    // Named argument in second position
+                    if (secondArg is FirNamedArgumentExpression && secondArg.name.asString() == "id") {
+                        val valueExpr = secondArg.expression
+                        if (valueExpr is FirLiteralExpression && valueExpr.value is String) {
+                            return valueExpr.value as String
+                        }
+                    }
+                }
+                return null
+            }
+
+            // For other DSL methods, id is the first positional argument
             val firstArg = arguments.firstOrNull()
             // Handle the case where it's a direct literal (positional)
             if (firstArg is FirLiteralExpression && firstArg.value is String) {

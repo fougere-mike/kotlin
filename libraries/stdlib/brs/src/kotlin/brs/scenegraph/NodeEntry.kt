@@ -29,7 +29,7 @@ public annotation class SGNodeDsl
  *
  * Example:
  * ```kotlin
- * class MainScreen : SceneNodeComponent() {
+ * class MainScreen : SceneComponent() {
  *     companion object {
  *         @SGLayout
  *         fun defineLayout() = sceneLayout {
@@ -99,6 +99,35 @@ public data class Vector4D(val x: Float, val y: Float, val width: Float, val hei
     /** Formats as XML attribute value */
     public fun toXmlValue(): String = "[$x, $y, $width, $height]"
 }
+
+/**
+ * Represents an interface field declaration with an alias to a child node's field.
+ * Used to expose child node fields through m.top for observer compatibility.
+ *
+ * Example:
+ * ```kotlin
+ * sceneLayout {
+ *     interfaceField("buttonSelected", alias = "incrementButton.buttonSelected")
+ *     button(id = "incrementButton", text = "Click")
+ * }
+ * ```
+ *
+ * Generates XML:
+ * ```xml
+ * <interface>
+ *     <field id="buttonSelected" alias="incrementButton.buttonSelected" />
+ * </interface>
+ * ```
+ *
+ * @property name The field name exposed on this component's interface
+ * @property alias The path to the child node's field (e.g., "buttonId.buttonSelected")
+ * @property type The field type (default: "node")
+ */
+public data class InterfaceFieldEntry(
+    val name: String,
+    val alias: String,
+    val type: String = "node"
+)
 
 /**
  * Color value for SceneGraph nodes.

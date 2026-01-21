@@ -62,9 +62,11 @@ public abstract class SceneLayoutBase(protected val top: RoSGNode) {
  * At runtime, users access the generated typed accessor instead of this class.
  *
  * @property nodes The list of top-level node entries declared in the DSL.
+ * @property interfaceFields The list of interface field declarations for aliasing child node fields.
  */
 public class SceneLayoutDefinition internal constructor(
-    internal val nodes: List<NodeEntry>
+    internal val nodes: List<NodeEntry>,
+    internal val interfaceFields: List<InterfaceFieldEntry> = emptyList()
 )
 
 /**
@@ -75,7 +77,7 @@ public class SceneLayoutDefinition internal constructor(
  *
  * Example:
  * ```kotlin
- * class MainScreen : SceneNodeComponent() {
+ * class MainScreen : SceneComponent() {
  *     @SGLayout
  *     val layout = sceneLayout {
  *         layoutGroup(
@@ -110,5 +112,8 @@ public class SceneLayoutDefinition internal constructor(
 public fun sceneLayout(init: LayoutBuilder.() -> Unit): SceneLayoutDefinition {
     val builder = LayoutBuilder()
     builder.init()
-    return SceneLayoutDefinition(builder.build())
+    return SceneLayoutDefinition(
+        nodes = builder.build(),
+        interfaceFields = builder.buildInterfaceFields()
+    )
 }

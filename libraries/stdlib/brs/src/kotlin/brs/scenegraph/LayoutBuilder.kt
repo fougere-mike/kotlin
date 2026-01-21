@@ -6,6 +6,51 @@
 package kotlin.brs.scenegraph
 
 /**
+ * Builder for custom component attributes and children.
+ *
+ * Use this builder inside a `component()` call to set custom attributes
+ * and add child nodes.
+ *
+ * Example:
+ * ```kotlin
+ * component("MyCustomButton", id = "btn1") {
+ *     attr("customField", "value")
+ *     attr("iconSize", 48)
+ *     attr("enabled", true)
+ *     children {
+ *         label(id = "inner", text = "Label")
+ *     }
+ * }
+ * ```
+ */
+@SGNodeDsl
+public class ComponentBuilder {
+    internal val attributes = mutableMapOf<String, String>()
+    internal val childBuilder = LayoutBuilder()
+
+    /** Set a string attribute on the component */
+    public fun attr(name: String, value: String) { attributes[name] = value }
+
+    /** Set a numeric attribute on the component */
+    public fun attr(name: String, value: Number) { attributes[name] = value.toString() }
+
+    /** Set a boolean attribute on the component */
+    public fun attr(name: String, value: Boolean) { attributes[name] = if (value) "true" else "false" }
+
+    /** Set a color attribute on the component */
+    public fun attr(name: String, value: Color) { attributes[name] = value.hex }
+
+    /** Set a Vector2D attribute on the component */
+    public fun attr(name: String, value: Vector2D) { attributes[name] = "[${value.x}, ${value.y}]" }
+
+    /** Set a Vector4D attribute on the component */
+    public fun attr(name: String, value: Vector4D) { attributes[name] = "[${value.x}, ${value.y}, ${value.width}, ${value.height}]" }
+
+    /** Add child nodes to this component */
+    public fun children(init: LayoutBuilder.() -> Unit) { childBuilder.init() }
+}
+
+/**
  * DSL builder for declaring SceneGraph node hierarchies.
  *
  * This builder provides type-safe methods for adding common SceneGraph nodes
@@ -29,12 +74,59 @@ package kotlin.brs.scenegraph
 @SGNodeDsl
 public class LayoutBuilder {
     private val nodes = mutableListOf<NodeEntry>()
+    private val _interfaceFields = mutableListOf<InterfaceFieldEntry>()
 
     /**
      * Returns the list of declared nodes.
      * @return Immutable copy of the node list.
      */
     internal fun build(): List<NodeEntry> = nodes.toList()
+
+    /**
+     * Returns the list of interface field declarations.
+     * @return Immutable copy of the interface fields list.
+     */
+    internal fun buildInterfaceFields(): List<InterfaceFieldEntry> = _interfaceFields.toList()
+
+    // =========================================================================
+    // Interface Fields
+    // =========================================================================
+
+    /**
+     * Declares an interface field that aliases a child node's field.
+     * This makes the child's field observable on m.top.
+     *
+     * Example:
+     * ```kotlin
+     * sceneLayout {
+     *     interfaceField("buttonSelected", alias = "incrementButton.buttonSelected")
+     *     button(id = "incrementButton", text = "Click")
+     * }
+     * ```
+     *
+     * Then observe on `top` instead of the button:
+     * ```kotlin
+     * top.observeFieldScoped("buttonSelected", brsName(::onButtonPressed))
+     * ```
+     *
+     * Generated XML:
+     * ```xml
+     * <interface>
+     *     <field id="buttonSelected" alias="incrementButton.buttonSelected" />
+     * </interface>
+     * ```
+     *
+     * @param name The field name exposed on this component's interface
+     * @param alias The path to the child node's field (e.g., "buttonId.buttonSelected")
+     * @param type The field type (default: "node")
+     */
+    public fun interfaceField(
+        name: String,
+        alias: String,
+        type: String = "node"
+    ) {
+        _interfaceFields.add(InterfaceFieldEntry(name, alias, type))
+    }
 
     // =========================================================================
     // Container Nodes
@@ -579,6 +671,82 @@ public class LayoutBuilder {
                 renderGroup = renderGroup,
                 focusable = focusable,
                 renderPass = renderPass
+            )
+        )
+    }
+
+    // =========================================================================
+    // Custom Components
+    // =========================================================================
+
+    /**
+     * Adds a custom user-defined component node.
+     *
+     * Use this to embed custom SceneGraph components that aren't built into the DSL.
+     * Custom attributes can be set using `attr()` calls in the builder lambda.
+     * Child nodes can be added using `children { }`.
+     *
+     * Example:
+     * ```kotlin
+     * component("MyCustomButton", id = "btn1") {
+     *     attr("customField", "value")
+     *     attr("iconSize", 48)
+     * }
+     *
+     * component("CustomContainer", id = "container") {
+     *     attr("padding", 20)
+     *     children {
+     *         label(id = "nested", text = "Inside container")
+     *     }
+     * }
+     * ```
+     *
+     * @param componentType The name of the custom component type (e.g., "MyCustomButton").
+     * @param id Unique identifier for this node.
+     * @param translation Position relative to parent.
+     * @param rotation Rotation in degrees.
+     * @param scale Scale factors.
+     * @param opacity Opacity from 0.0 to 1.0.
+     * @param visible Whether this node is visible.
+     * @param init Lambda to set custom attributes and add children.
+     */
+    public fun component(
+        componentType: String,
+        id: String,
+        translation: Vector2D? = null,
+        rotation: Float? = null,
+        scale: Vector2D? = null,
+        scaleRotateCenter: Vector2D? = null,
+        opacity: Float? = null,
+        visible: Boolean? = null,
+        inheritParentOpacity: Boolean? = null,
+        inheritParentTransform: Boolean? = null,
+        clippingRect: Vector4D? = null,
+        renderGroup: Boolean? = null,
+        focusable: Boolean? = null,
+        renderPass: Int? = null,
+        init: ComponentBuilder.() -> Unit = {}
+    ) {
+        val builder = ComponentBuilder()
+        builder.init()
+        nodes.add(
+            CustomComponentEntry(
+                id = id,
+                componentType = componentType,
+                customAttributes = builder.attributes.toMap(),
+                translation = translation,
+                rotation = rotation,
+                scale = scale,
+                scaleRotateCenter = scaleRotateCenter,
+                opacity = opacity,
+                visible = visible,
+                inheritParentOpacity = inheritParentOpacity,
+                inheritParentTransform = inheritParentTransform,
+                clippingRect = clippingRect,
+                renderGroup = renderGroup,
+                focusable = focusable,
+                renderPass = renderPass,
+                children = builder.childBuilder.build()
             )
         )
     }

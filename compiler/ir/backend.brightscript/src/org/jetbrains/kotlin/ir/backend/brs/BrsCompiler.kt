@@ -1653,6 +1653,12 @@ class BrsCompiler(
 
         // Add fields
         for (field in component.fields) {
+            // For aliased fields, only output id and alias (type is inherited from the aliased field)
+            if (field.alias != null) {
+                builder.appendLine("        <field id=\"${field.name}\" alias=\"${field.alias}\" />")
+                continue
+            }
+
             builder.append("        <field id=\"${field.name}\" type=\"${field.type}\"")
 
             field.defaultValue?.let { defaultValue ->
@@ -1665,10 +1671,6 @@ class BrsCompiler(
 
             if (field.alwaysNotify) {
                 builder.append(" alwaysNotify=\"true\"")
-            }
-
-            field.alias?.let { alias ->
-                builder.append(" alias=\"$alias\"")
             }
 
             builder.appendLine(" />")

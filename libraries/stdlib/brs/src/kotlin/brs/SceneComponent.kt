@@ -9,43 +9,23 @@ import kotlin.brs.roku.RoSGNode
 import kotlin.brs.roku.RoAssociativeArray
 
 /**
- * Base class for SceneGraph components that extend Group.
+ * Base class for all SceneGraph component types.
  *
- * Provides type-safe access to component scope variables:
+ * Provides type-safe access to component scope variables and key event handling:
  * - [top] - The component's interface node (`m.top`)
  * - [global] - The global node (`m.global`)
  * - [m] - Direct access to the component scope for custom fields
+ * - [onKeyEvent] - Override to handle key events (OK, Back, etc.)
  *
  * The `init { }` block in subclasses compiles to BrightScript's `sub init()`.
  *
- * Example:
- * ```kotlin
- * class MyComponent : SceneComponent() {
- *     init {
- *         top.setFocus(true)
- *         global.setField("ready", true)
- *     }
- *
- *     fun handleButton() {
- *         println("Button pressed")
- *     }
- * }
- * ```
- *
- * Compiles to:
- * ```brightscript
- * sub init()
- *     m.top.setFocus(true)
- *     m.global.setField("ready", true)
- * end sub
- *
- * sub handleButton_k_()
- *     println_AnyN_k_("Button pressed")
- * end sub
- * ```
+ * @see GroupComponent For components extending Group
+ * @see SceneComponent For components extending Scene
+ * @see TaskComponent For background task components
+ * @see LayoutComponent For auto-layout components (LayoutGroup)
+ * @see ContentNodeComponent For data model components (ContentNode)
  */
-@BrsSceneGraphComponent(extends = "Group")
-public abstract class SceneComponent {
+public abstract class ComponentBase {
     /**
      * The component's interface node.
      *
@@ -82,7 +62,116 @@ public abstract class SceneComponent {
      */
     protected val m: RoAssociativeArray
         get() = definedExternally
+
+    /**
+     * Handle remote key events.
+     *
+     * Override this method to handle key presses in your component.
+     * Return `true` if you handled the event, `false` to let it propagate
+     * to focused children.
+     *
+     * Compiles to:
+     * ```brightscript
+     * function onKeyEvent(key as String, press as Boolean) as Boolean
+     *     return false  ' or your custom logic
+     * end function
+     * ```
+     *
+     * Common key values:
+     * - "OK" - Select button
+     * - "back" - Back button
+     * - "up", "down", "left", "right" - D-pad
+     * - "play", "pause", "rewind", "fastforward" - Media keys
+     *
+     * Example:
+     * ```kotlin
+     * class MyComponent : GroupComponent() {
+     *     override fun onKeyEvent(key: String, press: Boolean): Boolean {
+     *         if (press && key == "OK") {
+     *             handleSelection()
+     *             return true
+     *         }
+     *         return false  // Let event propagate to children
+     *     }
+     * }
+     * ```
+     *
+     * @param key The key that was pressed (e.g., "OK", "back", "up")
+     * @param press True if key was pressed, false if released
+     * @return True if the key event was handled, false to let it propagate
+     */
+    protected open fun onKeyEvent(key: String, press: Boolean): Boolean = false
 }
+
+/**
+ * Base class for SceneGraph components that extend Group.
+ *
+ * Use this for custom components that contain other nodes but don't need
+ * automatic layout functionality.
+ *
+ * Example:
+ * ```kotlin
+ * class MyPanel : GroupComponent() {
+ *     init {
+ *         top.setFocus(true)
+ *     }
+ *
+ *     override fun onKeyEvent(key: String, press: Boolean): Boolean {
+ *         if (press && key == "OK") {
+ *             // Handle OK press
+ *             return true
+ *         }
+ *         return false
+ *     }
+ * }
+ * ```
+ */
+@BrsSceneGraphComponent(extends = "Group")
+public abstract class GroupComponent : ComponentBase()
+
+/**
+ * Base class for SceneGraph components that extend LayoutGroup.
+ *
+ * LayoutGroup components automatically arrange their children based on
+ * layout attributes like `layoutDirection`, `itemSpacings`, etc.
+ *
+ * Use this for components that need automatic layout of child nodes.
+ *
+ * Example:
+ * ```kotlin
+ * class MyMenu : LayoutComponent() {
+ *     init {
+ *         // Children will be laid out automatically
+ *         top.setField("layoutDirection", "vert")
+ *         top.setField("itemSpacings", listOf(10))
+ *     }
+ * }
+ * ```
+ *
+ * @see GroupComponent For components without automatic layout
+ */
+@BrsSceneGraphComponent(extends = "LayoutGroup")
+public abstract class LayoutComponent : ComponentBase()
+
+/**
+ * Base class for SceneGraph Scene components.
+ *
+ * Scene components represent the root of a SceneGraph application.
+ * There is typically one Scene per application, created via
+ * `RoSGScreen.createScene()`.
+ *
+ * Example:
+ * ```kotlin
+ * class MainScreen : SceneComponent() {
+ *     init {
+ *         top.setFocus(true)
+ *         // Initialize the scene
+ *     }
+ * }
+ * ```
+ */
+@BrsSceneGraphComponent(extends = "Scene")
+public abstract class SceneComponent : ComponentBase()
 
 /**
  * Base class for SceneGraph Task components.
@@ -90,6 +179,9 @@ public abstract class SceneComponent {
  * Task components run on a separate thread and are used for
  * background operations like network requests, file I/O, and
  * other long-running operations.
+ *
+ * Note: Task components do not support onKeyEvent as they run
+ * on a separate thread and don't participate in the focus chain.
  *
  * Example:
  * ```kotlin
@@ -107,24 +199,54 @@ public abstract class SceneComponent {
  * ```
  */
 @BrsSceneGraphComponent(extends = "Task")
-public abstract class TaskComponent : SceneComponent()
+public abstract class TaskComponent : ComponentBase()
 
 /**
- * Base class for SceneGraph Scene components.
+ * Base class for SceneGraph ContentNode components.
  *
- * Scene components represent the root of a SceneGraph application.
- * There is typically one Scene per application, created via
- * `RoSGScreen.createScene()`.
+ * ContentNode components are used as data models for lists, grids,
+ * and other data-driven UI components. They extend ContentNode and
+ * can have custom fields for your data.
+ *
+ * Note: ContentNode components do not support onKeyEvent as they
+ * are data containers, not visual components.
  *
  * Example:
  * ```kotlin
- * class MainScene : SceneNodeComponent() {
- *     init {
- *         top.setFocus(true)
- *         // Initialize the scene
- *     }
+ * class VideoItem : ContentNodeComponent() {
+ *     @SGStringField
+ *     var title: String = ""
+ *
+ *     @SGStringField
+ *     var thumbnailUrl: String = ""
+ *
+ *     @SGIntegerField
+ *     var duration: Int = 0
  * }
  * ```
+ *
+ * Usage with RowList/MarkupGrid:
+ * ```kotlin
+ * val item = VideoItem()
+ * item.title = "My Video"
+ * item.thumbnailUrl = "pkg:/images/thumb.png"
+ * rowList.content.appendChild(item)
+ * ```
  */
-@BrsSceneGraphComponent(extends = "Scene")
-public abstract class SceneNodeComponent : SceneComponent()
+@BrsSceneGraphComponent(extends = "ContentNode")
+public abstract class ContentNodeComponent : ComponentBase()
+
+// ==================== Deprecated Type Aliases ====================
+// These are provided for backwards compatibility during migration.
+// They will be removed in a future version.
+
+/**
+ * @deprecated Use [SceneComponent] instead (now extends Scene, not Group).
+ * Migration: If you need a Group component, use [GroupComponent].
+ */
+@Deprecated(
+    message = "SceneNodeComponent has been renamed to SceneComponent",
+    replaceWith = ReplaceWith("SceneComponent"),
+    level = DeprecationLevel.WARNING
+)
+public typealias SceneNodeComponent = SceneComponent

@@ -43,6 +43,26 @@ data class NodeEntryInfo(
 }
 
 /**
+ * Information about an interface field alias extracted from interfaceField() calls.
+ */
+data class InterfaceFieldInfo(
+    /**
+     * The field name exposed on this component's interface.
+     */
+    val name: String,
+
+    /**
+     * The path to the child node's field (e.g., "buttonId.buttonSelected").
+     */
+    val alias: String,
+
+    /**
+     * The field type (default: "node").
+     */
+    val type: String = "node"
+)
+
+/**
  * Information about a layout definition extracted from @SGLayout property.
  */
 data class BrsLayoutInfo(
@@ -59,7 +79,12 @@ data class BrsLayoutInfo(
     /**
      * Flattened list of all node IDs for accessor generation.
      */
-    val allNodeIds: List<String>
+    val allNodeIds: List<String>,
+
+    /**
+     * Interface field aliases declared via interfaceField() in the layout DSL.
+     */
+    val interfaceFields: List<InterfaceFieldInfo> = emptyList()
 )
 
 /**

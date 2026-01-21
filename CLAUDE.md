@@ -297,6 +297,16 @@ This handles all the bootstrap phases automatically. After completion:
 
 If you see SSL certificate errors, handshake failures, or connection reset errors during Gradle builds, **STOP and ask the user to turn off ZScaler**. This is the cause 99% of the time. Do not try to debug SSL issues yourself.
 
+### Roku Documentation Access
+
+Roku's official documentation (developer.roku.com) blocks bot/programmatic access. If you need to reference Roku SDK documentation:
+
+1. **Provide the URL** to the user (e.g., `https://developer.roku.com/docs/references/scenegraph/widget-nodes/button.md`)
+2. **Stop and wait** - the user will manually download the page
+3. **Read from `../RokuDocs/`** - downloaded documentation is stored there
+
+**DO NOT** repeatedly try to fetch from developer.roku.com - it will always fail with 403.
+
 ## Quick Reference
 
 | What Changed | Run This |

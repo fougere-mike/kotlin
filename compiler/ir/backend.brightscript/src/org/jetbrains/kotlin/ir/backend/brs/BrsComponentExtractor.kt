@@ -38,27 +38,50 @@ class BrsComponentExtractor(
         val exports = extractExports(irClass)
         val layout = extractLayout(irClass)
 
+        // Merge interface fields from layout into the fields list
+        val allFields = mergeInterfaceFields(fields, layout)
+
         return BrsComponentInfo(
             irClass = irClass,
             name = name,
             extendsComponent = extendsComponent,
-            fields = fields,
+            fields = allFields,
             exports = exports,
             layout = layout
         )
     }
 
     /**
+     * Merge interface fields from layout DSL into the component's field list.
+     *
+     * Interface fields declared via `interfaceField()` in the layout become
+     * BrsFieldInfo entries with the alias property set.
+     */
+    private fun mergeInterfaceFields(fields: List<BrsFieldInfo>, layout: BrsLayoutInfo?): List<BrsFieldInfo> {
+        if (layout == null || layout.interfaceFields.isEmpty()) return fields
+
+        val interfaceFieldInfos = layout.interfaceFields.map { fieldInfo ->
+            BrsFieldInfo(
+                name = fieldInfo.name,
+                type = fieldInfo.type,
+                alias = fieldInfo.alias
+            )
+        }
+
+        return fields + interfaceFieldInfos
+    }
+
+    /**
      * Check if a class is a SceneGraph component.
      *
      * A class is a component if it has @BrsComponent annotation OR extends
-     * a class with @BrsSceneGraphComponent (e.g., SceneComponent, TaskComponent).
+     * a class with @BrsSceneGraphComponent (e.g., GroupComponent, SceneComponent, TaskComponent).
      */
     fun isComponent(irClass: IrClass): Boolean {
         // Explicit @BrsComponent annotation
         if (findAnnotation(irClass, "BrsComponent") != null) return true
 
-        // Classes extending SceneComponent/TaskComponent/SceneNodeComponent
+        // Classes extending GroupComponent/SceneComponent/TaskComponent/etc.
         return hasSceneGraphComponentInHierarchy(irClass)
     }
 
@@ -66,7 +89,7 @@ class BrsComponentExtractor(
      * Check if a class inherits from a SceneGraph component base class.
      *
      * Note: We check the superclass hierarchy, but NOT the class itself.
-     * The base classes (SceneComponent, etc.) have @BrsSceneGraphComponent
+     * The base classes (GroupComponent, SceneComponent, etc.) have @BrsSceneGraphComponent
      * but should not generate their own XML - they're abstract bases.
      */
     private fun hasSceneGraphComponentInHierarchy(irClass: IrClass): Boolean {
@@ -471,6 +494,7 @@ class BrsComponentExtractor(
      * companion object {
      *     @SGLayout
      *     fun defineLayout() = sceneLayout {
+     *         interfaceField("buttonSelected", alias = "incrementButton.buttonSelected")
      *         button(id = "myButton")
      *         label(id = "myLabel")
      *     }
@@ -495,8 +519,8 @@ class BrsComponentExtractor(
             ?: return null
 
         // Extract the sceneLayout { } call from the function body
-        val nodes = extractLayoutNodesFromFunction(layoutFunction)
-        if (nodes.isEmpty()) return null
+        val (nodes, interfaceFields) = extractLayoutNodesAndFieldsFromFunction(layoutFunction)
+        if (nodes.isEmpty() && interfaceFields.isEmpty()) return null
 
         // Derive all node IDs from the nodes tree
         val allNodeIds = nodes.flatMap { it.allNodeIds() }
@@ -504,7 +528,8 @@ class BrsComponentExtractor(
         return BrsLayoutInfo(
             propertyName = "layout",  // Standard name for the layout accessor
             nodes = nodes,
-            allNodeIds = allNodeIds
+            allNodeIds = allNodeIds,
+            interfaceFields = interfaceFields
         )
     }
 
@@ -512,24 +537,34 @@ class BrsComponentExtractor(
      * Extract nodes from a layout function's body.
      */
     private fun extractLayoutNodesFromFunction(function: IrSimpleFunction): List<NodeEntryInfo> {
+        val (nodes, _) = extractLayoutNodesAndFieldsFromFunction(function)
+        return nodes
+    }
+
+    /**
+     * Extract nodes and interface fields from a layout function's body.
+     *
+     * @return Pair of (nodes, interfaceFields)
+     */
+    private fun extractLayoutNodesAndFieldsFromFunction(function: IrSimpleFunction): Pair<List<NodeEntryInfo>, List<InterfaceFieldInfo>> {
         // Check for expression body (single expression function) first
         // e.g., fun defineLayout() = sceneLayout { ... }
         val expressionBody = function.body as? IrExpressionBody
         if (expressionBody != null) {
-            val sceneLayoutCall = expressionBody.expression as? IrCall ?: return emptyList()
+            val sceneLayoutCall = expressionBody.expression as? IrCall ?: return Pair(emptyList(), emptyList())
             val calleeName = sceneLayoutCall.symbol.owner.name.asString()
-            if (calleeName != "sceneLayout") return emptyList()
+            if (calleeName != "sceneLayout") return Pair(emptyList(), emptyList())
 
             val lambdaArg = sceneLayoutCall.getValueArgument(sceneLayoutCall.valueArgumentsCount - 1)
-            val lambda = extractLambdaBody(lambdaArg) ?: return emptyList()
+            val lambda = extractLambdaBody(lambdaArg) ?: return Pair(emptyList(), emptyList())
 
-            return extractNodesFromLambda(lambda)
+            return extractNodesAndFieldsFromLambda(lambda)
         }
 
         // Check for block body with return statement
         // e.g., fun defineLayout(): SceneLayout { return sceneLayout { ... } }
         // Note: K2 compiles expression body functions to block body with return
-        val blockBody = function.body as? IrBlockBody ?: return emptyList()
+        val blockBody = function.body as? IrBlockBody ?: return Pair(emptyList(), emptyList())
 
         // Find the return expression containing sceneLayout { } call
         for (statement in blockBody.statements) {
@@ -542,10 +577,10 @@ class BrsComponentExtractor(
             val lambdaArg = sceneLayoutCall.getValueArgument(sceneLayoutCall.valueArgumentsCount - 1)
             val lambda = extractLambdaBody(lambdaArg) ?: continue
 
-            return extractNodesFromLambda(lambda)
+            return extractNodesAndFieldsFromLambda(lambda)
         }
 
-        return emptyList()
+        return Pair(emptyList(), emptyList())
     }
 
     /**
@@ -574,6 +609,90 @@ class BrsComponentExtractor(
     }
 
     /**
+     * Extract nodes and interface fields from a lambda body.
+     *
+     * @return Pair of (nodes, interfaceFields)
+     */
+    private fun extractNodesAndFieldsFromLambda(body: IrBlockBody): Pair<List<NodeEntryInfo>, List<InterfaceFieldInfo>> {
+        val nodes = mutableListOf<NodeEntryInfo>()
+        val interfaceFields = mutableListOf<InterfaceFieldInfo>()
+        extractNodesAndFieldsFromStatements(body.statements, nodes, interfaceFields)
+        return Pair(nodes, interfaceFields)
+    }
+
+    /**
+     * Recursively extract node entries and interface fields from statements.
+     * Handles IrBlock wrappers that K2 generates around DSL calls.
+     */
+    private fun extractNodesAndFieldsFromStatements(
+        statements: List<IrStatement>,
+        nodes: MutableList<NodeEntryInfo>,
+        interfaceFields: MutableList<InterfaceFieldInfo>
+    ) {
+        for (statement in statements) {
+            // Handle IrBlock - the K2 compiler may wrap DSL calls in blocks
+            if (statement is IrBlock) {
+                extractNodesAndFieldsFromStatements(statement.statements, nodes, interfaceFields)
+                continue
+            }
+
+            // Check if this is an interfaceField() call
+            val call = statement as? IrCall
+            if (call != null) {
+                val functionName = call.symbol.owner.name.asString()
+                if (functionName == "interfaceField") {
+                    val fieldInfo = extractInterfaceFieldFromCall(call)
+                    if (fieldInfo != null) {
+                        interfaceFields.add(fieldInfo)
+                    }
+                    continue
+                }
+            }
+
+            // Otherwise try to extract as a node
+            val node = extractNodeFromStatement(statement)
+            if (node != null) {
+                nodes.add(node)
+            }
+        }
+    }
+
+    /**
+     * Extract interface field info from an interfaceField() call.
+     *
+     * interfaceField(name: String, alias: String, type: String = "node")
+     */
+    private fun extractInterfaceFieldFromCall(call: IrCall): InterfaceFieldInfo? {
+        val function = call.symbol.owner
+
+        // Extract 'name' (first argument)
+        val nameArg = call.getValueArgument(0) as? IrConst ?: return null
+        val name = nameArg.value as? String ?: return null
+
+        // Extract 'alias' (second argument)
+        val aliasArg = call.getValueArgument(1) as? IrConst ?: return null
+        val alias = aliasArg.value as? String ?: return null
+
+        // Extract 'type' (third argument, optional with default "node")
+        var type = "node"
+        if (call.valueArgumentsCount > 2) {
+            val typeArg = call.getValueArgument(2) as? IrConst
+            if (typeArg != null) {
+                val typeValue = typeArg.value as? String
+                if (typeValue != null) {
+                    type = typeValue
+                }
+            }
+        }
+
+        return InterfaceFieldInfo(
+            name = name,
+            alias = alias,
+            type = type
+        )
+    }
+
+    /**
      * Recursively extract node entries from statements.
      * Handles IrBlock wrappers that K2 generates around DSL calls.
      */
@@ -598,6 +717,11 @@ class BrsComponentExtractor(
         val call = statement as? IrCall ?: return null
         val functionName = call.symbol.owner.name.asString()
 
+        // Handle custom component() calls specially
+        if (functionName == "component") {
+            return extractCustomComponentNode(call)
+        }
+
         // Map DSL method names to SceneGraph node types
         val nodeType = mapBuilderMethodToNodeType(functionName) ?: return null
 
@@ -619,7 +743,201 @@ class BrsComponentExtractor(
     }
 
     /**
+     * Extract a custom component node from a component() call.
+     *
+     * The component() method has signature:
+     * component(componentType: String, id: String, ..., init: ComponentBuilder.() -> Unit)
+     *
+     * The ComponentBuilder lambda contains attr() calls for custom attributes
+     * and optionally children {} blocks.
+     */
+    private fun extractCustomComponentNode(call: IrCall): NodeEntryInfo? {
+        val function = call.symbol.owner
+
+        // Extract componentType (first argument)
+        val componentTypeArg = call.getValueArgument(0) as? IrConst ?: return null
+        val componentType = componentTypeArg.value as? String ?: return null
+
+        // Extract id (second argument)
+        val idArg = call.getValueArgument(1) as? IrConst ?: return null
+        val id = idArg.value as? String ?: return null
+
+        // Extract standard node attributes (translation, rotation, etc.)
+        val attributes = mutableMapOf<String, String>()
+        for (i in 2 until call.valueArgumentsCount) {
+            val param = function.valueParameters.getOrNull(i) ?: continue
+            val paramName = param.name.asString()
+            val arg = call.getValueArgument(i) ?: continue
+
+            // Skip the 'init' lambda
+            if (paramName == "init") continue
+
+            val value = extractAttributeValue(arg, paramName)
+            if (value != null) {
+                val xmlAttrName = mapParamToXmlAttribute(paramName)
+                attributes[xmlAttrName] = value
+            }
+        }
+
+        // Extract custom attributes and children from the ComponentBuilder lambda
+        val initParamIndex = function.valueParameters.indexOfFirst { it.name.asString() == "init" }
+        val customAttributes = mutableMapOf<String, String>()
+        var children = emptyList<NodeEntryInfo>()
+
+        if (initParamIndex >= 0) {
+            val lambdaArg = call.getValueArgument(initParamIndex)
+            val lambdaBody = extractLambdaBody(lambdaArg)
+            if (lambdaBody != null) {
+                val (attrs, childNodes) = extractComponentBuilderCalls(lambdaBody)
+                customAttributes.putAll(attrs)
+                children = childNodes
+            }
+        }
+
+        // Merge custom attributes into attributes map
+        attributes.putAll(customAttributes)
+
+        return NodeEntryInfo(
+            nodeType = componentType,
+            id = id,
+            attributes = attributes,
+            children = children
+        )
+    }
+
+    /**
+     * Extract attr() calls and children {} blocks from a ComponentBuilder lambda body.
+     *
+     * @return Pair of (custom attributes map, list of child nodes)
+     */
+    private fun extractComponentBuilderCalls(body: IrBlockBody): Pair<Map<String, String>, List<NodeEntryInfo>> {
+        val attributes = mutableMapOf<String, String>()
+        var children = emptyList<NodeEntryInfo>()
+
+        for (statement in body.statements) {
+            // Handle IrBlock wrappers
+            if (statement is IrBlock) {
+                val (blockAttrs, blockChildren) = extractComponentBuilderCallsFromStatements(statement.statements)
+                attributes.putAll(blockAttrs)
+                if (blockChildren.isNotEmpty()) {
+                    children = blockChildren
+                }
+                continue
+            }
+
+            val call = statement as? IrCall ?: continue
+            val functionName = call.symbol.owner.name.asString()
+
+            when (functionName) {
+                "attr" -> {
+                    // attr(name: String, value: ...)
+                    val nameArg = call.getValueArgument(0) as? IrConst ?: continue
+                    val name = nameArg.value as? String ?: continue
+                    val valueArg = call.getValueArgument(1) ?: continue
+                    val value = extractAttrValue(valueArg)
+                    if (value != null) {
+                        attributes[name] = value
+                    }
+                }
+                "children" -> {
+                    // children { ... } - extract child nodes from the lambda
+                    val childLambdaArg = call.getValueArgument(0)
+                    val childLambdaBody = extractLambdaBody(childLambdaArg)
+                    if (childLambdaBody != null) {
+                        children = extractNodesFromLambda(childLambdaBody)
+                    }
+                }
+            }
+        }
+
+        return Pair(attributes, children)
+    }
+
+    /**
+     * Helper to extract from a list of statements (for handling IrBlock).
+     */
+    private fun extractComponentBuilderCallsFromStatements(statements: List<IrStatement>): Pair<Map<String, String>, List<NodeEntryInfo>> {
+        val attributes = mutableMapOf<String, String>()
+        var children = emptyList<NodeEntryInfo>()
+
+        for (statement in statements) {
+            if (statement is IrBlock) {
+                val (blockAttrs, blockChildren) = extractComponentBuilderCallsFromStatements(statement.statements)
+                attributes.putAll(blockAttrs)
+                if (blockChildren.isNotEmpty()) {
+                    children = blockChildren
+                }
+                continue
+            }
+
+            val call = statement as? IrCall ?: continue
+            val functionName = call.symbol.owner.name.asString()
+
+            when (functionName) {
+                "attr" -> {
+                    val nameArg = call.getValueArgument(0) as? IrConst ?: continue
+                    val name = nameArg.value as? String ?: continue
+                    val valueArg = call.getValueArgument(1) ?: continue
+                    val value = extractAttrValue(valueArg)
+                    if (value != null) {
+                        attributes[name] = value
+                    }
+                }
+                "children" -> {
+                    val childLambdaArg = call.getValueArgument(0)
+                    val childLambdaBody = extractLambdaBody(childLambdaArg)
+                    if (childLambdaBody != null) {
+                        children = extractNodesFromLambda(childLambdaBody)
+                    }
+                }
+            }
+        }
+
+        return Pair(attributes, children)
+    }
+
+    /**
+     * Extract value from an attr() call's value argument.
+     * Handles String, Number, Boolean, Color, Vector2D, Vector4D.
+     */
+    private fun extractAttrValue(expr: IrExpression): String? {
+        return when (expr) {
+            is IrConst -> {
+                val value = expr.value ?: return null
+                when (value) {
+                    is String -> if (value.isEmpty()) null else value
+                    is Boolean -> if (value) "true" else "false"
+                    is Number -> value.toString()
+                    else -> value.toString()
+                }
+            }
+            is IrConstructorCall -> extractConstructorValue(expr)
+            is IrCall -> {
+                // Handle property access like color.hex
+                val functionName = expr.symbol.owner.name.asString()
+                if (functionName.startsWith("get")) {
+                    // Could be a getter - try to extract from the dispatch receiver
+                    null
+                } else {
+                    extractCallValue(expr)
+                }
+            }
+            is IrGetValue -> {
+                val owner = expr.symbol.owner
+                if (owner is IrVariable) {
+                    val initializer = owner.initializer
+                    if (initializer != null) {
+                        extractAttrValue(initializer)
+                    } else null
+                } else null
+            }
+            else -> null
+        }
+    }
+
+    /**
      * Map DSL builder method names to SceneGraph node types.
+     * Returns null for methods that need special handling (like "component").
      */
     private fun mapBuilderMethodToNodeType(methodName: String): String? {
         return when (methodName) {
@@ -632,6 +950,7 @@ class BrsComponentExtractor(
             "buttonGroup" -> "ButtonGroup"
             "textEditBox" -> "TextEditBox"
             "keyboard" -> "Keyboard"
+            // "component" is handled specially - returns null here
             else -> null
         }
     }
