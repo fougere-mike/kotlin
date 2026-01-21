@@ -702,9 +702,10 @@ class IrToBrsTransformer(
             }
 
             // Generate member functions (but not inherited property accessors like get_top)
-            // Skip onKeyEvent - we handle it specially below
+            // Note: onKeyEvent overrides ARE included here - they generate the mangled implementation
+            // function (e.g., ShelfView_onKeyEvent_Str_Z_k_). The unmangled wrapper is added below.
             for (function in irClass.declarations.filterIsInstance<IrSimpleFunction>()) {
-                if (!function.isFakeOverride && !isComponentScopeAccessor(function) && !isOnKeyEventMethod(function)) {
+                if (!function.isFakeOverride && !isComponentScopeAccessor(function)) {
                     transformFunction(function)?.let { declarations.add(it) }
                 }
             }
@@ -746,17 +747,6 @@ class IrToBrsTransformer(
         val property = function.correspondingPropertySymbol?.owner ?: return false
         val propName = property.name.asString()
         return context.intrinsics.isComponentScopeProperty(propName)
-    }
-
-    /**
-     * Check if a function is the onKeyEvent method from ComponentBase.
-     */
-    private fun isOnKeyEventMethod(function: IrSimpleFunction): Boolean {
-        return function.name.asString() == "onKeyEvent" &&
-               function.valueParameters.size == 2 &&
-               function.valueParameters[0].type.isString() &&
-               function.valueParameters[1].type.isBoolean() &&
-               function.returnType.isBoolean()
     }
 
     /**
@@ -4679,9 +4669,10 @@ class IrExpressionToBrsTransformer(
         }
 
         // Check if this is a reference to a lambda's extension receiver
-        // The receiver parameter is named 'm' in the generated BrightScript
+        // The receiver parameter is named '__receiver' in the generated BrightScript
+        // (not 'm', to avoid collision with closure's m reference for captured variables)
         if (expression.symbol == parent.currentLambdaExtensionReceiver) {
-            return BrsMRef()
+            return BrsIdentifier("__receiver")
         }
 
         // Check if this is a shared variable (mutable var captured by closure) accessed outside the closure
@@ -7301,9 +7292,11 @@ class IrExpressionToBrsTransformer(
         val allParameters = mutableListOf<BrsParameter>()
 
         // Add extension receiver as first parameter if present (matches regular function handling)
+        // Use "__receiver" instead of "m" to avoid collision with closure's m reference
+        // This allows closure body to use m._componentM for component state access
         function.extensionReceiverParameter?.let { receiver ->
             allParameters.add(BrsParameter(
-                name = "m",
+                name = "__receiver",
                 type = parent.mapTypeToBrs(receiver.type)
             ))
         }
