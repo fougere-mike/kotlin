@@ -202,28 +202,29 @@ public class HashMap<K, V> : MutableMap<K, V> {
     internal fun getMap(): Dynamic = map
 
     // ==================== BrightScript Intrinsics ====================
-    // Note: These use m.get_map() to access the internal storage because @BrsInline
+    // Note: These use m.__get_map() to access the internal storage because @BrsInline
     // doesn't substitute parameters - 'm' in templates refers to the BrightScript implicit 'this'.
+    // Property accessors use the '__get_' prefix in generated BrightScript.
 
     @BrsInline("return CreateObject(\"roAssociativeArray\")")
     private external fun brsCreateAssociativeArray(): Dynamic
 
-    @BrsInline("return m.get_map().DoesExist(key)")
+    @BrsInline("return m.__get_map().DoesExist(key)")
     private external fun brsDoesExist(key: String): Boolean
 
-    @BrsInline("return m.get_map().Lookup(key)")
+    @BrsInline("return m.__get_map().Lookup(key)")
     private external fun <T> brsLookup(key: String): T
 
-    @BrsInline("m.get_map().AddReplace(key, value)")
+    @BrsInline("m.__get_map().AddReplace(key, value)")
     private external fun brsAddReplace(key: String, value: Any?): Unit
 
-    @BrsInline("return m.get_map().Delete(key)")
+    @BrsInline("return m.__get_map().Delete(key)")
     private external fun brsDelete(key: String): Boolean
 
-    @BrsInline("m.get_map().Clear()")
+    @BrsInline("m.__get_map().Clear()")
     private external fun brsClear(): Unit
 
-    @BrsInline("return m.get_map().Keys()")
+    @BrsInline("return m.__get_map().Keys()")
     private external fun brsKeys(): Dynamic
 
     @BrsInline("return arr.Count()")
@@ -625,7 +626,7 @@ private abstract class HashMapIterator<K, V, T>(
         return count
     }
 
-    @BrsInline("return m.get_map().get_map().Lookup(keyStr)")
+    @BrsInline("return m.__get_map().__get_map().Lookup(keyStr)")
     private external fun <T> lookupEntry(keyStr: String): T
 
     @BrsInline("return entry.k")

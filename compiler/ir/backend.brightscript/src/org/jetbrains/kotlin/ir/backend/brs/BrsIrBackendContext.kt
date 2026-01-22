@@ -310,10 +310,14 @@ class BrsIrBackendContext(
                 is IrClass -> {
                     val name = classifier.name.asString()
                     // Handle anonymous class names like "<no name provided>"
+                    // Note: BrightScript is case-insensitive, so we use uppercase for type
+                    // names in mangled signatures to distinguish them from property names.
+                    // E.g., parameter type `Key` becomes `KEY` while property name `key` stays `key`.
+                    // This prevents collisions like `get_Key_k_` (operator) vs `get_key_k_` (property).
                     val baseName = if (name.startsWith("<") && name.endsWith(">")) {
                         "Anon"
                     } else {
-                        name
+                        name.uppercase()
                     }
 
                     // Type erasure: Only erase TYPE PARAMETERS (like T, K, V), keep concrete types
@@ -448,13 +452,16 @@ class BrsIrBackendContext(
 
         // 4. Regular functions - calculate base name then apply mangling
         val rawName = irFunction.name.asString()
-        // Sanitize property accessor names: <get-foo> -> get_foo, <set-foo> -> set_foo
+        // Sanitize property accessor names: <get-foo> -> __get_foo, <set-foo> -> __set_foo
+        // We use "__get_" and "__set_" prefixes (double underscore) to clearly distinguish
+        // compiler-generated property accessors from user-defined functions, following
+        // common conventions for internal/generated names.
         val sanitizedName = when {
             rawName.startsWith("<get-") && rawName.endsWith(">") -> {
-                "get_" + rawName.removePrefix("<get-").removeSuffix(">")
+                "__get_" + rawName.removePrefix("<get-").removeSuffix(">")
             }
             rawName.startsWith("<set-") && rawName.endsWith(">") -> {
-                "set_" + rawName.removePrefix("<set-").removeSuffix(">")
+                "__set_" + rawName.removePrefix("<set-").removeSuffix(">")
             }
             else -> rawName
         }

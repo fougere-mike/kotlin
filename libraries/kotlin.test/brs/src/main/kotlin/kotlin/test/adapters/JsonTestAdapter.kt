@@ -5,10 +5,10 @@
 
 package kotlin.test.adapters
 
+import kotlin.brs.BrsInline
 import kotlin.brs.roku.RoDateTime
 import kotlin.brs.roku.RoTimespan
 import kotlin.brs.runtime.brsFormatJson
-import kotlin.brs.runtime.mapToPlainAA
 import kotlin.test.FrameworkAdapter
 
 /**
@@ -190,10 +190,16 @@ public class JsonTestAdapter : FrameworkAdapter {
      * FormatJson trying to serialize method references.
      */
     private fun emitJson(data: Map<String, Any?>) {
-        val plainAA = mapToPlainAA(data)
+        val plainAA = toPlainAA(data)
         val json = brsFormatJson(plainAA)
         println(json)
     }
+
+    /**
+     * Inline helper to convert Map to plain AA using the existing runtime function.
+     */
+    @BrsInline("return __kotlin_mapToPlainAA_ANY_k_(data)")
+    private external fun toPlainAA(data: Any?): Any
 
     /**
      * Returns the current time in milliseconds since epoch.

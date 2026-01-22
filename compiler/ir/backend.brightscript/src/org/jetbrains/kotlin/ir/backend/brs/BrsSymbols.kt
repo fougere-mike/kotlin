@@ -42,6 +42,13 @@ class BrsSymbols(
     private val isStdlibCompilation: Boolean = false
 ) : Symbols(irBuiltIns) {
 
+    /**
+     * Coroutine-specific symbols for suspend function lowering.
+     */
+    val coroutineSymbols: BrsCoroutineSymbols by lazy {
+        BrsCoroutineSymbols(symbolFinder, isStdlibCompilation)
+    }
+
     // Helper to find optional functions that may not exist in bootstrap stdlib
     private fun findOptionalFunction(packageName: FqName, name: String): IrSimpleFunctionSymbol? =
         symbolFinder.topLevelFunctions(packageName, name).firstOrNull()
@@ -152,31 +159,82 @@ class BrsSymbols(
             else error("StringBuilder not found - ensure stdlib is linked")
     }
 
-    // ==================== Coroutines (Not supported in BrightScript) ====================
+    // ==================== Coroutines ====================
 
-    override val coroutineImpl: IrClassSymbol
-        get() = error("Coroutines are not supported in BrightScript")
+    /**
+     * The CoroutineImpl class - base class for generated coroutine state machines.
+     */
+    override val coroutineImpl: IrClassSymbol by lazy {
+        coroutineSymbols.coroutineImpl
+            ?: if (isStdlibCompilation) error("CoroutineImpl accessed during stdlib compilation - use coroutineSymbols.coroutineImpl")
+            else error("CoroutineImpl not found - ensure stdlib is linked")
+    }
 
-    override val coroutineSuspendedGetter: IrSimpleFunctionSymbol
-        get() = error("Coroutines are not supported in BrightScript")
+    /**
+     * Getter for COROUTINE_SUSPENDED intrinsic.
+     */
+    override val coroutineSuspendedGetter: IrSimpleFunctionSymbol by lazy {
+        coroutineSymbols.coroutineSuspendedGetter
+            ?: if (isStdlibCompilation) error("coroutineSuspendedGetter accessed during stdlib compilation")
+            else error("COROUTINE_SUSPENDED getter not found - ensure stdlib is linked")
+    }
 
-    override val getContinuation: IrSimpleFunctionSymbol
-        get() = error("Coroutines are not supported in BrightScript")
+    /**
+     * Function to get the current continuation in a suspend function.
+     * In BRS, this is a compiler intrinsic - calls are transformed during lowering.
+     */
+    override val getContinuation: IrSimpleFunctionSymbol by lazy {
+        findOptionalFunction(BrsStandardClassIds.BASE_BRS_COROUTINES_PACKAGE, "getContinuation")
+            ?: if (isStdlibCompilation) error("getContinuation accessed during stdlib compilation")
+            else error("getContinuation not found - ensure stdlib is linked")
+    }
 
-    override val continuationClass: IrClassSymbol
-        get() = error("Coroutines are not supported in BrightScript")
+    /**
+     * The Continuation interface class.
+     */
+    override val continuationClass: IrClassSymbol by lazy {
+        coroutineSymbols.continuationClass
+            ?: if (isStdlibCompilation) error("continuationClass accessed during stdlib compilation")
+            else error("Continuation class not found - ensure stdlib is linked")
+    }
 
-    override val coroutineContextGetter: IrSimpleFunctionSymbol
-        get() = error("Coroutines are not supported in BrightScript")
+    /**
+     * Getter for the coroutineContext suspend property.
+     */
+    override val coroutineContextGetter: IrSimpleFunctionSymbol by lazy {
+        coroutineSymbols.coroutineContextGetter
+            ?: if (isStdlibCompilation) error("coroutineContextGetter accessed during stdlib compilation")
+            else error("coroutineContext getter not found - ensure stdlib is linked")
+    }
 
-    override val suspendCoroutineUninterceptedOrReturn: IrSimpleFunctionSymbol
-        get() = error("Coroutines are not supported in BrightScript")
+    /**
+     * The suspendCoroutineUninterceptedOrReturn intrinsic function.
+     */
+    override val suspendCoroutineUninterceptedOrReturn: IrSimpleFunctionSymbol by lazy {
+        // Look in kotlin.coroutines.intrinsics package
+        symbolFinder.topLevelFunctions(FqName("kotlin.coroutines.intrinsics"), "suspendCoroutineUninterceptedOrReturn")
+            .firstOrNull()
+            ?: if (isStdlibCompilation) error("suspendCoroutineUninterceptedOrReturn accessed during stdlib compilation")
+            else error("suspendCoroutineUninterceptedOrReturn not found - ensure stdlib is linked")
+    }
 
-    override val coroutineGetContext: IrSimpleFunctionSymbol
-        get() = error("Coroutines are not supported in BrightScript")
+    /**
+     * Function to get the coroutine context from a continuation.
+     */
+    override val coroutineGetContext: IrSimpleFunctionSymbol by lazy {
+        coroutineSymbols.coroutineGetContext
+            ?: if (isStdlibCompilation) error("coroutineGetContext accessed during stdlib compilation")
+            else error("Continuation.context getter not found - ensure stdlib is linked")
+    }
 
-    override val returnIfSuspended: IrSimpleFunctionSymbol
-        get() = error("Coroutines are not supported in BrightScript")
+    /**
+     * The returnIfSuspended helper function.
+     */
+    override val returnIfSuspended: IrSimpleFunctionSymbol by lazy {
+        findOptionalFunction(FqName("kotlin.coroutines.intrinsics"), "returnIfSuspended")
+            ?: if (isStdlibCompilation) error("returnIfSuspended accessed during stdlib compilation")
+            else error("returnIfSuspended not found - ensure stdlib is linked")
+    }
 
     // ==================== Function Adapter ====================
 

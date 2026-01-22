@@ -1094,10 +1094,10 @@ class BrsCompiler(
      *     kclass = {}
      *     kclass.__type = "KClass"
      *     kclass._typeName = typeName
-     *     kclass.get_simpleName = function()
+     *     kclass.prop_simpleName = function()
      *         return m._typeName
      *     end function
-     *     kclass.get_qualifiedName = function()
+     *     kclass.prop_qualifiedName = function()
      *         return invalid
      *     end function
      *     kclass.isInstance = function(value as Dynamic) as Boolean
@@ -1145,10 +1145,10 @@ class BrsCompiler(
                     BrsIdentifier("typeName")
                 )
             ),
-            // kclass.get_simpleName = function() return m._typeName end function
+            // kclass.__get_simpleName = function() return m._typeName end function
             BrsExpressionStatement(
                 BrsBinaryOp(
-                    BrsDotAccess(BrsIdentifier("kclass"), "get_simpleName"),
+                    BrsDotAccess(BrsIdentifier("kclass"), "__get_simpleName"),
                     BrsBinaryOperator.EQ,
                     BrsAnonymousFunction(
                         parameters = mutableListOf(),
@@ -1159,10 +1159,10 @@ class BrsCompiler(
                     )
                 )
             ),
-            // kclass.get_qualifiedName = function() return invalid end function
+            // kclass.__get_qualifiedName = function() return invalid end function
             BrsExpressionStatement(
                 BrsBinaryOp(
-                    BrsDotAccess(BrsIdentifier("kclass"), "get_qualifiedName"),
+                    BrsDotAccess(BrsIdentifier("kclass"), "__get_qualifiedName"),
                     BrsBinaryOperator.EQ,
                     BrsAnonymousFunction(
                         parameters = mutableListOf(),

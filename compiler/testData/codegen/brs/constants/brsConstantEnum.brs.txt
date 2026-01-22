@@ -16,7 +16,7 @@ function Color_create_k_(__name as String, __ordinal as Integer) as Object
     this.__id = __kotlin_nextObjectId()
     this.values_k_ = Color_values_k_
     this.valueOf_Str_k_ = Color_valueOf_Str_k_
-    this.get_entries = Color_get_entries_k_
+    this.__get_entries = Color___get_entries_k_
     return this
 end function
 

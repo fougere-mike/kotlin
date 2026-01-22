@@ -4,12 +4,12 @@ function Animal_create_Str_k_(name as String) as Object
     this.__type = "Animal"
     this.__proto = ["Animal"]
     this.__id = __kotlin_nextObjectId()
-    this.get_name = Animal_get_name_k_
+    this.__get_name = Animal___get_name_k_
     this.name = name
     return this
 end function
 
-function Animal_get_name_k_() as String
+function Animal___get_name_k_() as String
     return m.name
 end function
 
@@ -21,12 +21,12 @@ function Dog_create_Str_k_(name as String) as Object
     return this
 end function
 
-function getClassFromInstance_Animal_k_(animal as Object) as Object
+function getClassFromInstance_ANIMAL_k_(animal as Object) as Object
     return __kotlin_getClass(animal)
 end function
 
 function testGetClass_k_() as Dynamic
     dog = Dog_create_Str_k_("Buddy")
     klass = __kotlin_getClass(dog)
-    return klass.get_simpleName()
+    return klass.__get_simpleName()
 end function

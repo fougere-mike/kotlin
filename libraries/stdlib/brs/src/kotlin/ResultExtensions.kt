@@ -25,12 +25,17 @@ public inline fun <R, T> Result<T>.fold(
  * catching any [Throwable] exception that was thrown from the [block] function execution and encapsulating it as a failure.
  */
 @kotlin.internal.InlineOnly
+@Suppress("UNCHECKED_CAST")
 public inline fun <R> runCatching(block: () -> R): Result<R> {
-    return try {
-        Result.success(block())
+    // Note: Rewritten to avoid try-catch as expression (not supported in BrightScript)
+    // Initialize with a dummy value that will be overwritten
+    var result: Result<R> = Result.success(null as R)
+    try {
+        result = Result.success(block())
     } catch (e: Throwable) {
-        Result.failure(e)
+        result = Result.failure(e)
     }
+    return result
 }
 
 /**
@@ -38,10 +43,15 @@ public inline fun <R> runCatching(block: () -> R): Result<R> {
  * catching any [Throwable] exception that was thrown from the [block] function execution and encapsulating it as a failure.
  */
 @kotlin.internal.InlineOnly
+@Suppress("UNCHECKED_CAST")
 public inline fun <T, R> T.runCatching(block: T.() -> R): Result<R> {
-    return try {
-        Result.success(block())
+    // Note: Rewritten to avoid try-catch as expression (not supported in BrightScript)
+    // Initialize with a dummy value that will be overwritten
+    var result: Result<R> = Result.success(null as R)
+    try {
+        result = Result.success(block())
     } catch (e: Throwable) {
-        Result.failure(e)
+        result = Result.failure(e)
     }
+    return result
 }

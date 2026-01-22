@@ -14,6 +14,7 @@ object BrsStandardClassIds {
     val BASE_BRS_PACKAGE = BASE_KOTLIN_PACKAGE.child(Name.identifier("brs"))
     val BASE_BRS_INTERNAL_PACKAGE = BASE_BRS_PACKAGE.child(Name.identifier("internal"))
     val BASE_BRS_ROKU_PACKAGE = BASE_BRS_PACKAGE.child(Name.identifier("roku"))
+    val BASE_BRS_COROUTINES_PACKAGE = BASE_BRS_PACKAGE.child(Name.identifier("coroutines"))
 
     /**
      * Built-in BrightScript object types.
@@ -107,6 +108,20 @@ object BrsStandardClassIds {
 
         @JvmField
         val iEnumNative = "IEnumNative".brsRokuId()
+
+        // ==================== Coroutine Types (kotlin.brs.coroutines package) ====================
+
+        /** Base class for coroutine state machine implementations */
+        @JvmField
+        val coroutineImpl = "CoroutineImpl".brsCoroutinesId()
+
+        /** Marker object for COROUTINE_SUSPENDED sentinel value */
+        @JvmField
+        val coroutineSingletons = "CoroutineSingletons".brsCoroutinesId()
+
+        /** Safe continuation wrapper for double-resume protection */
+        @JvmField
+        val safeContinuation = "SafeContinuation".brsCoroutinesId()
 
         // SceneGraph type interfaces (kotlin.brs.roku package)
         @JvmField
@@ -402,6 +417,26 @@ object BrsStandardClassIds {
          */
         @JvmField
         val definedExternally = "definedExternally".callableId(BASE_BRS_PACKAGE)
+
+        // ==================== Coroutine Callables ====================
+
+        /**
+         * Gets the COROUTINE_SUSPENDED sentinel value.
+         */
+        @JvmField
+        val coroutineSuspendedGetter = "getCOROUTINE_SUSPENDED".callableId(BASE_BRS_COROUTINES_PACKAGE)
+
+        /**
+         * Gets the current continuation from suspend function context.
+         */
+        @JvmField
+        val getContinuation = "getContinuation".callableId(BASE_BRS_COROUTINES_PACKAGE)
+
+        /**
+         * Gets the coroutine context from a continuation.
+         */
+        @JvmField
+        val getCoroutineContext = "getCoroutineContext".callableId(BASE_BRS_COROUTINES_PACKAGE)
     }
 }
 
@@ -410,5 +445,7 @@ private fun String.brsId() = ClassId(BrsStandardClassIds.BASE_BRS_PACKAGE, Name.
 private fun String.brsInternalId() = ClassId(BrsStandardClassIds.BASE_BRS_INTERNAL_PACKAGE, Name.identifier(this))
 
 private fun String.brsRokuId() = ClassId(BrsStandardClassIds.BASE_BRS_ROKU_PACKAGE, Name.identifier(this))
+
+private fun String.brsCoroutinesId() = ClassId(BrsStandardClassIds.BASE_BRS_COROUTINES_PACKAGE, Name.identifier(this))
 
 private fun String.callableId(packageName: FqName) = CallableId(packageName, Name.identifier(this))

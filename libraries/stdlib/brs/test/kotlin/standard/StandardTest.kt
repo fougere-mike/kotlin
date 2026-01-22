@@ -38,7 +38,9 @@ fun TestRunner.standardFunctionsTests() {
         }
 
         test("run without receiver") {
-            val result = run {
+            // Use kotlin.run to explicitly call the standalone version
+            // Inside a lambda-with-receiver, unqualified `run` resolves to T.run
+            val result = kotlin.run {
                 val a = 1
                 val b = 2
                 a + b

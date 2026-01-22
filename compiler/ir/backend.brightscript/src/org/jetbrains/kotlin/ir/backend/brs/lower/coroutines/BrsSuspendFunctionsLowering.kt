@@ -1,0 +1,525 @@
+/*
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
+
+package org.jetbrains.kotlin.ir.backend.brs.lower.coroutines
+
+import org.jetbrains.kotlin.backend.common.BodyLoweringPass
+import org.jetbrains.kotlin.backend.common.descriptors.synthesizedName
+import org.jetbrains.kotlin.backend.common.lower.AbstractSuspendFunctionsLowering
+import org.jetbrains.kotlin.backend.common.lower.FinallyBlocksLowering
+import org.jetbrains.kotlin.backend.common.lower.ReturnableBlockTransformer
+import org.jetbrains.kotlin.backend.common.lower.coroutines.loweredSuspendFunctionReturnType
+import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
+import org.jetbrains.kotlin.backend.common.lower.optimizations.LivenessAnalysis
+import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.IrStatement
+import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
+import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
+import org.jetbrains.kotlin.ir.builders.*
+import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.expressions.*
+import org.jetbrains.kotlin.ir.expressions.impl.*
+import org.jetbrains.kotlin.ir.declarations.impl.IrVariableImpl
+import org.jetbrains.kotlin.ir.symbols.IrFieldSymbol
+import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
+import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
+import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
+import org.jetbrains.kotlin.ir.symbols.IrVariableSymbol
+import org.jetbrains.kotlin.ir.symbols.impl.IrVariableSymbolImpl
+import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.isUnit
+import org.jetbrains.kotlin.ir.util.*
+import org.jetbrains.kotlin.ir.visitors.*
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.utils.DFS
+import org.jetbrains.kotlin.backend.common.lower.WebCallableReferenceLowering
+import org.jetbrains.kotlin.util.OperatorNameConventions
+
+/**
+ * Transforms suspend functions into CoroutineImpl instances with state machines.
+ *
+ * This is the BrightScript-specific implementation of suspend function lowering.
+ * It converts suspend functions into classes that extend CoroutineImpl and contain
+ * a doResume() method that implements a state machine.
+ *
+ * Based on the JS backend implementation (JsSuspendFunctionsLowering).
+ */
+class BrsSuspendFunctionsLowering(
+    private val brsContext: BrsIrBackendContext
+) : AbstractSuspendFunctionsLowering<BrsIrBackendContext>(brsContext), BodyLoweringPass {
+
+    private val coroutineSymbols = brsContext.brsSymbols.coroutineSymbols
+
+    override val stateMachineMethodName = Name.identifier("doResume")
+
+    override fun getCoroutineBaseClass(function: IrFunction) = context.symbols.coroutineImpl
+
+    override fun nameForCoroutineClass(function: IrFunction) = "${function.name}COROUTINE\$".synthesizedName
+
+    override fun lower(irBody: IrBody, container: IrDeclaration) {
+        if (container is IrSimpleFunction && container.isSuspend) {
+            transformSuspendFunction(container, irBody)?.let {
+                val dc = container.parent as IrDeclarationContainer
+                dc.addChild(it)
+            }
+        }
+    }
+
+    private fun transformSuspendFunction(function: IrSimpleFunction, body: IrBody): IrClass? {
+        assert(function.isSuspend)
+
+        return when (val functionKind = getSuspendFunctionKind(function, body)) {
+            is SuspendFunctionKind.NO_SUSPEND_CALLS -> {
+                // No suspend function calls - just an ordinary function.
+                null
+            }
+            is SuspendFunctionKind.DELEGATING -> {
+                // Calls another suspend function at the end - no state machine needed.
+                removeReturnIfSuspendedCallAndSimplifyDelegatingCall(function, functionKind.delegatingCall)
+                null
+            }
+            is SuspendFunctionKind.NEEDS_STATE_MACHINE -> {
+                val isLoweredSuspendLambda = function.isOperator &&
+                        function.name == OperatorNameConventions.INVOKE &&
+                        function.parentClassOrNull?.let { it.origin === WebCallableReferenceLowering.LAMBDA_IMPL } == true
+                val coroutine = buildCoroutine(function, isLoweredSuspendLambda)
+                if (isLoweredSuspendLambda) {
+                    // Suspend lambdas are called through factory method <create>
+                    null
+                } else {
+                    coroutine
+                }
+            }
+        }
+    }
+
+    private fun removeReturnIfSuspendedCallAndSimplifyDelegatingCall(irFunction: IrFunction, delegatingCall: IrCall) {
+        val returnValue =
+            if (delegatingCall.isReturnIfSuspendedCall())
+                delegatingCall.arguments[0]!!
+            else delegatingCall
+
+        val body = irFunction.body as IrBlockBody
+        val statements = body.statements
+        val lastStatement = statements.last()
+
+        context.createIrBuilder(
+            irFunction.symbol,
+            startOffset = lastStatement.startOffset,
+            endOffset = lastStatement.endOffset
+        ).run {
+            assert(lastStatement == delegatingCall || lastStatement is IrReturn) { "Unexpected statement $lastStatement" }
+
+            // Create a temporary variable for the result and return it
+            val tempVar = scope.createTemporaryVariable(
+                generateDelegatedCall(irFunction.returnType, returnValue),
+                irType = context.irBuiltIns.anyType,
+            )
+            statements[statements.lastIndex] = tempVar
+            statements.add(irReturn(irGet(tempVar)))
+        }
+    }
+
+    override fun buildStateMachine(
+        stateMachineFunction: IrFunction,
+        transformingFunction: IrFunction,
+        argumentToPropertiesMap: Map<IrValueParameter, IrField>
+    ) {
+        // Transform finally blocks and returnable blocks
+        val returnableBlockTransformer = ReturnableBlockTransformer(context)
+        val finallyBlockTransformer = FinallyBlocksLowering(context, context.catchAllThrowableType)
+        val simplifiedFunction =
+            transformingFunction.transform(finallyBlockTransformer, null).transform(returnableBlockTransformer, null) as IrFunction
+
+        val originalBody = simplifiedFunction.body as IrBlockBody
+
+        val body = IrBlockImpl(
+            simplifiedFunction.startOffset,
+            simplifiedFunction.endOffset,
+            context.irBuiltIns.unitType,
+            BrsStatementOrigins.COROUTINE_IMPL,
+            originalBody.statements
+        )
+
+        val coroutineClass = stateMachineFunction.parent as IrClass
+
+        // Get coroutine symbols (may be null during stdlib compilation)
+        val resultGetter = coroutineSymbols.coroutineImplResultSymbolGetter
+        val resultSetter = coroutineSymbols.coroutineImplResultSymbolSetter
+        val labelGetter = coroutineSymbols.coroutineImplLabelPropertyGetter
+        val labelSetter = coroutineSymbols.coroutineImplLabelPropertySetter
+        val exceptionGetter = coroutineSymbols.coroutineImplExceptionPropertyGetter
+        val exceptionSetter = coroutineSymbols.coroutineImplExceptionPropertySetter
+        val exStateGetter = coroutineSymbols.coroutineImplExceptionStatePropertyGetter
+        val exStateSetter = coroutineSymbols.coroutineImplExceptionStatePropertySetter
+
+        // If symbols are missing (stdlib compilation), skip state machine generation
+        if (resultGetter == null || labelGetter == null) {
+            // During stdlib compilation, we can't generate proper state machines
+            // Just keep the original body
+            stateMachineFunction.body = context.irFactory.createBlockBody(
+                stateMachineFunction.startOffset,
+                stateMachineFunction.endOffset,
+                originalBody.statements
+            )
+            return
+        }
+
+        val suspendResult = buildVar(
+            context.irBuiltIns.anyNType,
+            stateMachineFunction,
+            "suspendResult",
+            true,
+            initializer = buildCall(resultGetter.symbol).apply {
+                dispatchReceiver = buildGetValue(stateMachineFunction.dispatchReceiverParameter!!.symbol)
+            }
+        )
+
+        val suspendState = buildVar(labelGetter.returnType, stateMachineFunction, "suspendState", true)
+
+        val unit = context.irBuiltIns.unitType
+
+        val switch = IrWhenImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, unit, BrsStatementOrigins.COROUTINE_SWITCH)
+        val stateVar = buildVar(context.irBuiltIns.intType, stateMachineFunction)
+        val switchBlock = IrBlockImpl(switch.startOffset, switch.endOffset, switch.type).apply {
+            statements += stateVar
+            statements += switch
+        }
+        val rootTry = IrTryImpl(body.startOffset, body.endOffset, unit).apply { tryResult = switchBlock }
+        val rootLoop = IrDoWhileLoopImpl(
+            body.startOffset,
+            body.endOffset,
+            unit,
+            BrsStatementOrigins.COROUTINE_ROOT_LOOP,
+        ).also {
+            it.condition = buildBoolean(context.irBuiltIns.booleanType, true)
+            it.body = rootTry
+            it.label = "\$sm"
+        }
+
+        val suspendableNodes = collectSuspendableNodes(body)
+        val thisReceiver = (stateMachineFunction.dispatchReceiverParameter as IrValueParameter).symbol
+        stateVar.initializer = buildCall(labelGetter.symbol).apply {
+            dispatchReceiver = buildGetValue(thisReceiver)
+        }
+
+        val stateMachineBuilder = BrsStateMachineBuilder(
+            suspendableNodes,
+            context,
+            stateMachineFunction.symbol,
+            rootLoop,
+            exceptionGetter!!,
+            exceptionSetter!!,
+            exStateGetter!!,
+            exStateSetter!!,
+            labelSetter!!,
+            thisReceiver,
+            getSuspendResultAsType = { type ->
+                buildImplicitCast(
+                    buildGetValue(suspendResult.symbol),
+                    type
+                )
+            },
+            setSuspendResultValue = { value ->
+                buildSetVariable(
+                    suspendResult.symbol,
+                    buildImplicitCast(
+                        value,
+                        context.irBuiltIns.anyNType
+                    ),
+                    unit
+                )
+            }
+        )
+
+        body.acceptVoid(stateMachineBuilder)
+
+        stateMachineBuilder.finalizeStateMachine()
+
+        rootTry.catches += stateMachineBuilder.globalCatch
+
+        assignStateIds(stateMachineBuilder.entryState, stateVar.symbol, switch, rootLoop)
+
+        // Set exceptionState to the global catch block
+        stateMachineBuilder.entryState.entryBlock.run {
+            val receiver = buildGetValue(coroutineClass.thisReceiver!!.symbol)
+            val exceptionTrapId = stateMachineBuilder.rootExceptionTrap.id
+            check(exceptionTrapId >= 0)
+            val id = buildInt(context.irBuiltIns.intType, exceptionTrapId)
+            statements.add(0, buildCall(exStateSetter.symbol).also { call ->
+                call.arguments[0] = receiver
+                call.arguments[1] = id
+            })
+        }
+
+        val functionBody = context.irFactory.createBlockBody(
+            stateMachineFunction.startOffset,
+            stateMachineFunction.endOffset,
+            stateMachineBuilder.allTheIntermediateLocals + suspendResult + rootLoop
+        )
+
+        stateMachineFunction.body = functionBody
+
+        // Move return targets to new function
+        functionBody.transformChildrenVoid(object : IrElementTransformerVoid() {
+            override fun visitReturn(expression: IrReturn): IrExpression {
+                expression.transformChildrenVoid(this)
+
+                return if (expression.returnTargetSymbol != simplifiedFunction.symbol)
+                    expression
+                else
+                    buildReturn(stateMachineFunction.symbol, expression.value, expression.type)
+            }
+        })
+
+        // Perform liveness analysis and move live locals to coroutine class fields
+        val liveLocals = LivenessAnalysis.run(functionBody, { it is IrCall && it.isSuspend })
+            .values.flatten().toSet()
+
+        val localToPropertyMap = hashMapOf<IrValueSymbol, IrFieldSymbol>()
+        var localCounter = 0
+        liveLocals.forEach {
+            if (it !== suspendState && it !== suspendResult && it !== stateVar) {
+                localToPropertyMap.getOrPut(it.symbol) {
+                    coroutineClass.addField(Name.identifier("${it.name}${localCounter++}"), it.type, (it as? IrVariable)?.isVar ?: false)
+                        .symbol
+                }
+            }
+        }
+        val isSuspendLambda = transformingFunction.parent === coroutineClass
+        val parameters = if (isSuspendLambda) simplifiedFunction.nonDispatchParameters else simplifiedFunction.parameters
+        for (parameter in parameters) {
+            localToPropertyMap.getOrPut(parameter.symbol) {
+                argumentToPropertiesMap.getValue(parameter).symbol
+            }
+        }
+
+        stateMachineFunction.body!!.patchDeclarationParents(stateMachineFunction)
+        stateMachineFunction.transform(BrsLiveLocalsTransformer(localToPropertyMap, { buildGetValue(thisReceiver) }, unit), null)
+    }
+
+    private fun assignStateIds(entryState: SuspendState, subject: IrVariableSymbol, switch: IrWhen, rootLoop: IrLoop) {
+        val visited = mutableSetOf<SuspendState>()
+
+        val sortedStates = DFS.topologicalOrder(listOf(entryState), { it.successors }, { visited.add(it) })
+        sortedStates.withIndex().forEach { it.value.id = it.index }
+
+        val eqeqeqInt = context.irBuiltIns.eqeqeqSymbol
+
+        for (state in sortedStates) {
+            val condition = buildCall(eqeqeqInt).apply {
+                arguments[0] = buildGetValue(subject)
+                arguments[1] = buildInt(context.irBuiltIns.intType, state.id)
+            }
+
+            switch.branches += IrBranchImpl(state.entryBlock.startOffset, state.entryBlock.endOffset, condition, state.entryBlock)
+        }
+
+        val dispatchPointTransformer = BrsDispatchPointTransformer {
+            assert(it.id >= 0)
+            buildInt(context.irBuiltIns.intType, it.id)
+        }
+
+        rootLoop.transformChildrenVoid(dispatchPointTransformer)
+    }
+
+    override fun IrBuilderWithScope.generateDelegatedCall(expectedType: IrType, delegatingCall: IrExpression): IrExpression {
+        val functionReturnType = (delegatingCall as? IrCall)?.symbol?.owner?.let { function ->
+            loweredSuspendFunctionReturnType(function, context.irBuiltIns)
+        } ?: delegatingCall.type
+
+        if (!needUnboxingOrUnit(functionReturnType, expectedType)) return delegatingCall
+
+        return irComposite(resultType = expectedType) {
+            val tmp = createTmpVariable(delegatingCall, irType = functionReturnType)
+            val coroutineSuspended = irCall(coroutineSymbols.coroutineSuspendedGetter!!)
+            val condition = irEqeqeq(irGet(tmp), coroutineSuspended)
+            +irIfThen(context.irBuiltIns.unitType, condition, irReturn(irGet(tmp)))
+            +irImplicitCast(irGet(tmp), expectedType)
+        }
+    }
+
+    private fun needUnboxingOrUnit(fromType: IrType, toType: IrType): Boolean {
+        return fromType.isUnit() && !toType.isUnit()
+    }
+
+    override fun IrBlockBodyBuilder.generateCoroutineStart(invokeSuspendFunction: IrFunction, receiver: IrExpression) {
+        val resultSetter = coroutineSymbols.coroutineImplResultSymbolSetter
+        val exceptionSetter = coroutineSymbols.coroutineImplExceptionPropertySetter
+
+        if (resultSetter == null || exceptionSetter == null) {
+            // During stdlib compilation, skip coroutine start generation
+            return
+        }
+
+        val dispatchReceiverVar = createTmpVariable(receiver, irType = receiver.type)
+        +irCall(resultSetter).apply {
+            arguments[0] = irGet(dispatchReceiverVar)
+            arguments[1] = irGetObject(context.irBuiltIns.unitClass)
+        }
+        +irCall(exceptionSetter).apply {
+            arguments[0] = irGet(dispatchReceiverVar)
+            arguments[1] = irNull()
+        }
+        val call = irCall(invokeSuspendFunction.symbol).apply {
+            arguments[0] = irGet(dispatchReceiverVar)
+        }
+        val functionReturnType = scope.scopeOwnerSymbol.let { (it as IrSimpleFunctionSymbol).owner.returnType }
+        +irReturn(generateDelegatedCall(functionReturnType, call))
+    }
+
+    // ==================== Suspend Function Analysis ====================
+
+    private fun getSuspendFunctionKind(function: IrSimpleFunction, body: IrBody): SuspendFunctionKind {
+        fun IrSimpleFunction.isSuspendLambda() =
+            name.asString() == "invoke" && parentClassOrNull?.let { it.origin === WebCallableReferenceLowering.LAMBDA_IMPL } == true
+
+        if (function.isSuspendLambda())
+            return SuspendFunctionKind.NEEDS_STATE_MACHINE // Suspend lambdas always need coroutine implementation.
+
+        var numberOfSuspendCalls = 0
+        body.acceptVoid(object : IrVisitorVoid() {
+            override fun visitElement(element: IrElement) {
+                element.acceptChildrenVoid(this)
+            }
+
+            override fun visitCall(expression: IrCall) {
+                expression.acceptChildrenVoid(this)
+                if (expression.isSuspend)
+                    ++numberOfSuspendCalls
+            }
+        })
+
+        // Optimize: if there's only one suspend call at the end, we can delegate directly
+        val lastCall = when (val lastStatement = (body as IrBlockBody).statements.lastOrNull()) {
+            is IrCall ->
+                if (lastStatement.type == context.irBuiltIns.unitType && function.returnType == context.irBuiltIns.unitType)
+                    lastStatement
+                else
+                    null
+            is IrReturn -> {
+                var value: IrElement = lastStatement
+                loop@ while (true) {
+                    value = when {
+                        value is IrBlock && value.statements.size == 1 -> value.statements.first()
+                        value is IrReturn -> value.value
+                        value is IrTypeOperatorCall && (value.operator == IrTypeOperator.IMPLICIT_CAST || value.operator == IrTypeOperator.IMPLICIT_COERCION_TO_UNIT) -> value.argument
+                        else -> break@loop
+                    }
+                }
+                value as? IrCall
+            }
+            else -> null
+        }
+        val suspendCallAtEnd = lastCall != null && lastCall.isSuspend
+
+        return when {
+            numberOfSuspendCalls == 0 -> SuspendFunctionKind.NO_SUSPEND_CALLS
+            numberOfSuspendCalls == 1 && suspendCallAtEnd -> SuspendFunctionKind.DELEGATING(lastCall!!)
+            else -> SuspendFunctionKind.NEEDS_STATE_MACHINE
+        }
+    }
+
+    private fun IrCall.isReturnIfSuspendedCall() =
+        symbol == context.symbols.returnIfSuspended
+
+    // ==================== IR Builder Helpers ====================
+
+    private fun buildVar(type: IrType, parent: IrDeclarationParent, name: String = "tmp", isMutable: Boolean = false, initializer: IrExpression? = null): IrVariable {
+        return IrVariableImpl(
+            startOffset = UNDEFINED_OFFSET,
+            endOffset = UNDEFINED_OFFSET,
+            origin = IrDeclarationOrigin.IR_TEMPORARY_VARIABLE,
+            symbol = IrVariableSymbolImpl(),
+            name = Name.identifier(name),
+            type = type,
+            isVar = isMutable,
+            isConst = false,
+            isLateinit = false,
+        ).apply {
+            this.parent = parent
+            this.initializer = initializer
+        }
+    }
+
+    private fun buildCall(symbol: IrSimpleFunctionSymbol) = IrCallImpl(
+        UNDEFINED_OFFSET, UNDEFINED_OFFSET,
+        symbol.owner.returnType,
+        symbol,
+        typeArgumentsCount = symbol.owner.typeParameters.size,
+        origin = null
+    )
+
+    private fun buildGetValue(symbol: IrValueSymbol) = IrGetValueImpl(
+        UNDEFINED_OFFSET, UNDEFINED_OFFSET,
+        symbol.owner.type,
+        symbol
+    )
+
+    private fun buildSetVariable(symbol: IrVariableSymbol, value: IrExpression, type: IrType) = IrSetValueImpl(
+        UNDEFINED_OFFSET, UNDEFINED_OFFSET,
+        type,
+        symbol,
+        value,
+        null
+    )
+
+    private fun buildInt(type: IrType, value: Int) = IrConstImpl.int(
+        UNDEFINED_OFFSET, UNDEFINED_OFFSET,
+        type,
+        value
+    )
+
+    private fun buildBoolean(type: IrType, value: Boolean) = IrConstImpl.boolean(
+        UNDEFINED_OFFSET, UNDEFINED_OFFSET,
+        type,
+        value
+    )
+
+    private fun buildImplicitCast(value: IrExpression, toType: IrType) = IrTypeOperatorCallImpl(
+        UNDEFINED_OFFSET, UNDEFINED_OFFSET,
+        toType,
+        IrTypeOperator.IMPLICIT_CAST,
+        toType,
+        value
+    )
+
+    private fun buildReturn(target: IrSimpleFunctionSymbol, value: IrExpression, type: IrType) = IrReturnImpl(
+        UNDEFINED_OFFSET, UNDEFINED_OFFSET,
+        type,
+        target,
+        value
+    )
+
+    private fun buildReturn(target: IrFunctionSymbol, value: IrExpression, type: IrType) = IrReturnImpl(
+        UNDEFINED_OFFSET, UNDEFINED_OFFSET,
+        type,
+        target,
+        value
+    )
+}
+
+/**
+ * Classification of suspend functions by their suspension behavior.
+ */
+internal sealed class SuspendFunctionKind {
+    /** No suspend calls in the function body - can be left as-is */
+    object NO_SUSPEND_CALLS : SuspendFunctionKind()
+
+    /** Single suspend call at the end that can be delegated without a state machine */
+    class DELEGATING(val delegatingCall: IrCall) : SuspendFunctionKind()
+
+    /** Multiple suspend calls or complex control flow - needs full state machine */
+    object NEEDS_STATE_MACHINE : SuspendFunctionKind()
+}
+
+/**
+ * Statement origins for coroutine-related IR nodes.
+ */
+object BrsStatementOrigins {
+    val COROUTINE_IMPL = IrStatementOriginImpl("COROUTINE_IMPL")
+    val COROUTINE_SWITCH = IrStatementOriginImpl("COROUTINE_SWITCH")
+    val COROUTINE_ROOT_LOOP = IrStatementOriginImpl("COROUTINE_ROOT_LOOP")
+}

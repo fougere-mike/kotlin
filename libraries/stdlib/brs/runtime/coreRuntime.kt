@@ -399,8 +399,8 @@ public fun __kotlin_toJsonValue(value: Any?): Any? {
             }
         }
         // Fallback: check for Kotlin methods that indicate it's a Map
-        if (brsHasField(value, "get_map")) {
-            // Has get_map method - it's a Kotlin Map
+        if (brsHasField(value, "getMap_k_")) {
+            // Has getMap_k_ method - it's a Kotlin Map
             return __kotlin_mapToPlainAA(value)
         }
         // Plain AA without Kotlin methods - pass through
@@ -426,10 +426,10 @@ public fun __kotlin_toJsonValue(value: Any?): Any? {
 private fun __kotlin_mapToPlainAA(map: Any): Any {
     val result = brsIntrinsicCreateObject("roAssociativeArray")
 
-    // LinkedHashMap and HashMap store data in a `get_map` method that returns the internal AA
+    // LinkedHashMap and HashMap store data in a `getMap_k_` method that returns the internal AA
     // The internal map stores entries as {k: originalKey, v: value}
-    if (brsHasField(map, "get_map")) {
-        val internalMap = brsIntrinsicCallMethod(map, "get_map")
+    if (brsHasField(map, "getMap_k_")) {
+        val internalMap = brsIntrinsicCallMethod(map, "getMap_k_")
         val keys = brsIntrinsicKeys(internalMap)
         for (internalKey in keys) {
             val entry = brsIntrinsicGetField(internalMap, internalKey)
@@ -454,6 +454,8 @@ private fun __kotlin_mapToPlainAA(map: Any): Any {
             if (valueType != "Function" && valueType != "roFunction") {
                 // Skip internal fields that start with __ or end with _k_
                 // Use intrinsics instead of stdlib calls to avoid initialization dependencies
+                // Note: __get_ and __set_ checks are redundant since we already check for __ prefix,
+                // but kept for clarity about what we're filtering
                 val isInternalKey = brsIntrinsicStartsWith(key, "__") || brsIntrinsicEndsWith(key, "_k_") ||
                     brsIntrinsicStartsWith(key, "get_") || brsIntrinsicStartsWith(key, "set_") ||
                     brsStringEquals(key, "equals") || brsStringEquals(key, "hashCode") || brsStringEquals(key, "toString") ||

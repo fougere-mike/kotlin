@@ -43,6 +43,11 @@ import test.roku.globalFunctionsTests
 // Reflection tests
 import test.reflect.kclassTests
 
+// Coroutine tests (marked as ignored in CoroutineTest.kt - interface default method inheritance issue)
+import test.coroutines.coroutineTests
+import test.coroutines.suspendFunctionTests
+import test.coroutines.dispatcherTests
+
 /**
  * Main entry point for stdlib runtime tests.
  */
@@ -83,5 +88,10 @@ fun main() {
 
         // Reflection
         kclassTests()
+
+        // Coroutines (marked as ignored in CoroutineTest.kt - interface default method inheritance issue)
+        coroutineTests()
+        suspendFunctionTests()
+        dispatcherTests()
     }
 }

@@ -2941,13 +2941,16 @@ class IrToBrsTransformer(
     /**
      * Sanitize property accessor names for BrightScript.
      * Kotlin IR uses names like <get-foo> and <set-foo> for property accessors.
+     * We use "__get_" and "__set_" prefixes (double underscore) to clearly distinguish
+     * compiler-generated property accessors from user-defined functions, following
+     * common conventions for internal/generated names.
      */
     fun sanitizeMethodName(name: String): String {
         return when {
             name.startsWith("<get-") && name.endsWith(">") ->
-                "get_" + name.removePrefix("<get-").removeSuffix(">")
+                "__get_" + name.removePrefix("<get-").removeSuffix(">")
             name.startsWith("<set-") && name.endsWith(">") ->
-                "set_" + name.removePrefix("<set-").removeSuffix(">")
+                "__set_" + name.removePrefix("<set-").removeSuffix(">")
             else -> name
         }
     }
@@ -3464,15 +3467,24 @@ class IrStatementToBrsTransformer(
     }
 
     override fun visitTry(aTry: IrTry, data: Unit): BrsStatement {
+        // Helper to transform a statement/expression inside try/catch blocks
+        // IrWhen needs special handling because it's technically an IrExpression
+        // but when used in statement context (like `if (x) return`) it should be
+        // transformed as a statement, not an expression (which returns BrsInvalidLiteral for Unit)
+        fun transformBlockStatement(stmt: IrStatement): BrsStatement? {
+            return when (stmt) {
+                is IrWhen -> visitWhen(stmt, data) // Transform as statement (if-then-else)
+                is IrExpression -> BrsExpressionStatement(parent.transformExpression(stmt))
+                else -> parent.transformStatement(stmt)
+            }
+        }
+
         return if (context.supportsExceptions) {
             // Transform try block - tryResult is an IrExpression (often IrBlock)
             val tryBlock = when (val tryResult = aTry.tryResult) {
                 is IrBlock -> {
                     val statements = tryResult.statements.mapNotNull { stmt ->
-                        when (stmt) {
-                            is IrExpression -> BrsExpressionStatement(parent.transformExpression(stmt))
-                            else -> parent.transformStatement(stmt)
-                        }
+                        transformBlockStatement(stmt)
                     }
                     BrsBlock(statements.toMutableList())
                 }
@@ -3484,10 +3496,7 @@ class IrStatementToBrsTransformer(
                 when (val catchResult = catch.result) {
                     is IrBlock -> {
                         val statements = catchResult.statements.mapNotNull { stmt ->
-                            when (stmt) {
-                                is IrExpression -> BrsExpressionStatement(parent.transformExpression(stmt))
-                                else -> parent.transformStatement(stmt)
-                            }
+                            transformBlockStatement(stmt)
                         }
                         BrsBlock(statements.toMutableList())
                     }
@@ -3502,10 +3511,7 @@ class IrStatementToBrsTransformer(
             when (val tryResult = aTry.tryResult) {
                 is IrBlock -> {
                     val statements = tryResult.statements.mapNotNull { stmt ->
-                        when (stmt) {
-                            is IrExpression -> BrsExpressionStatement(parent.transformExpression(stmt))
-                            else -> parent.transformStatement(stmt)
-                        }
+                        transformBlockStatement(stmt)
                     }
                     BrsBlock(statements.toMutableList())
                 }
@@ -4135,8 +4141,8 @@ class IrStatementToBrsTransformer(
         }
 
         // =============================================================================
-        // Strategy 3: Stdlib collections with get_array() (backward compatibility)
-        // These concrete stdlib collection types wrap roArray and expose it via get_array().
+        // Strategy 3: Stdlib collections with __get_array() property
+        // These concrete stdlib collection types wrap roArray and expose it via __get_array().
         // =============================================================================
         val hasGetArray = iterableClassName in listOf(
             // Array-backed collections
@@ -4149,8 +4155,8 @@ class IrStatementToBrsTransformer(
         )
 
         if (hasGetArray) {
-            // Call get_array() method for iteration - this works for concrete stdlib collections
-            val arrayIterable = BrsFunctionCall(BrsDotAccess(iterableBrs, "get_array"), mutableListOf())
+            // Call __get_array() method for iteration - this works for concrete stdlib collections
+            val arrayIterable = BrsFunctionCall(BrsDotAccess(iterableBrs, "__get_array"), mutableListOf())
             return BrsForEach(
                 variable = loopVarName,
                 iterable = arrayIterable,
@@ -4568,6 +4574,12 @@ class IrExpressionToBrsTransformer(
         // Continue statements in expression context
         val continueStmt = parent.statementVisitor.visitContinue(jump, Unit)
         return BrsStatementAsExpression(continueStmt)
+    }
+
+    override fun visitTry(aTry: IrTry, data: Unit): BrsExpression {
+        // Try statements in expression context
+        val tryStmt = parent.statementVisitor.visitTry(aTry, Unit)
+        return BrsStatementAsExpression(tryStmt)
     }
 
     // ==================== Literals ====================
@@ -5024,7 +5036,7 @@ class IrExpressionToBrsTransformer(
                 }
                 "brsIntrinsicCallGetArray" -> {
                     val collection = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
-                    return BrsMethodCall(collection, "get_array", mutableListOf())
+                    return BrsMethodCall(collection, "__get_array", mutableListOf())
                 }
                 "brsIntrinsicCount" -> {
                     val array = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
@@ -5629,13 +5641,13 @@ class IrExpressionToBrsTransformer(
                     }
                     val singletonName = context.getBrsName(parentClass)
                     val singletonInstance = BrsFunctionCall(BrsIdentifier("${singletonName}_getInstance"), mutableListOf())
-                    // Property accessors are attached with simple names (get_X, set_X)
+                    // Property accessors are attached with simple names (__get_X, __set_X)
                     // Regular methods are attached with mangled names
                     val rawFuncName = function.name.asString()
                     val methodName = if (rawFuncName.startsWith("<get-") && rawFuncName.endsWith(">")) {
-                        "get_" + rawFuncName.removePrefix("<get-").removeSuffix(">")
+                        "__get_" + rawFuncName.removePrefix("<get-").removeSuffix(">")
                     } else if (rawFuncName.startsWith("<set-") && rawFuncName.endsWith(">")) {
-                        "set_" + rawFuncName.removePrefix("<set-").removeSuffix(">")
+                        "__set_" + rawFuncName.removePrefix("<set-").removeSuffix(">")
                     } else {
                         // Use mangled name for regular methods
                         val fullMethodName = context.getBrsName(function)
@@ -5677,7 +5689,7 @@ class IrExpressionToBrsTransformer(
 
                             // Delegated properties must call the getter to unwrap the delegate
                             if (property.isDelegated) {
-                                return BrsMethodCall(componentM, "get_${fieldName}_k_", mutableListOf())
+                                return BrsMethodCall(componentM, "__get_${fieldName}_k_", mutableListOf())
                             }
 
                             return if (hasInterfaceFieldAnnotation(property)) {
@@ -5711,7 +5723,7 @@ class IrExpressionToBrsTransformer(
                         BrsDotAccess(receiverExpr, fieldName)
                     } else {
                         // Call getter for computed properties, overridden properties, etc.
-                        BrsMethodCall(receiverExpr, "get_$fieldName", mutableListOf())
+                        BrsMethodCall(receiverExpr, "__get_$fieldName", mutableListOf())
                     }
                 }
 
@@ -5734,7 +5746,7 @@ class IrExpressionToBrsTransformer(
 
                             // Delegated properties must call the setter
                             if (property.isDelegated) {
-                                return BrsMethodCall(componentM, "set_${fieldName}_k_", mutableListOf(value))
+                                return BrsMethodCall(componentM, "__set_${fieldName}_k_", mutableListOf(value))
                             }
 
                             val target = if (hasInterfaceFieldAnnotation(property)) {
@@ -5770,7 +5782,7 @@ class IrExpressionToBrsTransformer(
                         )
                     } else {
                         // Call setter for computed properties, overridden properties, etc.
-                        BrsMethodCall(receiverExpr, "set_$fieldName", mutableListOf(value))
+                        BrsMethodCall(receiverExpr, "__set_$fieldName", mutableListOf(value))
                     }
                 }
 
@@ -5897,13 +5909,13 @@ class IrExpressionToBrsTransformer(
             val singletonName = context.getBrsName(parentClass)
             val singletonInstance = BrsFunctionCall(BrsIdentifier("${singletonName}_getInstance"), mutableListOf())
 
-            // Property accessors are attached with simple names (get_X, set_X)
+            // Property accessors are attached with simple names (__get_X, __set_X)
             // Regular methods are attached with mangled names
             val rawFuncName = function.name.asString()
             val methodName = if (rawFuncName.startsWith("<get-") && rawFuncName.endsWith(">")) {
-                "get_" + rawFuncName.removePrefix("<get-").removeSuffix(">")
+                "__get_" + rawFuncName.removePrefix("<get-").removeSuffix(">")
             } else if (rawFuncName.startsWith("<set-") && rawFuncName.endsWith(">")) {
-                "set_" + rawFuncName.removePrefix("<set-").removeSuffix(">")
+                "__set_" + rawFuncName.removePrefix("<set-").removeSuffix(">")
             } else {
                 // Use mangled name for regular methods
                 val fullMethodName = context.getBrsName(function)
@@ -6368,11 +6380,11 @@ class IrExpressionToBrsTransformer(
             }
 
             is BrsIntrinsics.StdlibIntrinsic.GetLength -> {
-                // Call get_length() directly on an object: obj.get_length()
+                // Call __get_length() directly on an object: obj.__get_length()
                 // This is used by __kotlin_charSequenceLength to avoid recursion
                 if (args.isNotEmpty()) {
                     BrsFunctionCall(
-                        BrsDotAccess(args[0], "get_length"),
+                        BrsDotAccess(args[0], "__get_length"),
                         mutableListOf()
                     )
                 } else {

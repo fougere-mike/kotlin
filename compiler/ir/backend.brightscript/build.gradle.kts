@@ -10,6 +10,7 @@ dependencies {
     api(project(":compiler:ir.tree"))
     api(project(":compiler:ir.backend.common"))
     api(project(":compiler:ir.serialization.common"))
+    api(project(":compiler:ir.inline"))
     api(project(":brightscript:brs.ast"))
     api(project(":core:compiler.common.brightscript"))
 

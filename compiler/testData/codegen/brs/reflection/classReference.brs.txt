@@ -4,12 +4,12 @@ function Person_create_Str_k_(name as String) as Object
     this.__type = "Person"
     this.__proto = ["Person"]
     this.__id = __kotlin_nextObjectId()
-    this.get_name = Person_get_name_k_
+    this.__get_name = Person___get_name_k_
     this.name = name
     return this
 end function
 
-function Person_get_name_k_() as String
+function Person___get_name_k_() as String
     return m.name
 end function
 
@@ -19,13 +19,13 @@ end function
 
 function getClassName_k_() as Dynamic
     klass = __kotlin_KClass_create("Person")
-    return klass.get_simpleName()
+    return klass.__get_simpleName()
 end function
 
-function useClassInfo_KClass_k_(klass as Object) as Dynamic
-    return klass.get_simpleName()
+function useClassInfo_KCLASS_k_(klass as Object) as Dynamic
+    return klass.__get_simpleName()
 end function
 
 function testClassLiteral_k_() as Dynamic
-    return useClassInfo_KClass_k_(__kotlin_KClass_create("Person"))
+    return useClassInfo_KCLASS_k_(__kotlin_KClass_create("Person"))
 end function

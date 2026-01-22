@@ -6,25 +6,25 @@ function Counter_create_k_() as Object
     this.__id = __kotlin_nextObjectId()
     this.increment_k_ = Counter_increment_k_
     this.getCount_k_ = Counter_getCount_k_
-    this.get_count = Counter_get_count_k_
-    this.set_count = Counter_set_count_I_k_
+    this.__get_count = Counter___get_count_k_
+    this.__set_count = Counter___set_count_I_k_
     this.count = 0
     return this
 end function
 
 sub Counter_increment_k_()
-    m.set_count(m.get_count() + 1)
+    m.__set_count(m.__get_count() + 1)
 end sub
 
 function Counter_getCount_k_() as Integer
-    return m.get_count()
+    return m.__get_count()
 end function
 
-function Counter_get_count_k_() as Integer
+function Counter___get_count_k_() as Integer
     return m.count
 end function
 
-sub Counter_set_count_I_k_(value as Integer)
+sub Counter___set_count_I_k_(value as Integer)
     m.count = value
 end sub
 

@@ -6,14 +6,23 @@
 package org.jetbrains.kotlin.ir.backend.brs.lower
 
 import org.jetbrains.kotlin.backend.common.BodyLoweringPass
+import org.jetbrains.kotlin.backend.common.DeclarationTransformer
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.lower.*
+import org.jetbrains.kotlin.backend.common.lower.coroutines.AddContinuationToLocalSuspendFunctionsLowering
+import org.jetbrains.kotlin.backend.common.lower.coroutines.AddContinuationToNonLocalSuspendFunctionsLowering
 import org.jetbrains.kotlin.backend.common.lower.loops.ForLoopsLowering
 import org.jetbrains.kotlin.backend.common.phaser.*
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
+import org.jetbrains.kotlin.ir.backend.brs.lower.coroutines.BrsSuspendFunctionsLowering
+import org.jetbrains.kotlin.ir.backend.brs.lower.inline.BrsInlineFunctionResolver
+import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
+import org.jetbrains.kotlin.ir.expressions.IrBody
+import org.jetbrains.kotlin.ir.inline.FunctionInlining
+import org.jetbrains.kotlin.ir.inline.InlineMode
 import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 
 /**
@@ -27,12 +36,51 @@ object BrsLoweringPhases {
      * Run all lowering phases on the module.
      */
     fun lower(module: IrModuleFragment, context: BrsIrBackendContext): IrModuleFragment {
-        // Apply lowering phases in order
-        val phases = listOf(
-            // Phase 1: Validate and prepare
-            ValidateSuspendUsageLowering(context),
+        // Phase 0: Inline all inline functions FIRST
+        // This must happen before any other lowering because:
+        // 1. Inline functions like run, let, also, apply should be inlined at call sites
+        // 2. The inlined code may contain constructs that other lowering phases need to process
+        // 3. @InlineOnly functions (like stdlib's run, let, etc.) only exist as inline and must be inlined
+        //
+        // Note: During stdlib compilation, we skip inlining because:
+        // - Coroutine symbols aren't available yet
+        // - Stdlib functions being inlined are defined in stdlib itself
+        // User code compilations DO get inlining since they link against the compiled stdlib
+        if (!context.isStdlibCompilation) {
+            val inlineFunctionResolver = BrsInlineFunctionResolver(context, InlineMode.ALL_INLINE_FUNCTIONS)
+            val functionInlining = FunctionInlining(context, inlineFunctionResolver)
+            for (file in module.files) {
+                file.declarations.forEach { declaration ->
+                    if (declaration is org.jetbrains.kotlin.ir.declarations.IrFunction) {
+                        declaration.body?.let { body ->
+                            functionInlining.lower(body, declaration)
+                        }
+                    }
+                }
+            }
+        }
 
-            // Phase 1.3: Pre-compute enum ordinals for constant evaluation
+        // Build the list of lowering phases
+        val phases = mutableListOf<FileLoweringPass>()
+
+        // Phase 1: Coroutine Lowering (must run early)
+        // Skip during stdlib compilation or when coroutine symbols aren't available (e.g., in tests without stdlib)
+        val coroutinesAvailable = !context.isStdlibCompilation &&
+            context.brsSymbols.coroutineSymbols.areCoroutineSymbolsAvailable
+        if (coroutinesAvailable) {
+            // 1.1: Add continuation parameter to non-local suspend functions
+            phases += AddContinuationToNonLocalSuspendFunctionsLoweringWrapper(context)
+
+            // 1.2: Add continuation parameter to local suspend functions
+            phases += AddContinuationToLocalSuspendFunctionsLoweringWrapper(context)
+
+            // 1.3: Transform suspend functions into state machines
+            phases += BrsSuspendFunctionsLoweringWrapper(context)
+        }
+
+        // Add remaining phases
+        phases += listOf(
+            // Phase 1.5: Pre-compute enum ordinals for constant evaluation
             // Must run before BrsConstantEvaluationLowering so enum ordinals are available
             BrsEnumOrdinalPrecomputeLowering(context),
 
@@ -128,26 +176,67 @@ object BrsLoweringPhases {
     }
 }
 
+// ==================== Coroutine Lowering Wrappers ====================
+
 /**
- * Validates that no suspend functions are used, as BrightScript doesn't support coroutines.
+ * Wrapper for AddContinuationToNonLocalSuspendFunctionsLowering to work with FileLoweringPass.
+ * Adds $completion continuation parameter to non-local suspend functions.
  */
-class ValidateSuspendUsageLowering(
+class AddContinuationToNonLocalSuspendFunctionsLoweringWrapper(
     private val context: BrsIrBackendContext
 ) : FileLoweringPass {
-    override fun lower(irFile: IrFile) {
-        // Check for suspend functions and report errors
-        irFile.accept(object : IrVisitorVoid() {
-            override fun visitElement(element: org.jetbrains.kotlin.ir.IrElement) {
-                element.acceptChildren(this, null)
-            }
+    private val delegate = AddContinuationToNonLocalSuspendFunctionsLowering(context)
 
-            override fun visitFunction(declaration: org.jetbrains.kotlin.ir.declarations.IrFunction) {
-                if (declaration is org.jetbrains.kotlin.ir.declarations.IrSimpleFunction && declaration.isSuspend) {
-                    error("Suspend functions are not supported in BrightScript: ${declaration.name}")
+    override fun lower(irFile: IrFile) {
+        irFile.declarations.toList().forEach { declaration ->
+            delegate.transformFlat(declaration)?.let { transformed ->
+                val index = irFile.declarations.indexOf(declaration)
+                if (index >= 0) {
+                    irFile.declarations.removeAt(index)
+                    irFile.declarations.addAll(index, transformed)
                 }
-                super.visitFunction(declaration)
             }
-        }, null)
+        }
+    }
+}
+
+/**
+ * Wrapper for AddContinuationToLocalSuspendFunctionsLowering to work with FileLoweringPass.
+ * Adds $completion continuation parameter to local suspend functions.
+ */
+class AddContinuationToLocalSuspendFunctionsLoweringWrapper(
+    private val context: BrsIrBackendContext
+) : FileLoweringPass {
+    private val delegate = AddContinuationToLocalSuspendFunctionsLowering(context)
+
+    override fun lower(irFile: IrFile) {
+        irFile.declarations.forEach { declaration ->
+            if (declaration is org.jetbrains.kotlin.ir.declarations.IrFunction) {
+                declaration.body?.let { body ->
+                    delegate.lower(body, declaration)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Wrapper for BrsSuspendFunctionsLowering to work with FileLoweringPass.
+ * Transforms suspend functions into CoroutineImpl classes with state machines.
+ */
+class BrsSuspendFunctionsLoweringWrapper(
+    private val context: BrsIrBackendContext
+) : FileLoweringPass {
+    private val delegate = BrsSuspendFunctionsLowering(context)
+
+    override fun lower(irFile: IrFile) {
+        irFile.declarations.forEach { declaration ->
+            if (declaration is org.jetbrains.kotlin.ir.declarations.IrFunction) {
+                declaration.body?.let { body ->
+                    delegate.lower(body, declaration)
+                }
+            }
+        }
     }
 }
 
