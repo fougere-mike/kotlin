@@ -78,6 +78,12 @@ object BrsLoweringPhases {
             phases += BrsSuspendFunctionsLoweringWrapper(context)
         }
 
+        // Phase 1.4: Generate implementations for interface default methods
+        // Must run before code generation since BrightScript has no virtual dispatch.
+        // When a class implements an interface with default methods, we need to copy
+        // the method bodies into the class because BrightScript has no prototype chain.
+        phases += BrsInterfaceDefaultMethodsLowering(context)
+
         // Add remaining phases
         phases += listOf(
             // Phase 1.5: Pre-compute enum ordinals for constant evaluation

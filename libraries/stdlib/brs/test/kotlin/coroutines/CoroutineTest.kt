@@ -11,13 +11,9 @@ import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
 
 /**
  * Tests for coroutine primitives.
- *
- * NOTE: These tests are temporarily ignored due to interface default method inheritance issue.
- * The CoroutineContext.Element.get() default method is not being properly inherited by
- * implementing classes like JobImpl. This is a compiler issue to be fixed separately.
  */
 fun TestRunner.coroutineTests() {
-    suite("Coroutine Primitives", ignored = true) {
+    suite("Coroutine Primitives") {
 
         // ==================== CoroutineContext Tests ====================
 
@@ -176,11 +172,9 @@ fun TestRunner.coroutineTests() {
 
 /**
  * Tests for suspend functions and coroutine builders.
- *
- * NOTE: These tests are temporarily ignored due to interface default method inheritance issue.
  */
 fun TestRunner.suspendFunctionTests() {
-    suite("Suspend Functions", ignored = true) {
+    suite("Suspend Functions") {
 
         test("Simple suspend function") {
             // Local suspend functions aren't well supported yet - test at module level instead
@@ -207,11 +201,9 @@ fun TestRunner.suspendFunctionTests() {
 
 /**
  * Tests for dispatcher infrastructure.
- *
- * NOTE: These tests are temporarily ignored due to interface default method inheritance issue.
  */
 fun TestRunner.dispatcherTests() {
-    suite("Dispatchers", ignored = true) {
+    suite("Dispatchers") {
 
         test("Dispatchers.Default exists") {
             val dispatcher = kotlin.coroutines.dispatchers.Dispatchers.Default

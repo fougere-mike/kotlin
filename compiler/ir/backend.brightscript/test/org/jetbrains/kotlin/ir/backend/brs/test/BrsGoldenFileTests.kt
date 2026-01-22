@@ -68,6 +68,9 @@ class BrsClassGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun interfaces() = runTest("classes/interfaces.kt")
+
+    @Test
+    fun interfaceDefaultMethods() = runTest("classes/interfaceDefaultMethods.kt")
 }
 
 // ==================== Closure Tests ====================
