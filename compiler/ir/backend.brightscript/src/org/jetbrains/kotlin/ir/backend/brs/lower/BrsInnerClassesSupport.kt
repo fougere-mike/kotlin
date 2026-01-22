@@ -165,4 +165,13 @@ object BrsDeclarationOrigin : IrDeclarationOrigin {
         override val name: String = "BRS_HOISTED_LAMBDA"
         override val isSynthetic: Boolean = true
     }
+
+    /**
+     * Origin for shared variable wrappers.
+     * Variables with this origin are boxed in {value: ...} at transform time.
+     */
+    object SHARED_VARIABLE_WRAPPER : IrDeclarationOrigin {
+        override val name: String = "BRS_SHARED_VARIABLE_WRAPPER"
+        override val isSynthetic: Boolean = true
+    }
 }

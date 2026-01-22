@@ -84,9 +84,19 @@ object BrsLoweringPhases {
         // the method bodies into the class because BrightScript has no prototype chain.
         phases += BrsInterfaceDefaultMethodsLowering(context)
 
+        // NOTE: SharedVariablesLowering is intentionally NOT used for BrightScript.
+        // Instead, mutable captured variables are handled at transform time in IrToBrsTransformer
+        // using detectSharedVariables() which boxes them in {value: x} associative arrays.
+        //
+        // The reason is that SharedVariablesLowering + LocalDeclarationsLowering don't work well
+        // together for the BrightScript use case:
+        // - SharedVariablesLowering transforms all reads/writes to use the box
+        // - But LocalDeclarationsLowering then captures the box value, not the box reference
+        // - This breaks the reference semantics needed for closures to modify outer variables
+
         // Add remaining phases
         phases += listOf(
-            // Phase 1.5: Pre-compute enum ordinals for constant evaluation
+            // Phase 1.6: Pre-compute enum ordinals for constant evaluation
             // Must run before BrsConstantEvaluationLowering so enum ordinals are available
             BrsEnumOrdinalPrecomputeLowering(context),
 
@@ -156,6 +166,20 @@ object BrsLoweringPhases {
             // Phase 14: Final cleanup
             CleanupLowering(context),
 
+            // Phase 14.25: Detect shared variables BEFORE any local declarations lowering
+            // This must run BEFORE LocalDeclarationsLowering because LDL transforms local class
+            // variable accesses to field accesses, making it impossible to detect which outer
+            // variables are captured and mutated. The detected shared variables are stored in
+            // context.sharedVariablesByFunction for use during transformation.
+            BrsSharedVariableDetectionLowering(context),
+
+            // Phase 14.5: Ensure fields are created for write-only captured variables
+            // LocalDeclarationsLowering only creates fields for captured variables that are READ.
+            // If a variable is only WRITTEN inside a local class (never read), no field is created.
+            // This lowering adds synthetic reads to trigger field creation for write-only variables.
+            // Must run BEFORE LocalDeclarationsLowering.
+            BrsCapturedWriteOnlyVariablesLowering(context),
+
             // Phase 15: Local declarations lowering - handles closure capture for local classes
             // This transforms local classes to properly capture variables from enclosing scopes
             // Must run after ForLoopsLowering to avoid conflicts
@@ -165,6 +189,16 @@ object BrsLoweringPhases {
                 localNameSanitizer = { it.replace("\$", "_") },
                 suggestUniqueNames = false
             ),
+
+            // Phase 15.25: Remove synthetic reads that were added by BrsCapturedWriteOnlyVariablesLowering
+            // These were needed to trigger field creation in LocalDeclarationsLowering,
+            // but now would generate invalid BrightScript (standalone expressions)
+            BrsSyntheticReadsRemovalLowering(context),
+
+            // Phase 15.5: Rewrite writes to captured variables
+            // LocalDeclarationsLowering creates fields for captured variables and rewrites reads,
+            // but does NOT rewrite writes. For BrightScript we need explicit field access for writes.
+            BrsCapturedVariableWriteLowering(context),
 
             // Phase 16: Extract local classes to file level
             // After LocalDeclarationsLowering handles the closure capture, this pass moves
@@ -240,6 +274,38 @@ class BrsSuspendFunctionsLoweringWrapper(
             if (declaration is org.jetbrains.kotlin.ir.declarations.IrFunction) {
                 declaration.body?.let { body ->
                     delegate.lower(body, declaration)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Wrapper for SharedVariablesLowering to work with FileLoweringPass.
+ * Transforms mutable variables captured by closures to use boxed wrappers.
+ */
+class SharedVariablesLoweringWrapper(
+    private val context: BrsIrBackendContext
+) : FileLoweringPass {
+    private val delegate = SharedVariablesLowering(context)
+
+    override fun lower(irFile: IrFile) {
+        irFile.declarations.forEach { declaration ->
+            lowerDeclaration(declaration)
+        }
+    }
+
+    private fun lowerDeclaration(declaration: IrDeclaration) {
+        when (declaration) {
+            is org.jetbrains.kotlin.ir.declarations.IrFunction -> {
+                declaration.body?.let { body ->
+                    delegate.lower(body, declaration)
+                }
+            }
+            is org.jetbrains.kotlin.ir.declarations.IrClass -> {
+                // Process class members
+                declaration.declarations.forEach { member ->
+                    lowerDeclaration(member)
                 }
             }
         }

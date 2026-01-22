@@ -60,7 +60,7 @@ function Item___get_value_k_() as Integer
     return m.value
 end function
 
-function getDescription_DESCRIBABLE_k_(item as Object) as String
+function getDescription_Describable_k_(item as Object) as String
     return item.describe_k_()
 end function
 

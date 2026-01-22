@@ -79,6 +79,9 @@ class BrsClosureGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun lambdaCapture() = runTest("closures/lambdaCapture.kt")
+
+    @Test
+    fun capturedVarInAnonymousClass() = runTest("closures/capturedVarInAnonymousClass.kt")
 }
 
 // ==================== Inline BrightScript Tests ====================

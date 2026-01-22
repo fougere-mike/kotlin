@@ -9,12 +9,15 @@ import org.jetbrains.kotlin.backend.common.ir.SharedVariablesManager
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.builders.declarations.buildVariable
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrGetValue
 import org.jetbrains.kotlin.ir.expressions.IrSetValue
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrSetValueImpl
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
+import org.jetbrains.kotlin.ir.symbols.impl.IrVariableSymbolImpl
 
 /**
  * Manages shared variables for BrightScript code generation.
@@ -36,33 +39,45 @@ import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
  *     x.value = x.value + 1
  * end function
  * ```
+ *
+ * NOTE: This class creates the IR-level transformation, but the actual wrapping
+ * and .value access is handled at transform time in IrToBrsTransformer based on
+ * the sharedVariables set detected via detectSharedVariables().
+ *
+ * The new variable created by declareSharedVariable has SHARED_VARIABLE_WRAPPER origin
+ * which is detected by IrToBrsTransformer to box the initializer in {value: ...}.
  */
 class BrsSharedVariablesManager(
     private val irBuiltIns: IrBuiltIns
 ) : SharedVariablesManager() {
 
     /**
-     * Declares a shared variable by wrapping it in an associative array.
+     * Declares a shared variable.
+     *
+     * The new variable will have the same name but with SHARED_VARIABLE_WRAPPER origin,
+     * which tells IrToBrsTransformer to wrap the initializer in {value: ...}.
      *
      * @param originalDeclaration The original variable declaration
-     * @return A new variable declaration initialized with the wrapper AA
+     * @return A new variable declaration that will be boxed at transform time
      */
     override fun declareSharedVariable(originalDeclaration: IrVariable): IrVariable {
-        // Create a new variable that holds an AA wrapper
+        // Create a new variable with special origin to mark it as shared
+        // The type is anyNType because it will hold an AA wrapper
         return buildVariable(
             parent = originalDeclaration.parent,
             startOffset = originalDeclaration.startOffset,
             endOffset = originalDeclaration.endOffset,
-            origin = BrsDeclarationOrigin.CLOSURE_CAPTURE_FIELD,
+            origin = BrsDeclarationOrigin.SHARED_VARIABLE_WRAPPER,
             name = originalDeclaration.name,
             type = irBuiltIns.anyNType // AA type in BrightScript
-        )
+        ).apply {
+            // Copy the original initializer - it will be boxed at transform time
+            this.initializer = originalDeclaration.initializer
+        }
     }
 
     /**
      * Defines the value to store in a shared variable slot.
-     *
-     * This wraps the original value in an associative array.
      *
      * @param originalDeclaration The original variable declaration
      * @param sharedVariableDeclaration The shared variable declaration
@@ -73,23 +88,26 @@ class BrsSharedVariablesManager(
         sharedVariableDeclaration: IrVariable
     ): IrStatement {
         // Return the shared variable declaration - the actual AA wrapping
-        // happens during IR-to-BRS transformation
+        // happens at transform time in IrToBrsTransformer
         return sharedVariableDeclaration
     }
 
     /**
      * Gets the value from a shared variable.
      *
+     * At IR level, this returns an IrGetValue for the shared variable.
+     * At transform time, IrToBrsTransformer will generate: varName.value
+     *
      * @param sharedVariableSymbol The shared variable's symbol
      * @param originalGet The original get expression
-     * @return An expression that reads the "value" field from the wrapper
+     * @return An IrGetValue for the shared variable (transformed to .value access later)
      */
     override fun getSharedValue(
         sharedVariableSymbol: IrValueSymbol,
         originalGet: IrGetValue
     ): IrExpression {
-        // This will generate: <sharedVar>.value
-        // For now, return a get of the shared variable - the transformation happens in lowering
+        // Return a get of the shared variable
+        // The transform to .value access happens in IrToBrsTransformer based on sharedVariables set
         return IrGetValueImpl(
             originalGet.startOffset,
             originalGet.endOffset,
@@ -102,16 +120,26 @@ class BrsSharedVariablesManager(
     /**
      * Sets the value in a shared variable.
      *
+     * At IR level, this returns an IrSetValue for the shared variable.
+     * At transform time, IrToBrsTransformer will generate: varName.value = newValue
+     *
      * @param sharedVariableSymbol The shared variable's symbol
      * @param originalSet The original set expression
-     * @return An expression that writes to the "value" field of the wrapper
+     * @return An IrSetValue for the shared variable (transformed to .value = access later)
      */
     override fun setSharedValue(
         sharedVariableSymbol: IrValueSymbol,
         originalSet: IrSetValue
     ): IrExpression {
-        // This will generate: <sharedVar>.value = <newValue>
-        // For now, return the original set - the transformation happens in lowering
-        return originalSet
+        // Return a set of the shared variable
+        // The transform to .value = access happens in IrToBrsTransformer based on sharedVariables set
+        return IrSetValueImpl(
+            originalSet.startOffset,
+            originalSet.endOffset,
+            originalSet.type,
+            sharedVariableSymbol,
+            originalSet.value,
+            originalSet.origin
+        )
     }
 }

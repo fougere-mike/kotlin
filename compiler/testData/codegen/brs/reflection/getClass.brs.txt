@@ -21,7 +21,7 @@ function Dog_create_Str_k_(name as String) as Object
     return this
 end function
 
-function getClassFromInstance_ANIMAL_k_(animal as Object) as Object
+function getClassFromInstance_Animal_k_(animal as Object) as Object
     return __kotlin_getClass(animal)
 end function
 

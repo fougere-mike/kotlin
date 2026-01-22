@@ -125,7 +125,7 @@ function createPoint_k_() as Object
     return Point_create_I_I_k_(1, 2)
 end function
 
-function copyPoint_POINT_k_(p as Object) as Object
+function copyPoint_Point_k_(p as Object) as Object
     return p.copy(invalid, 10)
 end function
 

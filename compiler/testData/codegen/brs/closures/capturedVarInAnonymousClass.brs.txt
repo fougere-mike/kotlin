@@ -1,0 +1,25 @@
+// --- File: capturedVarInAnonymousClassKt.brs ---
+sub Callback_onResult_I_k_(value as Integer)
+end sub
+
+sub testCapture_k_()
+    result = {value: 0}
+    callback = Anon_60ed12e8_create_I_k_(result)
+
+    callback.onResult_I_k_(42)
+end sub
+
+function Anon_60ed12e8_create_I_k_(_result as Integer) as Object
+    this = {}
+    this.__type = "Anon_60ed12e8"
+    this.__proto = ["Anon_60ed12e8", "Callback"]
+    this.__id = __kotlin_nextObjectId()
+    this.onResult_I_k_ = Anon_60ed12e8_onResult_I_k_
+    this._result = _result
+    return this
+end function
+
+sub Anon_60ed12e8_onResult_I_k_(value as Integer)
+    m._result.value
+    m._result.value = value
+end sub

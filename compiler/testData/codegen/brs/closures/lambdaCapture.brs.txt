@@ -25,12 +25,12 @@ function returnedClosure_k_() as Object
     end function}
 end function
 
-function higherOrderFunction_I_FUNCTION1II_k_(value as Integer, transform as Object) as Integer
+function higherOrderFunction_I_Function1II_k_(value as Integer, transform as Object) as Integer
     return transform.invoke(value)
 end function
 
 function testHigherOrder_k_() as Integer
-    return higherOrderFunction_I_FUNCTION1II_k_(5, {invoke: function(it as Integer) as Integer
+    return higherOrderFunction_I_Function1II_k_(5, {invoke: function(it as Integer) as Integer
         return it * 2
     end function})
 end function

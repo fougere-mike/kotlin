@@ -1,5 +1,5 @@
 // --- File: safeCastKt.brs ---
-function safeCastIdentifier_ANY_k_(x as Object) as Dynamic
+function safeCastIdentifier_Any_k_(x as Object) as Dynamic
     return (function(__kotlin_isPrimitiveType, x)
         if __kotlin_isPrimitiveType(x, "String") then return x else return invalid
     end function)(__kotlin_isPrimitiveType, x)
@@ -17,19 +17,19 @@ function safeCastFunctionCall_k_() as Dynamic
 
 end function
 
-function safeCastToInt_ANY_k_(x as Object) as Dynamic
+function safeCastToInt_Any_k_(x as Object) as Dynamic
     return (function(__kotlin_isPrimitiveType, x)
         if __kotlin_isPrimitiveType(x, "Integer") then return x else return invalid
     end function)(__kotlin_isPrimitiveType, x)
 end function
 
-function safeCastNullable_ANYN_k_(x as Dynamic) as Dynamic
+function safeCastNullable_AnyN_k_(x as Dynamic) as Dynamic
     return (function(__kotlin_isPrimitiveType, x)
         if __kotlin_isPrimitiveType(x, "String") then return x else return invalid
     end function)(__kotlin_isPrimitiveType, x)
 end function
 
-function safeCastElvis_ANY_k_(x as Object) as String
+function safeCastElvis_Any_k_(x as Object) as String
     tmp0_elvis_lhs = (function(__kotlin_isPrimitiveType, x)
         if __kotlin_isPrimitiveType(x, "String") then return x else return invalid
     end function)(__kotlin_isPrimitiveType, x)
@@ -43,7 +43,7 @@ function safeCastElvis_ANY_k_(x as Object) as String
 
 end function
 
-function chainedSafeCast_ANY_k_(x as Object) as Dynamic
+function chainedSafeCast_Any_k_(x as Object) as Dynamic
     str = (function(__kotlin_isPrimitiveType, x)
         if __kotlin_isPrimitiveType(x, "String") then return x else return invalid
     end function)(__kotlin_isPrimitiveType, x)
@@ -72,7 +72,7 @@ function MyClass___get_value_k_() as Integer
     return m.value
 end function
 
-function safeCastToClass_ANY_k_(x as Object) as Dynamic
+function safeCastToClass_Any_k_(x as Object) as Dynamic
     return (function(__kotlin_isInstanceOf, x)
         if __kotlin_isInstanceOf(x, "MyClass") then return x else return invalid
     end function)(__kotlin_isInstanceOf, x)

@@ -22,10 +22,10 @@ function getClassName_k_() as Dynamic
     return klass.__get_simpleName()
 end function
 
-function useClassInfo_KCLASS_k_(klass as Object) as Dynamic
+function useClassInfo_KClass_k_(klass as Object) as Dynamic
     return klass.__get_simpleName()
 end function
 
 function testClassLiteral_k_() as Dynamic
-    return useClassInfo_KCLASS_k_(__kotlin_KClass_create("Person"))
+    return useClassInfo_KClass_k_(__kotlin_KClass_create("Person"))
 end function

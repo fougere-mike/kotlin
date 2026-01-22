@@ -37,7 +37,7 @@ function nullCheck_IN_k_(value as Dynamic) as String
 
 end function
 
-function chainedSafeCall_HOLDERN_k_(holder as Dynamic) as Dynamic
+function chainedSafeCall_HolderN_k_(holder as Dynamic) as Dynamic
     tmp0_safe_receiver = holder
     __when_tmp3 = invalid
     if tmp0_safe_receiver = invalid then
@@ -56,7 +56,7 @@ function chainedSafeCall_HOLDERN_k_(holder as Dynamic) as Dynamic
 
 end function
 
-function Holder_create_INNERN_k_(inner as Dynamic) as Object
+function Holder_create_InnerN_k_(inner as Dynamic) as Object
     this = {}
     this.__type = "Holder"
     this.__proto = ["Holder"]
@@ -96,7 +96,7 @@ end function
 sub Printer_print_Str_k_(msg as String)
 end sub
 
-sub safeCallStatement_PRINTERN_k_(printer as Dynamic)
+sub safeCallStatement_PrinterN_k_(printer as Dynamic)
     tmp0_safe_receiver = printer
     if tmp0_safe_receiver = invalid then
 
@@ -106,7 +106,7 @@ sub safeCallStatement_PRINTERN_k_(printer as Dynamic)
 
 end sub
 
-sub chainedSafeCallStatement_HOLDERN_k_(holder as Dynamic)
+sub chainedSafeCallStatement_HolderN_k_(holder as Dynamic)
     tmp0_safe_receiver = holder
     __when_tmp5 = invalid
     if tmp0_safe_receiver = invalid then

@@ -4,6 +4,15 @@
 
 This is a fork of the Kotlin compiler that adds a BrightScript backend for Roku development. It compiles Kotlin source code to BrightScript (.brs) files that run on Roku devices.
 
+## BrightScript Language Notes
+
+**BrightScript is case-insensitive.** This means:
+- `myFunction` and `MYFUNCTION` and `MyFunction` are all the same identifier
+- `result` and `RESULT` and `Result` are the same variable name
+- Method names like `resumeWith_Result_k_` and `resumeWith_RESULT_k_` are identical to BrightScript
+
+This affects code generation - there's no need to use uppercase for "disambiguation" since case doesn't disambiguate anything in BrightScript.
+
 ## MANDATORY BUILD RULES
 
 ### The ONE Command: `./rebuild.sh`

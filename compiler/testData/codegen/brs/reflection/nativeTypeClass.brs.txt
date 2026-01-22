@@ -19,10 +19,10 @@ end function
 
 function testIsInstance_k_() as Boolean
     data = SimpleData_create_I_k_(42)
-    return __kotlin_KClass_create("SimpleData").isInstance_ANYN_k_(data)
+    return __kotlin_KClass_create("SimpleData").isInstance_AnyN_k_(data)
 end function
 
 function testIsInstanceFalse_k_() as Boolean
     other = Other_create_k_()
-    return __kotlin_KClass_create("SimpleData").isInstance_ANYN_k_(other)
+    return __kotlin_KClass_create("SimpleData").isInstance_AnyN_k_(other)
 end function

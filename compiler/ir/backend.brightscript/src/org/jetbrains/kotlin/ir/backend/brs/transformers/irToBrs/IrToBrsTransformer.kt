@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.ir.backend.brs.transformers.irToBrs
 
+import org.jetbrains.kotlin.backend.common.capturedFields
 import org.jetbrains.kotlin.backend.common.lower.BOUND_VALUE_PARAMETER
 import org.jetbrains.kotlin.backend.common.lower.BOUND_RECEIVER_PARAMETER
 import org.jetbrains.kotlin.brs.backend.ast.*
@@ -378,7 +379,7 @@ class IrToBrsTransformer(
     fun detectSharedVariables(body: IrBody): Set<IrValueSymbol> {
         val sharedVars = mutableSetOf<IrValueSymbol>()
 
-        // Walk the body to find all function expressions (closures)
+        // Walk the body to find all function expressions (closures) and local classes
         body.acceptVoid(object : IrVisitorVoid() {
             override fun visitElement(element: IrElement) {
                 element.acceptChildrenVoid(this)
@@ -398,9 +399,130 @@ class IrToBrsTransformer(
                 // Continue searching for nested closures within this one
                 expression.function.body?.acceptVoid(this)
             }
+
+            override fun visitClass(declaration: IrClass) {
+                // Handle local classes (including anonymous object expressions)
+                // These also capture outer variables
+                if (declaration.visibility == org.jetbrains.kotlin.descriptors.DescriptorVisibilities.LOCAL) {
+                    val capturedVars = detectCapturedVariablesInClass(declaration)
+                    for (captured in capturedVars) {
+                        if (captured.isMutable) {
+                            sharedVars.add(captured.symbol)
+                        }
+                    }
+                }
+
+                // Continue searching for nested closures within this class
+                declaration.acceptChildrenVoid(this)
+            }
         })
 
         return sharedVars
+    }
+
+    /**
+     * Detect variables captured by a local class from outer scopes.
+     * Similar to detectCapturedVariables but for classes instead of functions.
+     */
+    private fun detectCapturedVariablesInClass(irClass: IrClass): List<CapturedVariable> {
+        val declaredSymbols = mutableSetOf<IrValueSymbol>()
+        val referencedSymbols = mutableMapOf<IrValueSymbol, Boolean>() // symbol -> isMutated
+
+        // Collect symbols declared within the class (parameters, local variables, etc.)
+        // Note: Class fields are not value symbols, so they don't need to be excluded
+
+        // Walk the class members to find referenced variables
+        irClass.declarations.forEach { declaration ->
+            when (declaration) {
+                is IrSimpleFunction -> {
+                    // Add function parameters as declared (they're local to the function)
+                    declaration.valueParameters.forEach { declaredSymbols.add(it.symbol) }
+                    declaration.extensionReceiverParameter?.let { declaredSymbols.add(it.symbol) }
+                    declaration.dispatchReceiverParameter?.let { declaredSymbols.add(it.symbol) }
+
+                    // Walk the function body
+                    declaration.body?.acceptVoid(object : IrVisitorVoid() {
+                        override fun visitElement(element: IrElement) {
+                            element.acceptChildrenVoid(this)
+                        }
+
+                        override fun visitVariable(declaration: IrVariable) {
+                            declaredSymbols.add(declaration.symbol)
+                            declaration.acceptChildrenVoid(this)
+                        }
+
+                        override fun visitGetValue(expression: IrGetValue) {
+                            val symbol = expression.symbol
+                            if (symbol !in declaredSymbols) {
+                                val owner = symbol.owner
+                                if (owner is IrVariable || owner is IrValueParameter) {
+                                    // Skip parameters added by LocalDeclarationsLowering
+                                    if (owner is IrValueParameter &&
+                                        (owner.origin == BOUND_VALUE_PARAMETER ||
+                                         owner.origin == BOUND_RECEIVER_PARAMETER)) {
+                                        expression.acceptChildrenVoid(this)
+                                        return
+                                    }
+                                    // Mark as referenced (not mutated)
+                                    if (symbol !in referencedSymbols) {
+                                        referencedSymbols[symbol] = false
+                                    }
+                                }
+                            }
+                            expression.acceptChildrenVoid(this)
+                        }
+
+                        override fun visitSetValue(expression: IrSetValue) {
+                            val symbol = expression.symbol
+                            if (symbol !in declaredSymbols) {
+                                val owner = symbol.owner
+                                if (owner is IrVariable || owner is IrValueParameter) {
+                                    // Skip parameters added by LocalDeclarationsLowering
+                                    if (owner is IrValueParameter &&
+                                        (owner.origin == BOUND_VALUE_PARAMETER ||
+                                         owner.origin == BOUND_RECEIVER_PARAMETER)) {
+                                        expression.acceptChildrenVoid(this)
+                                        return
+                                    }
+                                    // Mark as mutated
+                                    referencedSymbols[symbol] = true
+                                }
+                            }
+                            expression.acceptChildrenVoid(this)
+                        }
+
+                        // Skip nested function expressions - they have their own capture detection
+                        override fun visitFunctionExpression(expression: IrFunctionExpression) {
+                            // Don't recurse into nested function expressions
+                        }
+
+                        // Skip nested classes
+                        override fun visitClass(declaration: IrClass) {
+                            // Don't recurse into nested classes
+                        }
+                    })
+                }
+                is IrConstructor -> {
+                    // Add constructor parameters as declared
+                    declaration.valueParameters.forEach { declaredSymbols.add(it.symbol) }
+                }
+                else -> {}
+            }
+        }
+
+        // Build the captured variables list
+        return referencedSymbols.map { (symbol, isMutated) ->
+            val owner = symbol.owner
+            val isMutable = when (owner) {
+                is IrVariable -> owner.isVar || isMutated
+                else -> isMutated
+            }
+            CapturedVariable(
+                symbol = symbol,
+                name = sanitizeParameterName(owner.name.asString()),
+                isMutable = isMutable
+            )
+        }.distinctBy { it.name }
     }
 
     // ==================== Entry Points ====================
@@ -500,7 +622,12 @@ class IrToBrsTransformer(
         // Detect shared variables (mutable vars captured by closures) before transforming body
         // Save and restore to handle nested function transformations
         val previousSharedVariables = sharedVariables
-        sharedVariables = irFunction.body?.let { detectSharedVariables(it) } ?: emptySet()
+        // First check if BrsSharedVariableDetectionLowering already detected shared variables for this function
+        // (this runs before local class extraction, so it can detect variables captured by local classes)
+        // If not found, fall back to detecting them now (for lambdas and inline functions)
+        sharedVariables = context.sharedVariablesByFunction[irFunction.symbol]
+            ?: irFunction.body?.let { detectSharedVariables(it) }
+            ?: emptySet()
 
         // Check if this function has @BrsInline - use parsed code instead of IR body
         val inlineInfo = context.inlineFunctionInfo[irFunction.symbol] as? BrsCodeOutliningLowering.BrsInlineInfo
@@ -1541,10 +1668,16 @@ class IrToBrsTransformer(
         // 4. Generate initEntries sub (using m. prefix for global scope)
         val initEntriesBody = mutableListOf<BrsStatement>()
 
-        // if m.Color_entriesInitialized then return
+        // if m.Color_entriesInitialized = true then return
+        // Note: Use explicit = true comparison because the flag may be invalid (uninitialized)
+        // on first access, and BrightScript doesn't allow invalid in bare if-clause conditions.
         initEntriesBody.add(
             BrsIf(
-                condition = BrsDotAccess(BrsIdentifier("m"), initializedFlagName),
+                condition = BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier("m"), initializedFlagName),
+                    BrsBinaryOperator.EQ,
+                    BrsBooleanLiteral(true)
+                ),
                 thenBranch = BrsReturn(null)
             )
         )
@@ -2571,6 +2704,7 @@ class IrToBrsTransformer(
         bodyStatements: MutableList<BrsStatement>
     ) {
         val isDataClass = irClass.isData
+        val isEnumClass = irClass.kind == ClassKind.ENUM_CLASS
 
         // Add regular methods (IrSimpleFunction)
         // Use mangled names (fullMethodName minus class prefix) to support overloading
@@ -2586,6 +2720,12 @@ class IrToBrsTransformer(
 
                 // Skip componentN methods for data classes - also handled separately
                 if (isDataClass && methodBaseName.startsWith("component") && methodBaseName.drop(9).toIntOrNull() != null) {
+                    continue
+                }
+
+                // Skip values and valueOf for enum classes - these are generated with custom implementations
+                // and would have different names (ClassName_values vs ClassName_values_k_)
+                if (isEnumClass && (methodBaseName == "values" || methodBaseName == "valueOf")) {
                     continue
                 }
 
@@ -2622,6 +2762,10 @@ class IrToBrsTransformer(
         // Skip for data classes - their properties are constructor parameters accessed directly (e.g., m.first)
         if (!isDataClass) {
             for (property in irClass.declarations.filterIsInstance<IrProperty>()) {
+                // Skip the synthetic 'entries' property for enum classes - it's generated separately
+                if (isEnumClass && property.name.asString() == "entries") {
+                    continue
+                }
                 property.getter?.let { getter ->
                     if (!getter.isFakeOverride && !getter.isExternal) {
                         val fullMethodName = context.getBrsName(getter)
@@ -4410,9 +4554,26 @@ class IrStatementToBrsTransformer(
         val receiver = expression.receiver?.let { parent.transformExpression(it) }
             ?: BrsMRef()
 
+        val field = expression.symbol.owner
         // Sanitize field name - LocalDeclarationsLowering uses $ prefix for captured vars
-        val fieldName = expression.symbol.owner.name.asString().replace("$", "_")
-        val target = BrsDotAccess(receiver, fieldName)
+        val fieldName = field.name.asString().replace("$", "_")
+
+        // Check if this field holds a shared variable box (mutable captured variable)
+        // If so, we need to write to field.value instead of field
+        // EXCEPTION: In constructor body, we're initializing the field with the box itself,
+        // so we write directly to the field, not field.value
+        val parentClass = field.parent as? IrClass
+        val className = parentClass?.name?.asString() ?: ""
+        val fieldKey = "$className.$fieldName"
+        val isSharedVariableField = fieldKey in context.sharedVariableFields
+        val isInConstructor = parent.isInConstructorBody
+
+        val target = if (isSharedVariableField && !isInConstructor) {
+            // Write to the box's value: m.fieldName.value = newValue
+            BrsDotAccess(BrsDotAccess(receiver, fieldName), "value")
+        } else {
+            BrsDotAccess(receiver, fieldName)
+        }
 
         // Transform the expression - when-lowered blocks will add to hoisted queue
         val transformedValue = parent.transformExpression(expression.value)
@@ -4729,6 +4890,9 @@ class IrExpressionToBrsTransformer(
             expression.receiver?.let { it.accept(this, data) } ?: BrsMRef()
         }
 
+        // Sanitize field name - LocalDeclarationsLowering uses $ prefix for captured vars
+        val fieldName = field.name.asString().replace("$", "_")
+
         // Check if accessing outer class field from inner class
         // The receiver will be the outer class reference
         val fieldParentClass = field.parent as? IrClass
@@ -4738,16 +4902,25 @@ class IrExpressionToBrsTransformer(
             val receiverSymbol = (expression.receiver as? IrGetValue)?.symbol?.owner
             if (receiverSymbol != null && receiverSymbol.name.asString().contains("\$this")) {
                 // This is an outer class reference - access through _outer
-                // Sanitize field name - LocalDeclarationsLowering uses $ prefix for captured vars
                 return BrsDotAccess(
                     BrsDotAccess(BrsMRef(), "_outer"),
-                    field.name.asString().replace("$", "_")
+                    fieldName
                 )
             }
         }
 
-        // Sanitize field name - LocalDeclarationsLowering uses $ prefix for captured vars
-        return BrsDotAccess(receiver, field.name.asString().replace("$", "_"))
+        // Check if this field holds a shared variable box (mutable captured variable)
+        // If so, we need to read field.value instead of field
+        val className = fieldParentClass?.name?.asString() ?: ""
+        val fieldKey = "$className.$fieldName"
+        val isSharedVariableField = fieldKey in context.sharedVariableFields
+
+        return if (isSharedVariableField) {
+            // Read the box's value: m.fieldName.value
+            BrsDotAccess(BrsDotAccess(receiver, fieldName), "value")
+        } else {
+            BrsDotAccess(receiver, fieldName)
+        }
     }
 
     override fun visitSetField(expression: IrSetField, data: Unit): BrsExpression {
@@ -4760,10 +4933,26 @@ class IrExpressionToBrsTransformer(
             expression.receiver?.let { it.accept(this, data) } ?: BrsMRef()
         }
 
-        // Generate assignment expression: receiver.field = value
         // Sanitize field name - LocalDeclarationsLowering uses $ prefix for captured vars
+        val fieldName = field.name.asString().replace("$", "_")
+
+        // Check if this field holds a shared variable box (mutable captured variable)
+        // EXCEPTION: In constructor body, we're initializing the field with the box itself
+        val parentClass = field.parent as? IrClass
+        val className = parentClass?.name?.asString() ?: ""
+        val fieldKey = "$className.$fieldName"
+        val isSharedVariableField = fieldKey in context.sharedVariableFields
+        val isInConstructor = parent.isInConstructorBody
+
+        // Generate assignment expression: receiver.field = value (or receiver.field.value = value for shared vars)
+        val target = if (isSharedVariableField && !isInConstructor) {
+            BrsDotAccess(BrsDotAccess(receiver, fieldName), "value")
+        } else {
+            BrsDotAccess(receiver, fieldName)
+        }
+
         return BrsBinaryOp(
-            BrsDotAccess(receiver, field.name.asString().replace("$", "_")),
+            target,
             BrsBinaryOperator.EQ,
             expression.value.accept(this, data)
         )
@@ -4823,7 +5012,21 @@ class IrExpressionToBrsTransformer(
         val enumClass = expression.symbol.owner.parentAsClass
         val className = context.getBrsName(enumClass)
         val entryName = expression.symbol.owner.name.asString()
-        return BrsIdentifier("${className}_${entryName}")
+
+        // Ensure enum entries are initialized before accessing.
+        // BrightScript enum entries are stored in module scope (m.ClassName_EntryName) and are lazily initialized.
+        // We must call initEntries() to ensure the entry exists before returning it.
+        // Generate: [ClassName_initEntries(), m.ClassName_EntryName][1]
+        // This uses BrightScript's array literal with index [1] to execute init and return the value.
+        return BrsIndexAccess(
+            BrsArrayLiteral(
+                mutableListOf(
+                    BrsFunctionCall(BrsIdentifier("${className}_initEntries"), mutableListOf()),
+                    BrsDotAccess(BrsIdentifier("m"), "${className}_${entryName}")
+                )
+            ),
+            BrsIntLiteral(1)
+        )
     }
 
     // ==================== KClass / Reflection ====================
@@ -6910,8 +7113,25 @@ class IrExpressionToBrsTransformer(
         }
 
         // Add regular constructor arguments
+        // For local class constructors, check if arguments are for captured variables
+        // If a captured variable is a shared (boxed) variable, pass the box, not .value
         arguments.addAll((0 until expression.valueArgumentsCount).mapNotNull { i ->
-            expression.getValueArgument(i)?.let { it.accept(this, data) }
+            val arg = expression.getValueArgument(i) ?: return@mapNotNull null
+
+            // Check if this argument is for a bound (captured) value parameter
+            val param = constructor.valueParameters.getOrNull(i)
+            val isCapturedValueParam = param?.origin == BOUND_VALUE_PARAMETER ||
+                                        param?.origin == BOUND_RECEIVER_PARAMETER
+
+            // If it's a captured parameter and the argument is a GetValue for a shared variable,
+            // pass the box directly instead of dereferencing with .value
+            if (isCapturedValueParam && arg is IrGetValue && arg.symbol in parent.sharedVariables) {
+                // Pass the box itself, not the dereferenced value
+                val varName = parent.sanitizeParameterName(arg.symbol.owner.name.asString())
+                BrsIdentifier(varName)
+            } else {
+                arg.accept(this, data)
+            }
         })
 
         // Check if this is an external class (Roku SDK type)

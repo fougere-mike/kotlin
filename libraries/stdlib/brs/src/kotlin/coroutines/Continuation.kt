@@ -24,17 +24,23 @@ public interface Continuation<in T> {
 
 /**
  * Resumes the execution of the corresponding coroutine passing [value] as the return value of the last suspension point.
+ *
+ * Note: For BrightScript, this is non-inline because klib inline function deserialization is not yet implemented.
+ * This allows the function to be called from user code that depends on the stdlib klib.
  */
 @SinceKotlin("1.3")
-public inline fun <T> Continuation<T>.resume(value: T): Unit =
+public fun <T> Continuation<T>.resume(value: T): Unit =
     resumeWith(Result.success(value))
 
 /**
  * Resumes the execution of the corresponding coroutine so that the [exception] is re-thrown right after the
  * last suspension point.
+ *
+ * Note: For BrightScript, this is non-inline because klib inline function deserialization is not yet implemented.
+ * This allows the function to be called from user code that depends on the stdlib klib.
  */
 @SinceKotlin("1.3")
-public inline fun <T> Continuation<T>.resumeWithException(exception: Throwable): Unit =
+public fun <T> Continuation<T>.resumeWithException(exception: Throwable): Unit =
     resumeWith(Result.failure(exception))
 
 /**

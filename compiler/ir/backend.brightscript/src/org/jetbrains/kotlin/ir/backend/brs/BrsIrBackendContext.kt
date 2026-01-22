@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.ir.expressions.IrConst
 import org.jetbrains.kotlin.backend.common.getCompilerMessageLocation
 import org.jetbrains.kotlin.ir.util.getAnnotation
+import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.ir.util.isNullable
 import org.jetbrains.kotlin.name.BrsStandardClassIds
 import org.jetbrains.kotlin.name.FqName
@@ -197,6 +198,21 @@ class BrsIrBackendContext(
      */
     val namespaceCallNames = mutableMapOf<IrElement, String>()
 
+    /**
+     * Map from function symbols to their shared variables (mutable vars captured by closures).
+     * Populated by BrsSharedVariableDetectionLowering BEFORE local class extraction,
+     * used during transformation to properly box these variables.
+     */
+    val sharedVariablesByFunction = mutableMapOf<IrFunctionSymbol, Set<org.jetbrains.kotlin.ir.symbols.IrValueSymbol>>()
+
+    /**
+     * Set of class-field combinations where the field holds a shared variable box.
+     * When accessing these fields, we need to use .value to get/set the actual value.
+     * Key format: "ClassName.fieldName"
+     * Populated by BrsSharedVariableDetectionLowering.
+     */
+    val sharedVariableFields = mutableSetOf<String>()
+
     // ==================== Target Configuration ====================
 
     /**
@@ -310,14 +326,10 @@ class BrsIrBackendContext(
                 is IrClass -> {
                     val name = classifier.name.asString()
                     // Handle anonymous class names like "<no name provided>"
-                    // Note: BrightScript is case-insensitive, so we use uppercase for type
-                    // names in mangled signatures to distinguish them from property names.
-                    // E.g., parameter type `Key` becomes `KEY` while property name `key` stays `key`.
-                    // This prevents collisions like `get_Key_k_` (operator) vs `get_key_k_` (property).
                     val baseName = if (name.startsWith("<") && name.endsWith(">")) {
                         "Anon"
                     } else {
-                        name.uppercase()
+                        name
                     }
 
                     // Type erasure: Only erase TYPE PARAMETERS (like T, K, V), keep concrete types
@@ -353,9 +365,74 @@ class BrsIrBackendContext(
     }
 
     /**
+     * Find the original interface method that this function overrides.
+     * Returns null if the function doesn't override an interface method with generic type parameters.
+     *
+     * This is used to ensure that implementing classes use the same method name as the interface,
+     * with type parameters erased, so that callers using the interface type can find the method.
+     */
+    private fun findOverriddenInterfaceMethod(irFunction: IrSimpleFunction): IrSimpleFunction? {
+        if (irFunction.overriddenSymbols.isEmpty()) return null
+
+        // Walk up the override chain to find an interface method
+        for (overriddenSymbol in irFunction.overriddenSymbols) {
+            val overridden = overriddenSymbol.owner
+            val parent = overridden.parent
+
+            if (parent is IrClass && parent.isInterface) {
+                // Found an interface method - check if it has type parameters in its signature
+                // that would cause different mangling
+                val hasTypeParameterInSignature = overridden.valueParameters.any { param ->
+                    hasTypeParameter(param.type)
+                } || (overridden.extensionReceiverParameter?.let { hasTypeParameter(it.type) } == true)
+
+                if (hasTypeParameterInSignature) {
+                    return overridden
+                }
+            }
+
+            // Recursively check overridden methods
+            val result = findOverriddenInterfaceMethod(overridden)
+            if (result != null) return result
+        }
+
+        return null
+    }
+
+    /**
+     * Check if a type contains any type parameters (that would be erased differently
+     * than concrete types in the implementing class).
+     */
+    private fun hasTypeParameter(type: IrType): Boolean {
+        val simpleType = type as? org.jetbrains.kotlin.ir.types.IrSimpleType ?: return false
+
+        // Check if the type itself is a type parameter
+        if (simpleType.classifierOrNull?.owner is org.jetbrains.kotlin.ir.declarations.IrTypeParameter) {
+            return true
+        }
+
+        // Check type arguments
+        return simpleType.arguments.any { arg ->
+            when (arg) {
+                is org.jetbrains.kotlin.ir.types.IrTypeProjection -> hasTypeParameter(arg.type)
+                is org.jetbrains.kotlin.ir.types.IrStarProjection -> true // Star projections are type parameters
+            }
+        }
+    }
+
+    /**
      * Calculate the mangled function signature.
      * Functions with parameters, extension receivers, or non-Unit return types get type info appended
      * to prevent overload conflicts.
+     *
+     * IMPORTANT: When a function overrides an interface method with generic type parameters,
+     * we use the interface method's parameter types (with type parameters erased) rather than
+     * the implementation's specialized types. This ensures that callers using the interface
+     * type can find the method.
+     *
+     * Example: class MyClass : Continuation<Int> { override fun resumeWith(result: Result<Int>) }
+     * The method name should be resumeWith_RESULT_k_ (erased), not resumeWith_RESULTI_k_ (specialized),
+     * because callers using Continuation<T>.resumeWith() expect the erased signature.
      *
      * @param irFunction The function to calculate signature for
      * @param baseName The base name (e.g., "ClassName_functionName" or "ClassName_create")
@@ -364,15 +441,27 @@ class BrsIrBackendContext(
     private fun calculateBrsFunctionSignature(irFunction: IrFunction, baseName: String): String {
         val signatureParts = mutableListOf<String>()
 
+        // Check if this function overrides an interface method with generic type parameters.
+        // If so, use the interface method's parameter types to ensure callers can find it.
+        val interfaceMethod = if (irFunction is IrSimpleFunction) {
+            findOverriddenInterfaceMethod(irFunction)
+        } else null
+
+        // Use interface method's parameters if available, otherwise use this function's
+        val parametersToMangle = interfaceMethod?.valueParameters ?: irFunction.valueParameters
+        val extensionReceiver = if (interfaceMethod != null) {
+            interfaceMethod.extensionReceiverParameter
+        } else {
+            (irFunction as? IrSimpleFunction)?.extensionReceiverParameter
+        }
+
         // Include extension receiver type if present (for extension functions)
-        if (irFunction is IrSimpleFunction) {
-            irFunction.extensionReceiverParameter?.let { receiver ->
-                signatureParts.add("r" + receiver.type.toMangledString())
-            }
+        extensionReceiver?.let { receiver ->
+            signatureParts.add("r" + receiver.type.toMangledString())
         }
 
         // Include value parameter types
-        irFunction.valueParameters.forEach { param ->
+        parametersToMangle.forEach { param ->
             signatureParts.add(param.type.toMangledString())
         }
 
