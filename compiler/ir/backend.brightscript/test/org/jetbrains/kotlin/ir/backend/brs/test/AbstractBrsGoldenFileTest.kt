@@ -37,6 +37,7 @@ abstract class AbstractBrsGoldenFileTest {
     companion object {
         // Tests run from repo root via workingDir = rootDir in build.gradle.kts
         private val TEST_DATA_ROOT = File("compiler/testData/codegen/brs")
+        private val STDLIB_KLIB = File("libraries/stdlib/brs-prebuilt/kotlin-stdlib-brs.klib")
         private val UPDATE_GOLDEN_FILES = System.getProperty("kotlin.test.update.golden.files")?.toBoolean() ?: false
     }
 
@@ -101,6 +102,10 @@ abstract class AbstractBrsGoldenFileTest {
             val arguments = K2BrsCompilerArguments().apply {
                 freeArgs = listOf(inputFile.absolutePath)
                 outputDir = tempOutputDir.absolutePath
+                // Include stdlib so coroutine symbols and other builtins are available
+                if (STDLIB_KLIB.exists()) {
+                    libraries = STDLIB_KLIB.absolutePath
+                }
             }
 
             // Capture compiler messages

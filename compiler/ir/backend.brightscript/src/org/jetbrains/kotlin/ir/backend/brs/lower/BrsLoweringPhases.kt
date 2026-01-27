@@ -9,20 +9,24 @@ import org.jetbrains.kotlin.backend.common.BodyLoweringPass
 import org.jetbrains.kotlin.backend.common.DeclarationTransformer
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.lower.*
+import org.jetbrains.kotlin.backend.common.runOnFilePostfix
 import org.jetbrains.kotlin.backend.common.lower.coroutines.AddContinuationToLocalSuspendFunctionsLowering
 import org.jetbrains.kotlin.backend.common.lower.coroutines.AddContinuationToNonLocalSuspendFunctionsLowering
 import org.jetbrains.kotlin.backend.common.lower.loops.ForLoopsLowering
 import org.jetbrains.kotlin.backend.common.phaser.*
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
+import org.jetbrains.kotlin.ir.backend.brs.lower.coroutines.BrsAddContinuationToFunctionCallsLowering
 import org.jetbrains.kotlin.ir.backend.brs.lower.coroutines.BrsSuspendFunctionsLowering
 import org.jetbrains.kotlin.ir.backend.brs.lower.inline.BrsInlineFunctionResolver
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationParent
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.expressions.IrBody
 import org.jetbrains.kotlin.ir.inline.FunctionInlining
 import org.jetbrains.kotlin.ir.inline.InlineMode
+import org.jetbrains.kotlin.ir.util.patchDeclarationParents
 import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 
 /**
@@ -42,18 +46,73 @@ object BrsLoweringPhases {
         // 2. The inlined code may contain constructs that other lowering phases need to process
         // 3. @InlineOnly functions (like stdlib's run, let, etc.) only exist as inline and must be inlined
         //
-        // Note: During stdlib compilation, we skip inlining because:
-        // - Coroutine symbols aren't available yet
-        // - Stdlib functions being inlined are defined in stdlib itself
-        // User code compilations DO get inlining since they link against the compiled stdlib
-        if (!context.isStdlibCompilation) {
+        // Note: We DO run inlining during stdlib compilation, because inline functions like
+        // suspendCoroutineUninterceptedOrReturn need to be inlined into suspend functions.
+        // After inlining, the suspend functions contain getContinuation() calls which are
+        // transformed by coroutine lowering (for user code) or left as stubs (for stdlib).
+        run {
             val inlineFunctionResolver = BrsInlineFunctionResolver(context, InlineMode.ALL_INLINE_FUNCTIONS)
             val functionInlining = FunctionInlining(context, inlineFunctionResolver)
-            for (file in module.files) {
-                file.declarations.forEach { declaration ->
-                    if (declaration is org.jetbrains.kotlin.ir.declarations.IrFunction) {
+
+            fun processDeclaration(declaration: IrDeclaration, parent: IrDeclarationParent) {
+                when (declaration) {
+                    is org.jetbrains.kotlin.ir.declarations.IrFunction -> {
                         declaration.body?.let { body ->
                             functionInlining.lower(body, declaration)
+                        }
+                        // After inlining, patch parents of the entire function subtree
+                        // This ensures all declarations (including newly inlined ones) have correct parents
+                        declaration.patchDeclarationParents(parent)
+                    }
+                    is org.jetbrains.kotlin.ir.declarations.IrClass -> {
+                        // Process class members recursively
+                        declaration.declarations.forEach { member ->
+                            processDeclaration(member, declaration)
+                        }
+                        // Patch the class after processing all members
+                        declaration.patchDeclarationParents(parent)
+                    }
+                    else -> {
+                        // Patch other declarations too
+                        declaration.patchDeclarationParents(parent)
+                    }
+                }
+            }
+
+            for (file in module.files) {
+                file.declarations.forEach { declaration ->
+                    processDeclaration(declaration, file)
+                }
+            }
+        }
+
+        // Phase 0.05: Returnable Block Lowering
+        // After inlining, inline functions leave behind IrReturnableBlock nodes with
+        // return@block expressions. This lowering transforms them by:
+        // 1. Introducing a result variable to hold the return value
+        // 2. Replacing return@block value with: result = value; return@block Unit
+        // 3. Wrapping in a composite that evaluates to the result variable
+        //
+        // The IR-to-BrightScript transformer then handles these blocks using a
+        // while/done-flag pattern since BrightScript has no labeled breaks.
+        run {
+            val returnableBlockLowering = BrsReturnableBlockLowering(context)
+            for (file in module.files) {
+                file.declarations.forEach { declaration ->
+                    when (declaration) {
+                        is org.jetbrains.kotlin.ir.declarations.IrFunction -> {
+                            declaration.body?.let { body ->
+                                returnableBlockLowering.lower(body, declaration)
+                            }
+                        }
+                        is org.jetbrains.kotlin.ir.declarations.IrClass -> {
+                            declaration.declarations.forEach { member ->
+                                if (member is org.jetbrains.kotlin.ir.declarations.IrFunction) {
+                                    member.body?.let { body ->
+                                        returnableBlockLowering.lower(body, member)
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -63,20 +122,42 @@ object BrsLoweringPhases {
         // Build the list of lowering phases
         val phases = mutableListOf<FileLoweringPass>()
 
-        // Phase 1: Coroutine Lowering (must run early)
-        // Skip during stdlib compilation or when coroutine symbols aren't available (e.g., in tests without stdlib)
-        val coroutinesAvailable = !context.isStdlibCompilation &&
-            context.brsSymbols.coroutineSymbols.areCoroutineSymbolsAvailable
-        if (coroutinesAvailable) {
-            // 1.1: Add continuation parameter to non-local suspend functions
-            phases += AddContinuationToNonLocalSuspendFunctionsLoweringWrapper(context)
+        // Phase 0.1: Upgrade Callable References
+        // Transforms IrFunctionExpression (lambdas) and IrFunctionReference into IrRichFunctionReference.
+        // This is a prerequisite for the callable reference lowering phase.
+        // NOTE: This runs for BOTH stdlib and user code, matching JS backend behavior.
+        // Lambdas must always be converted to proper classes so they can be invoked with .invoke()
+        // SAM conversions are enabled so that fun interfaces (like Comparator) get proper implementation classes
+        phases += UpgradeCallableReferences(
+            context,
+            upgradeFunctionReferencesAndLambdas = true,
+            upgradePropertyReferences = true,
+            upgradeLocalDelegatedPropertyReferences = true,
+            upgradeSamConversions = true,
+        )
 
-            // 1.2: Add continuation parameter to local suspend functions
-            phases += AddContinuationToLocalSuspendFunctionsLoweringWrapper(context)
+        // Phase 0.15: Shared Variables Lowering
+        // Boxes mutable variables that are captured by closures in {value: x} wrapper objects.
+        // This MUST run AFTER UpgradeCallableReferences (so lambdas are IrRichFunctionReference)
+        // but BEFORE BrsCallableReferenceLowering (so the box is captured, not the value).
+        //
+        // IMPORTANT: We use BRS-specific SharedVariablesLowering that does NOT skip inline lambdas.
+        // Unlike JVM/Native where inline lambdas are truly inlined, BrightScript cannot inline
+        // functions - they always become closure objects. Therefore, mutable variables captured
+        // by inline lambdas (like forEach, also, etc.) must also be boxed.
+        phases += BrsSharedVariablesLoweringPass(context)
 
-            // 1.3: Transform suspend functions into state machines
-            phases += BrsSuspendFunctionsLoweringWrapper(context)
-        }
+        // Phase 0.2: Callable Reference Lowering
+        // Transforms IrRichFunctionReference nodes into anonymous classes.
+        // NOTE: This runs for BOTH stdlib and user code, matching JS backend behavior.
+        // All lambdas become classes with an invoke() method, which allows uniform invocation.
+        // For suspend lambdas (in user code), this also enables BrsSuspendFunctionsLowering
+        // to detect them by LAMBDA_IMPL origin and transform them into CoroutineImpl classes.
+        phases += BrsCallableReferenceLoweringPass(context)
+
+        // Note: Coroutine lowering phases are added later, after LocalDeclarationsLowering,
+        // because BrsSuspendFunctionsLowering needs capturedFields to be set.
+        // See the coroutine lowering section below LocalDeclarationsLowering.
 
         // Phase 1.4: Generate implementations for interface default methods
         // Must run before code generation since BrightScript has no virtual dispatch.
@@ -84,15 +165,11 @@ object BrsLoweringPhases {
         // the method bodies into the class because BrightScript has no prototype chain.
         phases += BrsInterfaceDefaultMethodsLowering(context)
 
-        // NOTE: SharedVariablesLowering is intentionally NOT used for BrightScript.
-        // Instead, mutable captured variables are handled at transform time in IrToBrsTransformer
-        // using detectSharedVariables() which boxes them in {value: x} associative arrays.
-        //
-        // The reason is that SharedVariablesLowering + LocalDeclarationsLowering don't work well
-        // together for the BrightScript use case:
-        // - SharedVariablesLowering transforms all reads/writes to use the box
-        // - But LocalDeclarationsLowering then captures the box value, not the box reference
-        // - This breaks the reference semantics needed for closures to modify outer variables
+        // NOTE: SharedVariablesLowering is now used (Phase 0.15) for closure capture of mutable variables.
+        // The custom BrsSharedVariableDetectionLowering below is a fallback for any cases the standard
+        // lowering might miss (e.g., anonymous object expressions with mutable captures).
+        // The key is that SharedVariablesLowering runs BEFORE callable reference lowering so that
+        // lambdas capture the box object, not the value.
 
         // Add remaining phases
         phases += listOf(
@@ -187,7 +264,7 @@ object BrsLoweringPhases {
             LocalDeclarationsLowering(
                 context,
                 localNameSanitizer = { it.replace("\$", "_") },
-                suggestUniqueNames = false
+                suggestUniqueNames = true  // Generate unique names for lambda classes
             ),
 
             // Phase 15.25: Remove synthetic reads that were added by BrsCapturedWriteOnlyVariablesLowering
@@ -198,13 +275,52 @@ object BrsLoweringPhases {
             // Phase 15.5: Rewrite writes to captured variables
             // LocalDeclarationsLowering creates fields for captured variables and rewrites reads,
             // but does NOT rewrite writes. For BrightScript we need explicit field access for writes.
-            BrsCapturedVariableWriteLowering(context),
-
-            // Phase 16: Extract local classes to file level
-            // After LocalDeclarationsLowering handles the closure capture, this pass moves
-            // local classes to file level so they can be properly emitted.
-            BrsLocalClassExtractionLowering(context)
+            BrsCapturedVariableWriteLowering(context)
         )
+
+        // Phase 16: Extract local classes to file level
+        // MUST run AFTER LocalDeclarationsLowering and BEFORE BrsSuspendFunctionsLowering.
+        // - LocalDeclarationsLowering sets capturedFields on classes
+        // - BrsLocalClassExtractionLowering moves classes to file level
+        // - BrsSuspendFunctionsLowering can then process them without nested local declarations
+        phases += BrsLocalClassExtractionLowering(context)
+
+        // Phase 16.5: Coroutine Lowering
+        // MUST run AFTER LocalDeclarationsLowering (which sets capturedFields on classes)
+        // and AFTER BrsLocalClassExtractionLowering (so classes are at file level).
+        //
+        // Note: We split coroutine lowering into two groups:
+        // 1. Continuation parameter addition and getContinuation() replacement - runs ALWAYS
+        //    (these don't need CoroutineImpl, just the Continuation interface)
+        // 2. State machine generation - only runs for user code (needs full CoroutineImpl infrastructure)
+
+        // Check if the basic coroutine symbols are available (Continuation class)
+        val continuationAvailable = context.brsSymbols.coroutineSymbols.continuationClass != null
+
+        // Check if full coroutine infrastructure is available (CoroutineImpl with all properties)
+        val fullCoroutinesAvailable = !context.isStdlibCompilation &&
+            context.brsSymbols.coroutineSymbols.areCoroutineSymbolsAvailable
+
+        if (fullCoroutinesAvailable) {
+            // 16.5.1: Transform suspend functions into state machines
+            // Uses capturedFields set by LocalDeclarationsLowering
+            // Only runs for user code - stdlib suspend functions delegate suspension
+            phases += BrsSuspendFunctionsLoweringWrapper(context)
+        }
+
+        // These phases run for BOTH stdlib and user code because they only need
+        // the Continuation interface, not the full CoroutineImpl infrastructure
+        if (continuationAvailable) {
+            // 16.5.2: Add continuation parameter to non-local suspend functions
+            phases += AddContinuationToNonLocalSuspendFunctionsLoweringWrapper(context)
+
+            // 16.5.3: Add continuation parameter to local suspend functions
+            phases += AddContinuationToLocalSuspendFunctionsLoweringWrapper(context)
+
+            // 16.5.4: Add continuation to suspend function CALLS and replace getContinuation() intrinsic
+            // This must run after 16.5.2 and 16.5.3 so that the continuation parameter exists
+            phases += BrsAddContinuationToFunctionCallsLoweringWrapper(context)
+        }
 
         for (phase in phases) {
             for (file in module.files) {
@@ -221,6 +337,11 @@ object BrsLoweringPhases {
 /**
  * Wrapper for AddContinuationToNonLocalSuspendFunctionsLowering to work with FileLoweringPass.
  * Adds $completion continuation parameter to non-local suspend functions.
+ *
+ * This uses the delegate's built-in lower(irFile) which properly handles:
+ * - File-level function declarations
+ * - Function members inside classes (including lambda class invoke methods)
+ * - Nested declarations (via recursive Visitor)
  */
 class AddContinuationToNonLocalSuspendFunctionsLoweringWrapper(
     private val context: BrsIrBackendContext
@@ -228,15 +349,8 @@ class AddContinuationToNonLocalSuspendFunctionsLoweringWrapper(
     private val delegate = AddContinuationToNonLocalSuspendFunctionsLowering(context)
 
     override fun lower(irFile: IrFile) {
-        irFile.declarations.toList().forEach { declaration ->
-            delegate.transformFlat(declaration)?.let { transformed ->
-                val index = irFile.declarations.indexOf(declaration)
-                if (index >= 0) {
-                    irFile.declarations.removeAt(index)
-                    irFile.declarations.addAll(index, transformed)
-                }
-            }
-        }
+        // Use the delegate's default lower() which properly visits class members
+        delegate.lower(irFile)
     }
 }
 
@@ -261,8 +375,29 @@ class AddContinuationToLocalSuspendFunctionsLoweringWrapper(
 }
 
 /**
+ * Wrapper for BrsAddContinuationToFunctionCallsLowering to work with FileLoweringPass.
+ * Adds continuation parameter to suspend function CALLS and replaces getContinuation() intrinsic.
+ *
+ * This must run after AddContinuationToNonLocalSuspendFunctionsLowering and
+ * AddContinuationToLocalSuspendFunctionsLowering so that the continuation parameter exists.
+ */
+class BrsAddContinuationToFunctionCallsLoweringWrapper(
+    private val context: BrsIrBackendContext
+) : FileLoweringPass {
+    private val delegate = BrsAddContinuationToFunctionCallsLowering(context)
+
+    override fun lower(irFile: IrFile) {
+        delegate.lower(irFile)
+    }
+}
+
+/**
  * Wrapper for BrsSuspendFunctionsLowering to work with FileLoweringPass.
  * Transforms suspend functions into CoroutineImpl classes with state machines.
+ *
+ * This runs AFTER BrsLocalClassExtractionLowering, so lambda classes are now
+ * file-level declarations. We use standard runOnFilePostfix traversal which
+ * visits all file-level declarations including extracted lambda classes.
  */
 class BrsSuspendFunctionsLoweringWrapper(
     private val context: BrsIrBackendContext
@@ -270,13 +405,10 @@ class BrsSuspendFunctionsLoweringWrapper(
     private val delegate = BrsSuspendFunctionsLowering(context)
 
     override fun lower(irFile: IrFile) {
-        irFile.declarations.forEach { declaration ->
-            if (declaration is org.jetbrains.kotlin.ir.declarations.IrFunction) {
-                declaration.body?.let { body ->
-                    delegate.lower(body, declaration)
-                }
-            }
-        }
+        // Lambda classes have been extracted to file level by BrsLocalClassExtractionLowering,
+        // so we use standard traversal (withLocalDeclarations = false, the default).
+        // This processes all file-level classes including extracted lambda classes.
+        delegate.runOnFilePostfix(irFile)
     }
 }
 

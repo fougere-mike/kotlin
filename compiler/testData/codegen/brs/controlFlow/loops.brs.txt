@@ -49,17 +49,25 @@ function breakContinueSum_k_() as Integer
 
 
         while inductionVariable <= 10
-            i = inductionVariable
-            inductionVariable = (inductionVariable + 1)
+            __break0 = false
+            while true
+                i = inductionVariable
+                inductionVariable = (inductionVariable + 1)
 
-            if i = 3 then
-                ' continue not supported on target Roku OS
-            end if
-            if i = 7 then
-                exit for
-            end if
-            sum = (sum + i)
+                if i = 3 then
+                    exit while
+                end if
+                if i = 7 then
+                    __break0 = true
+                    exit while
+                end if
+                sum = (sum + i)
 
+                exit while
+            end while
+            if __break0 then
+                exit while
+            end if
         end while
 
     end if

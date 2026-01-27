@@ -12,18 +12,49 @@ import kotlin.coroutines.CoroutineContext
  *
  * In BrightScript/Roku, coroutines run on either the render thread (SceneGraph)
  * or Task node threads. This object provides access to dispatchers for both.
+ *
+ * **Important:** For dispatchers to work correctly, your run loop must call
+ * [processCoroutineQueue] and [processCoroutineDelays] on each iteration:
+ *
+ * ```kotlin
+ * // Main thread event loop
+ * while (true) {
+ *     val msg = port.getMessage()
+ *     processCoroutineQueue()  // Process dispatched coroutine work
+ *     processCoroutineDelays() // Check and fire delay callbacks
+ *     // ... handle messages
+ * }
+ *
+ * // Render thread - use Timer node with observeField("fire", "onTick")
+ * fun onTick() {
+ *     processCoroutineQueue()
+ *     processCoroutineDelays()
+ * }
+ *
+ * // Task thread
+ * while (running) {
+ *     val msg = port.waitMessage(10)  // Short timeout for responsive delays
+ *     processCoroutineQueue()
+ *     processCoroutineDelays()
+ *     // ... handle messages
+ * }
+ * ```
  */
 public object Dispatchers {
 
     /**
      * The default coroutine dispatcher that is used by all standard builders
-     * like [launch][kotlinx.coroutines.launch] and [async][kotlinx.coroutines.async]
-     * if no dispatcher or other [ContinuationInterceptor] is specified in their context.
+     * like [launch] and [async] if no dispatcher or other [ContinuationInterceptor]
+     * is specified in their context.
      *
-     * In BrightScript, this is the current thread's event loop - either the
-     * render thread or the current Task's thread.
+     * In BrightScript, this dispatcher enqueues work to be processed by the
+     * current thread's run loop. The work is executed when [processCoroutineQueue]
+     * is called.
+     *
+     * This enables proper cooperative scheduling - coroutines can yield to each
+     * other and delays work without blocking the thread.
      */
-    public val Default: CoroutineDispatcher = UnconfinedDispatcher
+    public val Default: CoroutineDispatcher = DefaultDispatcher
 
     /**
      * A coroutine dispatcher that confines coroutine execution to the main/UI thread.
@@ -31,11 +62,11 @@ public object Dispatchers {
      * In BrightScript, this is the SceneGraph render thread. Use this dispatcher
      * when you need to update UI elements from a coroutine.
      *
-     * Note: The Main dispatcher may not be immediately available if the SceneGraph
-     * hasn't been fully initialized. In such cases, use [Dispatchers.Default] or
-     * a Task dispatcher.
+     * **Note:** Currently, [Main] uses the same implementation as [Default].
+     * Both dispatch to the current thread's queue. True render-thread confinement
+     * will be added in a future milestone.
      */
-    public val Main: CoroutineDispatcher = UnconfinedDispatcher
+    public val Main: CoroutineDispatcher = DefaultDispatcher
 
     /**
      * A coroutine dispatcher that is not confined to any specific thread.
@@ -44,8 +75,9 @@ public object Dispatchers {
      * and lets the coroutine resume in whatever thread that is used by the
      * corresponding suspending function, without mandating any specific threading policy.
      *
-     * Note: Use with caution. [Unconfined] dispatcher should not normally be used
-     * in code.
+     * **Note:** Use with caution. [Unconfined] dispatcher should not normally be used
+     * in code. It does not go through the queue, so delays and yields may not work
+     * as expected.
      */
     public val Unconfined: CoroutineDispatcher = UnconfinedDispatcher
 
@@ -53,12 +85,11 @@ public object Dispatchers {
      * A coroutine dispatcher that is designed for offloading blocking IO tasks
      * to a shared pool of threads.
      *
-     * In BrightScript, this would dispatch to Task nodes for background work.
-     * However, since Task management requires SceneGraph context, this currently
-     * falls back to [Unconfined].
+     * In BrightScript, this would ideally dispatch to Task nodes for background work.
+     * Currently, [IO] uses the same implementation as [Default] and dispatches to
+     * the current thread's queue.
      *
-     * For actual IO operations in BrightScript, consider using [forTask] with
-     * an explicit Task node.
+     * True Task node dispatch will be added in a future milestone (TaskPool).
      */
-    public val IO: CoroutineDispatcher = UnconfinedDispatcher
+    public val IO: CoroutineDispatcher = DefaultDispatcher
 }

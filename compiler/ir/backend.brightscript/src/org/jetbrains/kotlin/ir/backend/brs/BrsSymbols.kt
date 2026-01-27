@@ -182,20 +182,32 @@ class BrsSymbols(
     /**
      * Function to get the current continuation in a suspend function.
      * In BRS, this is a compiler intrinsic - calls are transformed during lowering.
+     *
+     * During stdlib compilation, this IS available because getContinuation() is defined
+     * in the stdlib being compiled. The symbol finder can resolve it.
      */
     override val getContinuation: IrSimpleFunctionSymbol by lazy {
-        findOptionalFunction(BrsStandardClassIds.BASE_BRS_COROUTINES_PACKAGE, "getContinuation")
-            ?: if (isStdlibCompilation) error("getContinuation accessed during stdlib compilation")
-            else error("getContinuation not found - ensure stdlib is linked")
+        // Look in kotlin.coroutines.intrinsics package where it's defined
+        findOptionalFunction(FqName("kotlin.coroutines.intrinsics"), "getContinuation")
+            ?: error("getContinuation not found - ensure stdlib is linked or you're compiling the stdlib")
+    }
+
+    /**
+     * Nullable version for checking during transformations.
+     */
+    val getContinuationOrNull: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(FqName("kotlin.coroutines.intrinsics"), "getContinuation")
     }
 
     /**
      * The Continuation interface class.
+     *
+     * During stdlib compilation, this IS available because Continuation is defined
+     * in the stdlib being compiled. The symbol finder can resolve it.
      */
     override val continuationClass: IrClassSymbol by lazy {
         coroutineSymbols.continuationClass
-            ?: if (isStdlibCompilation) error("continuationClass accessed during stdlib compilation")
-            else error("Continuation class not found - ensure stdlib is linked")
+            ?: error("Continuation class not found - ensure stdlib is linked or you're compiling the stdlib")
     }
 
     /**

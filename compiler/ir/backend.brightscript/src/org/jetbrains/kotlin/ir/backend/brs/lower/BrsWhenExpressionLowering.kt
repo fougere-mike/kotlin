@@ -69,6 +69,25 @@ class BrsWhenExpressionLowering(
         // Track whether we're at the top level of a statement (where when is allowed as-is)
         private var insideExpressionContext = false
 
+        // Track the current declaration parent for setting parent on new declarations
+        private var currentDeclarationParent: org.jetbrains.kotlin.ir.declarations.IrDeclarationParent? = null
+
+        override fun visitFunction(declaration: org.jetbrains.kotlin.ir.declarations.IrFunction): IrStatement {
+            val previousParent = currentDeclarationParent
+            currentDeclarationParent = declaration
+            val result = super.visitFunction(declaration)
+            currentDeclarationParent = previousParent
+            return result
+        }
+
+        override fun visitClass(declaration: org.jetbrains.kotlin.ir.declarations.IrClass): IrStatement {
+            val previousParent = currentDeclarationParent
+            currentDeclarationParent = declaration
+            val result = super.visitClass(declaration)
+            currentDeclarationParent = previousParent
+            return result
+        }
+
         override fun visitExpressionBody(body: IrExpressionBody): IrBody {
             // Expression body is an expression context
             val wasInExpression = insideExpressionContext
@@ -104,7 +123,14 @@ class BrsWhenExpressionLowering(
 
                 insideExpressionContext = wasInExpression
 
-                if (expression is IrBlock) {
+                // Preserve the original container type when recreating
+                // IrReturnableBlock must be preserved for BrsReturnableBlockLowering to work correctly
+                if (expression is IrReturnableBlock) {
+                    // For IrReturnableBlock, just update statements in place rather than creating a new block
+                    expression.statements.clear()
+                    expression.statements.addAll(statements)
+                    return expression
+                } else if (expression is IrBlock) {
                     return IrBlockImpl(
                         expression.startOffset,
                         expression.endOffset,
@@ -283,7 +309,7 @@ class BrsWhenExpressionLowering(
             // Create temp variable with invalid initializer
             val tempVarName = "__when_tmp${tempVarCounter++}"
             val tempVar = buildVariable(
-                parent = null, // Will be set by the IR infrastructure
+                parent = currentDeclarationParent ?: error("No declaration parent available for when-lowered temp variable"),
                 startOffset = startOffset,
                 endOffset = endOffset,
                 origin = IrDeclarationOrigin.IR_TEMPORARY_VARIABLE,

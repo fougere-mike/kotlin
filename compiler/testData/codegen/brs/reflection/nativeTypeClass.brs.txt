@@ -4,6 +4,12 @@ function SimpleData_create_I_k_(value as Integer) as Object
     this.__type = "SimpleData"
     this.__proto = ["SimpleData"]
     this.__id = __kotlin_nextObjectId()
+    this.equals_AnyN_k_ = Any_equals_AnyN_k_
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode_k_ = Any_hashCode_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString_k_ = Any_toString_k_
+    this.toString = Any_toString_k_
     this.__get_value = SimpleData___get_value_k_
     this.value = value
     return this
@@ -25,4 +31,18 @@ end function
 function testIsInstanceFalse_k_() as Boolean
     other = Other_create_k_()
     return __kotlin_KClass_create("SimpleData").isInstance_AnyN_k_(other)
+end function
+
+function Other_create_k_() as Object
+    this = {}
+    this.__type = "Other"
+    this.__proto = ["Other"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals_AnyN_k_ = Any_equals_AnyN_k_
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode_k_ = Any_hashCode_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString_k_ = Any_toString_k_
+    this.toString = Any_toString_k_
+    return this
 end function

@@ -4,6 +4,12 @@ function Person_create_Str_I_k_(name as String, age as Integer) as Object
     this.__type = "Person"
     this.__proto = ["Person"]
     this.__id = __kotlin_nextObjectId()
+    this.equals_AnyN_k_ = Any_equals_AnyN_k_
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode_k_ = Any_hashCode_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString_k_ = Any_toString_k_
+    this.toString = Any_toString_k_
     this.greet_k_ = Person_greet_k_
     this.isAdult_k_ = Person_isAdult_k_
     this.__get_name = Person___get_name_k_

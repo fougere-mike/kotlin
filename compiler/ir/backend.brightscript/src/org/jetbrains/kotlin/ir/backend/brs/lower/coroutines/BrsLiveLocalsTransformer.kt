@@ -7,11 +7,15 @@ package org.jetbrains.kotlin.ir.backend.brs.lower.coroutines
 
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.declarations.IrVariable
+import org.jetbrains.kotlin.ir.expressions.IrBlock
+import org.jetbrains.kotlin.ir.expressions.IrCatch
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrGetValue
 import org.jetbrains.kotlin.ir.expressions.IrSetValue
+import org.jetbrains.kotlin.ir.expressions.impl.IrBlockImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrCompositeImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetFieldImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrSetFieldImpl
 import org.jetbrains.kotlin.ir.symbols.IrFieldSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
@@ -64,5 +68,89 @@ class BrsLiveLocalsTransformer(
         } else {
             IrCompositeImpl(declaration.startOffset, declaration.endOffset, unitType)
         }
+    }
+
+    /**
+     * Handle catch blocks specially. The catch parameter must remain an IrVariable
+     * in the IrCatch structure, but we still want to transform accesses to it.
+     *
+     * We transform the result block normally, but leave the catch parameter alone
+     * and manually handle its initialization through field access.
+     */
+    override fun visitCatch(aCatch: IrCatch): IrCatch {
+        val catchParameter = aCatch.catchParameter
+        val field = localMap[catchParameter.symbol]
+
+        if (field != null) {
+            // Transform the initializer if present
+            val initializer = catchParameter.initializer
+            if (initializer != null) {
+                catchParameter.initializer = initializer.transform(this, null)
+
+                // Transform the result block - accesses to catchParameter will be transformed to field accesses
+                aCatch.result = aCatch.result.transform(this, null)
+
+                // The catch parameter stays as a variable, but its initializer is now a field set
+                // We need to prepend a field set to the catch result block
+                val setField = IrSetFieldImpl(
+                    catchParameter.startOffset,
+                    catchParameter.endOffset,
+                    field,
+                    receiver(),
+                    catchParameter.initializer!!,
+                    unitType
+                )
+                catchParameter.initializer = null
+
+                // Wrap the result with the field initialization
+                val resultBlock = aCatch.result
+                if (resultBlock is IrBlock) {
+                    resultBlock.statements.add(0, setField)
+                }
+
+                return aCatch
+            } else {
+                // Global catch or synthetic catch - no initializer means the catch parameter
+                // is implicitly initialized by the catch mechanism. We need to copy the catch
+                // parameter value to the field before the result block uses it.
+                aCatch.result = aCatch.result.transform(this, null)
+
+                // Create a field set to copy catch parameter to the field
+                // This must happen BEFORE the result block runs, so prepend it
+                val setField = IrSetFieldImpl(
+                    catchParameter.startOffset,
+                    catchParameter.endOffset,
+                    field,
+                    receiver(),
+                    IrGetValueImpl(
+                        catchParameter.startOffset,
+                        catchParameter.endOffset,
+                        catchParameter.type,
+                        catchParameter.symbol
+                    ),
+                    unitType
+                )
+
+                // Wrap the result with the field initialization
+                val resultBlock = aCatch.result
+                if (resultBlock is IrBlock) {
+                    resultBlock.statements.add(0, setField)
+                } else {
+                    // If result is not a block, wrap it in one with the field set first
+                    val block = IrBlockImpl(
+                        resultBlock.startOffset,
+                        resultBlock.endOffset,
+                        resultBlock.type,
+                        origin = null,
+                        statements = mutableListOf(setField, resultBlock)
+                    )
+                    aCatch.result = block
+                }
+
+                return aCatch
+            }
+        }
+
+        return super.visitCatch(aCatch)
     }
 }

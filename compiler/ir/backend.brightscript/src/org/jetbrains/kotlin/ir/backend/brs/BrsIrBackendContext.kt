@@ -165,6 +165,12 @@ class BrsIrBackendContext(
     val classNameCache = WeakHashMap<IrClass, String>()
 
     /**
+     * Track used class names to ensure uniqueness.
+     * Maps sanitized class name to the count of times it's been used.
+     */
+    private val usedClassNames = mutableMapOf<String, Int>()
+
+    /**
      * Cache for generated function names.
      */
     val functionNameCache = WeakHashMap<IrFunction, String>()
@@ -290,11 +296,45 @@ class BrsIrBackendContext(
 
         val parent = irClass.parent
 
-        return when (parent) {
+        val fullName = when (parent) {
             is IrClass -> "${getBrsName(parent)}_${baseName}"
             is IrPackageFragment -> baseName
             else -> baseName
         }
+
+        // Sanitize for BrightScript: replace $ with _, remove < and > characters
+        // Lambda class names from callable reference lowering look like "ArrayList$<init>$lambda"
+        val sanitized = sanitizeBrsIdentifier(fullName)
+
+        // Make the name unique by adding a counter suffix if this name was already used
+        // This handles lambda classes which often have the same base name (e.g., "Foo_lambda_lambda")
+        val count = usedClassNames.getOrDefault(sanitized, 0)
+        usedClassNames[sanitized] = count + 1
+
+        return if (count == 0) {
+            sanitized
+        } else {
+            "${sanitized}_$count"
+        }
+    }
+
+    /**
+     * Sanitize a string to be a valid BrightScript identifier.
+     * - Replaces $ with _
+     * - Replaces < and > with nothing
+     * - Replaces other special characters with _
+     */
+    private fun sanitizeBrsIdentifier(name: String): String {
+        return name
+            .replace("$", "_")
+            .replace("<", "_")
+            .replace(">", "_")
+            .replace(".", "_")
+            .replace("-", "_")
+            .replace(" ", "_")
+            // Note: We intentionally do NOT collapse multiple underscores
+            // because some stdlib functions use double underscores as a naming convention
+            // (e.g., __kotlin_numToStr_J_k_)
     }
 
     /**
@@ -552,7 +592,7 @@ class BrsIrBackendContext(
             rawName.startsWith("<set-") && rawName.endsWith(">") -> {
                 "__set_" + rawName.removePrefix("<set-").removeSuffix(">")
             }
-            else -> rawName
+            else -> sanitizeBrsIdentifier(rawName)
         }
 
         val baseName = when (val parent = irFunction.parent) {

@@ -104,6 +104,15 @@ object BrsIrBuilder {
     ) =
         IrSetValueImpl(startOffset, endOffset, symbol.owner.type, symbol, value, BrsStatementOrigins.SYNTHESIZED_STATEMENT)
 
+    fun buildSetVariable(
+        symbol: IrVariableSymbol,
+        value: IrExpression,
+        type: IrType,
+        startOffset: Int = UNDEFINED_OFFSET,
+        endOffset: Int = UNDEFINED_OFFSET,
+    ) =
+        IrSetValueImpl(startOffset, endOffset, type, symbol, value, BrsStatementOrigins.SYNTHESIZED_STATEMENT)
+
     fun buildGetField(
         symbol: IrFieldSymbol,
         receiver: IrExpression? = null,

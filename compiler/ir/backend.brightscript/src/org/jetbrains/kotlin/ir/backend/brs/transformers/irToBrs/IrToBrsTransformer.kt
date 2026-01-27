@@ -6,14 +6,18 @@
 package org.jetbrains.kotlin.ir.backend.brs.transformers.irToBrs
 
 import org.jetbrains.kotlin.backend.common.capturedFields
+import org.jetbrains.kotlin.backend.common.lower.AbstractSuspendFunctionsLowering
 import org.jetbrains.kotlin.backend.common.lower.BOUND_VALUE_PARAMETER
 import org.jetbrains.kotlin.backend.common.lower.BOUND_RECEIVER_PARAMETER
+import org.jetbrains.kotlin.backend.common.lower.WebCallableReferenceLowering
 import org.jetbrains.kotlin.brs.backend.ast.*
 import org.jetbrains.kotlin.brs.backend.ast.parser.parseBrightScriptStatements
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.ir.backend.brs.BrsIntrinsics
 import org.jetbrains.kotlin.ir.backend.brs.lower.BrsCodeOutliningLowering
+import org.jetbrains.kotlin.ir.backend.brs.lower.BrsDeclarationOrigin
 import org.jetbrains.kotlin.ir.backend.brs.lower.BrsInlineCallTransformer
+import org.jetbrains.kotlin.ir.backend.brs.lower.coroutines.BrsStatementOrigins
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
@@ -33,6 +37,7 @@ import org.jetbrains.kotlin.ir.util.isNullable
 import org.jetbrains.kotlin.ir.util.isTypeParameter
 import org.jetbrains.kotlin.ir.util.isUnsigned
 import org.jetbrains.kotlin.ir.util.parentAsClass
+import org.jetbrains.kotlin.ir.util.parentClassOrNull
 import org.jetbrains.kotlin.name.BrsStandardClassIds
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
@@ -143,6 +148,66 @@ class IrToBrsTransformer(
     private val tempVarNames = mutableMapOf<IrValueSymbol, String>()
 
     /**
+     * Set of IR loops that have been transformed to while loops in the output.
+     * When a for-each loop is transformed to a while loop (e.g., Strategy 4 - iterator protocol),
+     * any break statements inside should generate "exit while" instead of "exit for".
+     * The key is the IrLoop instance (the loop that IrBreak.loop references).
+     */
+    internal val loopsTransformedToWhile = mutableSetOf<IrLoop>()
+
+    /**
+     * Counter tracking how many FOR_LOOP blocks we're currently inside that will be
+     * transformed to while loops. When > 0, any break statements with FOR_LOOP_INNER_WHILE
+     * origin should generate "exit while" instead of "exit for".
+     *
+     * This is needed because after inlining, the IrBreak.loop may reference a different
+     * IrWhileLoop instance than what we traverse (inlining creates copies), so we can't
+     * rely on object identity in loopsTransformedToWhile.
+     */
+    internal var forLoopToWhileNestingDepth = 0
+
+    /**
+     * Maps IR loops to their break flag variable names.
+     * When continue is not supported, loops are wrapped in an inner while(true) loop.
+     * Break statements must set a flag and exit the inner loop, then the outer loop
+     * checks this flag and exits if set.
+     */
+    internal val loopBreakFlags = mutableMapOf<IrLoop, String>()
+
+    /**
+     * Set of IR loops that are currently being transformed with a continue wrapper.
+     * This is used during the transformation to know which loop a continue/break
+     * should target. We add the loop before transforming its body and remove it after.
+     * IMPORTANT: This only applies while we're actively inside the body transformation.
+     */
+    internal val loopsWithContinueWrapper = mutableSetOf<IrLoop>()
+
+    /**
+     * Stack of loops currently being transformed with continue wrappers.
+     * A loop is pushed when we start transforming its body and popped when done.
+     * IrContinue/IrBreak should only be transformed to exit while if their target
+     * loop is on this stack (meaning we're inside its body transformation).
+     */
+    internal val continueWrapperLoopStack = mutableListOf<IrLoop>()
+
+    /**
+     * Stack of returnable block exit flag variable names.
+     * When a returnable block contains while loops that have returns targeting the block,
+     * we can't use simple "exit while" (it would exit the inner loop, not the block wrapper).
+     * Instead, we use a flag-based approach: set the flag and exit while, then check the flag
+     * after each inner while loop.
+     *
+     * The stack supports nested returnable blocks. The top of the stack is the innermost
+     * returnable block currently being transformed.
+     */
+    internal val returnableBlockFlagStack = mutableListOf<String>()
+
+    /**
+     * Counter for generating unique returnable block flag names.
+     */
+    internal var returnableBlockFlagCounter = 0
+
+    /**
      * Counter for generating unique temp variable names.
      */
     private var tempIdCounter = 0
@@ -170,6 +235,109 @@ class IrToBrsTransformer(
 
     fun getTempVarName(symbol: IrValueSymbol): String? {
         return tempVarNames[symbol]
+    }
+
+    /**
+     * Maps IR value symbols to unique BrightScript variable names.
+     * This is needed because Kotlin IR can have multiple variables with the same name
+     * (distinguished by their symbol), but BrightScript uses a single namespace where
+     * variable names must be unique to avoid collisions.
+     *
+     * Example: After inlining `this.toUInt().plus(other.toUInt())`, the IR may have:
+     *   val tmp0 = this          // symbol A
+     *   val tmp0 = tmp_ret_0     // symbol B (different symbol, same name!)
+     *   val tmp0 = other         // symbol C (yet another symbol)
+     *
+     * Without renaming, these all map to `tmp0` in BrightScript, causing the
+     * second and third assignments to overwrite the first value.
+     */
+    private val symbolToUniqueName = mutableMapOf<IrValueSymbol, String>()
+
+    /**
+     * Set of variable names already used in the current function.
+     * Used to detect collisions and generate unique suffixes.
+     */
+    private val usedVariableNames = mutableSetOf<String>()
+
+    /**
+     * Clears the variable naming state. Should be called at the start of each function.
+     */
+    fun resetVariableNaming() {
+        symbolToUniqueName.clear()
+        usedVariableNames.clear()
+    }
+
+    /**
+     * Gets or creates a unique BrightScript variable name for the given IR symbol.
+     * If this symbol has already been assigned a name, returns it.
+     * If this is a new symbol, generates a unique name (possibly with a numeric suffix
+     * to avoid collision with existing names) and registers it.
+     */
+    fun getUniqueVariableName(symbol: IrValueSymbol, baseName: String): String {
+        // Check if we already have a name for this exact symbol
+        symbolToUniqueName[symbol]?.let { return it }
+
+        // Generate a unique name
+        var uniqueName = baseName
+        var suffix = 1
+        while (uniqueName in usedVariableNames) {
+            uniqueName = "${baseName}_${suffix++}"
+        }
+
+        // Register the mapping
+        symbolToUniqueName[symbol] = uniqueName
+        usedVariableNames.add(uniqueName)
+
+        return uniqueName
+    }
+
+    /**
+     * Gets the unique name for a symbol that should already have been declared.
+     * Returns the base name if the symbol wasn't registered (for parameters, etc.)
+     */
+    fun getVariableName(symbol: IrValueSymbol, baseName: String): String {
+        return symbolToUniqueName[symbol] ?: baseName
+    }
+
+    /**
+     * Checks if the given IR element contains any IrContinue statements targeting the specified loop.
+     * Used to determine if a loop needs to be wrapped with a continue-simulation pattern
+     * when native continue is not supported.
+     */
+    fun containsContinueFor(element: IrElement?, targetLoop: IrLoop): Boolean {
+        if (element == null) return false
+        var found = false
+        element.acceptVoid(object : IrVisitorVoid() {
+            override fun visitElement(element: IrElement) {
+                if (!found) element.acceptChildrenVoid(this)
+            }
+            override fun visitContinue(jump: IrContinue) {
+                if (jump.loop === targetLoop) {
+                    found = true
+                }
+            }
+        })
+        return found
+    }
+
+    /**
+     * Checks if the given IR element contains any IrBreak statements targeting the specified loop.
+     * Used to determine if we need a break flag variable when simulating continue.
+     */
+    fun containsBreakFor(element: IrElement?, targetLoop: IrLoop): Boolean {
+        if (element == null) return false
+        var found = false
+        element.acceptVoid(object : IrVisitorVoid() {
+            override fun visitElement(element: IrElement) {
+                if (!found) element.acceptChildrenVoid(this)
+            }
+            override fun visitBreak(jump: IrBreak) {
+                if (jump.loop === targetLoop) {
+                    found = true
+                }
+            }
+        })
+        return found
     }
 
     /**
@@ -588,6 +756,10 @@ class IrToBrsTransformer(
         // Clear any leftover hoisted statements from previous function transformations
         clearHoistedScopes()
 
+        // Reset variable naming state for this function
+        // This ensures each function gets fresh unique names and doesn't collide with other functions
+        resetVariableNaming()
+
         val name = context.getBrsName(irFunction)
 
         // Build parameter list, starting with extension receiver if present
@@ -685,11 +857,31 @@ class IrToBrsTransformer(
 
         val returnType = mapTypeToBrs(irFunction.returnType)
 
-        // Functions with Unit return type become subs
-        return if (irFunction.returnType.isUnit() || irFunction.returnType.isNothing()) {
+        // Check if this is a suspend lambda's invoke method that needs to return doResume result.
+        // These methods have their bodies rewritten to return the result of create().doResume(),
+        // so they must be functions even though the Kotlin return type is Unit.
+        //
+        // Detection: The invoke method is in a LAMBDA_IMPL class and is a suspend function.
+        // After the coroutine lowering, the invoke method's body is replaced to call create().doResume(),
+        // which returns a value, so it needs to be a BrightScript function, not a sub.
+        val isSuspendLambdaInvoke = irFunction is IrSimpleFunction &&
+            irFunction.isSuspend &&
+            irFunction.name.asString() == "invoke" &&
+            irFunction.parentClassOrNull?.origin == WebCallableReferenceLowering.LAMBDA_IMPL
+
+        // Functions with Unit return type become subs, EXCEPT for suspend lambda invoke methods
+        // Note: Functions returning Nothing (e.g., lambdas with non-local returns, throw expressions)
+        // should still be functions, not subs, because they may implement interfaces expecting return values
+        return if (irFunction.returnType.isUnit() && !isSuspendLambdaInvoke) {
             BrsSub(name, parameters.toMutableList(), body)
         } else {
-            BrsFunction(name, parameters.toMutableList(), returnType, body)
+            // For Nothing/Unit suspend invoke, use Dynamic as the BrightScript return type
+            val effectiveReturnType = when {
+                irFunction.returnType.isNothing() -> BrsType.DYNAMIC
+                irFunction.returnType.isUnit() -> BrsType.DYNAMIC  // suspend lambda invoke
+                else -> returnType
+            }
+            BrsFunction(name, parameters.toMutableList(), effectiveReturnType, body)
         }
     }
 
@@ -980,7 +1172,14 @@ class IrToBrsTransformer(
             }
 
             val backingField = property.backingField ?: continue
-            val fieldName = backingField.name.asString().replace("$", "_")
+            // Sanitize field name for special names like <this>
+            val rawFieldName = backingField.name.asString()
+            val fieldName = when {
+                rawFieldName == "<this>" -> "__this"
+                rawFieldName.startsWith("<") && rawFieldName.endsWith(">") ->
+                    rawFieldName.removePrefix("<").removeSuffix(">").replace("-", "_").replace(" ", "_")
+                else -> rawFieldName.replace("$", "_")
+            }
             backingField.initializer?.expression?.let { initializer ->
                 val transformedInit = transformExpression(initializer)
                 val hoisted = takeHoistedStatements()
@@ -2580,6 +2779,11 @@ class IrToBrsTransformer(
                     )
                 )
             )
+
+            // Add default Any methods for classes that directly extend Any
+            // (Classes with explicit superclasses inherit these from the parent constructor call)
+            // These provide default implementations that can be overridden by the class itself
+            addAnyMethodDefaults(bodyStatements)
         }
 
         // Update __type to current class for inherited classes
@@ -2622,7 +2826,15 @@ class IrToBrsTransformer(
         val initializedFields = mutableSetOf<String>()
         for (field in irClass.declarations.filterIsInstance<IrField>()) {
             field.initializer?.expression?.let { initializer ->
-                initializedFields.add(field.name.asString())
+                // Sanitize field name for special names like <this>
+                val rawName = field.name.asString()
+                val sanitizedName = when {
+                    rawName == "<this>" -> "__this"
+                    rawName.startsWith("<") && rawName.endsWith(">") ->
+                        rawName.removePrefix("<").removeSuffix(">").replace("-", "_").replace(" ", "_")
+                    else -> rawName.replace("$", "_")
+                }
+                initializedFields.add(sanitizedName)
                 val transformedInit = transformExpression(initializer)
                 // Consume hoisted statements from when-lowered blocks in the initializer
                 val hoisted = takeHoistedStatements()
@@ -2630,7 +2842,7 @@ class IrToBrsTransformer(
                 bodyStatements.add(
                     BrsExpressionStatement(
                         BrsBinaryOp(
-                            BrsDotAccess(BrsIdentifier("this"), field.name.asString()),
+                            BrsDotAccess(BrsIdentifier("this"), sanitizedName),
                             BrsBinaryOperator.EQ,
                             transformedInit
                         )
@@ -2644,7 +2856,14 @@ class IrToBrsTransformer(
             val backingField = property.backingField ?: continue
             // Use backing field name, not property name - for delegated properties, the backing field
             // is named <propertyName>$delegate (e.g., lazyValue$delegate)
-            val fieldName = backingField.name.asString().replace("$", "_")
+            // Also sanitize special names like <this>
+            val rawFieldName = backingField.name.asString()
+            val fieldName = when {
+                rawFieldName == "<this>" -> "__this"
+                rawFieldName.startsWith("<") && rawFieldName.endsWith(">") ->
+                    rawFieldName.removePrefix("<").removeSuffix(">").replace("-", "_").replace(" ", "_")
+                else -> rawFieldName.replace("$", "_")
+            }
             if (fieldName !in initializedFields) {
                 backingField.initializer?.expression?.let { initializer ->
                     val transformedInit = transformExpression(initializer)
@@ -2685,6 +2904,81 @@ class IrToBrsTransformer(
             parameters.toMutableList(),
             BrsType.OBJECT,
             BrsBlock(bodyStatements)
+        )
+    }
+
+    /**
+     * Add default Any method implementations for classes that directly extend Any.
+     *
+     * All Kotlin classes implicitly extend Any, which provides equals, hashCode, and toString.
+     * When a class has an explicit superclass, these methods are inherited from the parent.
+     * When a class only extends Any (no explicit superclass), we need to attach these methods
+     * directly so that structural equality checks and other operations work correctly.
+     *
+     * These are default implementations - if the class overrides any of these methods,
+     * the overriding implementation will be attached later by addMethodAttachments and will
+     * replace these defaults.
+     */
+    private fun addAnyMethodDefaults(bodyStatements: MutableList<BrsStatement>) {
+        // this.equals_AnyN_k_ = Any_equals_AnyN_k_
+        bodyStatements.add(
+            BrsExpressionStatement(
+                BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier("this"), "equals_AnyN_k_"),
+                    BrsBinaryOperator.EQ,
+                    BrsIdentifier("Any_equals_AnyN_k_")
+                )
+            )
+        )
+        // this.equals = Any_equals_AnyN_k_ (simple name alias for polymorphic calls)
+        bodyStatements.add(
+            BrsExpressionStatement(
+                BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier("this"), "equals"),
+                    BrsBinaryOperator.EQ,
+                    BrsIdentifier("Any_equals_AnyN_k_")
+                )
+            )
+        )
+        // this.hashCode_k_ = Any_hashCode_k_
+        bodyStatements.add(
+            BrsExpressionStatement(
+                BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier("this"), "hashCode_k_"),
+                    BrsBinaryOperator.EQ,
+                    BrsIdentifier("Any_hashCode_k_")
+                )
+            )
+        )
+        // this.hashCode = Any_hashCode_k_ (simple name alias)
+        bodyStatements.add(
+            BrsExpressionStatement(
+                BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier("this"), "hashCode"),
+                    BrsBinaryOperator.EQ,
+                    BrsIdentifier("Any_hashCode_k_")
+                )
+            )
+        )
+        // this.toString_k_ = Any_toString_k_
+        bodyStatements.add(
+            BrsExpressionStatement(
+                BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier("this"), "toString_k_"),
+                    BrsBinaryOperator.EQ,
+                    BrsIdentifier("Any_toString_k_")
+                )
+            )
+        )
+        // this.toString = Any_toString_k_ (simple name alias)
+        bodyStatements.add(
+            BrsExpressionStatement(
+                BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier("this"), "toString"),
+                    BrsBinaryOperator.EQ,
+                    BrsIdentifier("Any_toString_k_")
+                )
+            )
         )
     }
 
@@ -3031,7 +3325,7 @@ class IrToBrsTransformer(
 
         // If the statement is actually an expression, wrap it in an expression statement
         if (statement is IrExpression) {
-            return BrsExpressionStatement(transformExpression(statement))
+            return expressionToStatementOrNull(transformExpression(statement))
         }
 
         return null
@@ -3044,6 +3338,25 @@ class IrToBrsTransformer(
      */
     fun transformExpression(expression: IrExpression): BrsExpression {
         return expression.accept(expressionTransformer, Unit)
+    }
+
+    /**
+     * Wrap a BRS expression in a statement, or return null if the expression
+     * has no side effects and shouldn't be emitted as a standalone statement.
+     */
+    fun expressionToStatementOrNull(expr: BrsExpression): BrsStatement? {
+        // Skip side-effect-free expressions (like simple variable reads, literals)
+        return when (expr) {
+            is BrsIdentifier,
+            is BrsInvalidLiteral,
+            is BrsIntLiteral,
+            is BrsLongIntLiteral,
+            is BrsDoubleLiteral,
+            is BrsFloatLiteral,
+            is BrsStringLiteral,
+            is BrsBooleanLiteral -> null
+            else -> BrsExpressionStatement(expr)
+        }
     }
 
     // ==================== Helpers ====================
@@ -3122,7 +3435,8 @@ class IrToBrsTransformer(
             // Setter parameter: <set-?> -> value
             name.startsWith("<set-") && name.endsWith(">") -> "value"
             // Unused parameter placeholder (from _ in lambdas): <unused var> -> _unused
-            name == "<unused var>" -> "_unused"
+            // Handle both with and without angle brackets
+            name == "<unused var>" || name == "unused var" -> "_unused"
             // Receiver reference: <this> -> __this (avoid potential BrightScript 'm.this' issues)
             name == "<this>" -> "__this"
             // Any other special name: strip angle brackets and sanitize
@@ -3130,6 +3444,8 @@ class IrToBrsTransformer(
                 name.removePrefix("<").removeSuffix(">")
                     .replace("-", "_")
                     .replace(" ", "_")
+            // Names with spaces (shouldn't happen, but sanitize anyway)
+            name.contains(" ") -> name.replace(" ", "_")
             else -> name
         }
         // Sanitize invalid BrightScript identifier characters ($ is not valid in BrightScript)
@@ -3370,8 +3686,18 @@ class IrStatementToBrsTransformer(
 
     override fun visitVariable(declaration: IrVariable, data: Unit): BrsStatement {
         val initializer = declaration.initializer
+
         // Check if this variable is shared (captured by closure and mutable)
-        val isShared = declaration.symbol in parent.sharedVariables
+        // Two detection mechanisms:
+        // 1. Via SharedVariablesLowering which sets SHARED_VARIABLE_WRAPPER origin
+        // 2. Via BrsSharedVariableDetectionLowering which populates sharedVariables set
+        val isShared = declaration.origin == BrsDeclarationOrigin.SHARED_VARIABLE_WRAPPER ||
+                       declaration.symbol in parent.sharedVariables
+
+        // Get a unique variable name to avoid collision with other variables
+        // that may have the same name in the IR (e.g., from multiple inline expansions)
+        val baseName = parent.sanitizeParameterName(declaration.name.asString())
+        val uniqueName = parent.getUniqueVariableName(declaration.symbol, baseName)
 
         // Handle block initializers specially - BrightScript doesn't have block expressions
         // so we need to flatten the block's statements before the variable assignment
@@ -3395,7 +3721,7 @@ class IrStatementToBrsTransformer(
                     lastExpr = BrsAALiteral(mutableListOf(BrsAAEntry("value", lastExpr)))
                 }
                 statements.add(BrsVariable(
-                    name = parent.sanitizeParameterName(declaration.name.asString()),
+                    name = uniqueName,
                     type = parent.mapTypeToBrs(declaration.type),
                     initializer = lastExpr
                 ))
@@ -3405,7 +3731,7 @@ class IrStatementToBrsTransformer(
                     initExpr = BrsAALiteral(mutableListOf(BrsAAEntry("value", initExpr)))
                 }
                 statements.add(BrsVariable(
-                    name = parent.sanitizeParameterName(declaration.name.asString()),
+                    name = uniqueName,
                     type = parent.mapTypeToBrs(declaration.type),
                     initializer = initExpr
                 ))
@@ -3430,7 +3756,7 @@ class IrStatementToBrsTransformer(
         val hoisted = parent.takeHoistedStatements()
         return if (hoisted.isEmpty()) {
             BrsVariable(
-                name = parent.sanitizeParameterName(declaration.name.asString()),
+                name = uniqueName,
                 type = parent.mapTypeToBrs(declaration.type),
                 initializer = finalInit
             )
@@ -3438,7 +3764,7 @@ class IrStatementToBrsTransformer(
             // Prepend hoisted statements before the variable declaration
             val allStatements = hoisted.toMutableList()
             allStatements.add(BrsVariable(
-                name = parent.sanitizeParameterName(declaration.name.asString()),
+                name = uniqueName,
                 type = parent.mapTypeToBrs(declaration.type),
                 initializer = finalInit
             ))
@@ -3461,8 +3787,20 @@ class IrStatementToBrsTransformer(
 
             when {
                 stmt is IrBlock && stmt.statements.isNotEmpty() -> {
-                    // Recursively flatten nested blocks
-                    flattenBlockStatements(stmt.statements, output, data)
+                    // Check if this is a FOR_LOOP block - if so, increment the nesting counter
+                    // so that any break statements inside get "exit while" instead of "exit for"
+                    val isForLoop = stmt.origin == IrStatementOrigin.FOR_LOOP
+                    if (isForLoop) {
+                        parent.forLoopToWhileNestingDepth++
+                    }
+                    try {
+                        // Recursively flatten nested blocks
+                        flattenBlockStatements(stmt.statements, output, data)
+                    } finally {
+                        if (isForLoop) {
+                            parent.forLoopToWhileNestingDepth--
+                        }
+                    }
                 }
                 stmt is IrVariable -> {
                     output.add(visitVariable(stmt, data))
@@ -3472,13 +3810,16 @@ class IrStatementToBrsTransformer(
                     parent.transformStatement(stmt)?.let { output.add(it) }
                 }
                 stmt is IrExpression -> {
+                    val expr = parent.transformExpression(stmt)
+                    // For the LAST expression, always add it as an expression statement
+                    // because it may be the value of the block (e.g., __when_tmp variable read)
+                    // For non-last expressions, skip side-effect-free ones
                     if (isLast) {
-                        // Last expression is the block's value - keep as expression
-                        val expr = parent.transformExpression(stmt)
+                        // Always add last expression - it's the block's value
                         output.add(BrsExpressionStatement(expr))
-                    } else {
-                        // Non-last expression - transform as statement
-                        val expr = parent.transformExpression(stmt)
+                    } else if (expr !is BrsIdentifier && expr !is BrsInvalidLiteral &&
+                        expr !is BrsIntLiteral && expr !is BrsDoubleLiteral &&
+                        expr !is BrsStringLiteral && expr !is BrsBooleanLiteral) {
                         output.add(BrsExpressionStatement(expr))
                     }
                 }
@@ -3571,17 +3912,77 @@ class IrStatementToBrsTransformer(
         val transformedValue = parent.transformExpression(expression.value)
         val hoisted = parent.takeHoistedStatements()
 
+        // If the transformed value is a BrsStatementAsExpression wrapping a control-flow statement
+        // (throw, return, exit, continue), we should emit that statement directly instead of
+        // wrapping it in a return. These statements don't produce values and "return throw x" is invalid.
+        if (transformedValue is BrsStatementAsExpression) {
+            val innerStmt = transformedValue.statement
+            if (innerStmt is BrsThrow || innerStmt is BrsReturn || innerStmt is BrsExit || innerStmt is BrsContinue) {
+                return if (hoisted.isNotEmpty()) {
+                    val allStatements = hoisted.toMutableList()
+                    allStatements.add(innerStmt)
+                    BrsBlock(allStatements)
+                } else {
+                    innerStmt
+                }
+            }
+        }
+
+        val returnTarget = expression.returnTargetSymbol.owner
+
+        // Returns to returnable blocks (from inlined functions) after lowering
+        // The BrsReturnableBlockLowering transforms:
+        //   return@block value  ->  result = value; return@block Unit
+        // And wraps the block in: while true { ... exit while } end while
+        //
+        // So when we see return@block Unit, we should emit "exit while" to break out of the wrapper loop.
+        // The result variable has already been set by the lowering.
+        //
+        // IMPORTANT: If we're using flag-based approach (because the return is inside a while loop),
+        // we need to set the flag before exiting.
+        if (returnTarget !is IrFunction) {
+            // This is return@block Unit (after lowering) - emit exit while
+            val statements = hoisted.toMutableList()
+
+            // If there's a flag on the stack, we're inside a flag-based returnable block
+            val flagName = parent.returnableBlockFlagStack.lastOrNull()
+            if (flagName != null) {
+                statements.add(BrsExpressionStatement(
+                    BrsBinaryOp(BrsIdentifier(flagName), BrsBinaryOperator.EQ, BrsBooleanLiteral(true))
+                ))
+            }
+            statements.add(BrsExit(BrsExitKind.WHILE))
+            return if (statements.size == 1) statements[0] else BrsBlock(statements)
+        }
+
+        // Check if the function we're returning from expects a value
+        // (e.g., suspend functions have their return type changed from Unit to Any?)
+        val functionReturnsValue = !returnTarget.returnType.isUnit() && !returnTarget.returnType.isNothing()
+
         // For Unit return types, we still need to execute the expression (it may have side effects)
         // but we don't return a value. Emit the expression as a statement followed by empty return.
+        // EXCEPTION: If the function expects a return value (like suspend functions returning Any?),
+        // we must return the expression result even if it's Unit-typed, because the actual runtime
+        // value may be COROUTINE_SUSPENDED which needs to propagate to the caller.
         if (expression.value.type.isUnit()) {
-            val statements = hoisted.toMutableList()
-            // Only add the expression as a statement if it's not just a literal/identifier
-            // (to avoid emitting standalone "invalid" statements)
-            if (transformedValue !is BrsInvalidLiteral && transformedValue !is BrsIdentifier) {
-                statements.add(BrsExpressionStatement(transformedValue))
+            if (functionReturnsValue) {
+                // Function expects a return value - return the expression result even if it's Unit-typed
+                // This is critical for suspend functions where Unit expressions may actually carry
+                // suspension signals (COROUTINE_SUSPENDED) at runtime
+                val statements = hoisted.toMutableList()
+                statements.add(BrsReturn(value = transformedValue))
+                return if (statements.size == 1) statements[0] else BrsBlock(statements)
+            } else {
+                // Function doesn't expect return value - emit as statement then return nothing
+                val statements = hoisted.toMutableList()
+                // Only add the expression as a statement if it's not just a literal/identifier
+                // (to avoid emitting standalone "invalid" statements)
+                if (transformedValue !is BrsInvalidLiteral && transformedValue !is BrsIdentifier) {
+                    statements.add(BrsExpressionStatement(transformedValue))
+                }
+                statements.add(BrsReturn(value = null))
+                return if (statements.size == 1) statements[0] else BrsBlock(statements)
             }
-            statements.add(BrsReturn(value = null))
-            return if (statements.size == 1) statements[0] else BrsBlock(statements)
         }
 
         return if (hoisted.isNotEmpty()) {
@@ -3694,6 +4095,11 @@ class IrStatementToBrsTransformer(
                     val transformed = transformBlockOrStatement(branchResult)
                     transformed
                 }
+                is IrComposite -> {
+                    // Transform composite (used in coroutine state machine branches)
+                    val transformed = transformBlockOrStatement(branchResult)
+                    transformed
+                }
                 // IrTypeOperatorCall with IMPLICIT_COERCION_TO_UNIT wraps expressions used as statements
                 is IrTypeOperatorCall -> {
                     if (branchResult.operator == IrTypeOperator.IMPLICIT_COERCION_TO_UNIT) {
@@ -3750,24 +4156,299 @@ class IrStatementToBrsTransformer(
     }
 
     override fun visitWhileLoop(loop: IrWhileLoop, data: Unit): BrsStatement {
-        return BrsWhile(
-            condition = parent.transformExpression(loop.condition),
-            body = loop.body?.let { transformBlockOrStatement(it) } ?: BrsBlock()
-        )
+        val condition = parent.transformExpression(loop.condition)
+        // Take hoisted statements from condition transformation (e.g., from inlined returnable blocks)
+        val conditionHoisted = parent.takeHoistedStatements()
+        val bodyContainsContinue = parent.containsContinueFor(loop.body, loop)
+
+        if (!context.supportsContinue && bodyContainsContinue) {
+            // Wrap body in inner while(true) loop to simulate continue.
+            // continue becomes "exit while" which exits the inner loop, and the outer loop continues.
+            // break needs special handling: set a flag, exit inner, check flag after inner loop.
+            val bodyContainsBreak = parent.containsBreakFor(loop.body, loop)
+            val breakFlagName = if (bodyContainsBreak) "__break${parent.nextTempId()}" else null
+
+            // Register this loop as having a continue wrapper
+            parent.loopsWithContinueWrapper.add(loop)
+            if (breakFlagName != null) {
+                parent.loopBreakFlags[loop] = breakFlagName
+            }
+
+            // Push this loop onto the stack BEFORE transforming its body.
+            // This ensures that only IrContinue/IrBreak that are encountered
+            // during the body transformation will be converted to exit while.
+            parent.continueWrapperLoopStack.add(loop)
+
+            try {
+                // Transform the body (continue/break will be handled by visitContinue/visitBreak)
+                val innerBody = loop.body?.let { transformBlockOrStatement(it) } ?: BrsBlock()
+
+                // Ensure inner loop always exits at the end (normal flow)
+                val innerBodyStatements = when (innerBody) {
+                    is BrsBlock -> innerBody.statements.toMutableList()
+                    else -> mutableListOf(innerBody)
+                }
+                // Add exit while at end if not already terminating
+                if (innerBodyStatements.isEmpty() || !isTerminating(innerBodyStatements.last())) {
+                    innerBodyStatements.add(BrsExit(BrsExitKind.WHILE))
+                }
+
+                val innerLoop = BrsWhile(
+                    condition = BrsBooleanLiteral(true),
+                    body = BrsBlock(innerBodyStatements)
+                )
+
+                // Build outer loop body
+                val outerBodyStatements = mutableListOf<BrsStatement>()
+                if (breakFlagName != null) {
+                    // Initialize break flag to false at start of each iteration
+                    outerBodyStatements.add(BrsVariable(breakFlagName, null, BrsBooleanLiteral(false)))
+                }
+                outerBodyStatements.add(innerLoop)
+                if (breakFlagName != null) {
+                    // Check break flag after inner loop
+                    outerBodyStatements.add(
+                        BrsIf(
+                            condition = BrsIdentifier(breakFlagName),
+                            thenBranch = BrsExit(BrsExitKind.WHILE),
+                            elseBranch = null
+                        )
+                    )
+                }
+
+                // Handle hoisted statements from complex while conditions
+                if (conditionHoisted.isNotEmpty()) {
+                    // Add condition check at start and re-evaluation at end
+                    val fullBodyStatements = mutableListOf<BrsStatement>()
+                    // Condition check
+                    fullBodyStatements.add(
+                        BrsIf(
+                            condition = BrsUnaryOp(BrsUnaryOperator.NOT, condition),
+                            thenBranch = BrsExit(BrsExitKind.WHILE),
+                            elseBranch = null
+                        )
+                    )
+                    fullBodyStatements.addAll(outerBodyStatements)
+                    // Re-evaluate condition
+                    fullBodyStatements.addAll(conditionHoisted)
+
+                    val whileLoop = BrsWhile(
+                        condition = BrsBooleanLiteral(true),
+                        body = BrsBlock(fullBodyStatements)
+                    )
+                    return BrsBlock((conditionHoisted + whileLoop).toMutableList())
+                }
+
+                return BrsWhile(
+                    condition = condition,
+                    body = BrsBlock(outerBodyStatements)
+                )
+            } finally {
+                // Clean up tracking - remove from stack and sets
+                parent.continueWrapperLoopStack.remove(loop)
+                parent.loopsWithContinueWrapper.remove(loop)
+                if (breakFlagName != null) {
+                    parent.loopBreakFlags.remove(loop)
+                }
+            }
+        } else {
+            // Handle hoisted statements from complex while conditions (e.g., inlined returnable blocks)
+            // For conditions like `while (queue.isNotEmpty())` where isNotEmpty is an inlined function,
+            // the condition transformation produces hoisted statements that set up a temporary variable.
+            // We need to:
+            // 1. Run the hoisted statements before the loop (initial condition evaluation)
+            // 2. Check the condition at the start of the loop
+            // 3. Run the hoisted statements at the end of the loop body (re-evaluate for next iteration)
+            if (conditionHoisted.isNotEmpty()) {
+                val body = loop.body?.let { transformBlockOrStatement(it) } ?: BrsBlock()
+                val bodyStatements = when (body) {
+                    is BrsBlock -> body.statements.toMutableList()
+                    else -> mutableListOf(body)
+                }
+
+                // Build: while true { if not condition then exit while end if; body; hoisted }
+                val loopBody = mutableListOf<BrsStatement>()
+                // Condition check at start of loop
+                loopBody.add(
+                    BrsIf(
+                        condition = BrsUnaryOp(BrsUnaryOperator.NOT, condition),
+                        thenBranch = BrsExit(BrsExitKind.WHILE),
+                        elseBranch = null
+                    )
+                )
+                // Original body
+                loopBody.addAll(bodyStatements)
+                // Re-evaluate condition for next iteration
+                loopBody.addAll(conditionHoisted)
+
+                val whileLoop = BrsWhile(
+                    condition = BrsBooleanLiteral(true),
+                    body = BrsBlock(loopBody)
+                )
+
+                // Return: hoisted statements + while loop
+                return BrsBlock((conditionHoisted + whileLoop).toMutableList())
+            }
+
+            return BrsWhile(
+                condition = condition,
+                body = loop.body?.let { transformBlockOrStatement(it) } ?: BrsBlock()
+            )
+        }
+    }
+
+    /**
+     * Checks if a statement is terminating (return, exit, throw, etc.)
+     */
+    private fun isTerminating(stmt: BrsStatement): Boolean {
+        return when (stmt) {
+            is BrsReturn -> true
+            is BrsExit -> true
+            is BrsThrow -> true
+            is BrsContinue -> true
+            is BrsBlock -> stmt.statements.isNotEmpty() && isTerminating(stmt.statements.last())
+            else -> false
+        }
     }
 
     override fun visitDoWhileLoop(loop: IrDoWhileLoop, data: Unit): BrsStatement {
-        // BrightScript doesn't have do-while, transform to while with entry guard
-        val body = loop.body?.let { transformBlockOrStatement(it) } ?: BrsBlock()
-        val condition = parent.transformExpression(loop.condition)
+        // Coroutine root loops have special handling - use simple transformation
+        // The loop is structured as: do { try { state machine } catch { ... } } while(true)
+        // Continue statements become "exit while" (handled in visitContinue)
+        // which exits the try block and re-enters the while loop from the top.
+        if (loop.origin == BrsStatementOrigins.COROUTINE_ROOT_LOOP) {
+            val body = loop.body?.let { transformBlockOrStatement(it) } ?: BrsBlock()
+            val condition = parent.transformExpression(loop.condition)
+            // do { body } while(true) → while(true) { body }
+            // For coroutines, condition is always true, so we just use a while(true)
+            return BrsWhile(condition, body)
+        }
 
-        return BrsBlock(mutableListOf(
-            body,
-            BrsWhile(condition, body.deepCopy())
-        ))
+        // BrightScript doesn't have do-while, transform to while with entry guard
+        // First execution runs unconditionally, then subsequent iterations check condition
+        val bodyContainsContinue = parent.containsContinueFor(loop.body, loop)
+
+        if (!context.supportsContinue && bodyContainsContinue) {
+            // Similar to while loop, but do-while executes body first, then checks condition
+            // We transform to: body; while(condition) { body }
+            // But with continue wrapper for the while part
+            val bodyContainsBreak = parent.containsBreakFor(loop.body, loop)
+            val breakFlagName = if (bodyContainsBreak) "__break${parent.nextTempId()}" else null
+
+            // Register this loop as having a continue wrapper
+            parent.loopsWithContinueWrapper.add(loop)
+            if (breakFlagName != null) {
+                parent.loopBreakFlags[loop] = breakFlagName
+            }
+
+            // Transform the body for the first (unconditional) execution
+            // The first execution is NOT inside the loop, so continues should NOT
+            // be converted to exit while. We don't push to the stack yet.
+            val firstBody = loop.body?.let { transformBlockOrStatement(it) } ?: BrsBlock()
+
+            // Now push to the stack for the while loop body transformation
+            parent.continueWrapperLoopStack.add(loop)
+
+            try {
+                // Transform the body again for the while loop (with continue wrapper)
+                val innerBody = loop.body?.let { transformBlockOrStatement(it) } ?: BrsBlock()
+
+                val condition = parent.transformExpression(loop.condition)
+
+                // Ensure inner loop always exits at the end
+                val innerBodyStatements = when (innerBody) {
+                    is BrsBlock -> innerBody.statements.toMutableList()
+                    else -> mutableListOf(innerBody)
+                }
+                if (innerBodyStatements.isEmpty() || !isTerminating(innerBodyStatements.last())) {
+                    innerBodyStatements.add(BrsExit(BrsExitKind.WHILE))
+                }
+
+                val innerLoop = BrsWhile(
+                    condition = BrsBooleanLiteral(true),
+                    body = BrsBlock(innerBodyStatements)
+                )
+
+                // Build while loop body
+                val whileBodyStatements = mutableListOf<BrsStatement>()
+                if (breakFlagName != null) {
+                    whileBodyStatements.add(BrsVariable(breakFlagName, null, BrsBooleanLiteral(false)))
+                }
+                whileBodyStatements.add(innerLoop)
+                if (breakFlagName != null) {
+                    whileBodyStatements.add(
+                        BrsIf(
+                            condition = BrsIdentifier(breakFlagName),
+                            thenBranch = BrsExit(BrsExitKind.WHILE),
+                            elseBranch = null
+                        )
+                    )
+                }
+
+                val whileLoop = BrsWhile(
+                    condition = condition,
+                    body = BrsBlock(whileBodyStatements)
+                )
+
+                // For do-while with break in first body execution, we need similar handling
+                // But it's tricky since there's no outer loop. For now, handle simple case.
+                return BrsBlock(mutableListOf(firstBody, whileLoop))
+            } finally {
+                // Clean up tracking - remove from stack and sets
+                parent.continueWrapperLoopStack.remove(loop)
+                parent.loopsWithContinueWrapper.remove(loop)
+                if (breakFlagName != null) {
+                    parent.loopBreakFlags.remove(loop)
+                }
+            }
+        } else {
+            // Original transformation without continue wrapper
+            val body = loop.body?.let { transformBlockOrStatement(it) } ?: BrsBlock()
+            val condition = parent.transformExpression(loop.condition)
+
+            return BrsBlock(mutableListOf(
+                body,
+                BrsWhile(condition, body.deepCopy())
+            ))
+        }
     }
 
     override fun visitBreak(jump: IrBreak, data: Unit): BrsStatement {
+        // Check if this break targets a loop with a continue wrapper (simulated continue)
+        // In this case, we need to set the break flag and exit the inner wrapper loop.
+        // The outer loop will check the flag and exit.
+        // We check the stack to ensure we're inside the loop body transformation.
+        val breakFlagName = parent.loopBreakFlags[jump.loop]
+        if (breakFlagName != null && parent.continueWrapperLoopStack.contains(jump.loop)) {
+            // Set break flag to true, then exit the inner while loop
+            return BrsBlock(mutableListOf(
+                BrsExpressionStatement(
+                    BrsBinaryOp(
+                        BrsIdentifier(breakFlagName),
+                        BrsBinaryOperator.EQ,
+                        BrsBooleanLiteral(true)
+                    )
+                ),
+                BrsExit(BrsExitKind.WHILE)
+            ))
+        }
+
+        // Check if the loop this break references was transformed to a while loop
+        // This happens when a for-each loop uses Strategy 4 (iterator protocol),
+        // which generates a while loop instead of a native for-each
+        // First check: are we inside a FOR_LOOP that's being transformed to while?
+        // This handles cases where inlining creates new loop instances that we can't track by identity.
+        if (parent.forLoopToWhileNestingDepth > 0 &&
+            (jump.loop.origin == IrStatementOrigin.FOR_LOOP_INNER_WHILE ||
+             jump.loop.origin == IrStatementOrigin.FOR_LOOP)) {
+            return BrsExit(BrsExitKind.WHILE)
+        }
+
+        // Second check: is this specific loop instance in our tracking set?
+        if (parent.loopsTransformedToWhile.contains(jump.loop)) {
+            return BrsExit(BrsExitKind.WHILE)
+        }
+
         // Determine exit kind based on the loop type
         // FOR_LOOP origin indicates a for or for-each loop
         val exitKind = when (jump.loop.origin) {
@@ -3779,6 +4460,45 @@ class IrStatementToBrsTransformer(
     }
 
     override fun visitContinue(jump: IrContinue, data: Unit): BrsStatement {
+        // Coroutine root loops use while(true) with try/catch inside.
+        // The state machine uses continue to re-enter the loop from any state.
+        // When a suspend call returns immediately (doesn't suspend), we need to
+        // continue the loop to re-read the state and execute the next state.
+        // This requires "continue while" to restart the loop iteration.
+        if (jump.loop.origin == BrsStatementOrigins.COROUTINE_ROOT_LOOP) {
+            return BrsContinue(BrsContinueKind.WHILE)
+        }
+
+        // Check if this continue targets a loop with a continue wrapper
+        // In this case, emit "exit while" to exit the inner wrapper loop,
+        // which allows the outer loop to continue naturally.
+        // We check the stack (not just the set) to ensure we're actually inside
+        // the loop body transformation. This is important for coroutines where
+        // IrContinue statements may exist both inside and outside the loop.
+        if (parent.continueWrapperLoopStack.contains(jump.loop)) {
+            return BrsExit(BrsExitKind.WHILE)
+        }
+
+        // First check: are we inside a FOR_LOOP that's being transformed to while?
+        if (parent.forLoopToWhileNestingDepth > 0 &&
+            (jump.loop.origin == IrStatementOrigin.FOR_LOOP_INNER_WHILE ||
+             jump.loop.origin == IrStatementOrigin.FOR_LOOP)) {
+            return if (context.supportsContinue) {
+                BrsContinue(BrsContinueKind.WHILE)
+            } else {
+                BrsComment("continue not supported on target Roku OS")
+            }
+        }
+
+        // Second check: is this specific loop instance in our tracking set?
+        if (parent.loopsTransformedToWhile.contains(jump.loop)) {
+            return if (context.supportsContinue) {
+                BrsContinue(BrsContinueKind.WHILE)
+            } else {
+                BrsComment("continue not supported on target Roku OS")
+            }
+        }
+
         // Determine continue kind based on the loop type
         val continueKind = when (jump.loop.origin) {
             IrStatementOrigin.FOR_LOOP,
@@ -3798,12 +4518,57 @@ class IrStatementToBrsTransformer(
     }
 
     override fun visitBlock(expression: IrBlock, data: Unit): BrsStatement {
+        // Check if this is an IrReturnableBlock (from inlined functions)
+        // After BrsReturnableBlockLowering, the block contains:
+        // - Statements that may include "return@block Unit" (which becomes exit while)
+        // We wrap this in "while true { ... }" so exit while can break out of it.
+        if (expression is IrReturnableBlock) {
+            return transformReturnableBlock(expression)
+        }
+
         // Check if this is a FOR loop that was lowered to a while loop
-        if (expression.origin == IrStatementOrigin.FOR_LOOP) {
+        val isForLoop = expression.origin == IrStatementOrigin.FOR_LOOP
+        if (isForLoop) {
             val forLoopResult = tryTransformForLoop(expression)
             if (forLoopResult != null) {
                 return forLoopResult
             }
+            // If tryTransformForLoop returns null, fall through to general processing.
+            // This can happen after inlining changes the block structure.
+            // Register any inner while loops so that visitBreak generates "exit while" instead of "exit for".
+            // We need to do this BEFORE general processing transforms the body.
+            // Recursively find ALL while loops in the block, including those nested inside
+            // when expressions, type operators, etc.
+            fun registerInnerLoops(element: IrElement) {
+                when (element) {
+                    is IrWhileLoop -> {
+                        // This while loop was originally a for-loop's inner while
+                        // Any break statements targeting it should use "exit while"
+                        parent.loopsTransformedToWhile.add(element)
+                        // Also recurse into the loop body
+                        element.body?.let { registerInnerLoops(it) }
+                    }
+                    is IrBlock -> element.statements.forEach { registerInnerLoops(it) }
+                    is IrContainerExpression -> element.statements.forEach { registerInnerLoops(it) }
+                    is IrWhen -> element.branches.forEach { branch ->
+                        registerInnerLoops(branch.condition)
+                        registerInnerLoops(branch.result)
+                    }
+                    is IrTypeOperatorCall -> registerInnerLoops(element.argument)
+                    is IrReturn -> registerInnerLoops(element.value)
+                    is IrSetValue -> registerInnerLoops(element.value)
+                    is IrSetField -> registerInnerLoops(element.value)
+                    is IrVariable -> element.initializer?.let { registerInnerLoops(it) }
+                    is IrCall -> {
+                        element.dispatchReceiver?.let { registerInnerLoops(it) }
+                        element.extensionReceiver?.let { registerInnerLoops(it) }
+                        for (i in 0 until element.valueArgumentsCount) {
+                            element.getValueArgument(i)?.let { registerInnerLoops(it) }
+                        }
+                    }
+                }
+            }
+            expression.statements.forEach { registerInnerLoops(it) }
         }
 
         // Check if this is an increment/decrement block
@@ -3968,7 +4733,9 @@ class IrStatementToBrsTransformer(
                 }
                 is IrComposite -> {
                     // Process each statement in the composite
-                    val compositeStmts = stmt.statements.flatMap { nestedStmt ->
+                    // In statement context, the last element might be a result value that should be discarded
+                    val compositeStmts = stmt.statements.flatMapIndexed { index, nestedStmt ->
+                        val isLast = index == stmt.statements.lastIndex
                         when (nestedStmt) {
                             is IrBlock -> {
                                 val nested = visitBlock(nestedStmt, Unit)
@@ -3983,6 +4750,15 @@ class IrStatementToBrsTransformer(
                             is IrThrow -> listOf(visitThrow(nestedStmt, Unit))
                             is IrBreak -> listOf(visitBreak(nestedStmt, Unit))
                             is IrContinue -> listOf(visitContinue(nestedStmt, Unit))
+                            // IrReturn needs special handling - use statement transformer which has visitReturn
+                            is IrReturn -> listOfNotNull(parent.transformStatement(nestedStmt))
+                            // Skip pure value reads at the end (result values discarded in statement context)
+                            is IrGetValue -> if (isLast) emptyList() else listOf(BrsExpressionStatement(parent.transformExpression(nestedStmt)))
+                            // IrSetValue needs statement visitor to handle hoisting from nested composites properly
+                            is IrSetValue -> {
+                                val transformed = visitSetValue(nestedStmt, Unit)
+                                if (transformed is BrsBlock) transformed.statements else listOf(transformed)
+                            }
                             is IrExpression -> listOf(BrsExpressionStatement(parent.transformExpression(nestedStmt)))
                             else -> listOfNotNull(parent.transformStatement(nestedStmt))
                         }
@@ -4045,10 +4821,336 @@ class IrStatementToBrsTransformer(
         }
         // Consume any remaining hoisted statements and prepend them to the block
         val remainingHoisted = parent.takeHoistedStatements()
-        return if (remainingHoisted.isNotEmpty()) {
-            BrsBlock((remainingHoisted + statements).toMutableList())
+        val finalStatements = if (remainingHoisted.isNotEmpty()) {
+            remainingHoisted + statements
         } else {
-            BrsBlock(statements.toMutableList())
+            statements
+        }
+
+        // If this was a FOR_LOOP that fell through to general processing,
+        // convert any "exit for" to "exit while" since the loop may have been
+        // transformed to a while loop during inlining
+        val convertedStatements = if (isForLoop) {
+            convertForControlToWhile(finalStatements)
+        } else {
+            finalStatements
+        }
+
+        return BrsBlock(convertedStatements.toMutableList())
+    }
+
+    /**
+     * Check if any returns within the block target this returnable block.
+     * After BrsReturnableBlockLowering, these will be "return@block Unit" statements.
+     */
+    private fun hasReturnsTargetingBlock(block: IrReturnableBlock): Boolean {
+        var hasReturns = false
+        block.acceptVoid(object : IrVisitorVoid() {
+            override fun visitElement(element: IrElement) {
+                if (!hasReturns) {
+                    element.acceptChildrenVoid(this)
+                }
+            }
+
+            override fun visitReturn(expression: IrReturn) {
+                if (expression.returnTargetSymbol == block.symbol) {
+                    hasReturns = true
+                }
+                // Don't recurse into nested returns
+            }
+        })
+        return hasReturns
+    }
+
+    /**
+     * Check if any returns targeting this block are inside a while loop.
+     * This is critical because BrightScript's "exit while" only exits the innermost
+     * while loop, so if a return@block is inside a while loop, we need to use a
+     * flag-based approach instead of just "exit while".
+     */
+    private fun hasReturnsInsideWhileLoop(block: IrReturnableBlock): Boolean {
+        var hasReturnsInWhile = false
+        var insideWhileLoop = 0
+
+        block.acceptVoid(object : IrVisitorVoid() {
+            override fun visitElement(element: IrElement) {
+                if (!hasReturnsInWhile) {
+                    element.acceptChildrenVoid(this)
+                }
+            }
+
+            override fun visitWhileLoop(loop: IrWhileLoop) {
+                insideWhileLoop++
+                loop.acceptChildrenVoid(this)
+                insideWhileLoop--
+            }
+
+            override fun visitDoWhileLoop(loop: IrDoWhileLoop) {
+                insideWhileLoop++
+                loop.acceptChildrenVoid(this)
+                insideWhileLoop--
+            }
+
+            override fun visitReturn(expression: IrReturn) {
+                if (expression.returnTargetSymbol == block.symbol && insideWhileLoop > 0) {
+                    hasReturnsInWhile = true
+                }
+            }
+        })
+        return hasReturnsInWhile
+    }
+
+    /**
+     * Check if a BrsStatement contains a BrsWhile loop (at any nesting level).
+     * This is used to determine if we need to insert flag checks after a statement
+     * in the flag-based returnable block approach.
+     */
+    private fun containsBrsWhileLoop(stmt: BrsStatement): Boolean {
+        return when (stmt) {
+            is BrsWhile -> true
+            is BrsBlock -> stmt.statements.any { containsBrsWhileLoop(it) }
+            is BrsIf -> {
+                containsBrsWhileLoop(stmt.thenBranch) ||
+                (stmt.elseBranch?.let { containsBrsWhileLoop(it) } ?: false)
+            }
+            is BrsFor -> containsBrsWhileLoop(stmt.body)
+            is BrsForEach -> containsBrsWhileLoop(stmt.body)
+            is BrsTry -> {
+                containsBrsWhileLoop(stmt.tryBlock) ||
+                (stmt.catchBlock?.let { containsBrsWhileLoop(it) } ?: false)
+            }
+            else -> false
+        }
+    }
+
+    /**
+     * Insert flag checks after any BrsWhile statements found at any nesting level.
+     * This post-processes a BrsStatement to add "if flagName then exit while" after
+     * each while loop, ensuring early exit propagates correctly through nested loops.
+     *
+     * @param stmt The statement to process
+     * @param flagName The flag variable name to check
+     * @return A new statement with flag checks inserted
+     */
+    private fun insertFlagChecksAfterWhileLoops(stmt: BrsStatement, flagName: String): BrsStatement {
+        return when (stmt) {
+            is BrsBlock -> {
+                val newStatements = mutableListOf<BrsStatement>()
+                for (s in stmt.statements) {
+                    val processed = insertFlagChecksAfterWhileLoops(s, flagName)
+                    newStatements.add(processed)
+                    // Add flag check after while loops
+                    if (processed is BrsWhile) {
+                        newStatements.add(
+                            BrsIf(
+                                condition = BrsIdentifier(flagName),
+                                thenBranch = BrsExit(BrsExitKind.WHILE),
+                                elseBranch = null
+                            )
+                        )
+                    }
+                }
+                BrsBlock(newStatements)
+            }
+            is BrsIf -> BrsIf(
+                condition = stmt.condition,
+                thenBranch = insertFlagChecksAfterWhileLoops(stmt.thenBranch, flagName),
+                elseBranch = stmt.elseBranch?.let { insertFlagChecksAfterWhileLoops(it, flagName) }
+            )
+            is BrsFor -> BrsFor(
+                variable = stmt.variable,
+                start = stmt.start,
+                end = stmt.end,
+                step = stmt.step,
+                body = insertFlagChecksAfterWhileLoops(stmt.body, flagName)
+            )
+            is BrsForEach -> BrsForEach(
+                variable = stmt.variable,
+                iterable = stmt.iterable,
+                body = insertFlagChecksAfterWhileLoops(stmt.body, flagName)
+            )
+            is BrsTry -> BrsTry(
+                tryBlock = insertFlagChecksAfterWhileLoops(stmt.tryBlock, flagName),
+                catchVariable = stmt.catchVariable,
+                catchBlock = stmt.catchBlock?.let { insertFlagChecksAfterWhileLoops(it, flagName) }
+            )
+            is BrsWhile -> {
+                // Don't recurse into while loop body - we only care about while loops
+                // at the returnable block level, not nested while loops inside those
+                stmt
+            }
+            else -> stmt
+        }
+    }
+
+    /**
+     * Transform a returnable block (from inlined functions).
+     *
+     * After BrsReturnableBlockLowering, the returnable block contains:
+     * - Statements that may include "return@block Unit" (converted to exit while)
+     * - The actual return value has been hoisted to a result variable by the lowering
+     *
+     * We wrap this in "while true { ... exit while }" so that return@block Unit
+     * (which becomes "exit while") can break out of the block.
+     *
+     * IMPORTANT: If there are NO returns targeting this block, we don't need the
+     * while wrapper at all - just emit the statements directly. This avoids
+     * generating nested while loops for cases like `let { return it }` where
+     * the return is a function return, not a block return.
+     *
+     * CRITICAL: When returns are inside while loops, we use a flag-based approach
+     * because BrightScript's "exit while" only exits the innermost loop.
+     * The flag approach: set __done = true; exit while, then after each inner
+     * while loop check: if __done then exit while.
+     */
+    private fun transformReturnableBlock(block: IrReturnableBlock): BrsStatement {
+        // Check if any returns actually target this block
+        // If not, we don't need the while wrapper - just emit statements directly
+        val needsWhileWrapper = hasReturnsTargetingBlock(block)
+        val needsFlagApproachCheck = hasReturnsInsideWhileLoop(block)
+
+        // DEBUG: Log returnable block transformation
+        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB] transformReturnableBlock: needsWhileWrapper=$needsWhileWrapper, needsFlagApproach=$needsFlagApproachCheck\n")
+        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]   statements count: ${block.statements.size}\n")
+        block.statements.forEachIndexed { idx, stmt ->
+            java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]   [$idx] ${stmt::class.simpleName}: ${stmt.toString().take(100)}\n")
+        }
+
+        if (!needsWhileWrapper) {
+            // No returns target this block - just transform statements directly
+            val bodyStatements = mutableListOf<BrsStatement>()
+            for (stmt in block.statements) {
+                val transformed = when (stmt) {
+                    is IrExpression -> {
+                        parent.pushHoistedScope()
+                        val result = when (stmt) {
+                            is IrWhen -> visitWhen(stmt, Unit)
+                            is IrWhileLoop -> visitWhileLoop(stmt, Unit)
+                            is IrDoWhileLoop -> visitDoWhileLoop(stmt, Unit)
+                            is IrBlock -> visitBlock(stmt, Unit)
+                            is IrReturn -> visitReturn(stmt, Unit)
+                            else -> BrsExpressionStatement(parent.transformExpression(stmt))
+                        }
+                        val hoisted = parent.popHoistedScope()
+                        if (hoisted.isNotEmpty()) {
+                            bodyStatements.addAll(hoisted)
+                        }
+                        result
+                    }
+                    else -> parent.transformStatement(stmt)
+                }
+                if (transformed != null) {
+                    bodyStatements.add(transformed)
+                }
+            }
+            return if (bodyStatements.size == 1) bodyStatements[0] else BrsBlock(bodyStatements)
+        }
+
+        // Check if any returns targeting this block are inside while loops
+        // If so, we need to use a flag-based approach
+        val needsFlagApproach = hasReturnsInsideWhileLoop(block)
+
+        // Generate flag name if needed and push onto stack
+        val flagName = if (needsFlagApproach) {
+            val name = "__ret_done_${parent.returnableBlockFlagCounter++}"
+            parent.returnableBlockFlagStack.add(name)
+            name
+        } else null
+
+        try {
+            // Transform the block body
+            val bodyStatements = mutableListOf<BrsStatement>()
+
+            for (stmt in block.statements) {
+                java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]   Processing stmt: ${stmt::class.simpleName}\n")
+                val transformed = when (stmt) {
+                    is IrExpression -> {
+                        parent.pushHoistedScope()
+                        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]     Is IrExpression, pushed scope\n")
+                        val result = when (stmt) {
+                            is IrWhen -> visitWhen(stmt, Unit)
+                            is IrWhileLoop -> visitWhileLoop(stmt, Unit)
+                            is IrDoWhileLoop -> visitDoWhileLoop(stmt, Unit)
+                            is IrBlock -> visitBlock(stmt, Unit)
+                            is IrReturn -> visitReturn(stmt, Unit)
+                            else -> {
+                                java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]     else branch: calling transformExpression on ${stmt::class.simpleName}\n")
+                                BrsExpressionStatement(parent.transformExpression(stmt))
+                            }
+                        }
+                        val hoisted = parent.popHoistedScope()
+                        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]     popped scope, hoisted count: ${hoisted.size}\n")
+                        hoisted.forEachIndexed { idx, h ->
+                            java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]       hoisted[$idx]: ${h::class.simpleName}\n")
+                        }
+                        if (hoisted.isNotEmpty()) {
+                            java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]     adding hoisted to bodyStatements BEFORE result\n")
+                            bodyStatements.addAll(hoisted)
+                            java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]       bodyStatements now has ${bodyStatements.size} items\n")
+                        }
+                        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]     result: ${result::class.simpleName}\n")
+                        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]       result content: ${if (result is BrsBlock) "BrsBlock with ${(result as BrsBlock).statements.size} items" else result.toString().take(100)}\n")
+                        result
+                    }
+                    else -> parent.transformStatement(stmt)
+                }
+                if (transformed != null) {
+                    // If the result is a BrsBlock, flatten its statements into bodyStatements
+                    // This ensures proper ordering when nested blocks contain variable declarations
+                    // and assignments that depend on each other
+                    if (transformed is BrsBlock) {
+                        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]   flattening BrsBlock with ${transformed.statements.size} items into bodyStatements\n")
+                        bodyStatements.addAll(transformed.statements)
+                    } else {
+                        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]   adding ${transformed::class.simpleName} to bodyStatements\n")
+                        bodyStatements.add(transformed)
+                    }
+
+                    // DEBUG: Log transformed type
+                    java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]   bodyStatements.size=${bodyStatements.size}\n")
+                }
+            }
+
+            // Add "exit while" at the end to ensure we exit after all statements complete
+            // (in case there's no early return), but only if the last statement isn't already terminating
+            if (bodyStatements.isEmpty() || !isTerminating(bodyStatements.last())) {
+                if (flagName != null) {
+                    // Set flag before exiting
+                    bodyStatements.add(BrsExpressionStatement(
+                        BrsBinaryOp(BrsIdentifier(flagName), BrsBinaryOperator.EQ, BrsBooleanLiteral(true))
+                    ))
+                }
+                bodyStatements.add(BrsExit(BrsExitKind.WHILE))
+            }
+
+            // Build the while wrapper body
+            var whileBody: BrsStatement = BrsBlock(bodyStatements)
+
+            // If using flag approach, post-process the body to insert flag checks after each while loop
+            // at any nesting level. This ensures early exit propagates correctly.
+            if (flagName != null) {
+                whileBody = insertFlagChecksAfterWhileLoops(whileBody, flagName)
+                java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]   Applied insertFlagChecksAfterWhileLoops for flag=$flagName\n")
+            }
+
+            val whileLoop = BrsWhile(
+                condition = BrsBooleanLiteral(true),
+                body = whileBody
+            )
+
+            // If using flag approach, prepend flag declaration
+            return if (flagName != null) {
+                BrsBlock(mutableListOf<BrsStatement>(
+                    BrsVariable(flagName, BrsType.BOOLEAN, BrsBooleanLiteral(false)),
+                    whileLoop
+                ))
+            } else {
+                whileLoop
+            }
+        } finally {
+            if (flagName != null) {
+                parent.returnableBlockFlagStack.removeLast()
+            }
         }
     }
 
@@ -4148,34 +5250,81 @@ class IrStatementToBrsTransformer(
         // }
 
         val statements = block.statements
-        if (statements.size < 2) return null
+        if (statements.size < 2) {
+            return null
+        }
 
-        // Find the iterator variable
-        val iteratorVar = statements.firstOrNull {
+        // Find the iterator variable - may be at top level or inside an IrComposite
+        var iteratorVar = statements.firstOrNull {
             it is IrVariable && it.origin == IrDeclarationOrigin.FOR_LOOP_ITERATOR
-        } as? IrVariable ?: return null
+        } as? IrVariable
+
+        // If not found at top level, check inside IrComposite (happens after inlining)
+        if (iteratorVar == null) {
+            for (stmt in statements) {
+                if (stmt is IrComposite) {
+                    iteratorVar = stmt.statements.firstOrNull {
+                        it is IrVariable && (it as? IrVariable)?.origin == IrDeclarationOrigin.FOR_LOOP_ITERATOR
+                    } as? IrVariable
+                    if (iteratorVar != null) break
+                }
+            }
+        }
+
+        if (iteratorVar == null) {
+            // Still not found - this FOR_LOOP block has an unexpected structure
+            return null
+        }
 
         // Find the while loop
         val whileLoop = statements.lastOrNull {
             it is IrWhileLoop && it.origin == IrStatementOrigin.FOR_LOOP_INNER_WHILE
-        } as? IrWhileLoop ?: return null
+        } as? IrWhileLoop
+        if (whileLoop == null) {
+            return null
+        }
 
         // Try to extract the iterable from the iterator initialization
-        val iteratorInit = iteratorVar.initializer as? IrCall ?: return null
-        val iterableExpr = iteratorInit.dispatchReceiver ?: iteratorInit.extensionReceiver ?: return null
+        val iteratorInit = iteratorVar.initializer as? IrCall
+        if (iteratorInit == null) {
+            return null
+        }
+        val iterableExpr = iteratorInit.dispatchReceiver ?: iteratorInit.extensionReceiver
+        if (iterableExpr == null) {
+            return null
+        }
 
         // Get the loop body
-        val loopBody = whileLoop.body as? IrContainerExpression ?: return null
+        val loopBody = whileLoop.body as? IrContainerExpression
+        if (loopBody == null) {
+            return null
+        }
         val bodyStatements = loopBody.statements
 
-        if (bodyStatements.isEmpty()) return null
+        if (bodyStatements.isEmpty()) {
+            return null
+        }
 
         // First statement should be the loop variable assignment from iterator.next()
-        val loopVarDecl = bodyStatements.firstOrNull() as? IrVariable ?: return null
+        val loopVarDecl = bodyStatements.firstOrNull() as? IrVariable
+        if (loopVarDecl == null) {
+            return null
+        }
         val loopVarName = loopVarDecl.name.asString()
 
-        // Transform the remaining body statements (skip the loop variable declaration)
-        val actualBody = bodyStatements.drop(1).mapNotNull { stmt ->
+        // Register the while loop as "transformed to while" BEFORE transforming the body.
+        // This ensures that any IrBreak statements inside will generate "exit while" instead of "exit for".
+        // We don't know yet which strategy we'll use (it depends on iterable type analysis below),
+        // but it's safe to register - if we use native for-each (Strategy 1-3, 5), there won't be
+        // any break statements targeting this while loop in the output anyway.
+        parent.loopsTransformedToWhile.add(whileLoop)
+
+        // Increment nesting counter so that any nested for-loops (from inlining) also get "exit while"
+        parent.forLoopToWhileNestingDepth++
+        val actualBody: List<BrsStatement>
+        try {
+            // Transform the remaining body statements (skip the loop variable declaration)
+            actualBody = bodyStatements.drop(1).mapNotNull { stmt ->
             when (stmt) {
                 // IrWhen (if statements) should use visitWhen directly to handle returns properly
                 is IrWhen -> visitWhen(stmt, Unit)
@@ -4248,6 +5397,9 @@ class IrStatementToBrsTransformer(
                 }
                 else -> parent.transformStatement(stmt)
             }
+        }
+        } finally {
+            parent.forLoopToWhileNestingDepth--
         }
 
         // Transform the iterable expression
@@ -4391,11 +5543,17 @@ class IrStatementToBrsTransformer(
     private fun convertForControlToWhileStmt(stmt: BrsStatement): BrsStatement {
         return when (stmt) {
             is BrsExit -> if (stmt.kind == BrsExitKind.FOR) BrsExit(BrsExitKind.WHILE) else stmt
+            is BrsContinue -> if (stmt.kind == BrsContinueKind.FOR) BrsContinue(BrsContinueKind.WHILE) else stmt
             is BrsBlock -> BrsBlock(convertForControlToWhile(stmt.statements).toMutableList())
             is BrsIf -> BrsIf(
                 condition = stmt.condition,
                 thenBranch = convertForControlToWhileStmt(stmt.thenBranch),
                 elseBranch = stmt.elseBranch?.let { convertForControlToWhileStmt(it) }
+            )
+            is BrsTry -> BrsTry(
+                tryBlock = convertForControlToWhileStmt(stmt.tryBlock),
+                catchVariable = stmt.catchVariable,
+                catchBlock = stmt.catchBlock?.let { convertForControlToWhileStmt(it) }
             )
             is BrsWhile -> BrsWhile(
                 condition = stmt.condition,
@@ -4403,6 +5561,13 @@ class IrStatementToBrsTransformer(
             )
             is BrsForEach -> stmt // Don't recurse into nested for - it has its own scope
             is BrsFor -> stmt // Don't recurse into nested for - it has its own scope
+            // Handle expression statements that might contain nested structures
+            is BrsExpressionStatement -> stmt
+            is BrsVariable -> stmt
+            is BrsReturn -> stmt
+            is BrsThrow -> stmt
+            is BrsComment -> stmt
+            is BrsEmpty -> stmt
             else -> stmt
         }
     }
@@ -4522,32 +5687,52 @@ class IrStatementToBrsTransformer(
             else -> parent.sanitizeParameterName(rawName)
         }
 
+        // Check if this is a shared variable (boxed for closure capture)
+        // Two detection mechanisms:
+        // 1. Via SharedVariablesLowering which sets SHARED_VARIABLE_WRAPPER origin
+        // 2. Via BrsSharedVariableDetectionLowering which populates sharedVariables set
+        val owner = expression.symbol.owner
+        val isSharedVariable = (owner is IrVariable && owner.origin == BrsDeclarationOrigin.SHARED_VARIABLE_WRAPPER) ||
+                               expression.symbol in parent.sharedVariables
+
         // Build the target expression (LHS of assignment)
         val target = if (capturedVar != null && capturedVar.isMutable) {
             // Rewrite to assign via m (the closure object): m.varName.value = newValue
             BrsDotAccess(BrsDotAccess(BrsMRef(), capturedVar.name), "value")
-        } else if (expression.symbol in parent.sharedVariables) {
+        } else if (isSharedVariable) {
             // Shared variable accessed outside closure: varName.value = newValue
             // Note: capturedVar is null here due to the first condition being false
             BrsDotAccess(BrsIdentifier(parent.sanitizeParameterName(sanitizedName)), "value")
+        } else if (owner is IrVariable) {
+            // For local variables, use the unique name to avoid collisions from inline expansion
+            BrsIdentifier(parent.getVariableName(expression.symbol, sanitizedName))
         } else {
             BrsIdentifier(sanitizedName)
         }
 
         // Transform the expression - when-lowered blocks will add to hoisted queue
+        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-SV] StatementVisitor.visitSetValue for '${rawName}'\n")
         val transformedValue = parent.transformExpression(expression.value)
+        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-SV]   transformedValue: ${transformedValue::class.simpleName}\n")
         // Take any hoisted statements from nested when-lowered blocks
         val hoisted = parent.takeHoistedStatements()
+        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-SV]   hoisted count: ${hoisted.size}\n")
+        hoisted.forEachIndexed { idx, h ->
+            java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-SV]     hoisted[$idx]: ${h::class.simpleName}\n")
+        }
 
         val assignment = BrsExpressionStatement(
             BrsBinaryOp(target, BrsBinaryOperator.EQ, transformedValue)
         )
 
-        return if (hoisted.isNotEmpty()) {
+        val result = if (hoisted.isNotEmpty()) {
+            java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-SV]   returning BrsBlock with hoisted + assignment\n")
             BrsBlock((hoisted + assignment).toMutableList())
         } else {
+            java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-SV]   returning assignment only\n")
             assignment
         }
+        return result
     }
 
     override fun visitSetField(expression: IrSetField, data: Unit): BrsStatement {
@@ -4555,8 +5740,15 @@ class IrStatementToBrsTransformer(
             ?: BrsMRef()
 
         val field = expression.symbol.owner
-        // Sanitize field name - LocalDeclarationsLowering uses $ prefix for captured vars
-        val fieldName = field.name.asString().replace("$", "_")
+        // Sanitize field name - LocalDeclarationsLowering uses $ prefix for captured vars.
+        // Also handle special names like <this> which occur for extension receiver parameters.
+        val rawFieldName = field.name.asString()
+        val fieldName = when {
+            rawFieldName == "<this>" -> "__this"
+            rawFieldName.startsWith("<") && rawFieldName.endsWith(">") ->
+                rawFieldName.removePrefix("<").removeSuffix(">").replace("-", "_").replace(" ", "_")
+            else -> rawFieldName.replace("$", "_")
+        }
 
         // Check if this field holds a shared variable box (mutable captured variable)
         // If so, we need to write to field.value instead of field
@@ -4714,7 +5906,12 @@ class IrExpressionToBrsTransformer(
 
     override fun visitReturn(expression: IrReturn, data: Unit): BrsExpression {
         // Return statements in expression context (e.g., from inlined functions)
-        // Route to statement transformer and wrap as statement-in-expression
+        //
+        // After BrsReturnableBlockLowering, returns to returnable blocks become return@block Unit,
+        // which the statement visitor converts to "exit while" to break out of the wrapper loop.
+        // Returns to functions remain as BrsReturn statements.
+        //
+        // Route all returns through the statement visitor.
         val returnStmt = parent.statementVisitor.visitReturn(expression, Unit)
         return BrsStatementAsExpression(returnStmt)
     }
@@ -4851,7 +6048,13 @@ class IrExpressionToBrsTransformer(
         // Check if this is a shared variable (mutable var captured by closure) accessed outside the closure
         // These are boxed in {value: x} and need .value access
         // Note: capturedVar is null here because we returned early above if it wasn't
-        if (expression.symbol in parent.sharedVariables) {
+        // Two detection mechanisms:
+        // 1. Via SharedVariablesLowering which sets SHARED_VARIABLE_WRAPPER origin
+        // 2. Via BrsSharedVariableDetectionLowering which populates sharedVariables set
+        val owner = expression.symbol.owner
+        val isSharedVariable = (owner is IrVariable && owner.origin == BrsDeclarationOrigin.SHARED_VARIABLE_WRAPPER) ||
+                               expression.symbol in parent.sharedVariables
+        if (isSharedVariable) {
             val varName = parent.sanitizeParameterName(rawName)
             return BrsDotAccess(BrsIdentifier(varName), "value")
         }
@@ -4865,6 +6068,11 @@ class IrExpressionToBrsTransformer(
             // Sanitize other special names
             rawName.startsWith("<") && rawName.endsWith(">") ->
                 BrsIdentifier(rawName.removePrefix("<").removeSuffix(">").replace("-", "_"))
+            // For local variables, use the unique name to avoid collisions from inline expansion
+            owner is IrVariable -> {
+                val baseName = parent.sanitizeParameterName(rawName)
+                BrsIdentifier(parent.getVariableName(expression.symbol, baseName))
+            }
             // Apply full sanitization including reserved keyword escaping
             else -> BrsIdentifier(parent.sanitizeParameterName(rawName))
         }
@@ -4890,8 +6098,15 @@ class IrExpressionToBrsTransformer(
             expression.receiver?.let { it.accept(this, data) } ?: BrsMRef()
         }
 
-        // Sanitize field name - LocalDeclarationsLowering uses $ prefix for captured vars
-        val fieldName = field.name.asString().replace("$", "_")
+        // Sanitize field name - LocalDeclarationsLowering uses $ prefix for captured vars.
+        // Also handle special names like <this> which occur for extension receiver parameters.
+        val rawFieldName = field.name.asString()
+        val fieldName = when {
+            rawFieldName == "<this>" -> "__this"
+            rawFieldName.startsWith("<") && rawFieldName.endsWith(">") ->
+                rawFieldName.removePrefix("<").removeSuffix(">").replace("-", "_").replace(" ", "_")
+            else -> rawFieldName.replace("$", "_")
+        }
 
         // Check if accessing outer class field from inner class
         // The receiver will be the outer class reference
@@ -4933,8 +6148,15 @@ class IrExpressionToBrsTransformer(
             expression.receiver?.let { it.accept(this, data) } ?: BrsMRef()
         }
 
-        // Sanitize field name - LocalDeclarationsLowering uses $ prefix for captured vars
-        val fieldName = field.name.asString().replace("$", "_")
+        // Sanitize field name - LocalDeclarationsLowering uses $ prefix for captured vars.
+        // Also handle special names like <this> which occur for extension receiver parameters.
+        val rawFieldName = field.name.asString()
+        val fieldName = when {
+            rawFieldName == "<this>" -> "__this"
+            rawFieldName.startsWith("<") && rawFieldName.endsWith(">") ->
+                rawFieldName.removePrefix("<").removeSuffix(">").replace("-", "_").replace(" ", "_")
+            else -> rawFieldName.replace("$", "_")
+        }
 
         // Check if this field holds a shared variable box (mutable captured variable)
         // EXCEPTION: In constructor body, we're initializing the field with the box itself
@@ -4989,9 +6211,17 @@ class IrExpressionToBrsTransformer(
             )
         }
 
+        // For local variables, use the unique name to avoid collisions from inline expansion
+        val owner = expression.symbol.owner
+        val targetName = if (owner is IrVariable) {
+            parent.getVariableName(expression.symbol, sanitizedName)
+        } else {
+            sanitizedName
+        }
+
         // Generate assignment expression: varName = value
         return BrsBinaryOp(
-            BrsIdentifier(sanitizedName),
+            BrsIdentifier(targetName),
             BrsBinaryOperator.EQ,
             expression.value.accept(this, data)
         )
@@ -5110,6 +6340,17 @@ class IrExpressionToBrsTransformer(
         expression.origin?.let { origin ->
             val operatorResult = transformOperator(expression, origin)
             if (operatorResult != null) return operatorResult
+        }
+
+        // Handle identity comparison (===) even when origin is null
+        // This happens when coroutine lowering creates calls via local buildCall() with null origin
+        if (expression.symbol == context.irBuiltIns.eqeqeqSymbol) {
+            val left = expression.getValueArgument(0)?.accept(this, data) ?: return BrsInvalidLiteral()
+            val right = expression.getValueArgument(1)?.accept(this, data) ?: return BrsInvalidLiteral()
+            return BrsFunctionCall(
+                BrsIdentifier("__kotlin_identityEquals"),
+                mutableListOf(left, right)
+            )
         }
 
         // Handle builtin comparison functions (less, lessOrEqual, greater, greaterOrEqual)
@@ -5496,9 +6737,13 @@ class IrExpressionToBrsTransformer(
                 // Binary plus as method call (String.plus, etc.)
                 // Only convert to binary operator if receiver is a primitive type that supports +.
                 // Non-primitive types (UInt, ULong, custom classes) need method calls.
+                // Note: For shared variables (boxed in {value: x}), the receiver.type may be anyNType
+                // but the function's declared receiver type (dispatchReceiverParameter.type) preserves
+                // the original type. We use the function's declared type to detect primitives.
                 "plus" -> {
                     val arg = expression.getValueArgument(0)
-                    if (arg != null && receiver.type.isPrimitiveForArithmetic()) {
+                    val functionReceiverType = function.dispatchReceiverParameter?.type ?: receiver.type
+                    if (arg != null && functionReceiverType.isPrimitiveForArithmetic()) {
                         var left = receiver.accept(this, data)
                         var right = arg.accept(this, data)
 
@@ -5549,8 +6794,16 @@ class IrExpressionToBrsTransformer(
                     val args = (0 until expression.valueArgumentsCount).mapNotNull { i ->
                         expression.getValueArgument(i)?.accept(this, data)
                     }
-                    // Call .invoke() method on the closure object
-                    return BrsMethodCall(receiverExpr, "invoke", args.toMutableList())
+                    // Generate mangled invoke method name based on function parameters
+                    // Lambda classes from callable reference lowering use mangled names like invoke_AnyN_k_
+                    // The mangling suffix is based on the parameter types
+                    val paramTypes = (0 until function.valueParameters.size).map { i ->
+                        val param = function.valueParameters[i]
+                        context.typeToMangledString(param.type)
+                    }
+                    val mangledSuffix = if (paramTypes.isEmpty()) "k_" else "${paramTypes.joinToString("_")}_k_"
+                    val invokeMethodName = "invoke_$mangledSuffix"
+                    return BrsMethodCall(receiverExpr, invokeMethodName, args.toMutableList())
                 }
             }
         }
@@ -5570,8 +6823,14 @@ class IrExpressionToBrsTransformer(
                     args.add(BrsInvalidLiteral())
                 }
             }
-            // Call .invoke() method on the local function closure object
-            return BrsMethodCall(BrsIdentifier(localFunctionName), "invoke", args)
+            // Generate mangled invoke method name based on function parameters
+            val paramTypes = function.valueParameters.map { param ->
+                context.typeToMangledString(param.type)
+            }
+            val mangledSuffix = if (paramTypes.isEmpty()) "k_" else "${paramTypes.joinToString("_")}_k_"
+            val invokeMethodName = "invoke_$mangledSuffix"
+            // Call .invoke_*() method on the local function closure object
+            return BrsMethodCall(BrsIdentifier(localFunctionName), invokeMethodName, args)
         }
 
         val functionName = context.getBrsName(function)
@@ -6947,8 +8206,15 @@ class IrExpressionToBrsTransformer(
             if (binaryOp == BrsBinaryOperator.ADD || binaryOp == BrsBinaryOperator.SUB ||
                 binaryOp == BrsBinaryOperator.MUL || binaryOp == BrsBinaryOperator.DIV ||
                 binaryOp == BrsBinaryOperator.MOD) {
-                val leftType = leftIr.type
-                val rightType = rightIr.type
+                // Use the function's declared types instead of the expression's operand types.
+                // This is important for shared variables (boxed in {value: x}) where the operand
+                // may have anyNType but the function's declared receiver type preserves the original type.
+                val functionReceiverType = function.dispatchReceiverParameter?.type
+                    ?: function.extensionReceiverParameter?.type
+                val functionArgType = function.valueParameters.firstOrNull()?.type
+
+                val leftType = functionReceiverType ?: leftIr.type
+                val rightType = functionArgType ?: rightIr.type
 
                 // If either operand is non-primitive, let normal method call handling take over
                 if (!leftType.isPrimitiveForArithmetic() || !rightType.isPrimitiveForArithmetic()) {
@@ -6980,7 +8246,13 @@ class IrExpressionToBrsTransformer(
 
         // Identity operators (=== and !==)
         // These need special handling because BrightScript's = operator doesn't work for associative arrays
-        if (origin == IrStatementOrigin.EQEQEQ || origin == IrStatementOrigin.EXCLEQEQ) {
+        // Check both origin (for user code) and symbol (for synthesized calls from coroutine lowering)
+        val isIdentityOp = origin == IrStatementOrigin.EQEQEQ ||
+                           origin == IrStatementOrigin.EXCLEQEQ ||
+                           expression.symbol == context.irBuiltIns.eqeqeqSymbol
+        if (isIdentityOp) {
+            // Determine if this is === or !== based on origin (symbol is always eqeqeqSymbol)
+            val isNegated = origin == IrStatementOrigin.EXCLEQEQ
             val (left, right) = when {
                 expression.dispatchReceiver != null -> {
                     val l = expression.dispatchReceiver!!.accept(this, Unit)
@@ -7002,7 +8274,7 @@ class IrExpressionToBrsTransformer(
                 BrsIdentifier("__kotlin_identityEquals"),
                 mutableListOf(left, right)
             )
-            return if (origin == IrStatementOrigin.EXCLEQEQ) {
+            return if (isNegated) {
                 BrsUnaryOp(BrsUnaryOperator.NOT, identityCall)
             } else {
                 identityCall
@@ -7125,10 +8397,36 @@ class IrExpressionToBrsTransformer(
 
             // If it's a captured parameter and the argument is a GetValue for a shared variable,
             // pass the box directly instead of dereferencing with .value
-            if (isCapturedValueParam && arg is IrGetValue && arg.symbol in parent.sharedVariables) {
+            // Two detection mechanisms:
+            // 1. Via SharedVariablesLowering which sets SHARED_VARIABLE_WRAPPER origin
+            // 2. Via BrsSharedVariableDetectionLowering which populates sharedVariables set
+            val isSharedVar = arg is IrGetValue && (
+                (arg.symbol.owner is IrVariable && (arg.symbol.owner as IrVariable).origin == BrsDeclarationOrigin.SHARED_VARIABLE_WRAPPER) ||
+                arg.symbol in parent.sharedVariables
+            )
+            if (isCapturedValueParam && isSharedVar) {
                 // Pass the box itself, not the dereferenced value
-                val varName = parent.sanitizeParameterName(arg.symbol.owner.name.asString())
+                val varName = parent.sanitizeParameterName((arg as IrGetValue).symbol.owner.name.asString())
                 BrsIdentifier(varName)
+            } else if (arg is IrGetField) {
+                // Check if this field holds a shared variable box (e.g., in coroutine create method)
+                // When passing captured fields to a coroutine constructor, we want the box, not .value
+                val field = arg.symbol.owner
+                val fieldParentClass = field.parent as? IrClass
+                val rawFieldName = field.name.asString()
+                val fieldName = rawFieldName.replace("$", "_")
+                val className = fieldParentClass?.name?.asString() ?: ""
+                val fieldKey = "$className.$fieldName"
+                val isSharedVariableField = fieldKey in context.sharedVariableFields
+
+                if (isSharedVariableField) {
+                    // Pass the box itself, not the dereferenced .value
+                    // Generate m.fieldName (without .value)
+                    val receiver = arg.receiver?.accept(this, data) ?: BrsMRef()
+                    BrsDotAccess(receiver, fieldName)
+                } else {
+                    arg.accept(this, data)
+                }
             } else {
                 arg.accept(this, data)
             }
@@ -7606,7 +8904,12 @@ class IrExpressionToBrsTransformer(
 
             // Check if this mutable capture is already boxed (part of sharedVariables)
             // If so, pass the box directly instead of re-boxing
-            val isAlreadyBoxed = capturedVar.isMutable && capturedVar.symbol in parent.sharedVariables
+            // Two detection mechanisms:
+            // 1. Via SharedVariablesLowering which sets SHARED_VARIABLE_WRAPPER origin
+            // 2. Via BrsSharedVariableDetectionLowering which populates sharedVariables set
+            val varOwner = capturedVar.symbol.owner
+            val hasSharedVarOrigin = varOwner is IrVariable && varOwner.origin == BrsDeclarationOrigin.SHARED_VARIABLE_WRAPPER
+            val isAlreadyBoxed = capturedVar.isMutable && (hasSharedVarOrigin || capturedVar.symbol in parent.sharedVariables)
             val fieldValue = if (capturedVar.isMutable && !isAlreadyBoxed) {
                 // Wrap mutable captures in { value: x } for mutation to propagate
                 // (This case shouldn't happen anymore since all mutable captures should be in sharedVariables)
@@ -7722,21 +9025,114 @@ class IrExpressionToBrsTransformer(
     // ==================== Composite ====================
 
     override fun visitComposite(expression: IrComposite, data: Unit): BrsExpression {
-        // Composite expressions are sequences - return the last one
+        // Composite expressions are sequences where all statements must execute
+        // and the last expression is the result value.
+        //
+        // After BrsReturnableBlockLowering, composites may contain:
+        // - A result variable declaration
+        // - A returnable block (wrapped in while true { ... exit while })
+        // - A get of the result variable (the return value)
+        //
+        // For nested returnable blocks (e.g., suspendCoroutineUninterceptedOrReturn
+        // inside another inline function), each composite hoists only its OWN direct
+        // variable declarations. Nested composites handle their own variables when
+        // they are processed.
+        //
+        // This ensures correct ordering: when an assignment like `tmp_ret_2 = <composite>`
+        // is processed, the inner composite's hoisted statements (including its variable
+        // declaration and while loop) are placed BEFORE the assignment statement.
         val statements = expression.statements
-        return if (statements.isEmpty()) {
-            BrsInvalidLiteral()
+        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-COMP] visitComposite: ${statements.size} statements\n")
+        statements.forEachIndexed { idx, s ->
+            java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-COMP]   [$idx] ${s::class.simpleName}\n")
+        }
+        if (statements.isEmpty()) {
+            return BrsInvalidLiteral()
+        }
+
+        // PASS 1: Hoist only DIRECT variable declarations from this composite
+        // Nested composites will hoist their own variables when processed
+        val hoistedVars = mutableSetOf<IrVariable>()
+        hoistDirectVariables(statements, hoistedVars)
+        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-COMP] PASS1: hoisted ${hoistedVars.size} vars\n")
+
+        // PASS 2: Process other statements (skip variables, already done)
+        for (i in 0 until statements.size - 1) {
+            val stmt = statements[i]
+            if (stmt is IrVariable) continue  // Already hoisted in pass 1
+
+            java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-COMP] PASS2: processing stmt[$i] ${stmt::class.simpleName}\n")
+            parent.pushHoistedScope()
+            val transformed = when (stmt) {
+                is IrWhen -> parent.statementVisitor.visitWhen(stmt, Unit)
+                is IrWhileLoop -> parent.statementVisitor.visitWhileLoop(stmt, Unit)
+                is IrDoWhileLoop -> parent.statementVisitor.visitDoWhileLoop(stmt, Unit)
+                is IrReturnableBlock -> parent.statementVisitor.visitBlock(stmt, Unit)
+                is IrBlock -> parent.statementVisitor.visitBlock(stmt, Unit)
+                else -> parent.transformStatement(stmt)
+            }
+            val nestedHoisted = parent.popHoistedScope()
+            java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-COMP]   nestedHoisted: ${nestedHoisted.size}, adding each to parent\n")
+            nestedHoisted.forEach { parent.addHoistedStatement(it) }
+            transformed?.let {
+                java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-COMP]   adding transformed: ${it::class.simpleName}\n")
+                parent.addHoistedStatement(it)
+            }
+        }
+
+        // Return the last statement's value
+        val last = statements.last()
+        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-COMP] returning last: ${last::class.simpleName}\n")
+        return if (last is IrExpression) {
+            last.accept(this, data)
         } else {
-            val last = statements.last()
-            if (last is IrExpression) {
-                last.accept(this, data)
-            } else {
-                BrsInvalidLiteral()
+            BrsInvalidLiteral()
+        }
+    }
+
+    /**
+     * Hoists only DIRECT variable declarations from the composite's statements.
+     *
+     * IMPORTANT: We do NOT recurse into nested composites/blocks. Each composite
+     * handles its own variable hoisting when it is processed. Deep traversal
+     * caused variables from inner composites to be hoisted too early, resulting
+     * in wrong statement ordering (e.g., `tmp_ret_2 = tmp_ret_1` appearing before
+     * the inner while loop that assigns to `tmp_ret_1`).
+     *
+     * The correct flow:
+     * 1. Outer composite hoists only its direct variable (tmp_ret_2)
+     * 2. Outer composite processes its returnable block
+     * 3. Inside the block, when IrSetValue(tmp_ret_2, <inner_composite>) is processed,
+     *    the inner composite hoists its own variables (tmp_ret_1) at that point
+     * 4. The inner composite's hoisted statements go BEFORE the assignment
+     */
+    private fun hoistDirectVariables(statements: List<IrStatement>, hoistedVars: MutableSet<IrVariable>) {
+        for (stmt in statements) {
+            if (stmt is IrVariable && stmt !in hoistedVars) {
+                hoistedVars.add(stmt)
+                val varName = stmt.name.asString()
+                java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-HOIST] hoistDirectVariables: hoisting '$varName'\n")
+                val transformed = parent.statementVisitor.visitVariable(stmt, Unit)
+                parent.addHoistedStatement(transformed)
             }
         }
     }
 
     override fun visitBlock(expression: IrBlock, data: Unit): BrsExpression {
+        // Handle IrReturnableBlock (from inlined functions).
+        // If BrsReturnableBlockLowering wrapped this block (because returns target it), we would
+        // see an IrComposite here instead, not the IrReturnableBlock directly.
+        // So if we see IrReturnableBlock in expression context, it means no returns targeted it,
+        // and we should execute it for side effects only and return Unit.
+        if (expression is IrReturnableBlock) {
+            // Transform the block as a statement (wraps in while true { ... exit while })
+            val stmt = parent.statementVisitor.visitBlock(expression, Unit)
+            // Hoist the statement for side effects
+            parent.addHoistedStatement(stmt)
+            // Return Unit (the block has no meaningful return value since no returns target it)
+            return BrsInvalidLiteral()
+        }
+
         // Handle increment/decrement blocks - when used as expression (value needed),
         // we need to hoist the temp variable and setter, then return the appropriate value
         // Block structure: [IrVariable(<unary>) = getter(), setter(<unary>+1) or IrSetValue, IrGetValue(<unary>)]
@@ -8002,9 +9398,36 @@ class IrExpressionToBrsTransformer(
         }
 
         // Default: Block expressions return the last statement's value
+        // But we must also execute any preceding statements (side effects)!
+        // This is critical for inlined lambda bodies like:
+        //   { sideEffect(); returnValue }
+        //
+        // Note: After BrsReturnableBlockLowering runs, returnable blocks are converted
+        // to composites with temp variables, so returns targeting the block become
+        // assignments. This handles most cases from inline function expansion.
+        //
+        // For remaining cases (blocks that weren't from returnable blocks), we hoist
+        // the side effect statements so they execute, then return the value.
         return if (statements.isEmpty()) {
             BrsInvalidLiteral()
         } else {
+            // Hoist all statements except the last one (which is the return value)
+            for (i in 0 until statements.size - 1) {
+                val stmt = statements[i]
+                parent.pushHoistedScope()
+                val transformed = when (stmt) {
+                    is IrWhen -> parent.statementVisitor.visitWhen(stmt, Unit)
+                    is IrWhileLoop -> parent.statementVisitor.visitWhileLoop(stmt, Unit)
+                    is IrDoWhileLoop -> parent.statementVisitor.visitDoWhileLoop(stmt, Unit)
+                    is IrBlock -> parent.statementVisitor.visitBlock(stmt, Unit)
+                    else -> parent.transformStatement(stmt)
+                }
+                val nestedHoisted = parent.popHoistedScope()
+                nestedHoisted.forEach { parent.addHoistedStatement(it) }
+                transformed?.let { parent.addHoistedStatement(it) }
+            }
+
+            // Return the last statement's value
             val last = statements.last()
             if (last is IrExpression) {
                 last.accept(this, data)

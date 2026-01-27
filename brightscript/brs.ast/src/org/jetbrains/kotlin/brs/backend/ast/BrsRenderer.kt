@@ -373,9 +373,13 @@ class BrsRenderer(
         indent()
         builder.append(variable.name)
         // BrightScript local variables don't have type declarations - just assignment
-        variable.initializer?.let {
-            builder.append(" = ")
-            it.accept(this, data)
+        // Variables without initializers get assigned 'invalid' to ensure they're declared
+        builder.append(" = ")
+        val initializer = variable.initializer
+        if (initializer != null) {
+            initializer.accept(this, data)
+        } else {
+            builder.append("invalid")
         }
     }
 

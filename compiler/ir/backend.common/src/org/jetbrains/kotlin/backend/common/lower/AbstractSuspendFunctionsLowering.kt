@@ -283,8 +283,31 @@ abstract class AbstractSuspendFunctionsLowering<C : CommonBackendContext>(val co
                     .single { it.name == CREATE_METHOD_NAME && it.parameters.size == 2 }
                 val create1CompletionParameter = create1Function.parameters[1]
 
-                val createValueParameters = (unboundArgs + create1CompletionParameter).memoryOptimizedMap { parameter ->
-                    parameter.copyTo(this, DECLARATION_ORIGIN_COROUTINE_IMPL)
+                // For the create method, use the types from the base class's create method
+                // instead of the concrete types from the suspend lambda. This ensures that the
+                // generated method signature matches what the intrinsics call (which use erased types).
+                // The base class has: create(value: Any?, completion: Continuation<*>)
+                // So we need to use Any? for the receiver parameter type to match.
+                //
+                // superCreateFunction is the base class's create method with matching arity.
+                // Its valueParameters contain the erased types (Any? for receivers).
+                val createValueParameters = if (superCreateFunction != null && unboundArgs.isNotEmpty()) {
+                    // Use types from the base class's create method for proper overriding
+                    // nonDispatchParameters gives us value parameters without the dispatch receiver
+                    val baseValueParams = superCreateFunction.nonDispatchParameters
+                    unboundArgs.mapIndexed { index, originalParam ->
+                        if (index < baseValueParams.size) {
+                            // Use the base class's parameter type (e.g., Any? instead of CoroutineScope)
+                            originalParam.copyTo(this, DECLARATION_ORIGIN_COROUTINE_IMPL, type = baseValueParams[index].type)
+                        } else {
+                            originalParam.copyTo(this, DECLARATION_ORIGIN_COROUTINE_IMPL)
+                        }
+                    } + create1CompletionParameter.copyTo(this, DECLARATION_ORIGIN_COROUTINE_IMPL)
+                } else {
+                    // No superCreateFunction or no unbound args - use original types
+                    (unboundArgs + create1CompletionParameter).memoryOptimizedMap { parameter ->
+                        parameter.copyTo(this, DECLARATION_ORIGIN_COROUTINE_IMPL)
+                    }
                 }
                 parameters = listOf(createDispatchReceiverParameterWithClassParent()) + createValueParameters
 

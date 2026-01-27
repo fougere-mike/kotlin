@@ -65,6 +65,12 @@ function Response_Companion_create_k_() as Object
     this.__type = "Response_Companion"
     this.__proto = ["Response_Companion"]
     this.__id = __kotlin_nextObjectId()
+    this.equals_AnyN_k_ = Any_equals_AnyN_k_
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode_k_ = Any_hashCode_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString_k_ = Any_toString_k_
+    this.toString = Any_toString_k_
     this.fromCode_I_k_ = Response_Companion_fromCode_I_k_
     this.__get_DEFAULT_CODE = Response_Companion___get_DEFAULT_CODE_k_
     this.DEFAULT_CODE = 200

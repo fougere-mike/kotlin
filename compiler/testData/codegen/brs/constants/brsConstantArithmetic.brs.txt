@@ -4,6 +4,12 @@ function BrsConstant_create_k_() as Object
     this.__type = "BrsConstant"
     this.__proto = ["BrsConstant", "Annotation"]
     this.__id = __kotlin_nextObjectId()
+    this.equals_AnyN_k_ = Any_equals_AnyN_k_
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode_k_ = Any_hashCode_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString_k_ = Any_toString_k_
+    this.toString = Any_toString_k_
     return this
 end function
 

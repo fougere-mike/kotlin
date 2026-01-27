@@ -6,6 +6,7 @@
 package kotlin.coroutines.builders
 
 import kotlin.coroutines.*
+import kotlin.coroutines.dispatchers.processCoroutineQueue
 import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
 import kotlin.coroutines.intrinsics.createCoroutineUnintercepted
 import kotlin.coroutines.intrinsics.intercepted
@@ -66,6 +67,12 @@ public fun <T> CoroutineScope.async(
  * This function should not be used from a coroutine. It is designed to bridge regular blocking code
  * to libraries that are written in suspending style, to be used in `main` functions and in tests.
  *
+ * `runBlocking` includes its own event loop that processes:
+ * - Dispatched coroutine work (via [processCoroutineQueue])
+ * - Pending delays (via [processCoroutineDelays])
+ *
+ * This allows [delay], [yield], and [launch]/[async] to work correctly within `runBlocking`.
+ *
  * @param context the context of the coroutine. The default value is an event loop on the current thread.
  * @param block the coroutine code.
  */
@@ -81,11 +88,14 @@ public fun <T> runBlocking(
     val continuation = RunBlockingContinuation(scope, block, deferred)
     continuation.start()
 
-    // Process the event loop until the coroutine completes
+    // Process the event loop until the coroutine completes.
+    // This loop processes both dispatched work and pending delays.
     while (!deferred.isCompleted && !deferred.isCancelled) {
-        // In a real implementation, this would process message port events
-        // For now, we just spin (coroutines are expected to complete synchronously
-        // or via yield/delay which isn't fully implemented yet)
+        // Process any dispatched coroutine work
+        processCoroutineQueue()
+
+        // Process any expired delays
+        processCoroutineDelays()
     }
 
     // Return the result or throw the exception

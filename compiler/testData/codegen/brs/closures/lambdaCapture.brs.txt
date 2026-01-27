@@ -1,36 +1,107 @@
 // --- File: lambdaCaptureKt.brs ---
 function simpleCapture_k_() as Integer
     multiplier = 5
-    multiply = {multiplier: multiplier, invoke: function(x as Integer) as Integer
-        return x * m.multiplier
-    end function}
-    return multiply.invoke(10)
+    multiply = simpleCapture_lambda_create_I_k_(multiplier)
+    return multiply.invoke_AnyN_k_(10)
 end function
 
 function mutableCapture_k_() as Integer
     counter = {value: 0}
-    increment = {counter: counter, invoke: function() as Void
-        m.counter.value = (m.counter.value + 1)
-    end function}
-    increment.invoke()
-    increment.invoke()
+    increment = mutableCapture_lambda_create_AnyN_k_(counter)
+    increment.invoke_k_()
+    increment.invoke_k_()
     return counter.value
 end function
 
 function returnedClosure_k_() as Object
     count = {value: 0}
-    return {count: count, invoke: function() as Integer
-        m.count.value = (m.count.value + 1)
-        return m.count.value
-    end function}
+    return returnedClosure_lambda_create_AnyN_k_(count)
 end function
 
 function higherOrderFunction_I_Function1II_k_(value as Integer, transform as Object) as Integer
-    return transform.invoke(value)
+    return transform.invoke_AnyN_k_(value)
 end function
 
 function testHigherOrder_k_() as Integer
-    return higherOrderFunction_I_Function1II_k_(5, {invoke: function(it as Integer) as Integer
-        return it * 2
-    end function})
+    return higherOrderFunction_I_Function1II_k_(5, testHigherOrder_lambda_create_k_())
+end function
+
+function simpleCapture_lambda_create_I_k_(_multiplier as Integer) as Object
+    this = {}
+    this.__type = "simpleCapture_lambda"
+    this.__proto = ["simpleCapture_lambda", "Function1", "Function"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals_AnyN_k_ = Any_equals_AnyN_k_
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode_k_ = Any_hashCode_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString_k_ = Any_toString_k_
+    this.toString = Any_toString_k_
+    this.invoke_AnyN_k_ = simpleCapture_lambda_invoke_AnyN_k_
+    this._multiplier = _multiplier
+    return this
+end function
+
+function simpleCapture_lambda_invoke_AnyN_k_(x as Integer) as Integer
+    return x * m._multiplier
+end function
+
+function mutableCapture_lambda_create_AnyN_k_(_counter as Dynamic) as Object
+    this = {}
+    this.__type = "mutableCapture_lambda"
+    this.__proto = ["mutableCapture_lambda", "Function0", "Function"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals_AnyN_k_ = Any_equals_AnyN_k_
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode_k_ = Any_hashCode_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString_k_ = Any_toString_k_
+    this.toString = Any_toString_k_
+    this.invoke_k_ = mutableCapture_lambda_invoke_k_
+    this._counter = _counter
+    return this
+end function
+
+sub mutableCapture_lambda_invoke_k_()
+    m._counter.value = (m._counter.value + 1)
+end sub
+
+function returnedClosure_lambda_create_AnyN_k_(_count as Dynamic) as Object
+    this = {}
+    this.__type = "returnedClosure_lambda"
+    this.__proto = ["returnedClosure_lambda", "Function0", "Function"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals_AnyN_k_ = Any_equals_AnyN_k_
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode_k_ = Any_hashCode_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString_k_ = Any_toString_k_
+    this.toString = Any_toString_k_
+    this.invoke_k_ = returnedClosure_lambda_invoke_k_
+    this._count = _count
+    return this
+end function
+
+function returnedClosure_lambda_invoke_k_() as Integer
+    m._count.value = (m._count.value + 1)
+    return m._count.value
+end function
+
+function testHigherOrder_lambda_create_k_() as Object
+    this = {}
+    this.__type = "testHigherOrder_lambda"
+    this.__proto = ["testHigherOrder_lambda", "Function1", "Function"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals_AnyN_k_ = Any_equals_AnyN_k_
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode_k_ = Any_hashCode_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString_k_ = Any_toString_k_
+    this.toString = Any_toString_k_
+    this.invoke_AnyN_k_ = testHigherOrder_lambda_invoke_AnyN_k_
+    return this
+end function
+
+function testHigherOrder_lambda_invoke_AnyN_k_(it as Integer) as Integer
+    return it * 2
 end function

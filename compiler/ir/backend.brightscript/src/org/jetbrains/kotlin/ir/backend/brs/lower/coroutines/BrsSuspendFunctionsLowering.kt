@@ -82,8 +82,8 @@ class BrsSuspendFunctionsLowering(
             }
             is SuspendFunctionKind.NEEDS_STATE_MACHINE -> {
                 val isLoweredSuspendLambda = function.isOperator &&
-                        function.name == OperatorNameConventions.INVOKE &&
-                        function.parentClassOrNull?.let { it.origin === WebCallableReferenceLowering.LAMBDA_IMPL } == true
+                    function.name == OperatorNameConventions.INVOKE &&
+                    function.parentClassOrNull?.let { it.origin === WebCallableReferenceLowering.LAMBDA_IMPL } == true
                 val coroutine = buildCoroutine(function, isLoweredSuspendLambda)
                 if (isLoweredSuspendLambda) {
                     // Suspend lambdas are called through factory method <create>
@@ -155,8 +155,11 @@ class BrsSuspendFunctionsLowering(
         val exStateGetter = coroutineSymbols.coroutineImplExceptionStatePropertyGetter
         val exStateSetter = coroutineSymbols.coroutineImplExceptionStatePropertySetter
 
-        // If symbols are missing (stdlib compilation), skip state machine generation
-        if (resultGetter == null || labelGetter == null) {
+        // If any required symbols are missing (stdlib compilation), skip state machine generation
+        if (resultGetter == null || resultSetter == null ||
+            labelGetter == null || labelSetter == null ||
+            exceptionGetter == null || exceptionSetter == null ||
+            exStateGetter == null || exStateSetter == null) {
             // During stdlib compilation, we can't generate proper state machines
             // Just keep the original body
             stateMachineFunction.body = context.irFactory.createBlockBody(
@@ -210,11 +213,11 @@ class BrsSuspendFunctionsLowering(
             context,
             stateMachineFunction.symbol,
             rootLoop,
-            exceptionGetter!!,
-            exceptionSetter!!,
-            exStateGetter!!,
-            exStateSetter!!,
-            labelSetter!!,
+            exceptionGetter,
+            exceptionSetter,
+            exStateGetter,
+            exStateSetter,
+            labelSetter,
             thisReceiver,
             getSuspendResultAsType = { type ->
                 buildImplicitCast(

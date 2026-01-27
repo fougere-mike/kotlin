@@ -63,6 +63,12 @@ function MyClass_create_I_k_(value as Integer) as Object
     this.__type = "MyClass"
     this.__proto = ["MyClass"]
     this.__id = __kotlin_nextObjectId()
+    this.equals_AnyN_k_ = Any_equals_AnyN_k_
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode_k_ = Any_hashCode_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString_k_ = Any_toString_k_
+    this.toString = Any_toString_k_
     this.__get_value = MyClass___get_value_k_
     this.value = value
     return this

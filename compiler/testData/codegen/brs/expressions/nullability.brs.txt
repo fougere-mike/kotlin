@@ -61,6 +61,12 @@ function Holder_create_InnerN_k_(inner as Dynamic) as Object
     this.__type = "Holder"
     this.__proto = ["Holder"]
     this.__id = __kotlin_nextObjectId()
+    this.equals_AnyN_k_ = Any_equals_AnyN_k_
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode_k_ = Any_hashCode_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString_k_ = Any_toString_k_
+    this.toString = Any_toString_k_
     this.__get_inner = Holder___get_inner_k_
     this.inner = inner
     return this
@@ -75,6 +81,12 @@ function Inner_create_I_k_(value as Integer) as Object
     this.__type = "Inner"
     this.__proto = ["Inner"]
     this.__id = __kotlin_nextObjectId()
+    this.equals_AnyN_k_ = Any_equals_AnyN_k_
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode_k_ = Any_hashCode_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString_k_ = Any_toString_k_
+    this.toString = Any_toString_k_
     this.__get_value = Inner___get_value_k_
     this.value = value
     return this
@@ -89,6 +101,12 @@ function Printer_create_k_() as Object
     this.__type = "Printer"
     this.__proto = ["Printer"]
     this.__id = __kotlin_nextObjectId()
+    this.equals_AnyN_k_ = Any_equals_AnyN_k_
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode_k_ = Any_hashCode_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString_k_ = Any_toString_k_
+    this.toString = Any_toString_k_
     this.print_Str_k_ = Printer_print_Str_k_
     return this
 end function

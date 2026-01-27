@@ -9,7 +9,8 @@ package kotlin
  * The base class for all errors and exceptions. Only instances of this class can be thrown or caught.
  *
  * In BrightScript, exceptions are represented as roAssociativeArray with error information.
- * The BRS backend generates appropriate error handling code.
+ * BrightScript requires exception objects to have specific fields: number, message, and optionally backtrace.
+ * The `number` field is the BrightScript error code (ERR_USER = 0x28 for user-thrown exceptions).
  *
  * @param message the detail message string.
  * @param cause the cause of this throwable.
@@ -21,6 +22,12 @@ public open class Throwable(
     public constructor(message: String?) : this(message, null)
     public constructor(cause: Throwable?) : this(cause?.toString(), cause)
     public constructor() : this(null, null)
+
+    /**
+     * BrightScript error number. Required for BrightScript throw compatibility.
+     * ERR_USER (0x28 = 40) is used for user-thrown exceptions.
+     */
+    public open val number: Int = 0x28
 
     private var _stack: String? = null
 
