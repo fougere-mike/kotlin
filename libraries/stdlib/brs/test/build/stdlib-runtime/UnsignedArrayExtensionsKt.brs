@@ -1,0 +1,195 @@
+function contentToString_rUByteArrayN_k_(m as Dynamic) as String
+    if m = invalid then
+        return "null"
+    end if
+    list = ArrayList_create_k_()
+    for each item in m
+        list.add_AnyN_k_(item.toString())
+
+    end for
+    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ", invalid, invalid, invalid, invalid)) + "]"
+end function
+
+function contentEquals_rUByteArrayN_UByteArrayN_k_(m as Dynamic, other as Dynamic) as Boolean
+    if __kotlin_identityEquals(m, other) then
+        return true
+    end if
+    if (m = invalid) or (other = invalid) then
+        return false
+    end if
+    if m.__get_size() <> other.__get_size() then
+        return false
+    end if
+    progression = until_rI_I_k_(0, m.__get_size())
+    inductionVariable = progression.__get_first()
+    last = progression.__get_last()
+    if inductionVariable <= last then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
+        if not brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), other.get_I_k_(i)) then
+            return false
+        end if
+
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            if not brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), other.get_I_k_(i)) then
+                return false
+            end if
+
+        end while
+
+    end if
+
+    return true
+end function
+
+function contentToString_rUShortArrayN_k_(m as Dynamic) as String
+    if m = invalid then
+        return "null"
+    end if
+    list = ArrayList_create_k_()
+    for each item in m
+        list.add_AnyN_k_(item.toString())
+
+    end for
+    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ", invalid, invalid, invalid, invalid)) + "]"
+end function
+
+function contentEquals_rUShortArrayN_UShortArrayN_k_(m as Dynamic, other as Dynamic) as Boolean
+    if __kotlin_identityEquals(m, other) then
+        return true
+    end if
+    if (m = invalid) or (other = invalid) then
+        return false
+    end if
+    if m.__get_size() <> other.__get_size() then
+        return false
+    end if
+    progression = until_rI_I_k_(0, m.__get_size())
+    inductionVariable = progression.__get_first()
+    last = progression.__get_last()
+    if inductionVariable <= last then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
+        if not brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), other.get_I_k_(i)) then
+            return false
+        end if
+
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            if not brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), other.get_I_k_(i)) then
+                return false
+            end if
+
+        end while
+
+    end if
+
+    return true
+end function
+
+function contentToString_rUIntArrayN_k_(m as Dynamic) as String
+    if m = invalid then
+        return "null"
+    end if
+    list = ArrayList_create_k_()
+    for each item in m
+        list.add_AnyN_k_(item.toString())
+
+    end for
+    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ", invalid, invalid, invalid, invalid)) + "]"
+end function
+
+function contentEquals_rUIntArrayN_UIntArrayN_k_(m as Dynamic, other as Dynamic) as Boolean
+    if __kotlin_identityEquals(m, other) then
+        return true
+    end if
+    if (m = invalid) or (other = invalid) then
+        return false
+    end if
+    if m.__get_size() <> other.__get_size() then
+        return false
+    end if
+    progression = until_rI_I_k_(0, m.__get_size())
+    inductionVariable = progression.__get_first()
+    last = progression.__get_last()
+    if inductionVariable <= last then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
+        if not brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), other.get_I_k_(i)) then
+            return false
+        end if
+
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            if not brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), other.get_I_k_(i)) then
+                return false
+            end if
+
+        end while
+
+    end if
+
+    return true
+end function
+
+function contentToString_rULongArrayN_k_(m as Dynamic) as String
+    if m = invalid then
+        return "null"
+    end if
+    list = ArrayList_create_k_()
+    for each item in m
+        list.add_AnyN_k_(item.toString())
+
+    end for
+    return ("[" + joinToString_rIterable_CharSequence_CharSequence_CharSequence_I_CharSequence_k_(list, ", ", invalid, invalid, invalid, invalid)) + "]"
+end function
+
+function contentEquals_rULongArrayN_ULongArrayN_k_(m as Dynamic, other as Dynamic) as Boolean
+    if __kotlin_identityEquals(m, other) then
+        return true
+    end if
+    if (m = invalid) or (other = invalid) then
+        return false
+    end if
+    if m.__get_size() <> other.__get_size() then
+        return false
+    end if
+    progression = until_rI_I_k_(0, m.__get_size())
+    inductionVariable = progression.__get_first()
+    last = progression.__get_last()
+    if inductionVariable <= last then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
+        if not brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), other.get_I_k_(i)) then
+            return false
+        end if
+
+
+        while i <> last
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            if not brsStructuralEquals_AnyN_AnyN_k_(m.get_I_k_(i), other.get_I_k_(i)) then
+                return false
+            end if
+
+        end while
+
+    end if
+
+    return true
+end function

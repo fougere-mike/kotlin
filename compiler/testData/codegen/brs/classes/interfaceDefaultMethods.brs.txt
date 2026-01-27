@@ -8,11 +8,8 @@ function SimpleGreeter_create_k_() as Object
     this.__type = "SimpleGreeter"
     this.__proto = ["SimpleGreeter", "Greeter"]
     this.__id = __kotlin_nextObjectId()
-    this.equals_AnyN_k_ = Any_equals_AnyN_k_
     this.equals = Any_equals_AnyN_k_
-    this.hashCode_k_ = Any_hashCode_k_
     this.hashCode = Any_hashCode_k_
-    this.toString_k_ = Any_toString_k_
     this.toString = Any_toString_k_
     this.greet_k_ = SimpleGreeter_greet_k_
     return this
@@ -27,11 +24,8 @@ function CustomGreeter_create_k_() as Object
     this.__type = "CustomGreeter"
     this.__proto = ["CustomGreeter", "Greeter"]
     this.__id = __kotlin_nextObjectId()
-    this.equals_AnyN_k_ = Any_equals_AnyN_k_
     this.equals = Any_equals_AnyN_k_
-    this.hashCode_k_ = Any_hashCode_k_
     this.hashCode = Any_hashCode_k_
-    this.toString_k_ = Any_toString_k_
     this.toString = Any_toString_k_
     this.greet_k_ = CustomGreeter_greet_k_
     return this
@@ -57,11 +51,8 @@ function BasicCalculator_create_k_() as Object
     this.__type = "BasicCalculator"
     this.__proto = ["BasicCalculator", "Calculator"]
     this.__id = __kotlin_nextObjectId()
-    this.equals_AnyN_k_ = Any_equals_AnyN_k_
     this.equals = Any_equals_AnyN_k_
-    this.hashCode_k_ = Any_hashCode_k_
     this.hashCode = Any_hashCode_k_
-    this.toString_k_ = Any_toString_k_
     this.toString = Any_toString_k_
     this.subtract_I_I_k_ = BasicCalculator_subtract_I_I_k_
     this.add_I_I_k_ = BasicCalculator_add_I_I_k_
@@ -94,11 +85,8 @@ function Person_create_Str_I_k_(name as String, age as Integer) as Object
     this.__type = "Person"
     this.__proto = ["Person", "Named", "Aged"]
     this.__id = __kotlin_nextObjectId()
-    this.equals_AnyN_k_ = Any_equals_AnyN_k_
     this.equals = Any_equals_AnyN_k_
-    this.hashCode_k_ = Any_hashCode_k_
     this.hashCode = Any_hashCode_k_
-    this.toString_k_ = Any_toString_k_
     this.toString = Any_toString_k_
     this.getName_k_ = Person_getName_k_
     this.getAge_k_ = Person_getAge_k_
@@ -130,11 +118,8 @@ function AnonymousPerson_create_I_k_(age as Integer) as Object
     this.__type = "AnonymousPerson"
     this.__proto = ["AnonymousPerson", "Named", "Aged"]
     this.__id = __kotlin_nextObjectId()
-    this.equals_AnyN_k_ = Any_equals_AnyN_k_
     this.equals = Any_equals_AnyN_k_
-    this.hashCode_k_ = Any_hashCode_k_
     this.hashCode = Any_hashCode_k_
-    this.toString_k_ = Any_toString_k_
     this.toString = Any_toString_k_
     this.getAge_k_ = AnonymousPerson_getAge_k_
     this.getName_k_ = AnonymousPerson_getName_k_
@@ -164,11 +149,8 @@ function Diamond_create_k_() as Object
     this.__type = "Diamond"
     this.__proto = ["Diamond", "Left", "Base", "Right"]
     this.__id = __kotlin_nextObjectId()
-    this.equals_AnyN_k_ = Any_equals_AnyN_k_
     this.equals = Any_equals_AnyN_k_
-    this.hashCode_k_ = Any_hashCode_k_
     this.hashCode = Any_hashCode_k_
-    this.toString_k_ = Any_toString_k_
     this.toString = Any_toString_k_
     this.value_k_ = Diamond_value_k_
     return this
@@ -190,11 +172,8 @@ function Item_create_Str_k_(description as String) as Object
     this.__type = "Item"
     this.__proto = ["Item", "Describable"]
     this.__id = __kotlin_nextObjectId()
-    this.equals_AnyN_k_ = Any_equals_AnyN_k_
     this.equals = Any_equals_AnyN_k_
-    this.hashCode_k_ = Any_hashCode_k_
     this.hashCode = Any_hashCode_k_
-    this.toString_k_ = Any_toString_k_
     this.toString = Any_toString_k_
     this.describe_k_ = Item_describe_k_
     this.__get_description = Item___get_description_k_

@@ -10,11 +10,8 @@ function Product_create_Str_I_k_(name as String, price as Integer) as Object
     this.__type = "Product"
     this.__proto = ["Product", "Describable"]
     this.__id = __kotlin_nextObjectId()
-    this.equals_AnyN_k_ = Any_equals_AnyN_k_
     this.equals = Any_equals_AnyN_k_
-    this.hashCode_k_ = Any_hashCode_k_
     this.hashCode = Any_hashCode_k_
-    this.toString_k_ = Any_toString_k_
     this.toString = Any_toString_k_
     this.describe_k_ = Product_describe_k_
     this.__get_name = Product___get_name_k_
@@ -41,11 +38,8 @@ function Item_create_Str_I_k_(title as String, value as Integer) as Object
     this.__type = "Item"
     this.__proto = ["Item", "Describable", "Named"]
     this.__id = __kotlin_nextObjectId()
-    this.equals_AnyN_k_ = Any_equals_AnyN_k_
     this.equals = Any_equals_AnyN_k_
-    this.hashCode_k_ = Any_hashCode_k_
     this.hashCode = Any_hashCode_k_
-    this.toString_k_ = Any_toString_k_
     this.toString = Any_toString_k_
     this.describe_k_ = Item_describe_k_
     this.getName_k_ = Item_getName_k_

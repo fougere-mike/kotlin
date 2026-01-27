@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.ir.expressions.IrConst
 import org.jetbrains.kotlin.backend.common.getCompilerMessageLocation
+import org.jetbrains.kotlin.ir.util.fileOrNull
 import org.jetbrains.kotlin.ir.util.getAnnotation
 import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.ir.util.isNullable
@@ -288,8 +289,18 @@ class BrsIrBackendContext(
 
         // Handle anonymous classes (e.g., "<no name provided>" from object expressions)
         val baseName = if (rawName.startsWith("<") && rawName.endsWith(">")) {
-            // Generate unique name using hash code
-            "Anon_${kotlin.math.abs(irClass.hashCode()).toString(16)}"
+            // Generate unique name using deterministic hash based on source location
+            // Using startOffset, endOffset, and file path ensures stability across compiler runs
+            val file = irClass.fileOrNull
+            val hashInput = buildString {
+                append(file?.path ?: "unknown")
+                append(":")
+                append(irClass.startOffset)
+                append(":")
+                append(irClass.endOffset)
+            }
+            val hash = abs(hashInput.hashCode()).toString(16)
+            "Anon_$hash"
         } else {
             rawName
         }

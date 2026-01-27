@@ -4,26 +4,23 @@ end sub
 
 sub testCapture_k_()
     result = {value: 0}
-    callback = Anon_445821a6_create_AnyN_k_(result)
+    callback = Anon_28fec3e7_create_AnyN_k_(result)
     callback.onResult_I_k_(42)
 end sub
 
-function Anon_445821a6_create_AnyN_k_(_result as Dynamic) as Object
+function Anon_28fec3e7_create_AnyN_k_(_result as Dynamic) as Object
     this = {}
-    this.__type = "Anon_445821a6"
-    this.__proto = ["Anon_445821a6", "Callback"]
+    this.__type = "Anon_28fec3e7"
+    this.__proto = ["Anon_28fec3e7", "Callback"]
     this.__id = __kotlin_nextObjectId()
-    this.equals_AnyN_k_ = Any_equals_AnyN_k_
     this.equals = Any_equals_AnyN_k_
-    this.hashCode_k_ = Any_hashCode_k_
     this.hashCode = Any_hashCode_k_
-    this.toString_k_ = Any_toString_k_
     this.toString = Any_toString_k_
-    this.onResult_I_k_ = Anon_445821a6_onResult_I_k_
+    this.onResult_I_k_ = Anon_28fec3e7_onResult_I_k_
     this._result = _result
     return this
 end function
 
-sub Anon_445821a6_onResult_I_k_(value as Integer)
+sub Anon_28fec3e7_onResult_I_k_(value as Integer)
     m._result.value = value
 end sub

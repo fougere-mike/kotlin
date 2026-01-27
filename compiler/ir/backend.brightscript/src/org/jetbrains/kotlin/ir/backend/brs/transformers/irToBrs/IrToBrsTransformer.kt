@@ -2920,17 +2920,10 @@ class IrToBrsTransformer(
      * replace these defaults.
      */
     private fun addAnyMethodDefaults(bodyStatements: MutableList<BrsStatement>) {
-        // this.equals_AnyN_k_ = Any_equals_AnyN_k_
-        bodyStatements.add(
-            BrsExpressionStatement(
-                BrsBinaryOp(
-                    BrsDotAccess(BrsIdentifier("this"), "equals_AnyN_k_"),
-                    BrsBinaryOperator.EQ,
-                    BrsIdentifier("Any_equals_AnyN_k_")
-                )
-            )
-        )
-        // this.equals = Any_equals_AnyN_k_ (simple name alias for polymorphic calls)
+        // All calls to equals/hashCode/toString use simple names (see call site generation),
+        // so we only need to attach the simple name aliases. The mangled names are never called.
+
+        // this.equals = Any_equals_AnyN_k_
         bodyStatements.add(
             BrsExpressionStatement(
                 BrsBinaryOp(
@@ -2940,17 +2933,7 @@ class IrToBrsTransformer(
                 )
             )
         )
-        // this.hashCode_k_ = Any_hashCode_k_
-        bodyStatements.add(
-            BrsExpressionStatement(
-                BrsBinaryOp(
-                    BrsDotAccess(BrsIdentifier("this"), "hashCode_k_"),
-                    BrsBinaryOperator.EQ,
-                    BrsIdentifier("Any_hashCode_k_")
-                )
-            )
-        )
-        // this.hashCode = Any_hashCode_k_ (simple name alias)
+        // this.hashCode = Any_hashCode_k_
         bodyStatements.add(
             BrsExpressionStatement(
                 BrsBinaryOp(
@@ -2960,17 +2943,7 @@ class IrToBrsTransformer(
                 )
             )
         )
-        // this.toString_k_ = Any_toString_k_
-        bodyStatements.add(
-            BrsExpressionStatement(
-                BrsBinaryOp(
-                    BrsDotAccess(BrsIdentifier("this"), "toString_k_"),
-                    BrsBinaryOperator.EQ,
-                    BrsIdentifier("Any_toString_k_")
-                )
-            )
-        )
-        // this.toString = Any_toString_k_ (simple name alias)
+        // this.toString = Any_toString_k_
         bodyStatements.add(
             BrsExpressionStatement(
                 BrsBinaryOp(
@@ -7185,7 +7158,11 @@ class IrExpressionToBrsTransformer(
                         BrsDotAccess(receiverExpr, fieldName)
                     } else {
                         // Call getter for computed properties, overridden properties, etc.
-                        BrsMethodCall(receiverExpr, "__get_$fieldName", mutableListOf())
+                        // SceneGraph component property accessors use mangled names (with _k_ suffix)
+                        // Regular class property accessors use simple names (no suffix)
+                        val isComponentProperty = parentClass != null && context.intrinsics.isSceneGraphComponent(parentClass)
+                        val getterName = if (isComponentProperty) "__get_${fieldName}_k_" else "__get_$fieldName"
+                        BrsMethodCall(receiverExpr, getterName, mutableListOf())
                     }
                 }
 
@@ -7244,7 +7221,11 @@ class IrExpressionToBrsTransformer(
                         )
                     } else {
                         // Call setter for computed properties, overridden properties, etc.
-                        BrsMethodCall(receiverExpr, "__set_$fieldName", mutableListOf(value))
+                        // SceneGraph component property accessors use mangled names (with _k_ suffix)
+                        // Regular class property accessors use simple names (no suffix)
+                        val isComponentProperty = parentClass != null && context.intrinsics.isSceneGraphComponent(parentClass)
+                        val setterName = if (isComponentProperty) "__set_${fieldName}_k_" else "__set_$fieldName"
+                        BrsMethodCall(receiverExpr, setterName, mutableListOf(value))
                     }
                 }
 

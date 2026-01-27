@@ -1,0 +1,1244 @@
+Trying 192.168.1.125...
+Connected to 192.168.1.125.
+Escape character is '^]'.
+=== Hello World Roku App ===
+
+App: RokuTestApp v1.0.0
+
+Device Information:
+  Model: Roku Ultra
+BRIGHTSCRIPT: WARNING: roDeviceInfo.GetVersion: This function is deprecated: pkg:/source/MainKt.brs(10)
+  Roku OS: 999.99E99999A
+  Display: 720p
+  Locale: en_CA
+
+Current Time: 2026-01-27T23:00:48Z
+
+Values after filter: {AppConfig_0=AppConfig(name=AppConfig_0, version=0), AppConfig_1=AppConfig(name=AppConfig_1, version=1), AppConfig_2=AppConfig(name=AppConfig_2, version=2), AppConfig_3=AppConfig(name=AppConfig_3, version=3), AppConfig_4=AppConfig(name=AppConfig_4, version=4), AppConfig_5=AppConfig(name=AppConfig_5, version=5), AppConfig_6=AppConfig(name=AppConfig_6, version=6), AppConfig_7=AppConfig(name=AppConfig_7, version=7), AppConfig_8=AppConfig(name=AppConfig_8, version=8), AppConfig_9=AppConfig(name=AppConfig_9, version=9)}
+Kotlin/BRS stdlib features:
+  - ArrayList and HashMap collections
+  - Data classes with copy/equals/hashCode
+  - Sealed classes for state management
+  - String interpolation
+  - Lambda expressions
+  - Native Roku API bindings
+
+App Config: AppConfig(name=HelloWorld, version=1.0.0)
+
+=== App initialized successfully ===
+Launching blocking coroutine
+Loop A: 0
+Loop B: 0
+Loop B: 1
+Loop B: 2
+Loop B: 3
+Loop A: 1
+Loop B: 4
+Loop B: 5
+Loop B: 6
+Loop B: 7
+Loop A: 2
+Loop B: 8
+Loop B: 9
+Loop A: 3
+Loop A: 4
+Loop A: 5
+Loop A: 6
+Loop A: 7
+Loop A: 8
+Loop A: 9
+Coroutine complete
+DEBUGCARD: updateFocusedCard(0) called on thread
+DEBUGCARD: Old Card = {cardId=Card(1), change={Index1=0, Index2=0, Operation=none}, childRenderOrder=last, clippingRect={height=0, width=0, x=2.147484e+09, y=2.147484e+09}, enableRenderTracking=false, focusable=false, focusedChild=null, id=1, inheritParentOpacity=true, inheritParentTransform=true, muteAudioGuide=false, opacity=1, renderPass=0, renderTracking=disabled, rotation=0, scale=[1, 1], scaleRotateCenter=[0, 0], translation=[0, 0], visible=true}
+DEBUGCARD: updateFocusedCard(0) Updating color of old border
+DEBUGCARD: New Card = {cardId=Card(1), change={Index1=0, Index2=0, Operation=none}, childRenderOrder=last, clippingRect={height=0, width=0, x=2.147484e+09, y=2.147484e+09}, enableRenderTracking=false, focusable=false, focusedChild=null, id=1, inheritParentOpacity=true, inheritParentTransform=true, muteAudioGuide=false, opacity=1, renderPass=0, renderTracking=disabled, rotation=0, scale=[1, 1], scaleRotateCenter=[0, 0], translation=[0, 0], visible=true}
+DEBUGCARD: updateFocusedCard(0) Updating color of new border
+DEBUGCARD: updateFocusedCard(0) focusedCardIndex = 0
+
+BrightScript Micro Debugger.
+Enter any BrightScript statement, debug commands, or HELP.
+
+Suspending threads...
+
+Current Function:
+001:  sub init()
+002:*     m.layout = MainScreen_Layout_create_RoSGNode_k_(m.top)
+003:      m.__get_layout_k_ = MainScreen___get_layout_k_
+004:      tmp0_safe_receiver = m.top.findNode("shelf_view")
+005:      if tmp0_safe_receiver = invalid then
+006:  
+Source Digest(s): 
+pkg:    dev 1.0.0 ca3674bc RokuTestApp
+pkg: 632126 1.1.5 c486fcdb libplayready
+
+Function Call Operator ( ) attempted on non-function. (runtime error &he0) in pkg:/components/MainScreen/MainScreenKt.brs(2)
+Backtrace:
+#0  Function init() As Void
+   file/line: pkg:/components/MainScreen/MainScreenKt.brs(2)
+Local Variables:
+global           Interface:ifGlobal
+m                roAssociativeArray refcnt=2 count:2
+tmp0_safe_receiver <uninitialized>
+Threads:
+ID    Location                                Source Code
+ 0    pkg:/source/MainKt.brs(49)                 screen.show()
+ 1*   ...s/MainScreen/MainScreenKt.brs(2)        m.layout = MainScreen_Layout_create_RoSGNode_k_(m.top)
+  *selected
+Thread selected:  1*   
+Brightscript Debugger> ...s/MainScreen/MainScreenKt.brs(2)        m.layout = MainScreen_Layout_create_RoSGNode_k_(m.top)
+01-27 23:17:51.095 app  [beacon.signal] |AppExitInitiate -----------> TimeBase(1023170 ms)
+
+Thread detached
+
+Thread detached
+01-27 23:17:51.972 app  [bs.ndk.proc.exit] plugin=dev pid=28465 status=exit retval=12 user requested=1 process name='SdkLauncher' exit code=EXIT_BRIGHTSCRIPT_CRASH
+01-27 23:17:51.981 app  [beacon.signal] |AppExitComplete -----------> Duration(886 ms)
+01-27 23:17:51.981 app  [beacon.header] __________________________________________
+01-27 23:17:51.981 app  [beacon.report] |AppLaunchInitiate ---------> TimeBase(0 ms), InstantOn
+01-27 23:17:51.981 app  [beacon.report] |AppExitInitiate -----------> TimeBase(1023170 ms)
+01-27 23:17:51.981 app  [beacon.report] |AppExitComplete -----------> Duration(886 ms)
+01-27 23:17:51.981 app  [beacon.footer] __________________________________________
+01-27 23:18:44.221 app  [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
+01-27 23:18:44.221 app  [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
+01-27 23:18:44.222 app  [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
+
+------ Compiling dev 'KotlinStdlibTests' ------
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'appendable_append_c_k_' in pkg:/source/AppendableBrsKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'appendable_append_charsequencen_k_' in pkg:/source/AppendableBrsKt.brs(4)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'appendable_append_charsequencen_i_i_k_' in pkg:/source/AppendableBrsKt.brs(7)
+BRIGHTSCRIPT: WARNING: unused variable 'startindex' in function 'appendable_append_charsequencen_i_i_k_' in pkg:/source/AppendableBrsKt.brs(7)
+BRIGHTSCRIPT: WARNING: unused variable 'endindex' in function 'appendable_append_charsequencen_i_i_k_' in pkg:/source/AppendableBrsKt.brs(7)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'array_create_i_function1i_k_' in pkg:/source/ArrayKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'array_create_i_function1i_k_' in pkg:/source/ArrayKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'array_get_i_k_' in pkg:/source/ArrayKt.brs(16)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'array_set_i_anyn_k_' in pkg:/source/ArrayKt.brs(19)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'array_set_i_anyn_k_' in pkg:/source/ArrayKt.brs(19)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'arraylist_create_i_k_' in pkg:/source/ArrayListKt.brs(43)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'arraylistiterator_remove_k_' in pkg:/source/ArrayListKt.brs(534)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'arraylistiterator_set_anyn_k_' in pkg:/source/ArrayListKt.brs(558)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'sublistiterator_remove_k_' in pkg:/source/ArrayListKt.brs(913)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'sublistiterator_set_anyn_k_' in pkg:/source/ArrayListKt.brs(937)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'emptylist_contains_anyn_k_' in pkg:/source/ArrayListKt.brs(1072)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'emptylist_get_i_k_' in pkg:/source/ArrayListKt.brs(1080)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'emptylist_indexof_anyn_k_' in pkg:/source/ArrayListKt.brs(1084)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'emptylist_lastindexof_anyn_k_' in pkg:/source/ArrayListKt.brs(1088)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'bytearray_create_i_k_' in pkg:/source/ArraysKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'bytearray_create_i_function1ib_k_' in pkg:/source/ArraysKt.brs(16)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'bytearray_create_i_function1ib_k_' in pkg:/source/ArraysKt.brs(16)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'bytearray_get_i_k_' in pkg:/source/ArraysKt.brs(31)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'bytearray_set_i_b_k_' in pkg:/source/ArraysKt.brs(34)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'bytearray_set_i_b_k_' in pkg:/source/ArraysKt.brs(34)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'chararray_create_i_k_' in pkg:/source/ArraysKt.brs(44)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'chararray_create_i_function1ic_k_' in pkg:/source/ArraysKt.brs(59)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'chararray_create_i_function1ic_k_' in pkg:/source/ArraysKt.brs(59)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'chararray_get_i_k_' in pkg:/source/ArraysKt.brs(74)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'chararray_set_i_c_k_' in pkg:/source/ArraysKt.brs(77)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'chararray_set_i_c_k_' in pkg:/source/ArraysKt.brs(77)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'shortarray_create_i_k_' in pkg:/source/ArraysKt.brs(87)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'shortarray_create_i_function1is_k_' in pkg:/source/ArraysKt.brs(102)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'shortarray_create_i_function1is_k_' in pkg:/source/ArraysKt.brs(102)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'shortarray_get_i_k_' in pkg:/source/ArraysKt.brs(117)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'shortarray_set_i_s_k_' in pkg:/source/ArraysKt.brs(120)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'shortarray_set_i_s_k_' in pkg:/source/ArraysKt.brs(120)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'intarray_create_i_k_' in pkg:/source/ArraysKt.brs(130)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'intarray_create_i_function1ii_k_' in pkg:/source/ArraysKt.brs(145)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'intarray_create_i_function1ii_k_' in pkg:/source/ArraysKt.brs(145)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'intarray_get_i_k_' in pkg:/source/ArraysKt.brs(160)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'intarray_set_i_i_k_' in pkg:/source/ArraysKt.brs(163)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'intarray_set_i_i_k_' in pkg:/source/ArraysKt.brs(163)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'longarray_create_i_k_' in pkg:/source/ArraysKt.brs(173)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'longarray_create_i_function1ij_k_' in pkg:/source/ArraysKt.brs(188)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'longarray_create_i_function1ij_k_' in pkg:/source/ArraysKt.brs(188)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'longarray_get_i_k_' in pkg:/source/ArraysKt.brs(203)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'longarray_set_i_j_k_' in pkg:/source/ArraysKt.brs(206)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'longarray_set_i_j_k_' in pkg:/source/ArraysKt.brs(206)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'floatarray_create_i_k_' in pkg:/source/ArraysKt.brs(216)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'floatarray_create_i_function1if_k_' in pkg:/source/ArraysKt.brs(231)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'floatarray_create_i_function1if_k_' in pkg:/source/ArraysKt.brs(231)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'floatarray_get_i_k_' in pkg:/source/ArraysKt.brs(246)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'floatarray_set_i_f_k_' in pkg:/source/ArraysKt.brs(249)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'floatarray_set_i_f_k_' in pkg:/source/ArraysKt.brs(249)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'doublearray_create_i_k_' in pkg:/source/ArraysKt.brs(259)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'doublearray_create_i_function1id_k_' in pkg:/source/ArraysKt.brs(274)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'doublearray_create_i_function1id_k_' in pkg:/source/ArraysKt.brs(274)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'doublearray_get_i_k_' in pkg:/source/ArraysKt.brs(289)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'doublearray_set_i_d_k_' in pkg:/source/ArraysKt.brs(292)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'doublearray_set_i_d_k_' in pkg:/source/ArraysKt.brs(292)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'booleanarray_create_i_k_' in pkg:/source/ArraysKt.brs(302)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'booleanarray_create_i_function1iz_k_' in pkg:/source/ArraysKt.brs(317)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'booleanarray_create_i_function1iz_k_' in pkg:/source/ArraysKt.brs(317)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'booleanarray_get_i_k_' in pkg:/source/ArraysKt.brs(332)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'booleanarray_set_i_z_k_' in pkg:/source/ArraysKt.brs(335)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'booleanarray_set_i_z_k_' in pkg:/source/ArraysKt.brs(335)
+BRIGHTSCRIPT: WARNING: unused variable 'message' in function 'asserter_assertequals_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(21)
+BRIGHTSCRIPT: WARNING: unused variable 'expected' in function 'asserter_assertequals_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(21)
+BRIGHTSCRIPT: WARNING: unused variable 'actual' in function 'asserter_assertequals_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(21)
+BRIGHTSCRIPT: WARNING: unused variable 'message' in function 'asserter_assertnotequals_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(24)
+BRIGHTSCRIPT: WARNING: unused variable 'illegal' in function 'asserter_assertnotequals_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(24)
+BRIGHTSCRIPT: WARNING: unused variable 'actual' in function 'asserter_assertnotequals_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(24)
+BRIGHTSCRIPT: WARNING: unused variable 'message' in function 'asserter_assertsame_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(27)
+BRIGHTSCRIPT: WARNING: unused variable 'expected' in function 'asserter_assertsame_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(27)
+BRIGHTSCRIPT: WARNING: unused variable 'actual' in function 'asserter_assertsame_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(27)
+BRIGHTSCRIPT: WARNING: unused variable 'message' in function 'asserter_assertnotsame_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(30)
+BRIGHTSCRIPT: WARNING: unused variable 'illegal' in function 'asserter_assertnotsame_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(30)
+BRIGHTSCRIPT: WARNING: unused variable 'actual' in function 'asserter_assertnotsame_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(30)
+BRIGHTSCRIPT: WARNING: unused variable 'message' in function 'asserter_asserttrue_strn_z_k_' in pkg:/source/AssertionsKt.brs(33)
+BRIGHTSCRIPT: WARNING: unused variable 'actual' in function 'asserter_asserttrue_strn_z_k_' in pkg:/source/AssertionsKt.brs(33)
+BRIGHTSCRIPT: WARNING: unused variable 'message' in function 'asserter_assertfalse_strn_z_k_' in pkg:/source/AssertionsKt.brs(36)
+BRIGHTSCRIPT: WARNING: unused variable 'actual' in function 'asserter_assertfalse_strn_z_k_' in pkg:/source/AssertionsKt.brs(36)
+BRIGHTSCRIPT: WARNING: unused variable 'message' in function 'asserter_assertnotnull_strn_anyn_k_' in pkg:/source/AssertionsKt.brs(39)
+BRIGHTSCRIPT: WARNING: unused variable 'actual' in function 'asserter_assertnotnull_strn_anyn_k_' in pkg:/source/AssertionsKt.brs(39)
+BRIGHTSCRIPT: WARNING: unused variable 'message' in function 'asserter_assertnull_strn_anyn_k_' in pkg:/source/AssertionsKt.brs(42)
+BRIGHTSCRIPT: WARNING: unused variable 'actual' in function 'asserter_assertnull_strn_anyn_k_' in pkg:/source/AssertionsKt.brs(42)
+BRIGHTSCRIPT: WARNING: unused variable 'message' in function 'asserter_fail_strn_k_' in pkg:/source/AssertionsKt.brs(45)
+BRIGHTSCRIPT: WARNING: unused variable 'cause' in function 'asserter_fail_strn_throwablen_k_' in pkg:/source/AssertionsKt.brs(48)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_and_z_k_' in pkg:/source/BooleanKt.brs(26)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_or_z_k_' in pkg:/source/BooleanKt.brs(29)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_xor_z_k_' in pkg:/source/BooleanKt.brs(32)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_compareto_anyn_k_' in pkg:/source/BooleanKt.brs(35)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_equals_anyn_k_' in pkg:/source/BooleanKt.brs(41)
+BRIGHTSCRIPT: WARNING: unused variable 'cause' in function 'assertionerrorwithcause_strn_throwablen_k_' in pkg:/source/BrsImplKt.brs(8)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_compareto_anyn_k_' in pkg:/source/CharKt.brs(33)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_plus_i_k_' in pkg:/source/CharKt.brs(36)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_minus_c_k_' in pkg:/source/CharKt.brs(39)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_minus_i_k_' in pkg:/source/CharKt.brs(42)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_rangeto_c_k_' in pkg:/source/CharKt.brs(51)
+Displayed 100 of 304 warnings
+01-27 23:18:44.945 app  [scrpt.ctx.cmpl.time] Compiled 'KotlinStdlibTests', id 'dev' in 708 milliseconds (BCVer:0)
+01-27 23:18:44.967 app  [beacon.signal] |AppCompileComplete --------> Duration(746 ms)
+01-27 23:18:44.974 app  [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
+01-27 23:18:44.987 app  [beacon.signal] |AppSplashInitiate ---------> TimeBase(13 ms)
+01-27 23:18:45.696 app  [beacon.signal] |AppSplashComplete ---------> Duration(708 ms)
+01-27 23:18:45.779 sdkl [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
+
+------ Compiling sdklauncher 'Roku SDK Launcher' ------
+01-27 23:18:45.773 app  [scrpt.ctx.cmpl.time] Compiled 'Roku SDK Launcher', id 'sdklauncher' in 0 milliseconds (BCVer:0)
+01-27 23:18:45.784 sdkl [scrpt.cmpl] Compiling 'KotlinStdlibTests', id 'dev'
+
+------ Compiling dev 'KotlinStdlibTests' ------
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'appendable_append_c_k_' in pkg:/source/AppendableBrsKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'appendable_append_charsequencen_k_' in pkg:/source/AppendableBrsKt.brs(4)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'appendable_append_charsequencen_i_i_k_' in pkg:/source/AppendableBrsKt.brs(7)
+BRIGHTSCRIPT: WARNING: unused variable 'startindex' in function 'appendable_append_charsequencen_i_i_k_' in pkg:/source/AppendableBrsKt.brs(7)
+BRIGHTSCRIPT: WARNING: unused variable 'endindex' in function 'appendable_append_charsequencen_i_i_k_' in pkg:/source/AppendableBrsKt.brs(7)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'array_create_i_function1i_k_' in pkg:/source/ArrayKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'array_create_i_function1i_k_' in pkg:/source/ArrayKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'array_get_i_k_' in pkg:/source/ArrayKt.brs(16)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'array_set_i_anyn_k_' in pkg:/source/ArrayKt.brs(19)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'array_set_i_anyn_k_' in pkg:/source/ArrayKt.brs(19)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'arraylist_create_i_k_' in pkg:/source/ArrayListKt.brs(43)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'arraylistiterator_remove_k_' in pkg:/source/ArrayListKt.brs(534)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'arraylistiterator_set_anyn_k_' in pkg:/source/ArrayListKt.brs(558)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'sublistiterator_remove_k_' in pkg:/source/ArrayListKt.brs(913)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'sublistiterator_set_anyn_k_' in pkg:/source/ArrayListKt.brs(937)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'emptylist_contains_anyn_k_' in pkg:/source/ArrayListKt.brs(1072)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'emptylist_get_i_k_' in pkg:/source/ArrayListKt.brs(1080)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'emptylist_indexof_anyn_k_' in pkg:/source/ArrayListKt.brs(1084)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'emptylist_lastindexof_anyn_k_' in pkg:/source/ArrayListKt.brs(1088)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'bytearray_create_i_k_' in pkg:/source/ArraysKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'bytearray_create_i_function1ib_k_' in pkg:/source/ArraysKt.brs(16)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'bytearray_create_i_function1ib_k_' in pkg:/source/ArraysKt.brs(16)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'bytearray_get_i_k_' in pkg:/source/ArraysKt.brs(31)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'bytearray_set_i_b_k_' in pkg:/source/ArraysKt.brs(34)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'bytearray_set_i_b_k_' in pkg:/source/ArraysKt.brs(34)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'chararray_create_i_k_' in pkg:/source/ArraysKt.brs(44)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'chararray_create_i_function1ic_k_' in pkg:/source/ArraysKt.brs(59)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'chararray_create_i_function1ic_k_' in pkg:/source/ArraysKt.brs(59)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'chararray_get_i_k_' in pkg:/source/ArraysKt.brs(74)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'chararray_set_i_c_k_' in pkg:/source/ArraysKt.brs(77)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'chararray_set_i_c_k_' in pkg:/source/ArraysKt.brs(77)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'shortarray_create_i_k_' in pkg:/source/ArraysKt.brs(87)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'shortarray_create_i_function1is_k_' in pkg:/source/ArraysKt.brs(102)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'shortarray_create_i_function1is_k_' in pkg:/source/ArraysKt.brs(102)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'shortarray_get_i_k_' in pkg:/source/ArraysKt.brs(117)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'shortarray_set_i_s_k_' in pkg:/source/ArraysKt.brs(120)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'shortarray_set_i_s_k_' in pkg:/source/ArraysKt.brs(120)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'intarray_create_i_k_' in pkg:/source/ArraysKt.brs(130)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'intarray_create_i_function1ii_k_' in pkg:/source/ArraysKt.brs(145)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'intarray_create_i_function1ii_k_' in pkg:/source/ArraysKt.brs(145)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'intarray_get_i_k_' in pkg:/source/ArraysKt.brs(160)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'intarray_set_i_i_k_' in pkg:/source/ArraysKt.brs(163)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'intarray_set_i_i_k_' in pkg:/source/ArraysKt.brs(163)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'longarray_create_i_k_' in pkg:/source/ArraysKt.brs(173)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'longarray_create_i_function1ij_k_' in pkg:/source/ArraysKt.brs(188)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'longarray_create_i_function1ij_k_' in pkg:/source/ArraysKt.brs(188)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'longarray_get_i_k_' in pkg:/source/ArraysKt.brs(203)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'longarray_set_i_j_k_' in pkg:/source/ArraysKt.brs(206)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'longarray_set_i_j_k_' in pkg:/source/ArraysKt.brs(206)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'floatarray_create_i_k_' in pkg:/source/ArraysKt.brs(216)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'floatarray_create_i_function1if_k_' in pkg:/source/ArraysKt.brs(231)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'floatarray_create_i_function1if_k_' in pkg:/source/ArraysKt.brs(231)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'floatarray_get_i_k_' in pkg:/source/ArraysKt.brs(246)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'floatarray_set_i_f_k_' in pkg:/source/ArraysKt.brs(249)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'floatarray_set_i_f_k_' in pkg:/source/ArraysKt.brs(249)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'doublearray_create_i_k_' in pkg:/source/ArraysKt.brs(259)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'doublearray_create_i_function1id_k_' in pkg:/source/ArraysKt.brs(274)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'doublearray_create_i_function1id_k_' in pkg:/source/ArraysKt.brs(274)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'doublearray_get_i_k_' in pkg:/source/ArraysKt.brs(289)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'doublearray_set_i_d_k_' in pkg:/source/ArraysKt.brs(292)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'doublearray_set_i_d_k_' in pkg:/source/ArraysKt.brs(292)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'booleanarray_create_i_k_' in pkg:/source/ArraysKt.brs(302)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'booleanarray_create_i_function1iz_k_' in pkg:/source/ArraysKt.brs(317)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'booleanarray_create_i_function1iz_k_' in pkg:/source/ArraysKt.brs(317)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'booleanarray_get_i_k_' in pkg:/source/ArraysKt.brs(332)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'booleanarray_set_i_z_k_' in pkg:/source/ArraysKt.brs(335)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'booleanarray_set_i_z_k_' in pkg:/source/ArraysKt.brs(335)
+BRIGHTSCRIPT: WARNING: unused variable 'message' in function 'asserter_assertequals_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(21)
+BRIGHTSCRIPT: WARNING: unused variable 'expected' in function 'asserter_assertequals_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(21)
+BRIGHTSCRIPT: WARNING: unused variable 'actual' in function 'asserter_assertequals_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(21)
+BRIGHTSCRIPT: WARNING: unused variable 'message' in function 'asserter_assertnotequals_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(24)
+BRIGHTSCRIPT: WARNING: unused variable 'illegal' in function 'asserter_assertnotequals_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(24)
+BRIGHTSCRIPT: WARNING: unused variable 'actual' in function 'asserter_assertnotequals_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(24)
+BRIGHTSCRIPT: WARNING: unused variable 'message' in function 'asserter_assertsame_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(27)
+BRIGHTSCRIPT: WARNING: unused variable 'expected' in function 'asserter_assertsame_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(27)
+BRIGHTSCRIPT: WARNING: unused variable 'actual' in function 'asserter_assertsame_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(27)
+BRIGHTSCRIPT: WARNING: unused variable 'message' in function 'asserter_assertnotsame_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(30)
+BRIGHTSCRIPT: WARNING: unused variable 'illegal' in function 'asserter_assertnotsame_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(30)
+BRIGHTSCRIPT: WARNING: unused variable 'actual' in function 'asserter_assertnotsame_strn_anyn_anyn_k_' in pkg:/source/AssertionsKt.brs(30)
+BRIGHTSCRIPT: WARNING: unused variable 'message' in function 'asserter_asserttrue_strn_z_k_' in pkg:/source/AssertionsKt.brs(33)
+BRIGHTSCRIPT: WARNING: unused variable 'actual' in function 'asserter_asserttrue_strn_z_k_' in pkg:/source/AssertionsKt.brs(33)
+BRIGHTSCRIPT: WARNING: unused variable 'message' in function 'asserter_assertfalse_strn_z_k_' in pkg:/source/AssertionsKt.brs(36)
+BRIGHTSCRIPT: WARNING: unused variable 'actual' in function 'asserter_assertfalse_strn_z_k_' in pkg:/source/AssertionsKt.brs(36)
+BRIGHTSCRIPT: WARNING: unused variable 'message' in function 'asserter_assertnotnull_strn_anyn_k_' in pkg:/source/AssertionsKt.brs(39)
+BRIGHTSCRIPT: WARNING: unused variable 'actual' in function 'asserter_assertnotnull_strn_anyn_k_' in pkg:/source/AssertionsKt.brs(39)
+BRIGHTSCRIPT: WARNING: unused variable 'message' in function 'asserter_assertnull_strn_anyn_k_' in pkg:/source/AssertionsKt.brs(42)
+BRIGHTSCRIPT: WARNING: unused variable 'actual' in function 'asserter_assertnull_strn_anyn_k_' in pkg:/source/AssertionsKt.brs(42)
+BRIGHTSCRIPT: WARNING: unused variable 'message' in function 'asserter_fail_strn_k_' in pkg:/source/AssertionsKt.brs(45)
+BRIGHTSCRIPT: WARNING: unused variable 'cause' in function 'asserter_fail_strn_throwablen_k_' in pkg:/source/AssertionsKt.brs(48)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_and_z_k_' in pkg:/source/BooleanKt.brs(26)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_or_z_k_' in pkg:/source/BooleanKt.brs(29)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_xor_z_k_' in pkg:/source/BooleanKt.brs(32)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_compareto_anyn_k_' in pkg:/source/BooleanKt.brs(35)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_equals_anyn_k_' in pkg:/source/BooleanKt.brs(41)
+BRIGHTSCRIPT: WARNING: unused variable 'cause' in function 'assertionerrorwithcause_strn_throwablen_k_' in pkg:/source/BrsImplKt.brs(8)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_compareto_anyn_k_' in pkg:/source/CharKt.brs(33)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_plus_i_k_' in pkg:/source/CharKt.brs(36)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_minus_c_k_' in pkg:/source/CharKt.brs(39)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_minus_i_k_' in pkg:/source/CharKt.brs(42)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_rangeto_c_k_' in pkg:/source/CharKt.brs(51)
+Displayed 100 of 304 warnings
+01-27 23:18:46.507 sdkl [scrpt.ctx.cmpl.time] Compiled 'KotlinStdlibTests', id 'dev' in 707 milliseconds (BCVer:0)
+01-27 23:18:46.517 sdkl [beacon.signal] |AppCompileComplete --------> Duration(737 ms)
+
+------ Running dev 'KotlinStdlibTests' main ------
+01-27 23:18:46.551 sdkl [scrpt.ctx.run.enter] UI: Entering 'KotlinStdlibTests', id 'dev'
+[DEBUG] runTests starting
+[DEBUG] TestRunner created
+[DEBUG] TestRunner.run starting
+[DEBUG] About to call adapter.startRun()
+===KOTLINTEST_SENTINEL_1769555926558===
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:0]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:1]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:2]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:3]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:4]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:5]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:6]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:7]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:8]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:9]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:10]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:11]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:12]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:13]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:14]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:15]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:16]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:17]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:18]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:19]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:20]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:21]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:22]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:23]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:24]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:25]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:26]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:27]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:28]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:29]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:30]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:31]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:32]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:33]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:34]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:35]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:36]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:37]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:38]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:39]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:40]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:41]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:42]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:43]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:44]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:45]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:46]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:47]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:48]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:49]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:50]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:51]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:52]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:53]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:54]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:55]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:56]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:57]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:58]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:59]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:60]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:61]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:62]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:63]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:64]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:65]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:66]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:67]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:68]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:69]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:70]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:71]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:72]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:73]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:74]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:75]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:76]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:77]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:78]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:79]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:80]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:81]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:82]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:83]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:84]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:85]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:86]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:87]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:88]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:89]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:90]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:91]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:92]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:93]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:94]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:95]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:96]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:97]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:98]
+[KOTLINTEST_BUFFER_FLUSH:1769555926558:99]
+===KOTLINTEST_SENTINEL_1769555926558===
+[KOTLINTEST_RUN_ID:1769555926558]
+[KOTLINTEST_START]
+{"timestamp":1769555926584,"type":"run_start"}
+[DEBUG] adapter.startRun() complete
+[DEBUG] About to execute registration block
+[DEBUG] Registration block complete
+{"suite":"ArrayList","timestamp":1769555926586,"type":"suite_start"}
+{"suite":"ArrayList","test":"create empty","timestamp":1769555926586,"type":"test_start"}
+{"duration_ms":0,"suite":"ArrayList","test":"create empty","type":"test_pass"}
+{"suite":"ArrayList","test":"create with initial capacity","timestamp":1769555926587,"type":"test_start"}
+{"duration_ms":0,"suite":"ArrayList","test":"create with initial capacity","type":"test_pass"}
+{"suite":"ArrayList","test":"create from collection","timestamp":1769555926588,"type":"test_start"}
+{"duration_ms":0,"suite":"ArrayList","test":"create from collection","type":"test_pass"}
+{"suite":"ArrayList","test":"add elements","timestamp":1769555926589,"type":"test_start"}
+{"duration_ms":0,"suite":"ArrayList","test":"add elements","type":"test_pass"}
+{"suite":"ArrayList","test":"add at index","timestamp":1769555926590,"type":"test_start"}
+{"duration_ms":0,"suite":"ArrayList","test":"add at index","type":"test_pass"}
+{"suite":"ArrayList","test":"get element","timestamp":1769555926592,"type":"test_start"}
+{"duration_ms":0,"suite":"ArrayList","test":"get element","type":"test_pass"}
+{"suite":"ArrayList","test":"set element","timestamp":1769555926593,"type":"test_start"}
+{"duration_ms":0,"suite":"ArrayList","test":"set element","type":"test_pass"}
+{"suite":"ArrayList","test":"remove at index","timestamp":1769555926593,"type":"test_start"}
+{"duration_ms":0,"suite":"ArrayList","test":"remove at index","type":"test_pass"}
+{"suite":"ArrayList","test":"remove element","timestamp":1769555926595,"type":"test_start"}
+{"duration_ms":1,"suite":"ArrayList","test":"remove element","type":"test_pass"}
+{"suite":"ArrayList","test":"contains","timestamp":1769555926596,"type":"test_start"}
+{"duration_ms":0,"suite":"ArrayList","test":"contains","type":"test_pass"}
+{"suite":"ArrayList","test":"indexOf","timestamp":1769555926597,"type":"test_start"}
+{"duration_ms":0,"suite":"ArrayList","test":"indexOf","type":"test_pass"}
+{"suite":"ArrayList","test":"lastIndexOf","timestamp":1769555926598,"type":"test_start"}
+{"duration_ms":0,"suite":"ArrayList","test":"lastIndexOf","type":"test_pass"}
+{"suite":"ArrayList","test":"clear","timestamp":1769555926599,"type":"test_start"}
+{"duration_ms":0,"suite":"ArrayList","test":"clear","type":"test_pass"}
+{"suite":"ArrayList","test":"addAll","timestamp":1769555926600,"type":"test_start"}
+{"duration_ms":1,"suite":"ArrayList","test":"addAll","type":"test_pass"}
+{"suite":"ArrayList","test":"addAll at index","timestamp":1769555926601,"type":"test_start"}
+{"duration_ms":1,"suite":"ArrayList","test":"addAll at index","type":"test_pass"}
+{"suite":"ArrayList","test":"removeAll","timestamp":1769555926603,"type":"test_start"}
+{"duration_ms":1,"suite":"ArrayList","test":"removeAll","type":"test_pass"}
+{"suite":"ArrayList","test":"retainAll","timestamp":1769555926605,"type":"test_start"}
+{"duration_ms":1,"suite":"ArrayList","test":"retainAll","type":"test_pass"}
+{"suite":"ArrayList","test":"subList","timestamp":1769555926607,"type":"test_start"}
+{"duration_ms":1,"suite":"ArrayList","test":"subList","type":"test_pass"}
+{"suite":"ArrayList","test":"iterator","timestamp":1769555926608,"type":"test_start"}
+{"duration_ms":0,"suite":"ArrayList","test":"iterator","type":"test_pass"}
+{"suite":"ArrayList","test":"iterator remove","timestamp":1769555926610,"type":"test_start"}
+{"duration_ms":0,"suite":"ArrayList","test":"iterator remove","type":"test_pass"}
+{"suite":"ArrayList","test":"for-each loop","timestamp":1769555926611,"type":"test_start"}
+{"duration_ms":0,"suite":"ArrayList","test":"for-each loop","type":"test_pass"}
+{"suite":"ArrayList","test":"equals","timestamp":1769555926612,"type":"test_start"}
+{"duration_ms":0,"suite":"ArrayList","test":"equals","type":"test_pass"}
+{"suite":"ArrayList","test":"toString","timestamp":1769555926613,"type":"test_start"}
+{"duration_ms":0,"suite":"ArrayList","test":"toString","type":"test_pass"}
+{"duration_ms":28,"failed":0,"ignored":0,"passed":23,"suite":"ArrayList","type":"suite_end"}
+{"suite":"HashMap","timestamp":1769555926615,"type":"suite_start"}
+{"suite":"HashMap","test":"create empty","timestamp":1769555926615,"type":"test_start"}
+{"duration_ms":0,"suite":"HashMap","test":"create empty","type":"test_pass"}
+{"suite":"HashMap","test":"create from map","timestamp":1769555926616,"type":"test_start"}
+{"duration_ms":0,"suite":"HashMap","test":"create from map","type":"test_pass"}
+{"suite":"HashMap","test":"put and get","timestamp":1769555926617,"type":"test_start"}
+{"duration_ms":0,"suite":"HashMap","test":"put and get","type":"test_pass"}
+{"suite":"HashMap","test":"get nonexistent","timestamp":1769555926618,"type":"test_start"}
+{"duration_ms":0,"suite":"HashMap","test":"get nonexistent","type":"test_pass"}
+{"suite":"HashMap","test":"containsKey","timestamp":1769555926619,"type":"test_start"}
+{"duration_ms":0,"suite":"HashMap","test":"containsKey","type":"test_pass"}
+{"suite":"HashMap","test":"containsValue","timestamp":1769555926620,"type":"test_start"}
+{"duration_ms":0,"suite":"HashMap","test":"containsValue","type":"test_pass"}
+{"suite":"HashMap","test":"remove","timestamp":1769555926621,"type":"test_start"}
+{"duration_ms":0,"suite":"HashMap","test":"remove","type":"test_pass"}
+{"suite":"HashMap","test":"clear","timestamp":1769555926622,"type":"test_start"}
+{"duration_ms":0,"suite":"HashMap","test":"clear","type":"test_pass"}
+{"suite":"HashMap","test":"keys","timestamp":1769555926623,"type":"test_start"}
+{"duration_ms":0,"suite":"HashMap","test":"keys","type":"test_pass"}
+{"suite":"HashMap","test":"values","timestamp":1769555926624,"type":"test_start"}
+{"duration_ms":0,"suite":"HashMap","test":"values","type":"test_pass"}
+{"suite":"HashMap","test":"entries","timestamp":1769555926625,"type":"test_start"}
+{"duration_ms":0,"suite":"HashMap","test":"entries","type":"test_pass"}
+{"suite":"HashMap","test":"putAll","timestamp":1769555926626,"type":"test_start"}
+{"duration_ms":0,"suite":"HashMap","test":"putAll","type":"test_pass"}
+{"suite":"HashMap","test":"getOrDefault","timestamp":1769555926627,"type":"test_start"}
+{"duration_ms":0,"suite":"HashMap","test":"getOrDefault","type":"test_pass"}
+{"suite":"HashMap","test":"getOrPut","timestamp":1769555926628,"type":"test_start"}
+{"duration_ms":0,"suite":"HashMap","test":"getOrPut","type":"test_pass"}
+{"suite":"HashMap","test":"iteration via entries","timestamp":1769555926629,"type":"test_start"}
+{"duration_ms":0,"suite":"HashMap","test":"iteration via entries","type":"test_pass"}
+{"suite":"HashMap","test":"equals","timestamp":1769555926630,"type":"test_start"}
+{"duration_ms":1,"suite":"HashMap","test":"equals","type":"test_pass"}
+{"suite":"HashMap","test":"null values","timestamp":1769555926632,"type":"test_start"}
+{"duration_ms":0,"suite":"HashMap","test":"null values","type":"test_pass"}
+{"suite":"HashMap","test":"integer keys","timestamp":1769555926633,"type":"test_start"}
+{"duration_ms":0,"suite":"HashMap","test":"integer keys","type":"test_pass"}
+{"duration_ms":18,"failed":0,"ignored":0,"passed":18,"suite":"HashMap","type":"suite_end"}
+{"suite":"HashSet","timestamp":1769555926634,"type":"suite_start"}
+{"suite":"HashSet","test":"create empty","timestamp":1769555926634,"type":"test_start"}
+{"duration_ms":0,"suite":"HashSet","test":"create empty","type":"test_pass"}
+{"suite":"HashSet","test":"create from collection","timestamp":1769555926635,"type":"test_start"}
+{"duration_ms":0,"suite":"HashSet","test":"create from collection","type":"test_pass"}
+{"suite":"HashSet","test":"add elements","timestamp":1769555926637,"type":"test_start"}
+{"duration_ms":0,"suite":"HashSet","test":"add elements","type":"test_pass"}
+{"suite":"HashSet","test":"contains","timestamp":1769555926637,"type":"test_start"}
+{"duration_ms":0,"suite":"HashSet","test":"contains","type":"test_pass"}
+{"suite":"HashSet","test":"remove","timestamp":1769555926638,"type":"test_start"}
+{"duration_ms":0,"suite":"HashSet","test":"remove","type":"test_pass"}
+{"suite":"HashSet","test":"clear","timestamp":1769555926640,"type":"test_start"}
+{"duration_ms":0,"suite":"HashSet","test":"clear","type":"test_pass"}
+{"suite":"HashSet","test":"addAll","timestamp":1769555926641,"type":"test_start"}
+{"duration_ms":0,"suite":"HashSet","test":"addAll","type":"test_pass"}
+{"suite":"HashSet","test":"removeAll","timestamp":1769555926642,"type":"test_start"}
+{"duration_ms":1,"suite":"HashSet","test":"removeAll","type":"test_pass"}
+{"suite":"HashSet","test":"retainAll","timestamp":1769555926643,"type":"test_start"}
+{"duration_ms":1,"suite":"HashSet","test":"retainAll","type":"test_pass"}
+{"suite":"HashSet","test":"containsAll","timestamp":1769555926645,"type":"test_start"}
+{"duration_ms":1,"suite":"HashSet","test":"containsAll","type":"test_pass"}
+{"suite":"HashSet","test":"iteration","timestamp":1769555926647,"type":"test_start"}
+{"duration_ms":1,"suite":"HashSet","test":"iteration","type":"test_pass"}
+{"suite":"HashSet","test":"iterator remove","timestamp":1769555926649,"type":"test_start"}
+{"duration_ms":0,"suite":"HashSet","test":"iterator remove","type":"test_pass"}
+{"suite":"HashSet","test":"equals","timestamp":1769555926650,"type":"test_start"}
+{"duration_ms":1,"suite":"HashSet","test":"equals","type":"test_pass"}
+{"suite":"HashSet","test":"toString","timestamp":1769555926652,"type":"test_start"}
+{"duration_ms":1,"suite":"HashSet","test":"toString","type":"test_pass"}
+{"suite":"HashSet","test":"string set","timestamp":1769555926654,"type":"test_start"}
+{"duration_ms":0,"suite":"HashSet","test":"string set","type":"test_pass"}
+{"duration_ms":20,"failed":0,"ignored":0,"passed":15,"suite":"HashSet","type":"suite_end"}
+{"suite":"LinkedHashMap","timestamp":1769555926655,"type":"suite_start"}
+{"suite":"LinkedHashMap","test":"insertion order","timestamp":1769555926655,"type":"test_start"}
+{"duration_ms":1,"suite":"LinkedHashMap","test":"insertion order","type":"test_pass"}
+{"suite":"LinkedHashMap","test":"insertion order with updates","timestamp":1769555926657,"type":"test_start"}
+{"duration_ms":0,"suite":"LinkedHashMap","test":"insertion order with updates","type":"test_pass"}
+{"suite":"LinkedHashMap","test":"constructor with map","timestamp":1769555926659,"type":"test_start"}
+{"duration_ms":0,"suite":"LinkedHashMap","test":"constructor with map","type":"test_pass"}
+{"suite":"LinkedHashMap","test":"put and get","timestamp":1769555926660,"type":"test_start"}
+{"duration_ms":0,"suite":"LinkedHashMap","test":"put and get","type":"test_pass"}
+{"suite":"LinkedHashMap","test":"remove","timestamp":1769555926661,"type":"test_start"}
+{"duration_ms":1,"suite":"LinkedHashMap","test":"remove","type":"test_pass"}
+{"suite":"LinkedHashMap","test":"clear","timestamp":1769555926662,"type":"test_start"}
+{"duration_ms":0,"suite":"LinkedHashMap","test":"clear","type":"test_pass"}
+{"suite":"LinkedHashMap","test":"iterator remove","timestamp":1769555926663,"type":"test_start"}
+{"duration_ms":0,"suite":"LinkedHashMap","test":"iterator remove","type":"test_pass"}
+{"suite":"LinkedHashMap","test":"entry set","timestamp":1769555926664,"type":"test_start"}
+{"duration_ms":0,"suite":"LinkedHashMap","test":"entry set","type":"test_pass"}
+{"suite":"LinkedHashMap","test":"putAll","timestamp":1769555926665,"type":"test_start"}
+{"duration_ms":1,"suite":"LinkedHashMap","test":"putAll","type":"test_pass"}
+{"duration_ms":11,"failed":0,"ignored":0,"passed":9,"suite":"LinkedHashMap","type":"suite_end"}
+{"suite":"LinkedHashSet","timestamp":1769555926668,"type":"suite_start"}
+{"suite":"LinkedHashSet","test":"insertion order","timestamp":1769555926668,"type":"test_start"}
+{"duration_ms":1,"suite":"LinkedHashSet","test":"insertion order","type":"test_pass"}
+{"suite":"LinkedHashSet","test":"no duplicates","timestamp":1769555926670,"type":"test_start"}
+{"duration_ms":1,"suite":"LinkedHashSet","test":"no duplicates","type":"test_pass"}
+{"suite":"LinkedHashSet","test":"constructor with collection","timestamp":1769555926671,"type":"test_start"}
+{"duration_ms":1,"suite":"LinkedHashSet","test":"constructor with collection","type":"test_pass"}
+{"suite":"LinkedHashSet","test":"remove","timestamp":1769555926673,"type":"test_start"}
+{"duration_ms":1,"suite":"LinkedHashSet","test":"remove","type":"test_pass"}
+{"suite":"LinkedHashSet","test":"contains","timestamp":1769555926674,"type":"test_start"}
+{"duration_ms":0,"suite":"LinkedHashSet","test":"contains","type":"test_pass"}
+{"suite":"LinkedHashSet","test":"iterator","timestamp":1769555926675,"type":"test_start"}
+{"duration_ms":1,"suite":"LinkedHashSet","test":"iterator","type":"test_pass"}
+{"suite":"LinkedHashSet","test":"iterator remove","timestamp":1769555926677,"type":"test_start"}
+{"duration_ms":1,"suite":"LinkedHashSet","test":"iterator remove","type":"test_pass"}
+{"suite":"LinkedHashSet","test":"addAll","timestamp":1769555926678,"type":"test_start"}
+{"duration_ms":1,"suite":"LinkedHashSet","test":"addAll","type":"test_pass"}
+{"suite":"LinkedHashSet","test":"removeAll","timestamp":1769555926680,"type":"test_start"}
+{"duration_ms":1,"suite":"LinkedHashSet","test":"removeAll","type":"test_pass"}
+{"suite":"LinkedHashSet","test":"retainAll","timestamp":1769555926682,"type":"test_start"}
+{"duration_ms":2,"suite":"LinkedHashSet","test":"retainAll","type":"test_pass"}
+{"suite":"LinkedHashSet","test":"clear","timestamp":1769555926685,"type":"test_start"}
+{"duration_ms":0,"suite":"LinkedHashSet","test":"clear","type":"test_pass"}
+{"duration_ms":18,"failed":0,"ignored":0,"passed":11,"suite":"LinkedHashSet","type":"suite_end"}
+{"suite":"Collection Extensions","timestamp":1769555926687,"type":"suite_start"}
+{"suite":"Collection Extensions","test":"map","timestamp":1769555926687,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"map","type":"test_pass"}
+{"suite":"Collection Extensions","test":"mapNotNull","timestamp":1769555926688,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"mapNotNull","type":"test_pass"}
+{"suite":"Collection Extensions","test":"mapIndexed","timestamp":1769555926690,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"mapIndexed","type":"test_pass"}
+{"suite":"Collection Extensions","test":"flatMap","timestamp":1769555926691,"type":"test_start"}
+{"duration_ms":2,"suite":"Collection Extensions","test":"flatMap","type":"test_pass"}
+{"suite":"Collection Extensions","test":"filter","timestamp":1769555926693,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"filter","type":"test_pass"}
+{"suite":"Collection Extensions","test":"filterNot","timestamp":1769555926695,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"filterNot","type":"test_pass"}
+{"suite":"Collection Extensions","test":"filterIndexed","timestamp":1769555926696,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"filterIndexed","type":"test_pass"}
+{"suite":"Collection Extensions","test":"filterNotNull","timestamp":1769555926697,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"filterNotNull","type":"test_pass"}
+{"suite":"Collection Extensions","test":"fold","timestamp":1769555926699,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"fold","type":"test_pass"}
+{"suite":"Collection Extensions","test":"reduce","timestamp":1769555926700,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"reduce","type":"test_pass"}
+{"suite":"Collection Extensions","test":"sum","timestamp":1769555926700,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"sum","type":"test_pass"}
+{"suite":"Collection Extensions","test":"sumOf","timestamp":1769555926701,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"sumOf","type":"test_pass"}
+{"suite":"Collection Extensions","test":"count","timestamp":1769555926703,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"count","type":"test_pass"}
+{"suite":"Collection Extensions","test":"any","timestamp":1769555926704,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"any","type":"test_pass"}
+{"suite":"Collection Extensions","test":"all","timestamp":1769555926705,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"all","type":"test_pass"}
+{"suite":"Collection Extensions","test":"none","timestamp":1769555926706,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"none","type":"test_pass"}
+{"suite":"Collection Extensions","test":"first and last","timestamp":1769555926707,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"first and last","type":"test_pass"}
+{"suite":"Collection Extensions","test":"firstOrNull and lastOrNull","timestamp":1769555926708,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"firstOrNull and lastOrNull","type":"test_pass"}
+{"suite":"Collection Extensions","test":"find","timestamp":1769555926709,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"find","type":"test_pass"}
+{"suite":"Collection Extensions","test":"groupBy","timestamp":1769555926710,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"groupBy","type":"test_pass"}
+{"suite":"Collection Extensions","test":"partition","timestamp":1769555926712,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"partition","type":"test_pass"}
+{"suite":"Collection Extensions","test":"associate","timestamp":1769555926714,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"associate","type":"test_pass"}
+{"suite":"Collection Extensions","test":"associateWith","timestamp":1769555926715,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"associateWith","type":"test_pass"}
+{"suite":"Collection Extensions","test":"associateBy","timestamp":1769555926716,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"associateBy","type":"test_pass"}
+{"suite":"Collection Extensions","test":"toList","timestamp":1769555926718,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"toList","type":"test_pass"}
+{"suite":"Collection Extensions","test":"toSet","timestamp":1769555926719,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"toSet","type":"test_pass"}
+{"suite":"Collection Extensions","test":"joinToString","timestamp":1769555926720,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"joinToString","type":"test_pass"}
+{"suite":"Collection Extensions","test":"forEach","timestamp":1769555926722,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"forEach","type":"test_pass"}
+{"suite":"Collection Extensions","test":"forEachIndexed","timestamp":1769555926724,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"forEachIndexed","type":"test_pass"}
+{"suite":"Collection Extensions","test":"indexOf","timestamp":1769555926725,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"indexOf","type":"test_pass"}
+{"suite":"Collection Extensions","test":"indexOfFirst","timestamp":1769555926726,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"indexOfFirst","type":"test_pass"}
+{"suite":"Collection Extensions","test":"indexOfLast","timestamp":1769555926727,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"indexOfLast","type":"test_pass"}
+{"suite":"Collection Extensions","test":"distinct","timestamp":1769555926728,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"distinct","type":"test_pass"}
+{"suite":"Collection Extensions","test":"distinctBy","timestamp":1769555926730,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"distinctBy","type":"test_pass"}
+{"suite":"Collection Extensions","test":"take","timestamp":1769555926731,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"take","type":"test_pass"}
+{"suite":"Collection Extensions","test":"drop","timestamp":1769555926732,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"drop","type":"test_pass"}
+{"suite":"Collection Extensions","test":"takeWhile","timestamp":1769555926734,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"takeWhile","type":"test_pass"}
+{"suite":"Collection Extensions","test":"dropWhile","timestamp":1769555926735,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"dropWhile","type":"test_pass"}
+{"suite":"Collection Extensions","test":"reversed","timestamp":1769555926736,"type":"test_start"}
+{"duration_ms":0,"suite":"Collection Extensions","test":"reversed","type":"test_pass"}
+{"suite":"Collection Extensions","test":"zip","timestamp":1769555926738,"type":"test_start"}
+{"duration_ms":1,"suite":"Collection Extensions","test":"zip","type":"test_pass"}
+{"duration_ms":52,"failed":0,"ignored":0,"passed":40,"suite":"Collection Extensions","type":"suite_end"}
+{"suite":"Sorting","timestamp":1769555926740,"type":"suite_start"}
+{"suite":"Sorting","test":"sort integers","timestamp":1769555926740,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sort integers","type":"test_pass"}
+{"suite":"Sorting","test":"sort strings","timestamp":1769555926741,"type":"test_start"}
+{"duration_ms":0,"suite":"Sorting","test":"sort strings","type":"test_pass"}
+{"suite":"Sorting","test":"sort with comparator","timestamp":1769555926743,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sort with comparator","type":"test_pass"}
+{"suite":"Sorting","test":"sort descending","timestamp":1769555926744,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sort descending","type":"test_pass"}
+{"suite":"Sorting","test":"sortBy","timestamp":1769555926746,"type":"test_start"}
+{"duration_ms":0,"suite":"Sorting","test":"sortBy","type":"test_pass"}
+{"suite":"Sorting","test":"sortByDescending","timestamp":1769555926747,"type":"test_start"}
+{"duration_ms":0,"suite":"Sorting","test":"sortByDescending","type":"test_pass"}
+{"suite":"Sorting","test":"sorted (immutable)","timestamp":1769555926749,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sorted (immutable)","type":"test_pass"}
+{"suite":"Sorting","test":"sortedWith","timestamp":1769555926751,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sortedWith","type":"test_pass"}
+{"suite":"Sorting","test":"sortedDescending","timestamp":1769555926753,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sortedDescending","type":"test_pass"}
+{"suite":"Sorting","test":"sortedBy","timestamp":1769555926755,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sortedBy","type":"test_pass"}
+{"suite":"Sorting","test":"sortedByDescending","timestamp":1769555926756,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"sortedByDescending","type":"test_pass"}
+{"suite":"Sorting","test":"sort empty list","timestamp":1769555926758,"type":"test_start"}
+{"duration_ms":0,"suite":"Sorting","test":"sort empty list","type":"test_pass"}
+{"suite":"Sorting","test":"sort single element","timestamp":1769555926759,"type":"test_start"}
+{"duration_ms":0,"suite":"Sorting","test":"sort single element","type":"test_pass"}
+{"suite":"Sorting","test":"sort large list","timestamp":1769555926760,"type":"test_start"}
+{"duration_ms":164,"suite":"Sorting","test":"sort large list","type":"test_pass"}
+{"suite":"Sorting","test":"comparator reversed","timestamp":1769555926924,"type":"test_start"}
+{"duration_ms":1,"suite":"Sorting","test":"comparator reversed","type":"test_pass"}
+{"suite":"Sorting","test":"compareValues","timestamp":1769555926926,"type":"test_start"}
+{"duration_ms":0,"suite":"Sorting","test":"compareValues","type":"test_pass"}
+{"duration_ms":187,"failed":0,"ignored":0,"passed":16,"suite":"Sorting","type":"suite_end"}
+{"suite":"Sequence","timestamp":1769555926927,"type":"suite_start"}
+{"suite":"Sequence","test":"map and filter","timestamp":1769555926927,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"map and filter","type":"test_pass"}
+{"suite":"Sequence","test":"sequence with unsigned","timestamp":1769555926929,"type":"test_start"}
+{"duration_ms":2,"suite":"Sequence","test":"sequence with unsigned","type":"test_pass"}
+{"suite":"Sequence","test":"take","timestamp":1769555926932,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"take","type":"test_pass"}
+{"suite":"Sequence","test":"drop","timestamp":1769555926934,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"drop","type":"test_pass"}
+{"suite":"Sequence","test":"flatMap","timestamp":1769555926935,"type":"test_start"}
+{"duration_ms":2,"suite":"Sequence","test":"flatMap","type":"test_pass"}
+{"suite":"Sequence","test":"distinct","timestamp":1769555926938,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"distinct","type":"test_pass"}
+{"suite":"Sequence","test":"sum","timestamp":1769555926939,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"sum","type":"test_pass"}
+{"suite":"Sequence","test":"sorted","timestamp":1769555926940,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"sorted","type":"test_pass"}
+{"suite":"Sequence","test":"groupBy","timestamp":1769555926942,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"groupBy","type":"test_pass"}
+{"suite":"Sequence","test":"count","timestamp":1769555926944,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"count","type":"test_pass"}
+{"suite":"Sequence","test":"all","timestamp":1769555926946,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"all","type":"test_pass"}
+{"suite":"Sequence","test":"any","timestamp":1769555926947,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"any","type":"test_pass"}
+{"suite":"Sequence","test":"none","timestamp":1769555926948,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"none","type":"test_pass"}
+{"suite":"Sequence","test":"fold","timestamp":1769555926949,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"fold","type":"test_pass"}
+{"suite":"Sequence","test":"reduce","timestamp":1769555926950,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"reduce","type":"test_pass"}
+{"suite":"Sequence","test":"first","timestamp":1769555926951,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"first","type":"test_pass"}
+{"suite":"Sequence","test":"last","timestamp":1769555926953,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"last","type":"test_pass"}
+{"suite":"Sequence","test":"firstOrNull","timestamp":1769555926954,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"firstOrNull","type":"test_pass"}
+{"suite":"Sequence","test":"single","timestamp":1769555926955,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"single","type":"test_pass"}
+{"suite":"Sequence","test":"elementAt","timestamp":1769555926956,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"elementAt","type":"test_pass"}
+{"suite":"Sequence","test":"elementAtOrNull","timestamp":1769555926958,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"elementAtOrNull","type":"test_pass"}
+{"suite":"Sequence","test":"indexOf","timestamp":1769555926959,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"indexOf","type":"test_pass"}
+{"suite":"Sequence","test":"contains","timestamp":1769555926960,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"contains","type":"test_pass"}
+{"suite":"Sequence","test":"minMax","timestamp":1769555926961,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"minMax","type":"test_pass"}
+{"suite":"Sequence","test":"partition","timestamp":1769555926962,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"partition","type":"test_pass"}
+{"suite":"Sequence","test":"joinToString","timestamp":1769555926964,"type":"test_start"}
+{"duration_ms":2,"suite":"Sequence","test":"joinToString","type":"test_pass"}
+{"suite":"Sequence","test":"onEach","timestamp":1769555926967,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"onEach","type":"test_pass"}
+{"suite":"Sequence","test":"withIndex","timestamp":1769555926968,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"withIndex","type":"test_pass"}
+{"suite":"Sequence","test":"mapNotNull","timestamp":1769555926970,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"mapNotNull","type":"test_pass"}
+{"suite":"Sequence","test":"scan","timestamp":1769555926971,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"scan","type":"test_pass"}
+{"suite":"Sequence","test":"forEach","timestamp":1769555926973,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"forEach","type":"test_pass"}
+{"suite":"Sequence","test":"forEachIndexed","timestamp":1769555926974,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"forEachIndexed","type":"test_pass"}
+{"suite":"Sequence","test":"find","timestamp":1769555926975,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"find","type":"test_pass"}
+{"suite":"Sequence","test":"indexOfFirst","timestamp":1769555926977,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"indexOfFirst","type":"test_pass"}
+{"suite":"Sequence","test":"firstNotNullOf","timestamp":1769555926978,"type":"test_start"}
+{"duration_ms":0,"suite":"Sequence","test":"firstNotNullOf","type":"test_pass"}
+{"suite":"Sequence","test":"groupBy with transform","timestamp":1769555926979,"type":"test_start"}
+{"duration_ms":1,"suite":"Sequence","test":"groupBy with transform","type":"test_pass"}
+{"duration_ms":53,"failed":0,"ignored":0,"passed":36,"suite":"Sequence","type":"suite_end"}
+{"suite":"Unsigned Basics","timestamp":1769555926981,"type":"suite_start"}
+{"suite":"Unsigned Basics","test":"UInt basics","timestamp":1769555926982,"type":"test_start"}
+{"duration_ms":1,"suite":"Unsigned Basics","test":"UInt basics","type":"test_pass"}
+{"suite":"Unsigned Basics","test":"UInt comparison","timestamp":1769555926983,"type":"test_start"}
+{"duration_ms":0,"suite":"Unsigned Basics","test":"UInt comparison","type":"test_pass"}
+{"suite":"Unsigned Basics","test":"UInt arithmetic","timestamp":1769555926984,"type":"test_start"}
+{"duration_ms":1,"suite":"Unsigned Basics","test":"UInt arithmetic","type":"test_pass"}
+{"suite":"Unsigned Basics","test":"ULong basics","timestamp":1769555926986,"type":"test_start"}
+{"duration_ms":1,"suite":"Unsigned Basics","test":"ULong basics","type":"test_pass"}
+{"suite":"Unsigned Basics","test":"UByte basics","timestamp":1769555926987,"type":"test_start"}
+{"duration_ms":1,"suite":"Unsigned Basics","test":"UByte basics","type":"test_pass"}
+{"suite":"Unsigned Basics","test":"UShort basics","timestamp":1769555926988,"type":"test_start"}
+{"duration_ms":1,"suite":"Unsigned Basics","test":"UShort basics","type":"test_pass"}
+{"duration_ms":8,"failed":0,"ignored":0,"passed":6,"suite":"Unsigned Basics","type":"suite_end"}
+{"suite":"Unsigned Ranges","timestamp":1769555926990,"type":"suite_start"}
+{"suite":"Unsigned Ranges","test":"UIntRange","timestamp":1769555926991,"type":"test_start"}
+{"duration_ms":2,"suite":"Unsigned Ranges","test":"UIntRange","type":"test_pass"}
+{"suite":"Unsigned Ranges","test":"UIntRange until","timestamp":1769555926993,"type":"test_start"}
+{"duration_ms":1,"suite":"Unsigned Ranges","test":"UIntRange until","type":"test_pass"}
+{"suite":"Unsigned Ranges","test":"UIntRange downTo","timestamp":1769555926995,"type":"test_start"}
+{"duration_ms":1,"suite":"Unsigned Ranges","test":"UIntRange downTo","type":"test_pass"}
+{"suite":"Unsigned Ranges","test":"UIntRange step","timestamp":1769555926997,"type":"test_start"}
+{"duration_ms":2,"suite":"Unsigned Ranges","test":"UIntRange step","type":"test_pass"}
+{"suite":"Unsigned Ranges","test":"ULongRange","timestamp":1769555927000,"type":"test_start"}
+{"duration_ms":1,"suite":"Unsigned Ranges","test":"ULongRange","type":"test_pass"}
+{"duration_ms":11,"failed":0,"ignored":0,"passed":5,"suite":"Unsigned Ranges","type":"suite_end"}
+{"suite":"Math","timestamp":1769555927003,"type":"suite_start"}
+{"suite":"Math","test":"PI","timestamp":1769555927003,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"PI","type":"test_pass"}
+{"suite":"Math","test":"E","timestamp":1769555927004,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"E","type":"test_pass"}
+{"suite":"Math","test":"abs Int","timestamp":1769555927005,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"abs Int","type":"test_pass"}
+{"suite":"Math","test":"abs Double","timestamp":1769555927005,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"abs Double","type":"test_pass"}
+{"suite":"Math","test":"min","timestamp":1769555927006,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"min","type":"test_pass"}
+{"suite":"Math","test":"max","timestamp":1769555927007,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"max","type":"test_pass"}
+{"suite":"Math","test":"floor","timestamp":1769555927007,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"floor","type":"test_pass"}
+{"suite":"Math","test":"ceil","timestamp":1769555927008,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"ceil","type":"test_pass"}
+{"suite":"Math","test":"round","timestamp":1769555927009,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"round","type":"test_pass"}
+{"suite":"Math","test":"truncate","timestamp":1769555927010,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"truncate","type":"test_pass"}
+{"suite":"Math","test":"roundToInt","timestamp":1769555927011,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"roundToInt","type":"test_pass"}
+{"suite":"Math","test":"roundToLong","timestamp":1769555927012,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"roundToLong","type":"test_pass"}
+{"suite":"Math","test":"sqrt","timestamp":1769555927012,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"sqrt","type":"test_pass"}
+{"suite":"Math","test":"pow","timestamp":1769555927013,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"pow","type":"test_pass"}
+{"suite":"Math","test":"pow Int","timestamp":1769555927014,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"pow Int","type":"test_pass"}
+{"suite":"Math","test":"exp","timestamp":1769555927015,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"exp","type":"test_pass"}
+{"suite":"Math","test":"ln","timestamp":1769555927015,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"ln","type":"test_pass"}
+{"suite":"Math","test":"log10","timestamp":1769555927016,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"log10","type":"test_pass"}
+{"suite":"Math","test":"log2","timestamp":1769555927017,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"log2","type":"test_pass"}
+{"suite":"Math","test":"log with base","timestamp":1769555927018,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"log with base","type":"test_pass"}
+{"suite":"Math","test":"sin","timestamp":1769555927018,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"sin","type":"test_pass"}
+{"suite":"Math","test":"cos","timestamp":1769555927019,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"cos","type":"test_pass"}
+{"suite":"Math","test":"tan","timestamp":1769555927020,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"tan","type":"test_pass"}
+{"suite":"Math","test":"asin","timestamp":1769555927021,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"asin","type":"test_pass"}
+{"suite":"Math","test":"acos","timestamp":1769555927022,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"acos","type":"test_pass"}
+{"suite":"Math","test":"atan","timestamp":1769555927022,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"atan","type":"test_pass"}
+{"suite":"Math","test":"atan2","timestamp":1769555927023,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"atan2","type":"test_pass"}
+{"suite":"Math","test":"sinh","timestamp":1769555927024,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"sinh","type":"test_pass"}
+{"suite":"Math","test":"cosh","timestamp":1769555927025,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"cosh","type":"test_pass"}
+{"suite":"Math","test":"tanh","timestamp":1769555927025,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"tanh","type":"test_pass"}
+{"suite":"Math","test":"hypot","timestamp":1769555927026,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"hypot","type":"test_pass"}
+{"suite":"Math","test":"sign","timestamp":1769555927027,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"sign","type":"test_pass"}
+{"suite":"Math","test":"sign Int","timestamp":1769555927028,"type":"test_start"}
+{"duration_ms":0,"suite":"Math","test":"sign Int","type":"test_pass"}
+{"duration_ms":25,"failed":0,"ignored":0,"passed":33,"suite":"Math","type":"suite_end"}
+{"suite":"StringBuilder","timestamp":1769555927029,"type":"suite_start"}
+{"suite":"StringBuilder","test":"create empty","timestamp":1769555927029,"type":"test_start"}
+{"duration_ms":0,"suite":"StringBuilder","test":"create empty","type":"test_pass"}
+{"suite":"StringBuilder","test":"create with initial content","timestamp":1769555927030,"type":"test_start"}
+{"duration_ms":0,"suite":"StringBuilder","test":"create with initial content","type":"test_pass"}
+{"suite":"StringBuilder","test":"append string","timestamp":1769555927031,"type":"test_start"}
+{"duration_ms":0,"suite":"StringBuilder","test":"append string","type":"test_pass"}
+{"suite":"StringBuilder","test":"append various types","timestamp":1769555927032,"type":"test_start"}
+{"duration_ms":0,"suite":"StringBuilder","test":"append various types","type":"test_pass"}
+{"suite":"StringBuilder","test":"append chaining","timestamp":1769555927033,"type":"test_start"}
+{"duration_ms":0,"suite":"StringBuilder","test":"append chaining","type":"test_pass"}
+{"suite":"StringBuilder","test":"insert","timestamp":1769555927034,"type":"test_start"}
+{"duration_ms":0,"suite":"StringBuilder","test":"insert","type":"test_pass"}
+{"suite":"StringBuilder","test":"insert at beginning","timestamp":1769555927034,"type":"test_start"}
+{"duration_ms":0,"suite":"StringBuilder","test":"insert at beginning","type":"test_pass"}
+{"suite":"StringBuilder","test":"deleteAt","timestamp":1769555927035,"type":"test_start"}
+{"duration_ms":0,"suite":"StringBuilder","test":"deleteAt","type":"test_pass"}
+{"suite":"StringBuilder","test":"charAt","timestamp":1769555927036,"type":"test_start"}
+{"duration_ms":0,"suite":"StringBuilder","test":"charAt","type":"test_pass"}
+{"suite":"StringBuilder","test":"substring","timestamp":1769555927037,"type":"test_start"}
+{"duration_ms":0,"suite":"StringBuilder","test":"substring","type":"test_pass"}
+{"suite":"StringBuilder","test":"reverse","timestamp":1769555927038,"type":"test_start"}
+{"duration_ms":0,"suite":"StringBuilder","test":"reverse","type":"test_pass"}
+{"suite":"StringBuilder","test":"clear","timestamp":1769555927039,"type":"test_start"}
+{"duration_ms":0,"suite":"StringBuilder","test":"clear","type":"test_pass"}
+{"suite":"StringBuilder","test":"isEmpty","timestamp":1769555927040,"type":"test_start"}
+{"duration_ms":0,"suite":"StringBuilder","test":"isEmpty","type":"test_pass"}
+{"suite":"StringBuilder","test":"isNotEmpty","timestamp":1769555927041,"type":"test_start"}
+{"duration_ms":0,"suite":"StringBuilder","test":"isNotEmpty","type":"test_pass"}
+{"suite":"StringBuilder","test":"appendLine","timestamp":1769555927042,"type":"test_start"}
+{"duration_ms":0,"suite":"StringBuilder","test":"appendLine","type":"test_pass"}
+{"duration_ms":14,"failed":0,"ignored":0,"passed":15,"suite":"StringBuilder","type":"suite_end"}
+{"suite":"String Extensions","timestamp":1769555927043,"type":"suite_start"}
+{"suite":"String Extensions","test":"length","timestamp":1769555927044,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"length","type":"test_pass"}
+{"suite":"String Extensions","test":"isEmpty and isNotEmpty","timestamp":1769555927045,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"isEmpty and isNotEmpty","type":"test_pass"}
+{"suite":"String Extensions","test":"isBlank and isNotBlank","timestamp":1769555927045,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"isBlank and isNotBlank","type":"test_pass"}
+{"suite":"String Extensions","test":"uppercase","timestamp":1769555927046,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"uppercase","type":"test_pass"}
+{"suite":"String Extensions","test":"lowercase","timestamp":1769555927047,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"lowercase","type":"test_pass"}
+{"suite":"String Extensions","test":"substring","timestamp":1769555927048,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"substring","type":"test_pass"}
+{"suite":"String Extensions","test":"contains","timestamp":1769555927049,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"contains","type":"test_pass"}
+{"suite":"String Extensions","test":"startsWith","timestamp":1769555927049,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"startsWith","type":"test_pass"}
+{"suite":"String Extensions","test":"endsWith","timestamp":1769555927050,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"endsWith","type":"test_pass"}
+{"suite":"String Extensions","test":"indexOf","timestamp":1769555927051,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"indexOf","type":"test_pass"}
+{"suite":"String Extensions","test":"lastIndexOf","timestamp":1769555927052,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"lastIndexOf","type":"test_pass"}
+{"suite":"String Extensions","test":"padStart","timestamp":1769555927052,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"padStart","type":"test_pass"}
+{"suite":"String Extensions","test":"padEnd","timestamp":1769555927053,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"padEnd","type":"test_pass"}
+{"suite":"String Extensions","test":"get char","timestamp":1769555927054,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"get char","type":"test_pass"}
+{"suite":"String Extensions","test":"equals","timestamp":1769555927055,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"equals","type":"test_pass"}
+{"suite":"String Extensions","test":"compareTo","timestamp":1769555927056,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"compareTo","type":"test_pass"}
+{"suite":"String Extensions","test":"isNullOrEmpty","timestamp":1769555927057,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"isNullOrEmpty","type":"test_pass"}
+{"suite":"String Extensions","test":"repeat","timestamp":1769555927057,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"repeat","type":"test_pass"}
+{"suite":"String Extensions","test":"lastIndex","timestamp":1769555927058,"type":"test_start"}
+{"duration_ms":0,"suite":"String Extensions","test":"lastIndex","type":"test_pass"}
+{"duration_ms":15,"failed":0,"ignored":0,"passed":19,"suite":"String Extensions","type":"suite_end"}
+{"suite":"Standard Functions","timestamp":1769555927059,"type":"suite_start"}
+{"suite":"Standard Functions","test":"let returns lambda result","timestamp":1769555927060,"type":"test_start"}
+{"duration_ms":0,"suite":"Standard Functions","test":"let returns lambda result","type":"test_pass"}
+{"suite":"Standard Functions","test":"let with null","timestamp":1769555927061,"type":"test_start"}
+{"duration_ms":0,"suite":"Standard Functions","test":"let with null","type":"test_pass"}
+{"suite":"Standard Functions","test":"let chain","timestamp":1769555927061,"type":"test_start"}
+{"duration_ms":0,"suite":"Standard Functions","test":"let chain","type":"test_pass"}
+{"suite":"Standard Functions","test":"run returns lambda result","timestamp":1769555927062,"type":"test_start"}
+{"duration_ms":0,"suite":"Standard Functions","test":"run returns lambda result","type":"test_pass"}
+{"suite":"Standard Functions","test":"run without receiver","timestamp":1769555927063,"type":"test_start"}
+{"duration_ms":0,"suite":"Standard Functions","test":"run without receiver","type":"test_pass"}
+{"suite":"Standard Functions","test":"also returns receiver","timestamp":1769555927064,"type":"test_start"}
+{"duration_ms":0,"suite":"Standard Functions","test":"also returns receiver","type":"test_pass"}
+{"suite":"Standard Functions","test":"also chain","timestamp":1769555927064,"type":"test_start"}
+{"duration_ms":0,"suite":"Standard Functions","test":"also chain","type":"test_pass"}
+{"suite":"Standard Functions","test":"apply returns receiver","timestamp":1769555927066,"type":"test_start"}
+{"duration_ms":0,"suite":"Standard Functions","test":"apply returns receiver","type":"test_pass"}
+{"suite":"Standard Functions","test":"apply for configuration","timestamp":1769555927066,"type":"test_start"}
+{"duration_ms":0,"suite":"Standard Functions","test":"apply for configuration","type":"test_pass"}
+{"suite":"Standard Functions","test":"check passes when true","timestamp":1769555927067,"type":"test_start"}
+{"duration_ms":0,"suite":"Standard Functions","test":"check passes when true","type":"test_pass"}
+{"suite":"Standard Functions","test":"require passes when true","timestamp":1769555927068,"type":"test_start"}
+{"duration_ms":0,"suite":"Standard Functions","test":"require passes when true","type":"test_pass"}
+{"suite":"Standard Functions","test":"to creates Pair","timestamp":1769555927069,"type":"test_start"}
+{"duration_ms":0,"suite":"Standard Functions","test":"to creates Pair","type":"test_pass"}
+{"suite":"Standard Functions","test":"Pair destructuring","timestamp":1769555927069,"type":"test_start"}
+{"duration_ms":0,"suite":"Standard Functions","test":"Pair destructuring","type":"test_pass"}
+{"duration_ms":10,"failed":0,"ignored":0,"passed":13,"suite":"Standard Functions","type":"suite_end"}
+{"suite":"Lazy Delegates","timestamp":1769555927071,"type":"suite_start"}
+{"suite":"Lazy Delegates","test":"lazy isInitialized check","timestamp":1769555927071,"type":"test_start"}
+{"duration_ms":0,"suite":"Lazy Delegates","test":"lazy isInitialized check","type":"test_pass"}
+{"suite":"Lazy Delegates","test":"lazy toString before and after initialization","timestamp":1769555927072,"type":"test_start"}
+{"duration_ms":0,"suite":"Lazy Delegates","test":"lazy toString before and after initialization","type":"test_pass"}
+{"duration_ms":2,"failed":0,"ignored":0,"passed":2,"suite":"Lazy Delegates","type":"suite_end"}
+{"suite":"DateTime","timestamp":1769555927073,"type":"suite_start"}
+{"suite":"DateTime","test":"RoDateTime creation","timestamp":1769555927074,"type":"test_start"}
+{"duration_ms":0,"suite":"DateTime","test":"RoDateTime creation","type":"test_pass"}
+{"suite":"DateTime","test":"RoDateTime mark","timestamp":1769555927074,"type":"test_start"}
+{"duration_ms":0,"suite":"DateTime","test":"RoDateTime mark","type":"test_pass"}
+{"suite":"DateTime","test":"RoDateTime components","timestamp":1769555927075,"type":"test_start"}
+{"duration_ms":0,"suite":"DateTime","test":"RoDateTime components","type":"test_pass"}
+{"suite":"DateTime","test":"RoDateTime time components","timestamp":1769555927076,"type":"test_start"}
+{"duration_ms":0,"suite":"DateTime","test":"RoDateTime time components","type":"test_pass"}
+{"suite":"DateTime","test":"RoDateTime milliseconds","timestamp":1769555927077,"type":"test_start"}
+{"duration_ms":0,"suite":"DateTime","test":"RoDateTime milliseconds","type":"test_pass"}
+{"suite":"DateTime","test":"RoDateTime day of week","timestamp":1769555927078,"type":"test_start"}
+{"duration_ms":0,"suite":"DateTime","test":"RoDateTime day of week","type":"test_pass"}
+{"suite":"DateTime","test":"RoTimespan creation","timestamp":1769555927079,"type":"test_start"}
+{"duration_ms":0,"suite":"DateTime","test":"RoTimespan creation","type":"test_pass"}
+{"suite":"DateTime","test":"RoTimespan mark and measure","timestamp":1769555927079,"type":"test_start"}
+{"duration_ms":1,"suite":"DateTime","test":"RoTimespan mark and measure","type":"test_pass"}
+{"suite":"DateTime","test":"RoTimespan totalSeconds","timestamp":1769555927081,"type":"test_start"}
+{"duration_ms":0,"suite":"DateTime","test":"RoTimespan totalSeconds","type":"test_pass"}
+{"suite":"DateTime","test":"multiple timespans","timestamp":1769555927081,"type":"test_start"}
+{"duration_ms":1,"suite":"DateTime","test":"multiple timespans","type":"test_pass"}
+{"duration_ms":9,"failed":0,"ignored":0,"passed":10,"suite":"DateTime","type":"suite_end"}
+{"suite":"JSON Formatting","timestamp":1769555927083,"type":"suite_start"}
+{"suite":"JSON Formatting","test":"format simple map","timestamp":1769555927084,"type":"test_start"}
+{"duration_ms":0,"suite":"JSON Formatting","test":"format simple map","type":"test_pass"}
+{"suite":"JSON Formatting","test":"format nested map","timestamp":1769555927085,"type":"test_start"}
+{"duration_ms":0,"suite":"JSON Formatting","test":"format nested map","type":"test_pass"}
+{"suite":"JSON Formatting","test":"format list","timestamp":1769555927086,"type":"test_start"}
+{"duration_ms":0,"suite":"JSON Formatting","test":"format list","type":"test_pass"}
+{"suite":"JSON Formatting","test":"format mixed types","timestamp":1769555927086,"type":"test_start"}
+{"duration_ms":0,"suite":"JSON Formatting","test":"format mixed types","type":"test_pass"}
+{"suite":"JSON Formatting","test":"format empty map","timestamp":1769555927088,"type":"test_start"}
+{"duration_ms":0,"suite":"JSON Formatting","test":"format empty map","type":"test_pass"}
+{"suite":"JSON Formatting","test":"format empty list","timestamp":1769555927088,"type":"test_start"}
+{"duration_ms":0,"suite":"JSON Formatting","test":"format empty list","type":"test_pass"}
+{"suite":"JSON Formatting","test":"format null","timestamp":1769555927089,"type":"test_start"}
+{"duration_ms":0,"suite":"JSON Formatting","test":"format null","type":"test_pass"}
+{"duration_ms":6,"failed":0,"ignored":0,"passed":7,"suite":"JSON Formatting","type":"suite_end"}
+{"suite":"Core Utility Functions","timestamp":1769555927090,"type":"suite_start"}
+{"suite":"Core Utility Functions","test":"sleep pauses execution","timestamp":1769555927091,"type":"test_start"}
+{"duration_ms":100,"suite":"Core Utility Functions","test":"sleep pauses execution","type":"test_pass"}
+{"suite":"Core Utility Functions","test":"upTime returns positive value","timestamp":1769555927192,"type":"test_start"}
+{"duration_ms":0,"suite":"Core Utility Functions","test":"upTime returns positive value","type":"test_pass"}
+{"duration_ms":103,"failed":0,"ignored":0,"passed":2,"suite":"Core Utility Functions","type":"suite_end"}
+{"suite":"JSON Functions","timestamp":1769555927195,"type":"suite_start"}
+{"suite":"JSON Functions","test":"parseJson parses valid JSON","timestamp":1769555927196,"type":"test_start"}
+{"duration_ms":1,"suite":"JSON Functions","test":"parseJson parses valid JSON","type":"test_pass"}
+{"suite":"JSON Functions","test":"parseJson returns null for invalid JSON","timestamp":1769555927197,"type":"test_start"}
+BRIGHTSCRIPT: ERROR: ParseJSON: Unknown identifier 'not valid json {': pkg:/source/GlobalFunctionsTestKt.brs(92)
+{"duration_ms":3,"suite":"JSON Functions","test":"parseJson returns null for invalid JSON","type":"test_pass"}
+{"suite":"JSON Functions","test":"formatJson formats object","timestamp":1769555927202,"type":"test_start"}
+{"duration_ms":0,"suite":"JSON Functions","test":"formatJson formats object","type":"test_pass"}
+{"duration_ms":8,"failed":0,"ignored":0,"passed":3,"suite":"JSON Functions","type":"suite_end"}
+{"suite":"File System Functions","timestamp":1769555927205,"type":"suite_start"}
+{"suite":"File System Functions","test":"listDir returns array","timestamp":1769555927205,"type":"test_start"}
+{"duration_ms":1,"suite":"File System Functions","test":"listDir returns array","type":"test_pass"}
+{"suite":"File System Functions","test":"read and write ascii file","timestamp":1769555927208,"type":"test_start"}
+{"duration_ms":4,"suite":"File System Functions","test":"read and write ascii file","type":"test_pass"}
+{"suite":"File System Functions","test":"create and delete directory","timestamp":1769555927213,"type":"test_start"}
+{"duration_ms":2,"suite":"File System Functions","test":"create and delete directory","type":"test_pass"}
+{"suite":"File System Functions","test":"matchFiles searches for patterns","timestamp":1769555927216,"type":"test_start"}
+{"duration_ms":1,"suite":"File System Functions","test":"matchFiles searches for patterns","type":"test_pass"}
+{"duration_ms":13,"failed":0,"ignored":0,"passed":4,"suite":"File System Functions","type":"suite_end"}
+{"suite":"String Conversion Functions","timestamp":1769555927219,"type":"suite_start"}
+{"suite":"String Conversion Functions","test":"strToI converts valid integer string","timestamp":1769555927220,"type":"test_start"}
+{"duration_ms":0,"suite":"String Conversion Functions","test":"strToI converts valid integer string","type":"test_pass"}
+{"suite":"String Conversion Functions","test":"strToI converts negative integer string","timestamp":1769555927222,"type":"test_start"}
+{"duration_ms":0,"suite":"String Conversion Functions","test":"strToI converts negative integer string","type":"test_pass"}
+{"suite":"String Conversion Functions","test":"strToI returns 0 for invalid string","timestamp":1769555927223,"type":"test_start"}
+{"duration_ms":0,"suite":"String Conversion Functions","test":"strToI returns 0 for invalid string","type":"test_pass"}
+{"duration_ms":5,"failed":0,"ignored":0,"passed":3,"suite":"String Conversion Functions","type":"suite_end"}
+{"suite":"Localization Functions","timestamp":1769555927226,"type":"suite_start"}
+{"suite":"Localization Functions","test":"tr returns original string without translations","timestamp":1769555927226,"type":"test_start"}
+{"duration_ms":0,"suite":"Localization Functions","test":"tr returns original string without translations","type":"test_pass"}
+{"duration_ms":2,"failed":0,"ignored":0,"passed":1,"suite":"Localization Functions","type":"suite_end"}
+{"suite":"KClass","timestamp":1769555927229,"type":"suite_start"}
+{"suite":"KClass","test":"simpleName returns class name","timestamp":1769555927230,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass","test":"simpleName returns class name","type":"test_pass"}
+{"suite":"KClass","test":"simpleName for Animal","timestamp":1769555927231,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass","test":"simpleName for Animal","type":"test_pass"}
+{"suite":"KClass","test":"simpleName for Dog","timestamp":1769555927232,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass","test":"simpleName for Dog","type":"test_pass"}
+{"suite":"KClass","test":"same class literals are equal","timestamp":1769555927233,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass","test":"same class literals are equal","type":"test_pass"}
+{"suite":"KClass","test":"different class literals are not equal","timestamp":1769555927235,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass","test":"different class literals are not equal","type":"test_pass"}
+{"suite":"KClass","test":"parent and child class literals are not equal","timestamp":1769555927236,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass","test":"parent and child class literals are not equal","type":"test_pass"}
+{"suite":"KClass","test":"get class from instance","timestamp":1769555927237,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass","test":"get class from instance","type":"test_pass"}
+{"suite":"KClass","test":"get class from polymorphic reference","timestamp":1769555927239,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass","test":"get class from polymorphic reference","type":"test_pass"}
+{"suite":"KClass","test":"hashCode is consistent with equals","timestamp":1769555927240,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass","test":"hashCode is consistent with equals","type":"test_pass"}
+{"suite":"KClass","test":"different classes have different hashCodes","timestamp":1769555927241,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass","test":"different classes have different hashCodes","type":"test_pass"}
+{"suite":"KClass","test":"isInstance returns true for matching type","timestamp":1769555927243,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass","test":"isInstance returns true for matching type","type":"test_pass"}
+{"suite":"KClass","test":"isInstance returns true for subclass","timestamp":1769555927244,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass","test":"isInstance returns true for subclass","type":"test_pass"}
+{"suite":"KClass","test":"isInstance returns false for non-matching type","timestamp":1769555927245,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass","test":"isInstance returns false for non-matching type","type":"test_pass"}
+{"suite":"KClass","test":"isInstance returns false for null","timestamp":1769555927247,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass","test":"isInstance returns false for null","type":"test_pass"}
+{"suite":"KClass","test":"KClass can be used as map key","timestamp":1769555927248,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass","test":"KClass can be used as map key","type":"test_pass"}
+{"suite":"KClass","test":"KClass map lookup with instance class","timestamp":1769555927250,"type":"test_start"}
+{"duration_ms":1,"suite":"KClass","test":"KClass map lookup with instance class","type":"test_pass"}
+{"suite":"KClass","test":"qualifiedName returns null","timestamp":1769555927251,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass","test":"qualifiedName returns null","type":"test_pass"}
+{"suite":"KClass","test":"toString returns class prefix with name","timestamp":1769555927252,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass","test":"toString returns class prefix with name","type":"test_pass"}
+{"duration_ms":23,"failed":0,"ignored":0,"passed":18,"suite":"KClass","type":"suite_end"}
+{"suite":"KClass Native Types","timestamp":1769555927253,"type":"suite_start"}
+{"suite":"KClass Native Types","test":"RoArray class literal simpleName","timestamp":1769555927253,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass Native Types","test":"RoArray class literal simpleName","type":"test_pass"}
+{"suite":"KClass Native Types","test":"RoAssociativeArray class literal simpleName","timestamp":1769555927254,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass Native Types","test":"RoAssociativeArray class literal simpleName","type":"test_pass"}
+{"suite":"KClass Native Types","test":"native type class literals are equal","timestamp":1769555927255,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass Native Types","test":"native type class literals are equal","type":"test_pass"}
+{"suite":"KClass Native Types","test":"different native type class literals are not equal","timestamp":1769555927256,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass Native Types","test":"different native type class literals are not equal","type":"test_pass"}
+{"suite":"KClass Native Types","test":"native type KClass as map key","timestamp":1769555927257,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass Native Types","test":"native type KClass as map key","type":"test_pass"}
+{"suite":"KClass Native Types","test":"get class from native RoArray instance","timestamp":1769555927257,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass Native Types","test":"get class from native RoArray instance","type":"test_pass"}
+{"suite":"KClass Native Types","test":"native instance class matches class literal","timestamp":1769555927258,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass Native Types","test":"native instance class matches class literal","type":"test_pass"}
+{"suite":"KClass Native Types","test":"native type KClass map lookup with instance","timestamp":1769555927259,"type":"test_start"}
+{"duration_ms":0,"suite":"KClass Native Types","test":"native type KClass map lookup with instance","type":"test_pass"}
+{"duration_ms":6,"failed":0,"ignored":0,"passed":8,"suite":"KClass Native Types","type":"suite_end"}
+{"suite":"Coroutine Primitives","timestamp":1769555927260,"type":"suite_start"}
+{"suite":"Coroutine Primitives","test":"EmptyCoroutineContext is empty","timestamp":1769555927261,"type":"test_start"}
+{"duration_ms":0,"suite":"Coroutine Primitives","test":"EmptyCoroutineContext is empty","type":"test_pass"}
+{"suite":"Coroutine Primitives","test":"EmptyCoroutineContext plus element","timestamp":1769555927261,"type":"test_start"}
+{"duration_ms":0,"suite":"Coroutine Primitives","test":"EmptyCoroutineContext plus element","type":"test_pass"}
+{"suite":"Coroutine Primitives","test":"Context element lookup","timestamp":1769555927262,"type":"test_start"}
+{"duration_ms":0,"suite":"Coroutine Primitives","test":"Context element lookup","type":"test_pass"}
+{"suite":"Coroutine Primitives","test":"Combined context","timestamp":1769555927263,"type":"test_start"}
+{"duration_ms":0,"suite":"Coroutine Primitives","test":"Combined context","type":"test_pass"}
+{"suite":"Coroutine Primitives","test":"Context minusKey","timestamp":1769555927264,"type":"test_start"}
+{"duration_ms":0,"suite":"Coroutine Primitives","test":"Context minusKey","type":"test_pass"}
+{"suite":"Coroutine Primitives","test":"Job initial state is active","timestamp":1769555927265,"type":"test_start"}
+{"duration_ms":0,"suite":"Coroutine Primitives","test":"Job initial state is active","type":"test_pass"}
+{"suite":"Coroutine Primitives","test":"Job complete","timestamp":1769555927265,"type":"test_start"}
+{"duration_ms":0,"suite":"Coroutine Primitives","test":"Job complete","type":"test_pass"}
+{"suite":"Coroutine Primitives","test":"Job cancel","timestamp":1769555927266,"type":"test_start"}
+{"duration_ms":0,"suite":"Coroutine Primitives","test":"Job cancel","type":"test_pass"}
+{"suite":"Coroutine Primitives","test":"Job complete returns false if already completed","timestamp":1769555927267,"type":"test_start"}
+{"duration_ms":0,"suite":"Coroutine Primitives","test":"Job complete returns false if already completed","type":"test_pass"}
+{"suite":"Coroutine Primitives","test":"Job cancel after complete","timestamp":1769555927268,"type":"test_start"}
+{"duration_ms":0,"suite":"Coroutine Primitives","test":"Job cancel after complete","type":"test_pass"}
+{"suite":"Coroutine Primitives","test":"CompletableDeferred initial state","timestamp":1769555927268,"type":"test_start"}
+{"duration_ms":0,"suite":"Coroutine Primitives","test":"CompletableDeferred initial state","type":"test_pass"}
+{"suite":"Coroutine Primitives","test":"CompletableDeferred complete with value","timestamp":1769555927269,"type":"test_start"}
+{"duration_ms":0,"suite":"Coroutine Primitives","test":"CompletableDeferred complete with value","type":"test_pass"}
+{"suite":"Coroutine Primitives","test":"CompletableDeferred complete returns false if already completed","timestamp":1769555927270,"type":"test_start"}
+{"duration_ms":0,"suite":"Coroutine Primitives","test":"CompletableDeferred complete returns false if already completed","type":"test_pass"}
+{"suite":"Coroutine Primitives","test":"CompletableDeferred getCompleted throws if not completed","timestamp":1769555927271,"type":"test_start"}
+{"duration_ms":23,"suite":"Coroutine Primitives","test":"CompletableDeferred getCompleted throws if not completed","type":"test_pass"}
+{"suite":"Coroutine Primitives","test":"CoroutineScope factory function","timestamp":1769555927295,"type":"test_start"}
+{"duration_ms":0,"suite":"Coroutine Primitives","test":"CoroutineScope factory function","type":"test_pass"}
+{"suite":"Coroutine Primitives","test":"CoroutineScope with Job","timestamp":1769555927296,"type":"test_start"}
+{"duration_ms":0,"suite":"Coroutine Primitives","test":"CoroutineScope with Job","type":"test_pass"}
+{"suite":"Coroutine Primitives","test":"Continuation resume","timestamp":1769555927297,"type":"test_start"}
+{"duration_ms":0,"suite":"Coroutine Primitives","test":"Continuation resume","type":"test_pass"}
+{"suite":"Coroutine Primitives","test":"Continuation resumeWithException","timestamp":1769555927298,"type":"test_start"}
+{"duration_ms":0,"suite":"Coroutine Primitives","test":"Continuation resumeWithException","type":"test_pass"}
+{"suite":"Coroutine Primitives","test":"COROUTINE_SUSPENDED is a sentinel","timestamp":1769555927299,"type":"test_start"}
+{"duration_ms":0,"suite":"Coroutine Primitives","test":"COROUTINE_SUSPENDED is a sentinel","type":"test_pass"}
+{"duration_ms":39,"failed":0,"ignored":0,"passed":19,"suite":"Coroutine Primitives","type":"suite_end"}
+{"suite":"Suspend Functions","timestamp":1769555927300,"type":"suite_start"}
+{"suite":"Suspend Functions","test":"Simple suspend function","timestamp":1769555927300,"type":"test_start"}
+{"duration_ms":0,"suite":"Suspend Functions","test":"Simple suspend function","type":"test_pass"}
+{"suite":"Suspend Functions","test":"Suspend function with parameters","timestamp":1769555927301,"type":"test_start"}
+{"duration_ms":0,"suite":"Suspend Functions","test":"Suspend function with parameters","type":"test_pass"}
+{"suite":"Suspend Functions","test":"Suspend lambda","timestamp":1769555927302,"type":"test_start"}
+{"duration_ms":0,"suite":"Suspend Functions","test":"Suspend lambda","type":"test_pass"}
+{"suite":"Suspend Functions","test":"Suspend lambda with receiver","timestamp":1769555927302,"type":"test_start"}
+{"duration_ms":0,"suite":"Suspend Functions","test":"Suspend lambda with receiver","type":"test_pass"}
+{"duration_ms":3,"failed":0,"ignored":0,"passed":4,"suite":"Suspend Functions","type":"suite_end"}
+{"suite":"Dispatchers","timestamp":1769555927304,"type":"suite_start"}
+{"suite":"Dispatchers","test":"Dispatchers.Default exists","timestamp":1769555927304,"type":"test_start"}
+{"duration_ms":0,"suite":"Dispatchers","test":"Dispatchers.Default exists","type":"test_pass"}
+{"suite":"Dispatchers","test":"Dispatchers.Main exists","timestamp":1769555927305,"type":"test_start"}
+{"duration_ms":0,"suite":"Dispatchers","test":"Dispatchers.Main exists","type":"test_pass"}
+{"suite":"Dispatchers","test":"Dispatchers.Unconfined exists","timestamp":1769555927306,"type":"test_start"}
+{"duration_ms":0,"suite":"Dispatchers","test":"Dispatchers.Unconfined exists","type":"test_pass"}
+{"suite":"Dispatchers","test":"Dispatchers.IO exists","timestamp":1769555927306,"type":"test_start"}
+{"duration_ms":0,"suite":"Dispatchers","test":"Dispatchers.IO exists","type":"test_pass"}
+{"suite":"Dispatchers","test":"Unconfined dispatcher does not need dispatch","timestamp":1769555927307,"type":"test_start"}
+{"duration_ms":0,"suite":"Dispatchers","test":"Unconfined dispatcher does not need dispatch","type":"test_pass"}
+{"suite":"Dispatchers","test":"Default dispatcher needs dispatch","timestamp":1769555927308,"type":"test_start"}
+{"duration_ms":0,"suite":"Dispatchers","test":"Default dispatcher needs dispatch","type":"test_pass"}
+{"duration_ms":4,"failed":0,"ignored":0,"passed":6,"suite":"Dispatchers","type":"suite_end"}
+{"suite":"DelayTracker","timestamp":1769555927309,"type":"suite_start"}
+{"suite":"DelayTracker","test":"DelayTracker.current returns tracker","timestamp":1769555927309,"type":"test_start"}
+{"duration_ms":0,"suite":"DelayTracker","test":"DelayTracker.current returns tracker","type":"test_pass"}
+{"suite":"DelayTracker","test":"DelayTracker.current returns same instance","timestamp":1769555927310,"type":"test_start"}
+{"duration_ms":0,"suite":"DelayTracker","test":"DelayTracker.current returns same instance","type":"test_pass"}
+{"suite":"DelayTracker","test":"DelayTracker initially has no pending delays","timestamp":1769555927311,"type":"test_start"}
+{"duration_ms":0,"suite":"DelayTracker","test":"DelayTracker initially has no pending delays","type":"test_pass"}
+{"suite":"DelayTracker","test":"DelayTracker register adds pending delay","timestamp":1769555927312,"type":"test_start"}
+{"duration_ms":0,"suite":"DelayTracker","test":"DelayTracker register adds pending delay","type":"test_pass"}
+{"suite":"DelayTracker","test":"DelayTracker tick with no delays returns 0","timestamp":1769555927313,"type":"test_start"}
+{"duration_ms":0,"suite":"DelayTracker","test":"DelayTracker tick with no delays returns 0","type":"test_pass"}
+{"suite":"DelayTracker","test":"DelayTracker tick fires expired delays","timestamp":1769555927313,"type":"test_start"}
+{"duration_ms":0,"suite":"DelayTracker","test":"DelayTracker tick fires expired delays","type":"test_pass"}
+{"suite":"DelayTracker","test":"DelayTracker tick does not fire unexpired delays","timestamp":1769555927314,"type":"test_start"}
+{"duration_ms":0,"suite":"DelayTracker","test":"DelayTracker tick does not fire unexpired delays","type":"test_pass"}
+{"suite":"DelayTracker","test":"DelayTracker multiple delays fire in order","timestamp":1769555927315,"type":"test_start"}
+{"duration_ms":1,"suite":"DelayTracker","test":"DelayTracker multiple delays fire in order","type":"test_pass"}
+{"suite":"DelayTracker","test":"DelayTracker currentTimeMs increases","timestamp":1769555927317,"type":"test_start"}
+{"duration_ms":1,"suite":"DelayTracker","test":"DelayTracker currentTimeMs increases","type":"test_pass"}
+{"duration_ms":9,"failed":0,"ignored":0,"passed":9,"suite":"DelayTracker","type":"suite_end"}
+{"suite":"delay() Function","timestamp":1769555927319,"type":"suite_start"}
+{"suite":"delay() Function","test":"delay(0) returns immediately","timestamp":1769555927319,"type":"test_start"}
+{"duration_ms":1,"suite":"delay() Function","test":"delay(0) returns immediately","type":"test_pass"}
+{"suite":"delay() Function","test":"delay(negative) returns immediately","timestamp":1769555927320,"type":"test_start"}
+{"duration_ms":1,"suite":"delay() Function","test":"delay(negative) returns immediately","type":"test_pass"}
+{"suite":"delay() Function","test":"delay waits approximately correct time","timestamp":1769555927322,"type":"test_start"}
+{"duration_ms":100,"suite":"delay() Function","test":"delay waits approximately correct time","type":"test_pass"}
+{"suite":"delay() Function","test":"multiple sequential delays","timestamp":1769555927423,"type":"test_start"}
+{"duration_ms":150,"suite":"delay() Function","test":"multiple sequential delays","type":"test_pass"}
+{"suite":"delay() Function","test":"delay suspends and resumes","timestamp":1769555927574,"type":"test_start"}
+{"duration_ms":10,"suite":"delay() Function","test":"delay suspends and resumes","type":"test_pass"}
+{"duration_ms":265,"failed":0,"ignored":0,"passed":5,"suite":"delay() Function","type":"suite_end"}
+{"suite":"yield() Function","timestamp":1769555927585,"type":"suite_start"}
+{"suite":"yield() Function","test":"yield returns to runBlocking","timestamp":1769555927585,"type":"test_start"}
+{"duration_ms":1,"suite":"yield() Function","test":"yield returns to runBlocking","type":"test_pass"}
+{"suite":"yield() Function","test":"yield allows other coroutines to run","timestamp":1769555927587,"type":"test_start"}
+{"duration_ms":12,"suite":"yield() Function","test":"yield allows other coroutines to run","type":"test_pass"}
+{"duration_ms":14,"failed":0,"ignored":0,"passed":2,"suite":"yield() Function","type":"suite_end"}
+{"suite":"Coroutine Queue","timestamp":1769555927600,"type":"suite_start"}
+{"suite":"Coroutine Queue","test":"processCoroutineQueue with empty queue","timestamp":1769555927601,"type":"test_start"}
+{"duration_ms":0,"suite":"Coroutine Queue","test":"processCoroutineQueue with empty queue","type":"test_pass"}
+{"suite":"Coroutine Queue","test":"launch enqueues work","timestamp":1769555927601,"type":"test_start"}
+{"duration_ms":11,"suite":"Coroutine Queue","test":"launch enqueues work","type":"test_pass"}
+{"suite":"Coroutine Queue","test":"multiple launch calls execute","timestamp":1769555927613,"type":"test_start"}
+{"duration_ms":12,"suite":"Coroutine Queue","test":"multiple launch calls execute","type":"test_pass"}
+{"duration_ms":26,"failed":0,"ignored":0,"passed":3,"suite":"Coroutine Queue","type":"suite_end"}
+{"suite":"runBlocking with Delay","timestamp":1769555927627,"type":"suite_start"}
+{"suite":"runBlocking with Delay","test":"runBlocking completes simple coroutine","timestamp":1769555927627,"type":"test_start"}
+{"duration_ms":1,"suite":"runBlocking with Delay","test":"runBlocking completes simple coroutine","type":"test_pass"}
+{"suite":"runBlocking with Delay","test":"runBlocking with delay completes","timestamp":1769555927629,"type":"test_start"}
+{"duration_ms":10,"suite":"runBlocking with Delay","test":"runBlocking with delay completes","type":"test_pass"}
+{"suite":"runBlocking with Delay","test":"runBlocking with launch and delay","timestamp":1769555927639,"type":"test_start"}
+{"duration_ms":41,"suite":"runBlocking with Delay","test":"runBlocking with launch and delay","type":"test_pass"}
+{"suite":"runBlocking with Delay","test":"runBlocking processes delays correctly","timestamp":1769555927681,"type":"test_start"}
+{"duration_ms":50,"suite":"runBlocking with Delay","test":"runBlocking processes delays correctly","type":"test_pass"}
+{"duration_ms":105,"failed":0,"ignored":0,"passed":4,"suite":"runBlocking with Delay","type":"suite_end"}
+{"duration_ms":1174,"failed":0,"ignored":0,"passed":369,"total_suites":32,"total_tests":369,"type":"run_complete"}
+[KOTLINTEST_END]
+[DEBUG] runTests complete
+Note: GC - Found 205 orphaned objects (objects in a circular ref loop).
+01-27 23:18:47.790 app  [bs.ndk.proc.exit] plugin=dev pid=29297 status=exit retval=2 user requested=0 process name='SdkLauncher' exit code=EXIT_USER_NAV

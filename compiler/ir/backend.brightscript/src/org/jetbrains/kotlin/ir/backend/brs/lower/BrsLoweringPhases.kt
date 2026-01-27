@@ -122,6 +122,13 @@ object BrsLoweringPhases {
         // Build the list of lowering phases
         val phases = mutableListOf<FileLoweringPass>()
 
+        // Phase 0.05: BrightScript Intrinsic Lowering
+        // MUST run BEFORE UpgradeCallableReferences and BrsCallableReferenceLowering.
+        // This handles intrinsics that need to see the original function references
+        // before they are transformed into anonymous classes:
+        // - brsName(::function) -> extracts the mangled function name as a string literal
+        phases += BrsIntrinsicLowering(context)
+
         // Phase 0.1: Upgrade Callable References
         // Transforms IrFunctionExpression (lambdas) and IrFunctionReference into IrRichFunctionReference.
         // This is a prerequisite for the callable reference lowering phase.

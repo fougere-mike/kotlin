@@ -4,11 +4,8 @@ function Animal_create_Str_k_(name as String) as Object
     this.__type = "Animal"
     this.__proto = ["Animal"]
     this.__id = __kotlin_nextObjectId()
-    this.equals_AnyN_k_ = Any_equals_AnyN_k_
     this.equals = Any_equals_AnyN_k_
-    this.hashCode_k_ = Any_hashCode_k_
     this.hashCode = Any_hashCode_k_
-    this.toString_k_ = Any_toString_k_
     this.toString = Any_toString_k_
     this.__get_name = Animal___get_name_k_
     this.name = name

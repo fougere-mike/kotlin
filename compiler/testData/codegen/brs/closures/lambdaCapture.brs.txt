@@ -31,11 +31,8 @@ function simpleCapture_lambda_create_I_k_(_multiplier as Integer) as Object
     this.__type = "simpleCapture_lambda"
     this.__proto = ["simpleCapture_lambda", "Function1", "Function"]
     this.__id = __kotlin_nextObjectId()
-    this.equals_AnyN_k_ = Any_equals_AnyN_k_
     this.equals = Any_equals_AnyN_k_
-    this.hashCode_k_ = Any_hashCode_k_
     this.hashCode = Any_hashCode_k_
-    this.toString_k_ = Any_toString_k_
     this.toString = Any_toString_k_
     this.invoke_AnyN_k_ = simpleCapture_lambda_invoke_AnyN_k_
     this._multiplier = _multiplier
@@ -51,11 +48,8 @@ function mutableCapture_lambda_create_AnyN_k_(_counter as Dynamic) as Object
     this.__type = "mutableCapture_lambda"
     this.__proto = ["mutableCapture_lambda", "Function0", "Function"]
     this.__id = __kotlin_nextObjectId()
-    this.equals_AnyN_k_ = Any_equals_AnyN_k_
     this.equals = Any_equals_AnyN_k_
-    this.hashCode_k_ = Any_hashCode_k_
     this.hashCode = Any_hashCode_k_
-    this.toString_k_ = Any_toString_k_
     this.toString = Any_toString_k_
     this.invoke_k_ = mutableCapture_lambda_invoke_k_
     this._counter = _counter
@@ -71,11 +65,8 @@ function returnedClosure_lambda_create_AnyN_k_(_count as Dynamic) as Object
     this.__type = "returnedClosure_lambda"
     this.__proto = ["returnedClosure_lambda", "Function0", "Function"]
     this.__id = __kotlin_nextObjectId()
-    this.equals_AnyN_k_ = Any_equals_AnyN_k_
     this.equals = Any_equals_AnyN_k_
-    this.hashCode_k_ = Any_hashCode_k_
     this.hashCode = Any_hashCode_k_
-    this.toString_k_ = Any_toString_k_
     this.toString = Any_toString_k_
     this.invoke_k_ = returnedClosure_lambda_invoke_k_
     this._count = _count
@@ -92,11 +83,8 @@ function testHigherOrder_lambda_create_k_() as Object
     this.__type = "testHigherOrder_lambda"
     this.__proto = ["testHigherOrder_lambda", "Function1", "Function"]
     this.__id = __kotlin_nextObjectId()
-    this.equals_AnyN_k_ = Any_equals_AnyN_k_
     this.equals = Any_equals_AnyN_k_
-    this.hashCode_k_ = Any_hashCode_k_
     this.hashCode = Any_hashCode_k_
-    this.toString_k_ = Any_toString_k_
     this.toString = Any_toString_k_
     this.invoke_AnyN_k_ = testHigherOrder_lambda_invoke_AnyN_k_
     return this
