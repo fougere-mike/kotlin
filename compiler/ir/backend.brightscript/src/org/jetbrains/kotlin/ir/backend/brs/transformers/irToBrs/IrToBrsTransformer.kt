@@ -3616,6 +3616,61 @@ class IrToBrsTransformer(
         // Default implementation - should be handled by specialized transformers
         return null
     }
+
+    /**
+     * Check if a class is an extracted local class (lambda or function reference).
+     * These classes are extracted from function bodies by BrsLocalClassExtractionLowering
+     * but their code is still generated inline in the containing file, not as separate .brs files.
+     */
+    internal fun isExtractedLocalClass(irClass: IrClass): Boolean {
+        // Check for lambda or function reference origin
+        val origin = irClass.origin
+        if (origin == org.jetbrains.kotlin.backend.common.lower.WebCallableReferenceLowering.LAMBDA_IMPL ||
+            origin == org.jetbrains.kotlin.backend.common.lower.WebCallableReferenceLowering.FUNCTION_REFERENCE_IMPL) {
+            return true
+        }
+        // Also check if parent is still a function (before extraction)
+        if (irClass.parent is IrFunction) {
+            return true
+        }
+        return false
+    }
+
+    /**
+     * Determine the .brs file name a class's constructor will be compiled to.
+     * Returns null if no dependency should be recorded (e.g., external or local class).
+     */
+    internal fun determineBrsFileNameForClass(irClass: IrClass): String? {
+        // External classes don't produce output files
+        if (irClass.isExternal) return null
+
+        // Extracted local classes (lambdas, anonymous) are inlined
+        if (isExtractedLocalClass(irClass)) return null
+
+        // Check manifest first - this handles stdlib classes correctly
+        val constructor = irClass.declarations.filterIsInstance<IrConstructor>().firstOrNull()
+        if (constructor != null) {
+            val constructorName = context.getBrsName(constructor)
+            context.dependencyFunctionManifest[constructorName]?.let { return it }
+        }
+
+        // Find the containing file
+        var parent: org.jetbrains.kotlin.ir.declarations.IrDeclarationParent = irClass.parent
+        while (parent !is IrFile && parent is org.jetbrains.kotlin.ir.declarations.IrDeclaration) {
+            parent = (parent as org.jetbrains.kotlin.ir.declarations.IrDeclaration).parent
+        }
+
+        return when (parent) {
+            is IrFile -> {
+                // Top-level class - use source file name
+                java.io.File(parent.path).nameWithoutExtension + "Kt.brs"
+            }
+            else -> {
+                // Fallback to class name (for nested classes in same-module code)
+                context.getBrsName(irClass) + "Kt.brs"
+            }
+        }
+    }
 }
 
 /**
@@ -8420,6 +8475,14 @@ class IrExpressionToBrsTransformer(
             return BrsCreateObject(brsTypeName, arguments.toMutableList())
         }
 
+        // Record dependency for this constructor call
+        // This ensures the generated XML includes the script file containing the constructor
+        parent.currentFilePath?.let { currentFile ->
+            parent.determineBrsFileNameForClass(irClass)?.let { calledBrsFile ->
+                context.dependencyCollector.recordDependency(currentFile, calledBrsFile)
+            }
+        }
+
         // Use mangled constructor name to support overloading
         return BrsFunctionCall(
             BrsIdentifier(context.getBrsName(constructor)),
@@ -8429,9 +8492,19 @@ class IrExpressionToBrsTransformer(
 
     override fun visitDelegatingConstructorCall(expression: IrDelegatingConstructorCall, data: Unit): BrsExpression {
         val constructor = expression.symbol.owner
+        val irClass = constructor.parentAsClass
 
         val arguments = (0 until expression.valueArgumentsCount).mapNotNull { i ->
             expression.getValueArgument(i)?.let { it.accept(this, data) }
+        }
+
+        // Record dependency for delegating constructor call (e.g., calling super constructor)
+        if (!isExternalClass(irClass)) {
+            parent.currentFilePath?.let { currentFile ->
+                parent.determineBrsFileNameForClass(irClass)?.let { calledBrsFile ->
+                    context.dependencyCollector.recordDependency(currentFile, calledBrsFile)
+                }
+            }
         }
 
         // Use mangled constructor name to support overloading
@@ -8449,9 +8522,19 @@ class IrExpressionToBrsTransformer(
 
     override fun visitEnumConstructorCall(expression: IrEnumConstructorCall, data: Unit): BrsExpression {
         val constructor = expression.symbol.owner
+        val irClass = constructor.parentAsClass
 
         val arguments = (0 until expression.valueArgumentsCount).mapNotNull { i ->
             expression.getValueArgument(i)?.let { it.accept(this, data) }
+        }
+
+        // Record dependency for enum constructor call
+        if (!isExternalClass(irClass)) {
+            parent.currentFilePath?.let { currentFile ->
+                parent.determineBrsFileNameForClass(irClass)?.let { calledBrsFile ->
+                    context.dependencyCollector.recordDependency(currentFile, calledBrsFile)
+                }
+            }
         }
 
         // Use mangled constructor name to support overloading
@@ -9443,6 +9526,10 @@ class IrExpressionToBrsTransformer(
                 // They're just declarations of native BrightScript types
                 if (functionParent.isExternal) {
                     null
+                } else if (parent.isExtractedLocalClass(functionParent)) {
+                    // Lambda classes and function reference classes don't produce separate files
+                    // They're generated inline in the containing file even after extraction
+                    null
                 } else {
                     // Function belongs to a class in current module - use class name with Kt suffix
                     context.getBrsName(functionParent) + "Kt.brs"
@@ -9467,6 +9554,7 @@ class IrExpressionToBrsTransformer(
             else -> null
         }
     }
+
 }
 
 // ==================== Type Helper Extensions ====================

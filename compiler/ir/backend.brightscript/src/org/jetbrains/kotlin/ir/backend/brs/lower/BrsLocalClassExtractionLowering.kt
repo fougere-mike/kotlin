@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
+import org.jetbrains.kotlin.ir.declarations.IrAnonymousInitializer
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrFunction
@@ -56,16 +57,10 @@ class BrsLocalClassExtractionLowering(
                 // Visit children first to find nested local classes
                 declaration.acceptChildrenVoid(this)
 
-                // Collect classes that are nested inside functions
-                // Lambda classes from BrsCallableReferenceLowering have parent = IrFunction
-                // and origin = LAMBDA_IMPL or FUNCTION_REFERENCE_IMPL
-                // We need to extract these to file level for BrightScript emission
-                val parent = declaration.parent
-                val needsExtraction = parent is IrFunction
-
-                if (needsExtraction) {
-                    localClasses.add(declaration)
-                }
+                // Note: We DON'T add classes here based on parent checks.
+                // Instead, we add classes when we find them directly in statement lists
+                // (see visitStatements below). This handles the case where the parent
+                // is set to a class even though the lambda is embedded in a block.
             }
 
             // Explicitly handle block bodies to traverse function bodies
@@ -127,7 +122,11 @@ class BrsLocalClassExtractionLowering(
                     when (stmt) {
                         is IrClass -> {
                             // Found a class inside a block (e.g., lambda class)
-                            visitClass(stmt)
+                            // This class needs extraction regardless of its parent property,
+                            // because the fact that it's in a statement list means it's local
+                            localClasses.add(stmt)
+                            // Still visit its children to find nested local classes
+                            stmt.acceptChildrenVoid(this)
                         }
                         else -> {
                             // Continue traversing
