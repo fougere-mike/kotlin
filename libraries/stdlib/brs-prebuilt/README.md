@@ -18,7 +18,8 @@ chicken-and-egg problem by:
 ## Files
 
 - `kotlin-stdlib-brs.klib` - Pre-compiled stdlib klib (binary, checked into VCS)
-- `build.gradle.kts` - Script to regenerate the klib
+- `.klib-source-hash` - SHA-256 over the stdlib source tree at the time the klib was regenerated; used by `verifyKlib` to detect drift
+- `build.gradle.kts` - Script to regenerate the klib and to verify it against current sources
 - `.gitattributes` - Marks .klib files as binary for proper VCS handling
 
 ## Regenerating the Klib
@@ -27,15 +28,46 @@ When the stdlib source changes, regenerate the klib:
 
 ```bash
 # From the Kotlin root directory
-./gradlew :libraries:stdlib:brs-prebuilt:regenerateKlib
+./gradlew dist
+./gradlew :kotlin-stdlib-brs-prebuilt:regenerateKlib
 ```
 
-This requires a working Kotlin/BRS compiler. The typical workflow is:
+This requires a working Kotlin/BRS compiler. `regenerateKlib` rewrites both the
+klib and `.klib-source-hash` atomically; the two files must be committed together:
 
-1. Build the compiler with the current pre-compiled klib
-2. Make stdlib changes
-3. Regenerate the klib using the newly built compiler
-4. Commit the updated klib
+```bash
+git add libraries/stdlib/brs-prebuilt/kotlin-stdlib-brs.klib \
+        libraries/stdlib/brs-prebuilt/.klib-source-hash
+git commit
+```
+
+The typical workflow is:
+
+1. Build the compiler with the current pre-compiled klib (`./rebuild.sh`).
+2. Make stdlib changes under `libraries/stdlib/brs/` or `libraries/stdlib/brs-actual/`.
+3. Regenerate the klib using the newly built compiler.
+4. Commit the updated klib **and** hash file.
+
+## Drift Detection
+
+`./gradlew :kotlin-stdlib-brs-prebuilt:verifyKlib` (which is wired into `check`)
+computes a fresh SHA-256 over the stdlib sources and compares it to
+`.klib-source-hash`. If they differ, the build fails with an explicit
+remediation message. This prevents the silent-corruption failure mode where a
+contributor edits stdlib sources, forgets to regenerate the klib, and produces
+a branch whose downstream consumers link against stale bytecode.
+
+The hash is:
+
+- A SHA-256 over sorted `(relativePath, SHA-256(content))` tuples for every
+  `.kt` and `.kts` file under `brs/builtins`, `brs/runtime`, `brs/src`, and
+  `brs-actual/src`.
+- Deterministic across platforms: paths use POSIX separators, content is
+  normalized to LF line endings before hashing.
+- Sensitive to added, modified, and deleted files.
+
+The hashed source set deliberately matches the set `regenerateKlib` passes to
+the compiler, so the hash summarizes "what went into the klib."
 
 ## Integration
 
