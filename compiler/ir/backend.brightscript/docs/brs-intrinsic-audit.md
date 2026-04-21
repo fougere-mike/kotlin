@@ -118,3 +118,18 @@ None of these should be done in this audit phase.
 | `brightscript/brs.ast/src/.../parser/BrsParser.kt:874` | `BrsParseResult` container |
 | `compiler/testData/codegen/brs/inline/brsFunction.kt` | The only test |
 | `compiler/testData/codegen/brs/inline/brsFunction.brs.txt` | Its golden output |
+
+## B4 progress (updated as items ship)
+
+This audit is a pre-B4 snapshot. Implementation status of the four scope items proposed in §B4 scope:
+
+| Item | Status | Where |
+|---|---|---|
+| (a) Route `System.err.println` errors through `MessageCollector` | **Done** (commit 339b12394fc2) | `IrToBrsTransformer.kt:7596, 7604` + `BrsIrBackendContext.reportError` at `BrsIrBackendContext.kt:759`. Known limitation: location is declaration-scoped (null for `IrCall`), to be resolved in (b). |
+| (b) FIR-phase `FirBrsIntrinsicArgChecker` with `BRS_INTRINSIC_LITERAL_REQUIRED` | Pending | Future session. Threads source-location into the diagnostic. |
+| (c) Reject multi-statement `brs()` calls | **Done** | `IrToBrsTransformer.kt:7591–7640` — empty + >1-statement both report errors now. Zero downstream multi-statement callers in `kotlin-roku`/`roku-test-app`; hard rejection accepted without deprecation path. |
+| (d) Contract doc | **Done** | [brs-intrinsic.md](./brs-intrinsic.md). `core.kt` KDoc slimmed to a pointer. |
+
+Audit §Open-questions-1 ("do downstream repos call multi-statement `brs()`?") is resolved: **no**. The grep was `rg "brs\(" kotlin-roku roku-test-app` on 2026-04-21; one hit (`ShelfView.kt:63 → brs("card.id = itemId")`) and it is single-statement.
+
+§Open-questions-2 (`const val` folding) and §Open-questions-3 (feature flag / upstreamability) remain open. (2) is flagged as a known gap in the contract doc.

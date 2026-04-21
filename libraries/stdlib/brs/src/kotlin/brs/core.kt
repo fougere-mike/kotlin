@@ -21,19 +21,14 @@ public object Invalid {
 public external interface Dynamic
 
 /**
- * Executes inline BrightScript code and returns the result.
+ * Embeds inline BrightScript code at compile time.
  *
- * The code argument must be a compile-time constant string.
- * The BrightScript code is parsed and embedded directly in the output.
+ * The [code] argument must be a compile-time constant string that parses to
+ * exactly one BrightScript expression or statement. Multiple statements and
+ * non-literal arguments are compile errors.
  *
- * Example:
- * ```kotlin
- * val result = brs("1 + 2")  // Generates: result = 1 + 2
- * brs("print \"hello\"")     // Generates: print "hello"
- * ```
- *
- * @param code The BrightScript code to execute (must be a compile-time constant).
- * @return The result of evaluating the code.
+ * See `compiler/ir/backend.brightscript/docs/brs-intrinsic.md` for the full
+ * contract (input constraints, output semantics, error surface, examples).
  */
 public external fun brs(code: String): Dynamic
 
