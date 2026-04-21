@@ -7606,20 +7606,30 @@ class IrExpressionToBrsTransformer(
                     return BrsInvalidLiteral()
                 }
 
-                // Extract expression from parsed statements
+                // Extract expression from parsed statements.
+                // Contract: exactly one statement or expression. See
+                // compiler/ir/backend.brightscript/docs/brs-intrinsic.md.
                 val statements = parseResult.result
                 when {
-                    statements.isEmpty() -> BrsInvalidLiteral()
+                    statements.isEmpty() -> {
+                        context.reportError(
+                            expression,
+                            "brs() argument parsed to no statements; expected a single expression or statement"
+                        )
+                        BrsInvalidLiteral()
+                    }
                     statements.size == 1 && statements[0] is BrsReturn ->
                         (statements[0] as BrsReturn).value ?: BrsInvalidLiteral()
                     statements.size == 1 && statements[0] is BrsExpressionStatement ->
                         (statements[0] as BrsExpressionStatement).expression
+                    statements.size == 1 -> BrsInvalidLiteral()
                     else -> {
-                        // For multiple statements, try to extract expression from last one
-                        val lastStmt = statements.last()
-                        if (lastStmt is BrsExpressionStatement) lastStmt.expression
-                        else if (lastStmt is BrsReturn) lastStmt.value ?: BrsInvalidLiteral()
-                        else BrsInvalidLiteral()
+                        context.reportError(
+                            expression,
+                            "brs() must contain exactly one expression or statement; got ${statements.size}. " +
+                                "Split into multiple brs() calls instead."
+                        )
+                        BrsInvalidLiteral()
                     }
                 }
             }
