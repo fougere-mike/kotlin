@@ -369,4 +369,55 @@ class BrsSymbols(
             BrsStandardClassIds.BASE_BRS_INTERNAL_PACKAGE.asString()
         ).firstOrNull()
     }
+
+    // ==================== IO Worker Symbols ====================
+
+    /**
+     * The runIOWorker suspend function for executing registered workers.
+     */
+    val runIOWorker: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(FqName("kotlin.coroutines.task"), "runIOWorker")
+    }
+
+    /**
+     * The runBlocking function for blocking coroutine execution.
+     * Used by IO worker extraction to wrap suspend code in a blocking context.
+     */
+    val runBlockingFunction: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(FqName("kotlin.coroutines.builders"), "runBlocking")
+    }
+
+    /**
+     * EmptyCoroutineContext for default context argument.
+     */
+    val emptyCoroutineContext: IrClassSymbol? by lazy {
+        findOptionalClass(FqName("kotlin.coroutines"), "EmptyCoroutineContext")
+    }
+
+    /**
+     * The RoAssociativeArray class for native BrightScript associative arrays.
+     */
+    val roAssociativeArrayClass: IrClassSymbol? by lazy {
+        findOptionalClass(FqName("kotlin.brs.roku"), "RoAssociativeArray")
+    }
+
+    /**
+     * The IOWorkerRegistry object.
+     */
+    val ioWorkerRegistryClass: IrClassSymbol? by lazy {
+        findOptionalClass(FqName("kotlin.coroutines.task"), "IOWorkerRegistry")
+    }
+
+    /**
+     * IOWorkerRegistry.register function.
+     */
+    val ioWorkerRegistryRegister: IrSimpleFunctionSymbol? by lazy {
+        symbolFinder.findFunctions(
+            Name.identifier("register"),
+            "kotlin.coroutines.task"
+        ).firstOrNull { func ->
+            // Find the one that takes String and (Dynamic?) -> Any?
+            func.owner.valueParameters.size == 2
+        }
+    }
 }

@@ -45,27 +45,6 @@ import org.jetbrains.kotlin.library.impl.buildKotlinLibrary
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.util.klibMetadataVersionOrDefault
 import java.util.Properties
-import java.util.zip.ZipFile
-import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
-import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrFunction
-import org.jetbrains.kotlin.ir.declarations.IrProperty
-import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
-import org.jetbrains.kotlin.ir.declarations.path
-import org.jetbrains.kotlin.ir.expressions.IrCall
-import org.jetbrains.kotlin.ir.IrElement
-import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
-import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
-import org.jetbrains.kotlin.ir.visitors.acceptVoid
-import org.jetbrains.kotlin.ir.types.isInt
-import org.jetbrains.kotlin.ir.types.isLong
-import org.jetbrains.kotlin.ir.types.isFloat
-import org.jetbrains.kotlin.ir.types.isDouble
-import org.jetbrains.kotlin.ir.types.isShort
-import org.jetbrains.kotlin.ir.types.isByte
-import org.jetbrains.kotlin.ir.types.isBoolean
-import org.jetbrains.kotlin.ir.types.isChar
-import org.jetbrains.kotlin.descriptors.ClassKind
 
 /**
  * CLI compiler for Kotlin to BrightScript.
@@ -384,29 +363,45 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
             metadataVersion = configuration.klibMetadataVersionOrDefault()
         )
 
-        // Generate function manifest for this module
-        val functionManifest = generateFunctionManifest(
-            irResult.irModuleFragment,
-            irResult.irBuiltIns,
-            irResult.symbolTable,
-            configuration
-        )
+        // Run lowering to get post-lowering function manifest
+        // This is necessary because suspend functions have their signatures transformed
+        // during lowering (Continuation parameter added), which changes their BRS names.
+        // If we generated the manifest from unlowered IR, the names would be wrong.
+        // Note: isStdlibCompilation is already declared above
 
-        // Create context for file dependency collection
-        val context = BrsIrBackendContext(
+        // Load dependency manifests (empty for stdlib compilation)
+        val dependencyFunctionManifest = loadDependencyFunctionManifests(libraries, messageCollector)
+        val dependencyFileDeps = loadDependencyFileDeps(libraries, messageCollector)
+
+        val brsCompiler = BrsCompiler(
             module = irResult.irModuleFragment.descriptor,
             irBuiltIns = irResult.irBuiltIns,
             symbolTable = irResult.symbolTable,
             configuration = configuration,
-            isStdlibCompilation = configuration.languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation)
+            targetConfig = BrsTargetConfig.DEFAULT,
+            isStdlibCompilation = isStdlibCompilation,
+            dependencyFunctionManifest = dependencyFunctionManifest,
+            dependencyFileDeps = dependencyFileDeps
         )
 
-        // Generate file dependency graph
-        val fileDependencies = collectFileDependencies(
-            irResult.irModuleFragment,
-            functionManifest,
-            context
-        )
+        // Run compilation to get post-lowering manifest
+        // Note: We don't need the BRS output, just the manifest with correct function names
+        val compilationResult = brsCompiler.compile(irResult.irModuleFragment)
+
+        // Report any compilation errors
+        for (error in compilationResult.errors) {
+            messageCollector.report(CompilerMessageSeverity.ERROR, error)
+        }
+
+        if (compilationResult.errors.isNotEmpty()) {
+            return ExitCode.COMPILATION_ERROR
+        }
+
+        // Use the post-lowering manifest and file dependencies from compilation result
+        // File dependencies are now collected during code generation, capturing all dependencies
+        // including those from lowering-introduced code (interface default methods, coroutines, etc.)
+        val functionManifest = compilationResult.functionManifest
+        val fileDependencies = compilationResult.fileDependencies
 
         // Store both manifest and file dependencies in klib properties
         val manifestProperties = Properties().apply {
@@ -620,243 +615,7 @@ class K2BrsCompiler : CLICompiler<K2BrsCompilerArguments>() {
         }
     }
 
-    // ==================== Function Manifest ====================
-
-    /**
-     * Generate function-to-file manifest for the IR module.
-     * Maps BrightScript function names to their output .brs filenames.
-     * This manifest is stored in the klib and used by consuming modules
-     * to resolve dependencies accurately.
-     */
-    private fun generateFunctionManifest(
-        irModule: IrModuleFragment,
-        irBuiltIns: org.jetbrains.kotlin.ir.IrBuiltIns,
-        symbolTable: org.jetbrains.kotlin.ir.util.SymbolTable,
-        configuration: CompilerConfiguration
-    ): Map<String, String> {
-        val manifest = mutableMapOf<String, String>()
-
-        // Create a minimal context for name generation
-        val context = BrsIrBackendContext(
-            module = irModule.descriptor,
-            irBuiltIns = irBuiltIns,
-            symbolTable = symbolTable,
-            configuration = configuration,
-            isStdlibCompilation = configuration.languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation)
-        )
-
-        // Determine the first file name (runtime helpers are added to the first file)
-        // Note: BRS compiler appends "Kt" suffix to all output files
-        val firstFileName = irModule.files.firstOrNull()?.let {
-            File(it.path).nameWithoutExtension + "Kt.brs"
-        }
-
-        // Add runtime helper functions to manifest (they're in the first file)
-        // These are internal helpers used by stdlib classes like ArrayList, Any, etc.
-        if (firstFileName != null && configuration.languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation)) {
-            RUNTIME_HELPER_FUNCTIONS.forEach { helperName ->
-                manifest[helperName] = firstFileName
-            }
-        }
-
-        for (file in irModule.files) {
-            // Note: BRS compiler appends "Kt" suffix to all output files
-            val outputFileName = File(file.path).nameWithoutExtension + "Kt.brs"
-            collectDeclarationNames(file.declarations, outputFileName, context, manifest)
-        }
-
-        return manifest
-    }
-
-    /**
-     * Names of runtime helper functions added to the first stdlib file.
-     * These must match the function names generated by BrsCompiler.addRuntimeHelpers()
-     */
-    private val RUNTIME_HELPER_FUNCTIONS = listOf(
-        "__kotlin_ushr",
-        "__kotlin_stringCompare",
-        "__kotlin_intCompare",
-        "__kotlin_nextObjectId",
-        "__kotlin_identityEquals",
-        "__kotlin_isInstanceOf",
-        "__kotlin_isPrimitiveType"
-    )
-
-    /**
-     * Recursively collect BrightScript names for all declarations in a file.
-     */
-    private fun collectDeclarationNames(
-        declarations: List<org.jetbrains.kotlin.ir.declarations.IrDeclaration>,
-        outputFileName: String,
-        context: BrsIrBackendContext,
-        manifest: MutableMap<String, String>
-    ) {
-        for (declaration in declarations) {
-            when (declaration) {
-                is IrFunction -> {
-                    val brsName = context.getBrsName(declaration)
-                    manifest[brsName] = outputFileName
-                }
-                is IrClass -> {
-                    // Record the class itself
-                    val className = context.getBrsName(declaration)
-                    manifest[className] = outputFileName
-
-                    // Record all methods in the class
-                    for (member in declaration.declarations) {
-                        when (member) {
-                            is IrFunction -> {
-                                val methodName = context.getBrsName(member)
-                                manifest[methodName] = outputFileName
-                            }
-                            is IrProperty -> {
-                                // Record getter and setter if present
-                                member.getter?.let { getter ->
-                                    val getterName = context.getBrsName(getter)
-                                    manifest[getterName] = outputFileName
-                                }
-                                member.setter?.let { setter ->
-                                    val setterName = context.getBrsName(setter)
-                                    manifest[setterName] = outputFileName
-                                }
-                            }
-                        }
-                    }
-                }
-                is IrProperty -> {
-                    // Top-level property - record getter and setter
-                    declaration.getter?.let { getter ->
-                        val getterName = context.getBrsName(getter)
-                        manifest[getterName] = outputFileName
-                    }
-                    declaration.setter?.let { setter ->
-                        val setterName = context.getBrsName(setter)
-                        manifest[setterName] = outputFileName
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Collect file-to-file dependencies by analyzing IR call sites.
-     * Returns a map of outputFileName → set of dependent fileNames.
-     *
-     * This walks the IR to find function calls and maps them to their target files
-     * using the function manifest. The resulting dependency graph is stored in the
-     * klib so that transitive dependencies can be resolved during user code compilation.
-     */
-    private fun collectFileDependencies(
-        irModule: IrModuleFragment,
-        functionManifest: Map<String, String>,
-        context: BrsIrBackendContext
-    ): Map<String, Set<String>> {
-        val fileDeps = mutableMapOf<String, MutableSet<String>>()
-
-        // Find the file containing runtime helpers (where __kotlin_nextObjectId is defined)
-        // This is the first file in the stdlib (ArraysBrsKt.brs by convention)
-        val runtimeHelpersFile = functionManifest["__kotlin_nextObjectId"]
-
-        for (file in irModule.files) {
-            // Note: BRS compiler appends "Kt" suffix to all output files
-            val thisFileName = File(file.path).nameWithoutExtension + "Kt.brs"
-            val deps = mutableSetOf<String>()
-
-            // Track if this file contains class definitions that will need __kotlin_nextObjectId
-            var hasClassDefinitions = false
-
-            // Walk all declarations to find function calls
-            file.acceptVoid(object : IrVisitorVoid() {
-                override fun visitElement(element: IrElement) {
-                    element.acceptChildrenVoid(this)
-                }
-
-                override fun visitClass(declaration: IrClass) {
-                    // Class definitions generate code that calls __kotlin_nextObjectId()
-                    // for identity tracking. Skip interfaces and annotation classes.
-                    val kind = declaration.kind
-                    if (kind != ClassKind.INTERFACE && kind != ClassKind.ANNOTATION_CLASS) {
-                        hasClassDefinitions = true
-                    }
-                    declaration.acceptChildrenVoid(this)
-                }
-
-                override fun visitCall(expression: IrCall) {
-                    val calledFunction = expression.symbol.owner
-                    var calledBrsName = context.getBrsName(calledFunction)
-
-                    // For method calls on primitives, the BRS code generator transforms them into
-                    // function calls with the receiver as the first argument, using extension function
-                    // naming: functionName_rReceiverType_ParamTypes_k_
-                    //
-                    // The issue is getBrsName returns a name based on the function's parent class (e.g., Int_rangeTo_I_k_),
-                    // but the code generator uses the receiver type to build the function name (e.g., rangeTo_rI_I_k_).
-                    //
-                    // We need to match this behavior for correct dependency tracking.
-                    val primitiveClassPrefixes = listOf("Int_", "Long_", "Float_", "Double_", "Short_", "Byte_", "Boolean_", "Char_")
-                    val hasWrongClassPrefix = primitiveClassPrefixes.any { calledBrsName.startsWith(it) }
-
-                    // Check for dispatch receiver (method call on an object)
-                    val dispatchReceiver = expression.dispatchReceiver
-                    if (hasWrongClassPrefix && dispatchReceiver != null) {
-                        val receiverType = dispatchReceiver.type
-                        // Check if receiver is a primitive type
-                        val isPrimitiveReceiver = receiverType.isInt() || receiverType.isLong() ||
-                            receiverType.isFloat() || receiverType.isDouble() ||
-                            receiverType.isShort() || receiverType.isByte() ||
-                            receiverType.isBoolean() || receiverType.isChar()
-
-                        if (isPrimitiveReceiver) {
-                            // Rebuild the function name with correct format:
-                            // functionName_rReceiverType_ParamTypes_k_
-                            val rawName = calledFunction.name.asString()
-
-                            // Build signature parts
-                            val signatureParts = mutableListOf<String>()
-
-                            // Add receiver type with 'r' prefix
-                            signatureParts.add("r" + context.typeToMangledString(receiverType))
-
-                            // Add parameter types
-                            calledFunction.valueParameters.forEach { param ->
-                                signatureParts.add(context.typeToMangledString(param.type))
-                            }
-
-                            // Build the full name (no return type)
-                            val signature = signatureParts.joinToString("_")
-                            calledBrsName = "${rawName}_${signature}_k_"
-                        }
-                    }
-
-                    val targetFile = functionManifest[calledBrsName]
-                    if (targetFile != null && targetFile != thisFileName) {
-                        deps.add(targetFile)
-                    }
-
-                    // Special handling for intrinsics that generate calls to runtime functions
-                    // brsIntrinsicToString calls toString_AnyN_k_ which is in coreRuntimeKt.brs
-                    val functionName = calledFunction.name.asString()
-                    if (functionName == "brsIntrinsicToString") {
-                        deps.add("coreRuntimeKt.brs")
-                    }
-
-                    expression.acceptChildrenVoid(this)
-                }
-            })
-
-            // If this file has class definitions, it needs the runtime helpers file
-            // The BRS IR transformer generates __kotlin_nextObjectId() calls for class constructors
-            if (hasClassDefinitions && runtimeHelpersFile != null && runtimeHelpersFile != thisFileName) {
-                deps.add(runtimeHelpersFile)
-            }
-
-            if (deps.isNotEmpty()) {
-                fileDeps[thisFileName] = deps
-            }
-        }
-
-        return fileDeps
-    }
+    // ==================== Serialization ====================
 
     /**
      * Serialize the function manifest to a JSON string for storage in klib properties.

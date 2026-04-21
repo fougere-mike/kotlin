@@ -190,27 +190,45 @@ class BrsRenderer(
                 indent()
                 builder.append("end if")
             }
-            elseBranch is BrsIf -> {
-                // Continue the chain with else-if
+            elseBranch is BrsIf && !isLiteralTrue(elseBranch.condition) -> {
+                // Continue the chain with else-if (only if condition is not just 'true')
                 renderIfChain(elseBranch, data, isFirst = false)
             }
+            elseBranch is BrsIf && isLiteralTrue(elseBranch.condition) -> {
+                // Condition is literal true - this is really an else block
+                renderElseBlock(elseBranch.thenBranch, data)
+            }
             else -> {
-                indent()
-                builder.append("else")
-                newline()
-                withIndent {
-                    when (elseBranch) {
-                        is BrsBlock -> renderBlockContents(elseBranch)
-                        else -> {
-                            elseBranch.accept(this, data)
-                            newline()
-                        }
-                    }
-                }
-                indent()
-                builder.append("end if")
+                renderElseBlock(elseBranch, data)
             }
         }
+    }
+
+    /**
+     * Check if an expression is a literal boolean true.
+     */
+    private fun isLiteralTrue(expr: BrsExpression): Boolean {
+        return expr is BrsBooleanLiteral && expr.value == true
+    }
+
+    /**
+     * Render an else block with its content.
+     */
+    private fun renderElseBlock(elseBranch: BrsStatement, data: Unit) {
+        indent()
+        builder.append("else")
+        newline()
+        withIndent {
+            when (elseBranch) {
+                is BrsBlock -> renderBlockContents(elseBranch)
+                else -> {
+                    elseBranch.accept(this, data)
+                    newline()
+                }
+            }
+        }
+        indent()
+        builder.append("end if")
     }
 
     override fun visitWhile(whileStatement: BrsWhile, data: Unit) {

@@ -71,6 +71,54 @@ class BrsIrBackendContext(
     val dependencyFileDeps: Map<String, Set<String>> = emptyMap()
 ) : CommonBackendContext {
 
+    // ==================== Dependency Tracking During Code Generation ====================
+
+    /**
+     * File dependencies collected during code generation.
+     * Key: source file name (e.g., "DispatchersKt.brs")
+     * Value: set of files it depends on
+     *
+     * This is populated during IrToBrsTransformer when BrsFunctionCall nodes are created,
+     * ensuring we track exactly what functions are emitted, not what the IR contains.
+     */
+    val fileDependencies = mutableMapOf<String, MutableSet<String>>()
+
+    /**
+     * Current source file being transformed.
+     * Set by BrsCompiler before transforming each file.
+     * Used by recordFunctionDependency to know which file is calling the function.
+     */
+    var currentSourceFile: String? = null
+
+    /**
+     * Function-to-file manifest for the current module being compiled.
+     * Maps BrightScript function names to their .brs output files.
+     * Built incrementally by BrsCompiler before transforming files.
+     * Combined with dependencyFunctionManifest for complete lookup.
+     */
+    val functionManifest = mutableMapOf<String, String>()
+
+    /**
+     * Record that the current source file depends on a function.
+     * Looks up the function in both the current module's manifest and dependency manifests,
+     * then adds the target file as a dependency.
+     *
+     * @param functionName The BrightScript function name being called
+     */
+    fun recordFunctionDependency(functionName: String) {
+        val currentFile = currentSourceFile ?: return
+
+        // Look up in current module manifest first, then dependency manifest
+        val targetFile = functionManifest[functionName]
+            ?: dependencyFunctionManifest[functionName]
+            ?: return
+
+        // Don't record self-dependencies
+        if (targetFile != currentFile) {
+            fileDependencies.getOrPut(currentFile) { mutableSetOf() }.add(targetFile)
+        }
+    }
+
     // ==================== Type System ====================
 
     override val typeSystem: IrTypeSystemContext = IrTypeSystemContextImpl(irBuiltIns)
@@ -219,6 +267,39 @@ class BrsIrBackendContext(
      * Populated by BrsSharedVariableDetectionLowering.
      */
     val sharedVariableFields = mutableSetOf<String>()
+
+    // ==================== IO Worker Registry ====================
+
+    /**
+     * Map of IO worker functions extracted from withContext(Dispatchers.IO) blocks.
+     * Key: worker name (e.g., "ClassName_functionName_1")
+     * Value: the generated worker function
+     *
+     * Populated by BrsIOWorkerExtractionLowering, used by code generation
+     * to emit worker registration code.
+     */
+    val ioWorkerRegistrations = mutableMapOf<String, IrSimpleFunction>()
+
+    /**
+     * Counter for generating unique IO worker names per function context.
+     * Key: "className_functionName" (or just "functionName" for top-level)
+     * Value: next available counter
+     */
+    private val ioWorkerCounters = mutableMapOf<String, Int>()
+
+    /**
+     * Generate a unique name for an IO worker function.
+     *
+     * @param className The enclosing class name, or null for top-level functions
+     * @param functionName The enclosing function name
+     * @return A unique worker name like "__ioWorker_ClassName_functionName_1"
+     */
+    fun nextIOWorkerName(className: String?, functionName: String): String {
+        val key = if (className != null) "${className}_${functionName}" else functionName
+        val count = ioWorkerCounters.getOrPut(key) { 0 }
+        ioWorkerCounters[key] = count + 1
+        return "__ioWorker_${key}_${count + 1}"
+    }
 
     // ==================== Target Configuration ====================
 
@@ -680,6 +761,19 @@ class BrsIrBackendContext(
         val location = if (file != null) element.getCompilerMessageLocation(file) else null
         messageCollector.report(
             org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.ERROR,
+            message,
+            location
+        )
+    }
+
+    /**
+     * Report a warning on an IR element.
+     */
+    fun reportWarning(element: IrElement, message: String) {
+        val file = (element as? IrDeclaration)?.let { it.parent as? IrFile }
+        val location = if (file != null) element.getCompilerMessageLocation(file) else null
+        messageCollector.report(
+            org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.WARNING,
             message,
             location
         )

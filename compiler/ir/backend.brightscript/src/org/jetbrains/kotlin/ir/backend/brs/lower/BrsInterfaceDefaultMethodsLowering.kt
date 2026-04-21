@@ -62,10 +62,12 @@ class BrsInterfaceDefaultMethodsLowering(
                 // Visit children first to find nested classes
                 declaration.acceptChildrenVoid(this)
 
-                // Only process concrete classes (not interfaces, not abstract)
-                if (declaration.kind == ClassKind.CLASS &&
-                    declaration.modality != Modality.ABSTRACT &&
-                    !declaration.isInterface) {
+                // Process classes (including abstract classes) but not interfaces.
+                // Abstract classes also need interface default methods because BrightScript
+                // has no prototype chain - all methods must be attached to each object.
+                // When a concrete class inherits from an abstract class via super_create_k_(),
+                // it needs the abstract class to already have all interface methods attached.
+                if (declaration.kind == ClassKind.CLASS && !declaration.isInterface) {
                     classesToProcess.add(declaration)
                 }
             }

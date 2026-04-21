@@ -174,4 +174,12 @@ object BrsDeclarationOrigin : IrDeclarationOrigin {
         override val name: String = "BRS_SHARED_VARIABLE_WRAPPER"
         override val isSynthetic: Boolean = true
     }
+
+    /**
+     * Origin for IO worker functions extracted from withContext(Dispatchers.IO) blocks.
+     */
+    object IO_WORKER : IrDeclarationOrigin {
+        override val name: String = "BRS_IO_WORKER"
+        override val isSynthetic: Boolean = true
+    }
 }

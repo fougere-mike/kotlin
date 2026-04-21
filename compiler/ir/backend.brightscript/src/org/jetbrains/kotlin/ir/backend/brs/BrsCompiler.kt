@@ -81,6 +81,14 @@ data class BrsModuleCompilationResult(
     val functionManifest: Map<String, String>,
 
     /**
+     * File-to-file dependency graph collected during code generation.
+     * Maps each .brs output file to the set of .brs files it depends on.
+     * This is accurate because it's collected at the moment BrsFunctionCall nodes are created,
+     * capturing all dependencies including those from lowering-introduced code.
+     */
+    val fileDependencies: Map<String, Set<String>>,
+
+    /**
      * Errors encountered during compilation.
      */
     val errors: List<String>
@@ -162,23 +170,34 @@ class BrsCompiler(
         // Track which file receives runtime helpers (for manifest)
         var runtimeHelpersFile: String? = null
 
+        // ==================== Pass 1: Build complete function manifest ====================
+        // We need the complete manifest BEFORE transforming files so that dependency tracking
+        // can look up any function, including those defined in files processed later.
+        // Also determine which file will receive runtime helpers.
+        for (file in loweredModule.files) {
+            val outputFileName = File(file.path).nameWithoutExtension + "Kt.brs"
+            collectFunctionManifest(file, outputFileName, context, functionManifest)
+
+            // First file with stdlib compilation gets runtime helpers
+            if (runtimeHelpersFile == null && context.isStdlibCompilation) {
+                runtimeHelpersFile = outputFileName
+                addRuntimeHelperFunctionsToManifest(functionManifest, outputFileName)
+            }
+        }
+
+        // Copy manifest to context for use during dependency tracking
+        context.functionManifest.putAll(functionManifest)
+
+        // ==================== Pass 2: Transform files (with dependency tracking) ====================
         for (file in loweredModule.files) {
             try {
-                // Check if this file will receive runtime helpers
-                val willReceiveHelpers = context.needsRuntimeHelpers && context.isStdlibCompilation
+                val outputFileName = File(file.path).nameWithoutExtension + "Kt.brs"
+
+                // Set current file for dependency tracking before transforming
+                context.currentSourceFile = outputFileName
 
                 val output = compileFile(file, transformer, context)
                 outputs.add(output)
-
-                // Build function-to-file manifest for this file
-                val outputFileName = File(file.path).nameWithoutExtension + "Kt.brs"
-                collectFunctionManifest(file, outputFileName, context, functionManifest)
-
-                // If this file received runtime helpers, record it and add helper functions to manifest
-                if (willReceiveHelpers && !context.needsRuntimeHelpers) {
-                    runtimeHelpersFile = outputFileName
-                    addRuntimeHelperFunctionsToManifest(functionManifest, outputFileName)
-                }
 
                 // Generate component XML and deps.json using pre-extracted component info
                 generateComponentOutputForFile(file, preExtractedComponents, context).forEach { (name, xml, depsJson) ->
@@ -190,7 +209,13 @@ class BrsCompiler(
             }
         }
 
-        return BrsModuleCompilationResult(outputs, componentXml, componentDepsJson, functionManifest, errors)
+        // Clear current file after all files are processed
+        context.currentSourceFile = null
+
+        // Convert mutable sets to immutable for the result
+        val fileDependencies = context.fileDependencies.mapValues { it.value.toSet() }
+
+        return BrsModuleCompilationResult(outputs, componentXml, componentDepsJson, functionManifest, fileDependencies, errors)
     }
 
     private val brsStaticFqn = FqName("kotlin.brs.BrsStatic")
@@ -293,30 +318,7 @@ class BrsCompiler(
                     manifest[brsName] = outputFileName
                 }
                 is IrClass -> {
-                    // Record the class itself
-                    val className = context.getBrsName(declaration)
-                    manifest[className] = outputFileName
-
-                    // Record all methods in the class
-                    for (member in declaration.declarations) {
-                        when (member) {
-                            is IrFunction -> {
-                                val methodName = context.getBrsName(member)
-                                manifest[methodName] = outputFileName
-                            }
-                            is IrProperty -> {
-                                // Record getter and setter if present
-                                member.getter?.let { getter ->
-                                    val getterName = context.getBrsName(getter)
-                                    manifest[getterName] = outputFileName
-                                }
-                                member.setter?.let { setter ->
-                                    val setterName = context.getBrsName(setter)
-                                    manifest[setterName] = outputFileName
-                                }
-                            }
-                        }
-                    }
+                    collectClassManifest(declaration, outputFileName, context, manifest)
                 }
                 is IrProperty -> {
                     // Top-level property - record getter and setter
@@ -328,6 +330,52 @@ class BrsCompiler(
                         val setterName = context.getBrsName(setter)
                         manifest[setterName] = outputFileName
                     }
+                }
+            }
+        }
+    }
+
+    /**
+     * Recursively collect function-to-file mappings for a class and all its nested classes.
+     * This ensures companion objects and other nested classes are properly recorded.
+     */
+    private fun collectClassManifest(
+        irClass: IrClass,
+        outputFileName: String,
+        context: BrsIrBackendContext,
+        manifest: MutableMap<String, String>
+    ) {
+        // Record the class itself
+        val className = context.getBrsName(irClass)
+        manifest[className] = outputFileName
+
+        // For object declarations (objects, companion objects), record the getInstance function.
+        // The transformer generates ${className}_getInstance() for lazy singleton initialization.
+        if (irClass.kind == ClassKind.OBJECT) {
+            manifest["${className}_getInstance"] = outputFileName
+        }
+
+        // Record all declarations in the class
+        for (member in irClass.declarations) {
+            when (member) {
+                is IrFunction -> {
+                    val methodName = context.getBrsName(member)
+                    manifest[methodName] = outputFileName
+                }
+                is IrProperty -> {
+                    // Record getter and setter if present
+                    member.getter?.let { getter ->
+                        val getterName = context.getBrsName(getter)
+                        manifest[getterName] = outputFileName
+                    }
+                    member.setter?.let { setter ->
+                        val setterName = context.getBrsName(setter)
+                        manifest[setterName] = outputFileName
+                    }
+                }
+                is IrClass -> {
+                    // Recursively process nested classes (companion objects, etc.)
+                    collectClassManifest(member, outputFileName, context, manifest)
                 }
             }
         }
@@ -1537,16 +1585,19 @@ class BrsCompiler(
             .filter { it in preExtractedComponents }
 
         // Compute dependencies once for all components in this file
-        // (they share the same file path, so dependencies are the same)
-        val dependencies = computeComponentDependencies(irFile.path, context)
+        // Get the output filename for lookup in the new fileDependencies map
+        val outputFileName = File(irFile.path).nameWithoutExtension + "Kt.brs"
+        val dependencies = computeComponentDependencies(outputFileName, context)
 
         for (componentName in componentClassNames) {
             val componentInfo = preExtractedComponents[componentName] ?: continue
             val xml = generateComponentXmlContent(componentInfo, context, dependencies)
+            // Runtime functions are no longer tracked separately - they're included in dependencies
+            // via the function manifest lookup during code generation
             val depsJson = generateComponentDepsJson(
                 componentInfo.name,
                 dependencies,
-                context.dependencyCollector.getRuntimeFunctions(irFile.path)
+                emptySet() // Runtime functions are resolved via fileDependencies now
             )
             result.add(BrsComponentOutput(componentInfo.name, xml, depsJson))
         }
@@ -1556,37 +1607,30 @@ class BrsCompiler(
 
     /**
      * Compute the set of dependencies for a component file.
-     * Resolves transitive dependencies from both stdlib and user code.
-     * Also resolves runtime functions (e.g., __kotlin_nextObjectId) to their source files.
+     * Uses the new dependency tracking system where dependencies are collected
+     * during code generation via context.fileDependencies.
+     *
+     * @param outputFileName The .brs output file name (e.g., "ShelfViewKt.brs")
+     * @param context The backend context containing collected dependencies
      */
     private fun computeComponentDependencies(
-        filePath: String,
+        outputFileName: String,
         context: BrsIrBackendContext
     ): Set<String> {
-        // Get direct dependencies from the collector
-        val directDeps = context.dependencyCollector.getDependencies(filePath)
-
-        // Resolve runtime functions to their file locations
-        // Runtime functions like __kotlin_nextObjectId are defined in stdlib files (e.g., KotlinKt.brs)
-        // but are tracked separately. We need to include their source files in the dependencies.
-        val runtimeFunctionDeps = context.dependencyCollector.getRuntimeFunctions(filePath)
-            .mapNotNull { functionName -> context.dependencyFunctionManifest[functionName] }
-            .toSet()
-
-        // Merge runtime function files with direct deps
-        val allDirectDeps = directDeps + runtimeFunctionDeps
+        // Get direct dependencies from the new tracking system
+        // These were collected during code generation when BrsFunctionCall nodes were created
+        val directDeps = context.fileDependencies[outputFileName] ?: emptySet()
 
         // Build complete file deps graph by merging:
-        // 1. Stdlib file deps (from klib)
+        // 1. Stdlib file deps (from klib manifest)
         // 2. User code file deps (from current compilation)
-        val userFileDeps = context.dependencyCollector.getAllFileDependencies()
         val mergedFileDeps = context.dependencyFileDeps.toMutableMap<String, Set<String>>()
-        for ((file, deps) in userFileDeps) {
+        for ((file, deps) in context.fileDependencies) {
             mergedFileDeps.merge(file, deps) { existing, new -> existing + new }
         }
 
         // Resolve transitive dependencies using the merged graph
-        return resolveTransitiveDependencies(allDirectDeps, mergedFileDeps)
+        return resolveTransitiveDependencies(directDeps, mergedFileDeps)
     }
 
     /**

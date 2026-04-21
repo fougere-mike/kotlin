@@ -129,6 +129,15 @@ object BrsLoweringPhases {
         // - brsName(::function) -> extracts the mangled function name as a string literal
         phases += BrsIntrinsicLowering(context)
 
+        // Phase 0.06: IO Worker Detection (Warning-only for now)
+        // Detects withContext(Dispatchers.IO) calls and emits warnings about the
+        // lambda serialization limitation. Full automatic extraction is planned
+        // for a future release.
+        // Only run for user code, not stdlib compilation
+        if (!context.isStdlibCompilation) {
+            phases += BrsIOWorkerExtractionLowering(context)
+        }
+
         // Phase 0.1: Upgrade Callable References
         // Transforms IrFunctionExpression (lambdas) and IrFunctionReference into IrRichFunctionReference.
         // This is a prerequisite for the callable reference lowering phase.

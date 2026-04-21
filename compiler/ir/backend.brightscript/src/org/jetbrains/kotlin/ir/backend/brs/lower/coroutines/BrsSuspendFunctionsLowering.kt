@@ -525,4 +525,8 @@ object BrsStatementOrigins {
     val COROUTINE_IMPL = IrStatementOriginImpl("COROUTINE_IMPL")
     val COROUTINE_SWITCH = IrStatementOriginImpl("COROUTINE_SWITCH")
     val COROUTINE_ROOT_LOOP = IrStatementOriginImpl("COROUTINE_ROOT_LOOP")
+
+    // IO Worker extraction origins
+    val IO_WORKER_CALL = IrStatementOriginImpl("IO_WORKER_CALL")
+    val IO_WORKER_CAPTURES = IrStatementOriginImpl("IO_WORKER_CAPTURES")
 }

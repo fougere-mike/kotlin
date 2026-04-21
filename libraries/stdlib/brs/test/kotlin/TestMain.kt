@@ -52,6 +52,10 @@ import test.coroutines.delayFunctionTests
 import test.coroutines.yieldFunctionTests
 import test.coroutines.coroutineQueueTests
 import test.coroutines.runBlockingTests
+import test.coroutines.taskFunctionRefTests
+import test.coroutines.ioWorkerRegistryTests
+import test.coroutines.taskPoolTests
+import test.coroutines.withContextIOTests
 
 /**
  * Main entry point for stdlib runtime tests.
@@ -103,5 +107,9 @@ fun main() {
         yieldFunctionTests()
         coroutineQueueTests()
         runBlockingTests()
+        taskFunctionRefTests()
+        ioWorkerRegistryTests()
+        taskPoolTests()
+        withContextIOTests()
     }
 }
