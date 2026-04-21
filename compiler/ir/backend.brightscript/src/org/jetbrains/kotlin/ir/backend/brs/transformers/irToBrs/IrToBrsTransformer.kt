@@ -7593,7 +7593,7 @@ class IrExpressionToBrsTransformer(
                 val codeArg = expression.getValueArgument(0)
                 val codeString = foldBrsCodeString(codeArg)
                 if (codeString == null) {
-                    System.err.println("brs() argument must be a compile-time constant string")
+                    context.reportError(expression, "brs() argument must be a compile-time constant string")
                     return BrsInvalidLiteral()
                 }
 
@@ -7601,7 +7601,7 @@ class IrExpressionToBrsTransformer(
                 val parseResult = parseBrightScriptStatements(codeString)
                 if (parseResult.hasErrors) {
                     for (error in parseResult.errors) {
-                        System.err.println("Error in brs() code: $error")
+                        context.reportError(expression, "Error in brs() code: $error")
                     }
                     return BrsInvalidLiteral()
                 }
