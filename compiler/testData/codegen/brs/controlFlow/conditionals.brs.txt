@@ -4,7 +4,7 @@ function classifyNumber_I_k_(x as Integer) as String
         return "positive"
     else if x < 0 then
         return "negative"
-    else if true then
+    else
         return "zero"
     end if
 end function
@@ -13,7 +13,7 @@ function ifExpression_I_k_(x as Integer) as String
     __when_tmp0 = invalid
     if x > 0 then
         __when_tmp0 = "positive"
-    else if true then
+    else
         __when_tmp0 = "non-positive"
     end if
     return __when_tmp0
@@ -26,15 +26,15 @@ function nestedIf_I_I_k_(a as Integer, b as Integer) as String
         __when_tmp1 = invalid
         if b > 0 then
             __when_tmp1 = "both positive"
-        else if true then
+        else
             __when_tmp1 = "a positive, b non-positive"
         end if
         __when_tmp3 = __when_tmp1
-    else if true then
+    else
         __when_tmp2 = invalid
         if b > 0 then
             __when_tmp2 = "a non-positive, b positive"
-        else if true then
+        else
             __when_tmp2 = "both non-positive"
         end if
         __when_tmp3 = __when_tmp2

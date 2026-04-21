@@ -36,7 +36,7 @@ function safeCastElvis_Any_k_(x as Object) as String
     __when_tmp0 = invalid
     if tmp0_elvis_lhs = invalid then
         __when_tmp0 = "default"
-    else if true then
+    else
         __when_tmp0 = tmp0_elvis_lhs
     end if
     return __when_tmp0
@@ -51,7 +51,7 @@ function chainedSafeCast_Any_k_(x as Object) as Dynamic
     __when_tmp1 = invalid
     if tmp0_safe_receiver = invalid then
         __when_tmp1 = invalid
-    else if true then
+    else
         __when_tmp1 = Len(tmp0_safe_receiver)
     end if
     return __when_tmp1
