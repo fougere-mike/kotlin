@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir.analysis.diagnostics.brs
 
 import org.jetbrains.kotlin.diagnostics.*
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory0
+import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory1
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticsContainer
 import org.jetbrains.kotlin.diagnostics.Severity.ERROR
 import org.jetbrains.kotlin.diagnostics.SourceElementPositioningStrategies
@@ -21,6 +22,9 @@ import org.jetbrains.kotlin.psi.KtElement
 object FirBrsErrors : KtDiagnosticsContainer() {
     // Intrinsics
     val BRS_INTRINSIC_LITERAL_REQUIRED: KtDiagnosticFactory0 = KtDiagnosticFactory0("BRS_INTRINSIC_LITERAL_REQUIRED", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
+
+    // Name case clashes
+    val BRS_NAME_CASE_CLASH: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("BRS_NAME_CASE_CLASH", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
 
     override fun getRendererFactory(): BaseDiagnosticRendererFactory = FirBrsErrorsDefaultMessages
 }

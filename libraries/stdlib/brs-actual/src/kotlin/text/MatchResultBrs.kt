@@ -81,6 +81,7 @@ public interface MatchResult {
      *
      * component1 corresponds to the value of the first group, component2 — of the second, and so on.
      */
+    @Suppress("BRS_NAME_CASE_CLASH")
     public val destructured: Destructured get() = Destructured(this)
 
     /** Returns a new [MatchResult] with the results for the next match, starting at the position
@@ -96,6 +97,7 @@ public interface MatchResult {
      * If the group in the regular expression is optional and there were no match captured by that group,
      * corresponding component value is an empty string.
      */
+    @Suppress("BRS_NAME_CASE_CLASH")
     public class Destructured internal constructor(public val match: MatchResult) {
         public operator fun component1():  String = match.groupValues[1]
         public operator fun component2():  String = match.groupValues[2]

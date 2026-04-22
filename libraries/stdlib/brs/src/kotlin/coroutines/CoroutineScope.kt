@@ -18,6 +18,7 @@ package kotlin.coroutines
  * Additional context elements can be appended to the scope using the [plus][CoroutineScope.plus]
  * operator.
  */
+@Suppress("BRS_NAME_CASE_CLASH")
 public interface CoroutineScope {
     /**
      * The context of this scope.
@@ -36,6 +37,7 @@ public interface CoroutineScope {
  *
  * This function is a shortcut for `object : CoroutineScope { override val coroutineContext = context }`.
  */
+@Suppress("BRS_NAME_CASE_CLASH")
 public fun CoroutineScope(context: CoroutineContext): CoroutineScope =
     CoroutineScopeImpl(context)
 
@@ -52,6 +54,7 @@ internal class CoroutineScopeImpl(
  * This is a suspending function that creates a new scope and waits for all
  * coroutines launched in this scope to complete before returning.
  */
+@Suppress("BRS_NAME_CASE_CLASH")
 public suspend inline fun <R> coroutineScope(crossinline block: suspend CoroutineScope.() -> R): R {
     // Create a new scope with the current coroutine's context
     // For now, just run the block directly without structured concurrency enforcement

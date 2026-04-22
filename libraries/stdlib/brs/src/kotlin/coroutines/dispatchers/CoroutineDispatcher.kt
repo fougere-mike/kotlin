@@ -26,11 +26,13 @@ public abstract class CoroutineDispatcher : ContinuationInterceptor {
     /**
      * Key for [CoroutineDispatcher] in a coroutine context.
      */
+    @Suppress("BRS_NAME_CASE_CLASH")
     public companion object Key : CoroutineContext.Key<CoroutineDispatcher>
 
     /**
      * Returns the key for this dispatcher element.
      */
+    @Suppress("BRS_NAME_CASE_CLASH")
     override val key: CoroutineContext.Key<*> get() = CoroutineDispatcher
 
     /**

@@ -160,7 +160,8 @@ abstract class AbstractBrsDiagnosticTest {
      * Keep in sync manually.
      */
     private val diagnosticRenderedMessages: Map<String, String> = mapOf(
-        "BRS_INTRINSIC_LITERAL_REQUIRED" to "An argument for the 'brs()' function must be a compile-time constant string."
+        "BRS_INTRINSIC_LITERAL_REQUIRED" to "An argument for the 'brs()' function must be a compile-time constant string.",
+        "BRS_NAME_CASE_CLASH" to "Name clashes with {0} at BrightScript runtime (BrightScript is case-insensitive)."
     )
 
     /**
@@ -211,9 +212,12 @@ abstract class AbstractBrsDiagnosticTest {
         for ((name, template) in diagnosticRenderedMessages) {
             if (message == template) return name
         }
-        // Parameterized templates use {0}/{1}; check by regex.
+        // Parameterized templates use {0}/{1}; check by regex. Regex.escape wraps
+        // the template in `\Q...\E` literal-quote markers, so substituting `{0}` with
+        // `.*` would place the wildcard inside the quoted literal. Close the quote
+        // around the placeholder so `.*` is interpreted as a regex wildcard.
         for ((name, template) in diagnosticRenderedMessages) {
-            val regex = Regex("^" + Regex.escape(template).replace("""\{\d+}""".toRegex(), ".*") + "$")
+            val regex = Regex("^" + Regex.escape(template).replace("""\{\d+}""".toRegex(), """\\E.*\\Q""") + "$")
             if (regex.matches(message)) return name
         }
         return "<unknown>"

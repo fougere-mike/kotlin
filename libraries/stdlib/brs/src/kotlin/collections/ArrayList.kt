@@ -562,11 +562,13 @@ public fun <T> listOf(vararg elements: T): List<T> = if (elements.size == 0) emp
 /**
  * Returns an empty read-only list.
  */
+@Suppress("BRS_NAME_CASE_CLASH")
 public fun <T> emptyList(): List<T> = EmptyList
 
 /**
  * Singleton empty list implementation.
  */
+@Suppress("BRS_NAME_CASE_CLASH")
 private object EmptyList : List<Nothing>, RandomAccess {
     @BrsInline("return CreateObject(\"roArray\", 0, true)")
     private external fun brsCreateArray(): Dynamic

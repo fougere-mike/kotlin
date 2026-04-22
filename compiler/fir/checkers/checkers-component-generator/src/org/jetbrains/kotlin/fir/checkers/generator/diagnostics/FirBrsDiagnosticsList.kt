@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.checkers.generator.diagnostics
 
 import org.jetbrains.kotlin.fir.checkers.generator.diagnostics.model.DiagnosticList
+import org.jetbrains.kotlin.fir.checkers.generator.diagnostics.model.PositioningStrategy
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.util.PrivateForInline
 
@@ -14,5 +15,12 @@ import org.jetbrains.kotlin.util.PrivateForInline
 object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
     val INTRINSICS by object : DiagnosticGroup("Intrinsics") {
         val BRS_INTRINSIC_LITERAL_REQUIRED by error<KtElement>()
+    }
+
+    val NAME_CASE_CLASH by object : DiagnosticGroup("Name case clashes") {
+        val BRS_NAME_CASE_CLASH by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
+            parameter<String>("peers")
+            isSuppressible = true
+        }
     }
 }

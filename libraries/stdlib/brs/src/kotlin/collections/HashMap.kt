@@ -708,12 +708,13 @@ public fun <K, V> mapOf(vararg pairs: Pair<K, V>): Map<K, V> =
 /**
  * Returns an empty read-only map.
  */
-@Suppress("UNCHECKED_CAST")
+@Suppress("UNCHECKED_CAST", "BRS_NAME_CASE_CLASH")
 public fun <K, V> emptyMap(): Map<K, V> = EmptyMap as Map<K, V>
 
 /**
  * Singleton empty map implementation.
  */
+@Suppress("BRS_NAME_CASE_CLASH")
 private object EmptyMap : Map<Any?, Any?> {
     override val size: Int get() = 0
     override fun isEmpty(): Boolean = true

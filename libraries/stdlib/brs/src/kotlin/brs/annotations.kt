@@ -62,6 +62,7 @@ public annotation class BrsNamespace(val name: String = "")
     AnnotationTarget.CONSTRUCTOR
 )
 @Retention(AnnotationRetention.BINARY)
+@Suppress("BRS_NAME_CASE_CLASH")
 public annotation class BrsName(val name: String)
 
 /**
@@ -436,6 +437,7 @@ public annotation class BrsSceneGraphComponent(
  * @return The mangled BrightScript function name as a String
  */
 @BrsIntrinsic("brsIntrinsicFunctionName")
+@Suppress("BRS_NAME_CASE_CLASH")
 public external fun <T : Function<*>> brsName(function: T): String
 
 /**

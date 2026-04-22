@@ -8,6 +8,7 @@ package kotlin.sequences
 /**
  * Returns an empty sequence.
  */
+@Suppress("BRS_NAME_CASE_CLASH")
 public fun <T> emptySequence(): Sequence<T> = EmptySequence
 
 /**
@@ -45,6 +46,7 @@ internal fun <T> sequenceOf(iterator: Iterator<T>): Sequence<T> = object : Seque
  *
  * @suppress This function is not supported for BRS and will always throw an error.
  */
+@Suppress("BRS_NAME_CASE_CLASH")
 @Deprecated("Coroutine-based sequence building is not supported for BRS. Use generateSequence() instead.", level = DeprecationLevel.ERROR)
 public fun <T> sequence(): Sequence<T> {
     throw UnsupportedOperationException("Coroutine-based sequence building is not supported for BRS")
@@ -92,11 +94,13 @@ public fun <T> Iterator<T>.asSequence(): Sequence<T> = Sequence { this }
 /**
  * Creates a sequence that returns the specified values.
  */
+@Suppress("BRS_NAME_CASE_CLASH")
 internal fun <T> Sequence(iterator: () -> Iterator<T>): Sequence<T> = object : Sequence<T> {
     override fun iterator(): Iterator<T> = iterator()
 }
 
 // Empty sequence singleton
+@Suppress("BRS_NAME_CASE_CLASH")
 private object EmptySequence : Sequence<Nothing>, DropTakeSequence<Nothing> {
     override fun iterator(): Iterator<Nothing> = SequenceEmptyIterator
     override fun drop(n: Int): Sequence<Nothing> = EmptySequence

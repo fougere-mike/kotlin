@@ -5,9 +5,18 @@
 
 package org.jetbrains.kotlin.fir.analysis.brs.checkers
 
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsNameClashClassMembersChecker
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsNameClashFileTopLevelDeclarationsChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.*
 
 object BrsDeclarationCheckers : DeclarationCheckers() {
-    // BrightScript-specific declaration checkers can be added here as needed
-    // For initial implementation, we inherit common checkers only
+    override val fileCheckers: Set<FirFileChecker>
+        get() = setOf(
+            FirBrsNameClashFileTopLevelDeclarationsChecker,
+        )
+
+    override val classCheckers: Set<FirClassChecker>
+        get() = setOf(
+            FirBrsNameClashClassMembersChecker,
+        )
 }

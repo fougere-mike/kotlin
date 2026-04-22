@@ -35,4 +35,47 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testBrsIntrinsicMutableValTemplateRejected() {
         runTest("brsIntrinsic/mutableValTemplateRejected.kt")
     }
+
+    // BRS_NAME_CASE_CLASH — same-scope declarations whose names only differ in case
+    // silently collide at BrightScript runtime (which is case-insensitive).
+
+    @Test
+    fun testNameCaseClashTopLevel() {
+        runTest("nameCaseClash/topLevelClashRejected.kt")
+    }
+
+    @Test
+    fun testNameCaseClashClassBody() {
+        runTest("nameCaseClash/classBodyClashRejected.kt")
+    }
+
+    @Test
+    fun testNameCaseClashMixedKinds() {
+        runTest("nameCaseClash/mixedKindsClashRejected.kt")
+    }
+
+    @Test
+    fun testNameCaseClashOverloadsAllowed() {
+        runTest("nameCaseClash/noFalsePositiveIdenticalNames.kt")
+    }
+
+    @Test
+    fun testNameCaseClashDifferentScopes() {
+        runTest("nameCaseClash/noFalsePositiveDifferentScopes.kt")
+    }
+
+    @Test
+    fun testNameCaseClashSuppressed() {
+        runTest("nameCaseClash/suppressedClash.kt")
+    }
+
+    @Test
+    fun testNameCaseClashNestedClassWithSameLowercaseMethod() {
+        runTest("nameCaseClash/nestedClassWithSameLowercaseMethodOk.kt")
+    }
+
+    @Test
+    fun testNameCaseClashClassBodyMethodMatchingClassName() {
+        runTest("nameCaseClash/classBodyMethodMatchingClassNameOk.kt")
+    }
 }

@@ -32,8 +32,10 @@ internal constructor(@PublishedApi internal val storage: IntArray) : Collection<
     public override val size: Int get() = storage.size
 
     /** Creates an iterator over the elements of the array. */
+    @Suppress("BRS_NAME_CASE_CLASH")
     public override operator fun iterator(): kotlin.collections.Iterator<UInt> = Iterator(storage)
 
+    @Suppress("BRS_NAME_CASE_CLASH")
     private class Iterator(private val array: IntArray) : kotlin.collections.Iterator<UInt> {
         private var index = 0
         override fun hasNext() = index < array.size
