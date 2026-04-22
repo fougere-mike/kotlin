@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.brs.backend.ast.BrsType
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
 import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.expressions.IrBreak
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrConst
@@ -29,14 +30,9 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.types.classifierOrNull
 import org.jetbrains.kotlin.ir.types.isAny
-import org.jetbrains.kotlin.ir.types.isChar
-import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
-import org.jetbrains.kotlin.ir.util.isTypeParameter
-import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
-import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
-import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.ir.types.isBoolean
 import org.jetbrains.kotlin.ir.types.isByte
+import org.jetbrains.kotlin.ir.types.isChar
 import org.jetbrains.kotlin.ir.types.isDouble
 import org.jetbrains.kotlin.ir.types.isFloat
 import org.jetbrains.kotlin.ir.types.isInt
@@ -45,8 +41,13 @@ import org.jetbrains.kotlin.ir.types.isNothing
 import org.jetbrains.kotlin.ir.types.isShort
 import org.jetbrains.kotlin.ir.types.isString
 import org.jetbrains.kotlin.ir.types.isUnit
+import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.util.isFunction
 import org.jetbrains.kotlin.ir.util.isNullable
+import org.jetbrains.kotlin.ir.util.isTypeParameter
+import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
+import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
+import org.jetbrains.kotlin.ir.visitors.acceptVoid
 
 // BrightScript reserved keywords that cannot be used as identifiers
 // Includes language keywords plus special identifiers like 'global' (m.global), 'm' (this), 'top' (m.top)
@@ -126,6 +127,54 @@ fun deduplicateParameterNames(parameters: List<BrsParameter>): List<BrsParameter
             param
         }
     }
+}
+
+/**
+ * Create a BrsFunctionCall and record the dependency with the given context.
+ * This is the central place where all function calls are created, ensuring
+ * that dependency tracking captures every function we emit.
+ */
+fun createFunctionCall(
+    functionName: String,
+    args: MutableList<BrsExpression>,
+    context: BrsIrBackendContext
+): BrsFunctionCall {
+    context.recordFunctionDependency(functionName)
+    return BrsFunctionCall(BrsIdentifier(functionName), args)
+}
+
+/**
+ * Create a BrsFunctionCall with no arguments and record the dependency.
+ */
+fun createFunctionCall(functionName: String, context: BrsIrBackendContext): BrsFunctionCall {
+    return createFunctionCall(functionName, mutableListOf(), context)
+}
+
+/**
+ * Check whether a property on `ownerClass` is the SceneGraph Layout accessor property.
+ *
+ * Supports two patterns:
+ * 1. Top-level class: `MainScreen_Layout` (new pattern)
+ * 2. Nested class: `MainScreen.Layout` (legacy pattern, for backwards compatibility)
+ */
+fun isLayoutClassProperty(property: IrProperty, ownerClass: IrClass): Boolean {
+    val propertyType = property.getter?.returnType ?: property.backingField?.type ?: return false
+    val typeClass = propertyType.classOrNull?.owner ?: return false
+
+    val ownerClassName = ownerClass.name.asString()
+    val typeClassName = typeClass.name.asString()
+
+    // New pattern: top-level class named OwnerClassName_Layout
+    if (typeClassName == "${ownerClassName}_Layout" && typeClass.parent !is IrClass) {
+        return true
+    }
+
+    // Legacy pattern: nested class named "Layout" within the owner class
+    if (typeClassName == "Layout" && typeClass.parent == ownerClass) {
+        return true
+    }
+
+    return false
 }
 
 /**

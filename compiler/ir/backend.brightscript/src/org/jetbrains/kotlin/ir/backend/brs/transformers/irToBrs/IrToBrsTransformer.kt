@@ -248,18 +248,6 @@ class IrToBrsTransformer(
      * @param args The arguments to pass to the function
      * @return A BrsFunctionCall node
      */
-    fun createFunctionCall(functionName: String, args: MutableList<BrsExpression>): BrsFunctionCall {
-        context.recordFunctionDependency(functionName)
-        return BrsFunctionCall(BrsIdentifier(functionName), args)
-    }
-
-    /**
-     * Create a BrsFunctionCall with no arguments and record the dependency.
-     */
-    fun createFunctionCall(functionName: String): BrsFunctionCall {
-        return createFunctionCall(functionName, mutableListOf())
-    }
-
     /**
      * Maps IR value symbols to unique BrightScript variable names.
      * This is needed because Kotlin IR can have multiple variables with the same name
@@ -760,7 +748,8 @@ class IrToBrsTransformer(
                         mutableListOf(
                             BrsStringLiteral(workerName),
                             BrsIdentifier(brsFunctionName)
-                        )
+                        ),
+                        context
                     )
                 )
             )
@@ -1484,26 +1473,6 @@ class IrToBrsTransformer(
      * 1. Top-level class: `MainScreen_Layout` (new pattern)
      * 2. Nested class: `MainScreen.Layout` (legacy pattern, for backwards compatibility)
      */
-    internal fun isLayoutClassProperty(property: IrProperty, ownerClass: IrClass): Boolean {
-        val propertyType = property.getter?.returnType ?: property.backingField?.type ?: return false
-        val typeClass = propertyType.classOrNull?.owner ?: return false
-
-        val ownerClassName = ownerClass.name.asString()
-        val typeClassName = typeClass.name.asString()
-
-        // New pattern: top-level class named OwnerClassName_Layout
-        if (typeClassName == "${ownerClassName}_Layout" && typeClass.parent !is IrClass) {
-            return true
-        }
-
-        // Legacy pattern: nested class named "Layout" within the owner class
-        if (typeClassName == "Layout" && typeClass.parent == ownerClass) {
-            return true
-        }
-
-        return false
-    }
-
     /**
      * Check if a class is a FIR-generated Layout class.
      *
@@ -6976,7 +6945,7 @@ class IrExpressionToBrsTransformer(
                             } else {
                                 // Internal state - access via m
                                 // Layout properties are stored with underscore prefix (see layout initialization code)
-                                val actualFieldName = if (parent.isLayoutClassProperty(property, parentClass)) {
+                                val actualFieldName = if (isLayoutClassProperty(property, parentClass)) {
                                     "_$fieldName"
                                 } else {
                                     fieldName
@@ -7037,7 +7006,7 @@ class IrExpressionToBrsTransformer(
                             } else {
                                 // Internal state - access via m
                                 // Layout properties are stored with underscore prefix (see layout initialization code)
-                                val actualFieldName = if (parent.isLayoutClassProperty(property, parentClass)) {
+                                val actualFieldName = if (isLayoutClassProperty(property, parentClass)) {
                                     "_$fieldName"
                                 } else {
                                     fieldName
@@ -9387,10 +9356,10 @@ class IrExpressionToBrsTransformer(
         // Emit: runIOWorker_T_k_("workerName", capturesAA)
         // For now, we use a generic name since type erasure makes all instances the same
         val functionName = "runIOWorker_Str_k_" // Simplified - actual type handling TBD
-        return parent.createFunctionCall(functionName, mutableListOf(
+        return createFunctionCall(functionName, mutableListOf(
             BrsStringLiteral(workerName),
             capturesAA
-        ))
+        ), context)
     }
 
     /**
