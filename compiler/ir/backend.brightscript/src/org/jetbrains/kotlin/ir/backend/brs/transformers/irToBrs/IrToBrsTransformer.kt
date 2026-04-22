@@ -127,115 +127,6 @@ class IrToBrsTransformer(
     internal var currentFilePath: String? = null
 
     /**
-     * Set of IR loops that have been transformed to while loops in the output.
-     * When a for-each loop is transformed to a while loop (e.g., Strategy 4 - iterator protocol),
-     * any break statements inside should generate "exit while" instead of "exit for".
-     * The key is the IrLoop instance (the loop that IrBreak.loop references).
-     */
-    internal val loopsTransformedToWhile = mutableSetOf<IrLoop>()
-
-    /**
-     * Counter tracking how many FOR_LOOP blocks we're currently inside that will be
-     * transformed to while loops. When > 0, any break statements with FOR_LOOP_INNER_WHILE
-     * origin should generate "exit while" instead of "exit for".
-     *
-     * This is needed because after inlining, the IrBreak.loop may reference a different
-     * IrWhileLoop instance than what we traverse (inlining creates copies), so we can't
-     * rely on object identity in loopsTransformedToWhile.
-     */
-    internal var forLoopToWhileNestingDepth = 0
-
-    /**
-     * Maps IR loops to their break flag variable names.
-     * When continue is not supported, loops are wrapped in an inner while(true) loop.
-     * Break statements must set a flag and exit the inner loop, then the outer loop
-     * checks this flag and exits if set.
-     */
-    internal val loopBreakFlags = mutableMapOf<IrLoop, String>()
-
-    /**
-     * Set of IR loops that are currently being transformed with a continue wrapper.
-     * This is used during the transformation to know which loop a continue/break
-     * should target. We add the loop before transforming its body and remove it after.
-     * IMPORTANT: This only applies while we're actively inside the body transformation.
-     */
-    internal val loopsWithContinueWrapper = mutableSetOf<IrLoop>()
-
-    /**
-     * Stack of loops currently being transformed with continue wrappers.
-     * A loop is pushed when we start transforming its body and popped when done.
-     * IrContinue/IrBreak should only be transformed to exit while if their target
-     * loop is on this stack (meaning we're inside its body transformation).
-     */
-    internal val continueWrapperLoopStack = mutableListOf<IrLoop>()
-
-    /**
-     * Stack of returnable block exit flag variable names.
-     * When a returnable block contains while loops that have returns targeting the block,
-     * we can't use simple "exit while" (it would exit the inner loop, not the block wrapper).
-     * Instead, we use a flag-based approach: set the flag and exit while, then check the flag
-     * after each inner while loop.
-     *
-     * The stack supports nested returnable blocks. The top of the stack is the innermost
-     * returnable block currently being transformed.
-     */
-    internal val returnableBlockFlagStack = mutableListOf<String>()
-
-    // ==================== Function Call with Dependency Recording ====================
-
-    /**
-     * Create a BrsFunctionCall and record the dependency.
-     * This is the central place where all function calls are created, ensuring
-     * that dependency tracking captures every function we emit.
-     *
-     * @param functionName The BrightScript function name being called
-     * @param args The arguments to pass to the function
-     * @return A BrsFunctionCall node
-     */
-    /**
-     * Hoisted statements from when-expression lowered blocks.
-     * These need to be emitted before the expression that uses them.
-     */
-    // Stack of hoisted statement scopes for proper nesting of when-lowered blocks
-    private val hoistedScopes = mutableListOf<MutableList<BrsStatement>>()
-
-    init {
-        hoistedScopes.add(mutableListOf()) // Global scope
-    }
-
-    fun pushHoistedScope() {
-        hoistedScopes.add(mutableListOf())
-    }
-
-    fun popHoistedScope(): List<BrsStatement> {
-        if (hoistedScopes.size <= 1) {
-            // Don't pop the global scope - just return and clear it
-            val result = hoistedScopes.last().toList()
-            hoistedScopes.last().clear()
-            return result
-        }
-        return hoistedScopes.removeAt(hoistedScopes.lastIndex)
-    }
-
-    fun addHoistedStatement(stmt: BrsStatement) {
-        hoistedScopes.last().add(stmt)
-    }
-
-    fun takeHoistedStatements(): List<BrsStatement> {
-        val scope = hoistedScopes.last()
-        val result = scope.toList()
-        scope.clear()
-        return result
-    }
-
-    fun hasHoistedStatements(): Boolean = hoistedScopes.last().isNotEmpty()
-
-    fun clearHoistedScopes() {
-        hoistedScopes.clear()
-        hoistedScopes.add(mutableListOf()) // Reset to global scope
-    }
-
-    /**
      * Get the correct BrightScript expression to access the component's 'm' reference.
      *
      * When inside a lambda in component context, 'm' refers to the closure object,
@@ -664,7 +555,7 @@ class IrToBrsTransformer(
         if (irFunction.isExternal) return null
 
         // Clear any leftover hoisted statements from previous function transformations
-        clearHoistedScopes()
+        genCtx.clearHoistedScopes()
 
         // Reset variable naming state for this function
         // This ensures each function gets fresh unique names and doesn't collide with other functions
@@ -724,7 +615,7 @@ class IrToBrsTransformer(
         sharedVariables = previousSharedVariables
 
         // Check for any remaining hoisted statements and prepend them to the body
-        val remainingHoisted = takeHoistedStatements()
+        val remainingHoisted = genCtx.takeHoistedStatements()
         if (remainingHoisted.isNotEmpty()) {
             val combinedStatements = remainingHoisted.toMutableList()
             combinedStatements.addAll(body.statements)
@@ -1092,7 +983,7 @@ class IrToBrsTransformer(
             }
             backingField.initializer?.expression?.let { initializer ->
                 val transformedInit = transformExpression(initializer)
-                val hoisted = takeHoistedStatements()
+                val hoisted = genCtx.takeHoistedStatements()
                 bodyStatements.addAll(hoisted)
                 // Interface fields (with SGField annotations) go on m.top, internal state goes on m
                 val target = if (expressionTransformer.hasInterfaceFieldAnnotation(property)) {
@@ -2730,7 +2621,7 @@ class IrToBrsTransformer(
                 initializedFields.add(sanitizedName)
                 val transformedInit = transformExpression(initializer)
                 // Consume hoisted statements from when-lowered blocks in the initializer
-                val hoisted = takeHoistedStatements()
+                val hoisted = genCtx.takeHoistedStatements()
                 bodyStatements.addAll(hoisted)
                 bodyStatements.add(
                     BrsExpressionStatement(
@@ -2761,7 +2652,7 @@ class IrToBrsTransformer(
                 backingField.initializer?.expression?.let { initializer ->
                     val transformedInit = transformExpression(initializer)
                     // Consume hoisted statements from when-lowered blocks in the initializer
-                    val hoisted = takeHoistedStatements()
+                    val hoisted = genCtx.takeHoistedStatements()
                     bodyStatements.addAll(hoisted)
                     bodyStatements.add(
                         BrsExpressionStatement(
@@ -3334,7 +3225,7 @@ class IrStatementToBrsTransformer(
                 else -> {
                     // For other expressions, transform and wrap as expression statement
                     val expr = parent.transformExpression(innerArg)
-                    val hoisted = parent.takeHoistedStatements()
+                    val hoisted = genCtx.takeHoistedStatements()
                     if (hoisted.isNotEmpty()) {
                         BrsBlock((hoisted + BrsExpressionStatement(expr)).toMutableList())
                     } else {
@@ -3415,7 +3306,7 @@ class IrStatementToBrsTransformer(
         }
 
         // Check for hoisted statements from when-lowered blocks
-        val hoisted = parent.takeHoistedStatements()
+        val hoisted = genCtx.takeHoistedStatements()
         return if (hoisted.isEmpty()) {
             BrsVariable(
                 name = uniqueName,
@@ -3453,14 +3344,14 @@ class IrStatementToBrsTransformer(
                     // so that any break statements inside get "exit while" instead of "exit for"
                     val isForLoop = stmt.origin == IrStatementOrigin.FOR_LOOP
                     if (isForLoop) {
-                        parent.forLoopToWhileNestingDepth++
+                        genCtx.forLoopToWhileNestingDepth++
                     }
                     try {
                         // Recursively flatten nested blocks
                         flattenBlockStatements(stmt.statements, output, data)
                     } finally {
                         if (isForLoop) {
-                            parent.forLoopToWhileNestingDepth--
+                            genCtx.forLoopToWhileNestingDepth--
                         }
                     }
                 }
@@ -3572,7 +3463,7 @@ class IrStatementToBrsTransformer(
     override fun visitReturn(expression: IrReturn, data: Unit): BrsStatement {
         // Transform the expression - hoisted statements from when-lowered blocks go to current scope
         val transformedValue = parent.transformExpression(expression.value)
-        val hoisted = parent.takeHoistedStatements()
+        val hoisted = genCtx.takeHoistedStatements()
 
         // If the transformed value is a BrsStatementAsExpression wrapping a control-flow statement
         // (throw, return, exit, continue), we should emit that statement directly instead of
@@ -3607,7 +3498,7 @@ class IrStatementToBrsTransformer(
             val statements = hoisted.toMutableList()
 
             // If there's a flag on the stack, we're inside a flag-based returnable block
-            val flagName = parent.returnableBlockFlagStack.lastOrNull()
+            val flagName = genCtx.returnableBlockFlagStack.lastOrNull()
             if (flagName != null) {
                 statements.add(BrsExpressionStatement(
                     BrsBinaryOp(BrsIdentifier(flagName), BrsBinaryOperator.EQ, BrsBooleanLiteral(true))
@@ -3742,7 +3633,7 @@ class IrStatementToBrsTransformer(
             // CRITICAL: Consume hoisted statements from condition transformation.
             // This handles cases like elvis operator where the condition references
             // a variable that was declared in an enclosing ELVIS block.
-            precedingStatements.addAll(parent.takeHoistedStatements())
+            precedingStatements.addAll(genCtx.takeHoistedStatements())
 
             // Handle branch result - certain IR nodes need statement transformation
             val bodyStatement: BrsStatement = when (val branchResult = branch.result) {
@@ -3820,7 +3711,7 @@ class IrStatementToBrsTransformer(
     override fun visitWhileLoop(loop: IrWhileLoop, data: Unit): BrsStatement {
         val condition = parent.transformExpression(loop.condition)
         // Take hoisted statements from condition transformation (e.g., from inlined returnable blocks)
-        val conditionHoisted = parent.takeHoistedStatements()
+        val conditionHoisted = genCtx.takeHoistedStatements()
         val bodyContainsContinue = containsContinueFor(loop.body, loop)
 
         if (!context.supportsContinue && bodyContainsContinue) {
@@ -3831,15 +3722,15 @@ class IrStatementToBrsTransformer(
             val breakFlagName = if (bodyContainsBreak) "__break${genCtx.nextTempId()}" else null
 
             // Register this loop as having a continue wrapper
-            parent.loopsWithContinueWrapper.add(loop)
+            genCtx.loopsWithContinueWrapper.add(loop)
             if (breakFlagName != null) {
-                parent.loopBreakFlags[loop] = breakFlagName
+                genCtx.loopBreakFlags[loop] = breakFlagName
             }
 
             // Push this loop onto the stack BEFORE transforming its body.
             // This ensures that only IrContinue/IrBreak that are encountered
             // during the body transformation will be converted to exit while.
-            parent.continueWrapperLoopStack.add(loop)
+            genCtx.continueWrapperLoopStack.add(loop)
 
             try {
                 // Transform the body (continue/break will be handled by visitContinue/visitBreak)
@@ -3907,10 +3798,10 @@ class IrStatementToBrsTransformer(
                 )
             } finally {
                 // Clean up tracking - remove from stack and sets
-                parent.continueWrapperLoopStack.remove(loop)
-                parent.loopsWithContinueWrapper.remove(loop)
+                genCtx.continueWrapperLoopStack.remove(loop)
+                genCtx.loopsWithContinueWrapper.remove(loop)
                 if (breakFlagName != null) {
-                    parent.loopBreakFlags.remove(loop)
+                    genCtx.loopBreakFlags.remove(loop)
                 }
             }
         } else {
@@ -3998,9 +3889,9 @@ class IrStatementToBrsTransformer(
             val breakFlagName = if (bodyContainsBreak) "__break${genCtx.nextTempId()}" else null
 
             // Register this loop as having a continue wrapper
-            parent.loopsWithContinueWrapper.add(loop)
+            genCtx.loopsWithContinueWrapper.add(loop)
             if (breakFlagName != null) {
-                parent.loopBreakFlags[loop] = breakFlagName
+                genCtx.loopBreakFlags[loop] = breakFlagName
             }
 
             // Transform the body for the first (unconditional) execution
@@ -4009,7 +3900,7 @@ class IrStatementToBrsTransformer(
             val firstBody = loop.body?.let { transformBlockOrStatement(it) } ?: BrsBlock()
 
             // Now push to the stack for the while loop body transformation
-            parent.continueWrapperLoopStack.add(loop)
+            genCtx.continueWrapperLoopStack.add(loop)
 
             try {
                 // Transform the body again for the while loop (with continue wrapper)
@@ -4057,10 +3948,10 @@ class IrStatementToBrsTransformer(
                 return BrsBlock(mutableListOf(firstBody, whileLoop))
             } finally {
                 // Clean up tracking - remove from stack and sets
-                parent.continueWrapperLoopStack.remove(loop)
-                parent.loopsWithContinueWrapper.remove(loop)
+                genCtx.continueWrapperLoopStack.remove(loop)
+                genCtx.loopsWithContinueWrapper.remove(loop)
                 if (breakFlagName != null) {
-                    parent.loopBreakFlags.remove(loop)
+                    genCtx.loopBreakFlags.remove(loop)
                 }
             }
         } else {
@@ -4080,8 +3971,8 @@ class IrStatementToBrsTransformer(
         // In this case, we need to set the break flag and exit the inner wrapper loop.
         // The outer loop will check the flag and exit.
         // We check the stack to ensure we're inside the loop body transformation.
-        val breakFlagName = parent.loopBreakFlags[jump.loop]
-        if (breakFlagName != null && parent.continueWrapperLoopStack.contains(jump.loop)) {
+        val breakFlagName = genCtx.loopBreakFlags[jump.loop]
+        if (breakFlagName != null && genCtx.continueWrapperLoopStack.contains(jump.loop)) {
             // Set break flag to true, then exit the inner while loop
             return BrsBlock(mutableListOf(
                 BrsExpressionStatement(
@@ -4100,14 +3991,14 @@ class IrStatementToBrsTransformer(
         // which generates a while loop instead of a native for-each
         // First check: are we inside a FOR_LOOP that's being transformed to while?
         // This handles cases where inlining creates new loop instances that we can't track by identity.
-        if (parent.forLoopToWhileNestingDepth > 0 &&
+        if (genCtx.forLoopToWhileNestingDepth > 0 &&
             (jump.loop.origin == IrStatementOrigin.FOR_LOOP_INNER_WHILE ||
              jump.loop.origin == IrStatementOrigin.FOR_LOOP)) {
             return BrsExit(BrsExitKind.WHILE)
         }
 
         // Second check: is this specific loop instance in our tracking set?
-        if (parent.loopsTransformedToWhile.contains(jump.loop)) {
+        if (genCtx.loopsTransformedToWhile.contains(jump.loop)) {
             return BrsExit(BrsExitKind.WHILE)
         }
 
@@ -4137,12 +4028,12 @@ class IrStatementToBrsTransformer(
         // We check the stack (not just the set) to ensure we're actually inside
         // the loop body transformation. This is important for coroutines where
         // IrContinue statements may exist both inside and outside the loop.
-        if (parent.continueWrapperLoopStack.contains(jump.loop)) {
+        if (genCtx.continueWrapperLoopStack.contains(jump.loop)) {
             return BrsExit(BrsExitKind.WHILE)
         }
 
         // First check: are we inside a FOR_LOOP that's being transformed to while?
-        if (parent.forLoopToWhileNestingDepth > 0 &&
+        if (genCtx.forLoopToWhileNestingDepth > 0 &&
             (jump.loop.origin == IrStatementOrigin.FOR_LOOP_INNER_WHILE ||
              jump.loop.origin == IrStatementOrigin.FOR_LOOP)) {
             return if (context.supportsContinue) {
@@ -4153,7 +4044,7 @@ class IrStatementToBrsTransformer(
         }
 
         // Second check: is this specific loop instance in our tracking set?
-        if (parent.loopsTransformedToWhile.contains(jump.loop)) {
+        if (genCtx.loopsTransformedToWhile.contains(jump.loop)) {
             return if (context.supportsContinue) {
                 BrsContinue(BrsContinueKind.WHILE)
             } else {
@@ -4206,7 +4097,7 @@ class IrStatementToBrsTransformer(
                     is IrWhileLoop -> {
                         // This while loop was originally a for-loop's inner while
                         // Any break statements targeting it should use "exit while"
-                        parent.loopsTransformedToWhile.add(element)
+                        genCtx.loopsTransformedToWhile.add(element)
                         // Also recurse into the loop body
                         element.body?.let { registerInnerLoops(it) }
                     }
@@ -4276,7 +4167,7 @@ class IrStatementToBrsTransformer(
                 //
                 // We push a new hoisting scope so nested transformations don't interfere with
                 // outer scopes. This block directly returns its statements (not hoisted).
-                parent.pushHoistedScope()
+                genCtx.pushHoistedScope()
                 val resultStatements = mutableListOf<BrsStatement>()
                 val lastIndex = if (lastIsWhenTmpRef) blockStatements.size - 1 else blockStatements.size
 
@@ -4286,43 +4177,43 @@ class IrStatementToBrsTransformer(
                         is IrVariable -> {
                             val init = stmt.initializer?.let { parent.transformExpression(it) }
                             // Consume any hoisted statements from nested when-lowered blocks in the initializer
-                            val hoisted = parent.takeHoistedStatements()
+                            val hoisted = genCtx.takeHoistedStatements()
                             resultStatements.addAll(hoisted)
                             BrsVariable(stmt.name.asString(), mapTypeToBrs(stmt.type), init)
                         }
                         is IrWhen -> {
                             val whenStmt = visitWhen(stmt, Unit)
-                            resultStatements.addAll(parent.takeHoistedStatements())
+                            resultStatements.addAll(genCtx.takeHoistedStatements())
                             whenStmt
                         }
                         is IrWhileLoop -> {
                             val loopStmt = visitWhileLoop(stmt, Unit)
-                            resultStatements.addAll(parent.takeHoistedStatements())
+                            resultStatements.addAll(genCtx.takeHoistedStatements())
                             loopStmt
                         }
                         is IrDoWhileLoop -> {
                             val loopStmt = visitDoWhileLoop(stmt, Unit)
-                            resultStatements.addAll(parent.takeHoistedStatements())
+                            resultStatements.addAll(genCtx.takeHoistedStatements())
                             loopStmt
                         }
                         is IrBlock -> {
                             val blockStmt = visitBlock(stmt, Unit)
-                            resultStatements.addAll(parent.takeHoistedStatements())
+                            resultStatements.addAll(genCtx.takeHoistedStatements())
                             blockStmt
                         }
                         is IrSetValue -> {
                             val setStmt = visitSetValue(stmt, Unit)
-                            resultStatements.addAll(parent.takeHoistedStatements())
+                            resultStatements.addAll(genCtx.takeHoistedStatements())
                             setStmt
                         }
                         is IrSetField -> {
                             val setStmt = visitSetField(stmt, Unit)
-                            resultStatements.addAll(parent.takeHoistedStatements())
+                            resultStatements.addAll(genCtx.takeHoistedStatements())
                             setStmt
                         }
                         else -> {
                             val transformed = parent.transformStatement(stmt)
-                            resultStatements.addAll(parent.takeHoistedStatements())
+                            resultStatements.addAll(genCtx.takeHoistedStatements())
                             transformed
                         }
                     }
@@ -4332,7 +4223,7 @@ class IrStatementToBrsTransformer(
                 }
 
                 // Pop our scope (should be empty now) and discard
-                parent.popHoistedScope()
+                genCtx.popHoistedScope()
 
                 return BrsBlock(resultStatements.toMutableList())
             }
@@ -4341,7 +4232,7 @@ class IrStatementToBrsTransformer(
         val statements = expression.statements.flatMap { stmt ->
             // Helper to consume and prepend hoisted statements
             fun prependHoisted(stmts: List<BrsStatement>): List<BrsStatement> {
-                val hoisted = parent.takeHoistedStatements()
+                val hoisted = genCtx.takeHoistedStatements()
                 return if (hoisted.isNotEmpty()) hoisted + stmts else stmts
             }
 
@@ -4376,7 +4267,7 @@ class IrStatementToBrsTransformer(
                     val sanitizedName = sanitizeParameterName(varName)
                     val init = stmt.initializer?.let { parent.transformExpression(it) }
                     // Check for hoisted statements from when-lowered blocks in the initializer
-                    val hoisted = parent.takeHoistedStatements()
+                    val hoisted = genCtx.takeHoistedStatements()
                     // Always create the variable declaration (use invalid for uninitialized vars)
                     val varDecl = BrsVariable(sanitizedName, mapTypeToBrs(stmt.type), init ?: BrsInvalidLiteral())
                     if (hoisted.isNotEmpty()) {
@@ -4482,7 +4373,7 @@ class IrStatementToBrsTransformer(
             }
         }
         // Consume any remaining hoisted statements and prepend them to the block
-        val remainingHoisted = parent.takeHoistedStatements()
+        val remainingHoisted = genCtx.takeHoistedStatements()
         val finalStatements = if (remainingHoisted.isNotEmpty()) {
             remainingHoisted + statements
         } else {
@@ -4684,7 +4575,7 @@ class IrStatementToBrsTransformer(
             for (stmt in block.statements) {
                 val transformed = when (stmt) {
                     is IrExpression -> {
-                        parent.pushHoistedScope()
+                        genCtx.pushHoistedScope()
                         val result = when (stmt) {
                             is IrWhen -> visitWhen(stmt, Unit)
                             is IrWhileLoop -> visitWhileLoop(stmt, Unit)
@@ -4693,7 +4584,7 @@ class IrStatementToBrsTransformer(
                             is IrReturn -> visitReturn(stmt, Unit)
                             else -> BrsExpressionStatement(parent.transformExpression(stmt))
                         }
-                        val hoisted = parent.popHoistedScope()
+                        val hoisted = genCtx.popHoistedScope()
                         if (hoisted.isNotEmpty()) {
                             bodyStatements.addAll(hoisted)
                         }
@@ -4715,7 +4606,7 @@ class IrStatementToBrsTransformer(
         // Generate flag name if needed and push onto stack
         val flagName = if (needsFlagApproach) {
             val name = "__ret_done_${genCtx.returnableBlockFlagCounter++}"
-            parent.returnableBlockFlagStack.add(name)
+            genCtx.returnableBlockFlagStack.add(name)
             name
         } else null
 
@@ -4727,7 +4618,7 @@ class IrStatementToBrsTransformer(
                 java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]   Processing stmt: ${stmt::class.simpleName}\n")
                 val transformed = when (stmt) {
                     is IrExpression -> {
-                        parent.pushHoistedScope()
+                        genCtx.pushHoistedScope()
                         java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]     Is IrExpression, pushed scope\n")
                         val result = when (stmt) {
                             is IrWhen -> visitWhen(stmt, Unit)
@@ -4740,7 +4631,7 @@ class IrStatementToBrsTransformer(
                                 BrsExpressionStatement(parent.transformExpression(stmt))
                             }
                         }
-                        val hoisted = parent.popHoistedScope()
+                        val hoisted = genCtx.popHoistedScope()
                         java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]     popped scope, hoisted count: ${hoisted.size}\n")
                         hoisted.forEachIndexed { idx, h ->
                             java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]       hoisted[$idx]: ${h::class.simpleName}\n")
@@ -4811,7 +4702,7 @@ class IrStatementToBrsTransformer(
             }
         } finally {
             if (flagName != null) {
-                parent.returnableBlockFlagStack.removeLast()
+                genCtx.returnableBlockFlagStack.removeLast()
             }
         }
     }
@@ -4979,10 +4870,10 @@ class IrStatementToBrsTransformer(
         // We don't know yet which strategy we'll use (it depends on iterable type analysis below),
         // but it's safe to register - if we use native for-each (Strategy 1-3, 5), there won't be
         // any break statements targeting this while loop in the output anyway.
-        parent.loopsTransformedToWhile.add(whileLoop)
+        genCtx.loopsTransformedToWhile.add(whileLoop)
 
         // Increment nesting counter so that any nested for-loops (from inlining) also get "exit while"
-        parent.forLoopToWhileNestingDepth++
+        genCtx.forLoopToWhileNestingDepth++
         val actualBody: List<BrsStatement>
         try {
             // Transform the remaining body statements (skip the loop variable declaration)
@@ -5039,7 +4930,7 @@ class IrStatementToBrsTransformer(
                     } else {
                         // Transform expression - when-lowered blocks add to hoisted queue
                         val expr = parent.transformExpression(stmt)
-                        val hoisted = parent.takeHoistedStatements()
+                        val hoisted = genCtx.takeHoistedStatements()
                         // In statement context, skip __when_tmp references (just temp var values)
                         val skipFinalExpr = expr is BrsIdentifier && expr.name.startsWith("__when_tmp")
                         if (hoisted.isNotEmpty()) {
@@ -5061,7 +4952,7 @@ class IrStatementToBrsTransformer(
             }
         }
         } finally {
-            parent.forLoopToWhileNestingDepth--
+            genCtx.forLoopToWhileNestingDepth--
         }
 
         // Transform the iterable expression
@@ -5320,7 +5211,7 @@ class IrStatementToBrsTransformer(
                     val sanitizedVarName = sanitizeParameterName(varName)
                     val init = stmt.initializer?.let { parent.transformExpression(it) }
                     // Consume any hoisted statements from nested when-lowered blocks in the initializer
-                    val hoisted = parent.takeHoistedStatements()
+                    val hoisted = genCtx.takeHoistedStatements()
                     precedingStatements.addAll(hoisted)
                     if (init != null) BrsVariable(sanitizedVarName, mapTypeToBrs(stmt.type), init) else null
                 }
@@ -5377,7 +5268,7 @@ class IrStatementToBrsTransformer(
         val transformedValue = parent.transformExpression(expression.value)
         java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-SV]   transformedValue: ${transformedValue::class.simpleName}\n")
         // Take any hoisted statements from nested when-lowered blocks
-        val hoisted = parent.takeHoistedStatements()
+        val hoisted = genCtx.takeHoistedStatements()
         java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-SV]   hoisted count: ${hoisted.size}\n")
         hoisted.forEachIndexed { idx, h ->
             java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-SV]     hoisted[$idx]: ${h::class.simpleName}\n")
@@ -5432,7 +5323,7 @@ class IrStatementToBrsTransformer(
         // Transform the expression - when-lowered blocks will add to hoisted queue
         val transformedValue = parent.transformExpression(expression.value)
         // Take any hoisted statements from nested when-lowered blocks
-        val hoisted = parent.takeHoistedStatements()
+        val hoisted = genCtx.takeHoistedStatements()
 
         val assignment = BrsExpressionStatement(
             BrsBinaryOp(target, BrsBinaryOperator.EQ, transformedValue)
@@ -5456,7 +5347,7 @@ class IrStatementToBrsTransformer(
         // Transform the expression - when-lowered blocks will add to hoisted queue
         val transformedCall = parent.transformExpression(expression)
         // Take any hoisted statements from nested when-lowered blocks
-        val hoisted = parent.takeHoistedStatements()
+        val hoisted = genCtx.takeHoistedStatements()
 
         val callStmt = BrsExpressionStatement(transformedCall)
 
@@ -5501,7 +5392,7 @@ class IrStatementToBrsTransformer(
                     else -> {
                         // Transform and check for hoisted statements (from when expressions)
                         val expr = parent.transformExpression(element)
-                        val hoisted = parent.takeHoistedStatements()
+                        val hoisted = genCtx.takeHoistedStatements()
                         if (hoisted.isNotEmpty()) {
                             if (hoisted.size == 1) hoisted.first() else BrsBlock(hoisted.toMutableList())
                         } else {
@@ -5524,7 +5415,7 @@ class IrStatementToBrsTransformer(
             is IrExpression -> {
                 // Transform and check for hoisted statements (from when expressions)
                 val expr = parent.transformExpression(element)
-                val hoisted = parent.takeHoistedStatements()
+                val hoisted = genCtx.takeHoistedStatements()
                 if (hoisted.isNotEmpty()) {
                     if (hoisted.size == 1) hoisted.first() else BrsBlock(hoisted.toMutableList())
                 } else {
@@ -8309,7 +8200,7 @@ class IrExpressionToBrsTransformer(
                 } else {
                     // Hoist non-trivial expression to temp variable to avoid double evaluation
                     val tempName = "__safeCast_tmp${genCtx.nextTempId()}"
-                    parent.addHoistedStatement(BrsVariable(tempName, null, argument))
+                    genCtx.addHoistedStatement(BrsVariable(tempName, null, argument))
                     val tempRef = BrsIdentifier(tempName)
                     BrsConditional(
                         generateInstanceCheck(tempRef.deepCopy(), expression.typeOperand),
@@ -8811,7 +8702,7 @@ class IrExpressionToBrsTransformer(
             if (stmt is IrVariable) continue  // Already hoisted in pass 1
 
             java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-COMP] PASS2: processing stmt[$i] ${stmt::class.simpleName}\n")
-            parent.pushHoistedScope()
+            genCtx.pushHoistedScope()
             val transformed = when (stmt) {
                 is IrWhen -> parent.statementVisitor.visitWhen(stmt, Unit)
                 is IrWhileLoop -> parent.statementVisitor.visitWhileLoop(stmt, Unit)
@@ -8820,12 +8711,12 @@ class IrExpressionToBrsTransformer(
                 is IrBlock -> parent.statementVisitor.visitBlock(stmt, Unit)
                 else -> parent.transformStatement(stmt)
             }
-            val nestedHoisted = parent.popHoistedScope()
+            val nestedHoisted = genCtx.popHoistedScope()
             java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-COMP]   nestedHoisted: ${nestedHoisted.size}, adding each to parent\n")
-            nestedHoisted.forEach { parent.addHoistedStatement(it) }
+            nestedHoisted.forEach { genCtx.addHoistedStatement(it) }
             transformed?.let {
                 java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-COMP]   adding transformed: ${it::class.simpleName}\n")
-                parent.addHoistedStatement(it)
+                genCtx.addHoistedStatement(it)
             }
         }
 
@@ -8862,7 +8753,7 @@ class IrExpressionToBrsTransformer(
                 val varName = stmt.name.asString()
                 java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-HOIST] hoistDirectVariables: hoisting '$varName'\n")
                 val transformed = parent.statementVisitor.visitVariable(stmt, Unit)
-                parent.addHoistedStatement(transformed)
+                genCtx.addHoistedStatement(transformed)
             }
         }
     }
@@ -8877,7 +8768,7 @@ class IrExpressionToBrsTransformer(
             // Transform the block as a statement (wraps in while true { ... exit while })
             val stmt = parent.statementVisitor.visitBlock(expression, Unit)
             // Hoist the statement for side effects
-            parent.addHoistedStatement(stmt)
+            genCtx.addHoistedStatement(stmt)
             // Return Unit (the block has no meaningful return value since no returns target it)
             return BrsInvalidLiteral()
         }
@@ -8917,7 +8808,7 @@ class IrExpressionToBrsTransformer(
                     type = mapTypeToBrs(tempVar.type),
                     initializer = parent.transformExpression(tempVarInitializer)
                 )
-                parent.addHoistedStatement(hoistedTempVar)
+                genCtx.addHoistedStatement(hoistedTempVar)
 
                 // 2. Find and hoist the setter/assignment
                 for (stmt in statements) {
@@ -8929,7 +8820,7 @@ class IrExpressionToBrsTransformer(
                                 genCtx.setTempVarName(tempVar.symbol, tempVarName)
                                 try {
                                     val setterCall = stmt.accept(this, data)
-                                    parent.addHoistedStatement(BrsExpressionStatement(setterCall))
+                                    genCtx.addHoistedStatement(BrsExpressionStatement(setterCall))
                                 } finally {
                                     genCtx.popTempVarSubstitution(tempVar.symbol)
                                 }
@@ -8941,7 +8832,7 @@ class IrExpressionToBrsTransformer(
                                 try {
                                     val assignment = parent.transformStatement(stmt)
                                     if (assignment != null) {
-                                        parent.addHoistedStatement(assignment)
+                                        genCtx.addHoistedStatement(assignment)
                                     }
                                 } finally {
                                     genCtx.popTempVarSubstitution(tempVar.symbol)
@@ -9011,11 +8902,11 @@ class IrExpressionToBrsTransformer(
                     val varInit = firstStmt.initializer?.let { parent.transformExpression(it) }
 
                     // Take any hoisted statements from initializer transformation
-                    val initHoisted = parent.takeHoistedStatements()
-                    initHoisted.forEach { parent.addHoistedStatement(it) }
+                    val initHoisted = genCtx.takeHoistedStatements()
+                    initHoisted.forEach { genCtx.addHoistedStatement(it) }
 
                     // Add the temporary variable declaration
-                    parent.addHoistedStatement(
+                    genCtx.addHoistedStatement(
                         BrsVariable(
                             firstStmt.name.asString(),
                             mapTypeToBrs(firstStmt.type),
@@ -9050,7 +8941,7 @@ class IrExpressionToBrsTransformer(
                 // We push a new hoisting scope so nested transformations don't interfere with
                 // outer scopes. After processing, we pop and add our statements to the parent scope.
 
-                parent.pushHoistedScope()
+                genCtx.pushHoistedScope()
 
                 for (i in 0 until statements.size - 1) {
                     val stmt = statements[i]
@@ -9060,51 +8951,51 @@ class IrExpressionToBrsTransformer(
                             // will be added to the current hoisted scope
                             val init = stmt.initializer?.let { parent.transformExpression(it) }
                             // Add the variable declaration after any hoisted statements from the initializer
-                            parent.addHoistedStatement(BrsVariable(stmt.name.asString(), mapTypeToBrs(stmt.type), init))
+                            genCtx.addHoistedStatement(BrsVariable(stmt.name.asString(), mapTypeToBrs(stmt.type), init))
                         }
                         is IrWhen -> {
                             // Push a scope to capture any nested when-lowered block hoisting
-                            parent.pushHoistedScope()
+                            genCtx.pushHoistedScope()
                             val whenStmt = parent.statementVisitor.visitWhen(stmt, Unit)
                             // Take any statements added during transformation and add to our scope
-                            val nestedHoisted = parent.popHoistedScope()
-                            nestedHoisted.forEach { parent.addHoistedStatement(it) }
-                            parent.addHoistedStatement(whenStmt)
+                            val nestedHoisted = genCtx.popHoistedScope()
+                            nestedHoisted.forEach { genCtx.addHoistedStatement(it) }
+                            genCtx.addHoistedStatement(whenStmt)
                         }
                         is IrWhileLoop -> {
-                            parent.pushHoistedScope()
+                            genCtx.pushHoistedScope()
                             val loopStmt = parent.statementVisitor.visitWhileLoop(stmt, Unit)
-                            val nestedHoisted = parent.popHoistedScope()
-                            nestedHoisted.forEach { parent.addHoistedStatement(it) }
-                            parent.addHoistedStatement(loopStmt)
+                            val nestedHoisted = genCtx.popHoistedScope()
+                            nestedHoisted.forEach { genCtx.addHoistedStatement(it) }
+                            genCtx.addHoistedStatement(loopStmt)
                         }
                         is IrDoWhileLoop -> {
-                            parent.pushHoistedScope()
+                            genCtx.pushHoistedScope()
                             val loopStmt = parent.statementVisitor.visitDoWhileLoop(stmt, Unit)
-                            val nestedHoisted = parent.popHoistedScope()
-                            nestedHoisted.forEach { parent.addHoistedStatement(it) }
-                            parent.addHoistedStatement(loopStmt)
+                            val nestedHoisted = genCtx.popHoistedScope()
+                            nestedHoisted.forEach { genCtx.addHoistedStatement(it) }
+                            genCtx.addHoistedStatement(loopStmt)
                         }
                         is IrBlock -> {
-                            parent.pushHoistedScope()
+                            genCtx.pushHoistedScope()
                             val blockStmt = parent.statementVisitor.visitBlock(stmt, Unit)
-                            val nestedHoisted = parent.popHoistedScope()
-                            nestedHoisted.forEach { parent.addHoistedStatement(it) }
-                            parent.addHoistedStatement(blockStmt)
+                            val nestedHoisted = genCtx.popHoistedScope()
+                            nestedHoisted.forEach { genCtx.addHoistedStatement(it) }
+                            genCtx.addHoistedStatement(blockStmt)
                         }
                         else -> {
-                            parent.pushHoistedScope()
+                            genCtx.pushHoistedScope()
                             val transformed = parent.transformStatement(stmt)
-                            val nestedHoisted = parent.popHoistedScope()
-                            nestedHoisted.forEach { parent.addHoistedStatement(it) }
-                            transformed?.let { parent.addHoistedStatement(it) }
+                            val nestedHoisted = genCtx.popHoistedScope()
+                            nestedHoisted.forEach { genCtx.addHoistedStatement(it) }
+                            transformed?.let { genCtx.addHoistedStatement(it) }
                         }
                     }
                 }
 
                 // Pop our scope and add all statements to the parent scope
-                val blockStatements = parent.popHoistedScope()
-                blockStatements.forEach { parent.addHoistedStatement(it) }
+                val blockStatements = genCtx.popHoistedScope()
+                blockStatements.forEach { genCtx.addHoistedStatement(it) }
 
                 // Return just the temp var reference
                 return (lastStmt as IrExpression).accept(this, data)
@@ -9136,11 +9027,11 @@ class IrExpressionToBrsTransformer(
                 val varInit = subjectVar.initializer?.let { parent.transformExpression(it) }
 
                 // Take any hoisted statements from initializer transformation
-                val initHoisted = parent.takeHoistedStatements()
-                initHoisted.forEach { parent.addHoistedStatement(it) }
+                val initHoisted = genCtx.takeHoistedStatements()
+                initHoisted.forEach { genCtx.addHoistedStatement(it) }
 
                 // Add the subject variable declaration
-                parent.addHoistedStatement(
+                genCtx.addHoistedStatement(
                     BrsVariable(
                         subjectVar.name.asString(),
                         mapTypeToBrs(subjectVar.type),
@@ -9170,7 +9061,7 @@ class IrExpressionToBrsTransformer(
             // Hoist all statements except the last one (which is the return value)
             for (i in 0 until statements.size - 1) {
                 val stmt = statements[i]
-                parent.pushHoistedScope()
+                genCtx.pushHoistedScope()
                 val transformed = when (stmt) {
                     is IrWhen -> parent.statementVisitor.visitWhen(stmt, Unit)
                     is IrWhileLoop -> parent.statementVisitor.visitWhileLoop(stmt, Unit)
@@ -9178,9 +9069,9 @@ class IrExpressionToBrsTransformer(
                     is IrBlock -> parent.statementVisitor.visitBlock(stmt, Unit)
                     else -> parent.transformStatement(stmt)
                 }
-                val nestedHoisted = parent.popHoistedScope()
-                nestedHoisted.forEach { parent.addHoistedStatement(it) }
-                transformed?.let { parent.addHoistedStatement(it) }
+                val nestedHoisted = genCtx.popHoistedScope()
+                nestedHoisted.forEach { genCtx.addHoistedStatement(it) }
+                transformed?.let { genCtx.addHoistedStatement(it) }
             }
 
             // Return the last statement's value

@@ -5,8 +5,10 @@
 
 package org.jetbrains.kotlin.ir.backend.brs.transformers.irToBrs
 
+import org.jetbrains.kotlin.brs.backend.ast.BrsStatement
 import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
 import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.expressions.IrLoop
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
 
 /**
@@ -124,12 +126,113 @@ class BrsGenerationContext(
         return symbolToUniqueName[symbol] ?: baseName
     }
 
-    // ==================== Returnable block counter ====================
+    // ==================== Returnable block state ====================
+
+    /**
+     * Stack of returnable block exit flag variable names.
+     * When a returnable block contains while loops that have returns targeting the block,
+     * we can't use simple "exit while" (it would exit the inner loop, not the block wrapper).
+     * Instead, we use a flag-based approach: set the flag and exit while, then check the flag
+     * after each inner while loop.
+     *
+     * The stack supports nested returnable blocks. The top of the stack is the innermost
+     * returnable block currently being transformed.
+     */
+    internal val returnableBlockFlagStack = mutableListOf<String>()
 
     /**
      * Counter for generating unique returnable block flag names.
      */
     internal var returnableBlockFlagCounter = 0
+
+    // ==================== Loop bookkeeping ====================
+
+    /**
+     * Set of IR loops that have been transformed to while loops in the output.
+     * When a for-each loop is transformed to a while loop (e.g., Strategy 4 - iterator protocol),
+     * any break statements inside should generate "exit while" instead of "exit for".
+     * The key is the IrLoop instance (the loop that IrBreak.loop references).
+     */
+    internal val loopsTransformedToWhile = mutableSetOf<IrLoop>()
+
+    /**
+     * Counter tracking how many FOR_LOOP blocks we're currently inside that will be
+     * transformed to while loops. When > 0, any break statements with FOR_LOOP_INNER_WHILE
+     * origin should generate "exit while" instead of "exit for".
+     *
+     * This is needed because after inlining, the IrBreak.loop may reference a different
+     * IrWhileLoop instance than what we traverse (inlining creates copies), so we can't
+     * rely on object identity in loopsTransformedToWhile.
+     */
+    internal var forLoopToWhileNestingDepth = 0
+
+    /**
+     * Maps IR loops to their break flag variable names.
+     * When continue is not supported, loops are wrapped in an inner while(true) loop.
+     * Break statements must set a flag and exit the inner loop, then the outer loop
+     * checks this flag and exits if set.
+     */
+    internal val loopBreakFlags = mutableMapOf<IrLoop, String>()
+
+    /**
+     * Set of IR loops that are currently being transformed with a continue wrapper.
+     * This is used during the transformation to know which loop a continue/break
+     * should target. We add the loop before transforming its body and remove it after.
+     * IMPORTANT: This only applies while we're actively inside the body transformation.
+     */
+    internal val loopsWithContinueWrapper = mutableSetOf<IrLoop>()
+
+    /**
+     * Stack of loops currently being transformed with continue wrappers.
+     * A loop is pushed when we start transforming its body and popped when done.
+     * IrContinue/IrBreak should only be transformed to exit while if their target
+     * loop is on this stack (meaning we're inside its body transformation).
+     */
+    internal val continueWrapperLoopStack = mutableListOf<IrLoop>()
+
+    // ==================== Hoisted statements ====================
+
+    /**
+     * Hoisted statements from when-expression lowered blocks.
+     * These need to be emitted before the expression that uses them.
+     *
+     * Stack of hoisted statement scopes for proper nesting of when-lowered blocks.
+     */
+    private val hoistedScopes = mutableListOf<MutableList<BrsStatement>>().apply {
+        add(mutableListOf()) // Global scope
+    }
+
+    fun pushHoistedScope() {
+        hoistedScopes.add(mutableListOf())
+    }
+
+    fun popHoistedScope(): List<BrsStatement> {
+        if (hoistedScopes.size <= 1) {
+            // Don't pop the global scope - just return and clear it
+            val result = hoistedScopes.last().toList()
+            hoistedScopes.last().clear()
+            return result
+        }
+        return hoistedScopes.removeAt(hoistedScopes.lastIndex)
+    }
+
+    fun addHoistedStatement(stmt: BrsStatement) {
+        hoistedScopes.last().add(stmt)
+    }
+
+    fun takeHoistedStatements(): List<BrsStatement> {
+        val scope = hoistedScopes.last()
+        val result = scope.toList()
+        scope.clear()
+        return result
+    }
+
+    fun hasHoistedStatements(): Boolean = hoistedScopes.last().isNotEmpty()
+
+    fun clearHoistedScopes() {
+        hoistedScopes.clear()
+        hoistedScopes.add(mutableListOf()) // Reset to global scope
+    }
 }
 
 /**
