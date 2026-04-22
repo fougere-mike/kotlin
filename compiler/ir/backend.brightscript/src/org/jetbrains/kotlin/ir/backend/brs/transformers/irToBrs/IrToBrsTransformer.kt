@@ -68,299 +68,6 @@ class IrToBrsTransformer(
     val statementVisitor: IrStatementToBrsTransformer get() = statementTransformer
     internal val inlineCallTransformer = BrsInlineCallTransformer(context)
 
-    /**
-     * Detect variables captured by a function expression.
-     * Returns a list of variables that are referenced but not declared within the function.
-     */
-    fun detectCapturedVariables(function: IrSimpleFunction): List<CapturedVariable> {
-        val declaredSymbols = mutableSetOf<IrValueSymbol>()
-        val referencedSymbols = mutableMapOf<IrValueSymbol, Boolean>() // symbol -> isMutated
-
-        // Collect function parameters as declared
-        function.valueParameters.forEach { declaredSymbols.add(it.symbol) }
-        // Also include extension receiver parameter so it's not treated as captured
-        function.extensionReceiverParameter?.let { declaredSymbols.add(it.symbol) }
-
-        // Walk the function body to find declared and referenced variables
-        function.body?.acceptVoid(object : IrVisitorVoid() {
-            override fun visitElement(element: IrElement) {
-                element.acceptChildrenVoid(this)
-            }
-
-            // Skip nested function expressions - they have their own capture detection
-            // We only want to detect variables captured directly by this function,
-            // not variables used inside nested lambdas (which are their parameters)
-            override fun visitFunctionExpression(expression: IrFunctionExpression) {
-                // Don't recurse into nested function expressions
-            }
-
-            override fun visitVariable(declaration: IrVariable) {
-                declaredSymbols.add(declaration.symbol)
-                declaration.acceptChildrenVoid(this)
-            }
-
-            override fun visitGetValue(expression: IrGetValue) {
-                val symbol = expression.symbol
-                if (symbol !in declaredSymbols) {
-                    // Only track variables and value parameters from outer scope
-                    val owner = symbol.owner
-                    if (owner is IrVariable || owner is IrValueParameter) {
-                        // Skip parameters added by LocalDeclarationsLowering
-                        // These are synthetic parameters for captured values and are already
-                        // available as function parameters, not outer-scope captures
-                        if (owner is IrValueParameter &&
-                            (owner.origin == BOUND_VALUE_PARAMETER ||
-                             owner.origin == BOUND_RECEIVER_PARAMETER)) {
-                            expression.acceptChildrenVoid(this)
-                            return
-                        }
-                        // Skip parameters from functions that are not ancestors of this lambda
-                        // Parameters from non-ancestor functions come from inlined code
-                        if (owner is IrValueParameter) {
-                            val paramParent = owner.parent as? IrFunction
-                            if (paramParent != null) {
-                                // Check if paramParent is an ancestor of this function
-                                var parent: IrDeclarationParent? = function.parent
-                                var isAncestor = false
-                                while (parent != null) {
-                                    if (parent === paramParent) {
-                                        isAncestor = true
-                                        break
-                                    }
-                                    parent = (parent as? IrDeclaration)?.parent
-                                }
-                                if (!isAncestor) {
-                                    // This parameter is from a non-ancestor function (inlined code)
-                                    expression.acceptChildrenVoid(this)
-                                    return
-                                }
-
-                                // Skip extension receiver of the IMMEDIATE parent (the lambda's own receiver)
-                                // But DO capture extension receivers from ANCESTOR functions - these must be captured
-                                // so the closure can access the outer function's receiver
-                                if (paramParent.extensionReceiverParameter === owner && paramParent === function) {
-                                    expression.acceptChildrenVoid(this)
-                                    return
-                                }
-
-                                // Skip captured receiver parameters (names starting with $this$)
-                                // These are value parameters created by inline function expansion to hold
-                                // the extension receiver. They're accessible via m in BrightScript.
-                                val paramName = owner.name.asString()
-                                if (paramName.startsWith("\$this\$")) {
-                                    expression.acceptChildrenVoid(this)
-                                    return
-                                }
-                            }
-                        }
-                        if (symbol !in referencedSymbols) {
-                            referencedSymbols[symbol] = false
-                        }
-                    }
-                }
-                expression.acceptChildrenVoid(this)
-            }
-
-            override fun visitSetValue(expression: IrSetValue) {
-                val symbol = expression.symbol
-                if (symbol !in declaredSymbols) {
-                    // Skip parameters added by LocalDeclarationsLowering
-                    val owner = symbol.owner
-                    if (owner is IrValueParameter &&
-                        (owner.origin == BOUND_VALUE_PARAMETER ||
-                         owner.origin == BOUND_RECEIVER_PARAMETER)) {
-                        expression.acceptChildrenVoid(this)
-                        return
-                    }
-                    // Mark as mutated
-                    referencedSymbols[symbol] = true
-                }
-                expression.acceptChildrenVoid(this)
-            }
-        })
-
-        // Build the captured variables list
-        // Deduplicate by name - multiple IR symbols may map to the same BrightScript name
-        // (e.g., multiple receiver symbols all become "this")
-        return referencedSymbols.map { (symbol, isMutated) ->
-            val owner = symbol.owner
-            val isMutable = when (owner) {
-                is IrVariable -> owner.isVar || isMutated
-                else -> isMutated
-            }
-            CapturedVariable(
-                symbol = symbol,
-                name = sanitizeParameterName(owner.name.asString()),
-                isMutable = isMutable
-            )
-        }.distinctBy { it.name }
-    }
-
-    /**
-     * Check if a variable symbol is captured in the current closure context.
-     */
-    fun getCapturedVariable(symbol: IrValueSymbol): CapturedVariable? {
-        return genCtx.currentClosureContext?.find { it.symbol == symbol }
-    }
-
-    /**
-     * Detect all shared variables in a function body.
-     * A shared variable is a mutable variable (var) that is captured by at least one closure.
-     * These variables need to be boxed in {value: x} wrappers so mutations inside closures
-     * are visible outside and vice versa.
-     *
-     * @param body The function body to analyze
-     * @return Set of variable symbols that need to be shared (boxed)
-     */
-    fun detectSharedVariables(body: IrBody): Set<IrValueSymbol> {
-        val sharedVars = mutableSetOf<IrValueSymbol>()
-
-        // Walk the body to find all function expressions (closures) and local classes
-        body.acceptVoid(object : IrVisitorVoid() {
-            override fun visitElement(element: IrElement) {
-                element.acceptChildrenVoid(this)
-            }
-
-            override fun visitFunctionExpression(expression: IrFunctionExpression) {
-                // Detect captured variables for this closure
-                val capturedVars = detectCapturedVariables(expression.function)
-
-                // Add mutable captured variables to the shared set
-                for (captured in capturedVars) {
-                    if (captured.isMutable) {
-                        sharedVars.add(captured.symbol)
-                    }
-                }
-
-                // Continue searching for nested closures within this one
-                expression.function.body?.acceptVoid(this)
-            }
-
-            override fun visitClass(declaration: IrClass) {
-                // Handle local classes (including anonymous object expressions)
-                // These also capture outer variables
-                if (declaration.visibility == org.jetbrains.kotlin.descriptors.DescriptorVisibilities.LOCAL) {
-                    val capturedVars = detectCapturedVariablesInClass(declaration)
-                    for (captured in capturedVars) {
-                        if (captured.isMutable) {
-                            sharedVars.add(captured.symbol)
-                        }
-                    }
-                }
-
-                // Continue searching for nested closures within this class
-                declaration.acceptChildrenVoid(this)
-            }
-        })
-
-        return sharedVars
-    }
-
-    /**
-     * Detect variables captured by a local class from outer scopes.
-     * Similar to detectCapturedVariables but for classes instead of functions.
-     */
-    private fun detectCapturedVariablesInClass(irClass: IrClass): List<CapturedVariable> {
-        val declaredSymbols = mutableSetOf<IrValueSymbol>()
-        val referencedSymbols = mutableMapOf<IrValueSymbol, Boolean>() // symbol -> isMutated
-
-        // Collect symbols declared within the class (parameters, local variables, etc.)
-        // Note: Class fields are not value symbols, so they don't need to be excluded
-
-        // Walk the class members to find referenced variables
-        irClass.declarations.forEach { declaration ->
-            when (declaration) {
-                is IrSimpleFunction -> {
-                    // Add function parameters as declared (they're local to the function)
-                    declaration.valueParameters.forEach { declaredSymbols.add(it.symbol) }
-                    declaration.extensionReceiverParameter?.let { declaredSymbols.add(it.symbol) }
-                    declaration.dispatchReceiverParameter?.let { declaredSymbols.add(it.symbol) }
-
-                    // Walk the function body
-                    declaration.body?.acceptVoid(object : IrVisitorVoid() {
-                        override fun visitElement(element: IrElement) {
-                            element.acceptChildrenVoid(this)
-                        }
-
-                        override fun visitVariable(declaration: IrVariable) {
-                            declaredSymbols.add(declaration.symbol)
-                            declaration.acceptChildrenVoid(this)
-                        }
-
-                        override fun visitGetValue(expression: IrGetValue) {
-                            val symbol = expression.symbol
-                            if (symbol !in declaredSymbols) {
-                                val owner = symbol.owner
-                                if (owner is IrVariable || owner is IrValueParameter) {
-                                    // Skip parameters added by LocalDeclarationsLowering
-                                    if (owner is IrValueParameter &&
-                                        (owner.origin == BOUND_VALUE_PARAMETER ||
-                                         owner.origin == BOUND_RECEIVER_PARAMETER)) {
-                                        expression.acceptChildrenVoid(this)
-                                        return
-                                    }
-                                    // Mark as referenced (not mutated)
-                                    if (symbol !in referencedSymbols) {
-                                        referencedSymbols[symbol] = false
-                                    }
-                                }
-                            }
-                            expression.acceptChildrenVoid(this)
-                        }
-
-                        override fun visitSetValue(expression: IrSetValue) {
-                            val symbol = expression.symbol
-                            if (symbol !in declaredSymbols) {
-                                val owner = symbol.owner
-                                if (owner is IrVariable || owner is IrValueParameter) {
-                                    // Skip parameters added by LocalDeclarationsLowering
-                                    if (owner is IrValueParameter &&
-                                        (owner.origin == BOUND_VALUE_PARAMETER ||
-                                         owner.origin == BOUND_RECEIVER_PARAMETER)) {
-                                        expression.acceptChildrenVoid(this)
-                                        return
-                                    }
-                                    // Mark as mutated
-                                    referencedSymbols[symbol] = true
-                                }
-                            }
-                            expression.acceptChildrenVoid(this)
-                        }
-
-                        // Skip nested function expressions - they have their own capture detection
-                        override fun visitFunctionExpression(expression: IrFunctionExpression) {
-                            // Don't recurse into nested function expressions
-                        }
-
-                        // Skip nested classes
-                        override fun visitClass(declaration: IrClass) {
-                            // Don't recurse into nested classes
-                        }
-                    })
-                }
-                is IrConstructor -> {
-                    // Add constructor parameters as declared
-                    declaration.valueParameters.forEach { declaredSymbols.add(it.symbol) }
-                }
-                else -> {}
-            }
-        }
-
-        // Build the captured variables list
-        return referencedSymbols.map { (symbol, isMutated) ->
-            val owner = symbol.owner
-            val isMutable = when (owner) {
-                is IrVariable -> owner.isVar || isMutated
-                else -> isMutated
-            }
-            CapturedVariable(
-                symbol = symbol,
-                name = sanitizeParameterName(owner.name.asString()),
-                isMutable = isMutable
-            )
-        }.distinctBy { it.name }
-    }
-
     // ==================== Entry Points ====================
 
     /**
@@ -524,7 +231,7 @@ class IrToBrsTransformer(
         // (this runs before local class extraction, so it can detect variables captured by local classes)
         // If not found, fall back to detecting them now (for lambdas and inline functions)
         genCtx.sharedVariables = context.sharedVariablesByFunction[irFunction.symbol]
-            ?: irFunction.body?.let { detectSharedVariables(it) }
+            ?: irFunction.body?.let { genCtx.detectSharedVariables(it) }
             ?: emptySet()
 
         // Check if this function has @BrsInline - use parsed code instead of IR body
@@ -3338,7 +3045,7 @@ class IrStatementToBrsTransformer(
 
         // Detect captured variables for local functions
         val capturedVars = if (declaration is IrSimpleFunction) {
-            parent.detectCapturedVariables(declaration)
+            genCtx.detectCapturedVariables(declaration)
         } else {
             emptyList()
         }
@@ -5156,7 +4863,7 @@ class IrStatementToBrsTransformer(
         val rawName = expression.symbol.owner.name.asString()
 
         // Check if this variable is captured in a closure
-        val capturedVar = parent.getCapturedVariable(expression.symbol)
+        val capturedVar = genCtx.getCapturedVariable(expression.symbol)
 
         val sanitizedName = when {
             rawName.startsWith("<set-") && rawName.endsWith(">") -> "value"
@@ -5505,7 +5212,7 @@ class IrExpressionToBrsTransformer(
         val rawName = expression.symbol.owner.name.asString()
 
         // Check if this variable is captured in a closure
-        val capturedVar = parent.getCapturedVariable(expression.symbol)
+        val capturedVar = genCtx.getCapturedVariable(expression.symbol)
         if (capturedVar != null) {
             // Rewrite to access via m (the closure object)
             return if (capturedVar.isMutable) {
@@ -5663,7 +5370,7 @@ class IrExpressionToBrsTransformer(
         val rawName = expression.symbol.owner.name.asString()
 
         // Check if this variable is captured in a closure
-        val capturedVar = parent.getCapturedVariable(expression.symbol)
+        val capturedVar = genCtx.getCapturedVariable(expression.symbol)
         if (capturedVar != null && capturedVar.isMutable) {
             // Rewrite to assign via m (the closure object): m.varName.value = newValue
             return BrsBinaryOp(
@@ -8381,7 +8088,7 @@ class IrExpressionToBrsTransformer(
         val function = expression.function
 
         // Detect captured variables from outer scope
-        val capturedVars = parent.detectCapturedVariables(function)
+        val capturedVars = genCtx.detectCapturedVariables(function)
 
         // Build parameter list, starting with extension receiver if present
         val allParameters = mutableListOf<BrsParameter>()
