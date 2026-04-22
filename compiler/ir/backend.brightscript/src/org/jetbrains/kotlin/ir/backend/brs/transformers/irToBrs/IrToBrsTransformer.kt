@@ -70,16 +70,6 @@ class IrToBrsTransformer(
     private val enumClassNames = mutableListOf<String>()
 
     /**
-     * Tracks captured variables when transforming a closure.
-     * Maps IR variable symbols to their capture info (name and mutability).
-     */
-    data class CapturedVariable(
-        val symbol: IrValueSymbol,
-        val name: String,
-        val isMutable: Boolean
-    )
-
-    /**
      * Current closure context for variable access rewriting.
      * When non-null, we're inside a closure and need to rewrite captured variable accesses.
      * Internal visibility so expression/statement transformers can access it.
