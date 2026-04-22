@@ -8,7 +8,14 @@ package org.jetbrains.kotlin.ir.backend.brs.transformers.irToBrs
 import org.jetbrains.kotlin.brs.backend.ast.BrsInvalidLiteral
 import org.jetbrains.kotlin.brs.backend.ast.BrsParameter
 import org.jetbrains.kotlin.brs.backend.ast.BrsType
+import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.expressions.IrBreak
+import org.jetbrains.kotlin.ir.expressions.IrContinue
+import org.jetbrains.kotlin.ir.expressions.IrLoop
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
+import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
+import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.ir.types.isBoolean
 import org.jetbrains.kotlin.ir.types.isByte
 import org.jetbrains.kotlin.ir.types.isDouble
@@ -100,6 +107,47 @@ fun deduplicateParameterNames(parameters: List<BrsParameter>): List<BrsParameter
             param
         }
     }
+}
+
+/**
+ * Checks if the given IR element contains any IrContinue statements targeting the specified loop.
+ * Used to determine if a loop needs to be wrapped with a continue-simulation pattern
+ * when native continue is not supported.
+ */
+fun containsContinueFor(element: IrElement?, targetLoop: IrLoop): Boolean {
+    if (element == null) return false
+    var found = false
+    element.acceptVoid(object : IrVisitorVoid() {
+        override fun visitElement(element: IrElement) {
+            if (!found) element.acceptChildrenVoid(this)
+        }
+        override fun visitContinue(jump: IrContinue) {
+            if (jump.loop === targetLoop) {
+                found = true
+            }
+        }
+    })
+    return found
+}
+
+/**
+ * Checks if the given IR element contains any IrBreak statements targeting the specified loop.
+ * Used to determine if we need a break flag variable when simulating continue.
+ */
+fun containsBreakFor(element: IrElement?, targetLoop: IrLoop): Boolean {
+    if (element == null) return false
+    var found = false
+    element.acceptVoid(object : IrVisitorVoid() {
+        override fun visitElement(element: IrElement) {
+            if (!found) element.acceptChildrenVoid(this)
+        }
+        override fun visitBreak(jump: IrBreak) {
+            if (jump.loop === targetLoop) {
+                found = true
+            }
+        }
+    })
+    return found
 }
 
 /**

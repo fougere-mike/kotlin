@@ -323,47 +323,6 @@ class IrToBrsTransformer(
     }
 
     /**
-     * Checks if the given IR element contains any IrContinue statements targeting the specified loop.
-     * Used to determine if a loop needs to be wrapped with a continue-simulation pattern
-     * when native continue is not supported.
-     */
-    fun containsContinueFor(element: IrElement?, targetLoop: IrLoop): Boolean {
-        if (element == null) return false
-        var found = false
-        element.acceptVoid(object : IrVisitorVoid() {
-            override fun visitElement(element: IrElement) {
-                if (!found) element.acceptChildrenVoid(this)
-            }
-            override fun visitContinue(jump: IrContinue) {
-                if (jump.loop === targetLoop) {
-                    found = true
-                }
-            }
-        })
-        return found
-    }
-
-    /**
-     * Checks if the given IR element contains any IrBreak statements targeting the specified loop.
-     * Used to determine if we need a break flag variable when simulating continue.
-     */
-    fun containsBreakFor(element: IrElement?, targetLoop: IrLoop): Boolean {
-        if (element == null) return false
-        var found = false
-        element.acceptVoid(object : IrVisitorVoid() {
-            override fun visitElement(element: IrElement) {
-                if (!found) element.acceptChildrenVoid(this)
-            }
-            override fun visitBreak(jump: IrBreak) {
-                if (jump.loop === targetLoop) {
-                    found = true
-                }
-            }
-        })
-        return found
-    }
-
-    /**
      * Hoisted statements from when-expression lowered blocks.
      * These need to be emitted before the expression that uses them.
      */
@@ -4147,13 +4106,13 @@ class IrStatementToBrsTransformer(
         val condition = parent.transformExpression(loop.condition)
         // Take hoisted statements from condition transformation (e.g., from inlined returnable blocks)
         val conditionHoisted = parent.takeHoistedStatements()
-        val bodyContainsContinue = parent.containsContinueFor(loop.body, loop)
+        val bodyContainsContinue = containsContinueFor(loop.body, loop)
 
         if (!context.supportsContinue && bodyContainsContinue) {
             // Wrap body in inner while(true) loop to simulate continue.
             // continue becomes "exit while" which exits the inner loop, and the outer loop continues.
             // break needs special handling: set a flag, exit inner, check flag after inner loop.
-            val bodyContainsBreak = parent.containsBreakFor(loop.body, loop)
+            val bodyContainsBreak = containsBreakFor(loop.body, loop)
             val breakFlagName = if (bodyContainsBreak) "__break${parent.nextTempId()}" else null
 
             // Register this loop as having a continue wrapper
@@ -4314,13 +4273,13 @@ class IrStatementToBrsTransformer(
 
         // BrightScript doesn't have do-while, transform to while with entry guard
         // First execution runs unconditionally, then subsequent iterations check condition
-        val bodyContainsContinue = parent.containsContinueFor(loop.body, loop)
+        val bodyContainsContinue = containsContinueFor(loop.body, loop)
 
         if (!context.supportsContinue && bodyContainsContinue) {
             // Similar to while loop, but do-while executes body first, then checks condition
             // We transform to: body; while(condition) { body }
             // But with continue wrapper for the while part
-            val bodyContainsBreak = parent.containsBreakFor(loop.body, loop)
+            val bodyContainsBreak = containsBreakFor(loop.body, loop)
             val breakFlagName = if (bodyContainsBreak) "__break${parent.nextTempId()}" else null
 
             // Register this loop as having a continue wrapper
