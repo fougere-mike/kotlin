@@ -20,13 +20,30 @@ dependencies {
     implementation(project(":compiler:psi:psi-api"))
 
     compileOnly(intellijCore())
+
+    testImplementation(kotlinTest("junit5"))
+    testImplementation(project(":compiler:cli-brs"))
+    testImplementation(project(":compiler:cli-common"))
+    testImplementation(project(":compiler:cli"))
+    testRuntimeOnly(intellijCore())
+    // Required for IntelliJ plugin loading in Kotlin 2.2.x
+    testRuntimeOnly(commonDependency("org.codehaus.woodstox:stax2-api"))
+    testRuntimeOnly(commonDependency("com.fasterxml:aalto-xml"))
 }
 
 sourceSets {
     "main" {
         projectDefault()
     }
-    "test" { none() }
+    "test" {
+        projectDefault()
+    }
+}
+
+tasks.test {
+    // Run tests from the repo root so the compiler can find testData and the prebuilt klib
+    workingDir = rootDir
+    useJUnitPlatform()
 }
 
 generatedDiagnosticContainersAndCheckerComponents()
