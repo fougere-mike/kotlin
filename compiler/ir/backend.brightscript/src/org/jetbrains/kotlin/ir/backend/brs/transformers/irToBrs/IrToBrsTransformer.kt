@@ -3410,116 +3410,6 @@ class IrToBrsTransformer(
         }
     }
 
-    // ==================== ToString Transformation ====================
-
-    /**
-     * Transform a toString() call to appropriate BrightScript code.
-     * BrightScript primitives don't have methods, so we need to handle each type specially.
-     */
-    fun transformToString(receiverExpr: BrsExpression, receiverType: IrType): BrsExpression {
-        return when {
-            // String: just return the string itself (pass-through)
-            receiverType.isString() -> receiverExpr
-
-            // Char: already a string in BrightScript, just pass through
-            receiverType.isChar() -> receiverExpr
-
-            // Numeric types: use __kotlin_numToStr() helper function
-            // BrightScript's Str() adds a leading space for positive numbers
-            // We use a helper function because anonymous functions can't call global built-ins
-            // Note: Method names do NOT include return types (like Java) to support polymorphism
-            receiverType.isInt() || receiverType.isShort() || receiverType.isByte() ||
-            receiverType.isLong() || receiverType.isFloat() || receiverType.isDouble() -> {
-                // Choose the appropriate overload based on type
-                val funcName = when {
-                    receiverType.isInt() || receiverType.isShort() || receiverType.isByte() -> "__kotlin_numToStr_I_k_"
-                    receiverType.isLong() -> "__kotlin_numToStr_J_k_"
-                    receiverType.isFloat() -> "__kotlin_numToStr_F_k_"
-                    receiverType.isDouble() -> "__kotlin_numToStr_D_k_"
-                    else -> "__kotlin_numToStr_AnyN_k_"
-                }
-                BrsFunctionCall(
-                    BrsIdentifier(funcName),
-                    mutableListOf(receiverExpr)
-                )
-            }
-
-            // Boolean: use conditional to return "true" or "false"
-            receiverType.isBoolean() -> {
-                BrsConditional(
-                    receiverExpr,
-                    BrsStringLiteral("true"),
-                    BrsStringLiteral("false")
-                )
-            }
-
-            // Any?, Dynamic, nullable types, or type parameters: use runtime type checking
-            // since BrightScript primitives don't have .toString() method.
-            // Type parameters must use runtime checking because at runtime T could be
-            // a primitive (Int, String, Boolean, etc.) which don't have .toString() methods.
-            receiverType.isNullable() || receiverType.isAny() || receiverType.isTypeParameter() -> {
-                generateRuntimeToString(receiverExpr)
-            }
-
-            // Dynamic type and external interfaces: use runtime type checking
-            // These are native BrightScript types that don't have a toString() method
-            isDynamicType(receiverType) || isExternalInterfaceType(receiverType) -> {
-                generateRuntimeToString(receiverExpr)
-            }
-
-            // Non-nullable objects: call toString method
-            else -> {
-                BrsMethodCall(receiverExpr, "toString", mutableListOf())
-            }
-        }
-    }
-
-    /**
-     * Generate runtime type-checking toString logic for Any? types.
-     * This is used by brsIntrinsicToString when the type is not known at compile time.
-     *
-     * Instead of generating inline nested conditionals (which become IIFEs with scope issues),
-     * we call the stdlib toString_AnyN_k_ function which handles all types properly.
-     * Note: Method names do NOT include return types (like Java) to support polymorphism.
-     */
-    fun generateRuntimeToString(valueExpr: BrsExpression): BrsExpression {
-        // Call the stdlib toString function which handles all type checking
-        // This avoids nested IIFEs that cause scope issues with global built-in functions
-        return BrsFunctionCall(
-            BrsIdentifier("toString_AnyN_k_"),
-            mutableListOf(valueExpr)
-        )
-    }
-
-    /**
-     * Checks if a type is the Dynamic type (kotlin.brs.Dynamic).
-     * Dynamic type needs runtime type checking for toString since it can hold any value.
-     */
-    private fun isDynamicType(type: IrType): Boolean {
-        val classifier = type.classifierOrNull
-        if (classifier !is IrClassSymbol) return false
-        return classifier.owner.fqNameWhenAvailable?.asString() == "kotlin.brs.Dynamic"
-    }
-
-    /**
-     * Checks if a type is an external interface (native BrightScript type).
-     * External interfaces don't have Kotlin methods like toString().
-     */
-    private fun isExternalInterfaceType(type: IrType): Boolean {
-        val irClass = type.classOrNull?.owner ?: return false
-        return irClass.isExternal || isExternalClass(irClass)
-    }
-
-    /**
-     * Checks if a class is marked with @BrsExternal annotation.
-     */
-    private fun isExternalClass(irClass: IrClass): Boolean {
-        return irClass.annotations.any { annotation ->
-            val annotationClass = annotation.type.classifierOrNull?.owner as? IrClass
-            annotationClass?.name?.asString() == "BrsExternal"
-        }
-    }
-
     // ==================== Visitor Implementation ====================
 
     override fun visitElement(element: IrElement, data: Unit): BrsNode? {
@@ -6715,10 +6605,10 @@ class IrExpressionToBrsTransformer(
 
                         if (leftIsString && !rightIsString) {
                             // Right operand needs string conversion
-                            right = parent.transformToString(right, arg.type)
+                            right = transformToString(right, arg.type)
                         } else if (!leftIsString && rightIsString) {
                             // Left operand needs string conversion
-                            left = parent.transformToString(left, receiver.type)
+                            left = transformToString(left, receiver.type)
                         }
 
                         return BrsBinaryOp(left, BrsBinaryOperator.ADD, right)
@@ -6729,7 +6619,7 @@ class IrExpressionToBrsTransformer(
                 "toString" -> {
                     val receiverType = receiver.type
                     val receiverExpr = receiver.accept(this, data)
-                    return parent.transformToString(receiverExpr, receiverType)
+                    return transformToString(receiverExpr, receiverType)
                 }
             }
         }
@@ -7731,7 +7621,7 @@ class IrExpressionToBrsTransformer(
                 // Record dependency on toString_AnyN_k_ via function manifest
                 context.recordFunctionDependency("toString_AnyN_k_")
                 if (args.isNotEmpty()) {
-                    parent.generateRuntimeToString(args[0])
+                    generateRuntimeToString(args[0])
                 } else {
                     BrsStringLiteral("null")
                 }
@@ -8235,10 +8125,10 @@ class IrExpressionToBrsTransformer(
 
                 if (leftIsString && !rightIsString) {
                     // Right operand needs string conversion
-                    right = parent.transformToString(right, rightIr.type)
+                    right = transformToString(right, rightIr.type)
                 } else if (!leftIsString && rightIsString) {
                     // Left operand needs string conversion
-                    left = parent.transformToString(left, leftIr.type)
+                    left = transformToString(left, leftIr.type)
                 }
             }
 
@@ -8763,7 +8653,7 @@ class IrExpressionToBrsTransformer(
             val expr = arg.accept(this, data)
             // Convert non-string arguments to strings for BrightScript string concatenation
             if (!arg.type.isString()) {
-                parent.transformToString(expr, arg.type)
+                transformToString(expr, arg.type)
             } else {
                 expr
             }

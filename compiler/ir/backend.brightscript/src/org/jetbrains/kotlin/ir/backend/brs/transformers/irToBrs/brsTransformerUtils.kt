@@ -5,14 +5,28 @@
 
 package org.jetbrains.kotlin.ir.backend.brs.transformers.irToBrs
 
+import org.jetbrains.kotlin.brs.backend.ast.BrsConditional
+import org.jetbrains.kotlin.brs.backend.ast.BrsExpression
+import org.jetbrains.kotlin.brs.backend.ast.BrsFunctionCall
+import org.jetbrains.kotlin.brs.backend.ast.BrsIdentifier
 import org.jetbrains.kotlin.brs.backend.ast.BrsInvalidLiteral
+import org.jetbrains.kotlin.brs.backend.ast.BrsMethodCall
 import org.jetbrains.kotlin.brs.backend.ast.BrsParameter
+import org.jetbrains.kotlin.brs.backend.ast.BrsStringLiteral
 import org.jetbrains.kotlin.brs.backend.ast.BrsType
 import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.expressions.IrBreak
 import org.jetbrains.kotlin.ir.expressions.IrContinue
 import org.jetbrains.kotlin.ir.expressions.IrLoop
+import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.classOrNull
+import org.jetbrains.kotlin.ir.types.classifierOrNull
+import org.jetbrains.kotlin.ir.types.isAny
+import org.jetbrains.kotlin.ir.types.isChar
+import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
+import org.jetbrains.kotlin.ir.util.isTypeParameter
 import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
@@ -169,6 +183,114 @@ fun mapTypeToBrs(type: IrType): BrsType? {
         // BrightScript Function type. Map to Object to accept closure objects as arguments.
         type.isFunction() -> BrsType.OBJECT
         else -> BrsType.OBJECT
+    }
+}
+
+/**
+ * Transform a toString() call to appropriate BrightScript code.
+ * BrightScript primitives don't have methods, so we need to handle each type specially.
+ */
+fun transformToString(receiverExpr: BrsExpression, receiverType: IrType): BrsExpression {
+    return when {
+        // String: just return the string itself (pass-through)
+        receiverType.isString() -> receiverExpr
+
+        // Char: already a string in BrightScript, just pass through
+        receiverType.isChar() -> receiverExpr
+
+        // Numeric types: use __kotlin_numToStr() helper function
+        // BrightScript's Str() adds a leading space for positive numbers
+        // We use a helper function because anonymous functions can't call global built-ins
+        // Note: Method names do NOT include return types (like Java) to support polymorphism
+        receiverType.isInt() || receiverType.isShort() || receiverType.isByte() ||
+        receiverType.isLong() || receiverType.isFloat() || receiverType.isDouble() -> {
+            // Choose the appropriate overload based on type
+            val funcName = when {
+                receiverType.isInt() || receiverType.isShort() || receiverType.isByte() -> "__kotlin_numToStr_I_k_"
+                receiverType.isLong() -> "__kotlin_numToStr_J_k_"
+                receiverType.isFloat() -> "__kotlin_numToStr_F_k_"
+                receiverType.isDouble() -> "__kotlin_numToStr_D_k_"
+                else -> "__kotlin_numToStr_AnyN_k_"
+            }
+            BrsFunctionCall(
+                BrsIdentifier(funcName),
+                mutableListOf(receiverExpr)
+            )
+        }
+
+        // Boolean: use conditional to return "true" or "false"
+        receiverType.isBoolean() -> {
+            BrsConditional(
+                receiverExpr,
+                BrsStringLiteral("true"),
+                BrsStringLiteral("false")
+            )
+        }
+
+        // Any?, Dynamic, nullable types, or type parameters: use runtime type checking
+        // since BrightScript primitives don't have .toString() method.
+        // Type parameters must use runtime checking because at runtime T could be
+        // a primitive (Int, String, Boolean, etc.) which don't have .toString() methods.
+        receiverType.isNullable() || receiverType.isAny() || receiverType.isTypeParameter() -> {
+            generateRuntimeToString(receiverExpr)
+        }
+
+        // Dynamic type and external interfaces: use runtime type checking
+        // These are native BrightScript types that don't have a toString() method
+        isDynamicType(receiverType) || isExternalInterfaceType(receiverType) -> {
+            generateRuntimeToString(receiverExpr)
+        }
+
+        // Non-nullable objects: call toString method
+        else -> {
+            BrsMethodCall(receiverExpr, "toString", mutableListOf())
+        }
+    }
+}
+
+/**
+ * Generate runtime type-checking toString logic for Any? types.
+ * This is used by brsIntrinsicToString when the type is not known at compile time.
+ *
+ * Instead of generating inline nested conditionals (which become IIFEs with scope issues),
+ * we call the stdlib toString_AnyN_k_ function which handles all types properly.
+ * Note: Method names do NOT include return types (like Java) to support polymorphism.
+ */
+fun generateRuntimeToString(valueExpr: BrsExpression): BrsExpression {
+    // Call the stdlib toString function which handles all type checking
+    // This avoids nested IIFEs that cause scope issues with global built-in functions
+    return BrsFunctionCall(
+        BrsIdentifier("toString_AnyN_k_"),
+        mutableListOf(valueExpr)
+    )
+}
+
+/**
+ * Checks if a type is the Dynamic type (kotlin.brs.Dynamic).
+ * Dynamic type needs runtime type checking for toString since it can hold any value.
+ */
+fun isDynamicType(type: IrType): Boolean {
+    val classifier = type.classifierOrNull
+    if (classifier !is IrClassSymbol) return false
+    return classifier.owner.fqNameWhenAvailable?.asString() == "kotlin.brs.Dynamic"
+}
+
+/**
+ * Checks if a type is an external interface (native BrightScript type).
+ * External interfaces don't have Kotlin methods like toString().
+ */
+fun isExternalInterfaceType(type: IrType): Boolean {
+    val irClass = type.classOrNull?.owner ?: return false
+    return irClass.isExternal || isExternalClass(irClass)
+}
+
+/**
+ * Checks if a class is marked with @BrsExternal annotation.
+ */
+fun isExternalClass(irClass: IrClass): Boolean {
+    return irClass.annotations.any { annotation ->
+        val annotationClass = annotation.type.classifierOrNull?.owner as? IrClass
+        annotationClass?.name?.asString() == "BrsExternal"
     }
 }
 
