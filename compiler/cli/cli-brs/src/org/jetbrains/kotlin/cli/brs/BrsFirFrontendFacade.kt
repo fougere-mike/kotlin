@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.backend.common.serialization.mangle.ir.IrMangleCompu
 import org.jetbrains.kotlin.cli.common.fir.FirDiagnosticsCompilerResultsReporter
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
+import org.jetbrains.kotlin.cli.common.messages.MessageCollectorUtil
 import org.jetbrains.kotlin.cli.common.prepareBrsSessions
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
@@ -187,11 +188,7 @@ object BrsFirFrontendFacade {
                 firResult = firResult
             )
         } catch (e: Exception) {
-            // Print full stack trace for debugging
-            System.err.println("=== FIR ANALYSIS EXCEPTION ===")
-            e.printStackTrace(System.err)
-            System.err.println("=== END EXCEPTION ===")
-
+            MessageCollectorUtil.reportException(messageCollector, e)
             messageCollector.report(
                 CompilerMessageSeverity.ERROR,
                 "FIR analysis failed: ${e.message}"
@@ -248,6 +245,7 @@ object BrsFirFrontendFacade {
                 fir2IrActualizedResult = fir2IrActualizedResult
             )
         } catch (e: Exception) {
+            MessageCollectorUtil.reportException(messageCollector, e)
             messageCollector.report(
                 CompilerMessageSeverity.ERROR,
                 "FIR to IR conversion failed: ${e.message}"
