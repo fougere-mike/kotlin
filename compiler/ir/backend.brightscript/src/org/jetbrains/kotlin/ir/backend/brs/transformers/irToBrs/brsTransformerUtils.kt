@@ -15,9 +15,14 @@ import org.jetbrains.kotlin.brs.backend.ast.BrsParameter
 import org.jetbrains.kotlin.brs.backend.ast.BrsStringLiteral
 import org.jetbrains.kotlin.brs.backend.ast.BrsType
 import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.expressions.IrBreak
+import org.jetbrains.kotlin.ir.expressions.IrCall
+import org.jetbrains.kotlin.ir.expressions.IrConst
 import org.jetbrains.kotlin.ir.expressions.IrContinue
+import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.expressions.IrGetEnumValue
 import org.jetbrains.kotlin.ir.expressions.IrLoop
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.IrType
@@ -183,6 +188,38 @@ fun mapTypeToBrs(type: IrType): BrsType? {
         // BrightScript Function type. Map to Object to accept closure objects as arguments.
         type.isFunction() -> BrsType.OBJECT
         else -> BrsType.OBJECT
+    }
+}
+
+/**
+ * Check whether an IR expression is a compile-time constant (literal, enum value,
+ * or a known enum-property access). Uses the backend context to resolve enum-constant
+ * property maps for calls like `MyEnum.FOO.someProp`.
+ */
+fun isConstantExpression(expression: IrExpression, context: BrsIrBackendContext): Boolean {
+    return when (expression) {
+        is IrConst -> true
+        is IrGetEnumValue -> true  // Enum constants are always statically known
+        is IrCall -> {
+            // Check for property access on constant enum value
+            val receiver = expression.dispatchReceiver
+            if (receiver is IrGetEnumValue) {
+                val entry = receiver.symbol.owner
+                val functionName = expression.symbol.owner.name.asString()
+                when {
+                    functionName == "<get-ordinal>" || functionName == "ordinal" -> true
+                    functionName == "<get-name>" || functionName == "name" -> true
+                    functionName.startsWith("<get-") -> {
+                        val propName = functionName.removePrefix("<get-").removeSuffix(">")
+                        context.getEnumConstantProperties(entry)?.containsKey(propName) == true
+                    }
+                    else -> false
+                }
+            } else {
+                false
+            }
+        }
+        else -> false
     }
 }
 

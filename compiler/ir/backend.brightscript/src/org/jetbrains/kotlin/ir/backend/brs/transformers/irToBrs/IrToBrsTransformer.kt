@@ -3277,7 +3277,7 @@ class IrToBrsTransformer(
             if (field.parent is IrFile) {
                 field.initializer?.expression?.let { initializer ->
                     // Skip constant expressions - they will be inlined in the getter
-                    if (!isConstantExpression(initializer)) {
+                    if (!isConstantExpression(initializer, context)) {
                         val propName = property.name.asString()
                         // Use GetGlobalAA().propName = value for module-level property initialization
                         statements.add(
@@ -3383,33 +3383,6 @@ class IrToBrsTransformer(
      * - Enum value references (IrGetEnumValue)
      * - Property accesses on enum values for ordinal, name, and constant properties
      */
-    fun isConstantExpression(expression: IrExpression): Boolean {
-        return when (expression) {
-            is IrConst -> true
-            is IrGetEnumValue -> true  // Enum constants are always statically known
-            is IrCall -> {
-                // Check for property access on constant enum value
-                val receiver = expression.dispatchReceiver
-                if (receiver is IrGetEnumValue) {
-                    val entry = receiver.symbol.owner
-                    val functionName = expression.symbol.owner.name.asString()
-                    when {
-                        functionName == "<get-ordinal>" || functionName == "ordinal" -> true
-                        functionName == "<get-name>" || functionName == "name" -> true
-                        functionName.startsWith("<get-") -> {
-                            val propName = functionName.removePrefix("<get-").removeSuffix(">")
-                            context.getEnumConstantProperties(entry)?.containsKey(propName) == true
-                        }
-                        else -> false
-                    }
-                } else {
-                    false
-                }
-            }
-            else -> false
-        }
-    }
-
     // ==================== Visitor Implementation ====================
 
     override fun visitElement(element: IrElement, data: Unit): BrsNode? {
@@ -5922,7 +5895,7 @@ class IrExpressionToBrsTransformer(
         // This avoids the need for initialization statements that can't appear at file level
         if (field.parent is IrFile && field.isFinal) {
             field.initializer?.expression?.let { initializer ->
-                if (parent.isConstantExpression(initializer)) {
+                if (isConstantExpression(initializer, context)) {
                     return parent.transformExpression(initializer)
                 }
             }
