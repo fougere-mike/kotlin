@@ -129,8 +129,10 @@ This audit is a pre-B4 snapshot. Implementation status of the four scope items p
 | (b) FIR-phase `FirBrsIntrinsicArgChecker` with `BRS_INTRINSIC_LITERAL_REQUIRED` | **Done** | `compiler/fir/checkers/checkers.brs/src/org/jetbrains/kotlin/fir/analysis/brs/checkers/expression/FirBrsIntrinsicArgChecker.kt` (ports JS's `FirJsCodeConstantArgumentChecker`). Wired through `CheckersContainers.kt:registerBrsCheckers` + `FirBrsErrors` + `FirBrsErrorsDefaultMessages`. 5 testdata fixtures under `compiler/testData/diagnostics/testsWithBrsStdLib/brsIntrinsic/`. Source-scoped location: the diagnostic points at the offending argument subexpression, not the enclosing declaration. |
 | (c) Reject multi-statement `brs()` calls | **Done** | `IrToBrsTransformer.kt:7591–7640` — empty + >1-statement both report errors now. Zero downstream multi-statement callers in `kotlin-roku`/`roku-test-app`; hard rejection accepted without deprecation path. |
 | (d) Contract doc | **Done** | [brs-intrinsic.md](./brs-intrinsic.md). `core.kt` KDoc slimmed to a pointer. |
-| (e) IR-backend `foldBrsCodeString` walks `IrGetValue` for `const val` refs | Pending | Opened by B4(b): FIR accepts `brs("print ${CONST}")` but IR rejects it (fold doesn't follow `IrGetValue`). Fix is ~20 LOC in `foldBrsCodeString` at `IrToBrsTransformer.kt:7644`. Small scope, no upstream dependency. |
+| (e) IR-backend `foldBrsCodeString` walks const-val refs | **Done** | `IrToBrsTransformer.kt:7644` now handles `IrGetValue` (local `const val`), `IrGetField` (final fields with compile-time-constant initializers), and `IrCall` (const-val property getters). Golden at `compiler/testData/codegen/brs/inline/brsConstVal.kt`. FIR and IR acceptance now match. |
+
+**B4 status:** all sub-items (a)–(e) Done. Workstream closed.
 
 Audit §Open-questions-1 ("do downstream repos call multi-statement `brs()`?") is resolved: **no**. The grep was `rg "brs\(" kotlin-roku roku-test-app` on 2026-04-21; one hit (`ShelfView.kt:63 → brs("card.id = itemId")`) and it is single-statement.
 
-§Open-questions-2 (`const val` folding) is resolved into workstream B4(e) above — the FIR side now accepts const-val template args; the IR-side lags. §Open-questions-3 (feature flag / upstreamability) remains open.
+§Open-questions-2 (`const val` folding) is resolved by B4(e): the IR backend now folds const-val references, matching FIR. §Open-questions-3 (feature flag / upstreamability) remains open.

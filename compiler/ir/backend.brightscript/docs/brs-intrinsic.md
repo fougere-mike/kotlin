@@ -29,9 +29,10 @@ The argument is constant-folded at IR time. The folder (`foldBrsCodeString` in `
 |---|---|
 | `IrConst` with `IrConstKind.String` | value used directly |
 | `IrStringConcatenation` | each fragment folded recursively; all must fold |
-| anything else (including `IrGetValue` for `const val`) | fold fails → compile error |
-
-**Known gap** (audit §Open-questions-2): `const val` references are not walked today. `brs("print ${SOME_CONST}")` where `SOME_CONST` is a `const val` of a `String` will not fold. A future enhancement could walk `IrGetValue` to resolve compile-time-constant property references. Track with a new issue if you hit this in practice.
+| `IrGetValue` to a local `const val` | initializer folded recursively |
+| `IrGetField` to a final field with a compile-time-constant initializer | initializer folded recursively |
+| `IrCall` to a `const val` property getter | backing field initializer folded recursively |
+| anything else | fold fails → compile error |
 
 If the fold fails, the compiler emits:
 
@@ -92,9 +93,13 @@ brs("m.top.visible = true")            // → m.top.visible = true
 // Explicit return wrapping:
 return brs("return 42")                // → return 42
 
-// Template where every piece folds to a literal:
-val msg = "hello"
-brs("print \"${msg}\"")                // → print "hello"
+// Template where every piece folds to a compile-time constant:
+const val GREETING = "hi"
+brs("print \"${GREETING}\"")           // → print "hi"
+
+// Direct const val reference:
+const val RAW = "1 + 2"
+val x = brs(RAW)                       // → x = 1 + 2
 ```
 
 ### Invalid — caller error
@@ -104,9 +109,9 @@ brs("print \"${msg}\"")                // → print "hello"
 val name: String = getName()
 brs(name)                              // ERROR: brs() argument must be a compile-time constant string
 
-// const val references are a known gap:
-const val GREETING = "hi"
-brs("print \"${GREETING}\"")           // ERROR (current implementation)
+// Non-const val — its initializer is a literal, but the val itself isn't const:
+val msg = "hello"
+brs("print \"${msg}\"")                // ERROR: brs() argument must be a compile-time constant string
 
 // Empty string:
 brs("")                                // ERROR: parsed to no statements
@@ -133,16 +138,7 @@ The intrinsic now has **two diagnostic paths**, which are complementary:
 
 Both paths use `CompilerMessageSeverity.ERROR`. The FIR path is additive — it catches the "argument must fold to a compile-time constant string" case earlier and with a better pointer, but it cannot catch post-parse failures because the BRS parser is not linked into the FIR phase. Any input that reaches the IR backend has either passed FIR's literal check, or FIR's check has been bypassed (e.g., via a compiler internals test).
 
-### FIR checker asymmetry: `const val` template references
-
-The FIR checker uses `canBeEvaluatedAtCompileTime(…)` from `FirConstChecks.kt`, which folds `const val` property references. The IR-backend's `foldBrsCodeString` does **not** walk `IrGetValue` for const-val references (see the "Known gap" note under Input, above). This means:
-
-```kotlin
-const val GREETING = "hi"
-brs("print \"${GREETING}\"")   // Accepted by FIR, rejected by IR-backend with a declaration-scoped error
-```
-
-is accepted at FIR phase but still rejected later. Tracked as workstream **B4(e)** in the roadmap. The FIR checker is correct — the IR backend's fold is the laggard.
+FIR and IR agree on what counts as a compile-time constant: both walk `const val` references. If FIR accepts, IR accepts.
 
 ## Non-goals
 
