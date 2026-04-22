@@ -59,8 +59,10 @@ class IrToBrsTransformer(
     private val context: BrsIrBackendContext
 ) : IrVisitor<BrsNode?, Unit>() {
 
-    private val statementTransformer = IrStatementToBrsTransformer(this, context)
-    private val expressionTransformer = IrExpressionToBrsTransformer(this, context)
+    internal val genCtx = BrsGenerationContext(context)
+
+    private val statementTransformer = IrStatementToBrsTransformer(this, context, genCtx)
+    private val expressionTransformer = IrExpressionToBrsTransformer(this, context, genCtx)
 
     // Expose statement visitor for when-lowered block handling
     val statementVisitor: IrStatementToBrsTransformer get() = statementTransformer
@@ -125,19 +127,6 @@ class IrToBrsTransformer(
     internal var currentFilePath: String? = null
 
     /**
-     * Temp variable substitution map for increment/decrement inlining.
-     * When transforming increment blocks, we need to inline the temp variable's
-     * initializer instead of outputting a reference to the temp var.
-     */
-    private val tempVarSubstitutions = mutableMapOf<IrValueSymbol, IrExpression?>()
-
-    /**
-     * Map from IR temp var symbols to generated BRS variable names.
-     * Used when increment/decrement blocks are used as expressions.
-     */
-    private val tempVarNames = mutableMapOf<IrValueSymbol, String>()
-
-    /**
      * Set of IR loops that have been transformed to while loops in the output.
      * When a for-each loop is transformed to a while loop (e.g., Strategy 4 - iterator protocol),
      * any break statements inside should generate "exit while" instead of "exit for".
@@ -192,41 +181,6 @@ class IrToBrsTransformer(
      */
     internal val returnableBlockFlagStack = mutableListOf<String>()
 
-    /**
-     * Counter for generating unique returnable block flag names.
-     */
-    internal var returnableBlockFlagCounter = 0
-
-    /**
-     * Counter for generating unique temp variable names.
-     */
-    private var tempIdCounter = 0
-
-    fun nextTempId(): Int {
-        return tempIdCounter++
-    }
-
-    fun pushTempVarSubstitution(symbol: IrValueSymbol, initializer: IrExpression?) {
-        tempVarSubstitutions[symbol] = initializer
-    }
-
-    fun popTempVarSubstitution(symbol: IrValueSymbol) {
-        tempVarSubstitutions.remove(symbol)
-        tempVarNames.remove(symbol)
-    }
-
-    fun getTempVarSubstitution(symbol: IrValueSymbol): IrExpression? {
-        return tempVarSubstitutions[symbol]
-    }
-
-    fun setTempVarName(symbol: IrValueSymbol, name: String) {
-        tempVarNames[symbol] = name
-    }
-
-    fun getTempVarName(symbol: IrValueSymbol): String? {
-        return tempVarNames[symbol]
-    }
-
     // ==================== Function Call with Dependency Recording ====================
 
     /**
@@ -238,68 +192,6 @@ class IrToBrsTransformer(
      * @param args The arguments to pass to the function
      * @return A BrsFunctionCall node
      */
-    /**
-     * Maps IR value symbols to unique BrightScript variable names.
-     * This is needed because Kotlin IR can have multiple variables with the same name
-     * (distinguished by their symbol), but BrightScript uses a single namespace where
-     * variable names must be unique to avoid collisions.
-     *
-     * Example: After inlining `this.toUInt().plus(other.toUInt())`, the IR may have:
-     *   val tmp0 = this          // symbol A
-     *   val tmp0 = tmp_ret_0     // symbol B (different symbol, same name!)
-     *   val tmp0 = other         // symbol C (yet another symbol)
-     *
-     * Without renaming, these all map to `tmp0` in BrightScript, causing the
-     * second and third assignments to overwrite the first value.
-     */
-    private val symbolToUniqueName = mutableMapOf<IrValueSymbol, String>()
-
-    /**
-     * Set of variable names already used in the current function.
-     * Used to detect collisions and generate unique suffixes.
-     */
-    private val usedVariableNames = mutableSetOf<String>()
-
-    /**
-     * Clears the variable naming state. Should be called at the start of each function.
-     */
-    fun resetVariableNaming() {
-        symbolToUniqueName.clear()
-        usedVariableNames.clear()
-    }
-
-    /**
-     * Gets or creates a unique BrightScript variable name for the given IR symbol.
-     * If this symbol has already been assigned a name, returns it.
-     * If this is a new symbol, generates a unique name (possibly with a numeric suffix
-     * to avoid collision with existing names) and registers it.
-     */
-    fun getUniqueVariableName(symbol: IrValueSymbol, baseName: String): String {
-        // Check if we already have a name for this exact symbol
-        symbolToUniqueName[symbol]?.let { return it }
-
-        // Generate a unique name
-        var uniqueName = baseName
-        var suffix = 1
-        while (uniqueName in usedVariableNames) {
-            uniqueName = "${baseName}_${suffix++}"
-        }
-
-        // Register the mapping
-        symbolToUniqueName[symbol] = uniqueName
-        usedVariableNames.add(uniqueName)
-
-        return uniqueName
-    }
-
-    /**
-     * Gets the unique name for a symbol that should already have been declared.
-     * Returns the base name if the symbol wasn't registered (for parameters, etc.)
-     */
-    fun getVariableName(symbol: IrValueSymbol, baseName: String): String {
-        return symbolToUniqueName[symbol] ?: baseName
-    }
-
     /**
      * Hoisted statements from when-expression lowered blocks.
      * These need to be emitted before the expression that uses them.
@@ -776,7 +668,7 @@ class IrToBrsTransformer(
 
         // Reset variable naming state for this function
         // This ensures each function gets fresh unique names and doesn't collide with other functions
-        resetVariableNaming()
+        genCtx.resetVariableNaming()
 
         val name = context.getBrsName(irFunction)
 
@@ -3419,7 +3311,8 @@ class IrToBrsTransformer(
  */
 class IrStatementToBrsTransformer(
     private val parent: IrToBrsTransformer,
-    private val context: BrsIrBackendContext
+    private val context: BrsIrBackendContext,
+    private val genCtx: BrsGenerationContext,
 ) : IrVisitor<BrsStatement?, Unit>() {
 
     override fun visitElement(element: IrElement, data: Unit): BrsStatement? = null
@@ -3466,7 +3359,7 @@ class IrStatementToBrsTransformer(
         // Get a unique variable name to avoid collision with other variables
         // that may have the same name in the IR (e.g., from multiple inline expansions)
         val baseName = sanitizeParameterName(declaration.name.asString())
-        val uniqueName = parent.getUniqueVariableName(declaration.symbol, baseName)
+        val uniqueName = genCtx.getUniqueVariableName(declaration.symbol, baseName)
 
         // Handle block initializers specially - BrightScript doesn't have block expressions
         // so we need to flatten the block's statements before the variable assignment
@@ -3935,7 +3828,7 @@ class IrStatementToBrsTransformer(
             // continue becomes "exit while" which exits the inner loop, and the outer loop continues.
             // break needs special handling: set a flag, exit inner, check flag after inner loop.
             val bodyContainsBreak = containsBreakFor(loop.body, loop)
-            val breakFlagName = if (bodyContainsBreak) "__break${parent.nextTempId()}" else null
+            val breakFlagName = if (bodyContainsBreak) "__break${genCtx.nextTempId()}" else null
 
             // Register this loop as having a continue wrapper
             parent.loopsWithContinueWrapper.add(loop)
@@ -4102,7 +3995,7 @@ class IrStatementToBrsTransformer(
             // We transform to: body; while(condition) { body }
             // But with continue wrapper for the while part
             val bodyContainsBreak = containsBreakFor(loop.body, loop)
-            val breakFlagName = if (bodyContainsBreak) "__break${parent.nextTempId()}" else null
+            val breakFlagName = if (bodyContainsBreak) "__break${genCtx.nextTempId()}" else null
 
             // Register this loop as having a continue wrapper
             parent.loopsWithContinueWrapper.add(loop)
@@ -4821,7 +4714,7 @@ class IrStatementToBrsTransformer(
 
         // Generate flag name if needed and push onto stack
         val flagName = if (needsFlagApproach) {
-            val name = "__ret_done_${parent.returnableBlockFlagCounter++}"
+            val name = "__ret_done_${genCtx.returnableBlockFlagCounter++}"
             parent.returnableBlockFlagStack.add(name)
             name
         } else null
@@ -4971,7 +4864,7 @@ class IrStatementToBrsTransformer(
 
         // Set up temp var substitution if we found one
         if (tempVar != null && tempVarInitializer != null) {
-            parent.pushTempVarSubstitution(tempVar.symbol, tempVarInitializer)
+            genCtx.pushTempVarSubstitution(tempVar.symbol, tempVarInitializer)
         }
 
         try {
@@ -4996,7 +4889,7 @@ class IrStatementToBrsTransformer(
         } finally {
             // Clean up temp var substitution
             if (tempVar != null) {
-                parent.popTempVarSubstitution(tempVar.symbol)
+                genCtx.popTempVarSubstitution(tempVar.symbol)
             }
         }
     }
@@ -5247,7 +5140,7 @@ class IrStatementToBrsTransformer(
         if (isCollectionInterface) {
             // Generate: __iter = iterable.iterator_k_(); while __iter.hasNext_k_() { loopVar = __iter.next_k_(); body }
             // Note: Method names do NOT include return types (like Java) to support polymorphism
-            val iterVarName = "__iter_${parent.nextTempId()}"
+            val iterVarName = "__iter_${genCtx.nextTempId()}"
             val iterVar = BrsIdentifier(iterVarName)
 
             // All iterator methods use the same name regardless of mutable/non-mutable
@@ -5474,7 +5367,7 @@ class IrStatementToBrsTransformer(
             BrsDotAccess(BrsIdentifier(sanitizeParameterName(sanitizedName)), "value")
         } else if (owner is IrVariable) {
             // For local variables, use the unique name to avoid collisions from inline expansion
-            BrsIdentifier(parent.getVariableName(expression.symbol, sanitizedName))
+            BrsIdentifier(genCtx.getVariableName(expression.symbol, sanitizedName))
         } else {
             BrsIdentifier(sanitizedName)
         }
@@ -5649,7 +5542,8 @@ class IrStatementToBrsTransformer(
  */
 class IrExpressionToBrsTransformer(
     private val parent: IrToBrsTransformer,
-    private val context: BrsIrBackendContext
+    private val context: BrsIrBackendContext,
+    private val genCtx: BrsGenerationContext,
 ) : IrVisitor<BrsExpression, Unit>() {
 
     override fun visitElement(element: IrElement, data: Unit): BrsExpression {
@@ -5780,14 +5674,14 @@ class IrExpressionToBrsTransformer(
 
     override fun visitGetValue(expression: IrGetValue, data: Unit): BrsExpression {
         // Check if this is a temp variable that should be inlined (increment/decrement)
-        val substitution = parent.getTempVarSubstitution(expression.symbol)
+        val substitution = genCtx.getTempVarSubstitution(expression.symbol)
         if (substitution != null) {
             // Inline the initializer expression instead of outputting the temp var reference
             return substitution.accept(this, data)
         }
 
         // Check if there's a temp var name mapping (used when increment is an expression)
-        val tempVarName = parent.getTempVarName(expression.symbol)
+        val tempVarName = genCtx.getTempVarName(expression.symbol)
         if (tempVarName != null) {
             return BrsIdentifier(tempVarName)
         }
@@ -5840,7 +5734,7 @@ class IrExpressionToBrsTransformer(
             // For local variables, use the unique name to avoid collisions from inline expansion
             owner is IrVariable -> {
                 val baseName = sanitizeParameterName(rawName)
-                BrsIdentifier(parent.getVariableName(expression.symbol, baseName))
+                BrsIdentifier(genCtx.getVariableName(expression.symbol, baseName))
             }
             // Apply full sanitization including reserved keyword escaping
             else -> BrsIdentifier(sanitizeParameterName(rawName))
@@ -5983,7 +5877,7 @@ class IrExpressionToBrsTransformer(
         // For local variables, use the unique name to avoid collisions from inline expansion
         val owner = expression.symbol.owner
         val targetName = if (owner is IrVariable) {
-            parent.getVariableName(expression.symbol, sanitizedName)
+            genCtx.getVariableName(expression.symbol, sanitizedName)
         } else {
             sanitizedName
         }
@@ -8414,7 +8308,7 @@ class IrExpressionToBrsTransformer(
                     )
                 } else {
                     // Hoist non-trivial expression to temp variable to avoid double evaluation
-                    val tempName = "__safeCast_tmp${parent.nextTempId()}"
+                    val tempName = "__safeCast_tmp${genCtx.nextTempId()}"
                     parent.addHoistedStatement(BrsVariable(tempName, null, argument))
                     val tempRef = BrsIdentifier(tempName)
                     BrsConditional(
@@ -9015,7 +8909,7 @@ class IrExpressionToBrsTransformer(
 
             if (tempVar != null && tempVarInitializer != null) {
                 // Generate a unique name for the hoisted temp variable
-                val tempVarName = "__incr_tmp_${parent.nextTempId()}"
+                val tempVarName = "__incr_tmp_${genCtx.nextTempId()}"
 
                 // 1. Hoist the temp variable declaration with the OLD value
                 val hoistedTempVar = BrsVariable(
@@ -9031,26 +8925,26 @@ class IrExpressionToBrsTransformer(
                         when (stmt) {
                             is IrCall -> {
                                 // Property setter - use temp var in the call
-                                parent.pushTempVarSubstitution(tempVar.symbol, null) // Signal to use tempVarName
-                                parent.setTempVarName(tempVar.symbol, tempVarName)
+                                genCtx.pushTempVarSubstitution(tempVar.symbol, null) // Signal to use tempVarName
+                                genCtx.setTempVarName(tempVar.symbol, tempVarName)
                                 try {
                                     val setterCall = stmt.accept(this, data)
                                     parent.addHoistedStatement(BrsExpressionStatement(setterCall))
                                 } finally {
-                                    parent.popTempVarSubstitution(tempVar.symbol)
+                                    genCtx.popTempVarSubstitution(tempVar.symbol)
                                 }
                             }
                             is IrSetValue, is IrSetField -> {
                                 // Local variable assignment - use temp var
-                                parent.pushTempVarSubstitution(tempVar.symbol, null)
-                                parent.setTempVarName(tempVar.symbol, tempVarName)
+                                genCtx.pushTempVarSubstitution(tempVar.symbol, null)
+                                genCtx.setTempVarName(tempVar.symbol, tempVarName)
                                 try {
                                     val assignment = parent.transformStatement(stmt)
                                     if (assignment != null) {
                                         parent.addHoistedStatement(assignment)
                                     }
                                 } finally {
-                                    parent.popTempVarSubstitution(tempVar.symbol)
+                                    genCtx.popTempVarSubstitution(tempVar.symbol)
                                 }
                             }
                             is IrVariable -> {
