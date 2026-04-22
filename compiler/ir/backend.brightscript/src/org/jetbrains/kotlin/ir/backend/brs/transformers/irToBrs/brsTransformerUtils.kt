@@ -7,6 +7,20 @@ package org.jetbrains.kotlin.ir.backend.brs.transformers.irToBrs
 
 import org.jetbrains.kotlin.brs.backend.ast.BrsInvalidLiteral
 import org.jetbrains.kotlin.brs.backend.ast.BrsParameter
+import org.jetbrains.kotlin.brs.backend.ast.BrsType
+import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.isBoolean
+import org.jetbrains.kotlin.ir.types.isByte
+import org.jetbrains.kotlin.ir.types.isDouble
+import org.jetbrains.kotlin.ir.types.isFloat
+import org.jetbrains.kotlin.ir.types.isInt
+import org.jetbrains.kotlin.ir.types.isLong
+import org.jetbrains.kotlin.ir.types.isNothing
+import org.jetbrains.kotlin.ir.types.isShort
+import org.jetbrains.kotlin.ir.types.isString
+import org.jetbrains.kotlin.ir.types.isUnit
+import org.jetbrains.kotlin.ir.util.isFunction
+import org.jetbrains.kotlin.ir.util.isNullable
 
 // BrightScript reserved keywords that cannot be used as identifiers
 // Includes language keywords plus special identifiers like 'global' (m.global), 'm' (this), 'top' (m.top)
@@ -85,6 +99,28 @@ fun deduplicateParameterNames(parameters: List<BrsParameter>): List<BrsParameter
         } else {
             param
         }
+    }
+}
+
+/**
+ * Map a Kotlin IR type to a BrightScript type.
+ */
+fun mapTypeToBrs(type: IrType): BrsType? {
+    return when {
+        type.isInt() || type.isShort() || type.isByte() -> BrsType.INTEGER
+        type.isLong() -> BrsType.LONG_INTEGER
+        type.isFloat() -> BrsType.FLOAT
+        type.isDouble() -> BrsType.DOUBLE
+        type.isBoolean() -> BrsType.BOOLEAN
+        type.isString() -> BrsType.STRING
+        type.isUnit() -> BrsType.VOID
+        // Nothing maps to Dynamic for parameters (Void only valid for return types)
+        type.isNothing() -> BrsType.DYNAMIC
+        type.isNullable() -> BrsType.DYNAMIC
+        // Function types are implemented as closure objects (AA with invoke method), not as
+        // BrightScript Function type. Map to Object to accept closure objects as arguments.
+        type.isFunction() -> BrsType.OBJECT
+        else -> BrsType.OBJECT
     }
 }
 

@@ -3451,30 +3451,6 @@ class IrToBrsTransformer(
         }
     }
 
-    // ==================== Type Mapping ====================
-
-    /**
-     * Map a Kotlin IR type to a BrightScript type.
-     */
-    fun mapTypeToBrs(type: IrType): BrsType? {
-        return when {
-            type.isInt() || type.isShort() || type.isByte() -> BrsType.INTEGER
-            type.isLong() -> BrsType.LONG_INTEGER
-            type.isFloat() -> BrsType.FLOAT
-            type.isDouble() -> BrsType.DOUBLE
-            type.isBoolean() -> BrsType.BOOLEAN
-            type.isString() -> BrsType.STRING
-            type.isUnit() -> BrsType.VOID
-            // Nothing maps to Dynamic for parameters (Void only valid for return types)
-            type.isNothing() -> BrsType.DYNAMIC
-            type.isNullable() -> BrsType.DYNAMIC
-            // Function types are implemented as closure objects (AA with invoke method), not as
-            // BrightScript Function type. Map to Object to accept closure objects as arguments.
-            type.isFunction() -> BrsType.OBJECT
-            else -> BrsType.OBJECT
-        }
-    }
-
     // ==================== ToString Transformation ====================
 
     /**
@@ -3734,7 +3710,7 @@ class IrStatementToBrsTransformer(
                 }
                 statements.add(BrsVariable(
                     name = uniqueName,
-                    type = parent.mapTypeToBrs(declaration.type),
+                    type = mapTypeToBrs(declaration.type),
                     initializer = lastExpr
                 ))
             } else {
@@ -3744,7 +3720,7 @@ class IrStatementToBrsTransformer(
                 }
                 statements.add(BrsVariable(
                     name = uniqueName,
-                    type = parent.mapTypeToBrs(declaration.type),
+                    type = mapTypeToBrs(declaration.type),
                     initializer = initExpr
                 ))
             }
@@ -3769,7 +3745,7 @@ class IrStatementToBrsTransformer(
         return if (hoisted.isEmpty()) {
             BrsVariable(
                 name = uniqueName,
-                type = parent.mapTypeToBrs(declaration.type),
+                type = mapTypeToBrs(declaration.type),
                 initializer = finalInit
             )
         } else {
@@ -3777,7 +3753,7 @@ class IrStatementToBrsTransformer(
             val allStatements = hoisted.toMutableList()
             allStatements.add(BrsVariable(
                 name = uniqueName,
-                type = parent.mapTypeToBrs(declaration.type),
+                type = mapTypeToBrs(declaration.type),
                 initializer = finalInit
             ))
             BrsBlock(allStatements)
@@ -3856,12 +3832,12 @@ class IrStatementToBrsTransformer(
         val rawParameters = declaration.valueParameters.map { param ->
             BrsParameter(
                 name = sanitizeParameterName(param.name.asString()),
-                type = parent.mapTypeToBrs(param.type)
+                type = mapTypeToBrs(param.type)
             )
         }
         val parameters = deduplicateParameterNames(rawParameters)
 
-        val returnType = parent.mapTypeToBrs(declaration.returnType)
+        val returnType = mapTypeToBrs(declaration.returnType)
 
         // For subs (void return), use VOID return type
         val effectiveReturnType = if (declaration.returnType.isUnit() || declaration.returnType.isNothing()) {
@@ -4638,7 +4614,7 @@ class IrStatementToBrsTransformer(
                             // Consume any hoisted statements from nested when-lowered blocks in the initializer
                             val hoisted = parent.takeHoistedStatements()
                             resultStatements.addAll(hoisted)
-                            BrsVariable(stmt.name.asString(), parent.mapTypeToBrs(stmt.type), init)
+                            BrsVariable(stmt.name.asString(), mapTypeToBrs(stmt.type), init)
                         }
                         is IrWhen -> {
                             val whenStmt = visitWhen(stmt, Unit)
@@ -4728,7 +4704,7 @@ class IrStatementToBrsTransformer(
                     // Check for hoisted statements from when-lowered blocks in the initializer
                     val hoisted = parent.takeHoistedStatements()
                     // Always create the variable declaration (use invalid for uninitialized vars)
-                    val varDecl = BrsVariable(sanitizedName, parent.mapTypeToBrs(stmt.type), init ?: BrsInvalidLiteral())
+                    val varDecl = BrsVariable(sanitizedName, mapTypeToBrs(stmt.type), init ?: BrsInvalidLiteral())
                     if (hoisted.isNotEmpty()) {
                         // Prepend hoisted statements before the variable declaration
                         hoisted + varDecl
@@ -5672,7 +5648,7 @@ class IrStatementToBrsTransformer(
                     // Consume any hoisted statements from nested when-lowered blocks in the initializer
                     val hoisted = parent.takeHoistedStatements()
                     precedingStatements.addAll(hoisted)
-                    if (init != null) BrsVariable(sanitizedVarName, parent.mapTypeToBrs(stmt.type), init) else null
+                    if (init != null) BrsVariable(sanitizedVarName, mapTypeToBrs(stmt.type), init) else null
                 }
                 is IrWhen -> visitWhen(stmt, Unit)
                 is IrSetValue -> visitSetValue(stmt, Unit)
@@ -8925,7 +8901,7 @@ class IrExpressionToBrsTransformer(
         function.extensionReceiverParameter?.let { receiver ->
             allParameters.add(BrsParameter(
                 name = "__receiver",
-                type = parent.mapTypeToBrs(receiver.type)
+                type = mapTypeToBrs(receiver.type)
             ))
         }
 
@@ -8933,14 +8909,14 @@ class IrExpressionToBrsTransformer(
         val rawParameters = function.valueParameters.map { param ->
             BrsParameter(
                 name = sanitizeParameterName(param.name.asString()),
-                type = parent.mapTypeToBrs(param.type)
+                type = mapTypeToBrs(param.type)
             )
         }
         allParameters.addAll(rawParameters)
 
         val parameters = normalizeParametersForBrs(deduplicateParameterNames(allParameters))
 
-        val returnType = parent.mapTypeToBrs(function.returnType)
+        val returnType = mapTypeToBrs(function.returnType)
 
         // Generate closure object for ALL function expressions
         // BrightScript anonymous functions cannot access outer scope variables,
@@ -9044,7 +9020,7 @@ class IrExpressionToBrsTransformer(
         val rawParameters = function.valueParameters.map { param ->
             BrsParameter(
                 name = sanitizeParameterName(param.name.asString()),
-                type = parent.mapTypeToBrs(param.type)
+                type = mapTypeToBrs(param.type)
             )
         }
         val parameters = normalizeParametersForBrs(deduplicateParameterNames(rawParameters))
@@ -9068,7 +9044,7 @@ class IrExpressionToBrsTransformer(
         val returnType = if (function.returnType.isUnit() || function.returnType.isNothing()) {
             BrsType.VOID
         } else {
-            parent.mapTypeToBrs(function.returnType)
+            mapTypeToBrs(function.returnType)
         }
 
         // Build the wrapper body
@@ -9111,8 +9087,8 @@ class IrExpressionToBrsTransformer(
         }
 
         // Get the property type for the return type
-        val returnType = property.getter?.returnType?.let { parent.mapTypeToBrs(it) }
-            ?: parent.mapTypeToBrs(property.backingField?.type ?: context.irBuiltIns.anyType)
+        val returnType = property.getter?.returnType?.let { mapTypeToBrs(it) }
+            ?: mapTypeToBrs(property.backingField?.type ?: context.irBuiltIns.anyType)
 
         // Create a getter wrapper function
         val body = BrsBlock(mutableListOf(BrsReturn(propertyAccess)))
@@ -9263,7 +9239,7 @@ class IrExpressionToBrsTransformer(
                 // 1. Hoist the temp variable declaration with the OLD value
                 val hoistedTempVar = BrsVariable(
                     name = tempVarName,
-                    type = parent.mapTypeToBrs(tempVar.type),
+                    type = mapTypeToBrs(tempVar.type),
                     initializer = parent.transformExpression(tempVarInitializer)
                 )
                 parent.addHoistedStatement(hoistedTempVar)
@@ -9367,7 +9343,7 @@ class IrExpressionToBrsTransformer(
                     parent.addHoistedStatement(
                         BrsVariable(
                             firstStmt.name.asString(),
-                            parent.mapTypeToBrs(firstStmt.type),
+                            mapTypeToBrs(firstStmt.type),
                             varInit
                         )
                     )
@@ -9409,7 +9385,7 @@ class IrExpressionToBrsTransformer(
                             // will be added to the current hoisted scope
                             val init = stmt.initializer?.let { parent.transformExpression(it) }
                             // Add the variable declaration after any hoisted statements from the initializer
-                            parent.addHoistedStatement(BrsVariable(stmt.name.asString(), parent.mapTypeToBrs(stmt.type), init))
+                            parent.addHoistedStatement(BrsVariable(stmt.name.asString(), mapTypeToBrs(stmt.type), init))
                         }
                         is IrWhen -> {
                             // Push a scope to capture any nested when-lowered block hoisting
@@ -9492,7 +9468,7 @@ class IrExpressionToBrsTransformer(
                 parent.addHoistedStatement(
                     BrsVariable(
                         subjectVar.name.asString(),
-                        parent.mapTypeToBrs(subjectVar.type),
+                        mapTypeToBrs(subjectVar.type),
                         varInit
                     )
                 )
