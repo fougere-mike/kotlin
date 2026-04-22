@@ -31,6 +31,7 @@ fun generateNonSuppressibleErrorNamesFile(generationPath: File, packageName: Str
                     NATIVE_DIAGNOSTICS_LIST +
                     WEB_COMMON_DIAGNOSTICS_LIST +
                     WASM_DIAGNOSTICS_LIST +
+                    BRS_DIAGNOSTICS_LIST +
                     SYNTAX_DIAGNOSTIC_LIST
 
             for (diagnostic in combinedDiagnostics.allDiagnostics) {

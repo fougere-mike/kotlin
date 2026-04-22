@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir.checkers
 
 import org.jetbrains.kotlin.fir.analysis.checkers.*
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors
 import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors
@@ -65,10 +66,9 @@ fun FirSessionConfigurator.registerJsCheckers() {
 }
 
 fun FirSessionConfigurator.registerBrsCheckers() {
-    // BRS declaration and expression checkers intentionally omitted for now
-    // to focus on getting the basic compilation working.
-    // useCheckers(BrsDeclarationCheckers)
-    // useCheckers(BrsExpressionCheckers)
+    useCheckers(BrsDeclarationCheckers)
+    useCheckers(BrsExpressionCheckers)
+    registerDiagnosticContainers(FirBrsErrors)
 }
 
 fun FirSessionConfigurator.registerNativeCheckers() {

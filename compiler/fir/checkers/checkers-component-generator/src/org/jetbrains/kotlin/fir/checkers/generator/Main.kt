@@ -83,6 +83,17 @@ fun main(args: Array<String>) {
             )
         )
     }
+    if (args.isEmpty() || args[0] == "checkers.brs") {
+        generateDiagnostics(
+            generationPath ?: File("compiler/fir/checkers/checkers.brs/gen"),
+            "$packageName.brs",
+            BRS_DIAGNOSTICS_LIST,
+            starImportsToAdd = setOf(
+                ErrorListDiagnosticListRenderer.BASE_PACKAGE,
+                ErrorListDiagnosticListRenderer.DIAGNOSTICS_PACKAGE
+            )
+        )
+    }
     if (args.isEmpty() || args[0] == "raw-fir.common") {
         generateDiagnostics(
             generationPath ?: File("compiler/fir/raw-fir/raw-fir.common/gen"),

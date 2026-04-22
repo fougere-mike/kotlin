@@ -5,9 +5,12 @@
 
 package org.jetbrains.kotlin.fir.analysis.brs.checkers
 
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsIntrinsicArgChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.*
 
 object BrsExpressionCheckers : ExpressionCheckers() {
-    // BrightScript-specific expression checkers can be added here as needed
-    // For initial implementation, we inherit common checkers only
+    override val functionCallCheckers: Set<FirFunctionCallChecker>
+        get() = setOf(
+            FirBrsIntrinsicArgChecker,
+        )
 }
