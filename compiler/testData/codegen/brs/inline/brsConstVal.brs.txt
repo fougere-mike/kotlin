@@ -1,0 +1,55 @@
+// --- File: brsConstValKt.brs ---
+function __get_TOP_LEVEL_VALUE_k_() as String
+    return "42"
+end function
+
+function Config_create_k_() as Object
+    this = {}
+    this.__type = "Config"
+    this.__proto = ["Config"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    return this
+end function
+
+function Config_Companion_create_k_() as Object
+    this = {}
+    this.__type = "Config_Companion"
+    this.__proto = ["Config_Companion"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.__get_COMPANION_VALUE = Config_Companion___get_COMPANION_VALUE_k_
+    this.COMPANION_VALUE = "99"
+    return this
+end function
+
+function Config_Companion_getInstance() as Object
+    if GetGlobalAA().Config_Companion_instance = invalid then
+        GetGlobalAA().Config_Companion_instance = Config_Companion_create_k_()
+    end if
+    return GetGlobalAA().Config_Companion_instance
+end function
+
+function Config_Companion___get_COMPANION_VALUE_k_() as String
+    return m.COMPANION_VALUE
+end function
+
+function testTopLevelConstValDirect_k_() as Object
+    return 42
+end function
+
+function testCompanionConstValDirect_k_() as Object
+    return 99
+end function
+
+function testTopLevelConstValInTemplate_k_() as Object
+    return 42
+end function
+
+function testCompanionConstValInTemplate_k_() as Object
+    return 99
+end function

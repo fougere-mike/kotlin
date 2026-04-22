@@ -90,6 +90,9 @@ class BrsInlineGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun brsFunction() = runTest("inline/brsFunction.kt")
+
+    @Test
+    fun brsConstVal() = runTest("inline/brsConstVal.kt")
 }
 
 // ==================== SceneGraph Component Tests ====================

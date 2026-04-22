@@ -7640,6 +7640,10 @@ class IrExpressionToBrsTransformer(
     /**
      * Constant-fold a string expression for brs() inline code.
      * Returns null if the expression is not a compile-time constant string.
+     *
+     * `const val` references are followed to their initializer so that
+     * `brs("print ${CONST}")` folds identically to `brs("print literal")`.
+     * This matches the FIR checker's `canBeEvaluatedAtCompileTime` acceptance.
      */
     private fun foldBrsCodeString(expression: IrExpression?): String? {
         if (expression == null) return null
@@ -7656,6 +7660,30 @@ class IrExpressionToBrsTransformer(
                     builder.append(part)
                 }
                 builder.toString()
+            }
+            is IrGetValue -> {
+                val owner = expression.symbol.owner
+                if (owner is IrVariable && owner.isConst) {
+                    foldBrsCodeString(owner.initializer)
+                } else null
+            }
+            is IrGetField -> {
+                // Mirrors visitGetField's inline-at-visit logic: a final field
+                // with a compile-time-constant initializer can be spliced at fold time.
+                val field = expression.symbol.owner
+                if (field.isFinal) {
+                    foldBrsCodeString(field.initializer?.expression)
+                } else null
+            }
+            is IrCall -> {
+                // Property getter for a `const val`. `property.isConst` is the
+                // Kotlin source-level guarantee that this is a const, not a
+                // user-written getter with a body.
+                val getter = expression.symbol.owner
+                val property = getter.correspondingPropertySymbol?.owner
+                if (property?.isConst == true) {
+                    foldBrsCodeString(property.backingField?.initializer?.expression)
+                } else null
             }
             else -> null
         }
