@@ -126,10 +126,11 @@ This audit is a pre-B4 snapshot. Implementation status of the four scope items p
 | Item | Status | Where |
 |---|---|---|
 | (a) Route `System.err.println` errors through `MessageCollector` | **Done** (commit 339b12394fc2) | `IrToBrsTransformer.kt:7596, 7604` + `BrsIrBackendContext.reportError` at `BrsIrBackendContext.kt:759`. Known limitation: location is declaration-scoped (null for `IrCall`), to be resolved in (b). |
-| (b) FIR-phase `FirBrsIntrinsicArgChecker` with `BRS_INTRINSIC_LITERAL_REQUIRED` | Pending | Future session. Threads source-location into the diagnostic. |
+| (b) FIR-phase `FirBrsIntrinsicArgChecker` with `BRS_INTRINSIC_LITERAL_REQUIRED` | **Done** | `compiler/fir/checkers/checkers.brs/src/org/jetbrains/kotlin/fir/analysis/brs/checkers/expression/FirBrsIntrinsicArgChecker.kt` (ports JS's `FirJsCodeConstantArgumentChecker`). Wired through `CheckersContainers.kt:registerBrsCheckers` + `FirBrsErrors` + `FirBrsErrorsDefaultMessages`. 5 testdata fixtures under `compiler/testData/diagnostics/testsWithBrsStdLib/brsIntrinsic/`. Source-scoped location: the diagnostic points at the offending argument subexpression, not the enclosing declaration. |
 | (c) Reject multi-statement `brs()` calls | **Done** | `IrToBrsTransformer.kt:7591–7640` — empty + >1-statement both report errors now. Zero downstream multi-statement callers in `kotlin-roku`/`roku-test-app`; hard rejection accepted without deprecation path. |
 | (d) Contract doc | **Done** | [brs-intrinsic.md](./brs-intrinsic.md). `core.kt` KDoc slimmed to a pointer. |
+| (e) IR-backend `foldBrsCodeString` walks `IrGetValue` for `const val` refs | Pending | Opened by B4(b): FIR accepts `brs("print ${CONST}")` but IR rejects it (fold doesn't follow `IrGetValue`). Fix is ~20 LOC in `foldBrsCodeString` at `IrToBrsTransformer.kt:7644`. Small scope, no upstream dependency. |
 
 Audit §Open-questions-1 ("do downstream repos call multi-statement `brs()`?") is resolved: **no**. The grep was `rg "brs\(" kotlin-roku roku-test-app` on 2026-04-21; one hit (`ShelfView.kt:63 → brs("card.id = itemId")`) and it is single-statement.
 
-§Open-questions-2 (`const val` folding) and §Open-questions-3 (feature flag / upstreamability) remain open. (2) is flagged as a known gap in the contract doc.
+§Open-questions-2 (`const val` folding) is resolved into workstream B4(e) above — the FIR side now accepts const-val template args; the IR-side lags. §Open-questions-3 (feature flag / upstreamability) remains open.

@@ -124,14 +124,25 @@ brs("return return")                   // ERROR: Error in brs() code: <parser di
 
 ## Error surface
 
-| Property | Today | Future (B4(b)) |
-|---|---|---|
-| Severity | `CompilerMessageSeverity.ERROR` | unchanged |
-| Routing | `MessageCollector` via `BrsIrBackendContext.reportError` | `DiagnosticReporter` via FIR checker |
-| Source location | **Declaration-scoped only** — points at the enclosing function/property, not the `brs()` call itself | Expression-scoped (file + line + column of the `brs(…)` token) |
-| Phase | IR backend (after lowering; ~10s wait for the user) | FIR frontend (~100ms, same trip as other type errors) |
+The intrinsic now has **two diagnostic paths**, which are complementary:
 
-The declaration-scoped location is a known limitation of `BrsIrBackendContext.reportError` at `BrsIrBackendContext.kt:759` — `IrCall` is not an `IrDeclaration`, so the message collector receives `location = null` and falls back to whatever surrounds the call. A FIR-phase checker `FirBrsIntrinsicArgChecker` (workstream B4(b)) will supersede the backend-phase check and thread the call's source range into the diagnostic.
+| Path | Catches | Phase | Diagnostic | Source location |
+|---|---|---|---|---|
+| FIR-phase checker (`FirBrsIntrinsicArgChecker`, B4(b)) | non-literal argument | Frontend analysis (~100ms) | `BRS_INTRINSIC_LITERAL_REQUIRED` | Expression-scoped (line + column of the offending subexpression) |
+| IR-backend handler (`IrToBrsTransformer.kt:7591`, B4(a)/(c)) | empty input, parse errors, multi-statement | IR lowering (~10s) | Rendered-text messages via `MessageCollector` | Declaration-scoped (enclosing function), per `BrsIrBackendContext.kt:759` limitation |
+
+Both paths use `CompilerMessageSeverity.ERROR`. The FIR path is additive — it catches the "argument must fold to a compile-time constant string" case earlier and with a better pointer, but it cannot catch post-parse failures because the BRS parser is not linked into the FIR phase. Any input that reaches the IR backend has either passed FIR's literal check, or FIR's check has been bypassed (e.g., via a compiler internals test).
+
+### FIR checker asymmetry: `const val` template references
+
+The FIR checker uses `canBeEvaluatedAtCompileTime(…)` from `FirConstChecks.kt`, which folds `const val` property references. The IR-backend's `foldBrsCodeString` does **not** walk `IrGetValue` for const-val references (see the "Known gap" note under Input, above). This means:
+
+```kotlin
+const val GREETING = "hi"
+brs("print \"${GREETING}\"")   // Accepted by FIR, rejected by IR-backend with a declaration-scoped error
+```
+
+is accepted at FIR phase but still rejected later. Tracked as workstream **B4(e)** in the roadmap. The FIR checker is correct — the IR backend's fold is the laggard.
 
 ## Non-goals
 
@@ -149,4 +160,4 @@ An implementation conforms to this contract iff for every well-formed Kotlin pro
 2. Every accepted input listed under **Valid** emits the corresponding BrightScript as shown, unchanged.
 3. No `System.err.println`, `println`, or `throw` is used to surface errors to the user. All diagnostics route through `MessageCollector`.
 
-The test at `compiler/testData/codegen/brs/inline/brsFunction.kt` covers (2). Coverage for (1) is manual today; a formal diagnostics harness is part of B4(b).
+The test at `compiler/testData/codegen/brs/inline/brsFunction.kt` covers (2). Coverage for the FIR-phase arm of (1) — `BRS_INTRINSIC_LITERAL_REQUIRED` — is under `compiler/testData/diagnostics/testsWithBrsStdLib/brsIntrinsic/`, exercised by `compiler/fir/checkers/checkers.brs/test/.../BrsDiagnosticTests.kt`. IR-phase diagnostics (parse errors, multi-statement) remain covered manually; folding them into the FIR harness is future work once the BRS parser is available at FIR phase.

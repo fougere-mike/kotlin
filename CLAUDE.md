@@ -316,6 +316,19 @@ Roku's official documentation (developer.roku.com) blocks bot/programmatic acces
 
 **DO NOT** repeatedly try to fetch from developer.roku.com - it will always fail with 403.
 
+## Regenerating FIR diagnostic containers
+
+When you edit `compiler/fir/checkers/checkers-component-generator/src/.../diagnostics/FirBrsDiagnosticsList.kt` (add/rename/remove a BRS FIR diagnostic), regenerate the generated containers:
+
+```bash
+./gradlew :compiler:fir:checkers:checkers.brs:generateCheckersComponents --no-configuration-cache
+./gradlew :compiler:fir:checkers:generateCheckersComponents --no-configuration-cache
+```
+
+The first regenerates `compiler/fir/checkers/checkers.brs/gen/org/jetbrains/kotlin/fir/analysis/diagnostics/brs/FirBrsErrors.kt`. The second regenerates `compiler/fir/checkers/gen/org/jetbrains/kotlin/fir/analysis/diagnostics/FirNonSuppressibleErrorNames.kt` (the cross-platform aggregator). **Commit both generated files.** Then add the new diagnostic's message to `compiler/fir/checkers/checkers.brs/src/org/jetbrains/kotlin/fir/analysis/diagnostics/brs/FirBrsErrorsDefaultMessages.kt`.
+
+This is a manual step — `./rebuild.sh` does not invoke the generator. Follow the upstream JS/Wasm pattern: generated output is committed, regen happens on demand.
+
 ## Quick Reference
 
 | What Changed | Run This |
