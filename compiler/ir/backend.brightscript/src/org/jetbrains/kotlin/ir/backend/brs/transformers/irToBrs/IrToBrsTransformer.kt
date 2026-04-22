@@ -3451,114 +3451,6 @@ class IrToBrsTransformer(
         }
     }
 
-    /**
-     * Sanitize property accessor names for BrightScript.
-     * Kotlin IR uses names like <get-foo> and <set-foo> for property accessors.
-     * We use "__get_" and "__set_" prefixes (double underscore) to clearly distinguish
-     * compiler-generated property accessors from user-defined functions, following
-     * common conventions for internal/generated names.
-     */
-    fun sanitizeMethodName(name: String): String {
-        return when {
-            name.startsWith("<get-") && name.endsWith(">") ->
-                "__get_" + name.removePrefix("<get-").removeSuffix(">")
-            name.startsWith("<set-") && name.endsWith(">") ->
-                "__set_" + name.removePrefix("<set-").removeSuffix(">")
-            else -> name
-        }
-    }
-
-    // BrightScript reserved keywords that cannot be used as identifiers
-    // Includes language keywords plus special identifiers like 'global' (m.global), 'm' (this), 'top' (m.top)
-    private val brsReservedKeywords = setOf(
-        "and", "as", "boolean", "box", "catch", "class", "dim", "double", "dynamic",
-        "each", "else", "elseif", "end", "endfor", "endif", "endsub", "endwhile",
-        "exit", "extends", "false", "float", "for", "function", "global", "goto", "if", "in",
-        "integer", "interface", "invalid", "let", "library", "line_num", "longinteger",
-        "m", "mod", "next", "not", "object", "or", "override", "print", "private", "protected",
-        "public", "rem", "return", "run", "step", "stop", "string", "sub", "then",
-        "throw", "to", "top", "true", "try", "type", "while"
-    )
-
-    /**
-     * Sanitize parameter names for BrightScript.
-     * Kotlin IR uses special names like <set-?> for setter parameters,
-     * <unused var> for underscore placeholders in lambdas, etc.
-     * Also escapes BrightScript reserved keywords.
-     */
-    fun sanitizeParameterName(name: String): String {
-        val sanitized = when {
-            // Setter parameter: <set-?> -> value
-            name.startsWith("<set-") && name.endsWith(">") -> "value"
-            // Unused parameter placeholder (from _ in lambdas): <unused var> -> _unused
-            // Handle both with and without angle brackets
-            name == "<unused var>" || name == "unused var" -> "_unused"
-            // Receiver reference: <this> -> __this (avoid potential BrightScript 'm.this' issues)
-            name == "<this>" -> "__this"
-            // Any other special name: strip angle brackets and sanitize
-            name.startsWith("<") && name.endsWith(">") ->
-                name.removePrefix("<").removeSuffix(">")
-                    .replace("-", "_")
-                    .replace(" ", "_")
-            // Names with spaces (shouldn't happen, but sanitize anyway)
-            name.contains(" ") -> name.replace(" ", "_")
-            else -> name
-        }
-        // Sanitize invalid BrightScript identifier characters ($ is not valid in BrightScript)
-        val cleaned = sanitized.replace("$", "_")
-        // Escape reserved keywords by adding underscore suffix
-        return if (cleaned.lowercase() in brsReservedKeywords) {
-            "${cleaned}_"
-        } else {
-            cleaned
-        }
-    }
-
-    /**
-     * Deduplicate parameter names by adding numeric suffixes.
-     * This handles cases like multiple `_unused` parameters from lambdas with multiple _ placeholders.
-     */
-    fun deduplicateParameterNames(parameters: List<BrsParameter>): List<BrsParameter> {
-        val nameCounts = mutableMapOf<String, Int>()
-        return parameters.map { param ->
-            val count = nameCounts.getOrDefault(param.name, 0)
-            nameCounts[param.name] = count + 1
-            if (count > 0) {
-                BrsParameter("${param.name}$count", param.type, param.defaultValue)
-            } else {
-                param
-            }
-        }
-    }
-
-    /**
-     * Ensure parameters satisfy BrightScript's constraint:
-     * Once a parameter has a default value, all subsequent parameters must also have defaults.
-     *
-     * In BrightScript, this is invalid:
-     *   function foo(a = 1, b as String)  ' Error: b has no default after a has default
-     *
-     * This is valid:
-     *   function foo(a = 1, b = invalid)  ' OK: both have defaults
-     *
-     * This function adds `= invalid` to any parameter without a default that follows
-     * a parameter with a default.
-     */
-    internal fun normalizeParametersForBrs(parameters: List<BrsParameter>): List<BrsParameter> {
-        var sawDefault = false
-        return parameters.map { param ->
-            if (param.defaultValue != null) {
-                sawDefault = true
-                param
-            } else if (sawDefault) {
-                // Parameter after a default - must add default value
-                BrsParameter(param.name, param.type, BrsInvalidLiteral())
-            } else {
-                param
-            }
-        }
-    }
-
     // ==================== Type Mapping ====================
 
     /**
@@ -3816,7 +3708,7 @@ class IrStatementToBrsTransformer(
 
         // Get a unique variable name to avoid collision with other variables
         // that may have the same name in the IR (e.g., from multiple inline expansions)
-        val baseName = parent.sanitizeParameterName(declaration.name.asString())
+        val baseName = sanitizeParameterName(declaration.name.asString())
         val uniqueName = parent.getUniqueVariableName(declaration.symbol, baseName)
 
         // Handle block initializers specially - BrightScript doesn't have block expressions
@@ -3963,11 +3855,11 @@ class IrStatementToBrsTransformer(
         val name = declaration.name.asString()
         val rawParameters = declaration.valueParameters.map { param ->
             BrsParameter(
-                name = parent.sanitizeParameterName(param.name.asString()),
+                name = sanitizeParameterName(param.name.asString()),
                 type = parent.mapTypeToBrs(param.type)
             )
         }
-        val parameters = parent.deduplicateParameterNames(rawParameters)
+        val parameters = deduplicateParameterNames(rawParameters)
 
         val returnType = parent.mapTypeToBrs(declaration.returnType)
 
@@ -4831,7 +4723,7 @@ class IrStatementToBrsTransformer(
                 is IrVariable -> {
                     val varName = stmt.name.asString()
                     // Sanitize the name for BrightScript - handle special names and escape reserved keywords
-                    val sanitizedName = parent.sanitizeParameterName(varName)
+                    val sanitizedName = sanitizeParameterName(varName)
                     val init = stmt.initializer?.let { parent.transformExpression(it) }
                     // Check for hoisted statements from when-lowered blocks in the initializer
                     val hoisted = parent.takeHoistedStatements()
@@ -5775,7 +5667,7 @@ class IrStatementToBrsTransformer(
                 is IrVariable -> {
                     val varName = stmt.name.asString()
                     // Sanitize the name for BrightScript - handle special names and escape reserved keywords
-                    val sanitizedVarName = parent.sanitizeParameterName(varName)
+                    val sanitizedVarName = sanitizeParameterName(varName)
                     val init = stmt.initializer?.let { parent.transformExpression(it) }
                     // Consume any hoisted statements from nested when-lowered blocks in the initializer
                     val hoisted = parent.takeHoistedStatements()
@@ -5804,7 +5696,7 @@ class IrStatementToBrsTransformer(
             rawName.startsWith("<set-") && rawName.endsWith(">") -> "value"
             rawName.startsWith("<") && rawName.endsWith(">") ->
                 rawName.removePrefix("<").removeSuffix(">").replace("-", "_")
-            else -> parent.sanitizeParameterName(rawName)
+            else -> sanitizeParameterName(rawName)
         }
 
         // Check if this is a shared variable (boxed for closure capture)
@@ -5822,7 +5714,7 @@ class IrStatementToBrsTransformer(
         } else if (isSharedVariable) {
             // Shared variable accessed outside closure: varName.value = newValue
             // Note: capturedVar is null here due to the first condition being false
-            BrsDotAccess(BrsIdentifier(parent.sanitizeParameterName(sanitizedName)), "value")
+            BrsDotAccess(BrsIdentifier(sanitizeParameterName(sanitizedName)), "value")
         } else if (owner is IrVariable) {
             // For local variables, use the unique name to avoid collisions from inline expansion
             BrsIdentifier(parent.getVariableName(expression.symbol, sanitizedName))
@@ -6175,7 +6067,7 @@ class IrExpressionToBrsTransformer(
         val isSharedVariable = (owner is IrVariable && owner.origin == BrsDeclarationOrigin.SHARED_VARIABLE_WRAPPER) ||
                                expression.symbol in parent.sharedVariables
         if (isSharedVariable) {
-            val varName = parent.sanitizeParameterName(rawName)
+            val varName = sanitizeParameterName(rawName)
             return BrsDotAccess(BrsIdentifier(varName), "value")
         }
 
@@ -6190,11 +6082,11 @@ class IrExpressionToBrsTransformer(
                 BrsIdentifier(rawName.removePrefix("<").removeSuffix(">").replace("-", "_"))
             // For local variables, use the unique name to avoid collisions from inline expansion
             owner is IrVariable -> {
-                val baseName = parent.sanitizeParameterName(rawName)
+                val baseName = sanitizeParameterName(rawName)
                 BrsIdentifier(parent.getVariableName(expression.symbol, baseName))
             }
             // Apply full sanitization including reserved keyword escaping
-            else -> BrsIdentifier(parent.sanitizeParameterName(rawName))
+            else -> BrsIdentifier(sanitizeParameterName(rawName))
         }
     }
 
@@ -6318,14 +6210,14 @@ class IrExpressionToBrsTransformer(
             rawName.startsWith("<set-") && rawName.endsWith(">") -> "value"
             rawName.startsWith("<") && rawName.endsWith(">") ->
                 rawName.removePrefix("<").removeSuffix(">").replace("-", "_")
-            else -> parent.sanitizeParameterName(rawName)
+            else -> sanitizeParameterName(rawName)
         }
 
         // Check if this is a shared variable accessed outside closure
         // Note: sharedVariables only contains mutable vars, and mutable captures returned above
         if (expression.symbol in parent.sharedVariables) {
             return BrsBinaryOp(
-                BrsDotAccess(BrsIdentifier(parent.sanitizeParameterName(sanitizedName)), "value"),
+                BrsDotAccess(BrsIdentifier(sanitizeParameterName(sanitizedName)), "value"),
                 BrsBinaryOperator.EQ,
                 expression.value.accept(this, data)
             )
@@ -8581,7 +8473,7 @@ class IrExpressionToBrsTransformer(
             )
             if (isCapturedValueParam && isSharedVar) {
                 // Pass the box itself, not the dereferenced value
-                val varName = parent.sanitizeParameterName((arg as IrGetValue).symbol.owner.name.asString())
+                val varName = sanitizeParameterName((arg as IrGetValue).symbol.owner.name.asString())
                 BrsIdentifier(varName)
             } else if (arg is IrGetField) {
                 // Check if this field holds a shared variable box (e.g., in coroutine create method)
@@ -9040,13 +8932,13 @@ class IrExpressionToBrsTransformer(
         // Add value parameters
         val rawParameters = function.valueParameters.map { param ->
             BrsParameter(
-                name = parent.sanitizeParameterName(param.name.asString()),
+                name = sanitizeParameterName(param.name.asString()),
                 type = parent.mapTypeToBrs(param.type)
             )
         }
         allParameters.addAll(rawParameters)
 
-        val parameters = parent.normalizeParametersForBrs(parent.deduplicateParameterNames(allParameters))
+        val parameters = normalizeParametersForBrs(deduplicateParameterNames(allParameters))
 
         val returnType = parent.mapTypeToBrs(function.returnType)
 
@@ -9151,11 +9043,11 @@ class IrExpressionToBrsTransformer(
         // Create wrapper function parameters matching the referenced function
         val rawParameters = function.valueParameters.map { param ->
             BrsParameter(
-                name = parent.sanitizeParameterName(param.name.asString()),
+                name = sanitizeParameterName(param.name.asString()),
                 type = parent.mapTypeToBrs(param.type)
             )
         }
-        val parameters = parent.normalizeParametersForBrs(parent.deduplicateParameterNames(rawParameters))
+        val parameters = normalizeParametersForBrs(deduplicateParameterNames(rawParameters))
 
         // Build the call arguments from the wrapper parameters
         val callArgs: MutableList<BrsExpression> = parameters.map { BrsIdentifier(it.name) as BrsExpression }.toMutableList()
@@ -9165,7 +9057,7 @@ class IrExpressionToBrsTransformer(
         val call = if (boundReceiver != null) {
             // For bound method references, call as method on the receiver
             val receiverExpr = boundReceiver.accept(this, data)
-            val methodName = parent.sanitizeMethodName(function.name.asString())
+            val methodName = sanitizeMethodName(function.name.asString())
             BrsMethodCall(receiverExpr, methodName, callArgs)
         } else {
             // For unbound function references, call the global function
