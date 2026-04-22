@@ -68,81 +68,6 @@ class IrToBrsTransformer(
     val statementVisitor: IrStatementToBrsTransformer get() = statementTransformer
     internal val inlineCallTransformer = BrsInlineCallTransformer(context)
 
-    // Track enum classes encountered during transformation for initialization
-    private val enumClassNames = mutableListOf<String>()
-
-    /**
-     * Current closure context for variable access rewriting.
-     * When non-null, we're inside a closure and need to rewrite captured variable accesses.
-     * Internal visibility so expression/statement transformers can access it.
-     */
-    internal var currentClosureContext: List<CapturedVariable>? = null
-
-    /**
-     * Set of variable symbols that are shared (captured by closures and mutable).
-     * These variables need to be boxed in {value: x} wrappers at declaration time,
-     * and all accesses (both inside and outside closures) need to use .value.
-     * This is set per-function before transforming the function body.
-     */
-    internal var sharedVariables: Set<IrValueSymbol> = emptySet()
-
-    /**
-     * Current lambda extension receiver symbol.
-     * When non-null, we're inside a lambda with an extension receiver and need to rewrite
-     * references to this receiver as 'm' (the first parameter of the lambda).
-     */
-    internal var currentLambdaExtensionReceiver: IrValueSymbol? = null
-
-    /**
-     * Flag to indicate we're inside a constructor body.
-     * When true, '<this>' references should map to 'this' (local variable) instead of 'm'.
-     */
-    internal var isInConstructorBody: Boolean = false
-
-    /**
-     * Flag to indicate we're inside a SceneGraph component class transformation.
-     * When true:
-     * - 'top', 'global', and 'm' property accesses compile to m.top, m.global, m
-     * - 'this' references are not used (component doesn't create an object)
-     */
-    internal var isInComponentContext: Boolean = false
-
-    /**
-     * The current SceneGraph component class being transformed, if any.
-     * Used to determine which property accesses should compile to m.<name>.
-     */
-    internal var currentComponentClass: IrClass? = null
-
-    /**
-     * Flag to indicate we're inside a lambda that was created in component context.
-     * When true, component state accesses use m._componentM instead of m directly,
-     * because 'm' inside the lambda refers to the closure object, not the component.
-     */
-    internal var isInComponentLambda: Boolean = false
-
-    /**
-     * The current file path being transformed.
-     * Used for dependency tracking - we record which files each source depends on.
-     */
-    internal var currentFilePath: String? = null
-
-    /**
-     * Get the correct BrightScript expression to access the component's 'm' reference.
-     *
-     * When inside a lambda in component context, 'm' refers to the closure object,
-     * not the component. In this case, we use 'm._componentM' to access the captured
-     * component reference. Otherwise, we use 'm' directly.
-     */
-    fun getComponentMRef(): BrsExpression {
-        return if (isInComponentLambda) {
-            // Inside a lambda, access the captured component m via m._componentM
-            BrsDotAccess(BrsMRef(), "_componentM")
-        } else {
-            // Direct m access when not in a lambda
-            BrsMRef()
-        }
-    }
-
     /**
      * Detect variables captured by a function expression.
      * Returns a list of variables that are referenced but not declared within the function.
@@ -275,7 +200,7 @@ class IrToBrsTransformer(
      * Check if a variable symbol is captured in the current closure context.
      */
     fun getCapturedVariable(symbol: IrValueSymbol): CapturedVariable? {
-        return currentClosureContext?.find { it.symbol == symbol }
+        return genCtx.currentClosureContext?.find { it.symbol == symbol }
     }
 
     /**
@@ -446,10 +371,10 @@ class IrToBrsTransformer(
         val statements = mutableListOf<BrsStatement>()
 
         // Track current file for dependency collection
-        currentFilePath = irFile.path
+        genCtx.currentFilePath = irFile.path
 
         // Clear tracked enums from any previous transformation
-        enumClassNames.clear()
+        genCtx.enumClassNames.clear()
 
         for (declaration in irFile.declarations) {
             when (declaration) {
@@ -594,11 +519,11 @@ class IrToBrsTransformer(
 
         // Detect shared variables (mutable vars captured by closures) before transforming body
         // Save and restore to handle nested function transformations
-        val previousSharedVariables = sharedVariables
+        val previousSharedVariables = genCtx.sharedVariables
         // First check if BrsSharedVariableDetectionLowering already detected shared variables for this function
         // (this runs before local class extraction, so it can detect variables captured by local classes)
         // If not found, fall back to detecting them now (for lambdas and inline functions)
-        sharedVariables = context.sharedVariablesByFunction[irFunction.symbol]
+        genCtx.sharedVariables = context.sharedVariablesByFunction[irFunction.symbol]
             ?: irFunction.body?.let { detectSharedVariables(it) }
             ?: emptySet()
 
@@ -612,7 +537,7 @@ class IrToBrsTransformer(
         }
 
         // Restore previous shared variables
-        sharedVariables = previousSharedVariables
+        genCtx.sharedVariables = previousSharedVariables
 
         // Check for any remaining hoisted statements and prepend them to the body
         val remainingHoisted = genCtx.takeHoistedStatements()
@@ -717,7 +642,7 @@ class IrToBrsTransformer(
 
         // Handle enum classes specially
         if (irClass.kind == ClassKind.ENUM_CLASS) {
-            enumClassNames.add(context.getBrsName(irClass))
+            genCtx.enumClassNames.add(context.getBrsName(irClass))
             transformEnumDeclaration(irClass, declarations, statements)
             return
         }
@@ -792,10 +717,10 @@ class IrToBrsTransformer(
         declarations: MutableList<BrsDeclaration>
     ) {
         // Set component context flags
-        val previousInComponent = isInComponentContext
-        val previousComponentClass = currentComponentClass
-        isInComponentContext = true
-        currentComponentClass = irClass
+        val previousInComponent = genCtx.isInComponentContext
+        val previousComponentClass = genCtx.currentComponentClass
+        genCtx.isInComponentContext = true
+        genCtx.currentComponentClass = irClass
 
         try {
             // Extract layout info from companion @SGLayout function (new pattern)
@@ -854,8 +779,8 @@ class IrToBrsTransformer(
             }
         } finally {
             // Restore context flags
-            isInComponentContext = previousInComponent
-            currentComponentClass = previousComponentClass
+            genCtx.isInComponentContext = previousInComponent
+            genCtx.currentComponentClass = previousComponentClass
         }
     }
 
@@ -2600,7 +2525,7 @@ class IrToBrsTransformer(
         // Set flag so that '<this>' references map to 'this' instead of 'm'
         // This must be set BEFORE transforming field/property initializers, as they may
         // reference constructor parameters via getters on <this>
-        isInConstructorBody = true
+        genCtx.isInConstructorBody = true
 
         // Add methods and property accessors to the instance BEFORE field/property initializers
         // because initializers may call methods on 'this' (e.g., this.get_map().get_keyOrder())
@@ -2678,7 +2603,7 @@ class IrToBrsTransformer(
         }
 
         // Reset constructor context flag
-        isInConstructorBody = false
+        genCtx.isInConstructorBody = false
 
         // Return the constructed object
         bodyStatements.add(BrsReturn(BrsIdentifier("this")))
@@ -3245,7 +3170,7 @@ class IrStatementToBrsTransformer(
         // 1. Via SharedVariablesLowering which sets SHARED_VARIABLE_WRAPPER origin
         // 2. Via BrsSharedVariableDetectionLowering which populates sharedVariables set
         val isShared = declaration.origin == BrsDeclarationOrigin.SHARED_VARIABLE_WRAPPER ||
-                       declaration.symbol in parent.sharedVariables
+                       declaration.symbol in genCtx.sharedVariables
 
         // Get a unique variable name to avoid collision with other variables
         // that may have the same name in the IR (e.g., from multiple inline expansions)
@@ -3419,18 +3344,18 @@ class IrStatementToBrsTransformer(
         }
 
         // Save previous closure context
-        val previousContext = parent.currentClosureContext
+        val previousContext = genCtx.currentClosureContext
 
         // Set closure context for body transformation (if there are captures)
         if (capturedVars.isNotEmpty()) {
-            parent.currentClosureContext = capturedVars
+            genCtx.currentClosureContext = capturedVars
         }
 
         // Transform body with closure context active
         val body = declaration.body?.let { parent.transformBody(it) } ?: BrsBlock()
 
         // Restore previous context
-        parent.currentClosureContext = previousContext
+        genCtx.currentClosureContext = previousContext
 
         // Build closure object for local function (always, for consistent .invoke() usage)
         val entries = mutableListOf<BrsAAEntry>()
@@ -5246,7 +5171,7 @@ class IrStatementToBrsTransformer(
         // 2. Via BrsSharedVariableDetectionLowering which populates sharedVariables set
         val owner = expression.symbol.owner
         val isSharedVariable = (owner is IrVariable && owner.origin == BrsDeclarationOrigin.SHARED_VARIABLE_WRAPPER) ||
-                               expression.symbol in parent.sharedVariables
+                               expression.symbol in genCtx.sharedVariables
 
         // Build the target expression (LHS of assignment)
         val target = if (capturedVar != null && capturedVar.isMutable) {
@@ -5311,7 +5236,7 @@ class IrStatementToBrsTransformer(
         val className = parentClass?.name?.asString() ?: ""
         val fieldKey = "$className.$fieldName"
         val isSharedVariableField = fieldKey in context.sharedVariableFields
-        val isInConstructor = parent.isInConstructorBody
+        val isInConstructor = genCtx.isInConstructorBody
 
         val target = if (isSharedVariableField && !isInConstructor) {
             // Write to the box's value: m.fieldName.value = newValue
@@ -5595,7 +5520,7 @@ class IrExpressionToBrsTransformer(
         // Check if this is a reference to a lambda's extension receiver
         // The receiver parameter is named '__receiver' in the generated BrightScript
         // (not 'm', to avoid collision with closure's m reference for captured variables)
-        if (expression.symbol == parent.currentLambdaExtensionReceiver) {
+        if (expression.symbol == genCtx.currentLambdaExtensionReceiver) {
             return BrsIdentifier("__receiver")
         }
 
@@ -5607,7 +5532,7 @@ class IrExpressionToBrsTransformer(
         // 2. Via BrsSharedVariableDetectionLowering which populates sharedVariables set
         val owner = expression.symbol.owner
         val isSharedVariable = (owner is IrVariable && owner.origin == BrsDeclarationOrigin.SHARED_VARIABLE_WRAPPER) ||
-                               expression.symbol in parent.sharedVariables
+                               expression.symbol in genCtx.sharedVariables
         if (isSharedVariable) {
             val varName = sanitizeParameterName(rawName)
             return BrsDotAccess(BrsIdentifier(varName), "value")
@@ -5616,7 +5541,7 @@ class IrExpressionToBrsTransformer(
         return when {
             // In constructor bodies, '<this>' refers to the local 'this' variable being constructed
             // In regular methods, '<this>' refers to 'm' (the object the method was called on)
-            rawName == "<this>" -> if (parent.isInConstructorBody) BrsIdentifier("this") else BrsMRef()
+            rawName == "<this>" -> if (genCtx.isInConstructorBody) BrsIdentifier("this") else BrsMRef()
             // Sanitize setter parameter names
             rawName.startsWith("<set-") && rawName.endsWith(">") -> BrsIdentifier("value")
             // Sanitize other special names
@@ -5718,7 +5643,7 @@ class IrExpressionToBrsTransformer(
         val className = parentClass?.name?.asString() ?: ""
         val fieldKey = "$className.$fieldName"
         val isSharedVariableField = fieldKey in context.sharedVariableFields
-        val isInConstructor = parent.isInConstructorBody
+        val isInConstructor = genCtx.isInConstructorBody
 
         // Generate assignment expression: receiver.field = value (or receiver.field.value = value for shared vars)
         val target = if (isSharedVariableField && !isInConstructor) {
@@ -5757,7 +5682,7 @@ class IrExpressionToBrsTransformer(
 
         // Check if this is a shared variable accessed outside closure
         // Note: sharedVariables only contains mutable vars, and mutable captures returned above
-        if (expression.symbol in parent.sharedVariables) {
+        if (expression.symbol in genCtx.sharedVariables) {
             return BrsBinaryOp(
                 BrsDotAccess(BrsIdentifier(sanitizeParameterName(sanitizedName)), "value"),
                 BrsBinaryOperator.EQ,
@@ -6691,8 +6616,8 @@ class IrExpressionToBrsTransformer(
                     // Special handling for SceneGraph component scope properties (top, global, m)
                     // When in component context, these compile to m.top, m.global, m
                     // When inside a lambda, use getComponentMRef() to get the captured component reference
-                    if (parent.isInComponentContext && context.intrinsics.isComponentScopeProperty(fieldName)) {
-                        val componentM = parent.getComponentMRef()
+                    if (genCtx.isInComponentContext && context.intrinsics.isComponentScopeProperty(fieldName)) {
+                        val componentM = genCtx.getComponentMRef()
                         return when (fieldName) {
                             "m" -> componentM  // Just m (or m._componentM in lambda)
                             else -> BrsDotAccess(componentM, fieldName)  // m.top, m.global
@@ -6704,10 +6629,10 @@ class IrExpressionToBrsTransformer(
                     // Internal state (no annotation) compiles to m.fieldName
                     // Delegated properties must call the getter to unwrap the delegate
                     // When inside a lambda, use getComponentMRef() to get the captured component reference
-                    if (parent.isInComponentContext && property != null && backingField != null) {
+                    if (genCtx.isInComponentContext && property != null && backingField != null) {
                         val parentClass = function.parent as? IrClass
                         if (parentClass != null && context.intrinsics.isSceneGraphComponent(parentClass)) {
-                            val componentM = parent.getComponentMRef()
+                            val componentM = genCtx.getComponentMRef()
 
                             // Delegated properties must call the getter to unwrap the delegate
                             if (property.isDelegated) {
@@ -6765,10 +6690,10 @@ class IrExpressionToBrsTransformer(
                     // Internal state (no annotation) compiles to m.fieldName = value
                     // Delegated properties must call the setter
                     // When inside a lambda, use getComponentMRef() to get the captured component reference
-                    if (parent.isInComponentContext && property != null && backingField != null) {
+                    if (genCtx.isInComponentContext && property != null && backingField != null) {
                         val parentClass = function.parent as? IrClass
                         if (parentClass != null && context.intrinsics.isSceneGraphComponent(parentClass)) {
-                            val componentM = parent.getComponentMRef()
+                            val componentM = genCtx.getComponentMRef()
 
                             // Delegated properties must call the setter
                             if (property.isDelegated) {
@@ -8011,7 +7936,7 @@ class IrExpressionToBrsTransformer(
             // 2. Via BrsSharedVariableDetectionLowering which populates sharedVariables set
             val isSharedVar = arg is IrGetValue && (
                 (arg.symbol.owner is IrVariable && (arg.symbol.owner as IrVariable).origin == BrsDeclarationOrigin.SHARED_VARIABLE_WRAPPER) ||
-                arg.symbol in parent.sharedVariables
+                arg.symbol in genCtx.sharedVariables
             )
             if (isCapturedValueParam && isSharedVar) {
                 // Pass the box itself, not the dereferenced value
@@ -8492,37 +8417,37 @@ class IrExpressionToBrsTransformer(
         // all lambdas can be invoked uniformly with .invoke()
 
         // Save previous closure context and lambda extension receiver
-        val previousContext = parent.currentClosureContext
-        val previousLambdaReceiver = parent.currentLambdaExtensionReceiver
-        val previousInComponentLambda = parent.isInComponentLambda
+        val previousContext = genCtx.currentClosureContext
+        val previousLambdaReceiver = genCtx.currentLambdaExtensionReceiver
+        val previousInComponentLambda = genCtx.isInComponentLambda
 
         // Check if we're in component context - if so, we need to capture the component's m
-        val needsComponentCapture = parent.isInComponentContext && !parent.isInComponentLambda
+        val needsComponentCapture = genCtx.isInComponentContext && !genCtx.isInComponentLambda
 
         // Set closure context for body transformation (if there are captures)
         if (capturedVars.isNotEmpty()) {
-            parent.currentClosureContext = capturedVars
+            genCtx.currentClosureContext = capturedVars
         }
 
         // Set lambda extension receiver for body transformation
         // This allows visitGetValue to rewrite receiver references to 'm'
         function.extensionReceiverParameter?.let {
-            parent.currentLambdaExtensionReceiver = it.symbol
+            genCtx.currentLambdaExtensionReceiver = it.symbol
         }
 
         // If we're in component context, mark that we're now inside a component lambda
         // so that component state accesses use m._componentM instead of bare m
         if (needsComponentCapture) {
-            parent.isInComponentLambda = true
+            genCtx.isInComponentLambda = true
         }
 
         // Transform body with closure context active (variable accesses will be rewritten)
         val body = function.body?.let { parent.transformBody(it) } ?: BrsBlock()
 
         // Restore previous context and lambda receiver
-        parent.currentClosureContext = previousContext
-        parent.currentLambdaExtensionReceiver = previousLambdaReceiver
-        parent.isInComponentLambda = previousInComponentLambda
+        genCtx.currentClosureContext = previousContext
+        genCtx.currentLambdaExtensionReceiver = previousLambdaReceiver
+        genCtx.isInComponentLambda = previousInComponentLambda
 
         // Build closure object fields for captured variables
         val entries = mutableListOf<BrsAAEntry>()
@@ -8549,7 +8474,7 @@ class IrExpressionToBrsTransformer(
             // 2. Via BrsSharedVariableDetectionLowering which populates sharedVariables set
             val varOwner = capturedVar.symbol.owner
             val hasSharedVarOrigin = varOwner is IrVariable && varOwner.origin == BrsDeclarationOrigin.SHARED_VARIABLE_WRAPPER
-            val isAlreadyBoxed = capturedVar.isMutable && (hasSharedVarOrigin || capturedVar.symbol in parent.sharedVariables)
+            val isAlreadyBoxed = capturedVar.isMutable && (hasSharedVarOrigin || capturedVar.symbol in genCtx.sharedVariables)
             val fieldValue = if (capturedVar.isMutable && !isAlreadyBoxed) {
                 // Wrap mutable captures in { value: x } for mutation to propagate
                 // (This case shouldn't happen anymore since all mutable captures should be in sharedVariables)

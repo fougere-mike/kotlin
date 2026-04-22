@@ -5,8 +5,12 @@
 
 package org.jetbrains.kotlin.ir.backend.brs.transformers.irToBrs
 
+import org.jetbrains.kotlin.brs.backend.ast.BrsDotAccess
+import org.jetbrains.kotlin.brs.backend.ast.BrsExpression
+import org.jetbrains.kotlin.brs.backend.ast.BrsMRef
 import org.jetbrains.kotlin.brs.backend.ast.BrsStatement
 import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
+import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrLoop
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
@@ -233,6 +237,88 @@ class BrsGenerationContext(
         hoistedScopes.clear()
         hoistedScopes.add(mutableListOf()) // Reset to global scope
     }
+
+    // ==================== Closure state ====================
+
+    /**
+     * Current closure context for variable access rewriting.
+     * When non-null, we're inside a closure and need to rewrite captured variable accesses.
+     */
+    internal var currentClosureContext: List<CapturedVariable>? = null
+
+    /**
+     * Set of variable symbols that are shared (captured by closures and mutable).
+     * These variables need to be boxed in {value: x} wrappers at declaration time,
+     * and all accesses (both inside and outside closures) need to use .value.
+     * This is set per-function before transforming the function body.
+     */
+    internal var sharedVariables: Set<IrValueSymbol> = emptySet()
+
+    /**
+     * Current lambda extension receiver symbol.
+     * When non-null, we're inside a lambda with an extension receiver and need to rewrite
+     * references to this receiver as 'm' (the first parameter of the lambda).
+     */
+    internal var currentLambdaExtensionReceiver: IrValueSymbol? = null
+
+    // ==================== Constructor/component flags ====================
+
+    /**
+     * Flag to indicate we're inside a constructor body.
+     * When true, '<this>' references should map to 'this' (local variable) instead of 'm'.
+     */
+    internal var isInConstructorBody: Boolean = false
+
+    /**
+     * Flag to indicate we're inside a SceneGraph component class transformation.
+     * When true:
+     * - 'top', 'global', and 'm' property accesses compile to m.top, m.global, m
+     * - 'this' references are not used (component doesn't create an object)
+     */
+    internal var isInComponentContext: Boolean = false
+
+    /**
+     * The current SceneGraph component class being transformed, if any.
+     * Used to determine which property accesses should compile to m.<name>.
+     */
+    internal var currentComponentClass: IrClass? = null
+
+    /**
+     * Flag to indicate we're inside a lambda that was created in component context.
+     * When true, component state accesses use m._componentM instead of m directly,
+     * because 'm' inside the lambda refers to the closure object, not the component.
+     */
+    internal var isInComponentLambda: Boolean = false
+
+    /**
+     * Get the correct BrightScript expression to access the component's 'm' reference.
+     *
+     * When inside a lambda in component context, 'm' refers to the closure object,
+     * not the component. In this case, we use 'm._componentM' to access the captured
+     * component reference. Otherwise, we use 'm' directly.
+     */
+    fun getComponentMRef(): BrsExpression {
+        return if (isInComponentLambda) {
+            // Inside a lambda, access the captured component m via m._componentM
+            BrsDotAccess(BrsMRef(), "_componentM")
+        } else {
+            // Direct m access when not in a lambda
+            BrsMRef()
+        }
+    }
+
+    // ==================== File + enum tracking ====================
+
+    /**
+     * The current file path being transformed.
+     * Used for dependency tracking - we record which files each source depends on.
+     */
+    internal var currentFilePath: String? = null
+
+    /**
+     * Track enum classes encountered during transformation for initialization.
+     */
+    internal val enumClassNames = mutableListOf<String>()
 }
 
 /**
