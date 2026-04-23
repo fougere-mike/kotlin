@@ -37,6 +37,18 @@ object FirBrsSceneGraphFieldTypeChecker : FirPropertyChecker(MppCheckerKind.Comm
     context(context: CheckerContext, reporter: DiagnosticReporter)
     override fun check(declaration: FirProperty) {
         val session = context.session
+        val sgFieldClassIds = BrsStandardClassIds.Annotations.sgFieldAnnotationTypes.keys
+        val sgFieldAnnotations = declaration.annotations.mapNotNull {
+            it.toAnnotationClassId(session)?.takeIf { id -> id in sgFieldClassIds }
+        }
+        if (sgFieldAnnotations.size >= 2) {
+            reporter.reportOn(
+                declaration.source,
+                FirBrsErrors.BRS_SCENEGRAPH_FIELD_CONFLICT,
+                sgFieldAnnotations.joinToString(", ") { "@${it.shortClassName.asString()}" },
+            )
+            return
+        }
         val propertyType = declaration.returnTypeRef.coneType.fullyExpandedType()
         for (annotation in declaration.annotations) {
             val annotationClassId = annotation.toAnnotationClassId(session) ?: continue

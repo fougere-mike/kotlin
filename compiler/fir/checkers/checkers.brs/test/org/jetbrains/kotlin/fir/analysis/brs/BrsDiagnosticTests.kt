@@ -167,6 +167,21 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     }
 
     @Test
+    fun testScenegraphFieldTypeConflictingAnnotationsBothMatch() {
+        runTest("scenegraphFieldType/conflictingAnnotationsBothMatch.kt")
+    }
+
+    @Test
+    fun testScenegraphFieldTypeConflictingAnnotationsThreeAnnotations() {
+        runTest("scenegraphFieldType/conflictingAnnotationsThreeAnnotations.kt")
+    }
+
+    @Test
+    fun testScenegraphFieldTypeConflictingAnnotationsSuppressed() {
+        runTest("scenegraphFieldType/conflictingAnnotationsSuppressed.kt")
+    }
+
+    @Test
     fun testScenegraphFieldTypeVector2dFieldAcceptsFloatArray() {
         runTest("scenegraphFieldType/vector2dFieldAcceptsFloatArray.kt")
     }
