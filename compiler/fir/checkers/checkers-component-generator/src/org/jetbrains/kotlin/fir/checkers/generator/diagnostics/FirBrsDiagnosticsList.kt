@@ -31,5 +31,10 @@ object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
             parameter<String>("actualType")
             isSuppressible = true
         }
+        val BRS_ONCHANGE_HANDLER_NOT_FOUND by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
+            parameter<String>("handlerName")
+            parameter<String>("className")
+            isSuppressible = true
+        }
     }
 }

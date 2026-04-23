@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.analysis.diagnostics.brs
 import org.jetbrains.kotlin.diagnostics.*
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory0
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory1
+import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory2
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory3
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticsContainer
 import org.jetbrains.kotlin.diagnostics.Severity.ERROR
@@ -29,6 +30,7 @@ object FirBrsErrors : KtDiagnosticsContainer() {
 
     // SceneGraph
     val BRS_SCENEGRAPH_FIELD_TYPE: KtDiagnosticFactory3<String, String, String> = KtDiagnosticFactory3("BRS_SCENEGRAPH_FIELD_TYPE", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
+    val BRS_ONCHANGE_HANDLER_NOT_FOUND: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_ONCHANGE_HANDLER_NOT_FOUND", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
 
     override fun getRendererFactory(): BaseDiagnosticRendererFactory = FirBrsErrorsDefaultMessages
 }
