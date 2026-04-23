@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_INTRINSIC_LITERAL_REQUIRED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_NAME_CASE_CLASH
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_ONCHANGE_HANDLER_NOT_FOUND
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCENEGRAPH_FIELD_CONFLICT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCENEGRAPH_FIELD_TYPE
 
 @Suppress("unused")
@@ -31,6 +32,11 @@ object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             BRS_ONCHANGE_HANDLER_NOT_FOUND,
             "@BrsOnChange handler ''{0}'' not found in class ''{1}''.",
             CommonRenderers.STRING, CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_SCENEGRAPH_FIELD_CONFLICT,
+            "Property has conflicting SceneGraph field annotations: {0}. Keep only one.",
+            CommonRenderers.STRING,
         )
     }
 }

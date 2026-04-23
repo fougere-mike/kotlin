@@ -36,5 +36,9 @@ object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
             parameter<String>("className")
             isSuppressible = true
         }
+        val BRS_SCENEGRAPH_FIELD_CONFLICT by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
+            parameter<String>("annotations")
+            isSuppressible = true
+        }
     }
 }

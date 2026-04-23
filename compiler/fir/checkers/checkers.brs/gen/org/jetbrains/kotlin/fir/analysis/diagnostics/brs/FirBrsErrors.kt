@@ -31,6 +31,7 @@ object FirBrsErrors : KtDiagnosticsContainer() {
     // SceneGraph
     val BRS_SCENEGRAPH_FIELD_TYPE: KtDiagnosticFactory3<String, String, String> = KtDiagnosticFactory3("BRS_SCENEGRAPH_FIELD_TYPE", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
     val BRS_ONCHANGE_HANDLER_NOT_FOUND: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_ONCHANGE_HANDLER_NOT_FOUND", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
+    val BRS_SCENEGRAPH_FIELD_CONFLICT: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("BRS_SCENEGRAPH_FIELD_CONFLICT", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
 
     override fun getRendererFactory(): BaseDiagnosticRendererFactory = FirBrsErrorsDefaultMessages
 }
