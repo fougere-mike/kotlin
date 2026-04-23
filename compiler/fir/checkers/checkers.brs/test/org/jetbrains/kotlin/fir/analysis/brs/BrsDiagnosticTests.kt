@@ -175,4 +175,58 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testScenegraphFieldTypeVector2dFieldRejectsString() {
         runTest("scenegraphFieldType/vector2dFieldRejectsString.kt")
     }
+
+    // BRS_ONCHANGE_HANDLER_NOT_FOUND — @BrsOnChange("name") must refer to an existing member
+    // function on the enclosing class (or a supertype). Companion-object handlers are not
+    // accepted; inherited handlers are. Empty-string arg and the convention path are not checked.
+
+    @Test
+    fun testBrsOnChangeHandlerExplicitMissingRejected() {
+        runTest("brsOnChangeHandler/explicitHandlerMissingRejected.kt")
+    }
+
+    @Test
+    fun testBrsOnChangeHandlerTypoRejected() {
+        runTest("brsOnChangeHandler/typoHandlerRejected.kt")
+    }
+
+    @Test
+    fun testBrsOnChangeHandlerCompanionRejected() {
+        runTest("brsOnChangeHandler/companionHandlerRejected.kt")
+    }
+
+    @Test
+    fun testBrsOnChangeHandlerWithoutSGAnnotationRejected() {
+        runTest("brsOnChangeHandler/fieldWithoutSGAnnotationRejected.kt")
+    }
+
+    @Test
+    fun testBrsOnChangeHandlerExplicitExistsOk() {
+        runTest("brsOnChangeHandler/explicitHandlerExistsOk.kt")
+    }
+
+    @Test
+    fun testBrsOnChangeHandlerConventionWithoutAnnotationOk() {
+        runTest("brsOnChangeHandler/conventionWithoutAnnotationOk.kt")
+    }
+
+    @Test
+    fun testBrsOnChangeHandlerInheritedOk() {
+        runTest("brsOnChangeHandler/inheritedHandlerOk.kt")
+    }
+
+    @Test
+    fun testBrsOnChangeHandlerMultiplePropertiesMixed() {
+        runTest("brsOnChangeHandler/multipleOnChangePropertiesMixed.kt")
+    }
+
+    @Test
+    fun testBrsOnChangeHandlerSuppressed() {
+        runTest("brsOnChangeHandler/suppressedMissingHandler.kt")
+    }
+
+    @Test
+    fun testBrsOnChangeHandlerEmptyArgOk() {
+        runTest("brsOnChangeHandler/emptyHandlerArgumentOk.kt")
+    }
 }
