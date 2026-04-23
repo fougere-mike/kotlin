@@ -8,6 +8,7 @@ package kotlin.test
 /**
  * Current adapter providing assertion implementations.
  */
+@Suppress("BRS_NAME_CASE_CLASH")
 public val asserter: Asserter
     get() = _asserter ?: lookupAsserter()
 
@@ -19,6 +20,7 @@ internal var _asserter: Asserter? = null
 /**
  * Interface for assertion implementations.
  */
+@Suppress("BRS_NAME_CASE_CLASH")
 public interface Asserter {
     /**
      * Asserts that the specified values are equal.
