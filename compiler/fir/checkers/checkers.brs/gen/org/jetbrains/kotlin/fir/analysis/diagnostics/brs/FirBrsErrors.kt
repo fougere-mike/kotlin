@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.analysis.diagnostics.brs
 import org.jetbrains.kotlin.diagnostics.*
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory0
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory1
+import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory3
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticsContainer
 import org.jetbrains.kotlin.diagnostics.Severity.ERROR
 import org.jetbrains.kotlin.diagnostics.SourceElementPositioningStrategies
@@ -25,6 +26,9 @@ object FirBrsErrors : KtDiagnosticsContainer() {
 
     // Name case clashes
     val BRS_NAME_CASE_CLASH: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("BRS_NAME_CASE_CLASH", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
+
+    // SceneGraph
+    val BRS_SCENEGRAPH_FIELD_TYPE: KtDiagnosticFactory3<String, String, String> = KtDiagnosticFactory3("BRS_SCENEGRAPH_FIELD_TYPE", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
 
     override fun getRendererFactory(): BaseDiagnosticRendererFactory = FirBrsErrorsDefaultMessages
 }

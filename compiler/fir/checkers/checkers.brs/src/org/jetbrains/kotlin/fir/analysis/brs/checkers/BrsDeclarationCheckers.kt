@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir.analysis.brs.checkers
 
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsNameClashClassMembersChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsNameClashFileTopLevelDeclarationsChecker
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsSceneGraphFieldTypeChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.*
 
 object BrsDeclarationCheckers : DeclarationCheckers() {
@@ -19,4 +20,7 @@ object BrsDeclarationCheckers : DeclarationCheckers() {
         get() = setOf(
             FirBrsNameClashClassMembersChecker,
         )
+
+    override val propertyCheckers: Set<FirPropertyChecker>
+        get() = setOf(FirBrsSceneGraphFieldTypeChecker)
 }

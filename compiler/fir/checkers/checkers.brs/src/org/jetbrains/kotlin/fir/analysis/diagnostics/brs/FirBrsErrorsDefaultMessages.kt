@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.diagnostics.rendering.BaseDiagnosticRendererFactory
 import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_INTRINSIC_LITERAL_REQUIRED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_NAME_CASE_CLASH
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCENEGRAPH_FIELD_TYPE
 
 @Suppress("unused")
 object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
@@ -19,6 +20,11 @@ object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             BRS_NAME_CASE_CLASH,
             "Name clashes with {0} at BrightScript runtime (BrightScript is case-insensitive).",
             CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_SCENEGRAPH_FIELD_TYPE,
+            "{0} requires {1} property type, got {2}.",
+            CommonRenderers.STRING, CommonRenderers.STRING, CommonRenderers.STRING,
         )
     }
 }

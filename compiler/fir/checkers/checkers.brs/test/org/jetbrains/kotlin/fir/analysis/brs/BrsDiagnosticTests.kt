@@ -78,4 +78,101 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testNameCaseClashClassBodyMethodMatchingClassName() {
         runTest("nameCaseClash/classBodyMethodMatchingClassNameOk.kt")
     }
+
+    // BRS_SCENEGRAPH_FIELD_TYPE — property type must be compatible with its SG*Field annotation.
+
+    @Test
+    fun testScenegraphFieldTypeStringFieldRejectsInt() {
+        runTest("scenegraphFieldType/stringFieldRejectsInt.kt")
+    }
+
+    @Test
+    fun testScenegraphFieldTypeIntegerFieldRejectsString() {
+        runTest("scenegraphFieldType/integerFieldRejectsString.kt")
+    }
+
+    @Test
+    fun testScenegraphFieldTypeLongIntegerFieldRejectsInt() {
+        runTest("scenegraphFieldType/longIntegerFieldRejectsInt.kt")
+    }
+
+    @Test
+    fun testScenegraphFieldTypeFloatFieldRejectsInt() {
+        runTest("scenegraphFieldType/floatFieldRejectsInt.kt")
+    }
+
+    @Test
+    fun testScenegraphFieldTypeArrayFieldRejectsIntArray() {
+        runTest("scenegraphFieldType/arrayFieldRejectsIntArray.kt")
+    }
+
+    @Test
+    fun testScenegraphFieldTypeAssocArrayFieldRejectsList() {
+        runTest("scenegraphFieldType/assocArrayFieldRejectsList.kt")
+    }
+
+    @Test
+    fun testScenegraphFieldTypeNodeFieldRejectsString() {
+        runTest("scenegraphFieldType/nodeFieldRejectsString.kt")
+    }
+
+    @Test
+    fun testScenegraphFieldTypeColorFieldRejectsInt() {
+        runTest("scenegraphFieldType/colorFieldRejectsInt.kt")
+    }
+
+    @Test
+    fun testScenegraphFieldTypeFunctionFieldRejectsString() {
+        runTest("scenegraphFieldType/functionFieldRejectsString.kt")
+    }
+
+    @Test
+    fun testScenegraphFieldTypeStringFieldAcceptsString() {
+        runTest("scenegraphFieldType/stringFieldAcceptsString.kt")
+    }
+
+    @Test
+    fun testScenegraphFieldTypeNullableStringAccepted() {
+        runTest("scenegraphFieldType/nullableStringAccepted.kt")
+    }
+
+    @Test
+    fun testScenegraphFieldTypeNodeFieldAcceptsSubtype() {
+        runTest("scenegraphFieldType/nodeFieldAcceptsSubtype.kt")
+    }
+
+    @Test
+    fun testScenegraphFieldTypeArrayFieldAcceptsList() {
+        runTest("scenegraphFieldType/arrayFieldAcceptsList.kt")
+    }
+
+    @Test
+    fun testScenegraphFieldTypeArrayFieldAcceptsRoArray() {
+        runTest("scenegraphFieldType/arrayFieldAcceptsRoArray.kt")
+    }
+
+    @Test
+    fun testScenegraphFieldTypeFunctionFieldAcceptsFunctionType() {
+        runTest("scenegraphFieldType/functionFieldAcceptsFunctionType.kt")
+    }
+
+    @Test
+    fun testScenegraphFieldTypeSuppressedMismatch() {
+        runTest("scenegraphFieldType/suppressedMismatch.kt")
+    }
+
+    @Test
+    fun testScenegraphFieldTypeConflictingAnnotationsBothMismatch() {
+        runTest("scenegraphFieldType/conflictingAnnotationsBothMismatch.kt")
+    }
+
+    @Test
+    fun testScenegraphFieldTypeVector2dFieldAcceptsFloatArray() {
+        runTest("scenegraphFieldType/vector2dFieldAcceptsFloatArray.kt")
+    }
+
+    @Test
+    fun testScenegraphFieldTypeVector2dFieldRejectsString() {
+        runTest("scenegraphFieldType/vector2dFieldRejectsString.kt")
+    }
 }

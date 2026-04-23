@@ -23,4 +23,13 @@ object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
             isSuppressible = true
         }
     }
+
+    val SCENEGRAPH by object : DiagnosticGroup("SceneGraph") {
+        val BRS_SCENEGRAPH_FIELD_TYPE by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
+            parameter<String>("annotation")
+            parameter<String>("expectedType")
+            parameter<String>("actualType")
+            isSuppressible = true
+        }
+    }
 }
