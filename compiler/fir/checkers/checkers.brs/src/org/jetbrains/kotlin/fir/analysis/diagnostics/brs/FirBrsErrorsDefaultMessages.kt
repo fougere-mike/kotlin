@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.analysis.diagnostics.brs
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactoryToRendererMap
 import org.jetbrains.kotlin.diagnostics.rendering.BaseDiagnosticRendererFactory
 import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_ADDFIELD_INVALID_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_INTRINSIC_LITERAL_REQUIRED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_NAME_CASE_CLASH
@@ -49,6 +50,11 @@ object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE,
             "Captured ''{0}'' of type ''{1}'' cannot cross the Dispatchers.IO task thread boundary. " +
                 "Only primitives, String, RoArray, RoAssociativeArray, and Dynamic are serializable.",
+            CommonRenderers.STRING, CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_ADDFIELD_INVALID_TYPE,
+            "''{0}'' is not a valid SceneGraph field type for addField(). Valid types: {1}.",
             CommonRenderers.STRING, CommonRenderers.STRING,
         )
     }
