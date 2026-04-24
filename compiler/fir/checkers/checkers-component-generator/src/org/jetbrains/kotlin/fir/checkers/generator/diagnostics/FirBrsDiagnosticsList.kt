@@ -40,6 +40,12 @@ object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
             parameter<String>("annotations")
             isSuppressible = true
         }
+        val BRS_ONCHANGE_HANDLER_SIGNATURE by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
+            parameter<String>("handlerName")
+            parameter<String>("className")
+            parameter<String>("actualSignature")
+            isSuppressible = true
+        }
     }
 
     val IO_WORKER by object : DiagnosticGroup("IO worker extraction") {

@@ -165,6 +165,8 @@ abstract class AbstractBrsDiagnosticTest {
         "BRS_SCENEGRAPH_FIELD_TYPE" to "{0} requires {1} property type, got {2}.",
         "BRS_SCENEGRAPH_FIELD_CONFLICT" to "Property has conflicting SceneGraph field annotations: {0}. Keep only one.",
         "BRS_ONCHANGE_HANDLER_NOT_FOUND" to "@BrsOnChange handler '{0}' not found in class '{1}'.",
+        "BRS_ONCHANGE_HANDLER_SIGNATURE" to
+            "@BrsOnChange handler '{0}' on class '{1}' must take no arguments or a single RoSGNodeEvent; got signature {2}.",
         "BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE" to
             "Captured '{0}' of type '{1}' cannot cross the Dispatchers.IO task thread boundary. " +
                 "Only primitives, String, RoArray, RoAssociativeArray, and Dynamic are serializable.",

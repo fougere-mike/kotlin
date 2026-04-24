@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_INTRIN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_NAME_CASE_CLASH
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_ONCHANGE_HANDLER_NOT_FOUND
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_ONCHANGE_HANDLER_SIGNATURE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCENEGRAPH_FIELD_CONFLICT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCENEGRAPH_FIELD_TYPE
 
@@ -38,6 +39,11 @@ object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             BRS_SCENEGRAPH_FIELD_CONFLICT,
             "Property has conflicting SceneGraph field annotations: {0}. Keep only one.",
             CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_ONCHANGE_HANDLER_SIGNATURE,
+            "@BrsOnChange handler ''{0}'' on class ''{1}'' must take no arguments or a single RoSGNodeEvent; got signature {2}.",
+            CommonRenderers.STRING, CommonRenderers.STRING, CommonRenderers.STRING,
         )
         map.put(
             BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE,
