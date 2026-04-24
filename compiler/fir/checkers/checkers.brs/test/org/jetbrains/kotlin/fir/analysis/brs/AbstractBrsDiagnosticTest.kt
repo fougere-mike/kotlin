@@ -158,6 +158,11 @@ abstract class AbstractBrsDiagnosticTest {
      *
      * The templates come from [org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrorsDefaultMessages].
      * Keep in sync manually.
+     *
+     * NOTE: DefaultMessages uses MessageFormat `''` escaping (e.g. `''{0}''`) to produce a literal
+     * single-quote character in the rendered output. Entries here must use the *rendered* form with
+     * a single `'`, NOT the `''` escape, because `resolveDiagnosticName` matches against the already-
+     * rendered compiler output, never through MessageFormat.
      */
     private val diagnosticRenderedMessages: Map<String, String> = mapOf(
         "BRS_INTRINSIC_LITERAL_REQUIRED" to "An argument for the 'brs()' function must be a compile-time constant string.",
