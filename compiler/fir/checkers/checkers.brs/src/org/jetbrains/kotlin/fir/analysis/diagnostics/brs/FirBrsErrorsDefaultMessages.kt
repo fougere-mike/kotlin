@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactoryToRendererMap
 import org.jetbrains.kotlin.diagnostics.rendering.BaseDiagnosticRendererFactory
 import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_INTRINSIC_LITERAL_REQUIRED
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_NAME_CASE_CLASH
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_ONCHANGE_HANDLER_NOT_FOUND
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCENEGRAPH_FIELD_CONFLICT
@@ -37,6 +38,12 @@ object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             BRS_SCENEGRAPH_FIELD_CONFLICT,
             "Property has conflicting SceneGraph field annotations: {0}. Keep only one.",
             CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE,
+            "Captured ''{0}'' of type ''{1}'' cannot cross the Dispatchers.IO task thread boundary. " +
+                "Only primitives, String, RoArray, RoAssociativeArray, and Dynamic are serializable.",
+            CommonRenderers.STRING, CommonRenderers.STRING,
         )
     }
 }

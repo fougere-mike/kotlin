@@ -33,5 +33,8 @@ object FirBrsErrors : KtDiagnosticsContainer() {
     val BRS_ONCHANGE_HANDLER_NOT_FOUND: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_ONCHANGE_HANDLER_NOT_FOUND", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
     val BRS_SCENEGRAPH_FIELD_CONFLICT: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("BRS_SCENEGRAPH_FIELD_CONFLICT", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
 
+    // IO worker extraction
+    val BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
+
     override fun getRendererFactory(): BaseDiagnosticRendererFactory = FirBrsErrorsDefaultMessages
 }

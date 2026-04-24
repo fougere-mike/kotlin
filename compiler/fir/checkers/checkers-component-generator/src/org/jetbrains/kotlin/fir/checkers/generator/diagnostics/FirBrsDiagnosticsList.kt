@@ -41,4 +41,12 @@ object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
             isSuppressible = true
         }
     }
+
+    val IO_WORKER by object : DiagnosticGroup("IO worker extraction") {
+        val BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE by error<KtElement> {
+            parameter<String>("variableName")
+            parameter<String>("variableType")
+            isSuppressible = true
+        }
+    }
 }
