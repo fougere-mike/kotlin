@@ -47,14 +47,14 @@ object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             CommonRenderers.STRING, CommonRenderers.STRING, CommonRenderers.STRING,
         )
         map.put(
-            BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE,
-            "Captured ''{0}'' of type ''{1}'' cannot cross the Dispatchers.IO task thread boundary. " +
-                "Only primitives, String, RoArray, RoAssociativeArray, and Dynamic are serializable.",
+            BRS_ADDFIELD_INVALID_TYPE,
+            "''{0}'' is not a valid SceneGraph field type for addField(). Valid types: {1}.",
             CommonRenderers.STRING, CommonRenderers.STRING,
         )
         map.put(
-            BRS_ADDFIELD_INVALID_TYPE,
-            "''{0}'' is not a valid SceneGraph field type for addField(). Valid types: {1}.",
+            BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE,
+            "Captured ''{0}'' of type ''{1}'' cannot cross the Dispatchers.IO task thread boundary. " +
+                "Only primitives, String, RoArray, RoAssociativeArray, and Dynamic are serializable.",
             CommonRenderers.STRING, CommonRenderers.STRING,
         )
     }
