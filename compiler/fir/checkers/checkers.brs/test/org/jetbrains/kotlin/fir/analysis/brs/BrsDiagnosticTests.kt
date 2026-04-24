@@ -244,4 +244,11 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testBrsOnChangeHandlerEmptyArgOk() {
         runTest("brsOnChangeHandler/emptyHandlerArgumentOk.kt")
     }
+
+    // BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE — withContext(Dispatchers.IO) captures must be serializable.
+
+    @Test
+    fun testIoWorkerThisCaptureRejected() {
+        runTest("ioWorkerCapture/thisCaptureRejected.kt")
+    }
 }

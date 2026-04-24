@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.analysis.brs.checkers
 
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsIOWorkerCaptureChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsIntrinsicArgChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.*
 
@@ -12,5 +13,6 @@ object BrsExpressionCheckers : ExpressionCheckers() {
     override val functionCallCheckers: Set<FirFunctionCallChecker>
         get() = setOf(
             FirBrsIntrinsicArgChecker,
+            FirBrsIOWorkerCaptureChecker,
         )
 }
