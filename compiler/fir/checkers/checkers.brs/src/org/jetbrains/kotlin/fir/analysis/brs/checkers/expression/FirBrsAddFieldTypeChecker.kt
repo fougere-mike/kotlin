@@ -83,8 +83,8 @@ object FirBrsAddFieldTypeChecker : FirFunctionCallChecker(MppCheckerKind.Common)
      * Extracts a String value from a compile-time-constant expression.
      *
      * - Direct [FirLiteralExpression]: cast `value` to String.
-     * - [FirPropertyAccessExpression] to a `const val`: look up the initializer as
-     *   a [FirLiteralExpression] and cast its value.
+     * - [FirPropertyAccessExpression] to a `const val`: use [FirVariableSymbol.resolvedInitializer]
+     *   (the public API that handles lazy resolution) to get the initializer, then cast to String.
      * - Otherwise: return null (silent skip — not enough information at compile time).
      */
     private fun extractStringValue(expression: FirExpression): String? {
@@ -94,7 +94,7 @@ object FirBrsAddFieldTypeChecker : FirFunctionCallChecker(MppCheckerKind.Common)
                 val sym = expression.calleeReference.toResolvedCallableSymbol() as? FirPropertySymbol
                     ?: return null
                 if (!sym.isConst) return null
-                val initializer = sym.fir.initializer as? FirLiteralExpression ?: return null
+                val initializer = sym.resolvedInitializer as? FirLiteralExpression ?: return null
                 initializer.value as? String
             }
             else -> null
