@@ -363,4 +363,16 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testBrsOnChangeHandlerSignatureConventionPathSkipped() {
         runTest("brsOnChangeHandlerSignature/conventionPathSkipped.kt")
     }
+
+    // BRS_ADDFIELD_INVALID_TYPE — addField() type argument validation
+
+    @Test fun testAddFieldCapitalisedStringRejected() { runTest("addFieldInvalidType/capitalisedStringRejected.kt") }
+    @Test fun testAddFieldUnknownTypeRejected() { runTest("addFieldInvalidType/unknownTypeRejected.kt") }
+    @Test fun testAddFieldPositionalArgsOk() { runTest("addFieldInvalidType/positionalArgsOk.kt") }
+    @Test fun testAddFieldReorderedNamedArgsOk() { runTest("addFieldInvalidType/reorderedNamedArgsOk.kt") }
+    @Test fun testAddFieldNonLiteralTypeOk() { runTest("addFieldInvalidType/nonLiteralTypeOk.kt") }
+    @Test fun testAddFieldConstValOk() { runTest("addFieldInvalidType/constValOk.kt") }
+    @Test fun testAddFieldConstValMismatch() { runTest("addFieldInvalidType/constValMismatch.kt") }
+    @Test fun testAddFieldSubclassReceiverRejected() { runTest("addFieldInvalidType/subclassReceiverRejected.kt") }
+    @Test fun testAddFieldSuppressedInvalidType() { runTest("addFieldInvalidType/suppressedInvalidType.kt") }
 }
