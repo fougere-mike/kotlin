@@ -271,4 +271,34 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testIoWorkerCollectionCaptureRejected() {
         runTest("ioWorkerCapture/collectionCaptureRejected.kt")
     }
+
+    @Test
+    fun testIoWorkerTopLevelAccessAccepted() {
+        runTest("ioWorkerCapture/topLevelAccessAccepted.kt")
+    }
+
+    @Test
+    fun testIoWorkerDifferentDispatcherAccepted() {
+        runTest("ioWorkerCapture/differentDispatcherAccepted.kt")
+    }
+
+    @Test
+    fun testIoWorkerSuppressedCapture() {
+        runTest("ioWorkerCapture/suppressedCapture.kt")
+    }
+
+    @Test
+    fun testIoWorkerNestedLambdaCaptureNotDetected() {
+        runTest("ioWorkerCapture/nestedLambdaCaptureNotDetected.kt")
+    }
+
+    @Test
+    fun testIoWorkerContextCompositionNotDetected() {
+        runTest("ioWorkerCapture/contextCompositionNotDetected.kt")
+    }
+
+    @Test
+    fun testIoWorkerRoArrayCaptureAccepted() {
+        runTest("ioWorkerCapture/roArrayCaptureAccepted.kt")
+    }
 }
