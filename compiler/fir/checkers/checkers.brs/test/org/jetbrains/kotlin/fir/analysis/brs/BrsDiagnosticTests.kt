@@ -251,4 +251,24 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testIoWorkerThisCaptureRejected() {
         runTest("ioWorkerCapture/thisCaptureRejected.kt")
     }
+
+    @Test
+    fun testIoWorkerNonSerializableLocalRejected() {
+        runTest("ioWorkerCapture/nonSerializableLocalRejected.kt")
+    }
+
+    @Test
+    fun testIoWorkerSerializableLocalsAccepted() {
+        runTest("ioWorkerCapture/serializableLocalsAccepted.kt")
+    }
+
+    @Test
+    fun testIoWorkerFunctionTypeCaptureRejected() {
+        runTest("ioWorkerCapture/functionTypeCaptureRejected.kt")
+    }
+
+    @Test
+    fun testIoWorkerCollectionCaptureRejected() {
+        runTest("ioWorkerCapture/collectionCaptureRejected.kt")
+    }
 }
