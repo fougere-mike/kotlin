@@ -131,6 +131,9 @@ object BrsStandardClassIds {
         val roSGNodeInterface = "RoSGNode".brsRokuId()
 
         @JvmField
+        val iSGNodeFieldInterface = "ISGNodeField".brsRokuId()
+
+        @JvmField
         val roSGScreenEventInterface = "RoSGScreenEvent".brsRokuId()
 
         @JvmField
@@ -417,6 +420,17 @@ object BrsStandardClassIds {
          */
         @JvmField
         val definedExternally = "definedExternally".callableId(BASE_BRS_PACKAGE)
+
+        // ==================== SceneGraph Callables ====================
+
+        @JvmField
+        val iSGNodeFieldAddField = CallableId(BuiltIns.iSGNodeFieldInterface, Name.identifier("addField"))
+
+        @JvmField
+        val roSGNodeAddField = CallableId(BuiltIns.roSGNodeInterface, Name.identifier("addField"))
+
+        @JvmField
+        val addFieldCallables: Set<CallableId> = setOf(iSGNodeFieldAddField, roSGNodeAddField)
 
         // ==================== Coroutine Callables ====================
 
