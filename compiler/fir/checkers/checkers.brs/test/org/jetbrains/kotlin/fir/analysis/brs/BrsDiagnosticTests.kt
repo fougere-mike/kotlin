@@ -301,4 +301,66 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testIoWorkerRoArrayCaptureAccepted() {
         runTest("ioWorkerCapture/roArrayCaptureAccepted.kt")
     }
+
+    // BRS_ONCHANGE_HANDLER_SIGNATURE — handler function must be zero-arg or single RoSGNodeEvent.
+
+    @Test
+    fun testBrsOnChangeHandlerSignatureZeroArgOk() {
+        runTest("brsOnChangeHandlerSignature/zeroArgHandlerOk.kt")
+    }
+
+    @Test
+    fun testBrsOnChangeHandlerSignatureOneArgRoSGNodeEventOk() {
+        runTest("brsOnChangeHandlerSignature/oneArgRoSGNodeEventOk.kt")
+    }
+
+    @Test
+    fun testBrsOnChangeHandlerSignatureOneArgNullableRoSGNodeEventOk() {
+        runTest("brsOnChangeHandlerSignature/oneArgNullableRoSGNodeEventOk.kt")
+    }
+
+    @Test
+    fun testBrsOnChangeHandlerSignatureOneArgWrongTypeRejected() {
+        runTest("brsOnChangeHandlerSignature/oneArgWrongTypeRejected.kt")
+    }
+
+    @Test
+    fun testBrsOnChangeHandlerSignatureOneArgStringRejected() {
+        runTest("brsOnChangeHandlerSignature/oneArgStringRejected.kt")
+    }
+
+    @Test
+    fun testBrsOnChangeHandlerSignatureTwoArgsRejected() {
+        runTest("brsOnChangeHandlerSignature/twoArgsRejected.kt")
+    }
+
+    @Test
+    fun testBrsOnChangeHandlerSignatureInheritedBadRejected() {
+        runTest("brsOnChangeHandlerSignature/inheritedHandlerWithBadSignatureRejected.kt")
+    }
+
+    @Test
+    fun testBrsOnChangeHandlerSignatureInheritedGoodOk() {
+        runTest("brsOnChangeHandlerSignature/inheritedHandlerWithGoodSignatureOk.kt")
+    }
+
+    @Test
+    fun testBrsOnChangeHandlerSignatureOverloadedOneGoodOk() {
+        runTest("brsOnChangeHandlerSignature/overloadedHandlerWithOneGoodOk.kt")
+    }
+
+    @Test
+    fun testBrsOnChangeHandlerSignatureSuppressedOk() {
+        runTest("brsOnChangeHandlerSignature/suppressedBadSignature.kt")
+    }
+
+    @Test
+    fun testBrsOnChangeHandlerSignatureNotFoundTakesPrecedence() {
+        runTest("brsOnChangeHandlerSignature/notFoundTakesPrecedence.kt")
+    }
+
+    @Test
+    fun testBrsOnChangeHandlerSignatureConventionPathSkipped() {
+        runTest("brsOnChangeHandlerSignature/conventionPathSkipped.kt")
+    }
 }
