@@ -452,6 +452,24 @@ object BrsStandardClassIds {
         @JvmField
         val getCoroutineContext = "getCoroutineContext".callableId(BASE_BRS_COROUTINES_PACKAGE)
     }
+
+    /**
+     * Valid canonical type-name strings for [Callables.createObject].
+     *
+     * Derived from [BuiltIns] short class names. Adding a new [BuiltIns] entry
+     * automatically extends the valid set.
+     */
+    @JvmField
+    val brsCreateObjectValidTypes: Set<String> = setOf(
+        BuiltIns.roArray, BuiltIns.roAssociativeArray, BuiltIns.roSGNode,
+        BuiltIns.roSGScreen, BuiltIns.roSGScreenEvent, BuiltIns.roSGNodeEvent,
+        BuiltIns.roString, BuiltIns.roInt, BuiltIns.roFloat, BuiltIns.roDouble,
+        BuiltIns.roBoolean, BuiltIns.roRegex, BuiltIns.roDateTime, BuiltIns.roTimespan,
+        BuiltIns.roByteArray, BuiltIns.roUrlTransfer, BuiltIns.roMessagePort,
+        BuiltIns.roInput, BuiltIns.roPath, BuiltIns.roFileSystem,
+        BuiltIns.roDeviceInfo, BuiltIns.roAppInfo, BuiltIns.roRegistry,
+        BuiltIns.roRegistrySection,
+    ).map { it.shortClassName.asString() }.toSet()
 }
 
 private fun String.brsId() = ClassId(BrsStandardClassIds.BASE_BRS_PACKAGE, Name.identifier(this))

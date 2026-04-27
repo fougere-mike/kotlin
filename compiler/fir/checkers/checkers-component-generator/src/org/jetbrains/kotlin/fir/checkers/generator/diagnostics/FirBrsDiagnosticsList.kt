@@ -51,6 +51,11 @@ object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
             parameter<String>("validTypes")
             isSuppressible = true
         }
+        val BRS_CREATE_OBJECT_INVALID_TYPE by error<KtElement> {
+            parameter<String>("actualType")
+            parameter<String>("validTypes")
+            isSuppressible = true
+        }
     }
 
     val IO_WORKER by object : DiagnosticGroup("IO worker extraction") {
