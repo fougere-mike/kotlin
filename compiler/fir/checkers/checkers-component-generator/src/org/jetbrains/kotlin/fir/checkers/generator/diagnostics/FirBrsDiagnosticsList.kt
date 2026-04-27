@@ -26,6 +26,11 @@ object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
             parameter<String>("peers")
             isSuppressible = true
         }
+        val BRS_INHERITED_NAME_CASE_CLASH by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
+            parameter<String>("firstName")
+            parameter<String>("secondName")
+            isSuppressible = true
+        }
     }
 
     val SCENEGRAPH by object : DiagnosticGroup("SceneGraph") {
