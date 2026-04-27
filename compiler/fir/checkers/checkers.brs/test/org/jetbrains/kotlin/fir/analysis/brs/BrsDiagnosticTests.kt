@@ -605,4 +605,34 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testBrsStaticSuppressedOneOfOverload() {
         runTest("brsStaticValidation/suppressedOneOfOverload.kt")
     }
+
+    @Test
+    fun testBrsStaticCrossFileTopLevelOverloadRejected() {
+        runTest("brsStaticValidation/crossFileTopLevelOverloadRejected.kt")
+    }
+
+    @Test
+    fun testBrsStaticCrossFileTripleOverloadRejected() {
+        runTest("brsStaticValidation/crossFileTripleOverloadRejected.kt")
+    }
+
+    @Test
+    fun testBrsStaticCrossFileMixedSameFileAndCrossFileRejected() {
+        runTest("brsStaticValidation/crossFileMixedSameFileAndCrossFileRejected.kt")
+    }
+
+    @Test
+    fun testBrsStaticCrossFileDifferentPackageOk() {
+        runTest("brsStaticValidation/crossFileDifferentPackageOk.kt")
+    }
+
+    @Test
+    fun testBrsStaticCrossFileOneAnnotatedOk() {
+        runTest("brsStaticValidation/crossFileOneAnnotatedOk.kt")
+    }
+
+    @Test
+    fun testBrsStaticCrossFileSuppressedOverload() {
+        runTest("brsStaticValidation/crossFileSuppressedOverload.kt")
+    }
 }
