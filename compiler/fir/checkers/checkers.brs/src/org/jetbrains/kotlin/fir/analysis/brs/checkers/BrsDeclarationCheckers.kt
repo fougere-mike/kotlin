@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.analysis.brs.checkers
 
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsConstantVarChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsIntrinsicUserDefinedChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsNameClashClassMembersChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsNameClashFileTopLevelDeclarationsChecker
@@ -25,6 +26,11 @@ object BrsDeclarationCheckers : DeclarationCheckers() {
         get() = setOf(
             FirBrsNameClashClassMembersChecker,
             FirBrsStaticClassChecker,
+        )
+
+    override val regularClassCheckers: Set<FirRegularClassChecker>
+        get() = setOf(
+            FirBrsConstantVarChecker,
         )
 
     override val propertyCheckers: Set<FirPropertyChecker>
