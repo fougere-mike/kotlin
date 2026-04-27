@@ -15,6 +15,7 @@ public interface ContinuationInterceptor : CoroutineContext.Element {
     /**
      * The key that defines *the* context interceptor.
      */
+    @Suppress("BRS_NAME_CASE_CLASH")
     public companion object Key : CoroutineContext.Key<ContinuationInterceptor>
 
     /**

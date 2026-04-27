@@ -27,6 +27,7 @@ public interface Job : CoroutineContext.Element {
     /**
      * Key for [Job] instance in the coroutine context.
      */
+    @Suppress("BRS_NAME_CASE_CLASH")
     public companion object Key : CoroutineContext.Key<Job>
 
     /**
