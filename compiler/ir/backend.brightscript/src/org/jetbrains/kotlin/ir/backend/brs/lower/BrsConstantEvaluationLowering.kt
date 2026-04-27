@@ -114,9 +114,14 @@ class BrsConstantEvaluationLowering(
                             }
                         }
                     } else {
+                        // Defense-in-depth: FIR's BRS_BRSCONSTANT_VAR is the primary diagnostic for
+                        // user source. This IR branch fires for klib-deserialized callers that bypass
+                        // FIR, or when the FIR diagnostic is @Suppress-ed at the property. The "[IR] "
+                        // prefix lets AbstractBrsDiagnosticTest's ignoredMessagePatterns filter this
+                        // message during fixture verification.
                         context.reportError(
                             declaration,
-                            "@BrsConstant objects cannot contain var properties. " +
+                            "[IR] @BrsConstant objects cannot contain var properties. " +
                             "Use val instead: ${declaration.name}"
                         )
                     }
