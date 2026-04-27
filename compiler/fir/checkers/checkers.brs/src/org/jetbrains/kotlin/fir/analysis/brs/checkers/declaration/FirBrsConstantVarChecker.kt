@@ -12,8 +12,10 @@ import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirRegularClassChecker
+import org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollector
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors
 import org.jetbrains.kotlin.fir.declarations.DirectDeclarationsAccess
+import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.getAnnotationByClassId
@@ -51,6 +53,7 @@ object FirBrsConstantVarChecker : FirRegularClassChecker(MppCheckerKind.Common) 
             if (member !is FirProperty) continue
             if (!member.isVar) continue
             if (member.source?.kind is KtFakeSourceElementKind) continue
+            if (member.isSuppressedByAnnotation("BRS_BRSCONSTANT_VAR")) continue
             reporter.reportOn(
                 member.source,
                 FirBrsErrors.BRS_BRSCONSTANT_VAR,
@@ -58,4 +61,10 @@ object FirBrsConstantVarChecker : FirRegularClassChecker(MppCheckerKind.Common) 
             )
         }
     }
+}
+
+private fun FirDeclaration.isSuppressedByAnnotation(diagnosticName: String): Boolean {
+    val suppressed = AbstractDiagnosticCollector.getDiagnosticsSuppressedForContainer(this) ?: return false
+    return diagnosticName in suppressed ||
+        AbstractDiagnosticCollector.SUPPRESS_ALL_ERRORS in suppressed
 }
