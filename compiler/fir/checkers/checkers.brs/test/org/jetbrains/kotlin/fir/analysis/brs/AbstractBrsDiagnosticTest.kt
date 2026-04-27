@@ -53,15 +53,40 @@ abstract class AbstractBrsDiagnosticTest {
 
         val rawSource = inputFile.readText()
         val (strippedSource, expected) = stripMarkers(rawSource)
+        val segments = splitMultiFile(strippedSource)
 
-        val tempSourceFile = File.createTempFile("brs-diag-", ".kt").apply {
-            writeText(strippedSource)
-            deleteOnExit()
+        val tempFiles = segments.map { (name, content) ->
+            File.createTempFile("brs-diag-${name.removeSuffix(".kt")}-", ".kt").apply {
+                writeText(content)
+                deleteOnExit()
+            }
         }
-        val actual = compileAndCollectDiagnostics(tempSourceFile)
-        tempSourceFile.delete()
+        val actual = compileAndCollectDiagnostics(tempFiles)
+        tempFiles.forEach { it.delete() }
 
         verify(testPath, expected, actual)
+    }
+
+    /**
+     * Splits stripped test source by `// FILE: <name>.kt` markers.
+     * If no marker is present, returns a single (synthetic) file using `default.kt`.
+     * Marker format mirrors upstream Kotlin diagnostic-test convention.
+     *
+     * Returns a list of (filename, fileSource) pairs; `// FILE:` lines are stripped
+     * from the segment they introduce.
+     */
+    private fun splitMultiFile(strippedSource: String): List<Pair<String, String>> {
+        val markerRegex = Regex("""^// FILE:\s*(\S+)\s*$""", RegexOption.MULTILINE)
+        val matches = markerRegex.findAll(strippedSource).toList()
+        if (matches.isEmpty()) return listOf("default.kt" to strippedSource)
+        val results = mutableListOf<Pair<String, String>>()
+        for ((index, match) in matches.withIndex()) {
+            val name = match.groupValues[1]
+            val start = match.range.last + 1
+            val end = if (index + 1 < matches.size) matches[index + 1].range.first else strippedSource.length
+            results += name to strippedSource.substring(start, end)
+        }
+        return results
     }
 
     /**
@@ -116,12 +141,12 @@ abstract class AbstractBrsDiagnosticTest {
      */
     protected data class Reported(val severity: CompilerMessageSeverity, val message: String, val line: Int?, val column: Int?)
 
-    private fun compileAndCollectDiagnostics(inputFile: File): List<Reported> {
+    private fun compileAndCollectDiagnostics(inputFiles: List<File>): List<Reported> {
         val tempOutputDir = createTempDir("brs-diag-test-")
         try {
             val compiler = K2BrsCompiler()
             val arguments = K2BrsCompilerArguments().apply {
-                freeArgs = listOf(inputFile.absolutePath)
+                freeArgs = inputFiles.map { it.absolutePath }
                 outputDir = tempOutputDir.absolutePath
                 if (STDLIB_KLIB.exists()) libraries = STDLIB_KLIB.absolutePath
             }
