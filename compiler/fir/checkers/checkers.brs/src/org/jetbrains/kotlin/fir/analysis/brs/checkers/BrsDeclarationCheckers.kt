@@ -9,17 +9,21 @@ import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsNameClas
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsNameClashFileTopLevelDeclarationsChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsOnChangeHandlerChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsSceneGraphFieldTypeChecker
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsStaticClassChecker
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsStaticOverloadFileChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.*
 
 object BrsDeclarationCheckers : DeclarationCheckers() {
     override val fileCheckers: Set<FirFileChecker>
         get() = setOf(
             FirBrsNameClashFileTopLevelDeclarationsChecker,
+            FirBrsStaticOverloadFileChecker,
         )
 
     override val classCheckers: Set<FirClassChecker>
         get() = setOf(
             FirBrsNameClashClassMembersChecker,
+            FirBrsStaticClassChecker,
         )
 
     override val propertyCheckers: Set<FirPropertyChecker>
