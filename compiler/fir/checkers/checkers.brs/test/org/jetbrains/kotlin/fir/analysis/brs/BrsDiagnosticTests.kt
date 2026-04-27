@@ -84,6 +84,11 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
         runTest("nameCaseClash/brsNameOverrideResolvesClashOk.kt")
     }
 
+    @Test
+    fun testNameCaseClashBrsNameOverrideCreatesClashRejected() {
+        runTest("nameCaseClash/brsNameOverrideCreatesClashRejected.kt")
+    }
+
     // BRS_SCENEGRAPH_FIELD_TYPE — property type must be compatible with its SG*Field annotation.
 
     @Test
