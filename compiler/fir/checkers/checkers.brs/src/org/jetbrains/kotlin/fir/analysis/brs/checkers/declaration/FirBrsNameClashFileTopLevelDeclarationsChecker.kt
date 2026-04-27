@@ -88,13 +88,13 @@ object FirBrsNameClashFileTopLevelDeclarationsChecker : FirFileChecker(MppChecke
 
             for (probe in probeNames) {
                 packageScope.processFunctionsByName(probe) { sym ->
-                    addPeerIfNotLocal(combined, seenSymbols, sym, localDeclarations, session)
+                    addPeerIfNotLocal(combined, seenSymbols, sym, localDeclarations, session, lowercase)
                 }
                 packageScope.processPropertiesByName(probe) { sym ->
-                    addPeerIfNotLocal(combined, seenSymbols, sym, localDeclarations, session)
+                    addPeerIfNotLocal(combined, seenSymbols, sym, localDeclarations, session, lowercase)
                 }
                 packageScope.processClassifiersByNameWithSubstitution(probe) { sym, _ ->
-                    addPeerIfNotLocal(combined, seenSymbols, sym, localDeclarations, session)
+                    addPeerIfNotLocal(combined, seenSymbols, sym, localDeclarations, session, lowercase)
                 }
             }
 
@@ -109,6 +109,7 @@ object FirBrsNameClashFileTopLevelDeclarationsChecker : FirFileChecker(MppChecke
         peerSymbol: FirBasedSymbol<*>,
         localDeclarations: Set<FirDeclaration>,
         session: FirSession,
+        expectedLowercase: String,
     ) {
         if (peerSymbol in seen) return
         seen += peerSymbol
@@ -116,6 +117,10 @@ object FirBrsNameClashFileTopLevelDeclarationsChecker : FirFileChecker(MppChecke
         if (peerDecl in localDeclarations) return
         if (!peerSymbol.origin.fromSource) return
         val peerName = peerDecl.effectiveBrsName(session) ?: return
+        // Only add this peer if its effective name actually lowercase-collides with
+        // the current bucket. A probe with Name("Foo") may return a declaration
+        // whose @BrsName-renamed effective name has a different lowercase.
+        if (peerName.lowercase() != expectedLowercase) return
         combined += peerDecl to peerName
     }
 }

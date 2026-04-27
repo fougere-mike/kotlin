@@ -104,6 +104,26 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
         runTest("nameCaseClash/crossFileTopLevelClashRejected.kt")
     }
 
+    @Test
+    fun testNameCaseClashCrossFileBrsNameOverrideOk() {
+        runTest("nameCaseClash/crossFileBrsNameOverrideOk.kt")
+    }
+
+    @Test
+    fun testNameCaseClashCrossFileSamePackageDifferentLowercaseOk() {
+        runTest("nameCaseClash/crossFileSamePackageDifferentLowercaseOk.kt")
+    }
+
+    @Test
+    fun testNameCaseClashCrossFileDifferentPackageOk() {
+        runTest("nameCaseClash/crossFileDifferentPackageOk.kt")
+    }
+
+    @Test
+    fun testNameCaseClashCrossFileSuppressed() {
+        runTest("nameCaseClash/crossFileSuppressedClash.kt")
+    }
+
     // BRS_SCENEGRAPH_FIELD_TYPE — property type must be compatible with its SG*Field annotation.
 
     @Test
