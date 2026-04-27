@@ -259,7 +259,7 @@ class BrsCompiler(
                         for (func in overloads) {
                             context.reportError(
                                 func,
-                                "@BrsStatic function '$name' cannot have overloads. " +
+                                "[IR] @BrsStatic function '$name' cannot have overloads. " +
                                 "Found ${overloads.size} functions with the same name in the same scope."
                             )
                         }
@@ -287,7 +287,7 @@ class BrsCompiler(
                             // @BrsStatic on a regular class member - error
                             context.reportError(
                                 declaration,
-                                "@BrsStatic is only valid on top-level functions, " +
+                                "[IR] @BrsStatic is only valid on top-level functions, " +
                                 "object members, or companion object members. " +
                                 "Found on member of class '${irClass.name.asString()}'."
                             )

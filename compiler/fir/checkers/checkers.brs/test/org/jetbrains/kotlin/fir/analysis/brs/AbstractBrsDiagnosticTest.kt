@@ -198,6 +198,10 @@ abstract class AbstractBrsDiagnosticTest {
         Regex("^Error in brs\\(\\) code:.*"),
         Regex("^brs\\(\\) argument parsed to no statements.*"),
         Regex("^brs\\(\\) must contain exactly one expression or statement.*"),
+        // IR-phase @BrsStatic validator fires when FIR suppresses the diagnostic (FIR suppression
+        // prevents COMPILATION_ERROR so IR lowering runs). IR messages are prefixed with "[IR] "
+        // to distinguish them from FIR-rendered messages.
+        Regex("^\\[IR] @BrsStatic.*"),
     )
 
     private fun verify(testPath: String, expected: List<Expected>, actual: List<Reported>) {

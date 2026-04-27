@@ -12,9 +12,11 @@ import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirClassChecker
+import org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollector
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors
 import org.jetbrains.kotlin.fir.declarations.DirectDeclarationsAccess
 import org.jetbrains.kotlin.fir.declarations.FirClass
+import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 import org.jetbrains.kotlin.fir.declarations.getAnnotationByClassId
@@ -57,11 +59,13 @@ object FirBrsStaticClassChecker : FirClassChecker(MppCheckerKind.Common) {
             if (member.source?.kind is KtFakeSourceElementKind) continue
             if (member.getAnnotationByClassId(BrsStandardClassIds.Annotations.BrsStatic, session) == null) continue
             if (!isValidContext) {
-                reporter.reportOn(
-                    member.source,
-                    FirBrsErrors.BRS_STATIC_INVALID_TARGET,
-                    className,
-                )
+                if (!member.isSuppressedByAnnotation("BRS_STATIC_INVALID_TARGET")) {
+                    reporter.reportOn(
+                        member.source,
+                        FirBrsErrors.BRS_STATIC_INVALID_TARGET,
+                        className,
+                    )
+                }
             } else {
                 staticFunctionsByName.getOrPut(member.name.asString()) { mutableListOf() }.add(member)
             }
@@ -73,8 +77,15 @@ object FirBrsStaticClassChecker : FirClassChecker(MppCheckerKind.Common) {
             if (overloads.size < 2) continue
             val countRendered = overloads.size.toString()
             for (func in overloads) {
+                if (func.isSuppressedByAnnotation("BRS_STATIC_OVERLOAD")) continue
                 reporter.reportOn(func.source, FirBrsErrors.BRS_STATIC_OVERLOAD, name, countRendered)
             }
         }
     }
+}
+
+private fun FirDeclaration.isSuppressedByAnnotation(diagnosticName: String): Boolean {
+    val suppressed = AbstractDiagnosticCollector.getDiagnosticsSuppressedForContainer(this) ?: return false
+    return diagnosticName in suppressed ||
+        AbstractDiagnosticCollector.SUPPRESS_ALL_ERRORS in suppressed
 }
