@@ -17,6 +17,8 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_ONCHAN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_ONCHANGE_HANDLER_SIGNATURE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCENEGRAPH_FIELD_CONFLICT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCENEGRAPH_FIELD_TYPE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_STATIC_INVALID_TARGET
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_STATIC_OVERLOAD
 
 @Suppress("unused")
 object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
@@ -61,6 +63,17 @@ object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE,
             "Captured ''{0}'' of type ''{1}'' cannot cross the Dispatchers.IO task thread boundary. " +
                 "Only primitives, String, RoArray, RoAssociativeArray, and Dynamic are serializable.",
+            CommonRenderers.STRING, CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_STATIC_INVALID_TARGET,
+            "@BrsStatic is only valid on top-level functions, object members, or companion object members. " +
+                "Found on member of class ''{0}''.",
+            CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_STATIC_OVERLOAD,
+            "@BrsStatic function ''{0}'' cannot have overloads. Found {1} functions with the same name in the same scope.",
             CommonRenderers.STRING, CommonRenderers.STRING,
         )
     }
