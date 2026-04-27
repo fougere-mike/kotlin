@@ -192,6 +192,7 @@ abstract class AbstractBrsDiagnosticTest {
     private val diagnosticRenderedMessages: Map<String, String> = mapOf(
         "BRS_INTRINSIC_LITERAL_REQUIRED" to "An argument for the 'brs()' function must be a compile-time constant string.",
         "BRS_NAME_CASE_CLASH" to "Name clashes with {0} at BrightScript runtime (BrightScript is case-insensitive).",
+        "BRS_INHERITED_NAME_CASE_CLASH" to "Inherited members '{0}' and '{1}' clash at BrightScript runtime (BrightScript is case-insensitive). Override one or suppress.",
         "BRS_SCENEGRAPH_FIELD_TYPE" to "{0} requires {1} property type, got {2}.",
         "BRS_SCENEGRAPH_FIELD_CONFLICT" to "Property has conflicting SceneGraph field annotations: {0}. Keep only one.",
         "BRS_ONCHANGE_HANDLER_NOT_FOUND" to "@BrsOnChange handler '{0}' not found in class '{1}'.",

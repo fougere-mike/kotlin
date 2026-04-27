@@ -124,6 +124,43 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
         runTest("nameCaseClash/crossFileSuppressedClash.kt")
     }
 
+    // BRS_NAME_CASE_CLASH — Path B: own-declared member vs. inherited member case clash.
+
+    @Test
+    fun testNameCaseClashInheritedMemberClash() {
+        runTest("nameCaseClash/inheritedMemberCaseClash.kt")
+    }
+
+    @Test
+    fun testNameCaseClashInheritedFunctionClash() {
+        runTest("nameCaseClash/inheritedFunctionCaseClash.kt")
+    }
+
+    @Test
+    fun testNameCaseClashInheritedFromInterface() {
+        runTest("nameCaseClash/inheritedFromInterface.kt")
+    }
+
+    @Test
+    fun testNameCaseClashInheritedTransitive() {
+        runTest("nameCaseClash/inheritedTransitive.kt")
+    }
+
+    @Test
+    fun testNameCaseClashInheritedExactNameOverrideOk() {
+        runTest("nameCaseClash/inheritedExactNameOverrideOk.kt")
+    }
+
+    @Test
+    fun testNameCaseClashInheritedNoClashOk() {
+        runTest("nameCaseClash/inheritedNoClashOk.kt")
+    }
+
+    @Test
+    fun testNameCaseClashInheritedClashSuppressed() {
+        runTest("nameCaseClash/inheritedClashSuppressed.kt")
+    }
+
     // BRS_SCENEGRAPH_FIELD_TYPE — property type must be compatible with its SG*Field annotation.
 
     @Test
@@ -755,5 +792,29 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     @Test
     fun testBrsConstantSuppressedVarProperty() {
         runTest("brsConstantVar/suppressedVarProperty.kt")
+    }
+
+    // BRS_INHERITED_NAME_CASE_CLASH — Path C: two inherited members (from base classes or interfaces)
+    // whose effective BRS names clash in case, and the user class declares neither.
+    // Reported on the user class source.
+
+    @Test
+    fun testInheritedNameCaseClashTwoBasesCaseClash() {
+        runTest("inheritedNameCaseClash/twoBasesCaseClash.kt")
+    }
+
+    @Test
+    fun testInheritedNameCaseClashTransitive() {
+        runTest("inheritedNameCaseClash/transitiveInheritedClash.kt")
+    }
+
+    @Test
+    fun testInheritedNameCaseClashUserOverrideResolvesOk() {
+        runTest("inheritedNameCaseClash/userOverrideResolvesAmbiguityOk.kt")
+    }
+
+    @Test
+    fun testInheritedNameCaseClashClassLevelSuppressed() {
+        runTest("inheritedNameCaseClash/inheritedClashClassLevelSuppressed.kt")
     }
 }
