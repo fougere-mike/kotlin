@@ -222,6 +222,11 @@ class BrsCompiler(
 
     /**
      * Validate all @BrsStatic annotations in the module.
+     *
+     * Defense-in-depth fallback for callers that bypass FIR (klib-deserialized
+     * dependencies, future build paths). The primary diagnostics are emitted at
+     * FIR by `FirBrsStaticOverloadFileChecker` and `FirBrsStaticClassChecker`.
+     *
      * Reports errors for:
      * - @BrsStatic on regular class members (only top-level, object, or companion object allowed)
      * - @BrsStatic on functions that have overloads (same name in same scope)
