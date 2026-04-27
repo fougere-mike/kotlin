@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_CREATE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_INTRINSIC_LITERAL_REQUIRED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_INTRINSIC_USER_DEFINED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_INHERITED_NAME_CASE_CLASH
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_NAME_CASE_CLASH
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_ONCHANGE_HANDLER_NOT_FOUND
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_ONCHANGE_HANDLER_SIGNATURE
@@ -36,6 +37,11 @@ object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             BRS_NAME_CASE_CLASH,
             "Name clashes with {0} at BrightScript runtime (BrightScript is case-insensitive).",
             CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_INHERITED_NAME_CASE_CLASH,
+            "Inherited members ''{0}'' and ''{1}'' clash at BrightScript runtime (BrightScript is case-insensitive). Override one or suppress.",
+            CommonRenderers.STRING, CommonRenderers.STRING,
         )
         map.put(
             BRS_SCENEGRAPH_FIELD_TYPE,
