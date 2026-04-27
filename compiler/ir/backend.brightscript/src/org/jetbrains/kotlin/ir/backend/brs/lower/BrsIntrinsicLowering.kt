@@ -93,15 +93,19 @@ class BrsIntrinsicLowering(
                     // We can't extract the function name from an anonymous class
                     context.reportError(
                         expression,
-                        "brsName() received transformed function reference (IrBlock). " +
+                        "[IR] brsName() received transformed function reference (IrBlock). " +
                         "BrsIntrinsicLowering must run before callable reference lowering."
                     )
                     null
                 }
                 else -> {
+                    // FIR-phase BRS_BRSNAME_REQUIRES_CALLABLE_REF is the primary diagnostic for
+                    // this case. This IR branch is defense-in-depth for klib-deserialized callers
+                    // that bypass FIR. The "[IR] " prefix lets the test harness filter it out when
+                    // the FIR diagnostic is suppressed (@Suppress("BRS_BRSNAME_REQUIRES_CALLABLE_REF")).
                     context.reportError(
                         expression,
-                        "brsName() requires a function reference (::functionName), got ${arg?.javaClass?.simpleName}"
+                        "[IR] brsName() requires a function reference (::functionName), got ${arg?.javaClass?.simpleName}"
                     )
                     null
                 }

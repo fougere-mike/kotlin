@@ -207,6 +207,7 @@ abstract class AbstractBrsDiagnosticTest {
                 "Found on member of class '{0}'.",
         "BRS_STATIC_OVERLOAD" to
             "@BrsStatic function '{0}' cannot have overloads. Found {1} functions with the same name in the same scope.",
+        "BRS_BRSNAME_REQUIRES_CALLABLE_REF" to "brsName() requires a function reference (::functionName), got '{0}'.",
     )
 
     /**
@@ -227,6 +228,8 @@ abstract class AbstractBrsDiagnosticTest {
         // prevents COMPILATION_ERROR so IR lowering runs). IR messages are prefixed with "[IR] "
         // to distinguish them from FIR-rendered messages.
         Regex("^\\[IR] @BrsStatic.*"),
+        // IR-phase brsName() validator fires when FIR BRS_BRSNAME_REQUIRES_CALLABLE_REF is suppressed.
+        Regex("^\\[IR] brsName\\(\\).*"),
     )
 
     private fun verify(testPath: String, expected: List<Expected>, actual: List<Reported>) {

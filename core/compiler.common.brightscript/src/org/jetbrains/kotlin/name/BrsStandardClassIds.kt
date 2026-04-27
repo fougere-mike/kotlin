@@ -416,6 +416,12 @@ object BrsStandardClassIds {
         val print = "print".callableId(BASE_BRS_PACKAGE)
 
         /**
+         * brsName(::ref) — extracts mangled BrightScript function name.
+         */
+        @JvmField
+        val brsName = "brsName".callableId(BASE_BRS_PACKAGE)
+
+        /**
          * Placeholder for externally defined values.
          */
         @JvmField

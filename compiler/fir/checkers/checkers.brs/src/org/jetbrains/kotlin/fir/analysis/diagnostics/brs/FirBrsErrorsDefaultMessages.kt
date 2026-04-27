@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactoryToRendererMap
 import org.jetbrains.kotlin.diagnostics.rendering.BaseDiagnosticRendererFactory
 import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_ADDFIELD_INVALID_TYPE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_BRSNAME_REQUIRES_CALLABLE_REF
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_CREATE_OBJECT_INVALID_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_INTRINSIC_LITERAL_REQUIRED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE
@@ -75,6 +76,11 @@ object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             BRS_STATIC_OVERLOAD,
             "@BrsStatic function ''{0}'' cannot have overloads. Found {1} functions with the same name in the same scope.",
             CommonRenderers.STRING, CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_BRSNAME_REQUIRES_CALLABLE_REF,
+            "brsName() requires a function reference (::functionName), got ''{0}''.",
+            CommonRenderers.STRING,
         )
     }
 }

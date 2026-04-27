@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsAddFieldT
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsCreateObjectTypeChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsIOWorkerCaptureChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsIntrinsicArgChecker
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsNameCallableRefChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.*
 
 object BrsExpressionCheckers : ExpressionCheckers() {
@@ -18,5 +19,6 @@ object BrsExpressionCheckers : ExpressionCheckers() {
             FirBrsIOWorkerCaptureChecker,
             FirBrsAddFieldTypeChecker,
             FirBrsCreateObjectTypeChecker,
+            FirBrsNameCallableRefChecker,
         )
 }

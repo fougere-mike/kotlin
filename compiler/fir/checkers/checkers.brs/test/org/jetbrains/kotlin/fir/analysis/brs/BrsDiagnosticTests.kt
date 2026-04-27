@@ -635,4 +635,53 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testBrsStaticCrossFileSuppressedOverload() {
         runTest("brsStaticValidation/crossFileSuppressedOverload.kt")
     }
+
+    // BRS_BRSNAME_REQUIRES_CALLABLE_REF — brsName() requires a syntactic ::ref argument.
+    // Passes for direct, qualified, bound, and constructor references.
+    // Fires for lambdas, stored refs, function call results, and function-typed parameters.
+
+    @Test
+    fun testBrsNameTopLevelRefOk() {
+        runTest("brsNameRequiresCallableRef/topLevelRefOk.kt")
+    }
+
+    @Test
+    fun testBrsNameQualifiedRefOk() {
+        runTest("brsNameRequiresCallableRef/qualifiedRefOk.kt")
+    }
+
+    @Test
+    fun testBrsNameBoundRefOk() {
+        runTest("brsNameRequiresCallableRef/boundRefOk.kt")
+    }
+
+    @Test
+    fun testBrsNameConstructorRefOk() {
+        runTest("brsNameRequiresCallableRef/constructorRefOk.kt")
+    }
+
+    @Test
+    fun testBrsNameLambdaRejected() {
+        runTest("brsNameRequiresCallableRef/lambdaRejected.kt")
+    }
+
+    @Test
+    fun testBrsNameStoredRefRejected() {
+        runTest("brsNameRequiresCallableRef/storedRefRejected.kt")
+    }
+
+    @Test
+    fun testBrsNameFunctionCallResultRejected() {
+        runTest("brsNameRequiresCallableRef/functionCallResultRejected.kt")
+    }
+
+    @Test
+    fun testBrsNameParameterRefRejected() {
+        runTest("brsNameRequiresCallableRef/parameterRefRejected.kt")
+    }
+
+    @Test
+    fun testBrsNameSuppressedNonRef() {
+        runTest("brsNameRequiresCallableRef/suppressedNonRef.kt")
+    }
 }
