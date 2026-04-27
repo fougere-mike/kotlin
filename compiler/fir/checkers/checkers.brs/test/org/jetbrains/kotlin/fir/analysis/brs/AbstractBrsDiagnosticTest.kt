@@ -177,6 +177,11 @@ abstract class AbstractBrsDiagnosticTest {
                 "Only primitives, String, RoArray, RoAssociativeArray, and Dynamic are serializable.",
         "BRS_ADDFIELD_INVALID_TYPE" to "'{0}' is not a valid SceneGraph field type for addField(). Valid types: {1}.",
         "BRS_CREATE_OBJECT_INVALID_TYPE" to "'{0}' is not a valid BrightScript object type for createObject(). Valid types: {1}.",
+        "BRS_STATIC_INVALID_TARGET" to
+            "@BrsStatic is only valid on top-level functions, object members, or companion object members. " +
+                "Found on member of class '{0}'.",
+        "BRS_STATIC_OVERLOAD" to
+            "@BrsStatic function '{0}' cannot have overloads. Found {1} functions with the same name in the same scope.",
     )
 
     /**

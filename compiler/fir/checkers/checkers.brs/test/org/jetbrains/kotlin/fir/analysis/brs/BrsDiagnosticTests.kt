@@ -469,4 +469,95 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testCreateObjectSuppressedInvalidType() {
         runTest("createObjectInvalidType/suppressedInvalidType.kt")
     }
+
+    // BRS_STATIC_INVALID_TARGET / BRS_STATIC_OVERLOAD — @BrsStatic annotation validation.
+    // Two checkers: FirBrsStaticOverloadFileChecker (top-level scope) +
+    // FirBrsStaticClassChecker (object/companion/regular-class scope).
+    // Annotation-target filtering is upstream (@Target(FUNCTION)); these checkers
+    // only see function targets.
+
+    @Test
+    fun testBrsStaticTopLevelOk() {
+        runTest("brsStaticValidation/topLevelOk.kt")
+    }
+
+    @Test
+    fun testBrsStaticObjectMemberOk() {
+        runTest("brsStaticValidation/objectMemberOk.kt")
+    }
+
+    @Test
+    fun testBrsStaticCompanionMemberOk() {
+        runTest("brsStaticValidation/companionMemberOk.kt")
+    }
+
+    @Test
+    fun testBrsStaticDifferentScopesOk() {
+        runTest("brsStaticValidation/differentScopesOk.kt")
+    }
+
+    @Test
+    fun testBrsStaticNonStaticOverloadOk() {
+        runTest("brsStaticValidation/nonStaticOverloadOk.kt")
+    }
+
+    @Test
+    fun testBrsStaticMixedAnnotatedAndNotOk() {
+        runTest("brsStaticValidation/mixedAnnotatedAndNotOk.kt")
+    }
+
+    @Test
+    fun testBrsStaticRegularClassMemberRejected() {
+        runTest("brsStaticValidation/regularClassMemberRejected.kt")
+    }
+
+    @Test
+    fun testBrsStaticAbstractClassMemberRejected() {
+        runTest("brsStaticValidation/abstractClassMemberRejected.kt")
+    }
+
+    @Test
+    fun testBrsStaticInterfaceMemberRejected() {
+        runTest("brsStaticValidation/interfaceMemberRejected.kt")
+    }
+
+    @Test
+    fun testBrsStaticNestedRegularClassRejected() {
+        runTest("brsStaticValidation/nestedRegularClassRejected.kt")
+    }
+
+    @Test
+    fun testBrsStaticTopLevelOverloadRejected() {
+        runTest("brsStaticValidation/topLevelOverloadRejected.kt")
+    }
+
+    @Test
+    fun testBrsStaticObjectOverloadRejected() {
+        runTest("brsStaticValidation/objectOverloadRejected.kt")
+    }
+
+    @Test
+    fun testBrsStaticCompanionOverloadRejected() {
+        runTest("brsStaticValidation/companionOverloadRejected.kt")
+    }
+
+    @Test
+    fun testBrsStaticTripleOverloadRejected() {
+        runTest("brsStaticValidation/tripleOverloadRejected.kt")
+    }
+
+    @Test
+    fun testBrsStaticSuppressedInvalidTarget() {
+        runTest("brsStaticValidation/suppressedInvalidTarget.kt")
+    }
+
+    @Test
+    fun testBrsStaticSuppressedOverload() {
+        runTest("brsStaticValidation/suppressedOverload.kt")
+    }
+
+    @Test
+    fun testBrsStaticSuppressedOneOfOverload() {
+        runTest("brsStaticValidation/suppressedOneOfOverload.kt")
+    }
 }
