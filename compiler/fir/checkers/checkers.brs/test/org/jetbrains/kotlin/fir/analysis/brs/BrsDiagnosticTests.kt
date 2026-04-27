@@ -410,4 +410,63 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testAddFieldSuppressedInvalidType() {
         runTest("addFieldInvalidType/suppressedInvalidType.kt")
     }
+
+    // BRS_CREATE_OBJECT_INVALID_TYPE — FIR-phase validation for kotlin.brs.createObject(type, ...) call site.
+    // Literal-required-narrow: only fires when type is a compile-time constant string.
+    // Case policy: exact canonical match ("roArray" accepted; "RoArray", "roarray", "ROARRAY" rejected).
+
+    @Test
+    fun testCreateObjectLiteralOk() {
+        runTest("createObjectInvalidType/literalOk.kt")
+    }
+
+    @Test
+    fun testCreateObjectNamedArgOk() {
+        runTest("createObjectInvalidType/namedArgOk.kt")
+    }
+
+    @Test
+    fun testCreateObjectPositionalArgsOk() {
+        runTest("createObjectInvalidType/positionalArgsOk.kt")
+    }
+
+    @Test
+    fun testCreateObjectNonLiteralTypeOk() {
+        runTest("createObjectInvalidType/nonLiteralTypeOk.kt")
+    }
+
+    @Test
+    fun testCreateObjectConstValOk() {
+        runTest("createObjectInvalidType/constValOk.kt")
+    }
+
+    @Test
+    fun testCreateObjectUnknownTypeRejected() {
+        runTest("createObjectInvalidType/unknownTypeRejected.kt")
+    }
+
+    @Test
+    fun testCreateObjectCapitalisedRejected() {
+        runTest("createObjectInvalidType/capitalisedRejected.kt")
+    }
+
+    @Test
+    fun testCreateObjectUppercasedRejected() {
+        runTest("createObjectInvalidType/uppercasedRejected.kt")
+    }
+
+    @Test
+    fun testCreateObjectLowercasedRejected() {
+        runTest("createObjectInvalidType/lowercasedRejected.kt")
+    }
+
+    @Test
+    fun testCreateObjectConstValMismatch() {
+        runTest("createObjectInvalidType/constValMismatch.kt")
+    }
+
+    @Test
+    fun testCreateObjectSuppressedInvalidType() {
+        runTest("createObjectInvalidType/suppressedInvalidType.kt")
+    }
 }
