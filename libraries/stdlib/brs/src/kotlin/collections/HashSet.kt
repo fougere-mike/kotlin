@@ -221,7 +221,7 @@ public fun <T> setOf(vararg elements: T): Set<T> =
 /**
  * Returns an empty read-only set.
  */
-@Suppress("UNCHECKED_CAST")
+@Suppress("BRS_NAME_CASE_CLASH", "UNCHECKED_CAST")
 public fun <T> emptySet(): Set<T> = EmptyHashSet as Set<T>
 
 /**

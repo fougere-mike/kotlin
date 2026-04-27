@@ -17,6 +17,7 @@ package kotlin
 // Core Exception Hierarchy
 // ============================================
 
+@Suppress("BRS_NAME_CASE_CLASH")
 public open class Error : Throwable {
     public constructor() : super()
     public constructor(message: String?) : super(message)

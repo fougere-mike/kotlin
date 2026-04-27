@@ -12,6 +12,7 @@ package kotlin.sequences
  * Sequences can be iterated multiple times, however some sequence implementations might constrain themselves
  * to be iterated only once. That is mentioned specifically in their documentation (e.g. [constrainOnce]).
  */
+@Suppress("BRS_NAME_CASE_CLASH")
 public interface Sequence<out T> {
     /**
      * Returns an [Iterator] that returns the values from the sequence.

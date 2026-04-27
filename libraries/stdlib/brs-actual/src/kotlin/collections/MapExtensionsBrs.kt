@@ -8,6 +8,7 @@ package kotlin.collections
 /**
  * Allows to use the index operator for storing values in a mutable map.
  */
+@Suppress("BRS_NAME_CASE_CLASH")
 public operator fun <K, V> MutableMap<K, V>.set(key: K, value: V) {
     put(key, value)
 }

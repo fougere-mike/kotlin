@@ -97,6 +97,7 @@ public actual interface MutableList<E> : List<E>, MutableCollection<E> {
  * A generic unordered collection of unique elements.
  * @param E the type of elements contained in the set. The set is covariant in its element type.
  */
+@Suppress("BRS_NAME_CASE_CLASH")
 public actual interface Set<out E> : Collection<E> {
     actual override val size: Int
     actual override fun isEmpty(): Boolean
@@ -124,6 +125,7 @@ public actual interface MutableSet<E> : Set<E>, MutableCollection<E> {
  * @param K the type of map keys. The map is invariant in its key type.
  * @param V the type of map values. The map is covariant in its value type.
  */
+@Suppress("BRS_NAME_CASE_CLASH")
 public actual interface Map<K, out V> {
     public actual val size: Int
     public actual fun isEmpty(): Boolean

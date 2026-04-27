@@ -28,6 +28,7 @@ public inline fun <T> Iterable<T>.forEachIndexed(action: (index: Int, T) -> Unit
  * Returns a list containing the results of applying the given [transform] function
  * to each element in the original collection.
  */
+@Suppress("BRS_NAME_CASE_CLASH")
 public inline fun <T, R> Iterable<T>.map(transform: (T) -> R): List<R> {
     val result = ArrayList<R>()
     for (item in this) {

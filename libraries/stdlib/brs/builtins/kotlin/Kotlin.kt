@@ -273,12 +273,14 @@ public actual fun Float.Companion.fromBits(bits: Int): Float {
  * Creates a new instance of the [Lazy] that uses the specified initialization function.
  * In BrightScript, there's no multi-threading, so thread-safety mode is ignored.
  */
+@Suppress("BRS_NAME_CASE_CLASH")
 public actual fun <T> lazy(initializer: () -> T): Lazy<T> = UnsafeLazyImpl(initializer)
 
 /**
  * Creates a new instance of the [Lazy] with the specified thread-safety mode.
  * In BrightScript, there's no multi-threading, so mode is ignored.
  */
+@Suppress("BRS_NAME_CASE_CLASH")
 public actual fun <T> lazy(mode: LazyThreadSafetyMode, initializer: () -> T): Lazy<T> =
     UnsafeLazyImpl(initializer)
 
@@ -286,6 +288,7 @@ public actual fun <T> lazy(mode: LazyThreadSafetyMode, initializer: () -> T): La
  * Creates a new instance of the [Lazy] with a lock parameter.
  * The lock is ignored in BrightScript.
  */
+@Suppress("BRS_NAME_CASE_CLASH")
 @Deprecated("Synchronization on Any? object is supported only in Kotlin/JVM.", ReplaceWith("lazy(initializer)"))
 @DeprecatedSinceKotlin(warningSince = "1.9", errorSince = "2.1")
 public actual fun <T> lazy(lock: Any?, initializer: () -> T): Lazy<T> = UnsafeLazyImpl(initializer)

@@ -19,7 +19,7 @@ internal fun throwUninitializedPropertyAccessException(name: String): Nothing =
 internal fun throwKotlinNothingValueException(): Nothing =
     throw KotlinNothingValueException()
 
-@Suppress("DEPRECATION_ERROR")
+@Suppress("BRS_NAME_CASE_CLASH", "DEPRECATION_ERROR")
 internal fun noWhenBranchMatchedException(): Nothing =
     throw NoWhenBranchMatchedException()
 

@@ -10,6 +10,7 @@ package kotlin
  *
  * To create an instance of [Lazy] use the [lazy] function.
  */
+@Suppress("BRS_NAME_CASE_CLASH")
 public interface Lazy<out T> {
     /**
      * Gets the lazily initialized value of the current Lazy instance.

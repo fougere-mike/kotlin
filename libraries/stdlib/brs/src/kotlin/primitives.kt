@@ -181,6 +181,7 @@ public inline fun check(value: Boolean, lazyMessage: () -> Any) {
 /**
  * Throws an [IllegalStateException] with the given [message].
  */
+@Suppress("BRS_NAME_CASE_CLASH")
 public fun error(message: Any): Nothing = throw IllegalStateException(message.toString())
 
 // ============================================
