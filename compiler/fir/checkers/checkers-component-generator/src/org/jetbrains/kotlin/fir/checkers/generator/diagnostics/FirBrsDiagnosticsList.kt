@@ -65,4 +65,16 @@ object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
             isSuppressible = true
         }
     }
+
+    val STATIC by object : DiagnosticGroup("@BrsStatic") {
+        val BRS_STATIC_INVALID_TARGET by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
+            parameter<String>("className")
+            isSuppressible = true
+        }
+        val BRS_STATIC_OVERLOAD by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
+            parameter<String>("name")
+            parameter<String>("count")
+            isSuppressible = true
+        }
+    }
 }
