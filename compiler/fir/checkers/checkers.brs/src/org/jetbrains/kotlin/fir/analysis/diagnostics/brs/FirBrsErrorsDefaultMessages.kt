@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactoryToRendererMap
 import org.jetbrains.kotlin.diagnostics.rendering.BaseDiagnosticRendererFactory
 import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_ADDFIELD_INVALID_TYPE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_BRSCONSTANT_VAR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_BRSNAME_REQUIRES_CALLABLE_REF
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_CREATE_OBJECT_INVALID_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_INTRINSIC_LITERAL_REQUIRED
@@ -86,6 +87,11 @@ object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(
             BRS_BRSNAME_REQUIRES_CALLABLE_REF,
             "brsName() requires a function reference (::functionName), got ''{0}''.",
+            CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_BRSCONSTANT_VAR,
+            "@BrsConstant objects cannot contain var properties. Use val instead: ''{0}''.",
             CommonRenderers.STRING,
         )
     }
