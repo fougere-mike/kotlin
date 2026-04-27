@@ -15,8 +15,8 @@ import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 
 /**
  * Reports `BRS_NAME_CASE_CLASH` when two or more directly-declared members of
- * a class/interface/object have Kotlin names that differ in case but are
- * equal after `lowercase()`.
+ * a class/interface/object have effective BrightScript names that differ in
+ * case but are equal after `lowercase()`.
  *
  * Only walks directly-declared members. Inherited-member and fake-override
  * case-clash detection is a known follow-up (would require walking the
@@ -26,11 +26,12 @@ import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 object FirBrsNameClashClassMembersChecker : FirClassChecker(MppCheckerKind.Common) {
     context(context: CheckerContext, reporter: DiagnosticReporter)
     override fun check(declaration: FirClass) {
-        val groupedByLowercase = mutableMapOf<String, MutableList<FirDeclaration>>()
+        val session = context.session
+        val groupedByLowercase = mutableMapOf<String, MutableList<Pair<FirDeclaration, String>>>()
         @OptIn(DirectDeclarationsAccess::class)
         for (member in declaration.declarations) {
-            val name = member.caseClashName() ?: continue
-            groupedByLowercase.getOrPut(name.asString().lowercase()) { mutableListOf() }.add(member)
+            val name = member.effectiveBrsName(session) ?: continue
+            groupedByLowercase.getOrPut(name.lowercase()) { mutableListOf() }.add(member to name)
         }
         for (group in groupedByLowercase.values) {
             reportCaseClashes(group)

@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirFileChecker
@@ -19,18 +20,24 @@ import org.jetbrains.kotlin.fir.declarations.FirClassLikeDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirFile
+import org.jetbrains.kotlin.fir.declarations.getAnnotationByClassId
+import org.jetbrains.kotlin.fir.declarations.getStringArgument
+import org.jetbrains.kotlin.name.BrsStandardClassIds
 import org.jetbrains.kotlin.name.Name
 
 /**
  * Reports `BRS_NAME_CASE_CLASH` when two or more top-level declarations in the
- * same file have Kotlin names that differ in case but are equal after
- * `lowercase()` — these silently collide at BrightScript runtime because
+ * same file have effective BrightScript names that differ in case but are equal
+ * after `lowercase()` — these silently collide at BrightScript runtime because
  * BrightScript identifiers are case-insensitive.
+ *
+ * Effective name = `@BrsName("x")` override if present and non-blank, else the
+ * Kotlin identifier. This matches the IR backend's `getBrsName(...)` resolution.
  *
  * Skips:
  *  - Declarations with fake source kinds (compiler-synthesized: data-class
  *    members, expect/actual synthesis).
- *  - Groups where every Kotlin name is identical (those are handled by
+ *  - Groups where every effective name is identical (those are handled by
  *    upstream `REDECLARATION` / `CONFLICTING_OVERLOADS`).
  *
  * Cross-file package-scope collisions are a known follow-up — they require
@@ -39,11 +46,12 @@ import org.jetbrains.kotlin.name.Name
 object FirBrsNameClashFileTopLevelDeclarationsChecker : FirFileChecker(MppCheckerKind.Common) {
     context(context: CheckerContext, reporter: DiagnosticReporter)
     override fun check(declaration: FirFile) {
-        val groupedByLowercase = mutableMapOf<String, MutableList<FirDeclaration>>()
+        val session = context.session
+        val groupedByLowercase = mutableMapOf<String, MutableList<Pair<FirDeclaration, String>>>()
         @OptIn(DirectDeclarationsAccess::class)
         for (member in declaration.declarations) {
-            val name = member.caseClashName() ?: continue
-            groupedByLowercase.getOrPut(name.asString().lowercase()) { mutableListOf() }.add(member)
+            val name = member.effectiveBrsName(session) ?: continue
+            groupedByLowercase.getOrPut(name.lowercase()) { mutableListOf() }.add(member to name)
         }
         for (group in groupedByLowercase.values) {
             reportCaseClashes(group)
@@ -51,32 +59,35 @@ object FirBrsNameClashFileTopLevelDeclarationsChecker : FirFileChecker(MppChecke
     }
 }
 
+private val BRS_NAME_ARG = Name.identifier("name")
+
 /**
- * Extracts the Kotlin name used for case-clash grouping, or null if the
+ * Returns the effective BrightScript name for case-clash grouping, or null if the
  * declaration should be skipped (no name, synthetic, or special).
  *
- * Constructors are skipped: FirConstructor symbols carry the enclosing
- * class's identifier as their name (not `<init>`), which would cause a
- * class's primary constructor to collide with a same-lowercase member inside
- * the class body (e.g., `class SubList` with `fun subList()`). Constructors
- * aren't independent name-holders at BrightScript runtime — they're invoked
- * through the class name itself.
+ * If `@BrsName("x")` is present and non-blank, returns `x` (the emitted BRS name).
+ * Otherwise returns the Kotlin identifier. Constructors are skipped: they are
+ * invoked through the class name and are not independent name-holders at BRS runtime.
  */
-internal fun FirDeclaration.caseClashName(): Name? {
+internal fun FirDeclaration.effectiveBrsName(session: FirSession): String? {
     if (source?.kind is KtFakeSourceElementKind) return null
     if (this is FirConstructor) return null
-    val name = when (this) {
+    val kotlinName = when (this) {
         is FirCallableDeclaration -> symbol.name
         is FirClassLikeDeclaration -> symbol.name
         else -> return null
     }
-    return name.takeUnless { it.isSpecial }
+    if (kotlinName.isSpecial) return null
+    val annotation = getAnnotationByClassId(BrsStandardClassIds.Annotations.BrsName, session)
+    val override = annotation?.getStringArgument(BRS_NAME_ARG, session)
+    if (!override.isNullOrBlank()) return override
+    return kotlinName.asString()
 }
 
 /**
- * Reports `BRS_NAME_CASE_CLASH` on each member of `group` whose Kotlin name
- * has at least one peer with a *different* Kotlin name. Groups where every
- * Kotlin name is identical are left for upstream `REDECLARATION` /
+ * Reports `BRS_NAME_CASE_CLASH` on each member of `group` whose effective BRS name
+ * has at least one peer with a *different* effective name. Groups where every
+ * effective name is identical are left for upstream `REDECLARATION` /
  * `CONFLICTING_OVERLOADS` to handle.
  *
  * The visitor's `@Suppress` context is active at the enclosing file/class
@@ -85,12 +96,11 @@ internal fun FirDeclaration.caseClashName(): Name? {
  * member's own annotations for `BRS_NAME_CASE_CLASH` explicitly.
  */
 context(reporter: DiagnosticReporter, context: CheckerContext)
-internal fun reportCaseClashes(group: List<FirDeclaration>) {
+internal fun reportCaseClashes(group: List<Pair<FirDeclaration, String>>) {
     if (group.size < 2) return
-    val distinctNames = group.mapNotNull { it.caseClashName()?.asString() }.distinct()
+    val distinctNames = group.map { it.second }.distinct()
     if (distinctNames.size < 2) return
-    for (member in group) {
-        val myName = member.caseClashName()?.asString() ?: continue
+    for ((member, myName) in group) {
         val peers = distinctNames.filter { it != myName }
         if (peers.isEmpty()) continue
         if (member.isSuppressedByAnnotation("BRS_NAME_CASE_CLASH")) continue
