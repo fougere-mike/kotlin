@@ -210,6 +210,7 @@ abstract class AbstractBrsDiagnosticTest {
         "BRS_BRSNAME_REQUIRES_CALLABLE_REF" to "brsName() requires a function reference (::functionName), got '{0}'.",
         "BRS_INTRINSIC_USER_DEFINED" to
             "@BrsIntrinsic is reserved for the BrightScript stdlib. Function '{0}' cannot be marked as an intrinsic.",
+        "BRS_BRSCONSTANT_VAR" to "@BrsConstant objects cannot contain var properties. Use val instead: '{0}'.",
     )
 
     /**
@@ -232,6 +233,9 @@ abstract class AbstractBrsDiagnosticTest {
         Regex("^\\[IR] @BrsStatic.*"),
         // IR-phase brsName() validator fires when FIR BRS_BRSNAME_REQUIRES_CALLABLE_REF is suppressed.
         Regex("^\\[IR] brsName\\(\\).*"),
+        // IR-phase @BrsConstant validator fires when FIR BRS_BRSCONSTANT_VAR is suppressed
+        // (FIR suppression prevents COMPILATION_ERROR so IR lowering still runs).
+        Regex("^\\[IR] @BrsConstant.*"),
     )
 
     private fun verify(testPath: String, expected: List<Expected>, actual: List<Reported>) {

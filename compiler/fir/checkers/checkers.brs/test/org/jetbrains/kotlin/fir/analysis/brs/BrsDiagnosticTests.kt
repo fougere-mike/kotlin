@@ -718,4 +718,42 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testBrsIntrinsicUserDefinedSuppressed() {
         runTest("brsIntrinsicUserDefined/suppressedUserDefined.kt")
     }
+
+    // BRS_BRSCONSTANT_VAR — `var` properties inside @BrsConstant objects are inlined
+    // at compile time and cannot be mutable.
+
+    @Test
+    fun testBrsConstantVarPropertyRejected() {
+        runTest("brsConstantVar/varPropertyRejected.kt")
+    }
+
+    @Test
+    fun testBrsConstantMultipleVarsAllRejected() {
+        runTest("brsConstantVar/multipleVarsAllRejected.kt")
+    }
+
+    @Test
+    fun testBrsConstantMixedValVar() {
+        runTest("brsConstantVar/mixedValVar.kt")
+    }
+
+    @Test
+    fun testBrsConstantValOnlyOk() {
+        runTest("brsConstantVar/valOnlyOk.kt")
+    }
+
+    @Test
+    fun testBrsConstantNonAnnotatedObjectOk() {
+        runTest("brsConstantVar/nonAnnotatedObjectOk.kt")
+    }
+
+    @Test
+    fun testBrsConstantRegularClassWithVarOk() {
+        runTest("brsConstantVar/regularClassWithVarOk.kt")
+    }
+
+    @Test
+    fun testBrsConstantSuppressedVarProperty() {
+        runTest("brsConstantVar/suppressedVarProperty.kt")
+    }
 }
