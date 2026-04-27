@@ -250,6 +250,14 @@ object BrsStandardClassIds {
         @JvmField
         val BrsConstant = "BrsConstant".brsId()
 
+        /**
+         * Marks a function as a BrightScript intrinsic.
+         * Reserved for stdlib use only — user-defined functions carrying this annotation
+         * are reported as BRS_INTRINSIC_USER_DEFINED.
+         */
+        @JvmField
+        val BrsIntrinsic = "BrsIntrinsic".brsId()
+
         // ==================== Type-Safe SceneGraph Field Annotations ====================
 
         /** Marks a property as a SceneGraph string field. */

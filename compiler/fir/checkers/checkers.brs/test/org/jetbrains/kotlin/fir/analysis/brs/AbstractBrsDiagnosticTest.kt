@@ -208,6 +208,8 @@ abstract class AbstractBrsDiagnosticTest {
         "BRS_STATIC_OVERLOAD" to
             "@BrsStatic function '{0}' cannot have overloads. Found {1} functions with the same name in the same scope.",
         "BRS_BRSNAME_REQUIRES_CALLABLE_REF" to "brsName() requires a function reference (::functionName), got '{0}'.",
+        "BRS_INTRINSIC_USER_DEFINED" to
+            "@BrsIntrinsic is reserved for the BrightScript stdlib. Function '{0}' cannot be marked as an intrinsic.",
     )
 
     /**

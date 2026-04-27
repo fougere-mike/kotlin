@@ -15,6 +15,10 @@ import org.jetbrains.kotlin.util.PrivateForInline
 object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
     val INTRINSICS by object : DiagnosticGroup("Intrinsics") {
         val BRS_INTRINSIC_LITERAL_REQUIRED by error<KtElement>()
+        val BRS_INTRINSIC_USER_DEFINED by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
+            parameter<String>("functionName")
+            isSuppressible = true
+        }
     }
 
     val NAME_CASE_CLASH by object : DiagnosticGroup("Name case clashes") {

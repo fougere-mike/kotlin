@@ -13,6 +13,7 @@ import kotlin.brs.BrsIntrinsic
  * This is an intrinsic that generates: comparator.compare_AnyN_AnyN_k_(a, b)
  * Works around closure capture issues with method calls.
  */
+@Suppress("BRS_INTRINSIC_USER_DEFINED")
 @BrsIntrinsic("brsIntrinsicCallComparator")
 private external fun <T> brsInvokeComparator(comparator: Comparator<in T>, a: T, b: T): Int
 

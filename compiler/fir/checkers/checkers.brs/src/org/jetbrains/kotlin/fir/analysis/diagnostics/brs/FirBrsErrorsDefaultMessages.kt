@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_ADDFIE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_BRSNAME_REQUIRES_CALLABLE_REF
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_CREATE_OBJECT_INVALID_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_INTRINSIC_LITERAL_REQUIRED
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_INTRINSIC_USER_DEFINED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_NAME_CASE_CLASH
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_ONCHANGE_HANDLER_NOT_FOUND
@@ -25,6 +26,11 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_STATIC
 object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
     override val MAP: KtDiagnosticFactoryToRendererMap by KtDiagnosticFactoryToRendererMap("FIR") { map ->
         map.put(BRS_INTRINSIC_LITERAL_REQUIRED, "An argument for the 'brs()' function must be a compile-time constant string.")
+        map.put(
+            BRS_INTRINSIC_USER_DEFINED,
+            "@BrsIntrinsic is reserved for the BrightScript stdlib. Function ''{0}'' cannot be marked as an intrinsic.",
+            CommonRenderers.STRING,
+        )
         map.put(
             BRS_NAME_CASE_CLASH,
             "Name clashes with {0} at BrightScript runtime (BrightScript is case-insensitive).",

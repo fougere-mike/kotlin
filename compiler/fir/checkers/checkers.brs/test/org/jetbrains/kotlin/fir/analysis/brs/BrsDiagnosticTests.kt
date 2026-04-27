@@ -684,4 +684,38 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testBrsNameSuppressedNonRef() {
         runTest("brsNameRequiresCallableRef/suppressedNonRef.kt")
     }
+
+    // BRS_INTRINSIC_USER_DEFINED — @BrsIntrinsic is reserved for stdlib; user-defined functions
+    // (both external and non-external) carrying @BrsIntrinsic are rejected. Origin-based filter
+    // ensures stdlib's own ~23 @BrsIntrinsic sites are not affected at user-compile time.
+
+    @Test
+    fun testBrsIntrinsicUserDefinedExternalRejected() {
+        runTest("brsIntrinsicUserDefined/userDefinedExternalRejected.kt")
+    }
+
+    @Test
+    fun testBrsIntrinsicUserDefinedNonExternalRejected() {
+        runTest("brsIntrinsicUserDefined/userDefinedNonExternalRejected.kt")
+    }
+
+    @Test
+    fun testBrsIntrinsicUserDefinedCustomNameRejected() {
+        runTest("brsIntrinsicUserDefined/userDefinedCustomNameRejected.kt")
+    }
+
+    @Test
+    fun testBrsIntrinsicUserDefinedMultipleAllRejected() {
+        runTest("brsIntrinsicUserDefined/multipleUserFunctionsAllRejected.kt")
+    }
+
+    @Test
+    fun testBrsIntrinsicUserDefinedWithoutAnnotationOk() {
+        runTest("brsIntrinsicUserDefined/userFunctionWithoutAnnotationOk.kt")
+    }
+
+    @Test
+    fun testBrsIntrinsicUserDefinedSuppressed() {
+        runTest("brsIntrinsicUserDefined/suppressedUserDefined.kt")
+    }
 }

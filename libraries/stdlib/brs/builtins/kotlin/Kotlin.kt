@@ -369,6 +369,7 @@ public fun brsStructuralEquals(a: Any?, b: Any?): Boolean {
  * Check if a value is a roAssociativeArray (Kotlin class instance).
  * This is an intrinsic that compiles to: Type(a) = "roAssociativeArray"
  */
+@Suppress("BRS_INTRINSIC_USER_DEFINED")
 @kotlin.brs.BrsIntrinsic("brsIntrinsicIsAA")
 private external fun brsIsAssociativeArray(a: Any?): Boolean
 
@@ -377,6 +378,7 @@ private external fun brsIsAssociativeArray(a: Any?): Boolean
  * This is an intrinsic that compiles to: Type(a) = "roSGNode"
  * roSGNode cannot be compared with = operator - causes Type Mismatch error.
  */
+@Suppress("BRS_INTRINSIC_USER_DEFINED")
 @kotlin.brs.BrsIntrinsic("brsIntrinsicIsSGNode")
 private external fun brsIsSGNode(a: Any?): Boolean
 
@@ -384,6 +386,7 @@ private external fun brsIsSGNode(a: Any?): Boolean
  * Call the equals method on an object.
  * This is an intrinsic that compiles to: a.equals(b)
  */
+@Suppress("BRS_INTRINSIC_USER_DEFINED")
 @kotlin.brs.BrsIntrinsic("brsIntrinsicCallEquals")
 private external fun brsCallEquals(a: Any?, b: Any?): Boolean
 
@@ -391,6 +394,7 @@ private external fun brsCallEquals(a: Any?, b: Any?): Boolean
  * Native BrightScript equals comparison.
  * This is an intrinsic that compiles to: a = b
  */
+@Suppress("BRS_INTRINSIC_USER_DEFINED")
 @kotlin.brs.BrsIntrinsic("brsIntrinsicNativeEquals")
 private external fun brsNativeEquals(a: Any?, b: Any?): Boolean
 
@@ -426,6 +430,7 @@ public fun brsCompareTo(a: Any?, b: Any?): Int {
  * Call the compareTo method on an object.
  * This is an intrinsic that compiles to: a.compareTo(b)
  */
+@Suppress("BRS_INTRINSIC_USER_DEFINED")
 @kotlin.brs.BrsIntrinsic("brsIntrinsicCallCompareTo")
 private external fun brsCallCompareTo(a: Any?, b: Any?): Int
 
@@ -433,5 +438,6 @@ private external fun brsCallCompareTo(a: Any?, b: Any?): Int
  * Native BrightScript comparison.
  * This is an intrinsic that compiles to: if a < b then -1 else if a > b then 1 else 0
  */
+@Suppress("BRS_INTRINSIC_USER_DEFINED")
 @kotlin.brs.BrsIntrinsic("brsIntrinsicNativeCompare")
 private external fun brsNativeCompare(a: Any?, b: Any?): Int

@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.psi.KtElement
 object FirBrsErrors : KtDiagnosticsContainer() {
     // Intrinsics
     val BRS_INTRINSIC_LITERAL_REQUIRED: KtDiagnosticFactory0 = KtDiagnosticFactory0("BRS_INTRINSIC_LITERAL_REQUIRED", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
+    val BRS_INTRINSIC_USER_DEFINED: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("BRS_INTRINSIC_USER_DEFINED", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
 
     // Name case clashes
     val BRS_NAME_CASE_CLASH: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("BRS_NAME_CASE_CLASH", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())

@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.analysis.brs.checkers
 
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsIntrinsicUserDefinedChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsNameClashClassMembersChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsNameClashFileTopLevelDeclarationsChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsOnChangeHandlerChecker
@@ -31,4 +32,7 @@ object BrsDeclarationCheckers : DeclarationCheckers() {
             FirBrsSceneGraphFieldTypeChecker,
             FirBrsOnChangeHandlerChecker,
         )
+
+    override val simpleFunctionCheckers: Set<FirSimpleFunctionChecker>
+        get() = setOf(FirBrsIntrinsicUserDefinedChecker)
 }
