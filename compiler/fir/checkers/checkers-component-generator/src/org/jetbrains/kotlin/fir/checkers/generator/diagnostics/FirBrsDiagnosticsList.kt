@@ -77,4 +77,11 @@ object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
             isSuppressible = true
         }
     }
+
+    val BRSNAME by object : DiagnosticGroup("brsName") {
+        val BRS_BRSNAME_REQUIRES_CALLABLE_REF by error<KtElement> {
+            parameter<String>("actualKind")
+            isSuppressible = true
+        }
+    }
 }

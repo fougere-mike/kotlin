@@ -43,5 +43,8 @@ object FirBrsErrors : KtDiagnosticsContainer() {
     val BRS_STATIC_INVALID_TARGET: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("BRS_STATIC_INVALID_TARGET", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
     val BRS_STATIC_OVERLOAD: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_STATIC_OVERLOAD", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
 
+    // brsName
+    val BRS_BRSNAME_REQUIRES_CALLABLE_REF: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("BRS_BRSNAME_REQUIRES_CALLABLE_REF", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
+
     override fun getRendererFactory(): BaseDiagnosticRendererFactory = FirBrsErrorsDefaultMessages
 }
