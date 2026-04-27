@@ -34,6 +34,7 @@ object FirBrsErrors : KtDiagnosticsContainer() {
     val BRS_SCENEGRAPH_FIELD_CONFLICT: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("BRS_SCENEGRAPH_FIELD_CONFLICT", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
     val BRS_ONCHANGE_HANDLER_SIGNATURE: KtDiagnosticFactory3<String, String, String> = KtDiagnosticFactory3("BRS_ONCHANGE_HANDLER_SIGNATURE", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
     val BRS_ADDFIELD_INVALID_TYPE: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_ADDFIELD_INVALID_TYPE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
+    val BRS_CREATE_OBJECT_INVALID_TYPE: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_CREATE_OBJECT_INVALID_TYPE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
 
     // IO worker extraction
     val BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
