@@ -88,4 +88,11 @@ object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
             isSuppressible = true
         }
     }
+
+    val BRSCONSTANT by object : DiagnosticGroup("@BrsConstant") {
+        val BRS_BRSCONSTANT_VAR by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
+            parameter<String>("propertyName")
+            isSuppressible = true
+        }
+    }
 }
