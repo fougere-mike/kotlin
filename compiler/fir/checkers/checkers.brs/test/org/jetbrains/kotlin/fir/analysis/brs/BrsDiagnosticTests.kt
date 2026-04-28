@@ -759,6 +759,40 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     // (or abstract) classes, top-level functions, object/companion-object members, and
     // constructors all remain valid.
 
+    // BRS_BRSNAME_BLANK — @BrsName("") and @BrsName("   ") are rejected at FIR phase.
+    // Blank argument is never meaningful: FIR falls back to Kotlin name (silent no-op)
+    // and IR emits an empty identifier. Checker covers all declaration targets.
+
+    @Test
+    fun testBrsBrsNameBlankOnFunctionRejected() {
+        runTest("brsBrsNameBlank/blankOnFunctionRejected.kt")
+    }
+
+    @Test
+    fun testBrsBrsNameBlankOnClassRejected() {
+        runTest("brsBrsNameBlank/blankOnClassRejected.kt")
+    }
+
+    @Test
+    fun testBrsBrsNameBlankOnPropertyRejected() {
+        runTest("brsBrsNameBlank/blankOnPropertyRejected.kt")
+    }
+
+    @Test
+    fun testBrsBrsNameBlankWhitespaceOnlyRejected() {
+        runTest("brsBrsNameBlank/whitespaceOnlyRejected.kt")
+    }
+
+    @Test
+    fun testBrsBrsNameBlankNonBlankOk() {
+        runTest("brsBrsNameBlank/nonBlankOk.kt")
+    }
+
+    @Test
+    fun testBrsBrsNameBlankSuppressed() {
+        runTest("brsBrsNameBlank/blankSuppressed.kt")
+    }
+
     @Test
     fun testBrsNameLocalFunctionRejected() {
         runTest("brsNameInvalidTarget/localFunctionRejected.kt")
