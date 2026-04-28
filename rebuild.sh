@@ -297,6 +297,25 @@ else
     echo "6. Skipping stdlib BRS runtime (no changes detected)"
 fi
 
+# ============================================================================
+# PHASE 4: Compile-check kotlin-test-brs
+# This catches FIR-level regressions in kotlin.test that aren't covered by
+# the FIR diagnostic test suite or golden file tests. Without this gate,
+# checker tightenings can silently break the kotlin.test build (which only
+# surfaces when run-stdlib-tests.sh is invoked explicitly).
+# ============================================================================
+
+if [ "$STDLIB_CHANGED" = true ] || [ "$COMPILER_CHANGED" = true ]; then
+    echo ""
+    echo "7. Compile-checking kotlin-test-brs..."
+    ./gradlew :kotlin-test-brs:build $FLAGS
+
+    echo "  Verified: kotlin-test-brs compiles cleanly"
+else
+    echo ""
+    echo "7. Skipping kotlin-test-brs compile-check (no changes detected)"
+fi
+
 echo ""
 echo "=== All artifacts published to Maven Local ==="
 echo ""

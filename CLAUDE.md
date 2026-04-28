@@ -331,6 +331,13 @@ This is a manual step — `./rebuild.sh` does not invoke the generator. Follow t
 
 ## Quick Reference
 
+**rebuild.sh now compile-checks `kotlin-test-brs` whenever the stdlib or compiler
+changes** (step 7). This catches FIR-level regressions in `kotlin.test` that golden
+file tests and the diagnostic suite don't exercise. If step 7 fails, the new diagnostic
+or checker change is firing on real `kotlin.test` source — fix at the declaration site
+with `@Suppress("BRS_<NAME>")` (mirroring Job.Key, ContinuationInterceptor.Key, and
+the kotlin.test Test/test() suppression sites) or rework the checker.
+
 | What Changed | Run This |
 |--------------|----------|
 | Compiler or stdlib code | `./rebuild.sh` |
