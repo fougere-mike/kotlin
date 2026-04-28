@@ -22,8 +22,8 @@ import org.jetbrains.kotlin.fir.declarations.getAnnotationByClassId
 import org.jetbrains.kotlin.name.BrsStandardClassIds
 
 /**
- * Reports BRS_BRSCONSTANT_VAR for every `var` property directly declared inside an
- * `object` annotated with @BrsConstant.
+ * Reports BRS_BRSCONSTANT_NON_OBJECT for classes carrying @BrsConstant that are not
+ * `object`s, and BRS_BRSCONSTANT_VAR for `var` properties inside `@BrsConstant object`s.
  *
  * @BrsConstant objects are evaluated at compile time and inlined at usage sites by
  * BrsConstantEvaluationLowering. A `var` cannot be inlined safely (its value can change
@@ -31,22 +31,34 @@ import org.jetbrains.kotlin.name.BrsStandardClassIds
  * ID. This checker shifts the error left to FIR, gives it the stable ID
  * BRS_BRSCONSTANT_VAR, and makes it @Suppress-able by name.
  *
- * Class-kind filter: mirrors the IR lowering, which only processes ClassKind.OBJECT
- * carriers (BrsConstantEvaluationLowering.kt:64-65). @BrsConstant on a regular class is a
- * silent no-op at IR; we deliberately do not emit a FIR diagnostic for that case here.
+ * On non-object class kinds (`class`, `interface`, `enum class`, `annotation class`,
+ * `sealed class`), the IR lowering silently ignores the annotation
+ * (BrsConstantEvaluationLowering.kt:64-65). BRS_BRSCONSTANT_NON_OBJECT shifts that misuse
+ * left to FIR with a stable, suppressible diagnostic ID. No IR-side defense-in-depth mirror
+ * is added — non-object @BrsConstant is a runtime no-op, so the FIR diagnostic is the
+ * only checkpoint.
  *
  * Defense-in-depth: the IR-phase walker still runs and re-emits a "[IR] @BrsConstant…"
- * error for callers that bypass FIR (klib boundaries) or when the FIR diagnostic is
- * @Suppress-ed at the property — same pattern as BRS_STATIC_* and
+ * error for callers that bypass FIR (klib boundaries) or when the FIR BRS_BRSCONSTANT_VAR
+ * diagnostic is @Suppress-ed at the property — same pattern as BRS_STATIC_* and
  * BRS_BRSNAME_REQUIRES_CALLABLE_REF.
  */
 object FirBrsConstantVarChecker : FirRegularClassChecker(MppCheckerKind.Common) {
 
     context(context: CheckerContext, reporter: DiagnosticReporter)
     override fun check(declaration: FirRegularClass) {
-        if (declaration.classKind != ClassKind.OBJECT) return
         val session = context.session
         if (declaration.getAnnotationByClassId(BrsStandardClassIds.Annotations.BrsConstant, session) == null) return
+
+        if (declaration.classKind != ClassKind.OBJECT) {
+            if (declaration.isSuppressedByAnnotation("BRS_BRSCONSTANT_NON_OBJECT")) return
+            reporter.reportOn(
+                declaration.source,
+                FirBrsErrors.BRS_BRSCONSTANT_NON_OBJECT,
+                declaration.classKind.codeRepresentation ?: declaration.classKind.name.lowercase(),
+            )
+            return
+        }
 
         @OptIn(DirectDeclarationsAccess::class)
         for (member in declaration.declarations) {
