@@ -113,4 +113,12 @@ object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
             isSuppressible = true
         }
     }
+
+    val BRSCREATEOBJECT by object : DiagnosticGroup("@BrsCreateObject") {
+        val BRS_BRSCREATEOBJECT_INVALID_TYPE by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
+            parameter<String>("actualType")
+            parameter<String>("validTypes")
+            isSuppressible = true
+        }
+    }
 }
