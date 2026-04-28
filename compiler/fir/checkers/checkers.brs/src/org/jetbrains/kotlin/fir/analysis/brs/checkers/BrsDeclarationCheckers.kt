@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsConstant
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsIntrinsicUserDefinedChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsNameClashClassMembersChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsNameClashFileTopLevelDeclarationsChecker
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsNameClashFunctionBodyChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsOnChangeHandlerChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsSceneGraphFieldTypeChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsStaticClassChecker
@@ -51,6 +52,7 @@ object BrsDeclarationCheckers : DeclarationCheckers() {
     override val simpleFunctionCheckers: Set<FirSimpleFunctionChecker>
         get() = setOf(
             FirBrsIntrinsicUserDefinedChecker,
+            FirBrsNameClashFunctionBodyChecker,
             FirBrsStaticTopLevelExtensionChecker,
         )
 }
