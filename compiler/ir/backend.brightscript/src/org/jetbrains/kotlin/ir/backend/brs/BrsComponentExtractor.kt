@@ -134,12 +134,19 @@ class BrsComponentExtractor(
         val visited = mutableSetOf<IrClass>()
         val result = mutableListOf<T>()
         val queue = ArrayDeque<IrClass>()
-        for (s in irClass.superTypes) s.classOrNull?.owner?.let(queue::add)
+        for (superType in irClass.superTypes) {
+            val superClass = superType.classOrNull?.owner ?: continue
+            queue.add(superClass)
+        }
         while (queue.isNotEmpty()) {
-            val cur = queue.removeFirst()
-            if (!visited.add(cur)) continue
-            for (decl in cur.declarations) if (decl is T) result.add(decl)
-            for (s in cur.superTypes) s.classOrNull?.owner?.let(queue::add)
+            val current = queue.removeFirst()
+            if (current in visited) continue
+            visited.add(current)
+            for (decl in current.declarations) if (decl is T) result.add(decl)
+            for (superType in current.superTypes) {
+                val superClass = superType.classOrNull?.owner ?: continue
+                queue.add(superClass)
+            }
         }
         return result
     }
