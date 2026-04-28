@@ -123,6 +123,28 @@ class BrsComponentExtractor(
     }
 
     /**
+     * Collect all declarations of type [T] from the BFS-traversed supertype hierarchy of [irClass].
+     *
+     * Starts from the direct supertypes (not the class itself) and walks up using a visited set
+     * to handle diamond hierarchies. Mirrors the BFS shape of [hasSceneGraphComponentInHierarchy].
+     */
+    private inline fun <reified T : IrDeclaration> collectInheritedDeclarations(
+        irClass: IrClass
+    ): List<T> {
+        val visited = mutableSetOf<IrClass>()
+        val result = mutableListOf<T>()
+        val queue = ArrayDeque<IrClass>()
+        for (s in irClass.superTypes) s.classOrNull?.owner?.let(queue::add)
+        while (queue.isNotEmpty()) {
+            val cur = queue.removeFirst()
+            if (!visited.add(cur)) continue
+            for (decl in cur.declarations) if (decl is T) result.add(decl)
+            for (s in cur.superTypes) s.classOrNull?.owner?.let(queue::add)
+        }
+        return result
+    }
+
+    /**
      * Get the parent component to extend.
      */
     private fun getExtendsComponent(irClass: IrClass, componentAnnotation: IrConstructorCall?): String {
@@ -184,6 +206,26 @@ class BrsComponentExtractor(
 
         // Extract from fields with @BrsField (legacy support)
         for (field in irClass.declarations.filterIsInstance<IrField>()) {
+            val fieldAnnotation = findAnnotation(field, "BrsField")
+            if (fieldAnnotation != null && fields.none { it.name == field.name.asString() }) {
+                fields.add(extractFieldFromField(field, fieldAnnotation))
+            }
+        }
+
+        // Inherited properties — subclass declaration wins (already in list), so skip if name present
+        for (property in collectInheritedDeclarations<IrProperty>(irClass)) {
+            if (fields.any { it.name == property.name.asString() }) continue
+            val typeSafeField = extractTypeSafeField(property)
+            if (typeSafeField != null) {
+                fields.add(typeSafeField)
+                continue
+            }
+            val fieldAnnotation = findAnnotation(property, "BrsField")
+            if (fieldAnnotation != null) fields.add(extractFieldFromProperty(property, fieldAnnotation))
+        }
+
+        // Inherited fields (IrField) — same override semantics
+        for (field in collectInheritedDeclarations<IrField>(irClass)) {
             val fieldAnnotation = findAnnotation(field, "BrsField")
             if (fieldAnnotation != null && fields.none { it.name == field.name.asString() }) {
                 fields.add(extractFieldFromField(field, fieldAnnotation))
@@ -347,10 +389,12 @@ class BrsComponentExtractor(
      * Find onChange handler for a property.
      *
      * The handler name is resolved to its mangled BrightScript name. This works for:
-     * 1. Explicit @BrsOnChange("handlerName") annotation - looks up the function by Kotlin name
-     * 2. Convention: on{PropertyName}Changed - auto-detected from class declarations
+     * 1. Explicit @BrsOnChange("handlerName") annotation - looks up the function by Kotlin name,
+     *    falling back to the inherited supertype hierarchy via BFS.
+     * 2. Convention: on{PropertyName}Changed - auto-detected from class declarations,
+     *    falling back to the inherited supertype hierarchy via BFS.
      *
-     * @return The mangled BrightScript function name, or null if no handler is specified.
+     * @return The mangled BrightScript function name, or null if no handler is found.
      */
     private fun findOnChangeHandler(property: IrProperty): String? {
         val parentClass = property.parent as? IrClass ?: return null
@@ -359,22 +403,22 @@ class BrsComponentExtractor(
         val onChangeAnnotation = findAnnotation(property, "BrsOnChange")
         if (onChangeAnnotation != null) {
             val handlerName = getAnnotationStringArg(onChangeAnnotation, 0) ?: return null
-            // Look up the function by Kotlin name and resolve to mangled BrightScript name
+            // Look up the function by Kotlin name — local first, then inherited
             val handler = parentClass.declarations
                 .filterIsInstance<IrSimpleFunction>()
                 .find { it.name.asString() == handlerName }
-            if (handler != null) {
-                return context.getBrsName(handler)
-            }
-            // Handler not found - this will be caught by FIR checker, but return raw name as fallback
-            return handlerName
+                ?: collectInheritedDeclarations<IrSimpleFunction>(parentClass)
+                    .find { it.name.asString() == handlerName }
+            return handler?.let { context.getBrsName(it) }
         }
 
-        // Auto-convention: on{PropertyName}Changed
+        // Auto-convention: on{PropertyName}Changed — local first, then inherited
         val expectedName = "on${property.name.asString().replaceFirstChar { it.uppercase() }}Changed"
         val handler = parentClass.declarations
             .filterIsInstance<IrSimpleFunction>()
             .find { it.name.asString() == expectedName }
+            ?: collectInheritedDeclarations<IrSimpleFunction>(parentClass)
+                .find { it.name.asString() == expectedName }
 
         return handler?.let { context.getBrsName(it) }
     }

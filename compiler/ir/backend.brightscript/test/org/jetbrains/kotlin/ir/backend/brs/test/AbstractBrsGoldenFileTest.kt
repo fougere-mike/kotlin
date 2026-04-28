@@ -134,17 +134,17 @@ abstract class AbstractBrsGoldenFileTest {
                 """.trimIndent())
             }
 
-            // Collect all .brs files from output directory
-            val brsFiles = tempOutputDir.walkTopDown()
-                .filter { it.extension == "brs" }
+            // Collect all .brs and .xml files from output directory
+            val outputFiles = tempOutputDir.walkTopDown()
+                .filter { it.extension in setOf("brs", "xml") }
                 .sortedBy { it.name }
                 .toList()
 
-            return if (brsFiles.isEmpty()) {
+            return if (outputFiles.isEmpty()) {
                 "// No BrightScript output generated"
             } else {
-                brsFiles.joinToString("\n\n") { brsFile ->
-                    "// --- File: ${brsFile.name} ---\n${brsFile.readText()}"
+                outputFiles.joinToString("\n\n") { outputFile ->
+                    "// --- File: ${outputFile.name} ---\n${outputFile.readText()}"
                 }
             }
         } finally {
