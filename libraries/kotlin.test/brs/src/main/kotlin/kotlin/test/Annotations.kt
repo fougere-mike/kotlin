@@ -9,6 +9,7 @@ package kotlin.test
  * Marks a function or class as a test.
  */
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+@Suppress("BRS_NAME_CASE_CLASH")
 public annotation class Test
 
 /**

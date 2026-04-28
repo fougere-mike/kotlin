@@ -41,6 +41,7 @@ public fun suite(name: String, ignored: Boolean = false, suiteFn: () -> Unit) {
  * @param ignored whether the test should be ignored (default: false)
  * @param testFn the function that executes the test
  */
+@Suppress("BRS_NAME_CASE_CLASH")
 public fun test(name: String, ignored: Boolean = false, testFn: () -> Unit) {
     adapter().test(name, ignored, testFn)
 }
