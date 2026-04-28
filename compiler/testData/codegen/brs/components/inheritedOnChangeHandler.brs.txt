@@ -45,22 +45,22 @@ function BaseComponent_create_k_() as Object
     this.hashCode = Any_hashCode_k_
     this.toString = Any_toString_k_
     this.onTitleChanged_k_ = BaseComponent_onTitleChanged_k_
-    this.__get_title = BaseComponent___get_title_k_
-    this.title = ""
     return this
 end function
 
 sub BaseComponent_onTitleChanged_k_()
 end sub
 
-function BaseComponent___get_title_k_() as String
-    return m.title
-end function
-
 function InheritedOnChangeComponent_create_k_() as Object
     this = BaseComponent_create_k_()
     this._super = {}
     this.__proto = ["InheritedOnChangeComponent", this.__proto]
     this.__type = "InheritedOnChangeComponent"
+    this.__get_title = InheritedOnChangeComponent___get_title_k_
+    this.title = ""
     return this
+end function
+
+function InheritedOnChangeComponent___get_title_k_() as String
+    return m.title
 end function
