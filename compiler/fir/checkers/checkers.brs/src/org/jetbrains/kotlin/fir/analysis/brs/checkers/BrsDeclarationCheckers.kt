@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.analysis.brs.checkers
 
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsBlankAnnotationChecker
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsCreateObjectAnnotationChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsConstantVarChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsIntrinsicUserDefinedChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsNameClashClassMembersChecker
@@ -21,6 +22,7 @@ object BrsDeclarationCheckers : DeclarationCheckers() {
     override val basicDeclarationCheckers: Set<FirBasicDeclarationChecker>
         get() = setOf(
             FirBrsBlankAnnotationChecker,
+            FirBrsCreateObjectAnnotationChecker,
         )
 
     override val fileCheckers: Set<FirFileChecker>
