@@ -673,6 +673,36 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
         runTest("brsStaticValidation/crossFileSuppressedOverload.kt")
     }
 
+    @Test
+    fun testBrsStaticTopLevelExtensionRegularClassRejected() {
+        runTest("brsStaticValidation/topLevelExtensionRegularClassRejected.kt")
+    }
+
+    @Test
+    fun testBrsStaticTopLevelExtensionObjectRejected() {
+        runTest("brsStaticValidation/topLevelExtensionObjectRejected.kt")
+    }
+
+    @Test
+    fun testBrsStaticTopLevelExtensionInterfaceRejected() {
+        runTest("brsStaticValidation/topLevelExtensionInterfaceRejected.kt")
+    }
+
+    @Test
+    fun testBrsStaticTopLevelExtensionGenericRejected() {
+        runTest("brsStaticValidation/topLevelExtensionGenericRejected.kt")
+    }
+
+    @Test
+    fun testBrsStaticTopLevelExtensionNullableReceiverRejected() {
+        runTest("brsStaticValidation/topLevelExtensionNullableReceiverRejected.kt")
+    }
+
+    @Test
+    fun testBrsStaticTopLevelExtensionSuppressed() {
+        runTest("brsStaticValidation/topLevelExtensionSuppressed.kt")
+    }
+
     // BRS_BRSNAME_REQUIRES_CALLABLE_REF — brsName() requires a syntactic ::ref argument.
     // Passes for direct, qualified, bound, and constructor references.
     // Fires for lambdas, stored refs, function call results, and function-typed parameters.
