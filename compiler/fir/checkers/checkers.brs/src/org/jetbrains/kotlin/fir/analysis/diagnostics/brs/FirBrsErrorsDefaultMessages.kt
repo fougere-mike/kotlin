@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_ADDFIELD_INVALID_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_BRSCONSTANT_NON_OBJECT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_BRSCONSTANT_VAR
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_BRSNAME_INVALID_TARGET
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_BRSNAME_REQUIRES_CALLABLE_REF
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_CREATE_OBJECT_INVALID_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_INTRINSIC_LITERAL_REQUIRED
@@ -95,6 +96,11 @@ object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             BRS_BRSNAME_REQUIRES_CALLABLE_REF,
             "brsName() requires a function reference (::functionName), got ''{0}''.",
             CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_BRSNAME_INVALID_TARGET,
+            "brsName() target must be a top-level function, an object/companion-object member, an instance method of a regular class, or a constructor. ''{1}'' is a {0} and produces a name that does not match a runtime BrightScript function.",
+            CommonRenderers.STRING, CommonRenderers.STRING,
         )
         map.put(
             BRS_BRSCONSTANT_VAR,
