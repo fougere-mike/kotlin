@@ -967,4 +967,47 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testInheritedNameCaseClashClassLevelSuppressed() {
         runTest("inheritedNameCaseClash/inheritedClashClassLevelSuppressed.kt")
     }
+
+    // BRS_BRSCREATEOBJECT_INVALID_TYPE — @BrsCreateObject(typeName) annotation argument validation.
+    // Annotation-site twin of BRS_CREATE_OBJECT_INVALID_TYPE; same 24-element valid-type set.
+
+    @Test
+    fun testBrsCreateObjectAnnotationCanonicalLowerOk() {
+        runTest("brsBrsCreateObjectInvalidType/canonicalLowerOk.kt")
+    }
+
+    @Test
+    fun testBrsCreateObjectAnnotationUnknownTypeRejected() {
+        runTest("brsBrsCreateObjectInvalidType/unknownTypeRejected.kt")
+    }
+
+    @Test
+    fun testBrsCreateObjectAnnotationCapitalisedRejected() {
+        runTest("brsBrsCreateObjectInvalidType/capitalisedRejected.kt")
+    }
+
+    @Test
+    fun testBrsCreateObjectAnnotationUppercasedRejected() {
+        runTest("brsBrsCreateObjectInvalidType/uppercasedRejected.kt")
+    }
+
+    @Test
+    fun testBrsCreateObjectAnnotationLowercasedRejected() {
+        runTest("brsBrsCreateObjectInvalidType/lowercasedRejected.kt")
+    }
+
+    @Test
+    fun testBrsCreateObjectAnnotationEmptyStringRejected() {
+        runTest("brsBrsCreateObjectInvalidType/emptyStringRejected.kt")
+    }
+
+    @Test
+    fun testBrsCreateObjectAnnotationWhitespaceOnlyRejected() {
+        runTest("brsBrsCreateObjectInvalidType/whitespaceOnlyRejected.kt")
+    }
+
+    @Test
+    fun testBrsCreateObjectAnnotationSuppressed() {
+        runTest("brsBrsCreateObjectInvalidType/suppressedInvalidType.kt")
+    }
 }

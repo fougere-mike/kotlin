@@ -217,6 +217,7 @@ abstract class AbstractBrsDiagnosticTest {
             "@BrsIntrinsic is reserved for the BrightScript stdlib. Function '{0}' cannot be marked as an intrinsic.",
         "BRS_BRSCONSTANT_VAR" to "@BrsConstant objects cannot contain var properties. Use val instead: '{0}'.",
         "BRS_BRSCONSTANT_NON_OBJECT" to "@BrsConstant is only valid on object declarations. Found on {0} declaration.",
+        "BRS_BRSCREATEOBJECT_INVALID_TYPE" to "'{0}' is not a valid BrightScript object type for @BrsCreateObject. Valid types: {1}.",
     )
 
     /**
