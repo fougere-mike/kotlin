@@ -11,20 +11,40 @@ import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirFunctionCallChecker
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors
+import org.jetbrains.kotlin.fir.declarations.utils.isAbstract
+import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.impl.FirResolvedArgumentList
 import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirConstructorSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.name.BrsStandardClassIds
 import org.jetbrains.kotlin.name.Name
 
 /**
  * FIR checker for `kotlin.brs.brsName(function)`.
  *
- * Fires [FirBrsErrors.BRS_BRSNAME_REQUIRES_CALLABLE_REF] when the argument is not a
- * syntactic function reference (`::ref`).
+ * Fires two diagnostics:
  *
- * `brsName` extracts the mangled BrightScript name of a function at compile time. The
- * IR-phase lowering (`BrsIntrinsicLowering`) can only resolve `IrFunctionReference`
+ * - [FirBrsErrors.BRS_BRSNAME_REQUIRES_CALLABLE_REF] — the argument is not a syntactic
+ *   function reference (`::ref`). Examples: lambda, stored ref, function call result,
+ *   function-typed parameter.
+ *
+ * - [FirBrsErrors.BRS_BRSNAME_INVALID_TARGET] — the argument *is* a `::ref` but the
+ *   referenced declaration produces a name that does not correspond to a runtime
+ *   BrightScript function. Two cases today:
+ *     - `::localFun` — a local function. `LocalFunctionLowering` (Phase 5) hoists it
+ *       to a synthesized module-level name *after* `BrsIntrinsicLowering` (Phase 0.05)
+ *       has captured the pre-hoist name, so the resulting string never resolves.
+ *     - `Iface::abstractMethod` — an abstract member. The BRS backend emits no
+ *       module-level function for the abstract declaration; runtime lookup by name
+ *       fails.
+ *
+ * Constructors (`::SomeClass`) and concrete instance methods of regular classes
+ * (`MyClass::method`, `this::method`) remain valid.
+ *
+ * `brsName` extracts the mangled BrightScript name of a function at compile time.
+ * The IR-phase lowering (`BrsIntrinsicLowering`) can only resolve `IrFunctionReference`
  * nodes — anything stored in a variable, passed as a parameter, or expressed as a lambda
  * has already been lowered to an `IrGetValue` or `IrBlock` by the time the lowering runs.
  * This FIR check catches such usages early (IDE squiggle) with a clear message.
@@ -36,11 +56,15 @@ import org.jetbrains.kotlin.name.Name
  * - `brsName(::SomeClass)` — constructor reference (IR handles `IrConstructor` via
  *   `generateBrsFunctionName`)
  *
- * **Fires:**
+ * **Fires BRS_BRSNAME_REQUIRES_CALLABLE_REF:**
  * - `brsName({ x -> x })` — lambda (kind: "lambda")
  * - `brsName(storedRef)` — stored callable reference variable (kind: "property reference")
  * - `brsName(funcReturningFun())` — function call result (kind: "function call result")
  * - `brsName(param)` — function-typed parameter (kind: "property reference")
+ *
+ * **Fires BRS_BRSNAME_INVALID_TARGET:**
+ * - `brsName(::localFun)` inside an enclosing function (kind: "local function")
+ * - `brsName(IFace::abstractMethod)` for any `abstract`/`interface` member (kind: "abstract function")
  */
 object FirBrsNameCallableRefChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
 
@@ -60,20 +84,40 @@ object FirBrsNameCallableRefChecker : FirFunctionCallChecker(MppCheckerKind.Comm
             ?: expression.arguments.firstOrNull()
             ?: return
 
-        // Any FirCallableReferenceAccess (top-level, qualified, bound, or constructor ref) is fine.
-        if (arg is FirCallableReferenceAccess) return
-
-        val actualKind = when (arg) {
-            is FirAnonymousFunctionExpression -> "lambda"
-            is FirPropertyAccessExpression -> "property reference"
-            is FirFunctionCall -> "function call result"
-            else -> "expression"
+        if (arg !is FirCallableReferenceAccess) {
+            val actualKind = when (arg) {
+                is FirAnonymousFunctionExpression -> "lambda"
+                is FirPropertyAccessExpression -> "property reference"
+                is FirFunctionCall -> "function call result"
+                else -> "expression"
+            }
+            reporter.reportOn(
+                arg.source ?: expression.source,
+                FirBrsErrors.BRS_BRSNAME_REQUIRES_CALLABLE_REF,
+                actualKind,
+            )
+            return
         }
+
+        // The argument is a callable reference. Inspect the resolved symbol to confirm
+        // the target produces a runtime-resolvable BrightScript function name.
+        // Constructors are valid (handled by IrConstructor branch in BrsIrBackendContext.generateBrsFunctionName).
+        val targetSymbol = arg.calleeReference.toResolvedCallableSymbol() ?: return
+        if (targetSymbol is FirConstructorSymbol) return
+        if (targetSymbol !is FirNamedFunctionSymbol) return
+
+        val invalidKind: String? = when {
+            targetSymbol.isLocal -> "local function"
+            targetSymbol.isAbstract -> "abstract function"
+            else -> null
+        }
+        if (invalidKind == null) return
 
         reporter.reportOn(
             arg.source ?: expression.source,
-            FirBrsErrors.BRS_BRSNAME_REQUIRES_CALLABLE_REF,
-            actualKind,
+            FirBrsErrors.BRS_BRSNAME_INVALID_TARGET,
+            invalidKind,
+            targetSymbol.name.asString(),
         )
     }
 }
