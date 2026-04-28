@@ -785,13 +785,57 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     }
 
     @Test
-    fun testBrsConstantRegularClassWithVarOk() {
-        runTest("brsConstantVar/regularClassWithVarOk.kt")
+    fun testBrsConstantSuppressedVarProperty() {
+        runTest("brsConstantVar/suppressedVarProperty.kt")
+    }
+
+    // BRS_BRSCONSTANT_NON_OBJECT — @BrsConstant on any class kind other than `object`
+    // is silently ignored at IR lowering. The FIR diagnostic surfaces the misuse with a
+    // stable, suppressible ID.
+
+    @Test
+    fun testBrsConstantNonObjectRegularClassRejected() {
+        runTest("brsConstantNonObject/regularClassRejected.kt")
     }
 
     @Test
-    fun testBrsConstantSuppressedVarProperty() {
-        runTest("brsConstantVar/suppressedVarProperty.kt")
+    fun testBrsConstantNonObjectAbstractClassRejected() {
+        runTest("brsConstantNonObject/abstractClassRejected.kt")
+    }
+
+    @Test
+    fun testBrsConstantNonObjectInterfaceRejected() {
+        runTest("brsConstantNonObject/interfaceRejected.kt")
+    }
+
+    @Test
+    fun testBrsConstantNonObjectEnumClassRejected() {
+        runTest("brsConstantNonObject/enumClassRejected.kt")
+    }
+
+    @Test
+    fun testBrsConstantNonObjectAnnotationClassRejected() {
+        runTest("brsConstantNonObject/annotationClassRejected.kt")
+    }
+
+    @Test
+    fun testBrsConstantNonObjectSealedClassRejected() {
+        runTest("brsConstantNonObject/sealedClassRejected.kt")
+    }
+
+    @Test
+    fun testBrsConstantNonObjectObjectStillOk() {
+        runTest("brsConstantNonObject/objectStillOk.kt")
+    }
+
+    @Test
+    fun testBrsConstantNonObjectNonAnnotatedClassOk() {
+        runTest("brsConstantNonObject/nonAnnotatedClassOk.kt")
+    }
+
+    @Test
+    fun testBrsConstantNonObjectSuppressed() {
+        runTest("brsConstantNonObject/suppressedNonObjectClass.kt")
     }
 
     // BRS_INHERITED_NAME_CASE_CLASH — Path C: two inherited members (from base classes or interfaces)
