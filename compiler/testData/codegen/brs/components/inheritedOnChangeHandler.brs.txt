@@ -2,7 +2,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <component name="InheritedOnChangeComponent" extends="Group">
     <interface>
-        <field id="title" type="string" onChange="InheritedOnChangeComponent_onTitleChanged_k_" />
+        <field id="title" type="string" onChange="BaseComponent_onTitleChanged_k_" />
     </interface>
     <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />

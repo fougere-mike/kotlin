@@ -142,7 +142,8 @@ class BrsComponentExtractor(
             val current = queue.removeFirst()
             if (current in visited) continue
             visited.add(current)
-            for (decl in current.declarations) if (decl is T) result.add(decl)
+            for (decl in current.declarations)
+                if (decl is T && (decl !is IrSimpleFunction || !decl.isFakeOverride)) result.add(decl)
             for (superType in current.superTypes) {
                 val superClass = superType.classOrNull?.owner ?: continue
                 queue.add(superClass)
@@ -410,20 +411,23 @@ class BrsComponentExtractor(
         val onChangeAnnotation = findAnnotation(property, "BrsOnChange")
         if (onChangeAnnotation != null) {
             val handlerName = getAnnotationStringArg(onChangeAnnotation, 0) ?: return null
-            // Look up the function by Kotlin name — local first, then inherited
+            // Look up the function by Kotlin name — local real decls first, then inherited.
+            // Fake overrides are skipped: their parent is the subclass, so getBrsName would
+            // produce the wrong (subclass-prefixed) mangled name. The real declaration lives
+            // in the ancestor class and produces the correct prefix.
             val handler = parentClass.declarations
                 .filterIsInstance<IrSimpleFunction>()
-                .find { it.name.asString() == handlerName }
+                .find { !it.isFakeOverride && it.name.asString() == handlerName }
                 ?: collectInheritedDeclarations<IrSimpleFunction>(parentClass)
                     .find { it.name.asString() == handlerName }
             return handler?.let { context.getBrsName(it) }
         }
 
-        // Auto-convention: on{PropertyName}Changed — local first, then inherited
+        // Auto-convention: on{PropertyName}Changed — local real decls first, then inherited
         val expectedName = "on${property.name.asString().replaceFirstChar { it.uppercase() }}Changed"
         val handler = parentClass.declarations
             .filterIsInstance<IrSimpleFunction>()
-            .find { it.name.asString() == expectedName }
+            .find { !it.isFakeOverride && it.name.asString() == expectedName }
             ?: collectInheritedDeclarations<IrSimpleFunction>(parentClass)
                 .find { it.name.asString() == expectedName }
 
