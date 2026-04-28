@@ -1,0 +1,60 @@
+// --- File: InheritedExportComponent.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="InheritedExportComponent" extends="Group">
+    <interface>
+        <function name="handleTap" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CharKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CharSequenceKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CollectionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComparableKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IteratorKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/LazyKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/NumberKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PairKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PrimitivesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ReflectKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/consoleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/InheritedExportComponent/InheritedExportComponentKt.brs" />
+</component>
+
+
+// --- File: inheritedExportKt.brs ---
+function BaseComponent_create_k_() as Object
+    this = {}
+    this.__type = "BaseComponent"
+    this.__proto = ["BaseComponent"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.handleTap_k_ = BaseComponent_handleTap_k_
+    return this
+end function
+
+sub BaseComponent_handleTap_k_()
+end sub
+
+function InheritedExportComponent_create_k_() as Object
+    this = BaseComponent_create_k_()
+    this._super = {}
+    this.__proto = ["InheritedExportComponent", this.__proto]
+    this.__type = "InheritedExportComponent"
+    return this
+end function

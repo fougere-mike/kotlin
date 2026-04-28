@@ -107,6 +107,21 @@ class BrsComponentGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun componentWithMAccess() = runTest("components/componentWithMAccess.kt")
+
+    @Test
+    fun inheritedField() = runTest("components/inheritedField.kt")
+
+    @Test
+    fun inheritedExport() = runTest("components/inheritedExport.kt")
+
+    @Test
+    fun inheritedOnChangeHandler() = runTest("components/inheritedOnChangeHandler.kt")
+
+    @Test
+    fun overriddenFieldKeepsBaseAnnotation() = runTest("components/overriddenFieldKeepsBaseAnnotation.kt")
+
+    @Test
+    fun overriddenFieldChangesAnnotation() = runTest("components/overriddenFieldChangesAnnotation.kt")
 }
 
 // ==================== Intrinsics Tests ====================
