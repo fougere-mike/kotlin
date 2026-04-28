@@ -50,6 +50,7 @@ object FirBrsErrors : KtDiagnosticsContainer() {
 
     // @BrsConstant
     val BRS_BRSCONSTANT_VAR: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("BRS_BRSCONSTANT_VAR", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
+    val BRS_BRSCONSTANT_NON_OBJECT: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("BRS_BRSCONSTANT_NON_OBJECT", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
 
     override fun getRendererFactory(): BaseDiagnosticRendererFactory = FirBrsErrorsDefaultMessages
 }

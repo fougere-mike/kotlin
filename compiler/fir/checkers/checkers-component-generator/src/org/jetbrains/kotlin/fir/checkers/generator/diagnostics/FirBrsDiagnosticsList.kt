@@ -99,5 +99,9 @@ object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
             parameter<String>("propertyName")
             isSuppressible = true
         }
+        val BRS_BRSCONSTANT_NON_OBJECT by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
+            parameter<String>("classKind")
+            isSuppressible = true
+        }
     }
 }
