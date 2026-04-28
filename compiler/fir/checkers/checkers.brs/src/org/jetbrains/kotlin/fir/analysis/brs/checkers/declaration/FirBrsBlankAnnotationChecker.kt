@@ -53,7 +53,7 @@ object FirBrsBlankAnnotationChecker : FirBasicDeclarationChecker(MppCheckerKind.
         }
 
         reporter.reportOn(
-            annotation.source ?: declaration.source,
+            declaration.source,
             FirBrsErrors.BRS_BRSNAME_BLANK,
             displayName,
         )
