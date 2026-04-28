@@ -968,6 +968,35 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
         runTest("inheritedNameCaseClash/inheritedClashClassLevelSuppressed.kt")
     }
 
+    // BRS_NAME_CASE_CLASH — Path D: local function declarations inside a function body whose
+    // effective BrightScript names differ only in case. BrightScript is case-insensitive, so
+    // two locals like `fun innerOne()` and `fun INNERONE()` silently collide at runtime.
+
+    @Test
+    fun testNameCaseClashLocalFunctionRejected() {
+        runTest("nameCaseClash/localFunctionCaseClashRejected.kt")
+    }
+
+    @Test
+    fun testNameCaseClashLocalFunctionNoClashOk() {
+        runTest("nameCaseClash/localFunctionNoClashOk.kt")
+    }
+
+    @Test
+    fun testNameCaseClashLocalFunctionNestedIsolation() {
+        runTest("nameCaseClash/localFunctionNestedIsolation.kt")
+    }
+
+    @Test
+    fun testNameCaseClashLocalPropertyAndFunctionClashRejected() {
+        runTest("nameCaseClash/localPropertyAndFunctionClashRejected.kt")
+    }
+
+    @Test
+    fun testNameCaseClashLocalFunctionSuppressed() {
+        runTest("nameCaseClash/localFunctionSuppressed.kt")
+    }
+
     // BRS_BRSCREATEOBJECT_INVALID_TYPE — @BrsCreateObject(typeName) annotation argument validation.
     // Annotation-site twin of BRS_CREATE_OBJECT_INVALID_TYPE; same 24-element valid-type set.
 
