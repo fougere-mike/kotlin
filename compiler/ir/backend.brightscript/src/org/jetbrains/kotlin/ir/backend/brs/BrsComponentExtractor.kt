@@ -442,6 +442,17 @@ class BrsComponentExtractor(
             }
         }
 
+        // Inherited exports — subclass-declared export with same name wins (already in list)
+        for (function in collectInheritedDeclarations<IrSimpleFunction>(irClass)) {
+            val exportAnnotation = findAnnotation(function, "BrsExport")
+            if (exportAnnotation != null) {
+                val name = getAnnotationStringArg(exportAnnotation, "name") ?: function.name.asString()
+                if (exports.none { it.name == name }) {
+                    exports.add(BrsExportInfo(name = name, irFunction = function))
+                }
+            }
+        }
+
         return exports
     }
 
