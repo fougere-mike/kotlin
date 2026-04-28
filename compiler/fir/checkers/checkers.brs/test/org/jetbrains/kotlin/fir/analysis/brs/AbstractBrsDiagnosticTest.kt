@@ -211,6 +211,8 @@ abstract class AbstractBrsDiagnosticTest {
         "BRS_BRSNAME_REQUIRES_CALLABLE_REF" to "brsName() requires a function reference (::functionName), got '{0}'.",
         "BRS_BRSNAME_INVALID_TARGET" to
             "brsName() target must be a top-level function, an object/companion-object member, an instance method of a regular class, or a constructor. '{1}' is a {0} and produces a name that does not match a runtime BrightScript function.",
+        "BRS_BRSNAME_BLANK" to
+            "@BrsName argument must be a non-blank BrightScript identifier on declaration '{0}'. Remove the annotation to fall back to the Kotlin name, or supply a valid identifier.",
         "BRS_INTRINSIC_USER_DEFINED" to
             "@BrsIntrinsic is reserved for the BrightScript stdlib. Function '{0}' cannot be marked as an intrinsic.",
         "BRS_BRSCONSTANT_VAR" to "@BrsConstant objects cannot contain var properties. Use val instead: '{0}'.",
