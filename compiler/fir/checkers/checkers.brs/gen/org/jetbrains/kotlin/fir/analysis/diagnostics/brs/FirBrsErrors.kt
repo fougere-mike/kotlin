@@ -47,6 +47,7 @@ object FirBrsErrors : KtDiagnosticsContainer() {
 
     // brsName
     val BRS_BRSNAME_REQUIRES_CALLABLE_REF: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("BRS_BRSNAME_REQUIRES_CALLABLE_REF", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
+    val BRS_BRSNAME_INVALID_TARGET: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_BRSNAME_INVALID_TARGET", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
 
     // @BrsConstant
     val BRS_BRSCONSTANT_VAR: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("BRS_BRSCONSTANT_VAR", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())

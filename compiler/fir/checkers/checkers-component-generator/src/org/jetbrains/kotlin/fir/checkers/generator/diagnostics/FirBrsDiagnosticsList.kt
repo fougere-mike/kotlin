@@ -92,6 +92,11 @@ object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
             parameter<String>("actualKind")
             isSuppressible = true
         }
+        val BRS_BRSNAME_INVALID_TARGET by error<KtElement> {
+            parameter<String>("targetKind")
+            parameter<String>("targetName")
+            isSuppressible = true
+        }
     }
 
     val BRSCONSTANT by object : DiagnosticGroup("@BrsConstant") {
