@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactoryToRendererMap
 import org.jetbrains.kotlin.diagnostics.rendering.BaseDiagnosticRendererFactory
 import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_ADDFIELD_INVALID_TYPE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_BRSCREATEOBJECT_INVALID_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_BRSCONSTANT_NON_OBJECT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_BRSCONSTANT_VAR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_BRSNAME_BLANK
@@ -117,6 +118,11 @@ object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             BRS_BRSCONSTANT_NON_OBJECT,
             "@BrsConstant is only valid on object declarations. Found on {0} declaration.",
             CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_BRSCREATEOBJECT_INVALID_TYPE,
+            "''{0}'' is not a valid BrightScript object type for @BrsCreateObject. Valid types: {1}.",
+            CommonRenderers.STRING, CommonRenderers.STRING,
         )
     }
 }
