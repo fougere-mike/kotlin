@@ -722,6 +722,48 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
         runTest("brsNameRequiresCallableRef/suppressedNonRef.kt")
     }
 
+    // BRS_BRSNAME_INVALID_TARGET — brsName()'s target ::ref must point at a declaration
+    // that emits a stable module-level BRS function. Local functions get hoisted with
+    // synthesized names after BrsIntrinsicLowering captures the pre-hoist name; abstract
+    // members emit no module-level function at all. Concrete instance methods of regular
+    // (or abstract) classes, top-level functions, object/companion-object members, and
+    // constructors all remain valid.
+
+    @Test
+    fun testBrsNameLocalFunctionRejected() {
+        runTest("brsNameInvalidTarget/localFunctionRejected.kt")
+    }
+
+    @Test
+    fun testBrsNameInterfaceMemberRejected() {
+        runTest("brsNameInvalidTarget/interfaceMemberRejected.kt")
+    }
+
+    @Test
+    fun testBrsNameAbstractMemberRejected() {
+        runTest("brsNameInvalidTarget/abstractMemberRejected.kt")
+    }
+
+    @Test
+    fun testBrsNameConcreteMethodOnAbstractClassOk() {
+        runTest("brsNameInvalidTarget/concreteMethodOnAbstractClassOk.kt")
+    }
+
+    @Test
+    fun testBrsNameInterfaceDefaultMethodOk() {
+        runTest("brsNameInvalidTarget/interfaceDefaultMethodOk.kt")
+    }
+
+    @Test
+    fun testBrsNameInvalidTargetTopLevelStillOk() {
+        runTest("brsNameInvalidTarget/topLevelStillOk.kt")
+    }
+
+    @Test
+    fun testBrsNameInvalidTargetSuppressedLocalFunction() {
+        runTest("brsNameInvalidTarget/suppressedLocalFunction.kt")
+    }
+
     // BRS_INTRINSIC_USER_DEFINED — @BrsIntrinsic is reserved for stdlib; user-defined functions
     // (both external and non-external) carrying @BrsIntrinsic are rejected. Origin-based filter
     // ensures stdlib's own ~23 @BrsIntrinsic sites are not affected at user-compile time.
