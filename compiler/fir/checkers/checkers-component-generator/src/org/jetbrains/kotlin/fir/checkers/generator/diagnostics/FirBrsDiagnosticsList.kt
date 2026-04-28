@@ -97,6 +97,10 @@ object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
             parameter<String>("targetName")
             isSuppressible = true
         }
+        val BRS_BRSNAME_BLANK by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
+            parameter<String>("declarationName")
+            isSuppressible = true
+        }
     }
 
     val BRSCONSTANT by object : DiagnosticGroup("@BrsConstant") {
