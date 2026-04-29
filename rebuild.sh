@@ -68,9 +68,10 @@ if [[ "$1" == "--clean" ]]; then
 
     # Clean Maven Local BRS artifacts
     echo "  Cleaning Maven Local BRS artifacts..."
-    rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-compiler-brs
-    rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-brs
-    rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-test-brs
+    rm -rf ~/.m2/repository/com/nuvyyo/kotlin-compiler-brs
+    rm -rf ~/.m2/repository/com/nuvyyo/kotlin-stdlib-brs
+    rm -rf ~/.m2/repository/com/nuvyyo/kotlin-stdlib-brs-runtime
+    rm -rf ~/.m2/repository/com/nuvyyo/kotlin-test-brs
 
     # Clean BRS compiler build directories
     echo "  Cleaning BRS compiler build directories..."
@@ -164,7 +165,7 @@ if [ "$COMPILER_CHANGED" = true ]; then
         fi
     done
     # Clean Maven local cache for BRS compiler
-    rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-compiler-brs
+    rm -rf ~/.m2/repository/com/nuvyyo/kotlin-compiler-brs
 fi
 
 if [ "$STDLIB_CHANGED" = true ]; then
@@ -173,7 +174,8 @@ if [ "$STDLIB_CHANGED" = true ]; then
     rm -rf libraries/stdlib/brs/test/build
     rm -rf libraries/stdlib/brs-prebuilt/build
     rm -rf libraries/stdlib/brs-prebuilt/.gradle
-    rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-brs
+    rm -rf ~/.m2/repository/com/nuvyyo/kotlin-stdlib-brs
+    rm -rf ~/.m2/repository/com/nuvyyo/kotlin-stdlib-brs-runtime
 fi
 
 echo "  Done."
