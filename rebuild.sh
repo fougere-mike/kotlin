@@ -60,6 +60,7 @@ if [[ "$1" == "--clean" ]]; then
     rm -rf ~/.m2/repository/com/nuvyyo/kotlin-gradle-plugin-idea-brs
     rm -rf ~/.m2/repository/com/nuvyyo/kotlin-tooling-core-brs
     rm -rf ~/.m2/repository/com/nuvyyo/kotlin-gradle-plugins-bom-brs
+    rm -rf ~/.m2/repository/com/nuvyyo/kotlin-gradle-plugin  # stale pre-fix artifact (no -brs suffix)
     # Clean stale pre-rename org.jetbrains.kotlin BRS artifacts (from before group rename)
     rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-compiler-brs
     rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-brs
