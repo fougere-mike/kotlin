@@ -1032,23 +1032,27 @@ tasks.withType<Kotlin2JsCompile>().configureEach {
 // These tasks compile Kotlin stdlib sources to BrightScript .brs files using
 // JavaExec directly. They don't require local bootstrap or KGP with BRS support.
 // See CLAUDE.md "Bootstrap Architecture" section for why this matters.
-//
-// We use the dist compiler (kotlin-compiler.jar) rather than the cli-brs fat JAR
-// because it includes all necessary IntelliJ Platform dependencies bundled correctly.
+
+// The BRS compiler fat JAR from cli-brs:fatJar (self-contained, no dist needed).
+// We derive the path from the build directory rather than calling tasks.named() on
+// a cross-project reference: tasks.named() on a foreign project forces that project
+// to be configured immediately, which fails in Gradle's configuration phase ordering.
+// The archiveBaseName is "kotlinc-brs" (set in cli-brs/build.gradle.kts).
+// The explicit dependsOn(":compiler:cli-brs:fatJar") inside generateStdlibBrs is
+// load-bearing: it ensures the JAR is built before this task runs.
+val cliBrsFatJar: Provider<RegularFile> = rootProject.project(":compiler:cli-brs")
+    .layout.buildDirectory.file("libs/kotlinc-brs.jar")
 
 val generateStdlibBrs = tasks.register<JavaExec>("generateStdlibBrs") {
     group = "build"
     description = "Generate BrightScript source files from stdlib Kotlin sources"
 
-    // Use the dist compiler JAR which includes all dependencies
-    val compilerJar = rootDir.resolve("dist/kotlinc/lib/kotlin-compiler.jar")
-    val brsOutputDir = layout.buildDirectory.dir("brs-runtime")
+    dependsOn(":compiler:cli-brs:fatJar")
 
-    // Depends on dist task to ensure compiler is built
-    dependsOn(":dist")
-
-    classpath = files(compilerJar)
+    classpath = files(cliBrsFatJar)
     mainClass.set("org.jetbrains.kotlin.cli.brs.K2BrsCompiler")
+
+    val brsOutputDir = layout.buildDirectory.dir("brs-runtime")
 
     val brsDir = "$projectDir/brs"
     val brsActualDir = "$projectDir/brs-actual"
@@ -1067,13 +1071,7 @@ val generateStdlibBrs = tasks.register<JavaExec>("generateStdlibBrs") {
         file("$brsDir/runtime"),
         file("$brsDir/src"),
         file("$brsActualDir/src"),
-    ).filter { it.exists() }
-
-    doFirst {
-        require(compilerJar.exists()) {
-            "BRS Compiler not found at $compilerJar. Run ':dist' first."
-        }
-    }
+    ).filter { it.exists() }  // intentional: some dirs may not exist in partial checkouts
 
     args(
         "-output-dir", brsOutputDir.get().asFile.absolutePath,
@@ -1084,6 +1082,7 @@ val generateStdlibBrs = tasks.register<JavaExec>("generateStdlibBrs") {
     )
 
     inputs.files(sourceDirs)
+    inputs.files(cliBrsFatJar)
     outputs.dir(brsOutputDir)
 }
 
