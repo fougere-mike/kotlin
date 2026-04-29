@@ -184,7 +184,7 @@ fun Project.createGradleCommonSourceSet(): SourceSet {
             if (this@createGradleCommonSourceSet.name !in testPlugins) {
                 compileOnlyConfigurationName(project(":kotlin-gradle-plugin-api")) {
                     capabilities {
-                        requireCapability("org.jetbrains.kotlin:kotlin-gradle-plugin-api-common")
+                        requireCapability("com.nuvyyo:kotlin-gradle-plugin-api-common")
                     }
                 }
             }
@@ -555,7 +555,7 @@ fun Project.createGradlePluginVariant(
         if (this@createGradlePluginVariant.name !in testPlugins) {
             variantSourceSet.apiConfigurationName(project(":kotlin-gradle-plugin-api")) {
                 capabilities {
-                    requireCapability("org.jetbrains.kotlin:kotlin-gradle-plugin-api-${variant.sourceSetName}")
+                    requireCapability("com.nuvyyo:kotlin-gradle-plugin-api-${variant.sourceSetName}")
                 }
             }
         }

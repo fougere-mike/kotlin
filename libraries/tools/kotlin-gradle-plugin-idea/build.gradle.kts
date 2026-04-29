@@ -11,6 +11,16 @@ plugins {
 
 base.archivesName.set("kotlin-gradle-plugin-idea-brs")
 
+publishing {
+    publications {
+        withType<MavenPublication>().configureEach {
+            if (name == "Main") {
+                artifactId = "kotlin-gradle-plugin-idea-brs"
+            }
+        }
+    }
+}
+
 configureKotlinCompileTasksGradleCompatibility()
 
 kotlin.sourceSets.configureEach {

@@ -75,6 +75,7 @@ val mainClass = "org.jetbrains.kotlin.cli.brs.K2BrsCompiler"
 
 tasks.register<Jar>("fatJar") {
     archiveBaseName.set("kotlinc-brs")
+    archiveVersion.set("")  // No version suffix: output is always kotlinc-brs.jar
     manifest {
         attributes["Main-Class"] = mainClass
     }

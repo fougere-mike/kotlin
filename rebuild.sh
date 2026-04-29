@@ -49,12 +49,22 @@ if [[ "$1" == "--clean" ]]; then
     echo "Full clean requested - removing all build state..."
     echo ""
 
-    # Clean Maven Local BRS artifacts
+    # Clean Maven Local BRS artifacts (current com.nuvyyo group)
     echo "  Cleaning Maven Local BRS artifacts..."
     rm -rf ~/.m2/repository/com/nuvyyo/kotlin-compiler-brs
     rm -rf ~/.m2/repository/com/nuvyyo/kotlin-stdlib-brs
     rm -rf ~/.m2/repository/com/nuvyyo/kotlin-stdlib-brs-runtime
     rm -rf ~/.m2/repository/com/nuvyyo/kotlin-test-brs
+    rm -rf ~/.m2/repository/com/nuvyyo/kotlin-gradle-plugin-brs
+    rm -rf ~/.m2/repository/com/nuvyyo/kotlin-gradle-plugin-api-brs
+    rm -rf ~/.m2/repository/com/nuvyyo/kotlin-gradle-plugin-idea-brs
+    rm -rf ~/.m2/repository/com/nuvyyo/kotlin-tooling-core-brs
+    rm -rf ~/.m2/repository/com/nuvyyo/kotlin-gradle-plugins-bom-brs
+    # Clean stale pre-rename org.jetbrains.kotlin BRS artifacts (from before group rename)
+    rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-compiler-brs
+    rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-brs
+    rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-brs-runtime
+    rm -rf ~/.m2/repository/org/jetbrains/kotlin/kotlin-test-brs
 
     # Clean BRS compiler build directories
     echo "  Cleaning BRS compiler build directories..."
@@ -139,7 +149,13 @@ echo "3. Publishing BRS compiler to Maven Local..."
 
 echo ""
 echo "4. Publishing Kotlin Gradle Plugin and BOM..."
-./gradlew :kotlin-gradle-plugin:publishToMavenLocal :kotlin-gradle-plugins-bom:publishToMavenLocal $FLAGS
+./gradlew \
+    :kotlin-gradle-plugin:publishToMavenLocal \
+    :kotlin-gradle-plugin-api:publishToMavenLocal \
+    :kotlin-gradle-plugin-idea:publishToMavenLocal \
+    :kotlin-tooling-core:publishToMavenLocal \
+    :kotlin-gradle-plugins-bom:publishToMavenLocal \
+    $FLAGS
 
 # ============================================================================
 # PHASE 2: Publish pre-built stdlib klib

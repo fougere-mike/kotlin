@@ -13,6 +13,16 @@ plugins {
 
 base.archivesName.set("kotlin-gradle-plugin-brs")
 
+publishing {
+    publications {
+        withType<MavenPublication>().configureEach {
+            if (name == "pluginMaven") {
+                artifactId = "kotlin-gradle-plugin-brs"
+            }
+        }
+    }
+}
+
 repositories {
     google()
     mavenCentral()
@@ -113,12 +123,12 @@ dependencies {
     // Following two dependencies is a workaround for IDEA import to pick-up them correctly
     commonCompileOnly(project(":kotlin-gradle-plugin-api")) {
         capabilities {
-            requireCapability("org.jetbrains.kotlin:kotlin-gradle-plugin-api-common")
+            requireCapability("com.nuvyyo:kotlin-gradle-plugin-api-common")
         }
     }
     commonCompileOnly(project(":kotlin-gradle-plugin-model")) {
         capabilities {
-            requireCapability("org.jetbrains.kotlin:kotlin-gradle-plugin-model-common")
+            requireCapability("com.nuvyyo:kotlin-gradle-plugin-model-common")
         }
     }
 

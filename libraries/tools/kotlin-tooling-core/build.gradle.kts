@@ -2,9 +2,20 @@ plugins {
     kotlin("jvm")
     id("jps-compatible")
     id("org.jetbrains.kotlinx.binary-compatibility-validator")
+    `maven-publish`
 }
 
 base.archivesName.set("kotlin-tooling-core-brs")
+
+publishing {
+    publications {
+        withType<MavenPublication>().configureEach {
+            if (name == "Main") {
+                artifactId = "kotlin-tooling-core-brs"
+            }
+        }
+    }
+}
 publish()
 sourcesJar()
 javadocJar()

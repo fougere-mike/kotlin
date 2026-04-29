@@ -9,6 +9,16 @@ plugins {
 
 base.archivesName.set("kotlin-gradle-plugin-api-brs")
 
+publishing {
+    publications {
+        withType<MavenPublication>().configureEach {
+            if (name == "Main") {
+                artifactId = "kotlin-gradle-plugin-api-brs"
+            }
+        }
+    }
+}
+
 pluginApiReference {
     enableForGradlePluginVariants(GradlePluginVariant.values().toSet())
     enableKotlinlangDocumentation()
