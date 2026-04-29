@@ -701,13 +701,14 @@ fun Project.publishShadowedJar(
 }
 
 /**
- * BRS fork: Redirects the WithFixedAttribute catch-all variants to the gradle813 shadowed jar.
+ * BRS fork: Redirects the WithFixedAttribute catch-all variants to the gradle813 shadowed jar,
+ * and also registers the gradle813 jar as the artifact for the main runtimeElements/apiElements
+ * variants so Maven Local resolution finds a base jar file and can read the .module metadata.
  *
- * The WithFixedAttribute variants are created in [reconfigureMainSourcesSetForGradlePlugin] and
- * initially point to the main shadowed jar (set by [publishShadowedJar]). The main jar contains
- * Gradle 7.6-era shim classes (e.g. ProjectIsolationStartParameterAccessorG76) that crash
- * Gradle 8.14 consumers. This function redirects those variants to the gradle813 jar which
- * contains updated implementations that work with Gradle 8.14.
+ * Background: Gradle's MavenResolver checks for a base <name>-<version>.jar alongside the .pom
+ * before reading .module metadata. If no base jar exists, it treats the module as absent even
+ * when the .module file correctly declares per-variant artifacts. This was masked by the Gradle
+ * cache in previous sessions; after --clean it becomes fatal.
  *
  * Must be called AFTER the gradle813 source set and its shadow jar task have been created.
  */
@@ -715,6 +716,7 @@ fun Project.redirectFixedAttributeVariantsToGradle813() {
     val mainSourceSet = sourceSets[SourceSet.MAIN_SOURCE_SET_NAME]
     val gradle813ShadowJarTask = tasks.named<Jar>("${EMBEDDABLE_COMPILER_TASK_NAME}Gradle813Jar")
 
+    // Redirect WithFixedAttribute catch-all variants (used by consumers without plugin.api-version)
     configurations["${mainSourceSet.runtimeElementsConfigurationName}$FIXED_CONFIGURATION_SUFFIX"]
         .artifacts.removeAll { true }
     configurations["${mainSourceSet.apiElementsConfigurationName}$FIXED_CONFIGURATION_SUFFIX"]
@@ -724,6 +726,32 @@ fun Project.redirectFixedAttributeVariantsToGradle813() {
         artifacts {
             add("${mainSourceSet.runtimeElementsConfigurationName}$FIXED_CONFIGURATION_SUFFIX", gradle813ShadowJarTask)
             add("${mainSourceSet.apiElementsConfigurationName}$FIXED_CONFIGURATION_SUFFIX", gradle813ShadowJarTask)
+        }
+    }
+
+    // Gradle's MavenResolver checks for a base <name>-<version>.jar alongside the .pom before
+    // reading .module metadata. Without a base jar on disk it marks the module absent. Copy the
+    // gradle813 jar to the base jar name in Maven Local after publish.
+    val m2Base = java.io.File(System.getProperty("user.home"), ".m2/repository")
+    val groupPath = project.group.toString().replace('.', '/')
+    val version = project.version.toString()
+    val copyBaseJar = tasks.register<Copy>("copyKgpBrsBaseJarToMavenLocal") {
+        // Copy the single gradle813 output jar as the base-name jar so Maven Local resolvers find
+        // a <name>-<version>.jar alongside the .pom (required before .module metadata is read).
+        // archiveBaseName of the gradle813 shadow jar equals the archives name (e.g. kotlin-gradle-plugin-brs).
+        from(gradle813ShadowJarTask.flatMap { it.archiveFile })
+        into(providers.provider {
+            val baseName = gradle813ShadowJarTask.get().archiveBaseName.get()
+            m2Base.resolve("$groupPath/$baseName/$version")
+        })
+        rename { _ ->
+            val baseName = gradle813ShadowJarTask.get().archiveBaseName.get()
+            "$baseName-$version.jar"
+        }
+    }
+    tasks.configureEach {
+        if (name == "publishPluginMavenPublicationToMavenLocal") {
+            finalizedBy(copyBaseJar)
         }
     }
 }
