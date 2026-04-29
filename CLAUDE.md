@@ -24,16 +24,12 @@ This affects code generation - there's no need to use uppercase for "disambiguat
 ```
 
 That's it. This script:
-1. **Smart change detection**: Uses marker files to detect what changed since last build
-2. **Selective rebuilding**: Only rebuilds components that changed (compiler and/or stdlib)
-3. **Dependency-aware**: If compiler changes, stdlib is automatically rebuilt with the new compiler
-4. Cleans only the build directories for changed components
-5. Uses `--no-build-cache` and `--no-daemon` to prevent stale cached outputs
-6. Builds compiler fat JAR (if compiler changed)
-7. Regenerates stdlib klib using the fresh compiler (if needed)
-8. Publishes everything to Maven Local
-
-The script uses `.build-marker-compiler` and `.build-marker-stdlib` files to track when each component was last built successfully.
+1. Cleans BRS module build directories (forces ~42 BRS-specific tasks to re-execute)
+2. Runs all 7 build steps every invocation — Gradle's up-to-date checks skip unchanged modules
+3. Uses `-Pkotlin.build.useBootstrapStdlib=true` (prevents metadata version mismatch with bootstrap compiler)
+4. Builds `cli-brs:fatJar` (BRS compiler, ~702 tasks — not the full `dist`)
+5. Runs `regenerateKlib` and `generateStdlibBrs` using the fat JAR
+6. Publishes all artifacts to Maven Local
 
 **DO NOT** run manual cache-clearing commands. **DO NOT** run individual gradlew tasks.
 If `./rebuild.sh` doesn't work correctly, that's an **infrastructure failure** - fix the script.
@@ -65,22 +61,19 @@ When you see ANY of these, it is an **INFRASTRUCTURE FAILURE**:
 
 The tooling must work correctly. If it doesn't, fix the tooling.
 
-### Why rebuild.sh uses git status (not file mtime)
-
-Claude Code's Edit tool may not update file modification times when editing files.
-This breaks mtime-based change detection. We use `git status --short` instead,
-which reliably detects uncommitted changes regardless of file timestamps.
-
 ### How rebuild.sh optimizes incremental builds
 
-The rebuild.sh script uses **selective build directory cleanup** instead of `--rerun-tasks` for incremental builds. This provides a major speedup:
+On every run, `rebuild.sh` deletes only the BRS compiler module `build/` directories
+before invoking Gradle. This forces the ~42 BRS-specific tasks to re-execute while
+the ~660 core Kotlin compiler tasks remain `UP-TO-DATE` from Gradle's build cache.
 
-- **First build**: Uses `--rerun-tasks` for reliability (all 687 Gradle tasks)
-- **Incremental builds**: Deletes only BrightScript module build directories, then runs without `--rerun-tasks`
+`regenerateKlib` and `generateStdlibBrs` track `cli-brs:fatJar` as a Gradle input.
+If the fat JAR hasn't changed, those tasks are also `UP-TO-DATE`.
 
-This allows the ~645 core Kotlin compiler tasks to use cached outputs while forcing the ~42 BrightScript-specific tasks to recompile. Result: BRS-only changes build in ~5-8 minutes instead of 30+ minutes.
+There are no marker files. There is no `--rerun-tasks`. Gradle's own incremental
+build machinery is the source of truth for what needs rebuilding.
 
-**BrightScript modules cleaned on each incremental build:**
+**BrightScript modules cleaned on each run:**
 - `brightscript/brs.ast/build`
 - `core/compiler.common.brightscript/build`
 - `brs/brs.frontend/build`
@@ -91,14 +84,13 @@ This allows the ~645 core Kotlin compiler tasks to use cached outputs while forc
 
 ### Forcing a full rebuild
 
-If you need to rebuild the entire Kotlin compiler (rare - only after pulling upstream changes), delete the compiler marker file:
+Use `--clean` to force a full rebuild from scratch:
 
 ```bash
-rm .build-marker-compiler
-./rebuild.sh
+./rebuild.sh --clean
 ```
 
-This triggers the first-build path with `--rerun-tasks`.
+This removes all BRS build directories and Maven Local BRS artifacts before rebuilding.
 
 ## DO NOT
 
@@ -243,49 +235,62 @@ The rebuild.sh script handles this entire chain correctly. Manual commands break
 
 ### Why BRS Requires Special Handling
 
-Unlike JS/Native which are upstream in the Kotlin compiler, BRS is a fork. The remote bootstrap compiler from JetBrains Space has no BRS support. This creates a chicken-and-egg problem:
+This is a fork of the Kotlin compiler. The remote bootstrap compiler from JetBrains
+(v2.2.20-Beta2-71, see `gradle.properties:42`) speaks metadata version 2.0.x. If
+`:kotlin-stdlib:jvmJar` is forced to run (e.g. by `--rerun-tasks`), the project's
+own 2.2.x stdlib lands on `:kotlin-util-klib`'s compile classpath — the 2.0.x
+bootstrap compiler cannot read 2.2.x metadata → BUILD FAILED:
 
-1. To compile BRS stdlib, you need KGP with BRS target support
-2. To get KGP with BRS support, you need to build and publish it locally
-3. This requires building the BRS compiler first
-
-### How rebuild.sh Handles This
-
-The build is split into two phases:
-
-**Phase 1 (Remote Bootstrap)** - Steps 1-4 work with the remote bootstrap from JetBrains:
-- Build BRS compiler fat JAR
-- Regenerate stdlib klib (uses JavaExec directly, bypasses KGP)
-- Publish compiler to Maven Local
-- Publish KGP to Maven Local (now with BRS support)
-
-**Phase 2 (Local Bootstrap)** - Steps 5-6 use `-Pbootstrap.local=true`:
-- Gradle resolves KGP from Maven Local instead of remote
-- The `brs {}` blocks in stdlib and kotlin.test now work
-- Publish stdlib and kotlin.test with full BRS support
-
-### Conditional BRS Target Configuration
-
-The `brs {}` blocks are in separate Groovy scripts (`brs-target.gradle`) because:
-
-1. **The `brs {}` DSL function is generated by KGP** - it only exists when KGP has BRS support
-2. **Kotlin DSL scripts are compiled before execution** - if `brs` doesn't exist, compilation fails even with runtime checks
-3. **Groovy uses dynamic dispatch** - method resolution happens at runtime, not compile time
-4. **The scripts are only applied when BRS is available** - so `brs` will always exist when the script runs
-
-In `build.gradle.kts`:
-```kotlin
-val kgpHasBrsSupport = runCatching {
-    Class.forName("org.jetbrains.kotlin.gradle.targets.brs.KotlinBrsIrTarget")
-}.isSuccess
-
-if (kgpHasBrsSupport) {
-    apply(from = "brs-target.gradle")  // Groovy script with brs {} config
-}
+```
+binary version of its metadata is 2.2.0, expected version is 2.0.0
 ```
 
-This allows Gradle configuration to succeed with remote bootstrap (skipping BRS entirely),
-while still enabling full BRS compilation when local bootstrap is used.
+### The Fix: `-Pkotlin.build.useBootstrapStdlib=true`
+
+`rebuild.sh` passes `-Pkotlin.build.useBootstrapStdlib=true` to every Gradle
+invocation. This flag (defined in
+`repo/gradle-build-conventions/buildsrc-compat/src/main/kotlin/BuildPropertiesExt.kt`)
+makes `kotlinStdlib()` (`repoDependencies.kt:58-63`) return the external Maven
+bootstrap stdlib instead of `project(":kotlin-stdlib")`. The project's own stdlib
+never appears on the bootstrap compiler's classpath.
+
+**DO NOT remove this flag from rebuild.sh.** Without it, any build that re-executes
+`:kotlin-stdlib:jvmJar` will fail with the metadata version error above.
+
+### Why `cli-brs:fatJar` Instead of `dist`
+
+The `dist` task builds the full Kotlin distribution: JVM + JS + Native + BRS
+(~1381 tasks). BRS only needs the BRS backend. `compiler:cli-brs:fatJar` produces
+a self-contained fat JAR with all BRS compiler dependencies bundled (~702 tasks
+with `useBootstrapStdlib=true`).
+
+`regenerateKlib` (`brs-prebuilt/build.gradle.kts`) and `generateStdlibBrs`
+(`stdlib/build.gradle.kts`) both depend on `:compiler:cli-brs:fatJar`. The fat JAR
+is also tracked as a Gradle input — so changes to the compiler automatically trigger
+klib and runtime regeneration.
+
+### How `rebuild.sh` Works (Current Architecture)
+
+All 7 steps run on every invocation. Incremental speed comes from two mechanisms:
+
+1. **Build directory cleanup**: BRS compiler module `build/` dirs are deleted before
+   each run, forcing only the ~42 BRS-specific Gradle tasks to re-execute. The ~660
+   core Kotlin compiler tasks see their outputs unchanged and are `UP-TO-DATE`.
+2. **Gradle up-to-date checks**: `regenerateKlib` and `generateStdlibBrs` track the
+   fat JAR as an input. If the JAR hasn't changed, those tasks are UP-TO-DATE.
+
+There are no marker files. There is no `--rerun-tasks`. Gradle's own incremental
+build machinery is the source of truth.
+
+### Bootstrap Build Sequence
+
+```
+:compiler:cli-brs:fatJar  (~702 tasks, useBootstrapStdlib=true)
+         ↓
+:kotlin-stdlib-brs-prebuilt:regenerateKlib  (uses fatJar as classpath)
+         ↓
+publishToMavenLocal  (compiler, KGP, stdlib klib, stdlib runtime, kotlin-test-brs)
+```
 
 ### Fresh Clone Workflow
 
@@ -295,10 +300,8 @@ From a fresh clone, just run:
 ./rebuild.sh
 ```
 
-This handles all the bootstrap phases automatically. After completion:
-- BRS compiler, KGP, stdlib, and kotlin.test are all in Maven Local
-- The `kotlin-roku` plugin can resolve all dependencies
-- User projects can compile Kotlin to BrightScript
+This handles everything automatically. After completion, all artifacts are in Maven
+Local under `com.nuvyyo:*` at version `2.2.20-brs.1`.
 
 ## Troubleshooting
 
