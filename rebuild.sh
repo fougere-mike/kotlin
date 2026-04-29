@@ -272,26 +272,10 @@ fi
 
 if [ "$STDLIB_CHANGED" = true ]; then
     echo ""
-    echo "6. Generating stdlib BrightScript runtime JAR..."
-    ./gradlew :kotlin-stdlib:generateStdlibBrs :kotlin-stdlib:brsBrsJar $FLAGS
+    echo "6. Publishing stdlib BrightScript runtime JAR..."
+    ./gradlew :kotlin-stdlib:generateStdlibBrs :kotlin-stdlib:publishBrsRuntimePublicationToMavenLocal $FLAGS
 
-    # Get version and copy JAR to Maven Local manually
-    # (The tasks don't use KGP publishing, so we copy the JAR ourselves)
-    KOTLIN_VERSION=$(grep "^defaultSnapshotVersion=" gradle.properties | cut -d'=' -f2)
-    RUNTIME_JAR="libraries/stdlib/build/libs/kotlin-stdlib-brs-${KOTLIN_VERSION}-brs-runtime.jar"
-    MAVEN_LOCAL_DIR="$HOME/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-brs/${KOTLIN_VERSION}"
-
-    if [[ -f "$RUNTIME_JAR" ]]; then
-        mkdir -p "$MAVEN_LOCAL_DIR"
-        cp "$RUNTIME_JAR" "$MAVEN_LOCAL_DIR/"
-        echo "  Verified: stdlib BRS runtime JAR copied to Maven Local"
-        echo "            $MAVEN_LOCAL_DIR/kotlin-stdlib-brs-${KOTLIN_VERSION}-brs-runtime.jar"
-    else
-        echo ""
-        echo "ERROR: Runtime JAR not created at $RUNTIME_JAR"
-        echo "Build failed."
-        exit 1
-    fi
+    echo "  Verified: com.nuvyyo:kotlin-stdlib-brs-runtime published to Maven Local"
 else
     echo ""
     echo "6. Skipping stdlib BRS runtime (no changes detected)"
@@ -307,21 +291,22 @@ fi
 
 if [ "$STDLIB_CHANGED" = true ] || [ "$COMPILER_CHANGED" = true ]; then
     echo ""
-    echo "7. Compile-checking kotlin-test-brs..."
-    ./gradlew :kotlin-test-brs:build $FLAGS
+    echo "7. Compile-checking and publishing kotlin-test-brs..."
+    ./gradlew :kotlin-test-brs:build :kotlin-test-brs:publishToMavenLocal $FLAGS
 
-    echo "  Verified: kotlin-test-brs compiles cleanly"
+    echo "  Verified: kotlin-test-brs compiles cleanly and published to Maven Local"
 else
     echo ""
-    echo "7. Skipping kotlin-test-brs compile-check (no changes detected)"
+    echo "7. Skipping kotlin-test-brs (no changes detected)"
 fi
 
 echo ""
 echo "=== All artifacts published to Maven Local ==="
 echo ""
 echo "Published artifacts:"
-echo "  - org.jetbrains.kotlin:kotlin-compiler-brs"
-echo "  - org.jetbrains.kotlin:kotlin-gradle-plugin (with BRS target support)"
-echo "  - org.jetbrains.kotlin:kotlin-gradle-plugins-bom"
-echo "  - org.jetbrains.kotlin:kotlin-stdlib-brs (klib)"
-echo "  - org.jetbrains.kotlin:kotlin-stdlib-brs (brs-runtime JAR)"
+echo "  - com.nuvyyo:kotlin-compiler-brs"
+echo "  - com.nuvyyo:kotlin-gradle-plugin-brs (with BRS target support)"
+echo "  - com.nuvyyo:kotlin-gradle-plugins-bom-brs"
+echo "  - com.nuvyyo:kotlin-stdlib-brs (klib)"
+echo "  - com.nuvyyo:kotlin-stdlib-brs-runtime (JAR)"
+echo "  - com.nuvyyo:kotlin-test-brs (klib)"

@@ -16,7 +16,7 @@ val isBrsCompileTask: (Any) -> Boolean = { task ->
 
 // Common Group and version
 val kotlinVersion: String by rootProject.extra
-group = "org.jetbrains.kotlin"
+group = "com.nuvyyo"
 version = kotlinVersion
 
 project.configureJvmDefaultToolchain()

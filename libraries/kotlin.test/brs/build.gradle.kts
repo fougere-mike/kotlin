@@ -5,6 +5,7 @@
 
 plugins {
     base
+    `maven-publish`
 }
 
 description = "Kotlin test framework for BrightScript"
@@ -64,4 +65,26 @@ tasks.named("build") {
 
 tasks.named<Delete>("clean") {
     delete("build")
+}
+
+apply(plugin = "nuvyyo-publishing")
+
+publishing {
+    publications {
+        create<MavenPublication>("brsKotlinTest") {
+            groupId = "com.nuvyyo"
+            artifactId = "kotlin-test-brs"
+            version = project.version.toString()
+
+            artifact(outputKlib) {
+                extension = "klib"
+                builtBy(buildKlib)
+            }
+
+            pom {
+                name.set("Kotlin Test for BrightScript")
+                description.set("Kotlin test framework compiled for the BrightScript (Roku) platform")
+            }
+        }
+    }
 }

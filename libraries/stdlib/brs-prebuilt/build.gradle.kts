@@ -271,10 +271,12 @@ tasks.named<Delete>("clean") {
  */
 val kotlinVersion: String by rootProject.extra
 
+apply(plugin = "nuvyyo-publishing")
+
 publishing {
     publications {
         create<MavenPublication>("brsStdlib") {
-            groupId = "org.jetbrains.kotlin"
+            groupId = "com.nuvyyo"
             artifactId = "kotlin-stdlib-brs"
             version = kotlinVersion
 

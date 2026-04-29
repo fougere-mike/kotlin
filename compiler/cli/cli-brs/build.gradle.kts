@@ -92,11 +92,13 @@ tasks.register<JavaExec>("run") {
     workingDir = rootProject.projectDir
 }
 
+apply(plugin = "nuvyyo-publishing")
+
 // Publishing configuration for the BRS compiler fat JAR
 publishing {
     publications {
         create<MavenPublication>("maven") {
-            groupId = "org.jetbrains.kotlin"
+            groupId = "com.nuvyyo"
             artifactId = "kotlin-compiler-brs"
             version = project.version.toString()
 

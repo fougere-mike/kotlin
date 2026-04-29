@@ -1089,8 +1089,24 @@ val generateStdlibBrs = tasks.register<JavaExec>("generateStdlibBrs") {
 
 // JAR containing compiled .brs runtime files for packaging in Roku apps
 val brsBrsJar = tasks.register<Jar>("brsBrsJar") {
-    archiveBaseName.set("kotlin-stdlib-brs")
-    archiveClassifier.set("brs-runtime")
+    archiveBaseName.set("kotlin-stdlib-brs-runtime")
     from(layout.buildDirectory.dir("brs-runtime/source"))
     dependsOn(generateStdlibBrs)
+}
+
+apply(plugin = "nuvyyo-publishing")
+
+publishing {
+    publications {
+        create<MavenPublication>("brsRuntime") {
+            groupId = "com.nuvyyo"
+            artifactId = "kotlin-stdlib-brs-runtime"
+            version = project.version.toString()
+            artifact(brsBrsJar)
+            pom {
+                name.set("Kotlin Standard Library BrightScript Runtime")
+                description.set("Compiled .brs runtime files for packaging in Roku apps")
+            }
+        }
+    }
 }

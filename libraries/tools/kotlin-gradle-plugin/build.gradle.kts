@@ -11,6 +11,8 @@ plugins {
     `java-test-fixtures`
 }
 
+base.archivesName.set("kotlin-gradle-plugin-brs")
+
 repositories {
     google()
     mavenCentral()

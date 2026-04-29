@@ -7,6 +7,8 @@ plugins {
     id("gradle-plugin-api-reference")
 }
 
+base.archivesName.set("kotlin-gradle-plugin-api-brs")
+
 pluginApiReference {
     enableForGradlePluginVariants(GradlePluginVariant.values().toSet())
     enableKotlinlangDocumentation()

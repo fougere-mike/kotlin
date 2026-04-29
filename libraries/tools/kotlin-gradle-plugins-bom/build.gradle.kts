@@ -36,6 +36,7 @@ configureCommonPublicationSettingsForGradle(signLibraryPublication, sbom = false
 publishing {
     publications {
         create<MavenPublication>("myPlatform") {
+            artifactId = "kotlin-gradle-plugins-bom-brs"
             from(components["javaPlatform"])
             pom {
                 packaging = "pom"

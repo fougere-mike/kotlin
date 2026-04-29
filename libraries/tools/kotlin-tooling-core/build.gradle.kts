@@ -4,6 +4,7 @@ plugins {
     id("org.jetbrains.kotlinx.binary-compatibility-validator")
 }
 
+base.archivesName.set("kotlin-tooling-core-brs")
 publish()
 sourcesJar()
 javadocJar()

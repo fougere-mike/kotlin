@@ -9,6 +9,8 @@ plugins {
     id("org.jetbrains.kotlinx.binary-compatibility-validator")
 }
 
+base.archivesName.set("kotlin-gradle-plugin-idea-brs")
+
 configureKotlinCompileTasksGradleCompatibility()
 
 kotlin.sourceSets.configureEach {
