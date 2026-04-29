@@ -122,4 +122,9 @@ if (!kotlinBuildProperties.isInJpsBuildIdeaSync) {
         commonSourceSet = commonSourceSet
     )
     publishShadowedJar(gradle813SourceSet, commonSourceSet)
+
+    // BRS fork: redirect the WithFixedAttribute catch-all variants to the gradle813 jar.
+    // The main jar contains Gradle 7.6-era shim classes that crash Gradle 8.14 consumers.
+    // Must be called after gradle813 shadow jar is created by publishShadowedJar above.
+    redirectFixedAttributeVariantsToGradle813()
 }

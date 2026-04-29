@@ -700,6 +700,34 @@ fun Project.publishShadowedJar(
     }
 }
 
+/**
+ * BRS fork: Redirects the WithFixedAttribute catch-all variants to the gradle813 shadowed jar.
+ *
+ * The WithFixedAttribute variants are created in [reconfigureMainSourcesSetForGradlePlugin] and
+ * initially point to the main shadowed jar (set by [publishShadowedJar]). The main jar contains
+ * Gradle 7.6-era shim classes (e.g. ProjectIsolationStartParameterAccessorG76) that crash
+ * Gradle 8.14 consumers. This function redirects those variants to the gradle813 jar which
+ * contains updated implementations that work with Gradle 8.14.
+ *
+ * Must be called AFTER the gradle813 source set and its shadow jar task have been created.
+ */
+fun Project.redirectFixedAttributeVariantsToGradle813() {
+    val mainSourceSet = sourceSets[SourceSet.MAIN_SOURCE_SET_NAME]
+    val gradle813ShadowJarTask = tasks.named<Jar>("${EMBEDDABLE_COMPILER_TASK_NAME}Gradle813Jar")
+
+    configurations["${mainSourceSet.runtimeElementsConfigurationName}$FIXED_CONFIGURATION_SUFFIX"]
+        .artifacts.removeAll { true }
+    configurations["${mainSourceSet.apiElementsConfigurationName}$FIXED_CONFIGURATION_SUFFIX"]
+        .artifacts.removeAll { true }
+
+    configurations {
+        artifacts {
+            add("${mainSourceSet.runtimeElementsConfigurationName}$FIXED_CONFIGURATION_SUFFIX", gradle813ShadowJarTask)
+            add("${mainSourceSet.apiElementsConfigurationName}$FIXED_CONFIGURATION_SUFFIX", gradle813ShadowJarTask)
+        }
+    }
+}
+
 fun Project.addBomCheckTask() {
     val checkBomTask = tasks.register("checkGradlePluginsBom") {
         group = "Validation"
