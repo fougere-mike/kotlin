@@ -17,8 +17,13 @@ val brsActualDir = file("../brs-actual")
 val outputKlib = file("kotlin-stdlib-brs.klib")
 val sourceHashFile = file(".klib-source-hash")
 
-// The BRS compiler uses the Kotlin distribution built by ./gradlew dist
-val distCompilerJar = rootProject.file("dist/kotlinc/lib/kotlin-compiler.jar")
+// The BRS compiler fat JAR from cli-brs:fatJar (self-contained, no dist needed).
+// We derive the path from the build directory rather than calling tasks.named() on
+// a cross-project reference: tasks.named() on a foreign project forces that project
+// to be configured immediately, which fails in Gradle's configuration phase ordering.
+// The archiveBaseName is "kotlinc-brs" (set in cli-brs/build.gradle.kts).
+val cliBrsProject = rootProject.project(":compiler:cli-brs")
+val fatJarFile: Provider<RegularFile> = cliBrsProject.layout.buildDirectory.file("libs/kotlinc-brs.jar")
 
 // Source directories that contribute to the prebuilt klib.
 // Must stay in sync with regenerateKlib.args() below; any file under these dirs
@@ -83,33 +88,18 @@ val regenerateKlib by tasks.registering(JavaExec::class) {
     group = "build"
     description = "Regenerate BRS stdlib klib using the development compiler"
 
-    // Use dist compiler (includes all runtime dependencies in the distribution)
-    val distLibDir = rootProject.file("dist/kotlinc/lib")
-    classpath = fileTree(distLibDir) { include("*.jar") }
+    dependsOn(":compiler:cli-brs:fatJar")
+
+    // Fat JAR is self-contained (all compiler deps included via fatJar)
+    classpath = files(fatJarFile)
     mainClass.set("org.jetbrains.kotlin.cli.brs.K2BrsCompiler")
 
-    // BRS-specific source directories
-    // brs/builtins contains actual implementations for core types (Any, Unit, Nothing, Double.*, Float.*, etc.)
-    // brs/src contains BRS-specific implementations of stdlib functions
-    // brs-actual/src contains additional platform-specific actual implementations
-    //
-    // Note: We do NOT include:
-    // - common sources (src/, unsigned/src, common/src) because BRS has its own implementations
-    // - brs-actual/builtins because it duplicates brs/builtins (same Double.*, Float.* functions)
     val sourceDirs = klibSourceDirs
 
     doFirst {
-        if (!distCompilerJar.exists()) {
-            throw GradleException(
-                "BRS Compiler not found. Please build the distribution first:\n" +
-                "  ./gradlew dist\n" +
-                "Expected location:\n" +
-                "  - ${distCompilerJar}"
-            )
-        }
-
+        val fatJar = fatJarFile.get().asFile
         logger.lifecycle("Regenerating BRS stdlib klib...")
-        logger.lifecycle("  Compiler: ${distCompilerJar}")
+        logger.lifecycle("  Compiler: $fatJar")
         logger.lifecycle("  Sources: ${sourceDirs.map { it.name }}")
         logger.lifecycle("  Output: $outputKlib")
     }
@@ -118,20 +108,15 @@ val regenerateKlib by tasks.registering(JavaExec::class) {
         "-Xproduce=library",
         "-Xallow-kotlin-package",
         "-Xexpect-actual-classes",
-        "-Xstdlib-compilation",  // Enable stdlib compilation mode for proper klib metadata
-        "-module-name", "stdlib",  // Use "stdlib" to match Native convention
+        "-Xstdlib-compilation",
+        "-module-name", "stdlib",
         "-output", outputKlib.absolutePath,
         *sourceDirs.map { it.absolutePath }.toTypedArray()
     )
 
     inputs.dir(brsStdlibDir)
     inputs.dir(brsActualDir)
-    // Track the compiler JAR as an input so changes to the compiler trigger a rebuild
-    if (distCompilerJar.exists()) {
-        inputs.file(distCompilerJar)
-    }
-    // The source hash file is rewritten on every successful regeneration; declare
-    // it as an output so Gradle's up-to-date checks stay correct.
+    inputs.files(fatJarFile)
     outputs.file(outputKlib)
     outputs.file(sourceHashFile)
 
@@ -196,7 +181,7 @@ val verifyKlib by tasks.registering {
             throw GradleException(
                 "Pre-compiled klib not found at $outputKlibLocal.\n" +
                 "To fix:\n" +
-                "  ./gradlew dist\n" +
+                "  ./gradlew :compiler:cli-brs:fatJar\n" +
                 "  ./gradlew :kotlin-stdlib-brs-prebuilt:regenerateKlib"
             )
         }
@@ -206,7 +191,7 @@ val verifyKlib by tasks.registering {
             throw GradleException(
                 "Pre-compiled klib at $outputKlibLocal appears invalid ($size bytes).\n" +
                 "To fix:\n" +
-                "  ./gradlew dist\n" +
+                "  ./gradlew :compiler:cli-brs:fatJar\n" +
                 "  ./gradlew :kotlin-stdlib-brs-prebuilt:regenerateKlib"
             )
         }
@@ -218,7 +203,7 @@ val verifyKlib by tasks.registering {
                 "Source hash file not found at $sourceHashFileLocal.\n" +
                 "The prebuilt klib exists, but there is no recorded source hash to verify it against.\n" +
                 "To fix (this bootstraps the hash from current sources):\n" +
-                "  ./gradlew dist\n" +
+                "  ./gradlew :compiler:cli-brs:fatJar\n" +
                 "  ./gradlew :kotlin-stdlib-brs-prebuilt:regenerateKlib\n" +
                 "  git add $outputKlibRel $sourceHashFileRel"
             )
@@ -238,7 +223,7 @@ val verifyKlib by tasks.registering {
                     appendLine("artifacts together; otherwise downstream consumers link against stale bytecode.")
                     appendLine()
                     appendLine("To fix:")
-                    appendLine("  ./gradlew dist")
+                    appendLine("  ./gradlew :compiler:cli-brs:fatJar")
                     appendLine("  ./gradlew :kotlin-stdlib-brs-prebuilt:regenerateKlib")
                     appendLine("  git add $outputKlibRel $sourceHashFileRel")
                     append("  git commit")
