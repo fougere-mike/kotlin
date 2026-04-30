@@ -54,7 +54,7 @@ echo "Step 1: Building all artifacts..."
 # Step 2: Publish to GitHub Packages
 # ============================================================================
 
-FLAGS="--no-build-cache --no-daemon --no-configuration-cache"
+FLAGS="-Pkotlin.build.useBootstrapStdlib=true --no-build-cache --no-daemon --no-configuration-cache"
 
 echo ""
 echo "Step 2: Publishing compiler to GitHub Packages..."
@@ -75,7 +75,7 @@ echo "Step 5: Publishing kotlin-test-brs to GitHub Packages..."
 echo ""
 echo "Step 6: Publishing KGP and BOM to GitHub Packages..."
 ./gradlew \
-  :kotlin-gradle-plugin:publishAllPublicationsToNuvyyoRepository \
+  :kotlin-gradle-plugin:publishPluginMavenPublicationToNuvyyoRepository \
   :kotlin-gradle-plugin-api:publishAllPublicationsToNuvyyoRepository \
   :kotlin-gradle-plugin-idea:publishAllPublicationsToNuvyyoRepository \
   :kotlin-tooling-core:publishAllPublicationsToNuvyyoRepository \
