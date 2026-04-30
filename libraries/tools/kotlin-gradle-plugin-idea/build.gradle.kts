@@ -20,6 +20,7 @@ publishing {
         }
     }
 }
+apply(plugin = "nuvyyo-publishing")
 
 configureKotlinCompileTasksGradleCompatibility()
 

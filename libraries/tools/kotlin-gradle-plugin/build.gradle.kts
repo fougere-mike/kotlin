@@ -22,6 +22,7 @@ publishing {
         }
     }
 }
+apply(plugin = "nuvyyo-publishing")
 
 repositories {
     google()

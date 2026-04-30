@@ -16,6 +16,7 @@ publishing {
         }
     }
 }
+apply(plugin = "nuvyyo-publishing")
 publish()
 sourcesJar()
 javadocJar()

@@ -18,6 +18,7 @@ publishing {
         }
     }
 }
+apply(plugin = "nuvyyo-publishing")
 
 pluginApiReference {
     enableForGradlePluginVariants(GradlePluginVariant.values().toSet())
