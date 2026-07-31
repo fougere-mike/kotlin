@@ -1,0 +1,14 @@
+// --- File: externalBrsNameOverloadsKt.brs ---
+function observePortForms_RoSGNode_RoMessagePort_k_(node as Object, port as Object) as Boolean
+    node.observeField("echo", port)
+    return node.observeFieldScoped("input", port)
+end function
+
+function observeViaInterface_ISGNodeField_RoMessagePort_k_(field as Object, port as Object) as Boolean
+    return field.observeField("echo", port)
+end function
+
+function callFuncForms_RoSGNode_k_(node as Object) as Dynamic
+    node.callFunc("reset")
+    return node.callFunc("setValue", node.getField("value"))
+end function

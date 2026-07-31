@@ -46,6 +46,9 @@ class BrsExpressionGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun safeCast() = runTest("expressions/safeCast.kt")
+
+    @Test
+    fun externalBrsNameOverloads() = runTest("expressions/externalBrsNameOverloads.kt")
 }
 
 // ==================== Control Flow Tests ====================

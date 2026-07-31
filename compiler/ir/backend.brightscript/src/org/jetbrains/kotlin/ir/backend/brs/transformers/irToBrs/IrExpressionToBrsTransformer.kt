@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.ir.util.isTypeParameter
 import org.jetbrains.kotlin.ir.util.isUnsigned
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.util.parentClassOrNull
+import org.jetbrains.kotlin.ir.util.resolveFakeOverride
 import org.jetbrains.kotlin.name.BrsStandardClassIds
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
@@ -1451,8 +1452,12 @@ class IrExpressionToBrsTransformer(
                     rawMethodName in listOf("copy", "equals", "hashCode", "toString")
 
                 val methodName = if (isExternalInterfaceMethod || isDataClassSyntheticMethod) {
-                    // Use simple name for external interface methods and data class synthetic methods
-                    rawMethodName
+                    // Use simple name for external interface methods and data class synthetic
+                    // methods. @BrsName overrides the simple name so distinct Kotlin declarations
+                    // can target the same native method (e.g. the port form of observeField);
+                    // fake overrides are resolved to the declaration carrying the annotation.
+                    val resolved = function.resolveFakeOverride() ?: function
+                    context.getBrsNameOverride(resolved) ?: rawMethodName
                 } else {
                     // Use mangled name for other methods (to match how methods are attached)
                     val fullMethodName = context.getBrsName(function)

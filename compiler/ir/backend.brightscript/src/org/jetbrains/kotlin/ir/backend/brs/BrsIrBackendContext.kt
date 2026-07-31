@@ -626,15 +626,19 @@ class BrsIrBackendContext(
         }
     }
 
+    /**
+     * Returns the explicit @BrsName override for a function, or null if not annotated.
+     * The returned name is emitted verbatim - no mangling, no parent prefix.
+     */
+    fun getBrsNameOverride(irFunction: IrFunction): String? {
+        val brsNameAnnotation = irFunction.getAnnotation(brsNameFqn) ?: return null
+        val nameArg = brsNameAnnotation.getValueArgument(0)
+        return (nameArg as? IrConst)?.value?.toString()
+    }
+
     private fun generateBrsFunctionName(irFunction: IrFunction): String {
         // 1. @BrsName annotation takes precedence - no mangling
-        val brsNameAnnotation = irFunction.getAnnotation(brsNameFqn)
-        if (brsNameAnnotation != null) {
-            val nameArg = brsNameAnnotation.getValueArgument(0)
-            if (nameArg is IrConst) {
-                return nameArg.value.toString()
-            }
-        }
+        getBrsNameOverride(irFunction)?.let { return it }
 
         // 2. @BrsStatic - use raw name without mangling (but with parent prefix for objects)
         val brsStaticAnnotation = irFunction.getAnnotation(brsStaticFqn)
