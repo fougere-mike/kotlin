@@ -1,0 +1,469 @@
+Trying 192.168.1.125...
+Connected to 192.168.1.125.
+Escape character is '^]'.
+85532179226,"type":"test_start"}
+{"duration_ms":0,"suite":"IOWorkerRegistry","test":"doesExist returns false for non-existing keys","type":"test_pass"}
+{"duration_ms":8,"failed":0,"ignored":0,"passed":12,"suite":"IOWorkerRegistry","type":"suite_end"}
+{"suite":"TaskPool","timestamp":1785532179227,"type":"suite_start"}
+{"suite":"TaskPool","test":"isInitialized returns false before initialization","timestamp":1785532179228,"type":"test_start"}
+{"duration_ms":0,"suite":"TaskPool","test":"isInitialized returns false before initialization","type":"test_pass"}
+{"suite":"TaskPool","test":"DEFAULT_POOL_SIZE is 4","timestamp":1785532179228,"type":"test_start"}
+{"duration_ms":0,"suite":"TaskPool","test":"DEFAULT_POOL_SIZE is 4","type":"test_pass"}
+{"suite":"TaskPool","test":"instance throws when not initialized","timestamp":1785532179229,"type":"test_start"}
+{"duration_ms":0,"suite":"TaskPool","test":"instance throws when not initialized","type":"test_pass"}
+{"duration_ms":2,"failed":0,"ignored":0,"passed":3,"suite":"TaskPool","type":"suite_end"}
+{"suite":"TaskPool Worker Pattern","timestamp":1785532179230,"type":"suite_start"}
+{"suite":"TaskPool Worker Pattern","test":"submitIOWork accepts worker name and captures","timestamp":1785532179230,"type":"test_start"}
+{"duration_ms":0,"suite":"TaskPool Worker Pattern","test":"submitIOWork accepts worker name and captures","type":"test_pass"}
+{"suite":"TaskPool Worker Pattern","test":"worker registry pattern only passes serializable data","timestamp":1785532179231,"type":"test_start"}
+{"duration_ms":0,"suite":"TaskPool Worker Pattern","test":"worker registry pattern only passes serializable data","type":"test_pass"}
+{"duration_ms":1,"failed":0,"ignored":0,"passed":2,"suite":"TaskPool Worker Pattern","type":"suite_end"}
+{"suite":"IOWorkerRegistry API","timestamp":1785532179232,"type":"suite_start"}
+{"suite":"IOWorkerRegistry API","test":"register accepts worker function","timestamp":1785532179233,"type":"test_start"}
+{"duration_ms":0,"suite":"IOWorkerRegistry API","test":"register accepts worker function","type":"test_pass"}
+{"suite":"IOWorkerRegistry API","test":"register accepts multiple workers","timestamp":1785532179233,"type":"test_start"}
+{"duration_ms":0,"suite":"IOWorkerRegistry API","test":"register accepts multiple workers","type":"test_pass"}
+{"suite":"IOWorkerRegistry API","test":"registerTyped provides type-safe registration","timestamp":1785532179234,"type":"test_start"}
+{"duration_ms":0,"suite":"IOWorkerRegistry API","test":"registerTyped provides type-safe registration","type":"test_pass"}
+{"duration_ms":2,"failed":0,"ignored":0,"passed":3,"suite":"IOWorkerRegistry API","type":"suite_end"}
+{"suite":"Capture Container (RoAssociativeArray)","timestamp":1785532179235,"type":"suite_start"}
+{"suite":"Capture Container (RoAssociativeArray)","test":"stores string values","timestamp":1785532179236,"type":"test_start"}
+{"duration_ms":0,"suite":"Capture Container (RoAssociativeArray)","test":"stores string values","type":"test_pass"}
+{"suite":"Capture Container (RoAssociativeArray)","test":"stores integer values","timestamp":1785532179236,"type":"test_start"}
+{"duration_ms":0,"suite":"Capture Container (RoAssociativeArray)","test":"stores integer values","type":"test_pass"}
+{"suite":"Capture Container (RoAssociativeArray)","test":"stores boolean values","timestamp":1785532179237,"type":"test_start"}
+{"duration_ms":0,"suite":"Capture Container (RoAssociativeArray)","test":"stores boolean values","type":"test_pass"}
+{"suite":"Capture Container (RoAssociativeArray)","test":"stores null values","timestamp":1785532179238,"type":"test_start"}
+{"duration_ms":0,"suite":"Capture Container (RoAssociativeArray)","test":"stores null values","type":"test_pass"}
+{"suite":"Capture Container (RoAssociativeArray)","test":"stores nested associative arrays","timestamp":1785532179238,"type":"test_start"}
+{"duration_ms":0,"suite":"Capture Container (RoAssociativeArray)","test":"stores nested associative arrays","type":"test_pass"}
+{"suite":"Capture Container (RoAssociativeArray)","test":"stores RoArray values","timestamp":1785532179239,"type":"test_start"}
+{"duration_ms":0,"suite":"Capture Container (RoAssociativeArray)","test":"stores RoArray values","type":"test_pass"}
+{"suite":"Capture Container (RoAssociativeArray)","test":"doesExist returns true for existing keys","timestamp":1785532179240,"type":"test_start"}
+{"duration_ms":0,"suite":"Capture Container (RoAssociativeArray)","test":"doesExist returns true for existing keys","type":"test_pass"}
+{"suite":"Capture Container (RoAssociativeArray)","test":"doesExist returns false for missing keys","timestamp":1785532179240,"type":"test_start"}
+{"duration_ms":0,"suite":"Capture Container (RoAssociativeArray)","test":"doesExist returns false for missing keys","type":"test_pass"}
+{"suite":"Capture Container (RoAssociativeArray)","test":"stores multiple types together","timestamp":1785532179241,"type":"test_start"}
+{"duration_ms":0,"suite":"Capture Container (RoAssociativeArray)","test":"stores multiple types together","type":"test_pass"}
+{"duration_ms":6,"failed":0,"ignored":0,"passed":9,"suite":"Capture Container (RoAssociativeArray)","type":"suite_end"}
+{"suite":"Worker Function Pattern","timestamp":1785532179242,"type":"suite_start"}
+{"suite":"Worker Function Pattern","test":"worker with captures extracts values","timestamp":1785532179242,"type":"test_start"}
+{"duration_ms":0,"suite":"Worker Function Pattern","test":"worker with captures extracts values","type":"test_pass"}
+{"suite":"Worker Function Pattern","test":"worker handles null captures gracefully","timestamp":1785532179243,"type":"test_start"}
+{"duration_ms":0,"suite":"Worker Function Pattern","test":"worker handles null captures gracefully","type":"test_pass"}
+{"suite":"Worker Function Pattern","test":"worker handles missing keys gracefully","timestamp":1785532179244,"type":"test_start"}
+{"duration_ms":0,"suite":"Worker Function Pattern","test":"worker handles missing keys gracefully","type":"test_pass"}
+{"suite":"Worker Function Pattern","test":"worker with multiple captures","timestamp":1785532179245,"type":"test_start"}
+{"duration_ms":0,"suite":"Worker Function Pattern","test":"worker with multiple captures","type":"test_pass"}
+{"suite":"Worker Function Pattern","test":"worker returns computed result","timestamp":1785532179245,"type":"test_start"}
+{"duration_ms":0,"suite":"Worker Function Pattern","test":"worker returns computed result","type":"test_pass"}
+{"suite":"Worker Function Pattern","test":"worker with nested data","timestamp":1785532179246,"type":"test_start"}
+{"duration_ms":0,"suite":"Worker Function Pattern","test":"worker with nested data","type":"test_pass"}
+{"duration_ms":4,"failed":0,"ignored":0,"passed":6,"suite":"Worker Function Pattern","type":"suite_end"}
+{"suite":"Capture Analysis Scenarios","timestamp":1785532179247,"type":"suite_start"}
+{"suite":"Capture Analysis Scenarios","test":"single string capture pattern","timestamp":1785532179247,"type":"test_start"}
+{"duration_ms":0,"suite":"Capture Analysis Scenarios","test":"single string capture pattern","type":"test_pass"}
+{"suite":"Capture Analysis Scenarios","test":"multiple primitive captures pattern","timestamp":1785532179248,"type":"test_start"}
+{"duration_ms":0,"suite":"Capture Analysis Scenarios","test":"multiple primitive captures pattern","type":"test_pass"}
+{"suite":"Capture Analysis Scenarios","test":"nullable capture pattern","timestamp":1785532179249,"type":"test_start"}
+{"duration_ms":0,"suite":"Capture Analysis Scenarios","test":"nullable capture pattern","type":"test_pass"}
+{"suite":"Capture Analysis Scenarios","test":"object capture pattern","timestamp":1785532179249,"type":"test_start"}
+{"duration_ms":0,"suite":"Capture Analysis Scenarios","test":"object capture pattern","type":"test_pass"}
+{"duration_ms":3,"failed":0,"ignored":0,"passed":4,"suite":"Capture Analysis Scenarios","type":"suite_end"}
+{"duration_ms":1159,"failed":0,"ignored":0,"passed":409,"total_suites":40,"total_tests":409,"type":"run_complete"}
+[KOTLINTEST_END]
+[DEBUG] runTests complete
+Note: GC - Found 253 orphaned objects (objects in a circular ref loop).
+07-31 21:27:49.935 app  [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
+07-31 21:27:49.935 app  [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
+07-31 21:27:49.941 app  [scrpt.cmpl] Compiling 'RokuTestApp', id 'dev'
+07-31 21:27:49.961 app  [scrpt.load.mkup] Loading markup dev 'RokuTestApp'
+07-31 21:27:49.964 app  [scrpt.unload.mkup] Unloading markup dev 'RokuTestApp'
+07-31 21:27:49.970 app  [scrpt.parse.mkup.time] Parsed markup dev 'RokuTestApp' in 9 milliseconds
+
+------ Compiling dev 'RokuTestApp' ------
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'appendable_append_c_k_' in pkg:/source/AppendableBrsKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'appendable_append_charsequencen_k_' in pkg:/source/AppendableBrsKt.brs(4)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'appendable_append_charsequencen_i_i_k_' in pkg:/source/AppendableBrsKt.brs(7)
+BRIGHTSCRIPT: WARNING: unused variable 'startindex' in function 'appendable_append_charsequencen_i_i_k_' in pkg:/source/AppendableBrsKt.brs(7)
+BRIGHTSCRIPT: WARNING: unused variable 'endindex' in function 'appendable_append_charsequencen_i_i_k_' in pkg:/source/AppendableBrsKt.brs(7)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'array_create_i_function1i_k_' in pkg:/source/ArrayKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'array_create_i_function1i_k_' in pkg:/source/ArrayKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'array_get_i_k_' in pkg:/source/ArrayKt.brs(16)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'array_set_i_anyn_k_' in pkg:/source/ArrayKt.brs(19)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'array_set_i_anyn_k_' in pkg:/source/ArrayKt.brs(19)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'arraylist_create_i_k_' in pkg:/source/ArrayListKt.brs(43)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'arraylistiterator_remove_k_' in pkg:/source/ArrayListKt.brs(534)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'arraylistiterator_set_anyn_k_' in pkg:/source/ArrayListKt.brs(558)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'sublistiterator_remove_k_' in pkg:/source/ArrayListKt.brs(913)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'sublistiterator_set_anyn_k_' in pkg:/source/ArrayListKt.brs(937)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'emptylist_contains_anyn_k_' in pkg:/source/ArrayListKt.brs(1072)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'emptylist_get_i_k_' in pkg:/source/ArrayListKt.brs(1080)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'emptylist_indexof_anyn_k_' in pkg:/source/ArrayListKt.brs(1084)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'emptylist_lastindexof_anyn_k_' in pkg:/source/ArrayListKt.brs(1088)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'bytearray_create_i_k_' in pkg:/source/ArraysKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'bytearray_create_i_function1ib_k_' in pkg:/source/ArraysKt.brs(16)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'bytearray_create_i_function1ib_k_' in pkg:/source/ArraysKt.brs(16)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'bytearray_get_i_k_' in pkg:/source/ArraysKt.brs(31)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'bytearray_set_i_b_k_' in pkg:/source/ArraysKt.brs(34)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'bytearray_set_i_b_k_' in pkg:/source/ArraysKt.brs(34)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'chararray_create_i_k_' in pkg:/source/ArraysKt.brs(44)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'chararray_create_i_function1ic_k_' in pkg:/source/ArraysKt.brs(59)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'chararray_create_i_function1ic_k_' in pkg:/source/ArraysKt.brs(59)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'chararray_get_i_k_' in pkg:/source/ArraysKt.brs(74)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'chararray_set_i_c_k_' in pkg:/source/ArraysKt.brs(77)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'chararray_set_i_c_k_' in pkg:/source/ArraysKt.brs(77)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'shortarray_create_i_k_' in pkg:/source/ArraysKt.brs(87)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'shortarray_create_i_function1is_k_' in pkg:/source/ArraysKt.brs(102)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'shortarray_create_i_function1is_k_' in pkg:/source/ArraysKt.brs(102)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'shortarray_get_i_k_' in pkg:/source/ArraysKt.brs(117)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'shortarray_set_i_s_k_' in pkg:/source/ArraysKt.brs(120)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'shortarray_set_i_s_k_' in pkg:/source/ArraysKt.brs(120)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'intarray_create_i_k_' in pkg:/source/ArraysKt.brs(130)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'intarray_create_i_function1ii_k_' in pkg:/source/ArraysKt.brs(145)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'intarray_create_i_function1ii_k_' in pkg:/source/ArraysKt.brs(145)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'intarray_get_i_k_' in pkg:/source/ArraysKt.brs(160)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'intarray_set_i_i_k_' in pkg:/source/ArraysKt.brs(163)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'intarray_set_i_i_k_' in pkg:/source/ArraysKt.brs(163)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'longarray_create_i_k_' in pkg:/source/ArraysKt.brs(173)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'longarray_create_i_function1ij_k_' in pkg:/source/ArraysKt.brs(188)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'longarray_create_i_function1ij_k_' in pkg:/source/ArraysKt.brs(188)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'longarray_get_i_k_' in pkg:/source/ArraysKt.brs(203)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'longarray_set_i_j_k_' in pkg:/source/ArraysKt.brs(206)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'longarray_set_i_j_k_' in pkg:/source/ArraysKt.brs(206)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'floatarray_create_i_k_' in pkg:/source/ArraysKt.brs(216)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'floatarray_create_i_function1if_k_' in pkg:/source/ArraysKt.brs(231)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'floatarray_create_i_function1if_k_' in pkg:/source/ArraysKt.brs(231)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'floatarray_get_i_k_' in pkg:/source/ArraysKt.brs(246)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'floatarray_set_i_f_k_' in pkg:/source/ArraysKt.brs(249)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'floatarray_set_i_f_k_' in pkg:/source/ArraysKt.brs(249)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'doublearray_create_i_k_' in pkg:/source/ArraysKt.brs(259)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'doublearray_create_i_function1id_k_' in pkg:/source/ArraysKt.brs(274)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'doublearray_create_i_function1id_k_' in pkg:/source/ArraysKt.brs(274)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'doublearray_get_i_k_' in pkg:/source/ArraysKt.brs(289)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'doublearray_set_i_d_k_' in pkg:/source/ArraysKt.brs(292)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'doublearray_set_i_d_k_' in pkg:/source/ArraysKt.brs(292)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'booleanarray_create_i_k_' in pkg:/source/ArraysKt.brs(302)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'booleanarray_create_i_function1iz_k_' in pkg:/source/ArraysKt.brs(317)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'booleanarray_create_i_function1iz_k_' in pkg:/source/ArraysKt.brs(317)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'booleanarray_get_i_k_' in pkg:/source/ArraysKt.brs(332)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'booleanarray_set_i_z_k_' in pkg:/source/ArraysKt.brs(335)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'booleanarray_set_i_z_k_' in pkg:/source/ArraysKt.brs(335)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_and_z_k_' in pkg:/source/BooleanKt.brs(26)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_or_z_k_' in pkg:/source/BooleanKt.brs(29)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_xor_z_k_' in pkg:/source/BooleanKt.brs(32)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_compareto_anyn_k_' in pkg:/source/BooleanKt.brs(35)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_equals_anyn_k_' in pkg:/source/BooleanKt.brs(41)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_compareto_anyn_k_' in pkg:/source/CharKt.brs(33)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_plus_i_k_' in pkg:/source/CharKt.brs(36)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_minus_c_k_' in pkg:/source/CharKt.brs(39)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_minus_i_k_' in pkg:/source/CharKt.brs(42)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_rangeto_c_k_' in pkg:/source/CharKt.brs(51)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_rangeuntil_c_k_' in pkg:/source/CharKt.brs(54)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_equals_anyn_k_' in pkg:/source/CharKt.brs(81)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'charsequence_get_i_k_' in pkg:/source/CharSequenceKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'startindex' in function 'charsequence_subsequence_i_i_k_' in pkg:/source/CharSequenceKt.brs(4)
+BRIGHTSCRIPT: WARNING: unused variable 'endindex' in function 'charsequence_subsequence_i_i_k_' in pkg:/source/CharSequenceKt.brs(4)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'count_riterable_k_' in pkg:/source/CollectionExtensionsKt.brs(345)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'take_riterable_i_k_' in pkg:/source/CollectionExtensionsKt.brs(508)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'drop_riterable_i_k_' in pkg:/source/CollectionExtensionsKt.brs(549)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'collection_contains_anyn_k_' in pkg:/source/CollectionsKt.brs(10)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'collection_containsall_collection_k_' in pkg:/source/CollectionsKt.brs(16)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'mutablecollection_add_anyn_k_' in pkg:/source/CollectionsKt.brs(25)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'mutablecollection_remove_anyn_k_' in pkg:/source/CollectionsKt.brs(28)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'mutablecollection_addall_collection_k_' in pkg:/source/CollectionsKt.brs(31)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'mutablecollection_removeall_collection_k_' in pkg:/source/CollectionsKt.brs(34)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'mutablecollection_retainall_collection_k_' in pkg:/source/CollectionsKt.brs(37)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'list_contains_anyn_k_' in pkg:/source/CollectionsKt.brs(46)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'list_containsall_collection_k_' in pkg:/source/CollectionsKt.brs(52)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'list_get_i_k_' in pkg:/source/CollectionsKt.brs(55)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'list_indexof_anyn_k_' in pkg:/source/CollectionsKt.brs(58)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'list_lastindexof_anyn_k_' in pkg:/source/CollectionsKt.brs(61)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'list_listiterator_i_k_' in pkg:/source/CollectionsKt.brs(67)
+BRIGHTSCRIPT: WARNING: unused variable 'fromindex' in function 'list_sublist_i_i_k_' in pkg:/source/CollectionsKt.brs(70)
+BRIGHTSCRIPT: WARNING: unused variable 'toindex' in function 'list_sublist_i_i_k_' in pkg:/source/CollectionsKt.brs(70)
+Displayed 100 of 282 warnings
+07-31 21:27:50.554 app  [scrpt.ctx.cmpl.time] Compiled 'RokuTestApp', id 'dev' in 584 ms (BCVer:0), thrd 2527
+07-31 21:27:50.561 app  [scrpt.proc.mkup.time] Processed markup dev 'RokuTestApp' in 0 milliseconds
+07-31 21:27:50.611 app  [beacon.signal] |AppCompileComplete --------> Duration(676 ms)
+07-31 21:27:50.646 app  [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
+07-31 21:27:50.647 app  [beacon.signal] |AppLaunchChainInitiate ----> TimeBase(NotApplicable)
+07-31 21:27:50.656 app  [beacon.signal] |AppSplashInitiate ---------> TimeBase(10 ms)
+07-31 21:27:50.707 app  [beacon.signal] |AppSplashComplete ---------> Duration(51 ms)
+07-31 21:27:51.033 sdkl [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
+07-31 21:27:51.052 sdkl [scrpt.cmpl] Compiling 'RokuTestApp', id 'dev'
+07-31 21:27:51.078 sdkl [scrpt.load.mkup] Loading markup dev 'RokuTestApp'
+07-31 21:27:51.081 sdkl [scrpt.unload.mkup] Unloading markup dev 'RokuTestApp'
+07-31 21:27:51.086 sdkl [scrpt.parse.mkup.time] Parsed markup dev 'RokuTestApp' in 8 milliseconds
+
+------ Compiling dev 'RokuTestApp' ------
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'appendable_append_c_k_' in pkg:/source/AppendableBrsKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'appendable_append_charsequencen_k_' in pkg:/source/AppendableBrsKt.brs(4)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'appendable_append_charsequencen_i_i_k_' in pkg:/source/AppendableBrsKt.brs(7)
+BRIGHTSCRIPT: WARNING: unused variable 'startindex' in function 'appendable_append_charsequencen_i_i_k_' in pkg:/source/AppendableBrsKt.brs(7)
+BRIGHTSCRIPT: WARNING: unused variable 'endindex' in function 'appendable_append_charsequencen_i_i_k_' in pkg:/source/AppendableBrsKt.brs(7)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'array_create_i_function1i_k_' in pkg:/source/ArrayKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'array_create_i_function1i_k_' in pkg:/source/ArrayKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'array_get_i_k_' in pkg:/source/ArrayKt.brs(16)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'array_set_i_anyn_k_' in pkg:/source/ArrayKt.brs(19)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'array_set_i_anyn_k_' in pkg:/source/ArrayKt.brs(19)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'arraylist_create_i_k_' in pkg:/source/ArrayListKt.brs(43)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'arraylistiterator_remove_k_' in pkg:/source/ArrayListKt.brs(534)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'arraylistiterator_set_anyn_k_' in pkg:/source/ArrayListKt.brs(558)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'sublistiterator_remove_k_' in pkg:/source/ArrayListKt.brs(913)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'sublistiterator_set_anyn_k_' in pkg:/source/ArrayListKt.brs(937)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'emptylist_contains_anyn_k_' in pkg:/source/ArrayListKt.brs(1072)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'emptylist_get_i_k_' in pkg:/source/ArrayListKt.brs(1080)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'emptylist_indexof_anyn_k_' in pkg:/source/ArrayListKt.brs(1084)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'emptylist_lastindexof_anyn_k_' in pkg:/source/ArrayListKt.brs(1088)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'bytearray_create_i_k_' in pkg:/source/ArraysKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'bytearray_create_i_function1ib_k_' in pkg:/source/ArraysKt.brs(16)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'bytearray_create_i_function1ib_k_' in pkg:/source/ArraysKt.brs(16)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'bytearray_get_i_k_' in pkg:/source/ArraysKt.brs(31)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'bytearray_set_i_b_k_' in pkg:/source/ArraysKt.brs(34)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'bytearray_set_i_b_k_' in pkg:/source/ArraysKt.brs(34)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'chararray_create_i_k_' in pkg:/source/ArraysKt.brs(44)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'chararray_create_i_function1ic_k_' in pkg:/source/ArraysKt.brs(59)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'chararray_create_i_function1ic_k_' in pkg:/source/ArraysKt.brs(59)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'chararray_get_i_k_' in pkg:/source/ArraysKt.brs(74)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'chararray_set_i_c_k_' in pkg:/source/ArraysKt.brs(77)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'chararray_set_i_c_k_' in pkg:/source/ArraysKt.brs(77)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'shortarray_create_i_k_' in pkg:/source/ArraysKt.brs(87)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'shortarray_create_i_function1is_k_' in pkg:/source/ArraysKt.brs(102)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'shortarray_create_i_function1is_k_' in pkg:/source/ArraysKt.brs(102)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'shortarray_get_i_k_' in pkg:/source/ArraysKt.brs(117)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'shortarray_set_i_s_k_' in pkg:/source/ArraysKt.brs(120)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'shortarray_set_i_s_k_' in pkg:/source/ArraysKt.brs(120)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'intarray_create_i_k_' in pkg:/source/ArraysKt.brs(130)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'intarray_create_i_function1ii_k_' in pkg:/source/ArraysKt.brs(145)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'intarray_create_i_function1ii_k_' in pkg:/source/ArraysKt.brs(145)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'intarray_get_i_k_' in pkg:/source/ArraysKt.brs(160)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'intarray_set_i_i_k_' in pkg:/source/ArraysKt.brs(163)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'intarray_set_i_i_k_' in pkg:/source/ArraysKt.brs(163)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'longarray_create_i_k_' in pkg:/source/ArraysKt.brs(173)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'longarray_create_i_function1ij_k_' in pkg:/source/ArraysKt.brs(188)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'longarray_create_i_function1ij_k_' in pkg:/source/ArraysKt.brs(188)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'longarray_get_i_k_' in pkg:/source/ArraysKt.brs(203)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'longarray_set_i_j_k_' in pkg:/source/ArraysKt.brs(206)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'longarray_set_i_j_k_' in pkg:/source/ArraysKt.brs(206)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'floatarray_create_i_k_' in pkg:/source/ArraysKt.brs(216)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'floatarray_create_i_function1if_k_' in pkg:/source/ArraysKt.brs(231)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'floatarray_create_i_function1if_k_' in pkg:/source/ArraysKt.brs(231)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'floatarray_get_i_k_' in pkg:/source/ArraysKt.brs(246)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'floatarray_set_i_f_k_' in pkg:/source/ArraysKt.brs(249)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'floatarray_set_i_f_k_' in pkg:/source/ArraysKt.brs(249)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'doublearray_create_i_k_' in pkg:/source/ArraysKt.brs(259)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'doublearray_create_i_function1id_k_' in pkg:/source/ArraysKt.brs(274)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'doublearray_create_i_function1id_k_' in pkg:/source/ArraysKt.brs(274)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'doublearray_get_i_k_' in pkg:/source/ArraysKt.brs(289)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'doublearray_set_i_d_k_' in pkg:/source/ArraysKt.brs(292)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'doublearray_set_i_d_k_' in pkg:/source/ArraysKt.brs(292)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'booleanarray_create_i_k_' in pkg:/source/ArraysKt.brs(302)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'booleanarray_create_i_function1iz_k_' in pkg:/source/ArraysKt.brs(317)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'booleanarray_create_i_function1iz_k_' in pkg:/source/ArraysKt.brs(317)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'booleanarray_get_i_k_' in pkg:/source/ArraysKt.brs(332)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'booleanarray_set_i_z_k_' in pkg:/source/ArraysKt.brs(335)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'booleanarray_set_i_z_k_' in pkg:/source/ArraysKt.brs(335)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_and_z_k_' in pkg:/source/BooleanKt.brs(26)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_or_z_k_' in pkg:/source/BooleanKt.brs(29)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_xor_z_k_' in pkg:/source/BooleanKt.brs(32)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_compareto_anyn_k_' in pkg:/source/BooleanKt.brs(35)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_equals_anyn_k_' in pkg:/source/BooleanKt.brs(41)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_compareto_anyn_k_' in pkg:/source/CharKt.brs(33)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_plus_i_k_' in pkg:/source/CharKt.brs(36)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_minus_c_k_' in pkg:/source/CharKt.brs(39)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_minus_i_k_' in pkg:/source/CharKt.brs(42)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_rangeto_c_k_' in pkg:/source/CharKt.brs(51)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_rangeuntil_c_k_' in pkg:/source/CharKt.brs(54)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_equals_anyn_k_' in pkg:/source/CharKt.brs(81)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'charsequence_get_i_k_' in pkg:/source/CharSequenceKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'startindex' in function 'charsequence_subsequence_i_i_k_' in pkg:/source/CharSequenceKt.brs(4)
+BRIGHTSCRIPT: WARNING: unused variable 'endindex' in function 'charsequence_subsequence_i_i_k_' in pkg:/source/CharSequenceKt.brs(4)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'count_riterable_k_' in pkg:/source/CollectionExtensionsKt.brs(345)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'take_riterable_i_k_' in pkg:/source/CollectionExtensionsKt.brs(508)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'drop_riterable_i_k_' in pkg:/source/CollectionExtensionsKt.brs(549)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'collection_contains_anyn_k_' in pkg:/source/CollectionsKt.brs(10)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'collection_containsall_collection_k_' in pkg:/source/CollectionsKt.brs(16)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'mutablecollection_add_anyn_k_' in pkg:/source/CollectionsKt.brs(25)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'mutablecollection_remove_anyn_k_' in pkg:/source/CollectionsKt.brs(28)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'mutablecollection_addall_collection_k_' in pkg:/source/CollectionsKt.brs(31)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'mutablecollection_removeall_collection_k_' in pkg:/source/CollectionsKt.brs(34)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'mutablecollection_retainall_collection_k_' in pkg:/source/CollectionsKt.brs(37)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'list_contains_anyn_k_' in pkg:/source/CollectionsKt.brs(46)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'list_containsall_collection_k_' in pkg:/source/CollectionsKt.brs(52)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'list_get_i_k_' in pkg:/source/CollectionsKt.brs(55)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'list_indexof_anyn_k_' in pkg:/source/CollectionsKt.brs(58)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'list_lastindexof_anyn_k_' in pkg:/source/CollectionsKt.brs(61)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'list_listiterator_i_k_' in pkg:/source/CollectionsKt.brs(67)
+BRIGHTSCRIPT: WARNING: unused variable 'fromindex' in function 'list_sublist_i_i_k_' in pkg:/source/CollectionsKt.brs(70)
+BRIGHTSCRIPT: WARNING: unused variable 'toindex' in function 'list_sublist_i_i_k_' in pkg:/source/CollectionsKt.brs(70)
+Displayed 100 of 282 warnings
+07-31 21:27:51.667 sdkl [scrpt.ctx.cmpl.time] Compiled 'RokuTestApp', id 'dev' in 580 ms (BCVer:0), thrd 24563
+07-31 21:27:51.675 sdkl [scrpt.proc.mkup.time] Processed markup dev 'RokuTestApp' in 0 milliseconds
+07-31 21:27:51.676 sdkl [beacon.signal] |AppCompileComplete --------> Duration(630 ms)
+07-31 21:27:51.693 app  [beacon.signal] |AppExitComplete -----------> Duration(650 ms)
+07-31 21:27:51.693 app  [beacon.header] __________________________________________
+07-31 21:27:51.693 app  [beacon.report] |AppLaunchInitiate ---------> TimeBase(0 ms), InstantOn
+07-31 21:27:51.693 app  [beacon.report] |AppSplashInitiate ---------> TimeBase(10 ms)
+07-31 21:27:51.693 app  [beacon.report] |AppSplashComplete ---------> Duration(51 ms)
+07-31 21:27:51.693 app  [beacon.report] |AppExitInitiate -----------> TimeBase(397 ms)
+07-31 21:27:51.693 app  [beacon.report] |AppExitComplete -----------> Duration(650 ms)
+07-31 21:27:51.693 app  [beacon.report] |AppLaunchChainInitiate ----> TimeBase(NotApplicable)
+07-31 21:27:51.693 app  [beacon.footer] __________________________________________
+07-31 21:27:51.702 app  [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
+07-31 21:27:51.703 app  [beacon.signal] |AppLaunchChainInitiate ----> TimeBase(NotApplicable)
+07-31 21:27:51.711 app  [beacon.signal] |AppSplashInitiate ---------> TimeBase(9 ms)
+07-31 21:27:51.714 app  [beacon.signal] |AppSplashComplete ---------> Duration(3 ms)
+07-31 21:27:52.087 sdkl [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
+07-31 21:27:52.105 sdkl [scrpt.cmpl] Compiling 'RokuTestApp', id 'dev'
+07-31 21:27:52.123 sdkl [scrpt.load.mkup] Loading markup dev 'RokuTestApp'
+07-31 21:27:52.127 sdkl [scrpt.unload.mkup] Unloading markup dev 'RokuTestApp'
+07-31 21:27:52.132 sdkl [scrpt.parse.mkup.time] Parsed markup dev 'RokuTestApp' in 9 milliseconds
+
+------ Compiling dev 'RokuTestApp' ------
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'appendable_append_c_k_' in pkg:/source/AppendableBrsKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'appendable_append_charsequencen_k_' in pkg:/source/AppendableBrsKt.brs(4)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'appendable_append_charsequencen_i_i_k_' in pkg:/source/AppendableBrsKt.brs(7)
+BRIGHTSCRIPT: WARNING: unused variable 'startindex' in function 'appendable_append_charsequencen_i_i_k_' in pkg:/source/AppendableBrsKt.brs(7)
+BRIGHTSCRIPT: WARNING: unused variable 'endindex' in function 'appendable_append_charsequencen_i_i_k_' in pkg:/source/AppendableBrsKt.brs(7)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'array_create_i_function1i_k_' in pkg:/source/ArrayKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'array_create_i_function1i_k_' in pkg:/source/ArrayKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'array_get_i_k_' in pkg:/source/ArrayKt.brs(16)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'array_set_i_anyn_k_' in pkg:/source/ArrayKt.brs(19)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'array_set_i_anyn_k_' in pkg:/source/ArrayKt.brs(19)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'arraylist_create_i_k_' in pkg:/source/ArrayListKt.brs(43)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'arraylistiterator_remove_k_' in pkg:/source/ArrayListKt.brs(534)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'arraylistiterator_set_anyn_k_' in pkg:/source/ArrayListKt.brs(558)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'sublistiterator_remove_k_' in pkg:/source/ArrayListKt.brs(913)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'sublistiterator_set_anyn_k_' in pkg:/source/ArrayListKt.brs(937)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'emptylist_contains_anyn_k_' in pkg:/source/ArrayListKt.brs(1072)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'emptylist_get_i_k_' in pkg:/source/ArrayListKt.brs(1080)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'emptylist_indexof_anyn_k_' in pkg:/source/ArrayListKt.brs(1084)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'emptylist_lastindexof_anyn_k_' in pkg:/source/ArrayListKt.brs(1088)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'bytearray_create_i_k_' in pkg:/source/ArraysKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'bytearray_create_i_function1ib_k_' in pkg:/source/ArraysKt.brs(16)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'bytearray_create_i_function1ib_k_' in pkg:/source/ArraysKt.brs(16)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'bytearray_get_i_k_' in pkg:/source/ArraysKt.brs(31)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'bytearray_set_i_b_k_' in pkg:/source/ArraysKt.brs(34)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'bytearray_set_i_b_k_' in pkg:/source/ArraysKt.brs(34)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'chararray_create_i_k_' in pkg:/source/ArraysKt.brs(44)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'chararray_create_i_function1ic_k_' in pkg:/source/ArraysKt.brs(59)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'chararray_create_i_function1ic_k_' in pkg:/source/ArraysKt.brs(59)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'chararray_get_i_k_' in pkg:/source/ArraysKt.brs(74)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'chararray_set_i_c_k_' in pkg:/source/ArraysKt.brs(77)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'chararray_set_i_c_k_' in pkg:/source/ArraysKt.brs(77)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'shortarray_create_i_k_' in pkg:/source/ArraysKt.brs(87)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'shortarray_create_i_function1is_k_' in pkg:/source/ArraysKt.brs(102)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'shortarray_create_i_function1is_k_' in pkg:/source/ArraysKt.brs(102)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'shortarray_get_i_k_' in pkg:/source/ArraysKt.brs(117)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'shortarray_set_i_s_k_' in pkg:/source/ArraysKt.brs(120)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'shortarray_set_i_s_k_' in pkg:/source/ArraysKt.brs(120)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'intarray_create_i_k_' in pkg:/source/ArraysKt.brs(130)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'intarray_create_i_function1ii_k_' in pkg:/source/ArraysKt.brs(145)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'intarray_create_i_function1ii_k_' in pkg:/source/ArraysKt.brs(145)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'intarray_get_i_k_' in pkg:/source/ArraysKt.brs(160)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'intarray_set_i_i_k_' in pkg:/source/ArraysKt.brs(163)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'intarray_set_i_i_k_' in pkg:/source/ArraysKt.brs(163)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'longarray_create_i_k_' in pkg:/source/ArraysKt.brs(173)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'longarray_create_i_function1ij_k_' in pkg:/source/ArraysKt.brs(188)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'longarray_create_i_function1ij_k_' in pkg:/source/ArraysKt.brs(188)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'longarray_get_i_k_' in pkg:/source/ArraysKt.brs(203)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'longarray_set_i_j_k_' in pkg:/source/ArraysKt.brs(206)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'longarray_set_i_j_k_' in pkg:/source/ArraysKt.brs(206)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'floatarray_create_i_k_' in pkg:/source/ArraysKt.brs(216)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'floatarray_create_i_function1if_k_' in pkg:/source/ArraysKt.brs(231)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'floatarray_create_i_function1if_k_' in pkg:/source/ArraysKt.brs(231)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'floatarray_get_i_k_' in pkg:/source/ArraysKt.brs(246)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'floatarray_set_i_f_k_' in pkg:/source/ArraysKt.brs(249)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'floatarray_set_i_f_k_' in pkg:/source/ArraysKt.brs(249)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'doublearray_create_i_k_' in pkg:/source/ArraysKt.brs(259)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'doublearray_create_i_function1id_k_' in pkg:/source/ArraysKt.brs(274)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'doublearray_create_i_function1id_k_' in pkg:/source/ArraysKt.brs(274)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'doublearray_get_i_k_' in pkg:/source/ArraysKt.brs(289)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'doublearray_set_i_d_k_' in pkg:/source/ArraysKt.brs(292)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'doublearray_set_i_d_k_' in pkg:/source/ArraysKt.brs(292)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'booleanarray_create_i_k_' in pkg:/source/ArraysKt.brs(302)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'booleanarray_create_i_function1iz_k_' in pkg:/source/ArraysKt.brs(317)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'booleanarray_create_i_function1iz_k_' in pkg:/source/ArraysKt.brs(317)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'booleanarray_get_i_k_' in pkg:/source/ArraysKt.brs(332)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'booleanarray_set_i_z_k_' in pkg:/source/ArraysKt.brs(335)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'booleanarray_set_i_z_k_' in pkg:/source/ArraysKt.brs(335)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_and_z_k_' in pkg:/source/BooleanKt.brs(26)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_or_z_k_' in pkg:/source/BooleanKt.brs(29)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_xor_z_k_' in pkg:/source/BooleanKt.brs(32)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_compareto_anyn_k_' in pkg:/source/BooleanKt.brs(35)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_equals_anyn_k_' in pkg:/source/BooleanKt.brs(41)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_compareto_anyn_k_' in pkg:/source/CharKt.brs(33)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_plus_i_k_' in pkg:/source/CharKt.brs(36)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_minus_c_k_' in pkg:/source/CharKt.brs(39)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_minus_i_k_' in pkg:/source/CharKt.brs(42)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_rangeto_c_k_' in pkg:/source/CharKt.brs(51)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_rangeuntil_c_k_' in pkg:/source/CharKt.brs(54)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_equals_anyn_k_' in pkg:/source/CharKt.brs(81)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'charsequence_get_i_k_' in pkg:/source/CharSequenceKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'startindex' in function 'charsequence_subsequence_i_i_k_' in pkg:/source/CharSequenceKt.brs(4)
+BRIGHTSCRIPT: WARNING: unused variable 'endindex' in function 'charsequence_subsequence_i_i_k_' in pkg:/source/CharSequenceKt.brs(4)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'count_riterable_k_' in pkg:/source/CollectionExtensionsKt.brs(345)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'take_riterable_i_k_' in pkg:/source/CollectionExtensionsKt.brs(508)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'drop_riterable_i_k_' in pkg:/source/CollectionExtensionsKt.brs(549)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'collection_contains_anyn_k_' in pkg:/source/CollectionsKt.brs(10)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'collection_containsall_collection_k_' in pkg:/source/CollectionsKt.brs(16)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'mutablecollection_add_anyn_k_' in pkg:/source/CollectionsKt.brs(25)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'mutablecollection_remove_anyn_k_' in pkg:/source/CollectionsKt.brs(28)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'mutablecollection_addall_collection_k_' in pkg:/source/CollectionsKt.brs(31)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'mutablecollection_removeall_collection_k_' in pkg:/source/CollectionsKt.brs(34)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'mutablecollection_retainall_collection_k_' in pkg:/source/CollectionsKt.brs(37)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'list_contains_anyn_k_' in pkg:/source/CollectionsKt.brs(46)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'list_containsall_collection_k_' in pkg:/source/CollectionsKt.brs(52)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'list_get_i_k_' in pkg:/source/CollectionsKt.brs(55)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'list_indexof_anyn_k_' in pkg:/source/CollectionsKt.brs(58)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'list_lastindexof_anyn_k_' in pkg:/source/CollectionsKt.brs(61)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'list_listiterator_i_k_' in pkg:/source/CollectionsKt.brs(67)
+BRIGHTSCRIPT: WARNING: unused variable 'fromindex' in function 'list_sublist_i_i_k_' in pkg:/source/CollectionsKt.brs(70)
+BRIGHTSCRIPT: WARNING: unused variable 'toindex' in function 'list_sublist_i_i_k_' in pkg:/source/CollectionsKt.brs(70)
+Displayed 100 of 282 warnings
+07-31 21:27:52.711 sdkl [scrpt.ctx.cmpl.time] Compiled 'RokuTestApp', id 'dev' in 577 ms (BCVer:0), thrd 24676
+07-31 21:27:52.718 sdkl [scrpt.proc.mkup.time] Processed markup dev 'RokuTestApp' in 0 milliseconds
+07-31 21:27:52.719 sdkl [beacon.signal] |AppCompileComplete --------> Duration(621 ms)
+
+------ Running dev 'RokuTestApp' main ------
+07-31 21:27:52.742 sdkl [scrpt.ctx.run.enter] UI: Entering 'RokuTestApp', id 'dev', thrd 24656
+07-31 21:27:52.746 sdkl [beacon.signal] |AppLaunchChainComplete ----> Duration(410 ms)
+===SPIKE_SENTINEL_1.785533e+09===
+SPIKE|START|port-observe-spike
+SpikeScene: init (render thread)
+PortProbe: init (render thread)
+SPIKE|observe_returns|echo=true|timerOut=true|inputScoped=true
+PortProbe: onInputChanged data=ping1 (render thread)
+SPIKE|EVENT|#1|field=echo|data=echo:ping1|at=0ms
+SPIKE|ACCESSORS|getField=echo|getData=echo:ping1|getNode:typeOf=String value=probe1|getRoSGNode.subtype=PortProbe
+PortProbe: onInputChanged data=ping2 (render thread)
+SPIKE|EVENT|#2|field=input|data=ping1|at=0ms
+SPIKE|EVENT|#3|field=echo|data=echo:ping2|at=0ms
+SPIKE|EVENT|#4|field=input|data=ping2|at=1ms
+PortProbe: timer fired (render thread)
+SPIKE|EVENT|#5|field=timerOut|data=timer-fired|at=496ms
+SPIKE|task_observe_return|true
+SpikeTask: taskMain running (task thread), taskIn=hello-task
+SPIKE|EVENT|#6|field=taskOut|data=task-wrote:hello-task|at=500ms
+SPIKE|LOOP_DONE|events=6|elapsed=500ms
+SPIKE|FINAL_FIELDS|echo=echo:ping2|timerOut=timer-fired|taskOut=task-wrote:hello-task
+SPIKE|PASS|port_observe_accepted|observeField(field, port) returned echo=true timerOut=true
+SPIKE|PASS|scoped_port_observe_accepted|observeFieldScoped(field, port) from main returned true
+SPIKE|PASS|render_onchange_to_main_port|echo events for ping1=true ping2=true (two full set->onChange->event cycles)
+SPIKE|PASS|main_set_self_event|input events seen ping1=true ping2=true (scoped observer)
+SPIKE|PASS|spontaneous_timer_write|timerOut event from render-thread Timer handler
+SPIKE|PASS|event_accessors|data=echo:ping1 subtype=PortProbe getNode(typeOf=String value=probe1)
+SPIKE|PASS|task_thread_write_to_main_port|taskOut event received=true observeReturn=true
+SPIKE|PASS|final_field_reads|echo=echo:ping2 timerOut=timer-fired taskOut=task-wrote:hello-task
+SPIKE|END
+07-31 21:27:56.410 app  [beacon.signal] |AppExitInitiate -----------> TimeBase(4708 ms)
+07-31 21:27:56.410 app  [beacon.signal] |AppExitComplete -----------> Duration(0 ms)
+07-31 21:27:56.410 app  [beacon.header] __________________________________________
+07-31 21:27:56.410 app  [beacon.report] |AppLaunchInitiate ---------> TimeBase(0 ms)
+07-31 21:27:56.410 app  [beacon.report] |AppSplashInitiate ---------> TimeBase(9 ms)
+07-31 21:27:56.410 app  [beacon.report] |AppSplashComplete ---------> Duration(3 ms)
+07-31 21:27:56.410 app  [beacon.report] |AppExitInitiate -----------> TimeBase(4708 ms)
+07-31 21:27:56.410 app  [beacon.report] |AppExitComplete -----------> Duration(0 ms)
+07-31 21:27:56.410 app  [beacon.report] |AppLaunchChainInitiate ----> TimeBase(NotApplicable)
+07-31 21:27:56.410 app  [beacon.footer] __________________________________________

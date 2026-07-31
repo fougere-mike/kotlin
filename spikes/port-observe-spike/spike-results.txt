@@ -1,0 +1,21 @@
+SPIKE|START|port-observe-spike
+SPIKE|observe_returns|echo=true|timerOut=true|inputScoped=true
+SPIKE|EVENT|#1|field=echo|data=echo:ping1|at=0ms
+SPIKE|ACCESSORS|getField=echo|getData=echo:ping1|getNode:typeOf=String value=probe1|getRoSGNode.subtype=PortProbe
+SPIKE|EVENT|#2|field=input|data=ping1|at=0ms
+SPIKE|EVENT|#3|field=echo|data=echo:ping2|at=0ms
+SPIKE|EVENT|#4|field=input|data=ping2|at=1ms
+SPIKE|EVENT|#5|field=timerOut|data=timer-fired|at=496ms
+SPIKE|task_observe_return|true
+SPIKE|EVENT|#6|field=taskOut|data=task-wrote:hello-task|at=500ms
+SPIKE|LOOP_DONE|events=6|elapsed=500ms
+SPIKE|FINAL_FIELDS|echo=echo:ping2|timerOut=timer-fired|taskOut=task-wrote:hello-task
+SPIKE|PASS|port_observe_accepted|observeField(field, port) returned echo=true timerOut=true
+SPIKE|PASS|scoped_port_observe_accepted|observeFieldScoped(field, port) from main returned true
+SPIKE|PASS|render_onchange_to_main_port|echo events for ping1=true ping2=true (two full set->onChange->event cycles)
+SPIKE|PASS|main_set_self_event|input events seen ping1=true ping2=true (scoped observer)
+SPIKE|PASS|spontaneous_timer_write|timerOut event from render-thread Timer handler
+SPIKE|PASS|event_accessors|data=echo:ping1 subtype=PortProbe getNode(typeOf=String value=probe1)
+SPIKE|PASS|task_thread_write_to_main_port|taskOut event received=true observeReturn=true
+SPIKE|PASS|final_field_reads|echo=echo:ping2 timerOut=timer-fired taskOut=task-wrote:hello-task
+SPIKE|END
