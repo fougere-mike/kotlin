@@ -337,7 +337,8 @@ public class TaskPool private constructor(
         val isComplete = event.getData() as? Boolean ?: false
         if (!isComplete) return
 
-        val taskNode = event.getNode()
+        // getNode() returns the node's id string on device; getRoSGNode() is the node accessor
+        val taskNode = event.getRoSGNode()
 
         // Find the PooledTask wrapper
         val task = tasks.find { it.node.isSameNode(taskNode) } ?: return

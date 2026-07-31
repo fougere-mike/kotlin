@@ -6,6 +6,7 @@
 package kotlin.brs.roku
 
 import kotlin.brs.BrsCreateObject
+import kotlin.brs.BrsName
 import kotlin.brs.Dynamic
 
 // =============================================================================
@@ -167,6 +168,30 @@ public external interface ISGNodeField {
      * @return True if the observer was set up successfully.
      */
     public fun observeFieldScoped(fieldName: String, functionName: String): Boolean
+
+    /**
+     * Sets up a message port observer for a field (the port form of observeField).
+     * Field changes are delivered as roSGNodeEvents to the given port, waking
+     * `port.waitMessage()` on the observing thread.
+     *
+     * @param fieldName The name of the field to observe.
+     * @param port The message port that receives roSGNodeEvents.
+     * @return True if the observer was set up successfully.
+     */
+    @BrsName("observeField")
+    public fun observeFieldPort(fieldName: String, port: RoMessagePort): Boolean
+
+    /**
+     * Sets up a scoped message port observer for a field (the port form of
+     * observeFieldScoped). The observer is automatically removed when the
+     * observing component is destroyed.
+     *
+     * @param fieldName The name of the field to observe.
+     * @param port The message port that receives roSGNodeEvents.
+     * @return True if the observer was set up successfully.
+     */
+    @BrsName("observeFieldScoped")
+    public fun observeFieldScopedPort(fieldName: String, port: RoMessagePort): Boolean
 
     /**
      * Removes an observer from a field.
@@ -399,6 +424,26 @@ public external interface ISGNodeDict {
      * @return The cloned node.
      */
     public fun clone(deepCopy: Boolean): RoSGNode
+
+    /**
+     * Calls a function exposed in the component's interface.
+     *
+     * The function runs in the component's owning thread (the render thread for
+     * scene-parented components, the task thread for Task nodes).
+     *
+     * @param functionName The name of the interface function to call.
+     * @return The function's return value, or null.
+     */
+    public fun callFunc(functionName: String): Dynamic?
+
+    /**
+     * Calls a function exposed in the component's interface with one argument.
+     *
+     * @param functionName The name of the interface function to call.
+     * @param arg The argument to pass to the function.
+     * @return The function's return value, or null.
+     */
+    public fun callFunc(functionName: String, arg: Dynamic?): Dynamic?
 }
 
 /**
@@ -552,6 +597,10 @@ public external interface RoSGNode : ISGNodeField, ISGNodeChildren, ISGNodeDict,
     override fun removeFields(fieldNames: RoArray): Boolean
     override fun observeField(fieldName: String, functionName: String): Boolean
     override fun observeFieldScoped(fieldName: String, functionName: String): Boolean
+    @BrsName("observeField")
+    override fun observeFieldPort(fieldName: String, port: RoMessagePort): Boolean
+    @BrsName("observeFieldScoped")
+    override fun observeFieldScopedPort(fieldName: String, port: RoMessagePort): Boolean
     override fun unobserveField(fieldName: String): Boolean
     override fun unobserveFieldScoped(fieldName: String): Boolean
 
@@ -583,6 +632,8 @@ public external interface RoSGNode : ISGNodeField, ISGNodeChildren, ISGNodeDict,
     override fun isSubtype(nodeType: String): Boolean
     override fun isSameNode(other: RoSGNode): Boolean
     override fun clone(deepCopy: Boolean): RoSGNode
+    override fun callFunc(functionName: String): Dynamic?
+    override fun callFunc(functionName: String, arg: Dynamic?): Dynamic?
 
     // ISGNodeFocus overrides
     override fun setFocus(on: Boolean): Boolean
@@ -686,16 +737,21 @@ public external interface RoSGNodeEvent {
     public fun getData(): Dynamic
 
     /**
-     * Gets the node on which the field changed.
+     * Gets the id of the node on which the field changed.
      *
-     * @return The node that generated the event.
+     * Note: despite the name, BrightScript's getNode() returns the node's `id`
+     * field as a string, NOT a node object (verified on device — see
+     * spikes/port-observe-spike/FINDINGS.md, event_accessors). Use
+     * [getRoSGNode] to get the node object itself.
+     *
+     * @return The `id` of the node that generated the event.
      */
-    public fun getNode(): RoSGNode
+    public fun getNode(): String
 
     /**
-     * Gets the roSGNode object that was set as the observer's context.
+     * Gets the roSGNode object on which the field changed.
      *
-     * @return The context node, or the node itself if no context was set.
+     * @return The node that generated the event.
      */
     public fun getRoSGNode(): RoSGNode
 
