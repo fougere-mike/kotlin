@@ -1,0 +1,123 @@
+Trying 192.168.1.125...
+Connected to 192.168.1.125.
+Escape character is '^]'.
+GHTSCRIPT: WARNING: unused variable 'index' in function 'shortarray_set_i_s_k_' in pkg:/source/ArraysKt.brs(120)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'shortarray_set_i_s_k_' in pkg:/source/ArraysKt.brs(120)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'intarray_create_i_k_' in pkg:/source/ArraysKt.brs(130)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'intarray_create_i_function1ii_k_' in pkg:/source/ArraysKt.brs(145)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'intarray_create_i_function1ii_k_' in pkg:/source/ArraysKt.brs(145)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'intarray_get_i_k_' in pkg:/source/ArraysKt.brs(160)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'intarray_set_i_i_k_' in pkg:/source/ArraysKt.brs(163)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'intarray_set_i_i_k_' in pkg:/source/ArraysKt.brs(163)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'longarray_create_i_k_' in pkg:/source/ArraysKt.brs(173)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'longarray_create_i_function1ij_k_' in pkg:/source/ArraysKt.brs(188)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'longarray_create_i_function1ij_k_' in pkg:/source/ArraysKt.brs(188)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'longarray_get_i_k_' in pkg:/source/ArraysKt.brs(203)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'longarray_set_i_j_k_' in pkg:/source/ArraysKt.brs(206)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'longarray_set_i_j_k_' in pkg:/source/ArraysKt.brs(206)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'floatarray_create_i_k_' in pkg:/source/ArraysKt.brs(216)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'floatarray_create_i_function1if_k_' in pkg:/source/ArraysKt.brs(231)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'floatarray_create_i_function1if_k_' in pkg:/source/ArraysKt.brs(231)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'floatarray_get_i_k_' in pkg:/source/ArraysKt.brs(246)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'floatarray_set_i_f_k_' in pkg:/source/ArraysKt.brs(249)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'floatarray_set_i_f_k_' in pkg:/source/ArraysKt.brs(249)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'doublearray_create_i_k_' in pkg:/source/ArraysKt.brs(259)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'doublearray_create_i_function1id_k_' in pkg:/source/ArraysKt.brs(274)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'doublearray_create_i_function1id_k_' in pkg:/source/ArraysKt.brs(274)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'doublearray_get_i_k_' in pkg:/source/ArraysKt.brs(289)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'doublearray_set_i_d_k_' in pkg:/source/ArraysKt.brs(292)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'doublearray_set_i_d_k_' in pkg:/source/ArraysKt.brs(292)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'booleanarray_create_i_k_' in pkg:/source/ArraysKt.brs(302)
+BRIGHTSCRIPT: WARNING: unused variable 'size' in function 'booleanarray_create_i_function1iz_k_' in pkg:/source/ArraysKt.brs(317)
+BRIGHTSCRIPT: WARNING: unused variable 'init' in function 'booleanarray_create_i_function1iz_k_' in pkg:/source/ArraysKt.brs(317)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'booleanarray_get_i_k_' in pkg:/source/ArraysKt.brs(332)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'booleanarray_set_i_z_k_' in pkg:/source/ArraysKt.brs(335)
+BRIGHTSCRIPT: WARNING: unused variable 'value' in function 'booleanarray_set_i_z_k_' in pkg:/source/ArraysKt.brs(335)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_and_z_k_' in pkg:/source/BooleanKt.brs(26)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_or_z_k_' in pkg:/source/BooleanKt.brs(29)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_xor_z_k_' in pkg:/source/BooleanKt.brs(32)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_compareto_anyn_k_' in pkg:/source/BooleanKt.brs(35)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'boolean_equals_anyn_k_' in pkg:/source/BooleanKt.brs(41)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_compareto_anyn_k_' in pkg:/source/CharKt.brs(33)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_plus_i_k_' in pkg:/source/CharKt.brs(36)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_minus_c_k_' in pkg:/source/CharKt.brs(39)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_minus_i_k_' in pkg:/source/CharKt.brs(42)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_rangeto_c_k_' in pkg:/source/CharKt.brs(51)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_rangeuntil_c_k_' in pkg:/source/CharKt.brs(54)
+BRIGHTSCRIPT: WARNING: unused variable 'other' in function 'char_equals_anyn_k_' in pkg:/source/CharKt.brs(81)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'charsequence_get_i_k_' in pkg:/source/CharSequenceKt.brs(1)
+BRIGHTSCRIPT: WARNING: unused variable 'startindex' in function 'charsequence_subsequence_i_i_k_' in pkg:/source/CharSequenceKt.brs(4)
+BRIGHTSCRIPT: WARNING: unused variable 'endindex' in function 'charsequence_subsequence_i_i_k_' in pkg:/source/CharSequenceKt.brs(4)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'count_riterable_k_' in pkg:/source/CollectionExtensionsKt.brs(345)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'take_riterable_i_k_' in pkg:/source/CollectionExtensionsKt.brs(508)
+BRIGHTSCRIPT: WARNING: unused variable 'tmp_ret_1' in function 'drop_riterable_i_k_' in pkg:/source/CollectionExtensionsKt.brs(549)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'collection_contains_anyn_k_' in pkg:/source/CollectionsKt.brs(10)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'collection_containsall_collection_k_' in pkg:/source/CollectionsKt.brs(16)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'mutablecollection_add_anyn_k_' in pkg:/source/CollectionsKt.brs(25)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'mutablecollection_remove_anyn_k_' in pkg:/source/CollectionsKt.brs(28)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'mutablecollection_addall_collection_k_' in pkg:/source/CollectionsKt.brs(31)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'mutablecollection_removeall_collection_k_' in pkg:/source/CollectionsKt.brs(34)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'mutablecollection_retainall_collection_k_' in pkg:/source/CollectionsKt.brs(37)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'list_contains_anyn_k_' in pkg:/source/CollectionsKt.brs(46)
+BRIGHTSCRIPT: WARNING: unused variable 'elements' in function 'list_containsall_collection_k_' in pkg:/source/CollectionsKt.brs(52)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'list_get_i_k_' in pkg:/source/CollectionsKt.brs(55)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'list_indexof_anyn_k_' in pkg:/source/CollectionsKt.brs(58)
+BRIGHTSCRIPT: WARNING: unused variable 'element' in function 'list_lastindexof_anyn_k_' in pkg:/source/CollectionsKt.brs(61)
+BRIGHTSCRIPT: WARNING: unused variable 'index' in function 'list_listiterator_i_k_' in pkg:/source/CollectionsKt.brs(67)
+BRIGHTSCRIPT: WARNING: unused variable 'fromindex' in function 'list_sublist_i_i_k_' in pkg:/source/CollectionsKt.brs(70)
+BRIGHTSCRIPT: WARNING: unused variable 'toindex' in function 'list_sublist_i_i_k_' in pkg:/source/CollectionsKt.brs(70)
+Displayed 100 of 278 warnings
+07-01 21:50:25.132 app  [scrpt.ctx.cmpl.time] Compiled 'RokuTestApp', id 'dev' in 618 ms (BCVer:0), thrd 2527
+07-01 21:50:25.140 app  [scrpt.proc.mkup.time] Processed markup dev 'RokuTestApp' in 0 milliseconds
+07-01 21:50:25.179 app  [beacon.signal] |AppCompileComplete --------> Duration(699 ms)
+07-31 21:07:16.244 app  [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
+07-31 21:07:16.244 app  [beacon.signal] |AppCompileInitiate --------> TimeBase(0 ms)
+07-31 21:07:16.250 app  [scrpt.cmpl] Compiling 'TaskNodeSpike', id 'dev'
+07-31 21:07:16.254 app  [scrpt.load.mkup] Loading markup dev 'TaskNodeSpike'
+07-31 21:07:16.255 app  [scrpt.unload.mkup] Unloading markup dev 'TaskNodeSpike'
+07-31 21:07:16.256 app  [scrpt.parse.mkup.time] Parsed markup dev 'TaskNodeSpike' in 1 milliseconds
+
+------ Compiling dev 'TaskNodeSpike' ------
+BRIGHTSCRIPT: WARNING: unused variable 'event' in function 'fakestdlib_onemitseq' in pkg:/components/FakeStdlib.brs(10)
+BRIGHTSCRIPT: WARNING: unused variable 'event' in function 'fakestdlib_onwatchdog' in pkg:/components/FakeStdlib.brs(14)
+BRIGHTSCRIPT: WARNING: unused variable 'dummy' in function 'checkmscope' in pkg:/components/SpikeTask.brs(47)
+Displayed 3 of 3 warnings
+07-31 21:07:16.263 app  [scrpt.ctx.cmpl.time] Compiled 'TaskNodeSpike', id 'dev' in 6 ms (BCVer:0), thrd 2527
+07-31 21:07:16.263 app  [scrpt.proc.mkup.time] Processed markup dev 'TaskNodeSpike' in 0 milliseconds
+07-31 21:07:16.311 app  [beacon.signal] |AppCompileComplete --------> Duration(67 ms)
+07-31 21:07:16.343 app  [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
+07-31 21:07:16.348 app  [beacon.signal] |AppLaunchChainInitiate ----> TimeBase(NotApplicable)
+07-31 21:07:16.361 app  [beacon.signal] |AppSplashInitiate ---------> TimeBase(18 ms)
+07-31 21:07:16.400 app  [beacon.signal] |AppSplashComplete ---------> Duration(39 ms)
+07-31 21:07:16.731 sdkl [beacon.signal] |AppLaunchInitiate ---------> TimeBase(0 ms)
+07-31 21:07:16.758 sdkl [scrpt.cmpl] Compiling 'TaskNodeSpike', id 'dev'
+07-31 21:07:16.760 sdkl [scrpt.load.mkup] Loading markup dev 'TaskNodeSpike'
+07-31 21:07:16.761 sdkl [scrpt.unload.mkup] Unloading markup dev 'TaskNodeSpike'
+07-31 21:07:16.763 sdkl [scrpt.parse.mkup.time] Parsed markup dev 'TaskNodeSpike' in 3 milliseconds
+
+------ Compiling dev 'TaskNodeSpike' ------
+BRIGHTSCRIPT: WARNING: unused variable 'event' in function 'fakestdlib_onemitseq' in pkg:/components/FakeStdlib.brs(10)
+BRIGHTSCRIPT: WARNING: unused variable 'event' in function 'fakestdlib_onwatchdog' in pkg:/components/FakeStdlib.brs(14)
+BRIGHTSCRIPT: WARNING: unused variable 'dummy' in function 'checkmscope' in pkg:/components/SpikeTask.brs(47)
+Displayed 3 of 3 warnings
+07-31 21:07:16.771 sdkl [scrpt.ctx.cmpl.time] Compiled 'TaskNodeSpike', id 'dev' in 7 ms (BCVer:0), thrd 18544
+07-31 21:07:16.772 sdkl [scrpt.proc.mkup.time] Processed markup dev 'TaskNodeSpike' in 1 milliseconds
+07-31 21:07:16.773 sdkl [beacon.signal] |AppCompileComplete --------> Duration(23 ms)
+
+------ Running dev 'TaskNodeSpike' main ------
+07-31 21:07:16.845 sdkl [scrpt.ctx.run.enter] UI: Entering 'TaskNodeSpike', id 'dev', thrd 18525
+07-31 21:07:16.849 sdkl [beacon.signal] |AppLaunchChainComplete ----> Duration(406 ms)
+===SPIKE_SENTINEL_1785532036===
+SPIKE|BEGIN
+SPIKE|CHECK|field_name_legality|PASS|kotlinTask* fields readable on fresh node
+SPIKE|CHECK|included_script_callback|PASS|observer callback resolved from FakeStdlib.brs
+SPIKE|CHECK|unparented_run_roundtrip|PASS|state=done output=echo:hello|mInit:set-in-init|id:1
+SPIKE|CHECK|m_clone_in_visibility|PASS|clone-in of init-set m values: echo:hello|mInit:set-in-init|id:1
+SPIKE|CHECK|m_writeback_isolation|PASS|owner-thread m sees taskSetValue=invalid, initSetValue=set-in-init (invalid => no write-back; checker premise holds)
+SPIKE|CHECK|crash_to_error_state|PASS|state=error msg=spike-intentional-crash
+SPIKE|CHECK|rapid_alwaysnotify_datum|PASS|observer fires=200/200 (coalescing datum)
+SPIKE|CHECK|emission_array_drain|PASS|final array n=200 ordered=true => doorbell+drain viability
+SPIKE|CHECK|rerun_same_node|PASS|re-RUN executed; runCount=2 state=done
+SPIKE|CHECK|concurrent_instances|PASS|[72:done echo:B|mInit:set-in-init|id:72][71:done echo:A|mInit:set-in-init|id:71]
+SPIKE|SUMMARY|pass=10|fail=0
+SPIKE|END

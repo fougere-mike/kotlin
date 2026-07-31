@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="SpikeTask" extends="Task">
+    <interface>
+        <field id="kotlinTaskId" type="integer" value="0" />
+        <field id="kotlinTaskState" type="string" value="" alwaysNotify="true" />
+        <field id="kotlinTaskError" type="assocarray" />
+        <field id="inputText" type="string" value="" />
+        <field id="outputText" type="string" value="" />
+        <field id="crashPlease" type="boolean" value="false" />
+        <field id="delayMs" type="integer" value="0" />
+        <field id="emitSeq" type="integer" value="0" alwaysNotify="true" />
+        <field id="emissions" type="array" />
+        <field id="runCount" type="integer" value="0" />
+        <function name="checkMScope" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/SpikeTask.brs" />
+</component>

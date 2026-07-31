@@ -1,0 +1,13 @@
+SPIKE|BEGIN
+SPIKE|CHECK|field_name_legality|PASS|kotlinTask* fields readable on fresh node
+SPIKE|CHECK|included_script_callback|PASS|observer callback resolved from FakeStdlib.brs
+SPIKE|CHECK|unparented_run_roundtrip|PASS|state=done output=echo:hello|mInit:set-in-init|id:1
+SPIKE|CHECK|m_clone_in_visibility|PASS|clone-in of init-set m values: echo:hello|mInit:set-in-init|id:1
+SPIKE|CHECK|m_writeback_isolation|PASS|owner-thread m sees taskSetValue=invalid, initSetValue=set-in-init (invalid => no write-back; checker premise holds)
+SPIKE|CHECK|crash_to_error_state|PASS|state=error msg=spike-intentional-crash
+SPIKE|CHECK|rapid_alwaysnotify_datum|PASS|observer fires=200/200 (coalescing datum)
+SPIKE|CHECK|emission_array_drain|PASS|final array n=200 ordered=true => doorbell+drain viability
+SPIKE|CHECK|rerun_same_node|PASS|re-RUN executed; runCount=2 state=done
+SPIKE|CHECK|concurrent_instances|PASS|[72:done echo:B|mInit:set-in-init|id:72][71:done echo:A|mInit:set-in-init|id:71]
+SPIKE|SUMMARY|pass=10|fail=0
+SPIKE|END
