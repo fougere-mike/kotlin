@@ -9,8 +9,11 @@ plugins {
 
 description = "BrightScript stdlib runtime tests"
 
-// Use dist compiler (includes all runtime dependencies in the distribution)
-val distLibDir = rootProject.file("dist/kotlinc/lib")
+// The BRS compiler fat JAR from cli-brs:fatJar (self-contained, no dist needed).
+// Path derived from the build directory rather than tasks.named() on a cross-project
+// reference, which would force early configuration (same idiom as brs-prebuilt).
+val cliBrsProject = rootProject.project(":compiler:cli-brs")
+val fatJarFile: Provider<RegularFile> = cliBrsProject.layout.buildDirectory.file("libs/kotlinc-brs.jar")
 val stdlibKlib = rootProject.file("libraries/stdlib/brs-prebuilt/kotlin-stdlib-brs.klib")
 val kotlinTestKlib = rootProject.file("libraries/kotlin.test/brs/build/kotlin-test-brs.klib")
 val outputDir = file("build/brs")
@@ -22,19 +25,14 @@ val compileTests by tasks.registering(JavaExec::class) {
     group = "build"
     description = "Compile stdlib tests to BrightScript"
 
-    classpath = fileTree(distLibDir) { include("*.jar") }
+    dependsOn(":compiler:cli-brs:fatJar")
+
+    classpath = files(fatJarFile)
     mainClass.set("org.jetbrains.kotlin.cli.brs.K2BrsCompiler")
 
     val testSources = file("kotlin")
 
     doFirst {
-        val compilerJar = distLibDir.resolve("kotlin-compiler.jar")
-        if (!compilerJar.exists()) {
-            throw GradleException(
-                "Kotlin distribution not found at: ${distLibDir.absolutePath}\n" +
-                "Build it with: ./gradlew dist"
-            )
-        }
         if (!stdlibKlib.exists()) {
             throw GradleException(
                 "Stdlib klib not found: ${stdlibKlib.absolutePath}\n" +
@@ -50,7 +48,7 @@ val compileTests by tasks.registering(JavaExec::class) {
 
         outputDir.mkdirs()
         logger.lifecycle("Compiling stdlib tests...")
-        logger.lifecycle("  Compiler: dist/kotlinc/lib")
+        logger.lifecycle("  Compiler: ${fatJarFile.get().asFile}")
         logger.lifecycle("  Stdlib: ${stdlibKlib.name}")
         logger.lifecycle("  kotlin.test: ${kotlinTestKlib.name}")
         logger.lifecycle("  Output: ${outputDir.absolutePath}")
@@ -65,6 +63,7 @@ val compileTests by tasks.registering(JavaExec::class) {
     )
 
     inputs.dir(testSources)
+    inputs.file(fatJarFile)
     inputs.file(stdlibKlib)
     inputs.file(kotlinTestKlib)
     outputs.dir(outputDir)

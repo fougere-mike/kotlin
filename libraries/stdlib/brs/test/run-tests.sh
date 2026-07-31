@@ -45,9 +45,9 @@ echo ""
 echo "Step 1: Compiling stdlib tests..."
 cd "$KOTLIN_ROOT"
 
-# First ensure the dist compiler exists
-if [[ ! -f "dist/kotlinc/lib/kotlin-compiler.jar" ]]; then
-    echo -e "${YELLOW}Compiler distribution not found. Running rebuild.sh...${NC}"
+# First ensure the BRS compiler fat JAR exists (rebuild.sh builds cli-brs:fatJar, not dist)
+if [[ ! -f "compiler/cli/cli-brs/build/libs/kotlinc-brs.jar" ]]; then
+    echo -e "${YELLOW}BRS compiler fat JAR not found. Running rebuild.sh...${NC}"
     ./rebuild.sh
 fi
 
@@ -122,7 +122,7 @@ echo "Kotlin version: $KOTLIN_VERSION"
 
 # Get stdlib runtime .brs files from Maven Local
 # The runtime JAR contains pre-compiled .brs files from stdlib sources
-STDLIB_RUNTIME_JAR="$HOME/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-brs/${KOTLIN_VERSION}/kotlin-stdlib-brs-${KOTLIN_VERSION}-brs-runtime.jar"
+STDLIB_RUNTIME_JAR="$HOME/.m2/repository/com/nuvyyo/kotlin-stdlib-brs-runtime/${KOTLIN_VERSION}/kotlin-stdlib-brs-runtime-${KOTLIN_VERSION}.jar"
 
 if [[ ! -f "$STDLIB_RUNTIME_JAR" ]]; then
     echo -e "${RED}Error: Stdlib runtime JAR not found: $STDLIB_RUNTIME_JAR${NC}"
@@ -154,12 +154,7 @@ echo "Compiling kotlin.test to BrightScript..."
 KOTLIN_TEST_SRC="$KOTLIN_ROOT/libraries/kotlin.test/brs/src/main/kotlin"
 KOTLIN_TEST_BRS_DIR="$BUILD_DIR/kotlin-test-brs"
 STDLIB_KLIB="$KOTLIN_ROOT/libraries/stdlib/brs-prebuilt/kotlin-stdlib-brs.klib"
-COMPILER_JAR="$KOTLIN_ROOT/dist/kotlinc/lib/kotlin-compiler.jar"
-
-if [[ ! -f "$COMPILER_JAR" ]]; then
-    # Fall back to fat JAR if dist not available
-    COMPILER_JAR="$KOTLIN_ROOT/compiler/cli/cli-brs/build/libs/kotlinc-brs-${KOTLIN_VERSION}.jar"
-fi
+COMPILER_JAR="$KOTLIN_ROOT/compiler/cli/cli-brs/build/libs/kotlinc-brs.jar"
 
 if [[ ! -f "$COMPILER_JAR" ]]; then
     echo -e "${RED}Error: Compiler not found${NC}"
