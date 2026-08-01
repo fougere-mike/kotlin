@@ -6,6 +6,8 @@
 package kotlin.test
 
 import kotlin.test.adapters.JsonTestAdapter
+import kotlin.test.device.TestPort
+import kotlin.test.device.runPumping
 
 /**
  * Test runner that executes test suites with JSON output for automated testing.
@@ -95,6 +97,26 @@ public class TestRunner internal constructor() {
      */
     public fun xtest(name: String, reason: String = "", testFn: () -> Unit) {
         adapter.test(name, true, testFn)
+    }
+
+    /**
+     * Declares an async test that may await SceneGraph field changes.
+     *
+     * The body runs as a coroutine inside [runPumping], which pumps [TestPort]
+     * on the current thread, so it can use kotlin.test.device.awaitField and
+     * friends. If the body has not completed within [timeoutMs] the test fails
+     * with an AssertionError describing the pending awaits; the run continues.
+     *
+     * @param name The name of the test.
+     * @param timeoutMs Whole-test deadline in milliseconds.
+     * @param testFn The suspending test body.
+     */
+    public fun testAsync(name: String, timeoutMs: Int = 10_000, testFn: suspend () -> Unit) {
+        adapter.test(name, false) {
+            runPumping(TestPort.port, timeoutMs) {
+                testFn()
+            }
+        }
     }
 
     internal fun run(block: TestRunner.() -> Unit) {
