@@ -6,6 +6,7 @@
 package kotlin.test.adapters
 
 import kotlin.brs.BrsInline
+import kotlin.brs.Dynamic
 import kotlin.brs.roku.RoDateTime
 import kotlin.brs.roku.RoTimespan
 import kotlin.brs.runtime.brsFormatJson
@@ -132,9 +133,23 @@ public class JsonTestAdapter : FrameworkAdapter {
             "timestamp" to currentTimeMillis()
         ))
 
-        // Note: try-catch disabled due to compiler code generation issues.
-        // Suite exceptions will propagate and crash the test run.
-        suiteFn()
+        var suiteError: String? = null
+        try {
+            suiteFn()
+        } catch (e: Throwable) {
+            suiteError = describeCaught(e)
+        }
+        if (suiteError != null) {
+            // A suite-level crash means some tests never ran; count it as a
+            // failure so run_complete reflects a red run.
+            suiteFailed++
+            totalFailed++
+            emitJson(mapOf(
+                "type" to "test_error",
+                "suite" to name,
+                "message" to suiteError
+            ))
+        }
 
         val duration = suiteTimer.totalMilliseconds()
         emitJson(mapOf(
@@ -169,19 +184,33 @@ public class JsonTestAdapter : FrameworkAdapter {
             "timestamp" to currentTimeMillis()
         ))
 
-        // Note: try-catch disabled due to compiler code generation issues.
-        // Test exceptions will propagate and crash the test run.
-        // Failures will show which test crashed.
-        testFn()
+        var failureMessage: String? = null
+        try {
+            testFn()
+        } catch (e: Throwable) {
+            failureMessage = describeCaught(e)
+        }
         val duration = testTimer.totalMilliseconds()
-        suitePassed++
-        totalPassed++
-        emitJson(mapOf(
-            "type" to "test_pass",
-            "suite" to currentSuite,
-            "test" to name,
-            "duration_ms" to duration
-        ))
+        if (failureMessage == null) {
+            suitePassed++
+            totalPassed++
+            emitJson(mapOf(
+                "type" to "test_pass",
+                "suite" to currentSuite,
+                "test" to name,
+                "duration_ms" to duration
+            ))
+        } else {
+            suiteFailed++
+            totalFailed++
+            emitJson(mapOf(
+                "type" to "test_fail",
+                "suite" to currentSuite,
+                "test" to name,
+                "message" to failureMessage,
+                "duration_ms" to duration
+            ))
+        }
     }
 
     /**
@@ -200,6 +229,26 @@ public class JsonTestAdapter : FrameworkAdapter {
      */
     @BrsInline("return __kotlin_mapToPlainAA_ANY_k_(data)")
     private external fun toPlainAA(data: Any?): Any
+
+    /**
+     * Extracts a human-readable message from a caught throwable.
+     *
+     * BrightScript's `catch` also delivers native roExceptions (runtime errors),
+     * which carry a plain `message` field but none of the Kotlin Throwable
+     * methods - calling the e.message getter on one would crash inside the
+     * catch handler. Kotlin Throwables also store `message` as a plain field,
+     * so raw field access is safe for both.
+     */
+    private fun describeCaught(e: Throwable): String {
+        val message = rawMessageField(e)
+        if (message == null) {
+            return "unknown error"
+        }
+        return "$message"
+    }
+
+    @BrsInline("return e.message")
+    private external fun rawMessageField(e: Throwable): Dynamic?
 
     /**
      * Returns the current time in milliseconds since epoch.
