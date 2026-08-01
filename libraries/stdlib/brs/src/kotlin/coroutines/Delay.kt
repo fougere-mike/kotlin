@@ -142,3 +142,18 @@ public fun processCoroutineDelays(): Int {
 public fun hasPendingDelays(): Boolean {
     return DelayTracker.current.hasPendingDelays()
 }
+
+/**
+ * Discards all pending delays on the current thread without firing them.
+ *
+ * Run-loop housekeeping counterpart of
+ * [kotlin.coroutines.dispatchers.clearCoroutineQueue]: after a run is
+ * abandoned, pending delay callbacks would resume coroutines that must never
+ * execute again. This does not cancel those coroutines - it only prevents
+ * their delayed resumptions from firing.
+ *
+ * @return The number of delays discarded.
+ */
+public fun clearCoroutineDelays(): Int {
+    return DelayTracker.current.clear()
+}

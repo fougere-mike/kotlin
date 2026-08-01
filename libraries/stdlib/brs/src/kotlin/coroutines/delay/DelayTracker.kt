@@ -94,6 +94,17 @@ public class DelayTracker {
     }
 
     /**
+     * Discards all pending delays without firing their callbacks.
+     *
+     * @return The number of delays discarded.
+     */
+    public fun clear(): Int {
+        val discarded = pendingDelays.size
+        pendingDelays.clear()
+        return discarded
+    }
+
+    /**
      * Checks if there are any pending delays.
      *
      * @return `true` if there are pending delays waiting to fire.
