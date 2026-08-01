@@ -21,7 +21,7 @@ echo "  3. publishToMavenLocal (compiler)"
 echo "  4. publishToMavenLocal (KGP + BOM)"
 echo "  5. publishToMavenLocal (stdlib klib)"
 echo "  6. generateStdlibBrs + publish runtime JAR"
-echo "  7. kotlin-test-brs build + publish"
+echo "  7. kotlin-test-brs build + publish (klib + runtime JAR)"
 echo ""
 echo "See CLAUDE.md 'Bootstrap Architecture' for details."
 echo ""
@@ -55,6 +55,7 @@ if [[ "$1" == "--clean" ]]; then
     rm -rf ~/.m2/repository/com/nuvyyo/kotlin-stdlib-brs
     rm -rf ~/.m2/repository/com/nuvyyo/kotlin-stdlib-brs-runtime
     rm -rf ~/.m2/repository/com/nuvyyo/kotlin-test-brs
+    rm -rf ~/.m2/repository/com/nuvyyo/kotlin-test-brs-runtime
     rm -rf ~/.m2/repository/com/nuvyyo/kotlin-gradle-plugin-brs
     rm -rf ~/.m2/repository/com/nuvyyo/kotlin-gradle-plugin-api-brs
     rm -rf ~/.m2/repository/com/nuvyyo/kotlin-gradle-plugin-idea-brs
@@ -189,9 +190,9 @@ echo "  Verified: com.nuvyyo:kotlin-stdlib-brs-runtime published to Maven Local"
 # ============================================================================
 
 echo ""
-echo "7. Compile-checking and publishing kotlin-test-brs..."
+echo "7. Compile-checking and publishing kotlin-test-brs (klib + runtime JAR)..."
 ./gradlew :kotlin-test-brs:build :kotlin-test-brs:publishToMavenLocal $FLAGS
-echo "  Verified: kotlin-test-brs compiles cleanly and published to Maven Local"
+echo "  Verified: kotlin-test-brs klib and runtime JAR published to Maven Local"
 
 echo ""
 echo "=== All artifacts published to Maven Local ==="
@@ -203,3 +204,4 @@ echo "  - com.nuvyyo:kotlin-gradle-plugins-bom-brs"
 echo "  - com.nuvyyo:kotlin-stdlib-brs (klib)"
 echo "  - com.nuvyyo:kotlin-stdlib-brs-runtime (JAR)"
 echo "  - com.nuvyyo:kotlin-test-brs (klib)"
+echo "  - com.nuvyyo:kotlin-test-brs-runtime (JAR)"

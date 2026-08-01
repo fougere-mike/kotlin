@@ -59,8 +59,57 @@ val buildKlib by tasks.registering(JavaExec::class) {
     outputs.file(outputKlib)
 }
 
+// Generate .brs sources from the kotlin.test Kotlin sources. Mirrors the
+// compiler invocation in libraries/stdlib/brs/test/run-tests.sh (kotlin.test
+// step): source-to-.brs, not -Xproduce=library.
+val brsRuntimeDir = layout.buildDirectory.dir("brs-runtime")
+
+val generateTestBrs by tasks.registering(JavaExec::class) {
+    group = "build"
+    description = "Generate BrightScript source files from kotlin.test Kotlin sources"
+
+    dependsOn(":compiler:cli-brs:fatJar")
+    dependsOn(":kotlin-stdlib-brs-prebuilt:regenerateKlib")
+
+    classpath = files(fatJarFile)
+    mainClass.set("org.jetbrains.kotlin.cli.brs.K2BrsCompiler")
+
+    val brsSrc = file("src/main/kotlin")
+
+    doFirst {
+        if (!stdlibKlib.exists()) {
+            throw GradleException(
+                "Stdlib klib not found: ${stdlibKlib.absolutePath}\n" +
+                "Generate it with: ./gradlew :kotlin-stdlib-brs-prebuilt:regenerateKlib"
+            )
+        }
+    }
+
+    args(
+        "-Xallow-kotlin-package",
+        "-libraries", stdlibKlib.absolutePath,
+        "-output-dir", brsRuntimeDir.get().asFile.absolutePath,
+        brsSrc.absolutePath
+    )
+
+    inputs.dir(brsSrc)
+    inputs.file(fatJarFile)
+    inputs.file(stdlibKlib)
+    outputs.dir(brsRuntimeDir)
+}
+
+// JAR of the compiled .brs files, packed flat for extraction into Roku apps
+// (mirrors the kotlin-stdlib-brs-runtime jar in libraries/stdlib/build.gradle.kts)
+val brsRuntimeJar = tasks.register<Jar>("brsRuntimeJar") {
+    archiveBaseName.set("kotlin-test-brs-runtime")
+    destinationDirectory.set(layout.buildDirectory.dir("libs"))
+    from(layout.buildDirectory.dir("brs-runtime/source"))
+    dependsOn(generateTestBrs)
+}
+
 tasks.named("build") {
     dependsOn(buildKlib)
+    dependsOn(brsRuntimeJar)
 }
 
 tasks.named<Delete>("clean") {
@@ -84,6 +133,19 @@ publishing {
             pom {
                 name.set("Kotlin Test for BrightScript")
                 description.set("Kotlin test framework compiled for the BrightScript (Roku) platform")
+            }
+        }
+
+        create<MavenPublication>("brsKotlinTestRuntime") {
+            groupId = "com.nuvyyo"
+            artifactId = "kotlin-test-brs-runtime"
+            version = project.version.toString()
+
+            artifact(brsRuntimeJar)
+
+            pom {
+                name.set("Kotlin Test BrightScript Runtime")
+                description.set("Compiled .brs files of the Kotlin test framework for packaging in Roku apps")
             }
         }
     }
