@@ -18,6 +18,8 @@ import kotlin.coroutines.CoroutineScope
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.Job
 import kotlin.coroutines.builders.startCoroutine
+import kotlin.coroutines.clearCoroutineDelays
+import kotlin.coroutines.dispatchers.clearCoroutineQueue
 import kotlin.coroutines.dispatchers.processCoroutineQueue
 import kotlin.coroutines.processCoroutineDelays
 import kotlin.coroutines.resume
@@ -108,6 +110,23 @@ public object FieldEventBus {
     }
 
     /**
+     * True while some pending await still watches this (node, field). Used to
+     * keep the scoped observer alive until the LAST await on that node+field
+     * is resolved - unobserving while a sibling await is still armed would
+     * starve it.
+     */
+    private fun stillWatched(node: RoSGNode, fieldLower: String): Boolean {
+        for (entry in pending) {
+            if (entry.fieldLower == fieldLower) {
+                if (entry.node.isSameNode(node)) {
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
+    /**
      * Matches a field-change event against the pending awaits.
      *
      * A pending await matches when the event's node is the awaited node
@@ -145,7 +164,9 @@ public object FieldEventBus {
         // Resume after the registry walk: resuming re-enters test code, which
         // may register new awaits while we are still iterating.
         for (entry in matches) {
-            entry.node.unobserveFieldScoped(entry.fieldName)
+            if (!stillWatched(entry.node, entry.fieldLower)) {
+                entry.node.unobserveFieldScoped(entry.fieldName)
+            }
             entry.continuation.resume(data)
         }
     }
@@ -169,7 +190,9 @@ public object FieldEventBus {
         }
 
         for (entry in expired) {
-            entry.node.unobserveFieldScoped(entry.fieldName)
+            if (!stillWatched(entry.node, entry.fieldLower)) {
+                entry.node.unobserveFieldScoped(entry.fieldName)
+            }
             entry.continuation.resumeWithException(
                 AssertionError("awaitField timed out: ${entry.describe()}")
             )
@@ -214,6 +237,18 @@ public object FieldEventBus {
  * If [block] has not completed within [timeoutMs], all pending awaits are
  * cancelled and an AssertionError describing them is thrown (failing the
  * enclosing test, not the run).
+ *
+ * End-of-run containment: on EVERY exit (result, body exception, whole-test
+ * timeout) the run's job is cancelled, all pending awaits are dropped, and the
+ * coroutine work queue and pending delays are purged via [clearCoroutineQueue]
+ * / [clearCoroutineDelays]. Stdlib cancellation is flags-only, so a timed-out
+ * body cannot be truly cancelled - but with its queued resumptions, delay
+ * callbacks, and field awaits all discarded (and tests being sequential, so
+ * nothing else owns that state), nothing can ever resume it: it stays
+ * suspended and inert instead of executing during a later test. Residual
+ * limit: a resumption arriving from OUTSIDE the pump (e.g. the task-node
+ * completion paths behind withContext(IO), currently quarantined) is not
+ * covered by the purge.
  */
 public fun <T> runPumping(
     port: RoMessagePort,
@@ -250,8 +285,9 @@ public fun <T> runPumping(
         if (clock.totalMilliseconds() > timeoutMs) {
             if (!deferred.isCompleted) {
                 if (!deferred.isCancelled) {
+                    // Describe the pending awaits before endRun discards them.
                     val stillPending = FieldEventBus.pendingDescription()
-                    FieldEventBus.cancelAll()
+                    endRun(job)
                     throw AssertionError(
                         "runPumping timed out after ${timeoutMs}ms; pending awaits: $stillPending"
                     )
@@ -260,8 +296,26 @@ public fun <T> runPumping(
         }
     }
 
+    // Normal and body-exception exits: same containment before the result (or
+    // the body's exception) is surfaced, so leftovers from launch{}ed children
+    // cannot leak into the next test's pump.
+    endRun(job)
+
     // Return the result or throw the exception
     return deferred.getCompleted()
+}
+
+/**
+ * Containment on run exit: cancel the run's job (flags-only), drop all pending
+ * field awaits, and purge queued coroutine work and pending delays so nothing
+ * belonging to this run can execute during a later run. Tests are sequential,
+ * so everything queued at exit time belongs to the exiting run.
+ */
+private fun endRun(job: Job) {
+    job.cancel()
+    FieldEventBus.cancelAll()
+    clearCoroutineQueue()
+    clearCoroutineDelays()
 }
 
 /**
@@ -304,6 +358,13 @@ private class RunPumpingContinuation<T>(
  *
  * If nothing acceptable arrives within [timeoutMs], the await resumes with an
  * AssertionError naming the node subtype and field.
+ *
+ * Concurrent awaits on the same (node, field) - e.g. from launch{}ed children -
+ * are supported: one event resumes EVERY await whose predicate accepts it, and
+ * the scoped observer is removed only when the last pending await on that
+ * node+field is resolved. Each awaitField call re-invokes observeFieldScoped,
+ * so overlapping awaits may briefly duplicate observers; duplicated events are
+ * harmless under the predicate re-arm semantics above.
  */
 public suspend fun awaitField(
     node: RoSGNode,
