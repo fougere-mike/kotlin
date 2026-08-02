@@ -1,0 +1,16 @@
+// --- File: arrayFactoriesKt.brs ---
+function makeInts_k_() as Object
+    return [1, 2, 3]
+end function
+
+function makeEmpty_k_() as Object
+    return []
+end function
+
+function makeSlots_k_() as Object
+    return __kotlin_arrayOfNulls(4)
+end function
+
+function totalSize_k_() as Integer
+    return (makeInts_k_().count() + makeEmpty_k_().count()) + makeSlots_k_().count()
+end function

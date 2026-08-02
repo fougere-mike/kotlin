@@ -134,9 +134,11 @@ abstract class AbstractBrsGoldenFileTest {
                 """.trimIndent())
             }
 
-            // Collect all .brs and .xml files from output directory
+            // Collect all .brs, .xml and .deps.json files from output directory.
+            // The .deps.json capture locks the component dependency manifests (the
+            // input to KGP <script> injection) into the goldens alongside the XML.
             val outputFiles = tempOutputDir.walkTopDown()
-                .filter { it.extension in setOf("brs", "xml") }
+                .filter { it.extension in setOf("brs", "xml") || it.name.endsWith(".deps.json") }
                 .sortedBy { it.name }
                 .toList()
 

@@ -49,6 +49,9 @@ class BrsExpressionGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun externalBrsNameOverloads() = runTest("expressions/externalBrsNameOverloads.kt")
+
+    @Test
+    fun arrayFactories() = runTest("expressions/arrayFactories.kt")
 }
 
 // ==================== Control Flow Tests ====================
@@ -142,6 +145,9 @@ class BrsComponentGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun overriddenFieldChangesAnnotation() = runTest("components/overriddenFieldChangesAnnotation.kt")
+
+    @Test
+    fun deepTransitiveDeps() = runTest("components/deepTransitiveDeps.kt")
 }
 
 // ==================== Intrinsics Tests ====================

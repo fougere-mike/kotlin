@@ -1,0 +1,194 @@
+// --- File: DeepDepsProbe.deps.json ---
+{
+  "version": 1,
+  "component": "DeepDepsProbe",
+  "dependencies": [
+    "ArrayListKt.brs",
+    "ArraysBrsKt.brs",
+    "ArraysKt.brs",
+    "CharCategoryBrsKt.brs",
+    "ExceptionsKt.brs",
+    "HashMapKt.brs",
+    "HashSetKt.brs",
+    "KotlinKt.brs",
+    "MapExtensionsBrsKt.brs",
+    "PreconditionsKt.brs",
+    "PrimitiveIteratorsKt.brs",
+    "RangeOperatorsBrsKt.brs",
+    "RangesKt.brs",
+    "StringBuilderBrsKt.brs",
+    "ThrowableKt.brs",
+    "UByteKt.brs",
+    "UIntKt.brs",
+    "ULongKt.brs",
+    "URangesKt.brs",
+    "UShortKt.brs",
+    "UnsignedUtilsKt.brs",
+    "charBrsKt.brs",
+    "consoleKt.brs",
+    "coreRuntimeKt.brs",
+    "primitivesKt.brs",
+    "stringBrsKt.brs"
+  ]
+}
+
+
+// --- File: DeepDepsProbe.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="DeepDepsProbe" extends="Group">
+    <interface>
+        <field id="summary" type="string" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/MapExtensionsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PrimitiveIteratorsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ULongKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/URangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UShortKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnsignedUtilsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/consoleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/DeepDepsProbe/DeepDepsProbeKt.brs" />
+</component>
+
+
+// --- File: deepTransitiveDepsKt.brs ---
+function DeepDepsError_create_Str_k_(message as String) as Object
+    this = Exception_create_StrN_k_(message)
+    this._super = {}
+    this.__proto = ["DeepDepsError", this.__proto]
+    this.__type = "DeepDepsError"
+    return this
+end function
+
+function describeChar_C_k_(c as Object) as String
+    __when_tmp0 = invalid
+    if brsStructuralEquals_AnyN_AnyN_k_(__get_category_rC_k_(c), [CharCategory_initEntries(), m.CharCategory_LOWERCASE_LETTER][1]) then
+        __when_tmp0 = "lower"
+    else
+        __when_tmp0 = "other"
+    end if
+    return __when_tmp0
+
+end function
+
+function sumRange_k_() as Integer
+    total = 0
+    inductionVariable = 1
+    if inductionVariable <= 5 then
+                i = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
+        total = (total + i)
+
+
+        while inductionVariable <= 5
+            i = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            total = (total + i)
+
+        end while
+
+    end if
+
+    return total
+end function
+
+function onTick_I_k_(value as Integer) as Integer
+    return value + 1
+end function
+
+function DeepDepsProbe_create_k_() as Object
+    this = {}
+    this.__type = "DeepDepsProbe"
+    this.__proto = ["DeepDepsProbe"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.compute_k_ = DeepDepsProbe_compute_k_
+    this.__get_summary = DeepDepsProbe___get_summary_k_
+    this.summary = ""
+    return this
+end function
+
+function DeepDepsProbe_compute_k_() as String
+    counts = HashMap_create_k_()
+    set_rMutableMap_AnyN_AnyN_k_(counts, "alpha", 1)
+    set_rMutableMap_AnyN_AnyN_k_(counts, "beta", 2)
+    sb = StringBuilder_create_k_()
+    inductionVariable = "a"
+    if inductionVariable <= "c" then
+                c = inductionVariable
+        inductionVariable = (inductionVariable + 1)
+
+        sb.append_StrN_k_(describeChar_C_k_(c))
+
+
+        while inductionVariable <= "c"
+            c = inductionVariable
+            inductionVariable = (inductionVariable + 1)
+
+            sb.append_StrN_k_(describeChar_C_k_(c))
+
+        end while
+
+    end if
+
+    sb.append_I_k_(counts.__get_size())
+    sb.append_I_k_(sumRange_k_())
+    sb.append_I_k_(__kotlin_stringHashCode("alpha"))
+    names = ["x", "y"]
+    slots = __kotlin_arrayOfNulls(3)
+    sb.append_I_k_(names.count() + slots.count())
+    tick = onTick_ref_create_k_()
+    sb.append_I_k_(tick.invoke_AnyN_k_(41))
+    sb.append_StrN_k_("onTick_I_k_")
+    if sb.__get_length() = 0 then
+        throw DeepDepsError_create_Str_k_("empty summary")
+    end if
+    return sb.toString()
+end function
+
+function DeepDepsProbe___get_summary_k_() as String
+    return m.summary
+end function
+
+function onTick_ref_create_k_() as Object
+    this = {}
+    this.__type = "onTick_ref"
+    this.__proto = ["onTick_ref", "KFunction1", "KFunction", "KCallable", "Function", "Function1"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.invoke_AnyN_k_ = onTick_ref_invoke_AnyN_k_
+    this.__get_name = onTick_ref___get_name_k_
+    return this
+end function
+
+function onTick_ref_invoke_AnyN_k_(p0 as Integer) as Integer
+    return onTick_I_k_(p0)
+end function
+
+function onTick_ref___get_name_k_() as String
+    return "onTick"
+end function

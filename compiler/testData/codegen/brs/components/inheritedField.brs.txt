@@ -1,31 +1,63 @@
+// --- File: InheritedFieldComponent.deps.json ---
+{
+  "version": 1,
+  "component": "InheritedFieldComponent",
+  "dependencies": [
+    "ArrayListKt.brs",
+    "ArraysBrsKt.brs",
+    "ArraysKt.brs",
+    "CharCategoryBrsKt.brs",
+    "ExceptionsKt.brs",
+    "HashMapKt.brs",
+    "HashSetKt.brs",
+    "KotlinKt.brs",
+    "PreconditionsKt.brs",
+    "PrimitiveIteratorsKt.brs",
+    "RangeOperatorsBrsKt.brs",
+    "RangesKt.brs",
+    "StringBuilderBrsKt.brs",
+    "ThrowableKt.brs",
+    "UByteKt.brs",
+    "UIntKt.brs",
+    "ULongKt.brs",
+    "URangesKt.brs",
+    "UShortKt.brs",
+    "UnsignedUtilsKt.brs",
+    "charBrsKt.brs",
+    "consoleKt.brs",
+    "coreRuntimeKt.brs",
+    "primitivesKt.brs",
+    "stringBrsKt.brs"
+  ]
+}
+
+
 // --- File: InheritedFieldComponent.xml ---
 <?xml version="1.0" encoding="utf-8" ?>
 <component name="InheritedFieldComponent" extends="Group">
     <interface>
         <field id="title" type="string" />
     </interface>
-    <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/CharKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/CharSequenceKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/CollectionsKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/ComparableKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/IteratorKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/LazyKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/NumberKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/PairKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/PrimitivesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PrimitiveIteratorsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/ReflectKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ULongKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/URangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UShortKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnsignedUtilsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/consoleKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
