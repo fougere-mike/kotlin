@@ -281,31 +281,65 @@ TIMEOUT_SECONDS=90
 ELAPSED=0
 CRASH_DETECTED=false
 SEEN_SENTINEL=false
+SENTINEL_MONITOR_LINE=0
+# Lines captured before the monitor started (i.e. before/during deployment).
+# The stale console backlog drains at connect time, so anything at or below this
+# line cannot be output from THIS run's app.
+MONITOR_BASELINE_LINES=$(wc -l < "$TEST_OUTPUT" 2>/dev/null | tr -d ' ')
+MONITOR_BASELINE_LINES=${MONITOR_BASELINE_LINES:-0}
+
+# Find the line number of the LAST sentinel that (a) arrived after the monitor
+# baseline and (b) has a fresh embedded timestamp (within 300s of now, tolerating
+# device clock skew). The Roku console backlog can retain a PREVIOUS run's sentinel
+# AND its [KOTLINTEST_END]; matching either one stops the capture mid-run and
+# silently truncates the tail of the suite (observed: last 4 suites lost while the
+# runner reported "All tests passed"). Prints the line number on success; returns
+# non-zero otherwise.
+find_fresh_sentinel_line() {
+    local line sent raw ts epoch diff
+    line=$(grep -n '===KOTLINTEST_SENTINEL_[0-9.e+]*===' "$TEST_OUTPUT" 2>/dev/null \
+        | awk -F: -v base="$MONITOR_BASELINE_LINES" '$1 > base {print $1}' | tail -1)
+    [[ -z "$line" ]] && return 1
+    sent=$(sed -n "${line}p" "$TEST_OUTPUT" | grep -oE '===KOTLINTEST_SENTINEL_[0-9.e+]*===')
+    raw=$(echo "$sent" | sed 's/===KOTLINTEST_SENTINEL_//' | sed 's/===//')
+    ts=$(printf "%.0f" "$raw" 2>/dev/null || echo 0)
+    epoch=$((ts / 1000))
+    diff=$(( $(date +%s) - epoch ))
+    if [[ $diff -ge -60 && $diff -le 300 ]]; then
+        echo "$line"
+        return 0
+    fi
+    return 1
+}
+
+# Emit only the capture lines AFTER this run's sentinel. ALL marker checks in the
+# monitor loop must go through this - grepping the whole file resurrects the stale
+# buffer contents the sentinel exists to exclude.
+post_sentinel_output() {
+    tail -n "+$((SENTINEL_MONITOR_LINE + 1))" "$TEST_OUTPUT" 2>/dev/null
+}
 
 while [[ $ELAPSED -lt $TIMEOUT_SECONDS ]]; do
-    # Check if we've seen the sentinel (start of THIS run's output)
-    # We must see a sentinel BEFORE we can trust any other markers
+    # Check if we've seen THIS run's sentinel (fresh timestamp required)
     if [[ "$SEEN_SENTINEL" == "false" ]]; then
-        if grep -q '===KOTLINTEST_SENTINEL_' "$TEST_OUTPUT" 2>/dev/null; then
+        if SENTINEL_MONITOR_LINE=$(find_fresh_sentinel_line); then
             SEEN_SENTINEL=true
-            echo "  Sentinel found - monitoring for completion..."
+            echo "  Fresh sentinel found at line $SENTINEL_MONITOR_LINE - monitoring for completion..."
         fi
     fi
 
-    # Only check for completion AFTER we've seen a sentinel
-    # This prevents false positives from stale [KOTLINTEST_END] in the device buffer
+    # Only check for completion AFTER the sentinel, and only in post-sentinel output
     if [[ "$SEEN_SENTINEL" == "true" ]]; then
-        if grep -q '\[KOTLINTEST_END\]' "$TEST_OUTPUT" 2>/dev/null; then
+        if post_sentinel_output | grep -q '\[KOTLINTEST_END\]'; then
             echo "Test completion marker found!"
             break
         fi
     fi
 
-    # Only check for crash indicators AFTER we've seen the sentinel
-    # This prevents false positives from stale logs in the device buffer
+    # Only check for crash indicators AFTER the sentinel, in post-sentinel output
     if [[ "$SEEN_SENTINEL" == "true" ]]; then
         # Check for crash indicators (exit early)
-        if grep -q 'BrightScript Micro Debugger\.' "$TEST_OUTPUT" 2>/dev/null; then
+        if post_sentinel_output | grep -q 'BrightScript Micro Debugger\.'; then
             echo -e "${RED}CRASH DETECTED: BrightScript debugger entered${NC}"
             CRASH_DETECTED=true
             # Wait a moment to capture full crash output
@@ -316,16 +350,16 @@ while [[ $ELAPSED -lt $TIMEOUT_SECONDS ]]; do
         # Check for app exit - but only treat it as crash if tests didn't complete
         # The exit message pattern includes a timestamp that changes each run
         # We look for the pattern with a timestamp AFTER the sentinel
-        if grep -qE '\[bs\.ndk\.proc\.exit\].*EXIT_USER_NAV' "$TEST_OUTPUT" 2>/dev/null; then
+        if post_sentinel_output | grep -qE '\[bs\.ndk\.proc\.exit\].*EXIT_USER_NAV'; then
             # Give it a moment - the END marker might still be buffered
             sleep 1
-            if grep -q '\[KOTLINTEST_END\]' "$TEST_OUTPUT" 2>/dev/null; then
+            if post_sentinel_output | grep -q '\[KOTLINTEST_END\]'; then
                 echo "Test completion marker found (after exit)!"
                 break
             fi
             # If still no END marker, it's a crash
             echo -e "${YELLOW}App exited - checking if tests completed...${NC}"
-            if grep -q '\[KOTLINTEST_START\]' "$TEST_OUTPUT" 2>/dev/null; then
+            if post_sentinel_output | grep -q '\[KOTLINTEST_START\]'; then
                 # Started but didn't finish
                 echo -e "${RED}CRASH DETECTED: Tests started but didn't complete${NC}"
                 CRASH_DETECTED=true
@@ -472,11 +506,12 @@ if [[ -n "$SENTINEL_LINE" ]]; then
     # Convert scientific notation to integer (e.g., 1.767901e+12 -> 1767901000000)
     SENTINEL_TIMESTAMP=$(printf "%.0f" "$SENTINEL_TIMESTAMP_RAW" 2>/dev/null || echo "$SENTINEL_TIMESTAMP_RAW")
 
-    # Validate timestamp is recent (within 120 seconds to account for test runtime)
+    # Validate timestamp is recent (within 300 seconds: full-suite runtime plus
+    # device/host clock skew; a previous run's sentinel is many minutes older)
     SENTINEL_EPOCH=$((SENTINEL_TIMESTAMP / 1000))
     TIME_DIFF=$((CURRENT_TIME - SENTINEL_EPOCH))
 
-    if [[ $TIME_DIFF -gt 120 ]]; then
+    if [[ $TIME_DIFF -gt 300 ]]; then
         echo ""
         echo -e "${RED}╔══════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${RED}║  ERROR: Sentinel timestamp is stale                          ║${NC}"

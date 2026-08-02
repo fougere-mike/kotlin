@@ -403,6 +403,14 @@ The Roku debug console (telnet port 8085) has an internal buffer that retains lo
 
 This guarantees you only see logs from the current run, regardless of what's in the device buffer.
 
+**The completion monitor is sentinel-scoped too.** The wait loop only accepts a sentinel that
+(a) arrived in the capture AFTER deployment finished and (b) has a fresh embedded timestamp
+(within 300s, tolerating device clock skew), and it greps for `[KOTLINTEST_END]` / crash
+markers ONLY in the lines after that sentinel. Before this fix, a previous run's
+`[KOTLINTEST_END]` sitting in the console backlog stopped the capture mid-run and silently
+truncated the tail of the suite while still reporting "All tests passed" — if a run ever
+reports a suspiciously low total with zero failures, check for exactly this class of bug.
+
 **Why telnet instead of nc (netcat)?**
 
 The test runner uses `telnet` to connect to the Roku debug console, NOT `nc`. This is because `nc` exits immediately after receiving the initial buffer dump from the Roku (about 65 lines), while `telnet` stays connected waiting for more data. When run from a script (vs interactive terminal), `nc` doesn't keep the connection open for incoming data.
