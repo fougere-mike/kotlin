@@ -643,9 +643,10 @@ class IrToBrsTransformer(
                     BrsBinaryOp(
                         BrsDotAccess(BrsMRef(), "_${layoutInfo.propertyName}"),
                         BrsBinaryOperator.EQ,
-                        BrsFunctionCall(
-                            BrsIdentifier("${layoutInfo.className}_create"),
-                            mutableListOf(BrsDotAccess(BrsMRef(), "top"))
+                        createFunctionCall(
+                            "${layoutInfo.className}_create",
+                            mutableListOf(BrsDotAccess(BrsMRef(), "top")),
+                            context
                         )
                     )
                 )
@@ -2065,7 +2066,7 @@ class IrToBrsTransformer(
                 val (hoistedStatements, args) = getSuperConstructorArgsWithHoisting(constructor)
                 bodyStatements.addAll(hoistedStatements)
                 val delegatedName = context.getBrsName(delegatedConstructor)
-                val call = BrsFunctionCall(BrsIdentifier(delegatedName), args)
+                val call = createFunctionCall(delegatedName, args, context)
                 bodyStatements.add(BrsReturn(call))
                 return BrsFunction(name, parameters.toMutableList(), BrsType.OBJECT, BrsBlock(bodyStatements))
             }
@@ -2096,10 +2097,7 @@ class IrToBrsTransformer(
                 // Fallback: use class name + _create for no-arg constructor
                 "${context.getBrsName(superClass)}_create"
             }
-            val superConstructorCall = BrsFunctionCall(
-                BrsIdentifier(superConstructorName),
-                superArgs
-            )
+            val superConstructorCall = createFunctionCall(superConstructorName, superArgs, context)
             bodyStatements.add(
                 BrsVariable(name = "this", initializer = superConstructorCall)
             )

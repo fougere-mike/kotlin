@@ -360,6 +360,14 @@ class BrsCompiler(
             manifest["${className}_getInstance"] = outputFileName
         }
 
+        // For enum classes, record the generated entry initializer. The transformer
+        // synthesizes ${className}_initEntries() (it has no IR declaration), and every
+        // cross-file enum entry access calls it - without this entry the dependency
+        // is unresolvable and the defining file never reaches component includes.
+        if (irClass.kind == ClassKind.ENUM_CLASS) {
+            manifest["${className}_initEntries"] = outputFileName
+        }
+
         // Record all declarations in the class
         for (member in irClass.declarations) {
             when (member) {
@@ -399,13 +407,15 @@ class BrsCompiler(
         val runtimeHelperNames = listOf(
             "__kotlin_ushr",
             "__kotlin_stringCompare",
+            "__kotlin_stringHashCode",
             "__kotlin_intCompare",
             "__kotlin_nextObjectId",
             "__kotlin_identityEquals",
             "__kotlin_isInstanceOf",
             "__kotlin_KClass_create",
             "__kotlin_getClass",
-            "__kotlin_isPrimitiveType"
+            "__kotlin_isPrimitiveType",
+            "__kotlin_arrayOfNulls"
         )
         for (name in runtimeHelperNames) {
             manifest[name] = outputFileName
@@ -462,6 +472,15 @@ class BrsCompiler(
         // Add String.compareTo helper for Char comparisons
         val stringCompareFunction = createStringCompareHelper()
         program.declarations.add(0, stringCompareFunction)
+
+        // Add String.hashCode helper (Kotlin/Java string hash: h = 31*h + charCode)
+        val stringHashCodeFunction = createStringHashCodeHelper()
+        program.declarations.add(0, stringHashCodeFunction)
+
+        // Add arrayOfNulls helper (kotlin.arrayOfNulls has no BRS source implementation;
+        // the call site is intrinsified to __kotlin_arrayOfNulls - see IrExpressionToBrsTransformer)
+        val arrayOfNullsFunction = createArrayOfNullsHelper()
+        program.declarations.add(0, arrayOfNullsFunction)
 
         // Add unsigned right shift helper for Int.ushr
         val ushrFunction = createUshrHelper()
@@ -1048,6 +1067,127 @@ class BrsCompiler(
     }
 
     /**
+     * Creates the __kotlin_stringHashCode helper function.
+     * Implements the Kotlin/Java String.hashCode contract: h = 31 * h + charCode,
+     * over 32-bit integers (BrightScript Integer arithmetic wraps like Java's int).
+     *
+     * Generated BrightScript:
+     * ```
+     * function __kotlin_stringHashCode(s as String) as Integer
+     *     h = 0
+     *     n = Len(s)
+     *     i = 1
+     *     while i <= n
+     *         h = ((h * 31) + Asc(Mid(s, i, 1)))
+     *         i = (i + 1)
+     *     end while
+     *     return h
+     * end function
+     * ```
+     */
+    private fun createStringHashCodeHelper(): BrsFunction {
+        val body = BrsBlock(mutableListOf(
+            BrsVariable(name = "h", initializer = BrsIntLiteral(0)),
+            BrsVariable(
+                name = "n",
+                initializer = BrsFunctionCall(BrsIdentifier("Len"), mutableListOf(BrsIdentifier("s")))
+            ),
+            BrsVariable(name = "i", initializer = BrsIntLiteral(1)),
+            BrsWhile(
+                condition = BrsBinaryOp(BrsIdentifier("i"), BrsBinaryOperator.LE, BrsIdentifier("n")),
+                body = BrsBlock(mutableListOf(
+                    // h = ((h * 31) + Asc(Mid(s, i, 1)))
+                    BrsExpressionStatement(
+                        BrsBinaryOp(
+                            BrsIdentifier("h"),
+                            BrsBinaryOperator.EQ,
+                            BrsBinaryOp(
+                                BrsBinaryOp(BrsIdentifier("h"), BrsBinaryOperator.MUL, BrsIntLiteral(31)),
+                                BrsBinaryOperator.ADD,
+                                BrsFunctionCall(
+                                    BrsIdentifier("Asc"),
+                                    mutableListOf(
+                                        BrsFunctionCall(
+                                            BrsIdentifier("Mid"),
+                                            mutableListOf(BrsIdentifier("s"), BrsIdentifier("i"), BrsIntLiteral(1))
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    ),
+                    BrsExpressionStatement(
+                        BrsBinaryOp(
+                            BrsIdentifier("i"),
+                            BrsBinaryOperator.EQ,
+                            BrsBinaryOp(BrsIdentifier("i"), BrsBinaryOperator.ADD, BrsIntLiteral(1))
+                        )
+                    )
+                ))
+            ),
+            BrsReturn(BrsIdentifier("h"))
+        ))
+
+        return BrsFunction(
+            name = "__kotlin_stringHashCode",
+            parameters = mutableListOf(BrsParameter("s", BrsType.STRING)),
+            returnType = BrsType.INTEGER,
+            body = body
+        )
+    }
+
+    /**
+     * Creates the __kotlin_arrayOfNulls helper function.
+     * kotlin.arrayOfNulls(size) must return an array whose count() equals size
+     * (CreateObject("roArray", size, true) alone has count 0 - size is only capacity).
+     *
+     * Generated BrightScript:
+     * ```
+     * function __kotlin_arrayOfNulls(size as Integer) as Object
+     *     arr = CreateObject("roArray", size, true)
+     *     i = 0
+     *     while i < size
+     *         arr.push(invalid)
+     *         i = (i + 1)
+     *     end while
+     *     return arr
+     * end function
+     * ```
+     */
+    private fun createArrayOfNullsHelper(): BrsFunction {
+        val body = BrsBlock(mutableListOf(
+            BrsVariable(
+                name = "arr",
+                initializer = BrsCreateObject("roArray", mutableListOf(BrsIdentifier("size"), BrsBooleanLiteral(true)))
+            ),
+            BrsVariable(name = "i", initializer = BrsIntLiteral(0)),
+            BrsWhile(
+                condition = BrsBinaryOp(BrsIdentifier("i"), BrsBinaryOperator.LT, BrsIdentifier("size")),
+                body = BrsBlock(mutableListOf(
+                    BrsExpressionStatement(
+                        BrsMethodCall(BrsIdentifier("arr"), "push", mutableListOf(BrsInvalidLiteral()))
+                    ),
+                    BrsExpressionStatement(
+                        BrsBinaryOp(
+                            BrsIdentifier("i"),
+                            BrsBinaryOperator.EQ,
+                            BrsBinaryOp(BrsIdentifier("i"), BrsBinaryOperator.ADD, BrsIntLiteral(1))
+                        )
+                    )
+                ))
+            ),
+            BrsReturn(BrsIdentifier("arr"))
+        ))
+
+        return BrsFunction(
+            name = "__kotlin_arrayOfNulls",
+            parameters = mutableListOf(BrsParameter("size", BrsType.INTEGER)),
+            returnType = BrsType.OBJECT,
+            body = body
+        )
+    }
+
+    /**
      * Creates the __kotlin_ushr helper function for unsigned right shift.
      *
      * Generated BrightScript:
@@ -1597,13 +1737,7 @@ class BrsCompiler(
         for (componentName in componentClassNames) {
             val componentInfo = preExtractedComponents[componentName] ?: continue
             val xml = generateComponentXmlContent(componentInfo, context, dependencies)
-            // Runtime functions are no longer tracked separately - they're included in dependencies
-            // via the function manifest lookup during code generation
-            val depsJson = generateComponentDepsJson(
-                componentInfo.name,
-                dependencies,
-                emptySet() // Runtime functions are resolved via fileDependencies now
-            )
+            val depsJson = generateComponentDepsJson(componentInfo.name, dependencies)
             result.add(BrsComponentOutput(componentInfo.name, xml, depsJson))
         }
 
@@ -1644,17 +1778,19 @@ class BrsCompiler(
      * This manifest lists all .brs files that this component depends on,
      * enabling the Gradle plugin to inject the correct <script> tags.
      *
+     * The historical "runtimeFunctions" key is no longer emitted: it was always empty
+     * (runtime helpers are resolved through the function manifest into "dependencies").
+     * The KGP consumer (ProcessComponentXmlTask.parseComponentDeps) treats a missing
+     * key as an empty list, so omitting it is format-compatible.
+     *
      * @param componentName The name of the component
      * @param dependencies Pre-computed set of dependencies for this component
-     * @param runtimeFunctions Set of __kotlin_* functions used by this component
      */
     private fun generateComponentDepsJson(
         componentName: String,
-        dependencies: Set<String>,
-        runtimeFunctions: Set<String>
+        dependencies: Set<String>
     ): String {
         val allDeps = dependencies.sorted()
-        val runtimeFuncs = runtimeFunctions.sorted()
 
         return buildString {
             appendLine("{")
@@ -1664,12 +1800,6 @@ class BrsCompiler(
             allDeps.forEachIndexed { i, dep ->
                 val comma = if (i < allDeps.size - 1) "," else ""
                 appendLine("""    "$dep"$comma""")
-            }
-            appendLine("  ],")
-            appendLine("""  "runtimeFunctions": [""")
-            runtimeFuncs.forEachIndexed { i, func ->
-                val comma = if (i < runtimeFuncs.size - 1) "," else ""
-                appendLine("""    "$func"$comma""")
             }
             appendLine("  ]")
             appendLine("}")

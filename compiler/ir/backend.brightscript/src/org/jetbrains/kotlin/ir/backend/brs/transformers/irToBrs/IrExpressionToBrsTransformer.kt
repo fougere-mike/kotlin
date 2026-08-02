@@ -123,21 +123,25 @@ class IrExpressionToBrsTransformer(
         if (expression.type.isUnsigned() && expression.kind != IrConstKind.Null) {
             val className = expression.type.classOrNull?.owner?.name?.asString()
             return when (className) {
-                "UInt" -> BrsFunctionCall(
-                    BrsIdentifier("UInt_create_I_k_"),
-                    mutableListOf(BrsIntLiteral(expression.value as Int))
+                "UInt" -> createFunctionCall(
+                    "UInt_create_I_k_",
+                    mutableListOf(BrsIntLiteral(expression.value as Int)),
+                    context
                 )
-                "ULong" -> BrsFunctionCall(
-                    BrsIdentifier("ULong_create_J_k_"),
-                    mutableListOf(BrsLongIntLiteral(expression.value as Long))
+                "ULong" -> createFunctionCall(
+                    "ULong_create_J_k_",
+                    mutableListOf(BrsLongIntLiteral(expression.value as Long)),
+                    context
                 )
-                "UByte" -> BrsFunctionCall(
-                    BrsIdentifier("UByte_create_B_k_"),
-                    mutableListOf(BrsIntLiteral((expression.value as Byte).toInt()))
+                "UByte" -> createFunctionCall(
+                    "UByte_create_B_k_",
+                    mutableListOf(BrsIntLiteral((expression.value as Byte).toInt())),
+                    context
                 )
-                "UShort" -> BrsFunctionCall(
-                    BrsIdentifier("UShort_create_S_k_"),
-                    mutableListOf(BrsIntLiteral((expression.value as Short).toInt()))
+                "UShort" -> createFunctionCall(
+                    "UShort_create_S_k_",
+                    mutableListOf(BrsIntLiteral((expression.value as Short).toInt())),
+                    context
                 )
                 else -> {
                     // Unknown unsigned type, fall through to regular handling
@@ -462,7 +466,7 @@ class IrExpressionToBrsTransformer(
         return BrsIndexAccess(
             BrsArrayLiteral(
                 mutableListOf(
-                    BrsFunctionCall(BrsIdentifier("${className}_initEntries"), mutableListOf()),
+                    createFunctionCall("${className}_initEntries", context),
                     BrsDotAccess(BrsIdentifier("m"), "${className}_${entryName}")
                 )
             ),
@@ -872,9 +876,10 @@ class IrExpressionToBrsTransformer(
                     val receiverExpr = receiver.accept(this, data)
                     // Generate polymorphic dispatch using __kotlin_charSequenceLength helper
                     // Note: The mangled name includes the parameter type (_CharSequenceN_k_)
-                    return BrsFunctionCall(
-                        BrsIdentifier("__kotlin_charSequenceLength_CharSequenceN_k_"),
-                        mutableListOf(receiverExpr)
+                    return createFunctionCall(
+                        "__kotlin_charSequenceLength_CharSequenceN_k_",
+                        mutableListOf(receiverExpr),
+                        context
                     )
                 }
                 // For other types, fall through to normal property access
@@ -970,10 +975,10 @@ class IrExpressionToBrsTransformer(
 
                         if (leftIsString && !rightIsString) {
                             // Right operand needs string conversion
-                            right = transformToString(right, arg.type)
+                            right = transformToString(right, arg.type, context)
                         } else if (!leftIsString && rightIsString) {
                             // Left operand needs string conversion
-                            left = transformToString(left, receiver.type)
+                            left = transformToString(left, receiver.type, context)
                         }
 
                         return BrsBinaryOp(left, BrsBinaryOperator.ADD, right)
@@ -984,7 +989,7 @@ class IrExpressionToBrsTransformer(
                 "toString" -> {
                     val receiverType = receiver.type
                     val receiverExpr = receiver.accept(this, data)
-                    return transformToString(receiverExpr, receiverType)
+                    return transformToString(receiverExpr, receiverType, context)
                 }
             }
         }
@@ -992,6 +997,22 @@ class IrExpressionToBrsTransformer(
         // Check for intrinsics
         if (context.intrinsics.isIntrinsic(expression.symbol)) {
             return transformIntrinsic(expression)
+        }
+
+        // kotlin.arrayOf / kotlin.arrayOfNulls resolve from builtins metadata and have no BRS
+        // implementation anywhere (no stdlib source, no emitted definition) - a plain mangled
+        // call would be UNDEFINED at runtime. Intrinsify them instead:
+        //   arrayOf(a, b, c)  -> [a, b, c]        (the vararg argument already IS the array)
+        //   arrayOf()         -> []               (empty vararg arrives as a null argument)
+        //   arrayOfNulls(n)   -> __kotlin_arrayOfNulls(n)   (runtime helper, count = n)
+        val callFqName = function.fqNameWhenAvailable?.asString()
+        if (callFqName == "kotlin.arrayOf") {
+            val varargArg = expression.getValueArgument(0)
+            return varargArg?.accept(this, data) ?: BrsArrayLiteral(mutableListOf())
+        }
+        if (callFqName == "kotlin.arrayOfNulls") {
+            val sizeArg = expression.getValueArgument(0)?.accept(this, data) ?: BrsIntLiteral(0)
+            return createFunctionCall("__kotlin_arrayOfNulls", mutableListOf(sizeArg), context)
         }
 
         // Handle invoke calls on function-typed variables
@@ -1051,10 +1072,11 @@ class IrExpressionToBrsTransformer(
 
         val functionName = context.getBrsName(function)
 
-        // Record dependency for this function call using the new unified tracking
-        // This uses the function manifest to look up the target file, capturing
-        // all dependencies including those from lowering-introduced code
-        context.recordFunctionDependency(functionName)
+        // NOTE: the dependency for this call is recorded at the emission points below,
+        // NOT here. Recording here would capture the wrong (class-prefixed) name for
+        // primitive-extension calls, whose emitted name is rebuilt later (the "corrected"
+        // name), and would record names for paths that emit method calls (no global
+        // dependency at all).
 
         val arguments = mutableListOf<BrsExpression>()
 
@@ -1187,16 +1209,10 @@ class IrExpressionToBrsTransformer(
                             return if (actualReceiverType.isChar() || actualReceiverType.isStringClassType()) {
                                 // For Char and String (strings in BrightScript), use __kotlin_stringCompare
                                 // which compares strings lexicographically and returns -1, 0, or 1
-                                BrsFunctionCall(
-                                    BrsIdentifier("__kotlin_stringCompare"),
-                                    mutableListOf(left, right)
-                                )
+                                createFunctionCall("__kotlin_stringCompare", mutableListOf(left, right), context)
                             } else {
                                 // Use runtime helper function for numeric compareTo
-                                BrsFunctionCall(
-                                    BrsIdentifier("__kotlin_intCompare"),
-                                    mutableListOf(left, right)
-                                )
+                                createFunctionCall("__kotlin_intCompare", mutableListOf(left, right), context)
                             }
                         }
                         "equals" -> {
@@ -1213,10 +1229,7 @@ class IrExpressionToBrsTransformer(
                             // For strings, use a hash function; for primitives, the value itself
                             return if (actualReceiverType.isStringClassType()) {
                                 // String hashCode needs a runtime helper
-                                BrsFunctionCall(
-                                    BrsIdentifier("__kotlin_stringHashCode"),
-                                    mutableListOf(receiverExpr)
-                                )
+                                createFunctionCall("__kotlin_stringHashCode", mutableListOf(receiverExpr), context)
                             } else {
                                 // For numeric primitives, the value is the hash
                                 receiverExpr
@@ -1251,10 +1264,7 @@ class IrExpressionToBrsTransformer(
                             // Unsigned right shift - use helper function
                             val left = receiverExpr
                             val right = expression.getValueArgument(0)!!.accept(this, data)
-                            return BrsFunctionCall(
-                                BrsIdentifier("__kotlin_ushr"),
-                                mutableListOf(left, right)
-                            )
+                            return createFunctionCall("__kotlin_ushr", mutableListOf(left, right), context)
                         }
                     }
 
@@ -1297,7 +1307,7 @@ class IrExpressionToBrsTransformer(
                     } else {
                         functionName
                     }
-                    return BrsFunctionCall(BrsIdentifier(correctedFunctionName), args)
+                    return createFunctionCall(correctedFunctionName, args, context)
                 }
 
                 // Check if this is a call on a singleton object
@@ -1562,7 +1572,7 @@ class IrExpressionToBrsTransformer(
                         args.add(BrsInvalidLiteral())
                     }
                 }
-                return BrsFunctionCall(BrsIdentifier(correctedName), args)
+                return createFunctionCall(correctedName, args, context)
             }
 
             arguments.add(receiver.accept(this, data))
@@ -1608,7 +1618,12 @@ class IrExpressionToBrsTransformer(
             return BrsMethodCall(singletonInstance, methodName, arguments)
         }
 
-        return BrsFunctionCall(BrsIdentifier(functionName), arguments)
+        // Plain global function call - record the dependency unless the function is
+        // external (external functions are native BrightScript, they have no .brs file)
+        if (function.isExternal) {
+            return BrsFunctionCall(BrsIdentifier(functionName), arguments)
+        }
+        return createFunctionCall(functionName, arguments, context)
     }
 
     /**
@@ -1987,10 +2002,8 @@ class IrExpressionToBrsTransformer(
             is BrsIntrinsics.StdlibIntrinsic.ToString -> {
                 // Type-aware toString for Any? values
                 // Generate runtime type checking to handle primitives properly
-                // Record dependency on toString_AnyN_k_ via function manifest
-                context.recordFunctionDependency("toString_AnyN_k_")
                 if (args.isNotEmpty()) {
-                    generateRuntimeToString(args[0])
+                    generateRuntimeToString(args[0], context)
                 } else {
                     BrsStringLiteral("null")
                 }
@@ -2125,6 +2138,13 @@ class IrExpressionToBrsTransformer(
                     is IrFunctionReference -> {
                         val function = arg.symbol.owner
                         val mangledName = context.getBrsName(function)
+                        // The returned name is used as a callback (observeField / functionName
+                        // fields), so the defining file must be in the component's includes.
+                        // Skip external functions (native, no .brs file) and local functions
+                        // (emitted inline in the current file, never in a manifest).
+                        if (!function.isExternal && function.parent !is IrFunction) {
+                            context.recordFunctionDependency(mangledName)
+                        }
                         BrsStringLiteral(mangledName)
                     }
                     else -> {
@@ -2494,10 +2514,10 @@ class IrExpressionToBrsTransformer(
 
                 if (leftIsString && !rightIsString) {
                     // Right operand needs string conversion
-                    right = transformToString(right, rightIr.type)
+                    right = transformToString(right, rightIr.type, context)
                 } else if (!leftIsString && rightIsString) {
                     // Left operand needs string conversion
-                    left = transformToString(left, leftIr.type)
+                    left = transformToString(left, leftIr.type, context)
                 }
             }
 
@@ -3022,7 +3042,7 @@ class IrExpressionToBrsTransformer(
             val expr = arg.accept(this, data)
             // Convert non-string arguments to strings for BrightScript string concatenation
             if (!arg.type.isString()) {
-                transformToString(expr, arg.type)
+                transformToString(expr, arg.type, context)
             } else {
                 expr
             }
@@ -3254,8 +3274,16 @@ class IrExpressionToBrsTransformer(
             val methodName = sanitizeMethodName(function.name.asString())
             BrsMethodCall(receiverExpr, methodName, callArgs)
         } else {
-            // For unbound function references, call the global function
-            BrsFunctionCall(BrsIdentifier(functionName), callArgs)
+            // For unbound function references, call the global function.
+            // The wrapper's body calls the referenced function, so the reference is a
+            // dependency of this file even though the call happens later.
+            // Skip external functions (native, no .brs file) and local functions
+            // (emitted inline in the current file, never in a manifest).
+            if (function.isExternal || function.parent is IrFunction) {
+                BrsFunctionCall(BrsIdentifier(functionName), callArgs)
+            } else {
+                createFunctionCall(functionName, callArgs, context)
+            }
         }
 
         // Determine return type
@@ -3789,67 +3817,6 @@ class IrExpressionToBrsTransformer(
         ), context)
     }
 
-    /**
-     * Determine the .brs file name a function will be compiled to.
-     * Works for both local functions (from source) and klib functions.
-     */
-    private fun determineBrsFileName(function: IrFunction, functionName: String): String? {
-        // Runtime helpers (__kotlin_*) should be looked up in the manifest
-        // They are defined in the first stdlib file during compilation
-        if (functionName.startsWith("__kotlin_")) {
-            return context.dependencyFunctionManifest[functionName]
-        }
-
-        // ALWAYS check manifest first for any function
-        // This handles stdlib classes/interfaces correctly (e.g., MutableList.add → CollectionsKt.brs)
-        // Methods on interfaces like MutableList are compiled into CollectionsKt.brs,
-        // not MutableListKt.brs (which doesn't exist)
-        context.dependencyFunctionManifest[functionName]?.let { return it }
-
-        val functionParent = function.parent
-
-        return when (functionParent) {
-            is IrClass -> {
-                // External classes/interfaces (e.g., RoSGNodeEvent) don't produce output files
-                // They're just declarations of native BrightScript types
-                if (functionParent.isExternal) {
-                    null
-                } else if (parent.isExtractedLocalClass(functionParent)) {
-                    // Lambda classes and function reference classes don't produce separate files
-                    // They're generated inline in the containing file even after extraction
-                    null
-                } else if (functionParent.isCompanion) {
-                    // Companion object methods are compiled into the containing class's file
-                    val containingClass = functionParent.parent as? IrClass
-                    if (containingClass != null) {
-                        context.getBrsName(containingClass) + "Kt.brs"
-                    } else {
-                        context.getBrsName(functionParent) + "Kt.brs"
-                    }
-                } else {
-                    // Function belongs to a class in current module - use class name with Kt suffix
-                    context.getBrsName(functionParent) + "Kt.brs"
-                }
-            }
-            is IrFile -> {
-                // Top-level function in same module - use source file name with Kt suffix
-                File(functionParent.path).nameWithoutExtension + "Kt.brs"
-            }
-            is IrPackageFragment -> {
-                // Top-level function from klib (IrExternalPackageFragment)
-                // Manifest was already checked above, this is fallback for older klibs
-                // Use function name prefix as a heuristic
-                // E.g., mutableListOf_k_ -> mutableListOfKt.brs
-                val prefix = functionName.substringBefore("_k_")
-                if (prefix.isNotEmpty() && prefix != functionName) {
-                    "${prefix}Kt.brs"
-                } else {
-                    null
-                }
-            }
-            else -> null
-        }
-    }
 
 }
 

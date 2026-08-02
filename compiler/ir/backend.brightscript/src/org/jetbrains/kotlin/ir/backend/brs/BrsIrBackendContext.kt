@@ -99,19 +99,77 @@ class BrsIrBackendContext(
     val functionManifest = mutableMapOf<String, String>()
 
     /**
+     * Deduplication set for recording-gap warnings: "<file>:<functionName>".
+     * recordFunctionDependency is called once per emitted call expression, so the same
+     * unresolvable name can be hit hundreds of times per file - warn once per (file, name).
+     */
+    private val reportedRecordingGaps = mutableSetOf<String>()
+
+    /**
+     * Native BrightScript global functions (lowercase - BrightScript is case-insensitive).
+     * These are provided by the Roku firmware, have no .brs file, and are legitimately
+     * absent from every function manifest - recordFunctionDependency must not warn on them.
+     * Mirrors the KGP ComponentIncludeValidator.DEFAULT_BUILTINS allowlist.
+     */
+    private val brsNativeGlobalFunctions = setOf(
+        "createobject", "type", "getglobalaa", "getinterface", "findmemberfunction", "box",
+        "chr", "asc", "str", "stri", "val", "len", "left", "right", "mid", "instr",
+        "ucase", "lcase", "string", "stringi", "substitute", "strtoi",
+        "formatjson", "parsejson", "print",
+        "abs", "atn", "cdbl", "cint", "cos", "csng", "exp", "fix", "int", "log",
+        "rnd", "sgn", "sin", "sqr", "tan",
+        "uptime", "wait", "sleep", "tab", "pos",
+        "run", "eval", "rebootsystem", "rungarbagecollector",
+        "getlastruncompileerror", "getlastrunruntimeerror",
+        "readasciifile", "writeasciifile", "listdir", "matchfiles",
+        "deletefile", "deletedirectory", "createdirectory", "formatdrive",
+        "copyfile", "movefile"
+    )
+
+    /**
      * Record that the current source file depends on a function.
      * Looks up the function in both the current module's manifest and dependency manifests,
      * then adds the target file as a dependency.
      *
+     * A name that resolves in NEITHER manifest is a recording gap: the emitted call will
+     * work in the main scope (every file under source/ is loaded) but breaks inside SceneGraph
+     * components, which only load the files listed in their XML <script> tags. That must
+     * never be silent - it is reported as a compiler warning (the KGP
+     * validateComponentIncludes task is the hard gate).
+     *
      * @param functionName The BrightScript function name being called
      */
     fun recordFunctionDependency(functionName: String) {
-        val currentFile = currentSourceFile ?: return
+        val currentFile = currentSourceFile
+        if (currentFile == null) {
+            if (reportedRecordingGaps.add("<no-current-file>:$functionName")) {
+                messageCollector.report(
+                    org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.WARNING,
+                    "[BRS dependency recording] call to '$functionName' emitted with no current source file set; " +
+                        "the dependency cannot be attributed and component <script> includes may be incomplete."
+                )
+            }
+            return
+        }
 
         // Look up in current module manifest first, then dependency manifest
         val targetFile = functionManifest[functionName]
             ?: dependencyFunctionManifest[functionName]
-            ?: return
+
+        if (targetFile == null) {
+            if (functionName.lowercase() !in brsNativeGlobalFunctions &&
+                reportedRecordingGaps.add("$currentFile:$functionName")
+            ) {
+                messageCollector.report(
+                    org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.WARNING,
+                    "[BRS dependency recording] '$functionName' (called from $currentFile) is not present in any " +
+                        "function manifest; its defining .brs file cannot be added to component <script> includes. " +
+                        "Calls from SceneGraph component scope will fail at runtime unless the file is included " +
+                        "by another dependency."
+                )
+            }
+            return
+        }
 
         // Don't record self-dependencies
         if (targetFile != currentFile) {
@@ -201,12 +259,6 @@ class BrsIrBackendContext(
     // ==================== Mapping and Caching ====================
 
     val mapping: BrsMapping = BrsMapping()
-
-    /**
-     * Dependency collector for tracking which files call functions from other files.
-     * Used to generate accurate deps.json for SceneGraph components.
-     */
-    val dependencyCollector: BrsDependencyCollector = BrsDependencyCollector()
 
     /**
      * Cache for generated class names.
@@ -851,83 +903,3 @@ class BrsMapping {
     val constantObjectClasses = mutableSetOf<IrClass>()
 }
 
-/**
- * Collects dependency information during IR-to-BrightScript transformation.
- *
- * This tracks which .brs files are called from each source file, enabling
- * accurate dependency injection for SceneGraph components.
- */
-class BrsDependencyCollector {
-    /**
-     * Map: source file path → set of dependency .brs file names.
-     * Records which output files are called from each source file.
-     */
-    private val fileDependencies = mutableMapOf<String, MutableSet<String>>()
-
-    /**
-     * Map: source file path → set of runtime functions used.
-     * Records __kotlin_* functions called from each source file.
-     */
-    private val fileRuntimeFunctions = mutableMapOf<String, MutableSet<String>>()
-
-    /**
-     * Record a dependency from one file to another.
-     *
-     * @param fromFile The source file making the call (full path)
-     * @param toBrsFile The dependency .brs file name (e.g., "ArrayList.brs")
-     */
-    fun recordDependency(fromFile: String, toBrsFile: String) {
-        // Don't record self-dependencies
-        val fromFileName = java.io.File(fromFile).nameWithoutExtension + "Kt.brs"
-        if (fromFileName != toBrsFile) {
-            fileDependencies.getOrPut(fromFile) { mutableSetOf() }.add(toBrsFile)
-        }
-    }
-
-    /**
-     * Record usage of a runtime helper function.
-     *
-     * @param fromFile The source file using the runtime function (full path)
-     * @param functionName The runtime function name (e.g., "__kotlin_nextObjectId")
-     */
-    fun recordRuntimeFunction(fromFile: String, functionName: String) {
-        fileRuntimeFunctions.getOrPut(fromFile) { mutableSetOf() }.add(functionName)
-    }
-
-    /**
-     * Get all dependencies for a file.
-     *
-     * @param filePath The source file path
-     * @return Set of .brs file names this file depends on
-     */
-    fun getDependencies(filePath: String): Set<String> =
-        fileDependencies[filePath] ?: emptySet()
-
-    /**
-     * Get all runtime functions used by a file.
-     *
-     * @param filePath The source file path
-     * @return Set of __kotlin_* function names used
-     */
-    fun getRuntimeFunctions(filePath: String): Set<String> =
-        fileRuntimeFunctions[filePath] ?: emptySet()
-
-    /**
-     * Get the complete file dependency graph for all files in this compilation.
-     * Keys are .brs filenames (not full paths), values are sets of dependency .brs filenames.
-     * Used to resolve transitive dependencies for user code files.
-     */
-    fun getAllFileDependencies(): Map<String, Set<String>> {
-        return fileDependencies.entries.associate { (fullPath, deps) ->
-            java.io.File(fullPath).nameWithoutExtension + "Kt.brs" to deps.toSet()
-        }
-    }
-
-    /**
-     * Clear all collected dependency data.
-     */
-    fun clear() {
-        fileDependencies.clear()
-        fileRuntimeFunctions.clear()
-    }
-}
