@@ -85,6 +85,23 @@ class BrsClosureGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun capturedVarInAnonymousClass() = runTest("closures/capturedVarInAnonymousClass.kt")
+
+    @Test
+    fun nestedLambdaCaptureHoisting() = runTest("closures/nestedLambdaCaptureHoisting.kt")
+}
+
+// ==================== Coroutine Tests ====================
+
+class BrsCoroutineGoldenFileTests : AbstractBrsGoldenFileTest() {
+
+    @Test
+    fun simpleSuspend() = runTest("coroutines/simpleSuspend.kt")
+
+    @Test
+    fun suspendResumeValue() = runTest("coroutines/suspendResumeValue.kt")
+
+    @Test
+    fun suspendStatementDiscard() = runTest("coroutines/suspendStatementDiscard.kt")
 }
 
 // ==================== Inline BrightScript Tests ====================

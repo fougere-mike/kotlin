@@ -1,0 +1,176 @@
+// --- File: nestedLambdaCaptureHoistingKt.brs ---
+function Runner_create_k_() as Object
+    this = {}
+    this.__type = "Runner"
+    this.__proto = ["Runner"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.testAsync_Str_SuspendFunction0V_k_ = Runner_testAsync_Str_SuspendFunction0V_k_
+    return this
+end function
+
+sub Runner_testAsync_Str_SuspendFunction0V_k_(name as String, body as Object)
+end sub
+
+sub launchIt_Function0V_k_(block as Object)
+    block.invoke_k_()
+end sub
+
+function tick_ContinuationI_k_(_completion as Object) as Object
+    return 1
+end function
+
+sub registerSuite_Runner_Any_k_(runner as Object, scene as Object)
+    runner.testAsync_Str_SuspendFunction0V_k_("focusMoves", registerSuite_slambda_create_Any_ContinuationAnyNN_k_(scene, invalid))
+end sub
+
+sub registerSuiteAcrossSuspend_Runner_Any_k_(runner as Object, scene as Object)
+    runner.testAsync_Str_SuspendFunction0V_k_("focusMovesAcrossSuspend", registerSuiteAcrossSuspend_slambda_create_Any_ContinuationAnyNN_k_(scene, invalid))
+end sub
+
+function registerSuite_slambda_create_Any_ContinuationAnyNN_k_(_scene as Object, resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_Continuation_k_ = this.invoke_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_Continuation_k_ = this.create_Continuation_k_
+    this.__proto = ["registerSuite_slambda", "SuspendFunction0", this.__proto]
+    this.__type = "registerSuite_slambda"
+    this.invoke_Continuation_k_ = registerSuite_slambda_invoke_Continuation_k_
+    this.doResume_k_ = registerSuite_slambda_doResume_k_
+    this.create_Continuation_k_ = registerSuite_slambda_create_Continuation_k_
+    this._scene = _scene
+    return this
+end function
+
+function registerSuite_slambda_invoke_Continuation_k_(_completion as Object) as Object
+    tmp = m.create_Continuation_k_(_completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function registerSuite_slambda_doResume_k_() as Dynamic
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(1)
+                focused = {value: invalid}
+                launchIt_Function0V_k_(registerSuite_slambda_lambda_create_AnyN_Any_k_(focused, m._scene))
+                if focused.value = invalid then
+                    focused.value = m._scene
+                end if
+
+                                return invalid
+            else if __kotlin_identityEquals(tmp, 1) then
+                throw e
+            end if
+        catch e
+                        throw e
+        end try
+    end while
+end function
+
+function registerSuite_slambda_create_Continuation_k_(completion as Object) as Object
+    i = registerSuite_slambda_create_Any_ContinuationAnyNN_k_(m._scene, completion)
+    return i
+end function
+
+function registerSuite_slambda_lambda_create_AnyN_Any_k_(_focused as Dynamic, _scene as Object) as Object
+    this = {}
+    this.__type = "registerSuite_slambda_lambda"
+    this.__proto = ["registerSuite_slambda_lambda", "Function0", "Function"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.invoke_k_ = registerSuite_slambda_lambda_invoke_k_
+    this._focused = _focused
+    this._scene = _scene
+    return this
+end function
+
+sub registerSuite_slambda_lambda_invoke_k_()
+    m._focused.value = m._scene
+end sub
+
+function registerSuiteAcrossSuspend_slambda_create_Any_ContinuationAnyNN_k_(_scene as Object, resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_Continuation_k_ = this.invoke_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_Continuation_k_ = this.create_Continuation_k_
+    this.__proto = ["registerSuiteAcrossSuspend_slambda", "SuspendFunction0", this.__proto]
+    this.__type = "registerSuiteAcrossSuspend_slambda"
+    this.invoke_Continuation_k_ = registerSuiteAcrossSuspend_slambda_invoke_Continuation_k_
+    this.doResume_k_ = registerSuiteAcrossSuspend_slambda_doResume_k_
+    this.create_Continuation_k_ = registerSuiteAcrossSuspend_slambda_create_Continuation_k_
+    this._scene = _scene
+    return this
+end function
+
+function registerSuiteAcrossSuspend_slambda_invoke_Continuation_k_(_completion as Object) as Object
+    tmp = m.create_Continuation_k_(_completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function registerSuiteAcrossSuspend_slambda_doResume_k_() as Dynamic
+    t = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(1)
+                m.focused1 = {value: invalid}
+                launchIt_Function0V_k_(registerSuiteAcrossSuspend_slambda_lambda_create_AnyN_Any_k_(m.focused1, m._scene))
+                m.__set_state(2)
+                suspendResult = tick_ContinuationI_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                throw m.e0
+            else if __kotlin_identityEquals(tmp, 2) then
+                t = suspendResult
+                if m.focused1.value = invalid then
+                    m.focused1.value = m._scene
+                end if
+                                return invalid
+            end if
+        catch e
+            m.e0 = e
+                        throw m.e0
+        end try
+    end while
+end function
+
+function registerSuiteAcrossSuspend_slambda_create_Continuation_k_(completion as Object) as Object
+    i = registerSuiteAcrossSuspend_slambda_create_Any_ContinuationAnyNN_k_(m._scene, completion)
+    return i
+end function
+
+function registerSuiteAcrossSuspend_slambda_lambda_create_AnyN_Any_k_(_focused as Dynamic, _scene as Object) as Object
+    this = {}
+    this.__type = "registerSuiteAcrossSuspend_slambda_lambda"
+    this.__proto = ["registerSuiteAcrossSuspend_slambda_lambda", "Function0", "Function"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.invoke_k_ = registerSuiteAcrossSuspend_slambda_lambda_invoke_k_
+    this._focused = _focused
+    this._scene = _scene
+    return this
+end function
+
+sub registerSuiteAcrossSuspend_slambda_lambda_invoke_k_()
+    m._focused.value = m._scene
+end sub

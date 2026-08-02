@@ -74,6 +74,10 @@ class IrStatementToBrsTransformer(
                 is IrWhen -> visitWhen(innerArg, data)
                 is IrCall -> visitCall(innerArg, data)
                 else -> {
+                    // Side-effect-free reads in statement position (e.g. the suspendResult
+                    // read the coroutine state machine leaves in a continue state when the
+                    // value is discarded) would emit a bare identifier - invalid BrightScript.
+                    if (isDiscardablePureExpression(innerArg)) return BrsEmpty()
                     // For other expressions, transform and wrap as expression statement
                     val expr = parent.transformExpression(innerArg)
                     val hoisted = genCtx.takeHoistedStatements()
@@ -86,6 +90,21 @@ class IrStatementToBrsTransformer(
             }
         }
         return null
+    }
+
+    /**
+     * True for expressions that are side-effect free and therefore produce no code when
+     * used in statement position (their value is discarded). BrightScript cannot emit a
+     * bare identifier/constant as a statement, so such statements must be dropped.
+     */
+    private fun isDiscardablePureExpression(expression: IrExpression): Boolean = when (expression) {
+        is IrGetValue -> true
+        is IrConst -> true
+        is IrTypeOperatorCall ->
+            (expression.operator == IrTypeOperator.IMPLICIT_CAST ||
+                expression.operator == IrTypeOperator.IMPLICIT_COERCION_TO_UNIT) &&
+                isDiscardablePureExpression(expression.argument)
+        else -> false
     }
 
     override fun visitVariable(declaration: IrVariable, data: Unit): BrsStatement {
@@ -1119,8 +1138,17 @@ class IrStatementToBrsTransformer(
                     val init = stmt.initializer?.let { parent.transformExpression(it) }
                     // Check for hoisted statements from when-lowered blocks in the initializer
                     val hoisted = genCtx.takeHoistedStatements()
+                    // Shared (closure-captured mutable) variables live in a {value: ...} box
+                    // created at their declaration - same logic as visitVariable
+                    val isShared = stmt.origin == BrsDeclarationOrigin.SHARED_VARIABLE_WRAPPER ||
+                                   stmt.symbol in genCtx.sharedVariables
+                    val finalInit = if (isShared) {
+                        BrsAALiteral(mutableListOf(BrsAAEntry("value", init ?: BrsInvalidLiteral())))
+                    } else {
+                        init ?: BrsInvalidLiteral()
+                    }
                     // Always create the variable declaration (use invalid for uninitialized vars)
-                    val varDecl = BrsVariable(sanitizedName, mapTypeToBrs(stmt.type), init ?: BrsInvalidLiteral())
+                    val varDecl = BrsVariable(sanitizedName, mapTypeToBrs(stmt.type), finalInit)
                     if (hoisted.isNotEmpty()) {
                         // Prepend hoisted statements before the variable declaration
                         hoisted + varDecl
@@ -2099,11 +2127,16 @@ class IrStatementToBrsTransformer(
         val isSharedVariable = (owner is IrVariable && owner.origin == BrsDeclarationOrigin.SHARED_VARIABLE_WRAPPER) ||
                                expression.symbol in genCtx.sharedVariables
 
+        // The state machine hoists shared variable declarations and re-emits their
+        // initialization as an assignment tagged SHARED_BOX_INIT - that assignment
+        // creates the box; every other write goes through .value
+        val isBoxInit = isSharedVariable && expression.origin == BrsStatementOrigins.SHARED_BOX_INIT
+
         // Build the target expression (LHS of assignment)
         val target = if (capturedVar != null && capturedVar.isMutable) {
             // Rewrite to assign via m (the closure object): m.varName.value = newValue
             BrsDotAccess(BrsDotAccess(BrsMRef(), capturedVar.name), "value")
-        } else if (isSharedVariable) {
+        } else if (isSharedVariable && !isBoxInit) {
             // Shared variable accessed outside closure: varName.value = newValue
             // Note: capturedVar is null here due to the first condition being false
             BrsDotAccess(BrsIdentifier(sanitizeParameterName(sanitizedName)), "value")
@@ -2115,28 +2148,25 @@ class IrStatementToBrsTransformer(
         }
 
         // Transform the expression - when-lowered blocks will add to hoisted queue
-        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-SV] StatementVisitor.visitSetValue for '${rawName}'\n")
         val transformedValue = parent.transformExpression(expression.value)
-        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-SV]   transformedValue: ${transformedValue::class.simpleName}\n")
         // Take any hoisted statements from nested when-lowered blocks
         val hoisted = genCtx.takeHoistedStatements()
-        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-SV]   hoisted count: ${hoisted.size}\n")
-        hoisted.forEachIndexed { idx, h ->
-            java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-SV]     hoisted[$idx]: ${h::class.simpleName}\n")
+
+        val finalValue = if (isBoxInit) {
+            BrsAALiteral(mutableListOf(BrsAAEntry("value", transformedValue)))
+        } else {
+            transformedValue
         }
 
         val assignment = BrsExpressionStatement(
-            BrsBinaryOp(target, BrsBinaryOperator.EQ, transformedValue)
+            BrsBinaryOp(target, BrsBinaryOperator.EQ, finalValue)
         )
 
-        val result = if (hoisted.isNotEmpty()) {
-            java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-SV]   returning BrsBlock with hoisted + assignment\n")
+        return if (hoisted.isNotEmpty()) {
             BrsBlock((hoisted + assignment).toMutableList())
         } else {
-            java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-SV]   returning assignment only\n")
             assignment
         }
-        return result
     }
 
     override fun visitSetField(expression: IrSetField, data: Unit): BrsStatement {
@@ -2164,7 +2194,12 @@ class IrStatementToBrsTransformer(
         val isSharedVariableField = fieldKey in context.sharedVariableFields
         val isInConstructor = genCtx.isInConstructorBody
 
-        val target = if (isSharedVariableField && !isInConstructor) {
+        // A shared variable moved to a coroutine field keeps its SHARED_BOX_INIT-tagged
+        // initializing assignment (BrsLiveLocalsTransformer preserves the origin) - the box
+        // is created there; all other writes go through .value
+        val isBoxInit = isSharedVariableField && expression.origin == BrsStatementOrigins.SHARED_BOX_INIT
+
+        val target = if (isSharedVariableField && !isInConstructor && !isBoxInit) {
             // Write to the box's value: m.fieldName.value = newValue
             BrsDotAccess(BrsDotAccess(receiver, fieldName), "value")
         } else {
@@ -2176,8 +2211,14 @@ class IrStatementToBrsTransformer(
         // Take any hoisted statements from nested when-lowered blocks
         val hoisted = genCtx.takeHoistedStatements()
 
+        val finalValue = if (isBoxInit) {
+            BrsAALiteral(mutableListOf(BrsAAEntry("value", transformedValue)))
+        } else {
+            transformedValue
+        }
+
         val assignment = BrsExpressionStatement(
-            BrsBinaryOp(target, BrsBinaryOperator.EQ, transformedValue)
+            BrsBinaryOp(target, BrsBinaryOperator.EQ, finalValue)
         )
 
         return if (hoisted.isNotEmpty()) {
@@ -2210,6 +2251,9 @@ class IrStatementToBrsTransformer(
     }
 
     private fun transformBlockOrStatement(element: IrElement): BrsStatement {
+        // Pure reads in statement position emit invalid BrightScript (bare identifier);
+        // their value is discarded, so drop them entirely.
+        if (element is IrExpression && isDiscardablePureExpression(element)) return BrsEmpty()
         return when (element) {
             is IrBlock -> visitBlock(element, Unit)
             is IrBlockBody -> visitBlockBody(element, Unit)

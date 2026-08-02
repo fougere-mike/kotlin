@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
+import org.jetbrains.kotlin.ir.backend.brs.lower.BrsDeclarationOrigin
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
@@ -286,8 +287,15 @@ class BrsSuspendFunctionsLowering(
         liveLocals.forEach {
             if (it !== suspendState && it !== suspendResult && it !== stateVar) {
                 localToPropertyMap.getOrPut(it.symbol) {
-                    coroutineClass.addField(Name.identifier("${it.name}${localCounter++}"), it.type, (it as? IrVariable)?.isVar ?: false)
-                        .symbol
+                    val field = coroutineClass.addField(Name.identifier("${it.name}${localCounter++}"), it.type, (it as? IrVariable)?.isVar ?: false)
+                    // If a shared (closure-boxed) variable moves to a coroutine field, record the
+                    // field so the emitter keeps box semantics: reads/writes go through .value and
+                    // constructor calls pass the box itself (see sharedVariableFields consumers).
+                    if ((it as? IrVariable)?.origin == BrsDeclarationOrigin.SHARED_VARIABLE_WRAPPER) {
+                        val fieldName = field.name.asString().replace("$", "_")
+                        brsContext.sharedVariableFields.add("${coroutineClass.name.asString()}.$fieldName")
+                    }
+                    field.symbol
                 }
             }
         }
@@ -525,6 +533,11 @@ object BrsStatementOrigins {
     val COROUTINE_IMPL = IrStatementOriginImpl("COROUTINE_IMPL")
     val COROUTINE_SWITCH = IrStatementOriginImpl("COROUTINE_SWITCH")
     val COROUTINE_ROOT_LOOP = IrStatementOriginImpl("COROUTINE_ROOT_LOOP")
+
+    // Marks the assignment that initializes a SHARED_VARIABLE_WRAPPER variable after the
+    // state machine hoists its declaration. The emitter must create the {value: ...} box
+    // at this assignment (all other writes to the variable assign through .value).
+    val SHARED_BOX_INIT = IrStatementOriginImpl("SHARED_BOX_INIT")
 
     // IO Worker extraction origins
     val IO_WORKER_CALL = IrStatementOriginImpl("IO_WORKER_CALL")

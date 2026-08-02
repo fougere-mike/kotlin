@@ -1,0 +1,52 @@
+// --- File: simpleSuspendKt.brs ---
+function simpleSuspend_ContinuationI_k_(_completion as Object) as Object
+    return 42
+end function
+
+function callingSuspend_ContinuationI_k_(_completion as Object) as Object
+    tmp = _callingSuspendCOROUTINE__create_ContinuationI_k_(_completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function suspendWithParams_I_Str_ContinuationStr_k_(a as Integer, b as String, _completion as Object) as Object
+    return (b + ": ") + __kotlin_numToStr_I_k_(a)
+end function
+
+function _callingSuspendCOROUTINE__create_ContinuationI_k_(resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["_callingSuspendCOROUTINE_", this.__proto]
+    this.__type = "_callingSuspendCOROUTINE_"
+    this.doResume_k_ = _callingSuspendCOROUTINE__doResume_k_
+    return this
+end function
+
+function _callingSuspendCOROUTINE__doResume_k_() as Dynamic
+    result = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(1)
+                m.__set_state(2)
+                suspendResult = simpleSuspend_ContinuationI_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                throw m.e0
+            else if __kotlin_identityEquals(tmp, 2) then
+                result = suspendResult
+                                return result + 1
+            end if
+        catch e
+            m.e0 = e
+                        throw m.e0
+        end try
+    end while
+end function

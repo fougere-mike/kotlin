@@ -10,12 +10,15 @@ import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
 import org.jetbrains.kotlin.ir.backend.brs.ir.BrsIrBuilder
+import org.jetbrains.kotlin.ir.backend.brs.ir.BrsStatementOrigins as BrsIrStatementOrigins
+import org.jetbrains.kotlin.ir.backend.brs.lower.BrsDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.irAttribute
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
+import org.jetbrains.kotlin.ir.symbols.IrReturnableBlockSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueParameterSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.isNothing
@@ -313,7 +316,11 @@ class BrsStateMachineBuilder(
     }
 
     override fun visitReturn(expression: IrReturn) {
-        addStatement(expression)
+        expression.acceptChildrenVoid(this)
+        val returnTarget = expression.returnTargetSymbol
+        if (returnTarget !is IrReturnableBlockSymbol) {
+            transformLastExpression { expression.apply { value = it } }
+        }
     }
 
     private fun transformLoop(loop: IrLoop, transformer: (IrLoop, SuspendState /*head*/, SuspendState /*exit*/) -> Unit) {
@@ -439,11 +446,29 @@ class BrsStateMachineBuilder(
             doContinue()
 
             updateState(continueState)
-            // Note: We don't add getSuspendResultAsType as a bare statement here.
-            // The result is already stored in suspendResult from setSuspendResultValue above.
-            // Subsequent code will access it via getSuspendResultAsType calls where needed.
-            // Adding it as a bare statement would generate invalid BrightScript (bare variable reference).
+            // Expose the resumed value as the last expression of the continue state so that
+            // enclosing constructs (visitVariable, visitSetValue, visitReturn, visitTypeOperator)
+            // pick it up via transformLastExpression. Without this, lastExpression() returns
+            // unitValue and e.g. `val x = suspendCall()` resumes with `x = invalid`.
+            // If nothing consumes it, the emitter drops the pure read statement
+            // (see IrStatementToBrsTransformer.isDiscardablePureExpression).
+            // Unit-returning suspend calls don't carry a value, so nothing is exposed for them.
+            if (hasResultingValue(expression)) {
+                addStatement(getSuspendResultAsType(expression.type))
+            }
         }
+    }
+
+    override fun visitSetValue(expression: IrSetValue) {
+        if (expression !in suspendableNodes) return addStatement(expression)
+        expression.acceptChildrenVoid(this)
+        transformLastExpression { expression.apply { value = it } }
+    }
+
+    override fun visitTypeOperator(expression: IrTypeOperatorCall) {
+        if (expression !in suspendableNodes) return addStatement(expression)
+        expression.acceptChildrenVoid(this)
+        transformLastExpression { expression.apply { argument = it } }
     }
 
     override fun visitBlock(expression: IrBlock) {
@@ -486,13 +511,21 @@ class BrsStateMachineBuilder(
         declaration.startOffset = UNDEFINED_OFFSET
         declaration.endOffset = UNDEFINED_OFFSET
 
+        // Shared (closure-boxed) variables are boxed at their declaration by the emitter.
+        // Since the declaration is hoisted here and the initializer becomes an assignment,
+        // tag that assignment so the emitter creates the box there instead.
+        val setOrigin = if (declaration.origin == BrsDeclarationOrigin.SHARED_VARIABLE_WRAPPER)
+            BrsStatementOrigins.SHARED_BOX_INIT
+        else
+            BrsIrStatementOrigins.SYNTHESIZED_STATEMENT
+
         if (declaration !in suspendableNodes) {
-            initializer?.let { addStatement(BrsIrBuilder.buildSetValue(declaration.symbol, it, startOffset, endOffset)) }
+            initializer?.let { addStatement(BrsIrBuilder.buildSetValue(declaration.symbol, it, startOffset, endOffset, setOrigin)) }
             return
         }
 
         initializer?.acceptVoid(this)
-        transformLastExpression { BrsIrBuilder.buildSetValue(declaration.symbol, it, startOffset, endOffset) }
+        transformLastExpression { BrsIrBuilder.buildSetValue(declaration.symbol, it, startOffset, endOffset, setOrigin) }
     }
 
     private fun registerLocal(variable: IrVariable) {

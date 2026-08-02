@@ -341,17 +341,28 @@ class IrExpressionToBrsTransformer(
         val isSharedVariableField = fieldKey in context.sharedVariableFields
         val isInConstructor = genCtx.isInConstructorBody
 
+        // A shared variable moved to a coroutine field keeps its SHARED_BOX_INIT-tagged
+        // initializing assignment - the box is created there; other writes go through .value
+        val isBoxInit = isSharedVariableField && expression.origin == BrsStatementOrigins.SHARED_BOX_INIT
+
         // Generate assignment expression: receiver.field = value (or receiver.field.value = value for shared vars)
-        val target = if (isSharedVariableField && !isInConstructor) {
+        val target = if (isSharedVariableField && !isInConstructor && !isBoxInit) {
             BrsDotAccess(BrsDotAccess(receiver, fieldName), "value")
         } else {
             BrsDotAccess(receiver, fieldName)
         }
 
+        val transformedValue = expression.value.accept(this, data)
+        val finalValue = if (isBoxInit) {
+            BrsAALiteral(mutableListOf(BrsAAEntry("value", transformedValue)))
+        } else {
+            transformedValue
+        }
+
         return BrsBinaryOp(
             target,
             BrsBinaryOperator.EQ,
-            expression.value.accept(this, data)
+            finalValue
         )
     }
 
@@ -378,7 +389,23 @@ class IrExpressionToBrsTransformer(
 
         // Check if this is a shared variable accessed outside closure
         // Note: sharedVariables only contains mutable vars, and mutable captures returned above
-        if (expression.symbol in genCtx.sharedVariables) {
+        // Two detection mechanisms (same as the statement transformer's visitSetValue):
+        // 1. Via SharedVariablesLowering which sets SHARED_VARIABLE_WRAPPER origin
+        // 2. Via BrsSharedVariableDetectionLowering which populates sharedVariables set
+        val sharedOwner = expression.symbol.owner
+        val isSharedVariable = (sharedOwner is IrVariable && sharedOwner.origin == BrsDeclarationOrigin.SHARED_VARIABLE_WRAPPER) ||
+                               expression.symbol in genCtx.sharedVariables
+        if (isSharedVariable) {
+            // The state machine re-emits a hoisted shared declaration's initialization as an
+            // assignment tagged SHARED_BOX_INIT - that assignment creates the {value: ...} box;
+            // every other write assigns through .value
+            if (expression.origin == BrsStatementOrigins.SHARED_BOX_INIT) {
+                return BrsBinaryOp(
+                    BrsIdentifier(sanitizeParameterName(sanitizedName)),
+                    BrsBinaryOperator.EQ,
+                    BrsAALiteral(mutableListOf(BrsAAEntry("value", expression.value.accept(this, data))))
+                )
+            }
             return BrsBinaryOp(
                 BrsDotAccess(BrsIdentifier(sanitizeParameterName(sanitizedName)), "value"),
                 BrsBinaryOperator.EQ,

@@ -1,0 +1,48 @@
+// --- File: suspendResumeValueKt.brs ---
+function produceValue_ContinuationI_k_(_completion as Object) as Object
+    return 42
+end function
+
+function consumeValue_ContinuationI_k_(_completion as Object) as Object
+    tmp = _consumeValueCOROUTINE__create_ContinuationI_k_(_completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function _consumeValueCOROUTINE__create_ContinuationI_k_(resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["_consumeValueCOROUTINE_", this.__proto]
+    this.__type = "_consumeValueCOROUTINE_"
+    this.doResume_k_ = _consumeValueCOROUTINE__doResume_k_
+    return this
+end function
+
+function _consumeValueCOROUTINE__doResume_k_() as Dynamic
+    got = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(1)
+                m.__set_state(2)
+                suspendResult = produceValue_ContinuationI_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                throw m.e0
+            else if __kotlin_identityEquals(tmp, 2) then
+                got = suspendResult
+                                return got + 1
+            end if
+        catch e
+            m.e0 = e
+                        throw m.e0
+        end try
+    end while
+end function
