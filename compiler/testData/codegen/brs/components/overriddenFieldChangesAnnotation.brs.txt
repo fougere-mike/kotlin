@@ -3,6 +3,7 @@
   "version": 1,
   "component": "OverriddenAnnotationComponent",
   "dependencies": [
+    "AnyKt.brs",
     "ArrayListKt.brs",
     "ArraysBrsKt.brs",
     "ArraysKt.brs",
@@ -38,6 +39,7 @@
     <interface>
         <field id="score" type="integer" />
     </interface>
+    <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />

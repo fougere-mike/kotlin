@@ -3,6 +3,7 @@
   "version": 1,
   "component": "DeepDepsProbe",
   "dependencies": [
+    "AnyKt.brs",
     "ArrayListKt.brs",
     "ArraysBrsKt.brs",
     "ArraysKt.brs",
@@ -39,6 +40,7 @@
     <interface>
         <field id="summary" type="string" />
     </interface>
+    <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />

@@ -2337,6 +2337,15 @@ class IrToBrsTransformer(
         // All calls to equals/hashCode/toString use simple names (see call site generation),
         // so we only need to attach the simple name aliases. The mangled names are never called.
 
+        // The Any_* names below are BARE IDENTIFIER references (function values, not calls),
+        // so they never flow through createFunctionCall - record them explicitly. Every
+        // root-class _create references them cross-file into AnyKt.brs; without these
+        // records a component's script list can drop AnyKt.brs entirely and structural
+        // equality (obj ==, object-keyed HashMap, "$obj") breaks in component scope.
+        context.recordFunctionDependency("Any_equals_AnyN_k_")
+        context.recordFunctionDependency("Any_hashCode_k_")
+        context.recordFunctionDependency("Any_toString_k_")
+
         // this.equals = Any_equals_AnyN_k_
         bodyStatements.add(
             BrsExpressionStatement(
