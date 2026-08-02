@@ -83,6 +83,10 @@ val generateTestBrs by tasks.registering(JavaExec::class) {
                 "Generate it with: ./gradlew :kotlin-stdlib-brs-prebuilt:regenerateKlib"
             )
         }
+        // Start from a clean output dir: the compiler only writes files for current
+        // sources, so a renamed/deleted .kt would otherwise leave its stale .brs
+        // behind and get packed into the runtime JAR.
+        brsRuntimeDir.get().asFile.deleteRecursively()
     }
 
     args(

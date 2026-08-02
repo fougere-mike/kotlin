@@ -1081,6 +1081,13 @@ val generateStdlibBrs = tasks.register<JavaExec>("generateStdlibBrs") {
         *sourceDirs.map { it.absolutePath }.toTypedArray()
     )
 
+    doFirst {
+        // Start from a clean output dir: the compiler only writes files for current
+        // sources, so a renamed/deleted .kt would otherwise leave its stale .brs
+        // behind and get packed into the runtime JAR.
+        brsOutputDir.get().asFile.deleteRecursively()
+    }
+
     inputs.files(sourceDirs)
     inputs.files(cliBrsFatJar)
     outputs.dir(brsOutputDir)
