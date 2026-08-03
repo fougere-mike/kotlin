@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_BRSCON
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_BRSNAME_BLANK
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_BRSNAME_INVALID_TARGET
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_BRSNAME_REQUIRES_CALLABLE_REF
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_CREATE_COMPONENT_INVALID_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_CREATE_OBJECT_INVALID_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_INTRINSIC_LITERAL_REQUIRED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_INTRINSIC_USER_DEFINED
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCENEG
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCENEGRAPH_FIELD_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_STATIC_INVALID_TARGET
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_STATIC_OVERLOAD
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_TASK_STATE_NOT_FIELD
 
 @Suppress("unused")
 object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
@@ -123,6 +125,19 @@ object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             BRS_BRSCREATEOBJECT_INVALID_TYPE,
             "''{0}'' is not a valid BrightScript object type for @BrsCreateObject. Valid types: {1}.",
             CommonRenderers.STRING, CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_TASK_STATE_NOT_FIELD,
+            "Property ''{0}'' in task component ''{1}'' compiles to plain m-state: run() executes against a task-thread copy, " +
+                "and writes from run() are silently lost. Annotate it with an @SG*Field annotation (or @BrsField), " +
+                "or make it a local variable in run().",
+            CommonRenderers.STRING, CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_CREATE_COMPONENT_INVALID_TYPE,
+            "''{1}'' is not a valid component type for {0}(): {2}. The type argument must be a concrete component class " +
+                "(extending GroupComponent, SceneComponent, TaskComponent, etc., or annotated with @BrsComponent).",
+            CommonRenderers.STRING, CommonRenderers.STRING, CommonRenderers.STRING,
         )
     }
 }
