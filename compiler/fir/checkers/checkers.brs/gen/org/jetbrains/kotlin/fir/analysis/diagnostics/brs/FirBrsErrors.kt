@@ -57,5 +57,9 @@ object FirBrsErrors : KtDiagnosticsContainer() {
     // @BrsCreateObject
     val BRS_BRSCREATEOBJECT_INVALID_TYPE: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_BRSCREATEOBJECT_INVALID_TYPE", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
 
+    // Typed task components
+    val BRS_TASK_STATE_NOT_FIELD: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_TASK_STATE_NOT_FIELD", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
+    val BRS_CREATE_COMPONENT_INVALID_TYPE: KtDiagnosticFactory3<String, String, String> = KtDiagnosticFactory3("BRS_CREATE_COMPONENT_INVALID_TYPE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
+
     override fun getRendererFactory(): BaseDiagnosticRendererFactory = FirBrsErrorsDefaultMessages
 }

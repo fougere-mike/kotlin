@@ -121,4 +121,18 @@ object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
             isSuppressible = true
         }
     }
+
+    val TYPED_TASKS by object : DiagnosticGroup("Typed task components") {
+        val BRS_TASK_STATE_NOT_FIELD by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
+            parameter<String>("propertyName")
+            parameter<String>("className")
+            isSuppressible = true
+        }
+        val BRS_CREATE_COMPONENT_INVALID_TYPE by error<KtElement> {
+            parameter<String>("functionName")
+            parameter<String>("actualType")
+            parameter<String>("reason")
+            isSuppressible = true
+        }
+    }
 }
