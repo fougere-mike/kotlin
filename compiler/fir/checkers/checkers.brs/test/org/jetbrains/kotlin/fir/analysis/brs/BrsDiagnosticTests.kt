@@ -1148,4 +1148,9 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testCreateComponentSuppressedAbstract() {
         runTest("createComponentInvalidType/suppressedAbstract.kt")
     }
+
+    @Test
+    fun testCreateComponentRunTaskAbstractRejected() {
+        runTest("createComponentInvalidType/runTaskAbstractRejected.kt")
+    }
 }

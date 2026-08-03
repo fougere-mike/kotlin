@@ -15,6 +15,7 @@ object BrsStandardClassIds {
     val BASE_BRS_INTERNAL_PACKAGE = BASE_BRS_PACKAGE.child(Name.identifier("internal"))
     val BASE_BRS_ROKU_PACKAGE = BASE_BRS_PACKAGE.child(Name.identifier("roku"))
     val BASE_BRS_COROUTINES_PACKAGE = BASE_BRS_PACKAGE.child(Name.identifier("coroutines"))
+    val BASE_COROUTINES_TASK_PACKAGE = BASE_KOTLIN_PACKAGE.child(Name.identifier("coroutines")).child(Name.identifier("task"))
 
     /**
      * Built-in BrightScript object types.
@@ -461,12 +462,17 @@ object BrsStandardClassIds {
         val brsCreateComponent = "brsCreateComponent".callableId(BASE_BRS_PACKAGE)
 
         /**
-         * Callables whose reified type argument must be a concrete SceneGraph component
-         * class (checked by FirBrsCreateComponentTypeChecker). Task 12's runTask joins
-         * this set.
+         * runTask<T>{} — reified typed-task launcher (kotlin.coroutines.task.TaskRunner).
          */
         @JvmField
-        val componentFactoryCallables: Set<CallableId> = setOf(createComponent, brsCreateComponent)
+        val runTask = "runTask".callableId(BASE_COROUTINES_TASK_PACKAGE)
+
+        /**
+         * Callables whose reified type argument must be a concrete SceneGraph component
+         * class (checked by FirBrsCreateComponentTypeChecker).
+         */
+        @JvmField
+        val componentFactoryCallables: Set<CallableId> = setOf(createComponent, brsCreateComponent, runTask)
 
         // ==================== Coroutine Callables ====================
 

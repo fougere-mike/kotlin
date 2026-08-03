@@ -27,9 +27,9 @@ import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.name.BrsStandardClassIds
 
 /**
- * FIR checker for `kotlin.brs.createComponent<T>()` (and its backend intrinsic
- * `brsCreateComponent<T>()`; the callable set is
- * [BrsStandardClassIds.Callables.componentFactoryCallables] — Task 12's runTask joins it).
+ * FIR checker for `kotlin.brs.createComponent<T>()` (with its backend intrinsic
+ * `brsCreateComponent<T>()`) and `kotlin.coroutines.task.runTask<T>{}`; the callable
+ * set is [BrsStandardClassIds.Callables.componentFactoryCallables].
  *
  * Reports [FirBrsErrors.BRS_CREATE_COMPONENT_INVALID_TYPE] when the reified type
  * argument cannot be instantiated as a SceneGraph node:
