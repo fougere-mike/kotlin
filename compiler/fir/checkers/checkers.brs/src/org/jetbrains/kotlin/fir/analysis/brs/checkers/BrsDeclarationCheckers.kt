@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsSceneGra
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsStaticClassChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsStaticOverloadFileChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsStaticTopLevelExtensionChecker
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsTaskStateNotFieldChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.*
 
 object BrsDeclarationCheckers : DeclarationCheckers() {
@@ -47,6 +48,7 @@ object BrsDeclarationCheckers : DeclarationCheckers() {
         get() = setOf(
             FirBrsSceneGraphFieldTypeChecker,
             FirBrsOnChangeHandlerChecker,
+            FirBrsTaskStateNotFieldChecker,
         )
 
     override val simpleFunctionCheckers: Set<FirSimpleFunctionChecker>
