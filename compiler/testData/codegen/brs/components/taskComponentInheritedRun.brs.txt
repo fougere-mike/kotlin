@@ -1,0 +1,90 @@
+// --- File: BaseEchoTask.deps.json ---
+{
+  "version": 1,
+  "component": "BaseEchoTask",
+  "dependencies": [
+  ]
+}
+
+
+// --- File: BaseEchoTask.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="BaseEchoTask" extends="Task">
+    <interface>
+        <field id="result" type="string" />
+        <field id="kotlinTaskState" type="string" alwaysNotify="true" />
+        <field id="kotlinTaskError" type="assocarray" />
+        <field id="kotlinTaskId" type="integer" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/BaseEchoTask/BaseEchoTaskKt.brs" />
+</component>
+
+
+// --- File: LeafTask.deps.json ---
+{
+  "version": 1,
+  "component": "LeafTask",
+  "dependencies": [
+  ]
+}
+
+
+// --- File: LeafTask.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="LeafTask" extends="BaseEchoTask">
+    <interface>
+        <field id="result" type="string" />
+        <field id="kotlinTaskState" type="string" alwaysNotify="true" />
+        <field id="kotlinTaskError" type="assocarray" />
+        <field id="kotlinTaskId" type="integer" />
+        <function name="__kotlinTaskMain" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/LeafTask/LeafTaskKt.brs" />
+</component>
+
+
+// --- File: taskComponentInheritedRunKt.brs ---
+sub init()
+    m.top.result = ""
+    m.run_k_ = BaseEchoTask_run_k_
+    m.__get_result_k_ = BaseEchoTask___get_result_k_
+    m.__set_result_Str_k_ = BaseEchoTask___set_result_Str_k_
+end sub
+
+sub BaseEchoTask_run_k_()
+    m.top.result = "ran-in-base"
+end sub
+
+sub __kotlinTaskMain()
+    try
+        BaseEchoTask_run_k_()
+        m.top.kotlinTaskState = "done"
+    catch e
+        errInfo = {message: "", number: 0}
+        if Type(e) = "roAssociativeArray" then
+            if e.message <> invalid then
+                errInfo.message = e.message
+            end if
+            if e.number <> invalid then
+                errInfo.number = e.number
+            end if
+            if e.backtrace <> invalid then
+                errInfo.backtrace = e.backtrace
+            end if
+        end if
+        m.top.kotlinTaskError = errInfo
+        m.top.kotlinTaskState = "error"
+    end try
+end sub
+
+function BaseEchoTask___get_result_k_() as String
+    return m.result
+end function
+
+sub BaseEchoTask___set_result_Str_k_(value as String)
+    m.result = value
+end sub
+
+sub init()
+    m.top.functionName = "__kotlinTaskMain"
+end sub

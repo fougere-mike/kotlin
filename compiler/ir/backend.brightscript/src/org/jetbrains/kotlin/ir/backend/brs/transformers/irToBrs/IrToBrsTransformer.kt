@@ -599,21 +599,31 @@ class IrToBrsTransformer(
     }
 
     /**
-     * Find the run() implementation a concrete task component executes.
-     * A fake override (implementation inherited from an intermediate base)
-     * is resolved to the real declaration so getBrsName produces the
-     * declaring class's mangled name.
+     * Find the run() implementation THIS class declares (real, non-abstract
+     * declaration in the class itself — fake overrides don't count).
+     *
+     * The wrapper is emitted next to the declaration it calls, so the call never
+     * crosses component script files: a class inheriting run() also inherits the
+     * declaring class's __kotlinTaskMain through SceneGraph XML inheritance
+     * (derived components inherit base component <script> functions), and a class
+     * redeclaring run() emits its own wrapper, which overrides the base's by name.
+     * Emitting a cross-script call instead (leaf wrapper -> base run_k_) would
+     * force the base component's .brs onto the leaf's <script> list, where its
+     * `sub init()` would collide with the leaf's own init().
      */
-    private fun findTaskRunImplementation(irClass: IrClass): IrSimpleFunction? {
-        val runFunction = irClass.declarations.filterIsInstance<IrSimpleFunction>()
-            .find { it.name.asString() == "run" && it.valueParameters.isEmpty() }
-            ?: return null
-        val resolved = if (runFunction.isFakeOverride) runFunction.resolveFakeOverride() else runFunction
-        return resolved?.takeIf { it.modality != org.jetbrains.kotlin.descriptors.Modality.ABSTRACT }
+    private fun findLocalTaskRunImplementation(irClass: IrClass): IrSimpleFunction? {
+        return irClass.declarations.filterIsInstance<IrSimpleFunction>()
+            .find {
+                it.name.asString() == "run" && it.valueParameters.isEmpty() &&
+                    !it.isFakeOverride &&
+                    it.modality != org.jetbrains.kotlin.descriptors.Modality.ABSTRACT
+            }
     }
 
     /**
-     * Generate the task-thread entry point for a concrete TaskComponent subclass.
+     * Generate the task-thread entry point for a TaskComponent subclass that
+     * declares a run() implementation (abstract intermediates included — their
+     * concrete leaves inherit this wrapper via SceneGraph XML inheritance).
      *
      * The shape is device-proven by spikes/task-node-spike/components/SpikeTask.brs:
      * the run() override is wrapped in try/catch, the error AA is written BEFORE the
@@ -641,9 +651,13 @@ class IrToBrsTransformer(
      * ```
      */
     private fun generateTaskMainFunction(irClass: IrClass): BrsSub? {
-        if (!isConcreteTaskComponent(irClass)) return null
-        val runImplementation = findTaskRunImplementation(irClass) ?: return null
+        if (!context.intrinsics.isTaskComponent(irClass)) return null
+        val runImplementation = findLocalTaskRunImplementation(irClass) ?: return null
         val runName = context.getBrsName(runImplementation)
+        // Same file as the run() declaration by construction (self-dependency is
+        // filtered), but recorded per house style so any future emission split
+        // still lands the defining file on the component's script list.
+        context.recordFunctionDependency(runName)
 
         fun assign(target: BrsExpression, value: BrsExpression): BrsStatement =
             BrsExpressionStatement(BrsBinaryOp(target, BrsBinaryOperator.EQ, value))
