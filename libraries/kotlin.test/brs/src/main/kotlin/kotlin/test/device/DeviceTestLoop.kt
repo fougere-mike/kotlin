@@ -5,6 +5,7 @@
 
 package kotlin.test.device
 
+import kotlin.brs.BrsInline
 import kotlin.brs.Dynamic
 import kotlin.brs.roku.RoMessagePort
 import kotlin.brs.roku.RoSGNode
@@ -45,6 +46,14 @@ import kotlin.coroutines.suspendCoroutine
  * - Cross-field event ordering is not write order; correlate by (field, value),
  *   never by arrival order across different fields.
  */
+
+/**
+ * [RoSGNodeEvent.getRoSGNode] with an honest return type: on device it
+ * returns invalid when the event's node has been destroyed between the event
+ * being queued and being dequeued (the typed interface declares it non-null).
+ */
+@BrsInline("return event.getRoSGNode()")
+private external fun eventNodeOrNull(event: RoSGNodeEvent): RoSGNode?
 
 /**
  * The message port shared by the test driver and all field observers.
@@ -135,10 +144,18 @@ public object FieldEventBus {
      * (BrightScript is case-insensitive), and the predicate accepts the event
      * data. Matches are unobserved and resumed with the data; non-matching
      * awaits stay armed so stray/initial events are tolerated.
+     *
+     * Events whose node has since been DESTROYED are dropped: getRoSGNode()
+     * returns invalid once the node is gone (proven on device - a stale
+     * output event outlived its probe after the next test removed it from
+     * the scene), and no pending await can match a dead node anyway.
      */
     public fun dispatch(event: RoSGNodeEvent) {
         val eventField = event.getField().lowercase()
-        val eventNode = event.getRoSGNode()
+        val eventNode = eventNodeOrNull(event)
+        if (eventNode == null) {
+            return
+        }
         val data = event.getData()
 
         val matches = mutableListOf<PendingAwait>()
@@ -238,6 +255,10 @@ public object FieldEventBus {
  * cancelled and an AssertionError describing them is thrown (failing the
  * enclosing test, not the run).
  *
+ * Start-of-run containment: the port is drained before [block] starts, so
+ * events left queued by a previous run (or arriving between runs) are never
+ * dispatched into this run's awaits.
+ *
  * End-of-run containment: on EVERY exit (result, body exception, whole-test
  * timeout) the run's job is cancelled, all pending awaits are dropped, and the
  * coroutine work queue and pending delays are purged via [clearCoroutineQueue]
@@ -255,6 +276,19 @@ public fun <T> runPumping(
     timeoutMs: Int,
     block: suspend CoroutineScope.() -> T,
 ): T {
+    // Start-of-run containment: drop messages queued before this run. A
+    // previous run can leak unconsumed roSGNodeEvents - re-observing a field
+    // mid-test duplicates delivery (scoped unobserve from main scope does not
+    // detach the port observer), and the pump exits on body completion without
+    // draining. Left in the port, such an event is dispatched into THIS run's
+    // awaits: same field name matches, and if its node was destroyed in the
+    // meantime the isSameNode probe crashes ('Dot' Operator on invalid -
+    // proven on device by the ComponentObserver rapid-sets test). Draining at
+    // start rather than at exit also catches events that arrive from the
+    // render thread after the previous run's endRun.
+    while (port.getMessage() != null) {
+    }
+
     val job = Job()
     val scope = CoroutineScope(EmptyCoroutineContext + job)
     val deferred = CompletableDeferred<T>()
@@ -364,7 +398,10 @@ private class RunPumpingContinuation<T>(
  * the scoped observer is removed only when the last pending await on that
  * node+field is resolved. Each awaitField call re-invokes observeFieldScoped,
  * so overlapping awaits may briefly duplicate observers; duplicated events are
- * harmless under the predicate re-arm semantics above.
+ * harmless under the predicate re-arm semantics above WITHIN a run, and cannot
+ * leak into a later run because [runPumping] drains the port before starting
+ * its body (a leaked duplicate whose node was later destroyed crashed the
+ * dispatch isSameNode probe - device finding, ComponentObserver rapid-sets).
  */
 public suspend fun awaitField(
     node: RoSGNode,
