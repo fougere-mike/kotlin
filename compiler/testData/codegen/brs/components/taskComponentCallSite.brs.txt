@@ -1,0 +1,83 @@
+// --- File: FetchTask.deps.json ---
+{
+  "version": 1,
+  "component": "FetchTask",
+  "dependencies": [
+  ]
+}
+
+
+// --- File: FetchTask.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="FetchTask" extends="Task">
+    <interface>
+        <field id="url" type="string" />
+        <field id="payload" type="string" />
+        <field id="kotlinTaskState" type="string" alwaysNotify="true" />
+        <field id="kotlinTaskError" type="assocarray" />
+        <field id="kotlinTaskId" type="integer" />
+        <function name="__kotlinTaskMain" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/FetchTask/FetchTaskKt.brs" />
+</component>
+
+
+// --- File: taskComponentCallSiteKt.brs ---
+sub init()
+    m.top.functionName = "__kotlinTaskMain"
+    m.top.url = ""
+    m.top.payload = ""
+    m.run_k_ = FetchTask_run_k_
+    m.__get_url_k_ = FetchTask___get_url_k_
+    m.__set_url_Str_k_ = FetchTask___set_url_Str_k_
+    m.__get_payload_k_ = FetchTask___get_payload_k_
+    m.__set_payload_Str_k_ = FetchTask___set_payload_Str_k_
+end sub
+
+sub FetchTask_run_k_()
+    m.top.payload = ("fetched:" + m.top.url)
+end sub
+
+sub __kotlinTaskMain()
+    try
+        FetchTask_run_k_()
+        m.top.kotlinTaskState = "done"
+    catch e
+        errInfo = {message: "", number: 0}
+        if Type(e) = "roAssociativeArray" then
+            if e.message <> invalid then
+                errInfo.message = e.message
+            end if
+            if e.number <> invalid then
+                errInfo.number = e.number
+            end if
+            if e.backtrace <> invalid then
+                errInfo.backtrace = e.backtrace
+            end if
+        end if
+        m.top.kotlinTaskError = errInfo
+        m.top.kotlinTaskState = "error"
+    end try
+end sub
+
+function FetchTask___get_url_k_() as String
+    return m.url
+end function
+
+sub FetchTask___set_url_Str_k_(value as String)
+    m.url = value
+end sub
+
+function FetchTask___get_payload_k_() as String
+    return m.payload
+end function
+
+sub FetchTask___set_payload_Str_k_(value as String)
+    m.payload = value
+end sub
+
+function launchFetch_k_() as String
+    task = CreateObject("roSGNode", "FetchTask")
+    task.url = "https://example.com/feed"
+    return task.payload
+end function

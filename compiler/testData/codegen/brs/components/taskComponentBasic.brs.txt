@@ -1,0 +1,81 @@
+// --- File: BasicTask.deps.json ---
+{
+  "version": 1,
+  "component": "BasicTask",
+  "dependencies": [
+  ]
+}
+
+
+// --- File: BasicTask.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="BasicTask" extends="Task">
+    <interface>
+        <field id="inputText" type="string" />
+        <field id="outputText" type="string" />
+        <field id="kotlinTaskState" type="string" alwaysNotify="true" />
+        <field id="kotlinTaskError" type="assocarray" />
+        <field id="kotlinTaskId" type="integer" />
+        <function name="__kotlinTaskMain" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/BasicTask/BasicTaskKt.brs" />
+</component>
+
+
+// --- File: taskComponentBasicKt.brs ---
+sub init()
+    m.top.functionName = "__kotlinTaskMain"
+    m.top.inputText = ""
+    m.top.outputText = ""
+    m.run_k_ = BasicTask_run_k_
+    m.__get_inputText_k_ = BasicTask___get_inputText_k_
+    m.__set_inputText_Str_k_ = BasicTask___set_inputText_Str_k_
+    m.__get_outputText_k_ = BasicTask___get_outputText_k_
+    m.__set_outputText_Str_k_ = BasicTask___set_outputText_Str_k_
+end sub
+
+sub BasicTask_run_k_()
+    id = m.top.kotlinTaskId
+    m.top.outputText = ("echo:" + m.top.inputText)
+    if id > 0 then
+        m.top.outputText = (m.top.outputText + "!")
+    end if
+end sub
+
+sub __kotlinTaskMain()
+    try
+        BasicTask_run_k_()
+        m.top.kotlinTaskState = "done"
+    catch e
+        errInfo = {message: "", number: 0}
+        if Type(e) = "roAssociativeArray" then
+            if e.message <> invalid then
+                errInfo.message = e.message
+            end if
+            if e.number <> invalid then
+                errInfo.number = e.number
+            end if
+            if e.backtrace <> invalid then
+                errInfo.backtrace = e.backtrace
+            end if
+        end if
+        m.top.kotlinTaskError = errInfo
+        m.top.kotlinTaskState = "error"
+    end try
+end sub
+
+function BasicTask___get_inputText_k_() as String
+    return m.inputText
+end function
+
+sub BasicTask___set_inputText_Str_k_(value as String)
+    m.inputText = value
+end sub
+
+function BasicTask___get_outputText_k_() as String
+    return m.outputText
+end function
+
+sub BasicTask___set_outputText_Str_k_(value as String)
+    m.outputText = value
+end sub

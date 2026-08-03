@@ -157,6 +157,15 @@ class BrsComponentGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun deepTransitiveDeps() = runTest("components/deepTransitiveDeps.kt")
+
+    @Test
+    fun taskComponentBasic() = runTest("components/taskComponentBasic.kt")
+
+    @Test
+    fun taskComponentCallSite() = runTest("components/taskComponentCallSite.kt")
+
+    @Test
+    fun componentExternalFieldAccess() = runTest("components/componentExternalFieldAccess.kt")
 }
 
 // ==================== Intrinsics Tests ====================

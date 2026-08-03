@@ -1,0 +1,48 @@
+// --- File: StatusCard.deps.json ---
+{
+  "version": 1,
+  "component": "StatusCard",
+  "dependencies": [
+  ]
+}
+
+
+// --- File: StatusCard.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="StatusCard" extends="Group">
+    <interface>
+        <field id="label" type="string" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/StatusCard/StatusCardKt.brs" />
+</component>
+
+
+// --- File: componentExternalFieldAccessKt.brs ---
+sub init()
+    m.top.label = ""
+    m.refresh_StatusCard_k_ = StatusCard_refresh_StatusCard_k_
+    m.__get_label_k_ = StatusCard___get_label_k_
+    m.__set_label_Str_k_ = StatusCard___set_label_Str_k_
+end sub
+
+sub StatusCard_refresh_StatusCard_k_(other as Object)
+    m.top.label = "self"
+    other.label = m.top.label
+    m.top.label = other.label
+end sub
+
+function onKeyEvent(key as String, press as Boolean) as Boolean
+    return false
+end function
+
+function StatusCard___get_label_k_() as String
+    return m.label
+end function
+
+sub StatusCard___set_label_Str_k_(value as String)
+    m.label = value
+end sub
+
+sub syncLabels_StatusCard_StatusCard_k_(a as Object, b as Object)
+    b.label = a.label
+end sub
