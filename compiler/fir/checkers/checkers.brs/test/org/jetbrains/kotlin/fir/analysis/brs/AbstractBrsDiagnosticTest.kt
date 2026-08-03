@@ -218,6 +218,17 @@ abstract class AbstractBrsDiagnosticTest {
         "BRS_BRSCONSTANT_VAR" to "@BrsConstant objects cannot contain var properties. Use val instead: '{0}'.",
         "BRS_BRSCONSTANT_NON_OBJECT" to "@BrsConstant is only valid on object declarations. Found on {0} declaration.",
         "BRS_BRSCREATEOBJECT_INVALID_TYPE" to "'{0}' is not a valid BrightScript object type for @BrsCreateObject. Valid types: {1}.",
+        "BRS_TASK_STATE_NOT_FIELD" to
+            "Property '{0}' in task component '{1}' compiles to plain m-state: run() executes against a task-thread copy, " +
+                "and writes from run() are silently lost. Annotate it with an @SG*Field annotation (or @BrsField), " +
+                "or make it a local variable in run().",
+        "BRS_CREATE_COMPONENT_INVALID_TYPE" to
+            "'{1}' is not a valid component type for {0}(): {2}. The type argument must be a concrete component class " +
+                "(extending GroupComponent, SceneComponent, TaskComponent, etc., or annotated with @BrsComponent).",
+        // Upstream (non-BRS) diagnostic: the createComponentInvalidType/interfaceRejected fixture
+        // expects it alongside ours, because an interface also violates the T : ComponentBase bound.
+        // Template from FirErrorsDefaultMessages; {2} is an optional trailing sentence.
+        "UPPER_BOUND_VIOLATED" to "Type argument is not within its bounds: must be subtype of '{0}'.{2}",
     )
 
     /**
@@ -243,6 +254,10 @@ abstract class AbstractBrsDiagnosticTest {
         // IR-phase @BrsConstant validator fires when FIR BRS_BRSCONSTANT_VAR is suppressed
         // (FIR suppression prevents COMPILATION_ERROR so IR lowering still runs).
         Regex("^\\[IR] @BrsConstant.*"),
+        // IR-phase createComponent validation (IrExpressionToBrsTransformer, Task 10 — predates
+        // the "[IR] " prefix convention) fires when FIR BRS_CREATE_COMPONENT_INVALID_TYPE is
+        // suppressed.
+        Regex("^createComponent type argument must be a concrete SceneGraph component class.*"),
     )
 
     private fun verify(testPath: String, expected: List<Expected>, actual: List<Reported>) {

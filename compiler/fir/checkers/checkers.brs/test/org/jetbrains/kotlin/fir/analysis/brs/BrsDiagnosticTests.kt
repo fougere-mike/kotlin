@@ -1039,4 +1039,113 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testBrsCreateObjectAnnotationSuppressed() {
         runTest("brsBrsCreateObjectInvalidType/suppressedInvalidType.kt")
     }
+
+    // BRS_TASK_STATE_NOT_FIELD — backing-field properties declared in concrete TaskComponent-derived
+    // classes must carry @SG*Field/@BrsField. Un-annotated state compiles to plain m-state: the task
+    // thread gets a clone-in copy (reads of init-set values work) but writes from run() are silently
+    // lost (device-proven: spikes/task-node-spike FINDINGS m_writeback_isolation). v1 flags val too.
+
+    @Test
+    fun testTaskStateNotFieldPlainVarRejected() {
+        runTest("taskStateNotField/plainVarRejected.kt")
+    }
+
+    @Test
+    fun testTaskStateNotFieldPlainValRejected() {
+        runTest("taskStateNotField/plainValRejected.kt")
+    }
+
+    @Test
+    fun testTaskStateNotFieldAnnotatedFieldOk() {
+        runTest("taskStateNotField/annotatedFieldOk.kt")
+    }
+
+    @Test
+    fun testTaskStateNotFieldBrsFieldAnnotatedOk() {
+        runTest("taskStateNotField/brsFieldAnnotatedOk.kt")
+    }
+
+    @Test
+    fun testTaskStateNotFieldLocalInRunOk() {
+        runTest("taskStateNotField/localInRunOk.kt")
+    }
+
+    @Test
+    fun testTaskStateNotFieldGetterOnlyOk() {
+        runTest("taskStateNotField/getterOnlyOk.kt")
+    }
+
+    @Test
+    fun testTaskStateNotFieldAbstractBaseNotFlagged() {
+        runTest("taskStateNotField/abstractBaseNotFlagged.kt")
+    }
+
+    @Test
+    fun testTaskStateNotFieldInheritedPropertyNotFlagged() {
+        runTest("taskStateNotField/inheritedPropertyNotFlagged.kt")
+    }
+
+    @Test
+    fun testTaskStateNotFieldNonTaskComponentOk() {
+        runTest("taskStateNotField/nonTaskComponentOk.kt")
+    }
+
+    @Test
+    fun testTaskStateNotFieldSuppressed() {
+        runTest("taskStateNotField/suppressedPlainVar.kt")
+    }
+
+    // BRS_CREATE_COMPONENT_INVALID_TYPE — createComponent<T>()'s reified type argument must be a
+    // concrete component class (@BrsComponent on itself or a @BrsSceneGraphComponent ancestor).
+    // Type-parameter arguments are skipped (checked at the outer reified call site).
+
+    @Test
+    fun testCreateComponentConcreteTaskOk() {
+        runTest("createComponentInvalidType/concreteTaskOk.kt")
+    }
+
+    @Test
+    fun testCreateComponentConcreteGroupOk() {
+        runTest("createComponentInvalidType/concreteGroupOk.kt")
+    }
+
+    @Test
+    fun testCreateComponentAnnotatedComponentOk() {
+        runTest("createComponentInvalidType/annotatedComponentOk.kt")
+    }
+
+    @Test
+    fun testCreateComponentAbstractRejected() {
+        runTest("createComponentInvalidType/abstractRejected.kt")
+    }
+
+    @Test
+    fun testCreateComponentBaseClassRejected() {
+        runTest("createComponentInvalidType/baseClassRejected.kt")
+    }
+
+    @Test
+    fun testCreateComponentNonComponentRejected() {
+        runTest("createComponentInvalidType/nonComponentRejected.kt")
+    }
+
+    @Test
+    fun testCreateComponentInterfaceRejected() {
+        runTest("createComponentInvalidType/interfaceRejected.kt")
+    }
+
+    @Test
+    fun testCreateComponentInferredAbstractRejected() {
+        runTest("createComponentInvalidType/inferredAbstractRejected.kt")
+    }
+
+    @Test
+    fun testCreateComponentTypeParameterSkippedOk() {
+        runTest("createComponentInvalidType/typeParameterSkippedOk.kt")
+    }
+
+    @Test
+    fun testCreateComponentSuppressedAbstract() {
+        runTest("createComponentInvalidType/suppressedAbstract.kt")
+    }
 }
