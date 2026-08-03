@@ -181,26 +181,67 @@ public abstract class SceneComponent : ComponentBase()
  * background operations like network requests, file I/O, and
  * other long-running operations.
  *
+ * Subclasses declare typed inputs and outputs as `@SG*Field` properties
+ * and implement [run], which executes on the task thread (blocking calls
+ * are fine there). The compiler wires the task entry point automatically:
+ * it emits a `__kotlinTaskMain` wrapper that calls [run], reports success
+ * or failure through the `kotlinTask*` protocol fields, and sets
+ * `m.top.functionName` in the generated `init()`.
+ *
  * Note: Task components do not support onKeyEvent as they run
  * on a separate thread and don't participate in the focus chain.
  *
  * Example:
  * ```kotlin
- * class FetchDataTask : TaskComponent() {
- *     init {
- *         top.functionName = "fetchData"
- *     }
+ * class FetchFeedTask : TaskComponent() {
+ *     @SGStringField
+ *     var url: String = ""            // input
  *
- *     fun fetchData() {
- *         // Perform network request
- *         val result = doNetworkCall()
- *         top.setField("result", result)
+ *     @SGAssocArrayField
+ *     var feed: RoAssociativeArray? = null  // output
+ *
+ *     override fun run() {
+ *         feed = httpGetJson(url)     // runs on the task thread
  *     }
  * }
  * ```
  */
 @BrsSceneGraphComponent(extends = "Task")
-public abstract class TaskComponent : ComponentBase()
+public abstract class TaskComponent : ComponentBase() {
+    /**
+     * Completion protocol field (internal — do not write from user code).
+     *
+     * "" while running, then "error" or "done". Written LAST by the generated
+     * `__kotlinTaskMain` wrapper so observers see a fully populated node.
+     */
+    @SGStringField(alwaysNotify = true)
+    public var kotlinTaskState: String = ""
+
+    /**
+     * Completion protocol field (internal — do not write from user code).
+     *
+     * On failure holds `{message, number, backtrace}` from the caught error;
+     * written BEFORE [kotlinTaskState] is set to "error".
+     */
+    @SGAssocArrayField
+    public var kotlinTaskError: RoAssociativeArray? = null
+
+    /**
+     * Correlation id assigned by the render-side runner (internal protocol).
+     * Lets concurrent invocations of the same task type be told apart.
+     */
+    @SGIntegerField
+    public var kotlinTaskId: Int = 0
+
+    /**
+     * The task body. Runs on the task thread when the node's `control`
+     * field is set to "RUN"; blocking calls are allowed here.
+     *
+     * Only `@SG*Field` properties cross the thread boundary — writes to
+     * un-annotated properties from this method are silently lost.
+     */
+    protected abstract fun run()
+}
 
 /**
  * Base class for SceneGraph ContentNode components.

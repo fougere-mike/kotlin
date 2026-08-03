@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.ir.backend.brs
 
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.InternalSymbolFinderAPI
 import org.jetbrains.kotlin.ir.declarations.IrClass
@@ -197,6 +198,22 @@ class BrsIntrinsics(
             }
         }
         return false
+    }
+
+    /**
+     * Checks if a class is one of the abstract component base declarations
+     * (GroupComponent, SceneComponent, TaskComponent, ...): directly annotated
+     * with @BrsSceneGraphComponent and abstract.
+     *
+     * These bases carry their contract (extends value, inherited protocol
+     * fields) through the component extractor's inheritance pass; they must
+     * not emit any BrightScript of their own — their source file is a shared
+     * pkg:/source script, so e.g. a `sub init()` there would collide with
+     * every component's own init().
+     */
+    fun isComponentBaseDeclaration(irClass: IrClass): Boolean {
+        return irClass.modality == Modality.ABSTRACT &&
+                irClass.hasAnnotation(brsSceneGraphComponentFqn)
     }
 
     /**

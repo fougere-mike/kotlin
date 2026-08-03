@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.backend.brs.lower.BrsLoweringPhases
 import org.jetbrains.kotlin.ir.backend.brs.transformers.irToBrs.IrToBrsTransformer
 import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrFunction
@@ -1898,6 +1899,13 @@ class BrsCompiler(
         // Add exported functions
         for (export in component.exports) {
             builder.appendLine("        <function name=\"${export.name}\" />")
+        }
+
+        // Concrete task components expose the generated task-thread entry point
+        if (context.intrinsics.isTaskComponent(component.irClass) &&
+            component.irClass.modality != Modality.ABSTRACT
+        ) {
+            builder.appendLine("        <function name=\"$KOTLIN_TASK_MAIN_FUNCTION_NAME\" />")
         }
 
         builder.appendLine("    </interface>")

@@ -21,6 +21,9 @@ import org.jetbrains.kotlin.ir.backend.brs.lower.coroutines.BrsStatementOrigins
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
+import org.jetbrains.kotlin.ir.backend.brs.KOTLIN_TASK_ERROR_FIELD
+import org.jetbrains.kotlin.ir.backend.brs.KOTLIN_TASK_MAIN_FUNCTION_NAME
+import org.jetbrains.kotlin.ir.backend.brs.KOTLIN_TASK_STATE_FIELD
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
@@ -38,6 +41,7 @@ import org.jetbrains.kotlin.ir.util.isTypeParameter
 import org.jetbrains.kotlin.ir.util.isUnsigned
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.util.parentClassOrNull
+import org.jetbrains.kotlin.ir.util.resolveFakeOverride
 import org.jetbrains.kotlin.name.BrsStandardClassIds
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
@@ -423,6 +427,15 @@ class IrToBrsTransformer(
         irClass: IrClass,
         declarations: MutableList<BrsDeclaration>
     ) {
+        // The abstract stdlib base declarations (GroupComponent, TaskComponent, ...)
+        // emit no BrightScript of their own: their contract reaches user components
+        // through the extractor's inheritance pass, and their source file is a shared
+        // pkg:/source script where an emitted `sub init()` would collide with every
+        // component's own init().
+        if (context.intrinsics.isComponentBaseDeclaration(irClass)) {
+            return
+        }
+
         // Set component context flags
         val previousInComponent = genCtx.isInComponentContext
         val previousComponentClass = genCtx.currentComponentClass
@@ -467,6 +480,12 @@ class IrToBrsTransformer(
             val onKeyEventFunction = generateOnKeyEventFunction(irClass)
             if (onKeyEventFunction != null) {
                 declarations.add(onKeyEventFunction)
+            }
+
+            // Generate the task-thread entry wrapper for concrete task components
+            val taskMainFunction = generateTaskMainFunction(irClass)
+            if (taskMainFunction != null) {
+                declarations.add(taskMainFunction)
             }
 
             // Generate property accessor functions (for delegated properties, custom getters/setters, etc.)
@@ -570,6 +589,125 @@ class IrToBrsTransformer(
     }
 
     /**
+     * Check if a class is a concrete (instantiable) TaskComponent subclass.
+     * Only these get the __kotlinTaskMain wrapper and functionName wiring;
+     * CoroutineTask is excluded by isTaskComponent (it extends ComponentBase directly).
+     */
+    private fun isConcreteTaskComponent(irClass: IrClass): Boolean {
+        return context.intrinsics.isTaskComponent(irClass) &&
+                irClass.modality != org.jetbrains.kotlin.descriptors.Modality.ABSTRACT
+    }
+
+    /**
+     * Find the run() implementation a concrete task component executes.
+     * A fake override (implementation inherited from an intermediate base)
+     * is resolved to the real declaration so getBrsName produces the
+     * declaring class's mangled name.
+     */
+    private fun findTaskRunImplementation(irClass: IrClass): IrSimpleFunction? {
+        val runFunction = irClass.declarations.filterIsInstance<IrSimpleFunction>()
+            .find { it.name.asString() == "run" && it.valueParameters.isEmpty() }
+            ?: return null
+        val resolved = if (runFunction.isFakeOverride) runFunction.resolveFakeOverride() else runFunction
+        return resolved?.takeIf { it.modality != org.jetbrains.kotlin.descriptors.Modality.ABSTRACT }
+    }
+
+    /**
+     * Generate the task-thread entry point for a concrete TaskComponent subclass.
+     *
+     * The shape is device-proven by spikes/task-node-spike/components/SpikeTask.brs:
+     * the run() override is wrapped in try/catch, the error AA is written BEFORE the
+     * state, and kotlinTaskState is written LAST so observers always see a fully
+     * populated node. The catch guards AA member access with nested ifs because
+     * BrightScript's and/or operators do not short-circuit.
+     *
+     * ```brightscript
+     * sub __kotlinTaskMain()
+     *     try
+     *         EchoTask_run_k_()
+     *         m.top.kotlinTaskState = "done"
+     *     catch e
+     *         errInfo = {message: "", number: 0}
+     *         if Type(e) = "roAssociativeArray" then
+     *             if e.message <> invalid then
+     *                 errInfo.message = e.message
+     *             end if
+     *             ...
+     *         end if
+     *         m.top.kotlinTaskError = errInfo
+     *         m.top.kotlinTaskState = "error"
+     *     end try
+     * end sub
+     * ```
+     */
+    private fun generateTaskMainFunction(irClass: IrClass): BrsSub? {
+        if (!isConcreteTaskComponent(irClass)) return null
+        val runImplementation = findTaskRunImplementation(irClass) ?: return null
+        val runName = context.getBrsName(runImplementation)
+
+        fun assign(target: BrsExpression, value: BrsExpression): BrsStatement =
+            BrsExpressionStatement(BrsBinaryOp(target, BrsBinaryOperator.EQ, value))
+
+        fun mTopField(name: String): BrsExpression =
+            BrsDotAccess(BrsDotAccess(BrsMRef(), "top"), name)
+
+        val errorVar = "e"
+        val errorInfoVar = "errInfo"
+
+        fun copyErrorMember(member: String): BrsStatement = BrsIf(
+            condition = BrsBinaryOp(
+                BrsDotAccess(BrsIdentifier(errorVar), member),
+                BrsBinaryOperator.NE,
+                BrsInvalidLiteral()
+            ),
+            thenBranch = BrsExpressionStatement(
+                BrsBinaryOp(
+                    BrsDotAccess(BrsIdentifier(errorInfoVar), member),
+                    BrsBinaryOperator.EQ,
+                    BrsDotAccess(BrsIdentifier(errorVar), member)
+                )
+            ),
+            elseBranch = null
+        )
+
+        val tryBlock = BrsBlock(mutableListOf(
+            BrsExpressionStatement(BrsFunctionCall(BrsIdentifier(runName), mutableListOf())),
+            assign(mTopField(KOTLIN_TASK_STATE_FIELD), BrsStringLiteral("done"))
+        ))
+
+        val catchBlock = BrsBlock(mutableListOf(
+            assign(
+                BrsIdentifier(errorInfoVar),
+                BrsAALiteral(mutableListOf(
+                    BrsAAEntry("message", BrsStringLiteral("")),
+                    BrsAAEntry("number", BrsIntLiteral(0))
+                ))
+            ),
+            BrsIf(
+                condition = BrsBinaryOp(
+                    BrsTypeOf(BrsIdentifier(errorVar)),
+                    BrsBinaryOperator.EQ,
+                    BrsStringLiteral("roAssociativeArray")
+                ),
+                thenBranch = BrsBlock(mutableListOf(
+                    copyErrorMember("message"),
+                    copyErrorMember("number"),
+                    copyErrorMember("backtrace")
+                )),
+                elseBranch = null
+            ),
+            assign(mTopField(KOTLIN_TASK_ERROR_FIELD), BrsIdentifier(errorInfoVar)),
+            assign(mTopField(KOTLIN_TASK_STATE_FIELD), BrsStringLiteral("error"))
+        ))
+
+        return BrsSub(
+            name = KOTLIN_TASK_MAIN_FUNCTION_NAME,
+            parameters = mutableListOf(),
+            body = BrsBlock(mutableListOf(BrsTry(tryBlock, errorVar, catchBlock)))
+        )
+    }
+
+    /**
      * Transform the component's init {} block to BrightScript's sub init().
      *
      * Extracts statements from the constructor body, filtering out:
@@ -584,6 +722,21 @@ class IrToBrsTransformer(
         layoutInfo: LayoutAccessorInfo? = null
     ): BrsSub? {
         val bodyStatements = mutableListOf<BrsStatement>()
+
+        // Task components: wire the task-thread entry point first, matching the
+        // device-proven spike init shape. This also guarantees init() is emitted
+        // even when the class has no properties or init block of its own.
+        if (isConcreteTaskComponent(irClass)) {
+            bodyStatements.add(
+                BrsExpressionStatement(
+                    BrsBinaryOp(
+                        BrsDotAccess(BrsDotAccess(BrsMRef(), "top"), "functionName"),
+                        BrsBinaryOperator.EQ,
+                        BrsStringLiteral(KOTLIN_TASK_MAIN_FUNCTION_NAME)
+                    )
+                )
+            )
+        }
 
         // Initialize property backing fields on m (like regular classes do with 'this')
         // This must happen BEFORE init block statements execute

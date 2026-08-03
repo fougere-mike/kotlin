@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.ir.util.getPackageFragment
 import org.jetbrains.kotlin.ir.util.isFunction
 import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.ir.util.isNullable
+import org.jetbrains.kotlin.ir.util.isSubclassOf
 import org.jetbrains.kotlin.ir.util.isTypeParameter
 import org.jetbrains.kotlin.ir.util.isUnsigned
 import org.jetbrains.kotlin.ir.util.parentAsClass
@@ -752,6 +753,37 @@ class IrExpressionToBrsTransformer(
             }
         }
 
+        // createComponent<T>() intrinsic (kotlin.brs.ComponentFactory): the reified call
+        // site carries the concrete component class as its type argument and lowers to
+        // CreateObject("roSGNode", name). createComponent itself is matched (not just the
+        // underlying brsCreateComponent) because BrsInlineFunctionResolver cannot inline
+        // klib functions — user call sites reach codegen un-inlined. brsCreateComponent
+        // is matched too for call sites that DO get inlined (stdlib-internal callers).
+        if (runtimePackageFqName == "kotlin.brs" &&
+            (runtimeFunctionName == "createComponent" || runtimeFunctionName == "brsCreateComponent")
+        ) {
+            val typeArgument = expression.typeArguments.getOrNull(0)
+            val componentClass = typeArgument?.classOrNull?.owner
+            if (componentClass != null) {
+                if (!context.intrinsics.isSceneGraphComponent(componentClass) ||
+                    componentClass.modality == org.jetbrains.kotlin.descriptors.Modality.ABSTRACT
+                ) {
+                    context.reportError(
+                        expression,
+                        "createComponent type argument must be a concrete SceneGraph component class, " +
+                            "got '${componentClass.name.asString()}'"
+                    )
+                    return BrsInvalidLiteral()
+                }
+                return BrsCreateObject(
+                    "roSGNode",
+                    mutableListOf(BrsStringLiteral(context.getBrsName(componentClass)))
+                )
+            }
+            // Unsubstituted type parameter: this is the inline wrapper's own body being
+            // emitted (declaration codegen, not a user call site) — keep the stub call.
+        }
+
         // Check for @BrsCreateObject annotation - compile to CreateObject(typeName, args...)
         val brsCreateObjectAnnotation = function.getAnnotation(BrsStandardClassIds.Annotations.BrsCreateObject.asSingleFqName())
         if (brsCreateObjectAnnotation != null) {
@@ -1357,34 +1389,52 @@ class IrExpressionToBrsTransformer(
                         }
                     }
 
-                    // Handle user-defined properties in component context
-                    // Interface fields (with @SGField or @BrsField) compile to m.top.fieldName
-                    // Internal state (no annotation) compiles to m.fieldName
-                    // Delegated properties must call the getter to unwrap the delegate
-                    // When inside a lambda, use getComponentMRef() to get the captured component reference
-                    if (genCtx.isInComponentContext && property != null && backingField != null) {
-                        val parentClass = function.parent as? IrClass
-                        if (parentClass != null && context.intrinsics.isSceneGraphComponent(parentClass)) {
-                            val componentM = genCtx.getComponentMRef()
+                    // Handle properties of SceneGraph component classes (receiver-aware).
+                    // Fake overrides are resolved so properties inherited from a klib base
+                    // (e.g. TaskComponent's kotlinTask* protocol fields) expose their
+                    // annotations and backing field.
+                    // - receiver is `this` of the current component: interface fields
+                    //   (@SG*Field / @BrsField) compile to m.top.fieldName, internal state
+                    //   to m.fieldName (m.top/m via getComponentMRef() inside lambdas)
+                    // - any other receiver: interface fields compile to direct node field
+                    //   access on the receiver handle (<receiverExpr>.fieldName)
+                    run {
+                        val resolvedGetter = (if (function.isFakeOverride) function.resolveFakeOverride() else null) ?: function
+                        val componentProperty = resolvedGetter.correspondingPropertySymbol?.owner
+                        val componentPropertyClass = resolvedGetter.parent as? IrClass
+                        if (componentProperty != null && componentPropertyClass != null &&
+                            context.intrinsics.isSceneGraphComponent(componentPropertyClass)
+                        ) {
+                            val isSelfAccess = genCtx.isInComponentContext && isCurrentComponentSelfReceiver(receiver)
+                            if (isSelfAccess && componentProperty.backingField != null) {
+                                val componentM = genCtx.getComponentMRef()
 
-                            // Delegated properties must call the getter to unwrap the delegate
-                            if (property.isDelegated) {
-                                return BrsMethodCall(componentM, "__get_${fieldName}_k_", mutableListOf())
-                            }
-
-                            return if (hasInterfaceFieldAnnotation(property)) {
-                                // Interface field - access via m.top
-                                BrsDotAccess(BrsDotAccess(componentM, "top"), fieldName)
-                            } else {
-                                // Internal state - access via m
-                                // Layout properties are stored with underscore prefix (see layout initialization code)
-                                val actualFieldName = if (isLayoutClassProperty(property, parentClass)) {
-                                    "_$fieldName"
-                                } else {
-                                    fieldName
+                                // Delegated properties must call the getter to unwrap the delegate
+                                if (componentProperty.isDelegated) {
+                                    return BrsMethodCall(componentM, "__get_${fieldName}_k_", mutableListOf())
                                 }
-                                BrsDotAccess(componentM, actualFieldName)
+
+                                return if (hasInterfaceFieldAnnotation(componentProperty)) {
+                                    // Interface field - access via m.top
+                                    BrsDotAccess(BrsDotAccess(componentM, "top"), fieldName)
+                                } else {
+                                    // Internal state - access via m
+                                    // Layout properties are stored with underscore prefix (see layout initialization code)
+                                    val actualFieldName = if (isLayoutClassProperty(componentProperty, componentPropertyClass)) {
+                                        "_$fieldName"
+                                    } else {
+                                        fieldName
+                                    }
+                                    BrsDotAccess(componentM, actualFieldName)
+                                }
                             }
+                            if (!isSelfAccess && hasInterfaceFieldAnnotation(componentProperty) && !componentProperty.isDelegated) {
+                                // Another instance's interface field: direct node field access
+                                // works on the raw roSGNode handle
+                                return BrsDotAccess(receiverExpr, fieldName)
+                            }
+                            // Computed self properties and un-annotated state on another
+                            // instance fall through to the accessor-call path below.
                         }
                     }
 
@@ -1418,35 +1468,49 @@ class IrExpressionToBrsTransformer(
                     val backingField = property?.backingField
                     val value = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
 
-                    // Handle user-defined properties in component context
-                    // Interface fields (with @SGField or @BrsField) compile to m.top.fieldName = value
-                    // Internal state (no annotation) compiles to m.fieldName = value
-                    // Delegated properties must call the setter
-                    // When inside a lambda, use getComponentMRef() to get the captured component reference
-                    if (genCtx.isInComponentContext && property != null && backingField != null) {
-                        val parentClass = function.parent as? IrClass
-                        if (parentClass != null && context.intrinsics.isSceneGraphComponent(parentClass)) {
-                            val componentM = genCtx.getComponentMRef()
+                    // Handle properties of SceneGraph component classes (receiver-aware).
+                    // Mirrors the getter logic above: fake overrides are resolved so
+                    // inherited klib properties expose their annotations/backing field;
+                    // `this` of the current component writes m.top.fieldName / m.fieldName,
+                    // any other receiver writes the interface field directly on the handle.
+                    run {
+                        val resolvedSetter = (if (function.isFakeOverride) function.resolveFakeOverride() else null) ?: function
+                        val componentProperty = resolvedSetter.correspondingPropertySymbol?.owner
+                        val componentPropertyClass = resolvedSetter.parent as? IrClass
+                        if (componentProperty != null && componentPropertyClass != null &&
+                            context.intrinsics.isSceneGraphComponent(componentPropertyClass)
+                        ) {
+                            val isSelfAccess = genCtx.isInComponentContext && isCurrentComponentSelfReceiver(receiver)
+                            if (isSelfAccess && componentProperty.backingField != null) {
+                                val componentM = genCtx.getComponentMRef()
 
-                            // Delegated properties must call the setter
-                            if (property.isDelegated) {
-                                return BrsMethodCall(componentM, "__set_${fieldName}_k_", mutableListOf(value))
-                            }
-
-                            val target = if (hasInterfaceFieldAnnotation(property)) {
-                                // Interface field - access via m.top
-                                BrsDotAccess(BrsDotAccess(componentM, "top"), fieldName)
-                            } else {
-                                // Internal state - access via m
-                                // Layout properties are stored with underscore prefix (see layout initialization code)
-                                val actualFieldName = if (isLayoutClassProperty(property, parentClass)) {
-                                    "_$fieldName"
-                                } else {
-                                    fieldName
+                                // Delegated properties must call the setter
+                                if (componentProperty.isDelegated) {
+                                    return BrsMethodCall(componentM, "__set_${fieldName}_k_", mutableListOf(value))
                                 }
-                                BrsDotAccess(componentM, actualFieldName)
+
+                                val target = if (hasInterfaceFieldAnnotation(componentProperty)) {
+                                    // Interface field - access via m.top
+                                    BrsDotAccess(BrsDotAccess(componentM, "top"), fieldName)
+                                } else {
+                                    // Internal state - access via m
+                                    // Layout properties are stored with underscore prefix (see layout initialization code)
+                                    val actualFieldName = if (isLayoutClassProperty(componentProperty, componentPropertyClass)) {
+                                        "_$fieldName"
+                                    } else {
+                                        fieldName
+                                    }
+                                    BrsDotAccess(componentM, actualFieldName)
+                                }
+                                return BrsBinaryOp(target, BrsBinaryOperator.EQ, value)
                             }
-                            return BrsBinaryOp(target, BrsBinaryOperator.EQ, value)
+                            if (!isSelfAccess && hasInterfaceFieldAnnotation(componentProperty) && !componentProperty.isDelegated) {
+                                // Another instance's interface field: direct node field access
+                                // works on the raw roSGNode handle
+                                return BrsBinaryOp(BrsDotAccess(receiverExpr, fieldName), BrsBinaryOperator.EQ, value)
+                            }
+                            // Computed self properties and un-annotated state on another
+                            // instance fall through to the accessor-call path below.
                         }
                     }
 
@@ -2787,6 +2851,35 @@ class IrExpressionToBrsTransformer(
             val annotationClass = annotation.type.classifierOrNull?.owner as? IrClass
             annotationClass?.name?.asString() == "BrsExternal"
         }
+    }
+
+    /**
+     * True when [receiver] is `this` of the component class currently being
+     * transformed — i.e. the access targets the current component's own node.
+     *
+     * Only an IrGetValue of a dispatch/class `<this>` parameter typed as the
+     * current component class (or one of its supertypes, for accessors declared
+     * in a base) qualifies. Everything else — locals, ordinary parameters, call
+     * results, extension-lambda receivers — is a handle to some OTHER instance
+     * and must compile to direct node field access, not m/m.top.
+     */
+    private fun isCurrentComponentSelfReceiver(receiver: IrExpression): Boolean {
+        var unwrapped: IrExpression = receiver
+        while (unwrapped is IrTypeOperatorCall &&
+            (unwrapped.operator == IrTypeOperator.IMPLICIT_CAST ||
+                unwrapped.operator == IrTypeOperator.CAST ||
+                unwrapped.operator == IrTypeOperator.IMPLICIT_NOTNULL)
+        ) {
+            unwrapped = unwrapped.argument
+        }
+        if (unwrapped !is IrGetValue) return false
+        // Extension-lambda receivers (e.g. a T.() -> Unit block) are values, not the component's this
+        if (unwrapped.symbol == genCtx.currentLambdaExtensionReceiver) return false
+        val parameter = unwrapped.symbol.owner as? IrValueParameter ?: return false
+        if (parameter.name.asString() != "<this>") return false
+        val componentClass = genCtx.currentComponentClass ?: return false
+        val parameterClass = parameter.type.classOrNull?.owner ?: return false
+        return parameterClass == componentClass || componentClass.isSubclassOf(parameterClass)
     }
 
     /**

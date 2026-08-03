@@ -11,6 +11,21 @@ import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 
 /**
+ * Task-thread entry point emitted for concrete TaskComponent subclasses.
+ * Referenced by the generated init() (`m.top.functionName = ...`), the
+ * component XML (`<function name=...>`), and the wrapper sub itself.
+ */
+const val KOTLIN_TASK_MAIN_FUNCTION_NAME = "__kotlinTaskMain"
+
+/**
+ * TaskComponent completion-protocol interface fields (declared in the stdlib
+ * kotlin.brs.TaskComponent and inherited into every user task's XML).
+ * The wrapper writes the error AA before the state, and the state LAST.
+ */
+const val KOTLIN_TASK_STATE_FIELD = "kotlinTaskState"
+const val KOTLIN_TASK_ERROR_FIELD = "kotlinTaskError"
+
+/**
  * Information about a SceneGraph node entry extracted from the DSL.
  *
  * This represents a single node in the component's children hierarchy.
