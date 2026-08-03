@@ -1,0 +1,146 @@
+// --- File: suspendInTryCatchKt.brs ---
+function mayFail_Z_ContinuationI_k_(flag as Boolean, _completion as Object) as Object
+    if flag then
+        throw IllegalStateException_create_StrN_k_("boom")
+    end if
+    return 7
+end function
+
+function tock_ContinuationI_k_(_completion as Object) as Object
+    return 1
+end function
+
+function guardedStatement_Z_ContinuationI_k_(flag as Boolean, _completion as Object) as Object
+    tmp = _guardedStatementCOROUTINE__create_Z_ContinuationI_k_(flag, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function guardedValue_Z_ContinuationI_k_(flag as Boolean, _completion as Object) as Object
+    tmp = _guardedValueCOROUTINE__create_Z_ContinuationI_k_(flag, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function _guardedStatementCOROUTINE__create_Z_ContinuationI_k_(flag as Boolean, resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["_guardedStatementCOROUTINE_", this.__proto]
+    this.__type = "_guardedStatementCOROUTINE_"
+    this.doResume_k_ = _guardedStatementCOROUTINE__doResume_k_
+    this.flag = flag
+    return this
+end function
+
+function _guardedStatementCOROUTINE__doResume_k_() as Dynamic
+    ARGUMENT = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(5)
+                m.result1 = 0
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = mayFail_Z_ContinuationI_k_(m.flag, m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                m.result1 = suspendResult
+                m.__set_exceptionState(5)
+                m.__set_state(3)
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+                m.__set_exceptionState(5)
+                e = m.__get_exception()
+                m.result1 = -1
+
+                m.__set_state(3)
+                continue while
+            else if __kotlin_identityEquals(tmp, 3) then
+                m.__set_exceptionState(5)
+                m.ARGUMENT0 = m.result1
+                m.__set_state(4)
+                suspendResult = tock_ContinuationI_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 4) then
+                ARGUMENT = suspendResult
+                                return m.ARGUMENT0 + ARGUMENT
+            else if __kotlin_identityEquals(tmp, 5) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 5) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function _guardedValueCOROUTINE__create_Z_ContinuationI_k_(flag as Boolean, resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["_guardedValueCOROUTINE_", this.__proto]
+    this.__type = "_guardedValueCOROUTINE_"
+    this.doResume_k_ = _guardedValueCOROUTINE__doResume_k_
+    this.flag = flag
+    return this
+end function
+
+function _guardedValueCOROUTINE__doResume_k_() as Dynamic
+    r = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(4)
+
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = mayFail_Z_ContinuationI_k_(m.flag, m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                m.TRY_RESULT0 = suspendResult
+                m.__set_exceptionState(4)
+                m.__set_state(3)
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+                m.__set_exceptionState(4)
+                e = m.__get_exception()
+                m.TRY_RESULT0 = -1
+                m.__set_state(3)
+                continue while
+            else if __kotlin_identityEquals(tmp, 3) then
+                m.__set_exceptionState(4)
+                r = m.TRY_RESULT0
+                                return r + 1
+            else if __kotlin_identityEquals(tmp, 4) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 4) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function

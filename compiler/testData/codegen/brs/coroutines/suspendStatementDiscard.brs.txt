@@ -26,22 +26,26 @@ function _discardValueCOROUTINE__doResume_k_() as Dynamic
                 try
             tmp = m.__get_state()
             if __kotlin_identityEquals(tmp, 0) then
-                m.__set_exceptionState(1)
-                m.__set_state(2)
+                m.__set_exceptionState(2)
+                m.__set_state(1)
                 suspendResult = produceValue_ContinuationI_k_(m)
                 if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
                     return suspendResult
                 end if
                 continue while
             else if __kotlin_identityEquals(tmp, 1) then
-                throw m.e0
-            else if __kotlin_identityEquals(tmp, 2) then
 
                                 return 7
+            else if __kotlin_identityEquals(tmp, 2) then
+                throw m.__get_exception()
             end if
         catch e
-            m.e0 = e
-                        throw m.e0
+            if __kotlin_identityEquals(m.__get_exceptionState(), 2) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
         end try
     end while
 end function

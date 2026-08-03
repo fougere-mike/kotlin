@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.ir.backend.brs.lower.coroutines
 
+import org.jetbrains.kotlin.backend.common.ir.isPure
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.isNothing
 import org.jetbrains.kotlin.ir.types.isUnit
 import org.jetbrains.kotlin.ir.types.makeNotNull
+import org.jetbrains.kotlin.ir.util.deepCopyWithSymbols
 import org.jetbrains.kotlin.ir.util.isSuspend
 import org.jetbrains.kotlin.ir.util.isTrueConst
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
@@ -139,8 +141,6 @@ class BrsStateMachineBuilder(
 
     val entryState = SuspendState(unit)
     val allTheIntermediateLocals = mutableListOf<IrVariable>()
-    // Note: globalExceptionVar must be initialized BEFORE rootExceptionTrap
-    // because buildExceptionTrapState() uses globalExceptionVar
     private val globalExceptionVar = BrsIrBuilder.buildVar(
         exceptionSymbolGetter.returnType.makeNotNull(),
         function.owner,
@@ -165,10 +165,12 @@ class BrsStateMachineBuilder(
 
     private fun buildExceptionTrapState(): SuspendState {
         val state = SuspendState(unit)
-        state.entryBlock.statements += BrsIrBuilder.buildThrow(
-            nothing,
-            BrsIrBuilder.buildGetValue(globalExceptionVar.symbol)
-        )
+        // The trap state executes at the top of the dispatch loop, OUTSIDE the global
+        // catch clause, so the catch-local variable is out of scope here. It must
+        // rethrow the exception stored on the coroutine - set either by the global
+        // catch before dispatching, or by CoroutineImpl.resumeWith on exceptional
+        // resume (which dispatches straight to this state).
+        state.entryBlock.statements += BrsIrBuilder.buildThrow(nothing, pendingException())
         return state
     }
 
@@ -469,6 +471,90 @@ class BrsStateMachineBuilder(
         if (expression !in suspendableNodes) return addStatement(expression)
         expression.acceptChildrenVoid(this)
         transformLastExpression { expression.apply { argument = it } }
+    }
+
+    /**
+     * Splits suspendable sub-expressions out of an argument list, preserving
+     * evaluation order across the suspension points: every argument up to the
+     * last suspendable one is evaluated (state-split if suspendable) into an
+     * ARGUMENT temp; arguments after the last suspension point are left in place.
+     */
+    private fun <E : IrExpression?> transformArguments(arguments: MutableList<E>) {
+        var suspendableCount = arguments.fold(0) { r, n -> if (n != null && n in suspendableNodes) r + 1 else r }
+        arguments.replaceAll { arg ->
+            if (arg.isPure(false)) arg else {
+                require(arg != null)
+                if (suspendableCount > 0) {
+                    if (arg in suspendableNodes) suspendableCount--
+                    arg.acceptVoid(this)
+                    val irVar = tempVar(arg.type, "ARGUMENT")
+                    transformLastExpression {
+                        BrsIrBuilder.buildSetValue(irVar.symbol, it)
+                    }
+                    @Suppress("UNCHECKED_CAST")
+                    BrsIrBuilder.buildGetValue(irVar.symbol) as E
+                } else {
+                    arg.deepCopyWithSymbols(function.owner)
+                }
+            }
+        }
+    }
+
+    override fun visitMemberAccess(expression: IrMemberAccessExpression<*>) {
+        if (expression !in suspendableNodes) {
+            addExceptionEdge()
+            return addStatement(expression)
+        }
+
+        transformArguments(expression.arguments)
+
+        addExceptionEdge()
+        addStatement(expression)
+    }
+
+    // By state-machine time a var captured by a nested lambda is a shared-box FIELD
+    // write, so `capturedVar = suspendCall()` arrives here as IrSetField - the
+    // visitSetValue split above never sees it. Without this override the whole
+    // assignment was emitted bare in one state and the box received
+    // COROUTINE_SUSPENDED itself (device fingerprint: "actual <CoroutineSingletons>").
+    override fun visitSetField(expression: IrSetField) {
+        if (expression !in suspendableNodes) return addStatement(expression)
+
+        val newArguments = mutableListOf(expression.receiver, expression.value).also(this::transformArguments)
+
+        val receiver = newArguments[0]
+        val value = newArguments[1]!!
+
+        addStatement(expression.run {
+            IrSetFieldImpl(
+                startOffset,
+                endOffset,
+                symbol,
+                receiver,
+                value,
+                unit,
+                origin,
+                superQualifierSymbol
+            )
+        })
+    }
+
+    // String templates survive to this point as IrStringConcatenation
+    // (StringConcatenationLowering is a no-op), so a suspend call inside a
+    // template must be split out of the concatenation like any other argument.
+    override fun visitStringConcatenation(expression: IrStringConcatenation) {
+        if (expression !in suspendableNodes) return addStatement(expression)
+
+        val newArguments = expression.arguments.toMutableList().apply(this::transformArguments)
+
+        addStatement(expression.run {
+            IrStringConcatenationImpl(
+                startOffset,
+                endOffset,
+                type,
+                newArguments
+            )
+        })
     }
 
     override fun visitBlock(expression: IrBlock) {

@@ -91,6 +91,9 @@ class BrsClosureGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun nestedLambdaCaptureHoisting() = runTest("closures/nestedLambdaCaptureHoisting.kt")
+
+    @Test
+    fun nestedLambdaSuspendCaptureWrite() = runTest("closures/nestedLambdaSuspendCaptureWrite.kt")
 }
 
 // ==================== Coroutine Tests ====================
@@ -105,6 +108,12 @@ class BrsCoroutineGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun suspendStatementDiscard() = runTest("coroutines/suspendStatementDiscard.kt")
+
+    @Test
+    fun suspendInStringTemplate() = runTest("coroutines/suspendInStringTemplate.kt")
+
+    @Test
+    fun suspendInTryCatch() = runTest("coroutines/suspendInTryCatch.kt")
 }
 
 // ==================== Inline BrightScript Tests ====================
