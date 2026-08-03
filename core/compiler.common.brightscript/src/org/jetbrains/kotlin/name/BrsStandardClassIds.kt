@@ -446,6 +446,28 @@ object BrsStandardClassIds {
         @JvmField
         val addFieldCallables: Set<CallableId> = setOf(iSGNodeFieldAddField, roSGNodeAddField)
 
+        // ==================== Component Factory Callables ====================
+
+        /**
+         * createComponent<T>() — reified SceneGraph component factory (kotlin.brs.ComponentFactory).
+         */
+        @JvmField
+        val createComponent = "createComponent".callableId(BASE_BRS_PACKAGE)
+
+        /**
+         * brsCreateComponent<T>() — backend intrinsic behind [createComponent].
+         */
+        @JvmField
+        val brsCreateComponent = "brsCreateComponent".callableId(BASE_BRS_PACKAGE)
+
+        /**
+         * Callables whose reified type argument must be a concrete SceneGraph component
+         * class (checked by FirBrsCreateComponentTypeChecker). Task 12's runTask joins
+         * this set.
+         */
+        @JvmField
+        val componentFactoryCallables: Set<CallableId> = setOf(createComponent, brsCreateComponent)
+
         // ==================== Coroutine Callables ====================
 
         /**
