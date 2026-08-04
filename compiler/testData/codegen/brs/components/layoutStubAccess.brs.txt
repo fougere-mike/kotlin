@@ -1,0 +1,187 @@
+// --- File: StubbedScreen.deps.json ---
+{
+  "version": 1,
+  "component": "StubbedScreen",
+  "dependencies": [
+    "AnyKt.brs",
+    "ArrayListKt.brs",
+    "ArraysBrsKt.brs",
+    "ArraysKt.brs",
+    "CharCategoryBrsKt.brs",
+    "CollectionExtensionsKt.brs",
+    "ContainerNodesKt.brs",
+    "ExceptionsKt.brs",
+    "HashMapKt.brs",
+    "HashSetKt.brs",
+    "KotlinKt.brs",
+    "LayoutBuilderKt.brs",
+    "MapExtensionsBrsKt.brs",
+    "NodeEntryKt.brs",
+    "PairKt.brs",
+    "PreconditionsKt.brs",
+    "PrimitiveIteratorsKt.brs",
+    "RangeOperatorsBrsKt.brs",
+    "RangesKt.brs",
+    "RenderableNodesKt.brs",
+    "SceneLayoutKt.brs",
+    "StringBuilderBrsKt.brs",
+    "ThrowableKt.brs",
+    "UByteKt.brs",
+    "UIntKt.brs",
+    "ULongKt.brs",
+    "URangesKt.brs",
+    "UShortKt.brs",
+    "UnsignedUtilsKt.brs",
+    "WidgetNodesKt.brs",
+    "charBrsKt.brs",
+    "consoleKt.brs",
+    "coreRuntimeKt.brs",
+    "primitivesKt.brs",
+    "stringBrsKt.brs"
+  ]
+}
+
+
+// --- File: StubbedScreen.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="StubbedScreen" extends="Group">
+    <interface>
+    </interface>
+    <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContainerNodesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/LayoutBuilderKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/MapExtensionsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/NodeEntryKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PairKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PrimitiveIteratorsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RenderableNodesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/SceneLayoutKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ULongKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/URangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UShortKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnsignedUtilsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/WidgetNodesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/consoleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/StubbedScreen/StubbedScreenKt.brs" />
+    <children>
+        <ShelfWidget id="shelfNode"/>
+    </children>
+</component>
+
+
+// --- File: layoutStubAccessKt.brs ---
+function StubbedScreen_Layout_create_RoSGNode_k_(top_ as Object) as Object
+    this = {}
+    this.__type = "StubbedScreen_Layout"
+    this.__proto = ["StubbedScreen_Layout"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.__get_top = StubbedScreen_Layout___get_top_k_
+    this.__get__shelfNode = StubbedScreen_Layout___get__shelfNode_k_
+    this.__set__shelfNode = StubbedScreen_Layout___set__shelfNode_RoSGNodeN_k_
+    this.__get_shelfNode = StubbedScreen_Layout___get_shelfNode_k_
+    this.top = top_
+    this._shelfNode = invalid
+    return this
+end function
+
+function StubbedScreen_Layout___get_top_k_() as Object
+    return m.top
+end function
+
+function StubbedScreen_Layout___get__shelfNode_k_() as Dynamic
+    return m._shelfNode
+end function
+
+sub StubbedScreen_Layout___set__shelfNode_RoSGNodeN_k_(value as Dynamic)
+    m._shelfNode = value
+end sub
+
+function StubbedScreen_Layout___get_shelfNode_k_() as Object
+    if m.__get__shelfNode() = invalid then
+        tmp0_elvis_lhs = m.__get_top().findNode("shelfNode")
+        __when_tmp0 = invalid
+        if tmp0_elvis_lhs = invalid then
+            __when_tmp0 = error_Any_k_("Layout node 'shelfNode' not found in component")
+        else
+            __when_tmp0 = tmp0_elvis_lhs
+        end if
+        m.__set__shelfNode(__when_tmp0)
+    end if
+    return m.__get__shelfNode()
+end function
+
+sub init()
+    m.layout = StubbedScreen_Layout_create_RoSGNode_k_(m.top)
+    m.__get_layout_k_ = StubbedScreen___get_layout_k_
+    m.layout.__get_shelfNode().setFocus(true)
+end sub
+
+function onKeyEvent(key as String, press as Boolean) as Boolean
+    return false
+end function
+
+function StubbedScreen___get_layout_k_() as Object
+    return m.layout
+end function
+
+function StubbedScreen_Companion_create_k_() as Object
+    this = {}
+    this.__type = "StubbedScreen_Companion"
+    this.__proto = ["StubbedScreen_Companion"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.defineLayout_k_ = StubbedScreen_Companion_defineLayout_k_
+    return this
+end function
+
+function StubbedScreen_Companion_getInstance() as Object
+    if GetGlobalAA().StubbedScreen_Companion_instance = invalid then
+        GetGlobalAA().StubbedScreen_Companion_instance = StubbedScreen_Companion_create_k_()
+    end if
+    return GetGlobalAA().StubbedScreen_Companion_instance
+end function
+
+function StubbedScreen_Companion_defineLayout_k_() as Object
+    return sceneLayout_Function1LayoutBuilderV_k_(StubbedScreen_Companion_defineLayout_lambda_create_k_())
+end function
+
+function StubbedScreen_Companion_defineLayout_lambda_create_k_() as Object
+    this = {}
+    this.__type = "StubbedScreen_Companion_defineLayout_lambda"
+    this.__proto = ["StubbedScreen_Companion_defineLayout_lambda", "Function1", "Function"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.invoke_AnyN_k_ = StubbedScreen_Companion_defineLayout_lambda_invoke_AnyN_k_
+    return this
+end function
+
+sub StubbedScreen_Companion_defineLayout_lambda_invoke_AnyN_k_(_this_sceneLayout as Object)
+    _this_sceneLayout.component("ShelfWidget", "shelfNode", invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid)
+end sub

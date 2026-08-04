@@ -1418,14 +1418,12 @@ class IrExpressionToBrsTransformer(
                                     // Interface field - access via m.top
                                     BrsDotAccess(BrsDotAccess(componentM, "top"), fieldName)
                                 } else {
-                                    // Internal state - access via m
-                                    // Layout properties are stored with underscore prefix (see layout initialization code)
-                                    val actualFieldName = if (isLayoutClassProperty(componentProperty, componentPropertyClass)) {
-                                        "_$fieldName"
-                                    } else {
-                                        fieldName
-                                    }
-                                    BrsDotAccess(componentM, actualFieldName)
+                                    // Internal state - access via m. Layout-typed properties
+                                    // included: init stores the compiled Layout stub at
+                                    // m.<name>; the underscore-prefixed slot belonged to the
+                                    // retired FIR-generated accessor path and reading it
+                                    // dereferenced invalid on device (Task 14 finding).
+                                    BrsDotAccess(componentM, fieldName)
                                 }
                             }
                             if (!isSelfAccess && hasInterfaceFieldAnnotation(componentProperty) && !componentProperty.isDelegated) {
@@ -1493,14 +1491,9 @@ class IrExpressionToBrsTransformer(
                                     // Interface field - access via m.top
                                     BrsDotAccess(BrsDotAccess(componentM, "top"), fieldName)
                                 } else {
-                                    // Internal state - access via m
-                                    // Layout properties are stored with underscore prefix (see layout initialization code)
-                                    val actualFieldName = if (isLayoutClassProperty(componentProperty, componentPropertyClass)) {
-                                        "_$fieldName"
-                                    } else {
-                                        fieldName
-                                    }
-                                    BrsDotAccess(componentM, actualFieldName)
+                                    // Internal state - access via m (layout-typed properties
+                                    // included; see the matching getter path above)
+                                    BrsDotAccess(componentM, fieldName)
                                 }
                                 return BrsBinaryOp(target, BrsBinaryOperator.EQ, value)
                             }
