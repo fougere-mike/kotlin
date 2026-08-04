@@ -87,19 +87,26 @@ E2E_RESULTS="../roku-test-app/build/test-results/roku/results.json"
 E2E_XML="../roku-test-app/build/test-results/roku/results.xml"
 
 if [ -f "$E2E_RESULTS" ]; then
-    # Parse JSON results (simple grep-based parsing)
-    TOTAL=$(grep -o '"total":[0-9]*' "$E2E_RESULTS" | tail -1 | grep -o '[0-9]*' || echo "?")
-    PASSED=$(grep -o '"passed":[0-9]*' "$E2E_RESULTS" | tail -1 | grep -o '[0-9]*' || echo "?")
-    FAILED=$(grep -o '"failed":[0-9]*' "$E2E_RESULTS" | tail -1 | grep -o '[0-9]*' || echo "?")
+    # results.json is JSON-lines (one event per line). The final run_complete
+    # event carries the totals; failures appear as test_fail events (there is
+    # no "failed" counter key on a green run).
+    RUN_COMPLETE=$(grep '"type":"run_complete"' "$E2E_RESULTS" | tail -1)
+    TOTAL=$(echo "$RUN_COMPLETE" | grep -o '"total_tests":[0-9]*' | grep -o '[0-9]*$')
+    PASSED=$(echo "$RUN_COMPLETE" | grep -o '"passed":[0-9]*' | grep -o '[0-9]*$')
+    IGNORED=$(echo "$RUN_COMPLETE" | grep -o '"ignored":[0-9]*' | grep -o '[0-9]*$')
+    FAILED=$(grep -c '"type":"test_fail"' "$E2E_RESULTS")
 
-    if [ "$FAILED" == "0" ]; then
+    if [ -z "$RUN_COMPLETE" ]; then
+        echo -e "  Status:   ${RED}INCOMPLETE${NC} (no run_complete event - run crashed or was cut off)"
+    elif [ "$FAILED" == "0" ]; then
         echo -e "  Status:   ${GREEN}PASSED${NC}"
     else
         echo -e "  Status:   ${RED}FAILED${NC}"
     fi
-    echo "  Total:    $TOTAL"
-    echo "  Passed:   $PASSED"
+    echo "  Total:    ${TOTAL:-?}"
+    echo "  Passed:   ${PASSED:-?}"
     echo "  Failed:   $FAILED"
+    echo "  Ignored:  ${IGNORED:-0}"
     echo ""
     echo "  JSON:     $E2E_RESULTS"
     echo "  XML:      $E2E_XML"
