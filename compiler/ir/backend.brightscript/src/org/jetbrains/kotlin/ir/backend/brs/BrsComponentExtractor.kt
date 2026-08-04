@@ -127,9 +127,17 @@ class BrsComponentExtractor(
      *
      * Starts from the direct supertypes (not the class itself) and walks up using a visited set
      * to handle diamond hierarchies. Mirrors the BFS shape of [hasSceneGraphComponentInHierarchy].
+     *
+     * With [stopAtUserComponents], an ancestor that is itself a user component (it gets its own
+     * XML) is skipped along with everything above it: its fields are already declared by its own
+     * XML and re-declaring them in the derived XML fails at node creation on device with
+     * `Attempt to add duplicate field "x"` (proven by Suite 4's derived-task case). Fields from
+     * the stdlib @BrsSceneGraphComponent bases (which emit no XML) are still collected — the
+     * FIRST user component in the chain is the one that declares them.
      */
     private inline fun <reified T : IrDeclaration> collectInheritedDeclarations(
-        irClass: IrClass
+        irClass: IrClass,
+        stopAtUserComponents: Boolean = false,
     ): List<T> {
         val visited = mutableSetOf<IrClass>()
         val result = mutableListOf<T>()
@@ -142,6 +150,7 @@ class BrsComponentExtractor(
             val current = queue.removeFirst()
             if (current in visited) continue
             visited.add(current)
+            if (stopAtUserComponents && isComponent(current)) continue
             for (decl in current.declarations)
                 if (decl is T && (decl !is IrSimpleFunction || !decl.isFakeOverride)) result.add(decl)
             for (superType in current.superTypes) {
@@ -198,8 +207,14 @@ class BrsComponentExtractor(
     private fun extractFields(irClass: IrClass): List<BrsFieldInfo> {
         val fields = mutableListOf<BrsFieldInfo>()
 
-        // Extract from properties - check type-safe annotations first, then legacy @BrsField
+        // Extract from properties - check type-safe annotations first, then legacy @BrsField.
+        // Fake overrides are skipped: source-level fake overrides carry the base declaration's
+        // annotations, which duplicated every user-ancestor field into the derived XML — the
+        // inherited pass below owns inherited fields and knows when an ancestor's own XML
+        // already declares them (device finding: duplicate field declarations fail node
+        // creation with `Attempt to add duplicate field`).
         for (property in irClass.declarations.filterIsInstance<IrProperty>()) {
+            if (property.isFakeOverride) continue
             val typeSafeField = extractTypeSafeField(property)
             if (typeSafeField != null) {
                 fields.add(typeSafeField)
@@ -220,8 +235,10 @@ class BrsComponentExtractor(
             }
         }
 
-        // Inherited properties — subclass declaration wins (already in list), so skip if name present
-        for (property in collectInheritedDeclarations<IrProperty>(irClass)) {
+        // Inherited properties — subclass declaration wins (already in list), so skip if name present.
+        // Fields already declared by a user-component ancestor's XML are NOT re-declared
+        // (stopAtUserComponents): they arrive through the SceneGraph extends chain instead.
+        for (property in collectInheritedDeclarations<IrProperty>(irClass, stopAtUserComponents = true)) {
             if (fields.any { it.name == property.name.asString() }) continue
             val typeSafeField = extractTypeSafeField(property)
             if (typeSafeField != null) {
@@ -232,8 +249,8 @@ class BrsComponentExtractor(
             if (fieldAnnotation != null) fields.add(extractFieldFromProperty(property, fieldAnnotation))
         }
 
-        // Inherited fields (IrField) — same override semantics
-        for (field in collectInheritedDeclarations<IrField>(irClass)) {
+        // Inherited fields (IrField) — same override semantics and same user-ancestor skip
+        for (field in collectInheritedDeclarations<IrField>(irClass, stopAtUserComponents = true)) {
             val fieldAnnotation = findAnnotation(field, "BrsField")
             if (fieldAnnotation != null && fields.none { it.name == field.name.asString() }) {
                 fields.add(extractFieldFromField(field, fieldAnnotation))
