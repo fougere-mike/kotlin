@@ -254,10 +254,9 @@ abstract class AbstractBrsDiagnosticTest {
         // IR-phase @BrsConstant validator fires when FIR BRS_BRSCONSTANT_VAR is suppressed
         // (FIR suppression prevents COMPILATION_ERROR so IR lowering still runs).
         Regex("^\\[IR] @BrsConstant.*"),
-        // IR-phase createComponent validation (IrExpressionToBrsTransformer, Task 10 — predates
-        // the "[IR] " prefix convention) fires when FIR BRS_CREATE_COMPONENT_INVALID_TYPE is
-        // suppressed.
-        Regex("^createComponent type argument must be a concrete SceneGraph component class.*"),
+        // IR-phase createComponent validation (IrExpressionToBrsTransformer) fires when FIR
+        // BRS_CREATE_COMPONENT_INVALID_TYPE is suppressed.
+        Regex("^\\[IR] createComponent type argument.*"),
     )
 
     private fun verify(testPath: String, expected: List<Expected>, actual: List<Reported>) {

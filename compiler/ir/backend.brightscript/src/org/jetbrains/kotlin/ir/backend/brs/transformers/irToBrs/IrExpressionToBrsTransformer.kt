@@ -770,7 +770,7 @@ class IrExpressionToBrsTransformer(
                 ) {
                     context.reportError(
                         expression,
-                        "createComponent type argument must be a concrete SceneGraph component class, " +
+                        "[IR] createComponent type argument must be a concrete SceneGraph component class, " +
                             "got '${componentClass.name.asString()}'"
                     )
                     return BrsInvalidLiteral()
