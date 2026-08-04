@@ -129,6 +129,16 @@ object BrsLoweringPhases {
         // - brsName(::function) -> extracts the mangled function name as a string literal
         phases += BrsIntrinsicLowering(context)
 
+        // Phase 0.055: runTask call-site rewrite
+        // runTask<T>{} is a klib inline function, which this backend never inlines at
+        // user call sites; the reified type argument only exists on the un-inlined
+        // IrCall. Rewrites it to runTaskImpl(brsCreateComponent<T>(), configure) so
+        // the codegen intrinsic can lower the node creation. Must run BEFORE
+        // UpgradeCallableReferences (the configure lambda moves to a new call while
+        // still an IrFunctionExpression) and before any coroutine lowering (one
+        // suspend call replaces another).
+        phases += BrsRunTaskCallLowering(context)
+
         // Phase 0.06: IO Worker Detection (Warning-only for now)
         // Detects withContext(Dispatchers.IO) calls and emits warnings about the
         // lambda serialization limitation. Full automatic extraction is planned

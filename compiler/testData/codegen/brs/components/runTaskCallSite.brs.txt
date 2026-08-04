@@ -1,0 +1,211 @@
+// --- File: EchoCallTask.deps.json ---
+{
+  "version": 1,
+  "component": "EchoCallTask",
+  "dependencies": [
+    "AnyKt.brs",
+    "ArrayListKt.brs",
+    "ArraysBrsKt.brs",
+    "ArraysKt.brs",
+    "CharCategoryBrsKt.brs",
+    "ComponentFactoryKt.brs",
+    "ContinuationInterceptorKt.brs",
+    "ContinuationKt.brs",
+    "CoroutineImplKt.brs",
+    "CoroutineSingletonsKt.brs",
+    "ExceptionsKt.brs",
+    "HashMapKt.brs",
+    "HashSetKt.brs",
+    "IntrinsicsBrsKt.brs",
+    "KotlinKt.brs",
+    "MapExtensionsBrsKt.brs",
+    "PreconditionsKt.brs",
+    "PrimitiveIteratorsKt.brs",
+    "RangeOperatorsBrsKt.brs",
+    "RangesKt.brs",
+    "ResultKt.brs",
+    "StringBuilderBrsKt.brs",
+    "TaskRunnerKt.brs",
+    "ThrowableKt.brs",
+    "UByteKt.brs",
+    "UIntKt.brs",
+    "ULongKt.brs",
+    "URangesKt.brs",
+    "UShortKt.brs",
+    "UnsignedUtilsKt.brs",
+    "charBrsKt.brs",
+    "consoleKt.brs",
+    "coreRuntimeKt.brs",
+    "primitivesKt.brs",
+    "stringBrsKt.brs"
+  ]
+}
+
+
+// --- File: EchoCallTask.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="EchoCallTask" extends="Task">
+    <interface>
+        <field id="input" type="string" />
+        <field id="result" type="string" />
+        <field id="kotlinTaskState" type="string" alwaysNotify="true" />
+        <field id="kotlinTaskError" type="assocarray" />
+        <field id="kotlinTaskId" type="integer" />
+        <function name="__kotlinTaskMain" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentFactoryKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineImplKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineSingletonsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IntrinsicsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/MapExtensionsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PrimitiveIteratorsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ResultKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/TaskRunnerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ULongKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/URangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UShortKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnsignedUtilsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/consoleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/EchoCallTask/EchoCallTaskKt.brs" />
+</component>
+
+
+// --- File: runTaskCallSiteKt.brs ---
+sub init()
+    m.top.functionName = "__kotlinTaskMain"
+    m.top.input = ""
+    m.top.result = ""
+    m.run_k_ = EchoCallTask_run_k_
+    m.__get_input_k_ = EchoCallTask___get_input_k_
+    m.__set_input_Str_k_ = EchoCallTask___set_input_Str_k_
+    m.__get_result_k_ = EchoCallTask___get_result_k_
+    m.__set_result_Str_k_ = EchoCallTask___set_result_Str_k_
+end sub
+
+sub EchoCallTask_run_k_()
+    m.top.result = ("echo:" + m.top.input)
+end sub
+
+sub __kotlinTaskMain()
+    try
+        EchoCallTask_run_k_()
+        m.top.kotlinTaskState = "done"
+    catch e
+        errInfo = {message: "", number: 0}
+        if Type(e) = "roAssociativeArray" then
+            if e.message <> invalid then
+                errInfo.message = e.message
+            end if
+            if e.number <> invalid then
+                errInfo.number = e.number
+            end if
+            if e.backtrace <> invalid then
+                errInfo.backtrace = e.backtrace
+            end if
+        end if
+        m.top.kotlinTaskError = errInfo
+        m.top.kotlinTaskState = "error"
+    end try
+end sub
+
+function EchoCallTask___get_input_k_() as String
+    return m.input
+end function
+
+sub EchoCallTask___set_input_Str_k_(value as String)
+    m.input = value
+end sub
+
+function EchoCallTask___get_result_k_() as String
+    return m.result
+end function
+
+sub EchoCallTask___set_result_Str_k_(value as String)
+    m.result = value
+end sub
+
+function launchEcho_ContinuationStr_k_(_completion as Object) as Object
+    tmp = _launchEchoCOROUTINE__create_ContinuationStr_k_(_completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function launchEcho_lambda_create_k_() as Object
+    this = {}
+    this.__type = "launchEcho_lambda"
+    this.__proto = ["launchEcho_lambda", "Function1", "Function"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.invoke_AnyN_k_ = launchEcho_lambda_invoke_AnyN_k_
+    return this
+end function
+
+sub launchEcho_lambda_invoke_AnyN_k_(_this_runTask as Object)
+    _this_runTask.input = "ping"
+end sub
+
+function _launchEchoCOROUTINE__create_ContinuationStr_k_(resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["_launchEchoCOROUTINE_", this.__proto]
+    this.__type = "_launchEchoCOROUTINE_"
+    this.doResume_k_ = _launchEchoCOROUTINE__doResume_k_
+    return this
+end function
+
+function _launchEchoCOROUTINE__doResume_k_() as Dynamic
+    task = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = runTaskImpl_Any_Function1V_Continuation_k_(CreateObject("roSGNode", "EchoCallTask"), launchEcho_lambda_create_k_(), m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                task = suspendResult
+                                return task.result
+            else if __kotlin_identityEquals(tmp, 2) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 2) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function

@@ -168,6 +168,9 @@ class BrsComponentGoldenFileTests : AbstractBrsGoldenFileTest() {
     fun taskComponentInheritedRun() = runTest("components/taskComponentInheritedRun.kt")
 
     @Test
+    fun runTaskCallSite() = runTest("components/runTaskCallSite.kt")
+
+    @Test
     fun componentExternalFieldAccess() = runTest("components/componentExternalFieldAccess.kt")
 }
 

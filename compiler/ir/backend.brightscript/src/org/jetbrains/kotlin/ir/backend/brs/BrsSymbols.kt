@@ -308,6 +308,24 @@ class BrsSymbols(
                 call.symbol in intrinsics.primitiveToBoxConstructor.values
     }
 
+    // ==================== Typed Task Symbols ====================
+
+    /**
+     * `kotlin.coroutines.task.runTaskImpl` — the rewrite target for reified
+     * `runTask<T>{}` call sites (see BrsRunTaskCallLowering).
+     */
+    val runTaskImplOrNull: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(BrsStandardClassIds.BASE_COROUTINES_TASK_PACKAGE, "runTaskImpl")
+    }
+
+    /**
+     * `kotlin.brs.brsCreateComponent` — the node-creation stub whose concrete
+     * call sites the codegen intrinsic lowers to CreateObject("roSGNode", name).
+     */
+    val brsCreateComponentOrNull: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(BrsStandardClassIds.BASE_BRS_PACKAGE, "brsCreateComponent")
+    }
+
     // ==================== BrightScript-specific Symbols ====================
 
     /**
