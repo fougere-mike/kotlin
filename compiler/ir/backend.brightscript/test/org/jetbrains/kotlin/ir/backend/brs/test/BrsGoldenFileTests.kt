@@ -77,6 +77,9 @@ class BrsClassGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun interfaceDefaultMethods() = runTest("classes/interfaceDefaultMethods.kt")
+
+    @Test
+    fun enumConstructorProperties() = runTest("classes/enumConstructorProperties.kt")
 }
 
 // ==================== Closure Tests ====================

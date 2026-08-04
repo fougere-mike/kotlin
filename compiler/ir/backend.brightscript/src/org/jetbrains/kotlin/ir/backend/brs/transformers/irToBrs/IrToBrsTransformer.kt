@@ -1631,6 +1631,16 @@ class IrToBrsTransformer(
                 transformFunction(function)?.let { declarations.add(it) }
             }
         }
+
+        // Generate property accessors. The constructor attaches
+        // this.__get_x = ClassName___get_x_k_ for every property
+        // (addMethodAttachments) and reads through a variable receiver compile
+        // to receiver.__get_x(), so the accessor functions must exist.
+        // Skip the synthetic 'entries' property, mirroring the attachment side.
+        for (property in irClass.declarations.filterIsInstance<IrProperty>()) {
+            if (property.name.asString() == "entries") continue
+            transformProperty(property, declarations, statements)
+        }
     }
 
     /**

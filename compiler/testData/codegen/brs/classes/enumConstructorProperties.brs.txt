@@ -1,0 +1,55 @@
+// --- File: enumConstructorPropertiesKt.brs ---
+function Fruit_create_Str_I_k_(__name as String, __ordinal as Integer, label as String, rank as Integer) as Object
+    this = {}
+    this.__type = "Fruit"
+    this.name = __name
+    this.ordinal = __ordinal
+    this.__proto = ["Fruit", "Comparable"]
+    this.__id = __kotlin_nextObjectId()
+    this.label = label
+    this.rank = rank
+    this.__get_label = Fruit___get_label_k_
+    this.__get_rank = Fruit___get_rank_k_
+    return this
+end function
+
+sub Fruit_initEntries()
+    if m.Fruit_entriesInitialized = true then
+        return
+    end if
+    m.Fruit_entriesInitialized = true
+    m.Fruit_APPLE = Fruit_create_Str_I_k_("APPLE", 0, "apple", 1)
+    m.Fruit_BANANA = Fruit_create_Str_I_k_("BANANA", 1, "banana", 2)
+end sub
+
+function Fruit_values() as Object
+    Fruit_initEntries()
+    return [m.Fruit_APPLE, m.Fruit_BANANA]
+end function
+
+function Fruit_valueOf(name as String) as Object
+    Fruit_initEntries()
+    if name = "APPLE" then
+        return m.Fruit_APPLE
+    else if name = "BANANA" then
+        return m.Fruit_BANANA
+    else
+        return invalid
+    end if
+end function
+
+function Fruit___get_label_k_() as String
+    return m.label
+end function
+
+function Fruit___get_rank_k_() as Integer
+    return m.rank
+end function
+
+function labelOf_Fruit_k_(f as Object) as String
+    return f.__get_label()
+end function
+
+function rankOf_Fruit_k_(f as Object) as Integer
+    return f.__get_rank()
+end function
