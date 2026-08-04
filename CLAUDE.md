@@ -170,7 +170,8 @@ BrightScript interfaces map to Kotlin interfaces:
 | `libraries/stdlib/brs/src/kotlin/brs/roku/NativeTypes.kt` | Native type interfaces (RoArray, RoAssociativeArray, etc.) |
 | `core/compiler.common.brightscript/.../BrsStandardClassIds.kt` | Class IDs for compiler recognition |
 | `compiler/ir/backend.brightscript/.../BrsIntrinsics.kt` | `isNativeIterable()`, `returnsNativeArrayIterator()` |
-| `compiler/ir/backend.brightscript/.../IrToBrsTransformer.kt` | For-each handling, @BrsCreateObject compilation |
+| `compiler/ir/backend.brightscript/.../irToBrs/IrToBrsTransformer.kt` | Declaration/for-each handling (irToBrs package, post-B1 split) |
+| `compiler/ir/backend.brightscript/.../irToBrs/IrExpressionToBrsTransformer.kt` | Expression codegen, @BrsCreateObject compilation |
 
 ### For-Each Loop Compilation Strategies
 
@@ -181,6 +182,16 @@ The compiler uses these strategies (in order) for `for (x in iterable)`:
 3. **Stdlib collections with get_array()**: ArrayList, IntArray, etc. → `for each x in obj.get_array()`
 4. **Kotlin Iterable interface**: HashSet, Sequence, etc. → while loop with `iterator_k_()`, `hasNext_k_()`, `next_k_()`
 5. **Default**: Native `for each`
+
+**Reality check (backlogged):** strategies 1–2 are currently unreachable from user
+code. `for (x in roArray)` does NOT compile: `NativeIterable.iterator()` lacks the
+`operator` convention and `NativeArrayIterator` declares no `hasNext()`/`next()`,
+so the frontend rejects the loop before the backend's strategy choice matters.
+Indexing is also broken for native arrays: `RoArray` operator `get` emits a
+`.get(i)` method call that native roArray does not have. Until both are fixed,
+drain native arrays with `count()`/`shift()` or render them via `join()` —
+see `roku-test-app/components/ShelfView/ShelfView.kt` (onShelfItemsChanged)
+for the working pattern.
 
 ### Adding New Native Types
 
@@ -203,6 +214,117 @@ To add a new native BrightScript type (e.g., `RoList`):
 2. **Add class ID** (if needed for compiler recognition) in `BrsStandardClassIds.kt`
 
 3. **No wrapper class needed** - the external interface describes what the native object can do
+
+## Typed Tasks (`runTask`) - THE Task-Boundary Mechanism
+
+Work that must leave the render thread goes through a **typed task component**.
+This is the only sanctioned way to cross the render/task thread boundary.
+
+**1. Declare the task** - subclass `TaskComponent`, annotate typed input/output
+fields, put the task-thread work in `run()`:
+
+```kotlin
+class FetchShelfTask : TaskComponent() {
+    @SGIntegerField
+    var count: Int = 0            // input
+
+    @SGArrayField
+    var items: RoArray? = null    // output
+
+    override fun run() {          // runs on the TASK thread
+        val fetched = RoArray.create(0, true)
+        for (i in 1..count) {
+            fetched.push("$i")
+        }
+        items = fetched
+    }
+}
+```
+
+**2. Run it** from a render-thread coroutine. `runTask` creates a fresh node,
+configures the inputs, runs it on the task thread, and suspends until the task
+completes - resuming with the completed node so typed outputs read directly:
+
+```kotlin
+val node = top   // alias: a coroutine lambda's `m` is the coroutine object,
+                 // not the component scope, so hand results back via the node
+CoroutineScope(Dispatchers.Main).launch {
+    try {
+        val task = runTask<FetchShelfTask> { count = 5 }
+        node.setField("shelfItems", task.items)
+    } catch (e: TaskException) {
+        // run() threw on the task thread; message/number/backtrace preserved
+        println("fetch failed: ${e.message}")
+    }
+}
+```
+
+Key facts:
+
+- A failed `run()` surfaces as `TaskException` at the suspend point (fields of
+  the BrightScript error object: `message`, `number`, `backtrace`).
+- v1 constraints: must be called from render-thread component context; a fresh
+  unparented node per invocation (no pooling); one-shot; no cancellation or
+  timeout yet (M3 backlog).
+- FIR diagnostics guard the pattern: `BRS_TASK_STATE_NOT_FIELD` (task state
+  must be @SG interface fields - plain properties are lost across the node
+  clone) and `BRS_CREATE_COMPONENT_INVALID_TYPE` (+ an "[IR] " backstop).
+- Canonical example: `../roku-test-app/components/ShelfView/ShelfView.kt` +
+  `FetchShelfTask.kt` (the flagship demo). Acceptance coverage: E2E Suite 4
+  (TypedTaskAcceptance).
+- Stdlib implementation: `libraries/stdlib/brs/src/kotlin/coroutines/task/TaskRunner.kt`.
+
+### QUARANTINED: `withContext(Dispatchers.IO)` / TaskPool / runIOWorker
+
+`withContext(Dispatchers.IO)`, `TaskPool`, and the `IOWorkerRegistry`/ioWorker
+pipeline are **QUARANTINED - do not use**. That pipeline is unverified on
+device, has zero E2E coverage, and its last consumer (ShelfView) was migrated
+to `runTask` in Phase 2. It is slated to be re-layered as sugar that
+synthesizes a typed task per block (M3 backlog); until then any new
+`withContext(Dispatchers.IO)` use is a review-blocking regression.
+
+## SceneGraph Layouts: @SGLayout DSL + Layout Accessors
+
+The layout story: declare the component's children ONCE in the `sceneLayout {}`
+DSL; access them through the generated `<ClassName>_Layout` accessor class.
+
+```kotlin
+class MainScreen : SceneComponent() {
+    private val layout = MainScreen_Layout(top)   // generated stub
+
+    init {
+        layout.shelf_view.setFocus(true)          // typed accessor
+    }
+
+    companion object {
+        @SGLayout
+        fun defineLayout() = sceneLayout {
+            layoutGroup(id = "mainLayout", layoutDirection = LayoutDirection.horiz) {
+                component("ShelfView", id = "shelf_view", focusable = true)
+            }
+        }
+    }
+}
+```
+
+How it works:
+
+- The compiler extracts the DSL into the component XML `<children>` section.
+  Attribute values must be compile-time constants - a non-constant value is
+  dropped from the XML with a compiler warning naming the attribute and
+  component (set those at runtime in `init {}` instead).
+- The kotlin-roku Gradle plugin (`GenerateLayoutStubsTask`) generates the
+  `<ClassName>_Layout` stub class (lazily cached `findNode()` getters) for
+  every node id in the DSL - including embedded custom components declared
+  via `component("Type", id = "...")`.
+- The stub compiles as normal Kotlin and IS the runtime implementation; the
+  component stores it in its `layout` property (`m.layout` in generated BRS).
+
+**@SGNodeField is NOT for layout-child access.** It declares a node-typed
+*interface field* on the component (`<field type="node" nodeType="..."/>`) - a
+slot that external code can set/observe. Use Layout accessors for nodes the
+component declares itself; use `@SGNodeField` only for node-valued
+inputs/outputs on the component's public interface.
 
 ## Key Directories
 
@@ -346,8 +468,14 @@ the kotlin.test Test/test() suppression sites) or rework the checker.
 | Compiler or stdlib code | `./rebuild.sh` |
 | Full clean rebuild (nuclear option) | `./rebuild.sh --clean` |
 | Everything + test app | `cd ../roku-test-app && ./rebuild-all.sh --all` |
-| Plugin only (no compiler changes) | `cd ../roku-test-app && ./rebuild-all.sh --plugin --clean` |
+| kotlin-roku plugin only | `cd ../roku-test-app && ./rebuild-all.sh --plugin` |
 | Run stdlib tests | `./run-stdlib-tests.sh` |
+| Run E2E device tests | `cd ../roku-test-app && ./run-device-tests.sh` |
+
+**Careful with `--plugin --clean`:** `--clean` wipes ALL `com.nuvyyo` artifacts
+from Maven Local but `--plugin` republishes only the kotlin-roku plugin - the
+compiler/stdlib artifacts stay missing until the next `./rebuild.sh`. Use
+`--clean` only together with `--all` (or right after a fresh `./rebuild.sh`).
 
 `./rebuild.sh` handles all cache cleaning automatically. Use `--clean` when things are in a bad state.
 
@@ -448,6 +576,38 @@ cd ../roku-test-app && ./run-device-tests.sh
 cd ../roku-test-app && ./gradlew rokuTest
 ```
 
+**What actually runs:** `rokuTest` (KGP task) packages the test app from
+`roku-test-app/src/brsTest/kotlin/tests/` + the fixture components in
+`roku-test-app/components/fixtures/`, sideloads it, and parses structured
+`[KOTLINTEST_EVENT]` JSON events off the telnet console (sentinel-armed like
+the stdlib runner: replayed events from a previous run are discarded).
+Results land in `build/test-results/roku/` as JSON + JUnit XML.
+
+**The suites (5 suites, 21 active tests + 3 red-guarded `xtest` placeholders):**
+
+| Suite | File | Exercises |
+|-------|------|-----------|
+| 0 HarnessSmoke | `tests/HarnessSmokeTests.kt` | driver plumbing, sync + async pass/fail paths |
+| 1 ComponentObserver | `tests/ComponentObserverTests.kt` | @SG field writes, @BrsOnChange, rapid sets |
+| 2 RenderCoroutines | `tests/RenderCoroutineTests.kt` | coroutines on the render thread, captured vars |
+| 3 TaskBoundary | `tests/TaskBoundaryTests.kt` | task-thread round trips via EchoTask fixtures |
+| 4 TypedTaskAcceptance | `tests/TypedTaskTests.kt` | `runTask` success/error/overlap/round-trip/derived |
+
+**The main-thread driver:** `tests/TestMain.kt` is a `main()` that creates the
+SceneGraph screen, installs the screen's message port as the shared `TestPort`,
+shows the (empty) `TestScene`, and calls `runTests { ... }`. Test bodies use the
+device-test API from `kotlin.test.device` (`libraries/kotlin.test/brs/src/main/kotlin/kotlin/test/device/DeviceTestLoop.kt`):
+
+- `testAsync("name") { ... }` — suspending test body, pumped by the driver's
+  port loop (`runPumping`); default 10s whole-test timeout.
+- `awaitField(node, "field") { predicate }` — suspends until the field changes
+  to a value the predicate accepts (scoped observers, port-drained between runs).
+- `awaitFieldEquals(node, "field", expected)` / `roundTrip(node, set, value, await)` —
+  conveniences over `awaitField`.
+
+Predicates must return false rather than throw. Probe nodes are created via
+`components/fixtures/` components appended to the TestScene.
+
 ### Run All Tests
 
 ```bash
@@ -468,10 +628,24 @@ cd ../roku-test-app && ./gradlew rokuTest
 |-----------|----------|
 | Golden file tests | `compiler/ir/backend.brightscript/test/.../BrsGoldenFileTests.kt` |
 | Golden file test data | `compiler/testData/codegen/brs/` |
+| FIR diagnostic tests | `compiler/fir/checkers/checkers.brs/test/` + fixtures in `compiler/testData/diagnostics/testsWithBrsStdLib/` |
 | Stdlib tests (source) | `libraries/stdlib/brs/test/kotlin/` |
 | Stdlib tests (generated) | `libraries/stdlib/brs/test/build/brs/source/` |
-| E2E test framework | `roku-test-app/src/brsMain/kotlin/tests/TestFramework.kt` |
-| E2E test suites | `roku-test-app/src/brsMain/kotlin/tests/TestMain.kt` |
+| Device-test API (kotlin.test) | `libraries/kotlin.test/brs/src/main/kotlin/kotlin/test/device/DeviceTestLoop.kt` |
+| E2E test suites + driver | `roku-test-app/src/brsTest/kotlin/tests/` (TestMain.kt is the main-thread driver) |
+| E2E fixture components | `roku-test-app/components/fixtures/` |
+
+### Current Gate Numbers (as of Task 14, 2026-08)
+
+These are the whole-branch green gates; a drop in any of them is a regression.
+
+| Gate | Count |
+|------|-------|
+| Golden file tests | 53 |
+| FIR diagnostic suite (checkers.brs) | 214 |
+| Stdlib device suite | 409 tests / 40 suites |
+| rokuTest E2E | 21 active tests / 5 suites (+3 red-guarded xtests) |
+| `validateComponentIncludes` | strict mode, 0 findings (no allowlist) |
 
 ### Test Output
 
