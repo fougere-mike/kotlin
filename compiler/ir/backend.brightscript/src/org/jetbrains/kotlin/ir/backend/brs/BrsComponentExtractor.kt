@@ -24,6 +24,27 @@ class BrsComponentExtractor(
     private val context: BrsIrBackendContext
 ) {
     /**
+     * Name of the component currently being extracted; set by [extractComponent] so the
+     * layout-DSL walkers deep below it can name the component in diagnostics.
+     */
+    private var currentComponentName: String? = null
+
+    /**
+     * Layout attribute values must reduce to compile-time constants to be emitted into the
+     * component XML. Attributes whose values don't are silently absent from the XML today;
+     * this warning makes the drop visible, naming the attribute and the component.
+     */
+    private fun warnDroppedAttribute(attrName: String) {
+        context.messageCollector.report(
+            org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.WARNING,
+            "[BRS layout] attribute '$attrName' on component " +
+                "'${currentComponentName ?: "<unknown>"}' is not a compile-time constant " +
+                "and was dropped from the generated XML. Set it at runtime (e.g. in init {}) " +
+                "or use a constant value."
+        )
+    }
+
+    /**
      * Extract component information from an IR class, if it's a component.
      *
      * Returns null if the class is not a component.
@@ -33,6 +54,7 @@ class BrsComponentExtractor(
 
         val componentAnnotation = findAnnotation(irClass, "BrsComponent")
         val name = context.getBrsName(irClass)
+        currentComponentName = name
         val extendsComponent = getExtendsComponent(irClass, componentAnnotation)
         val fields = extractFields(irClass)
         val exports = extractExports(irClass)
@@ -165,13 +187,6 @@ class BrsComponentExtractor(
      * Get the parent component to extend.
      */
     private fun getExtendsComponent(irClass: IrClass, componentAnnotation: IrConstructorCall?): String {
-        // Check @BrsExtends annotation first
-        val extendsAnnotation = findAnnotation(irClass, "BrsExtends")
-        if (extendsAnnotation != null) {
-            val value = getAnnotationStringArg(extendsAnnotation, 0)
-            if (value != null) return value
-        }
-
         // Check "extends" parameter on @BrsComponent (if present)
         if (componentAnnotation != null) {
             val extendsArg = getAnnotationStringArg(componentAnnotation, "extends")
@@ -307,12 +322,18 @@ class BrsComponentExtractor(
         val defaultValue = extractTypedDefaultValue(annotation, brsType)
         val onChange = findOnChangeHandler(property)
 
+        // @SGNodeField(nodeType = ...) narrows the accepted node type in the XML declaration
+        val nodeType = if (brsType == BrsFieldTypes.NODE) {
+            getAnnotationStringArg(annotation, "nodeType")?.takeIf { it.isNotEmpty() }
+        } else null
+
         return BrsFieldInfo(
             name = name,
             type = brsType,
             defaultValue = defaultValue,
             onChange = onChange,
             alwaysNotify = alwaysNotify,
+            nodeType = nodeType,
             irProperty = property
         )
     }
@@ -362,14 +383,16 @@ class BrsComponentExtractor(
      * Extract field info from a property.
      */
     private fun extractFieldFromProperty(property: IrProperty, annotation: IrConstructorCall): BrsFieldInfo {
-        val name = getAnnotationStringArg(annotation, "name")
+        // Empty string means "not specified" for all string args: the annotation defaults
+        // are "", and an explicit "" would otherwise produce broken XML (id=""/value="""").
+        val name = getAnnotationStringArg(annotation, "name")?.takeIf { it.isNotEmpty() }
             ?: property.name.asString()
 
-        val type = getAnnotationStringArg(annotation, "type")
+        val type = getAnnotationStringArg(annotation, "type")?.takeIf { it.isNotEmpty() }
             ?: mapTypeToFieldType(property.getter?.returnType ?: property.backingField?.type)
 
-        val defaultValue = getAnnotationStringArg(annotation, "defaultValue")
-        val alias = getAnnotationStringArg(annotation, "alias")
+        val defaultValue = getAnnotationStringArg(annotation, "defaultValue")?.takeIf { it.isNotEmpty() }
+        val alias = getAnnotationStringArg(annotation, "alias")?.takeIf { it.isNotEmpty() }
         val alwaysNotify = getAnnotationBooleanArg(annotation, "alwaysNotify") ?: false
 
         // Check for @BrsOnChange annotation
@@ -390,14 +413,15 @@ class BrsComponentExtractor(
      * Extract field info from a field declaration.
      */
     private fun extractFieldFromField(field: IrField, annotation: IrConstructorCall): BrsFieldInfo {
-        val name = getAnnotationStringArg(annotation, "name")
+        // Same empty-string-means-unspecified handling as extractFieldFromProperty
+        val name = getAnnotationStringArg(annotation, "name")?.takeIf { it.isNotEmpty() }
             ?: field.name.asString()
 
-        val type = getAnnotationStringArg(annotation, "type")
+        val type = getAnnotationStringArg(annotation, "type")?.takeIf { it.isNotEmpty() }
             ?: mapTypeToFieldType(field.type)
 
-        val defaultValue = getAnnotationStringArg(annotation, "defaultValue")
-        val alias = getAnnotationStringArg(annotation, "alias")
+        val defaultValue = getAnnotationStringArg(annotation, "defaultValue")?.takeIf { it.isNotEmpty() }
+        val alias = getAnnotationStringArg(annotation, "alias")?.takeIf { it.isNotEmpty() }
         val alwaysNotify = getAnnotationBooleanArg(annotation, "alwaysNotify") ?: false
 
         return BrsFieldInfo(
@@ -930,6 +954,8 @@ class BrsComponentExtractor(
             if (value != null) {
                 val xmlAttrName = mapParamToXmlAttribute(paramName)
                 attributes[xmlAttrName] = value
+            } else if (resolvesToConst(arg) == null) {
+                warnDroppedAttribute(paramName)
             }
         }
 
@@ -991,6 +1017,8 @@ class BrsComponentExtractor(
                     val value = extractAttrValue(valueArg)
                     if (value != null) {
                         attributes[name] = value
+                    } else if (resolvesToConst(valueArg) == null) {
+                        warnDroppedAttribute(name)
                     }
                 }
                 "children" -> {
@@ -1035,6 +1063,8 @@ class BrsComponentExtractor(
                     val value = extractAttrValue(valueArg)
                     if (value != null) {
                         attributes[name] = value
+                    } else if (resolvesToConst(valueArg) == null) {
+                        warnDroppedAttribute(name)
                     }
                 }
                 "children" -> {
@@ -1138,10 +1168,34 @@ class BrsComponentExtractor(
             if (value != null) {
                 val xmlAttrName = mapParamToXmlAttribute(paramName)
                 attributes[xmlAttrName] = value
+            } else if (resolvesToConst(arg) == null) {
+                warnDroppedAttribute(paramName)
             }
         }
 
         return attributes
+    }
+
+    /**
+     * Resolve an expression to the [IrConst] it evaluates to, unwrapping K2's
+     * temporary-variable indirection for named arguments. Returns null for anything
+     * that is not statically a constant.
+     *
+     * Used to distinguish "attribute deliberately unset" (a constant null / empty
+     * string, which [extractAttributeValue] maps to no-attribute by design) from
+     * "attribute silently dropped" (a non-constant expression the extractor cannot
+     * evaluate) - only the latter deserves [warnDroppedAttribute].
+     */
+    private fun resolvesToConst(expr: IrExpression): IrConst? {
+        return when (expr) {
+            is IrConst -> expr
+            is IrGetValue -> {
+                val owner = expr.symbol.owner
+                val initializer = (owner as? IrVariable)?.initializer ?: return null
+                resolvesToConst(initializer)
+            }
+            else -> null
+        }
     }
 
     /**

@@ -199,6 +199,12 @@ data class BrsFieldInfo(
     val alias: String? = null,
 
     /**
+     * For "node"-typed fields: the specific node type accepted by the field
+     * (from @SGNodeField(nodeType = ...)), or null to accept any node.
+     */
+    val nodeType: String? = null,
+
+    /**
      * The IR property this field was extracted from.
      */
     val irProperty: IrProperty? = null,

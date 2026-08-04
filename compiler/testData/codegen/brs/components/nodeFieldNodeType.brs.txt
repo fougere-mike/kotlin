@@ -1,0 +1,105 @@
+// --- File: NodeTypedFieldComponent.deps.json ---
+{
+  "version": 1,
+  "component": "NodeTypedFieldComponent",
+  "dependencies": [
+    "AnyKt.brs",
+    "ArrayListKt.brs",
+    "ArraysBrsKt.brs",
+    "ArraysKt.brs",
+    "CharCategoryBrsKt.brs",
+    "ExceptionsKt.brs",
+    "HashMapKt.brs",
+    "HashSetKt.brs",
+    "KotlinKt.brs",
+    "PreconditionsKt.brs",
+    "PrimitiveIteratorsKt.brs",
+    "RangeOperatorsBrsKt.brs",
+    "RangesKt.brs",
+    "StringBuilderBrsKt.brs",
+    "ThrowableKt.brs",
+    "UByteKt.brs",
+    "UIntKt.brs",
+    "ULongKt.brs",
+    "URangesKt.brs",
+    "UShortKt.brs",
+    "UnsignedUtilsKt.brs",
+    "charBrsKt.brs",
+    "consoleKt.brs",
+    "coreRuntimeKt.brs",
+    "primitivesKt.brs",
+    "stringBrsKt.brs"
+  ]
+}
+
+
+// --- File: NodeTypedFieldComponent.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="NodeTypedFieldComponent" extends="Group">
+    <interface>
+        <field id="content" type="node" nodeType="ContentNode" />
+        <field id="anyNode" type="node" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PrimitiveIteratorsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ULongKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/URangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UShortKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnsignedUtilsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/consoleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/NodeTypedFieldComponent/NodeTypedFieldComponentKt.brs" />
+</component>
+
+
+// --- File: nodeFieldNodeTypeKt.brs ---
+function NodeTypedFieldComponent_create_k_() as Object
+    this = {}
+    this.__type = "NodeTypedFieldComponent"
+    this.__proto = ["NodeTypedFieldComponent"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.__get_content = NodeTypedFieldComponent___get_content_k_
+    this.__set_content = NodeTypedFieldComponent___set_content_RoSGNodeN_k_
+    this.__get_anyNode = NodeTypedFieldComponent___get_anyNode_k_
+    this.__set_anyNode = NodeTypedFieldComponent___set_anyNode_RoSGNodeN_k_
+    this.content = invalid
+    this.anyNode = invalid
+    return this
+end function
+
+function NodeTypedFieldComponent___get_content_k_() as Dynamic
+    return m.content
+end function
+
+sub NodeTypedFieldComponent___set_content_RoSGNodeN_k_(value as Dynamic)
+    m.content = value
+end sub
+
+function NodeTypedFieldComponent___get_anyNode_k_() as Dynamic
+    return m.anyNode
+end function
+
+sub NodeTypedFieldComponent___set_anyNode_RoSGNodeN_k_(value as Dynamic)
+    m.anyNode = value
+end sub

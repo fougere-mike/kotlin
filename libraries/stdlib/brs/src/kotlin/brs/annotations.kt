@@ -83,12 +83,23 @@ public annotation class BrsExport
  *
  * @property type The BrightScript field type (e.g., "string", "integer", "node").
  * @property alwaysNotify If true, observers are notified even when the value doesn't change.
+ * @property name Overrides the XML field id (defaults to the property name). This only
+ *                renames the declared interface field: generated component code keeps
+ *                accessing `m.top.<propertyName>`, so a name override is for fields that
+ *                are read/written by name from outside (getField/setField/observeField)
+ *                or combined with [alias].
+ * @property defaultValue The default value for this field in the XML (`value` attribute).
+ * @property alias Aliases this field to a child node's field (e.g., "myButton.buttonSelected").
+ *                 Aliased fields take their type from the target field, so [type] is ignored.
  */
 @Target(AnnotationTarget.PROPERTY)
 @Retention(AnnotationRetention.BINARY)
 public annotation class BrsField(
     val type: String = "",
-    val alwaysNotify: Boolean = false
+    val alwaysNotify: Boolean = false,
+    val name: String = "",
+    val defaultValue: String = "",
+    val alias: String = ""
 )
 
 /**

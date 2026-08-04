@@ -1881,6 +1881,11 @@ class BrsCompiler(
 
             builder.append("        <field id=\"${field.name}\" type=\"${field.type}\"")
 
+            // @SGNodeField(nodeType = ...) narrows which node type the field accepts
+            field.nodeType?.let { nodeType ->
+                builder.append(" nodeType=\"$nodeType\"")
+            }
+
             field.defaultValue?.let { defaultValue ->
                 builder.append(" value=\"$defaultValue\"")
             }

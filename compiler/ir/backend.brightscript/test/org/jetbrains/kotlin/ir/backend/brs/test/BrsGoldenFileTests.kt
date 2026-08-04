@@ -175,6 +175,12 @@ class BrsComponentGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun componentExternalFieldAccess() = runTest("components/componentExternalFieldAccess.kt")
+
+    @Test
+    fun brsFieldNamedArgs() = runTest("components/brsFieldNamedArgs.kt")
+
+    @Test
+    fun nodeFieldNodeType() = runTest("components/nodeFieldNodeType.kt")
 }
 
 // ==================== Intrinsics Tests ====================
