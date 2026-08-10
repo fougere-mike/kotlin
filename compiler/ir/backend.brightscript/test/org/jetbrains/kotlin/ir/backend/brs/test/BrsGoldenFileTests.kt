@@ -177,6 +177,9 @@ class BrsComponentGoldenFileTests : AbstractBrsGoldenFileTest() {
     fun componentExternalFieldAccess() = runTest("components/componentExternalFieldAccess.kt")
 
     @Test
+    fun lambdaSelfWriteToField() = runTest("components/lambdaSelfWriteToField.kt")
+
+    @Test
     fun brsFieldNamedArgs() = runTest("components/brsFieldNamedArgs.kt")
 
     @Test

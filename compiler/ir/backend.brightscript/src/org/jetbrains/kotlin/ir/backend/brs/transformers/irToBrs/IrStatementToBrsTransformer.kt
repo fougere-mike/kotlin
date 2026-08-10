@@ -2184,11 +2184,36 @@ class IrStatementToBrsTransformer(
             else -> rawFieldName.replace("$", "_")
         }
 
+        // @SG*Field-annotated component fields live on the NODE, not the component
+        // m-scope object: backing-field writes (setter bodies) must write m.top.field.
+        // Delegated properties are excluded — their backing field holds the delegate.
+        val parentClass = field.parent as? IrClass
+        val fieldProperty = field.correspondingPropertySymbol?.owner
+        if (parentClass != null && fieldProperty != null &&
+            !fieldProperty.isDelegated &&
+            context.intrinsics.isSceneGraphComponent(parentClass) &&
+            hasInterfaceFieldAnnotation(fieldProperty)
+        ) {
+            val interfaceFieldValue = parent.transformExpression(expression.value)
+            val interfaceFieldHoisted = genCtx.takeHoistedStatements()
+            val interfaceFieldAssignment = BrsExpressionStatement(
+                BrsBinaryOp(
+                    BrsDotAccess(BrsDotAccess(receiver, "top"), fieldName),
+                    BrsBinaryOperator.EQ,
+                    interfaceFieldValue
+                )
+            )
+            return if (interfaceFieldHoisted.isNotEmpty()) {
+                BrsBlock((interfaceFieldHoisted + interfaceFieldAssignment).toMutableList())
+            } else {
+                interfaceFieldAssignment
+            }
+        }
+
         // Check if this field holds a shared variable box (mutable captured variable)
         // If so, we need to write to field.value instead of field
         // EXCEPTION: In constructor body, we're initializing the field with the box itself,
         // so we write directly to the field, not field.value
-        val parentClass = field.parent as? IrClass
         val className = parentClass?.name?.asString() ?: ""
         val fieldKey = "$className.$fieldName"
         val isSharedVariableField = fieldKey in context.sharedVariableFields

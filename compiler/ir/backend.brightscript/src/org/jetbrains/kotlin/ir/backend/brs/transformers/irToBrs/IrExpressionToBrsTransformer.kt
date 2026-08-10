@@ -304,6 +304,19 @@ class IrExpressionToBrsTransformer(
             }
         }
 
+        // @SG*Field-annotated component fields live on the NODE, not the component
+        // m-scope object: backing-field access (accessor bodies) must read m.top.field.
+        // Delegated properties are excluded — their backing field holds the delegate
+        // object, which is component-internal state.
+        val fieldProperty = field.correspondingPropertySymbol?.owner
+        if (fieldParentClass != null && fieldProperty != null &&
+            !fieldProperty.isDelegated &&
+            context.intrinsics.isSceneGraphComponent(fieldParentClass) &&
+            hasInterfaceFieldAnnotation(fieldProperty)
+        ) {
+            return BrsDotAccess(BrsDotAccess(receiver, "top"), fieldName)
+        }
+
         // Check if this field holds a shared variable box (mutable captured variable)
         // If so, we need to read field.value instead of field
         val className = fieldParentClass?.name?.asString() ?: ""
@@ -338,9 +351,25 @@ class IrExpressionToBrsTransformer(
             else -> rawFieldName.replace("$", "_")
         }
 
+        // @SG*Field-annotated component fields live on the NODE, not the component
+        // m-scope object: backing-field writes (setter bodies) must write m.top.field.
+        // Delegated properties are excluded — their backing field holds the delegate.
+        val parentClass = field.parent as? IrClass
+        val fieldProperty = field.correspondingPropertySymbol?.owner
+        if (parentClass != null && fieldProperty != null &&
+            !fieldProperty.isDelegated &&
+            context.intrinsics.isSceneGraphComponent(parentClass) &&
+            hasInterfaceFieldAnnotation(fieldProperty)
+        ) {
+            return BrsBinaryOp(
+                BrsDotAccess(BrsDotAccess(receiver, "top"), fieldName),
+                BrsBinaryOperator.EQ,
+                expression.value.accept(this, data)
+            )
+        }
+
         // Check if this field holds a shared variable box (mutable captured variable)
         // EXCEPTION: In constructor body, we're initializing the field with the box itself
-        val parentClass = field.parent as? IrClass
         val className = parentClass?.name?.asString() ?: ""
         val fieldKey = "$className.$fieldName"
         val isSharedVariableField = fieldKey in context.sharedVariableFields
@@ -1396,6 +1425,10 @@ class IrExpressionToBrsTransformer(
                     // - receiver is `this` of the current component: interface fields
                     //   (@SG*Field / @BrsField) compile to m.top.fieldName, internal state
                     //   to m.fieldName (m.top/m via getComponentMRef() inside lambdas)
+                    // - receiver is a lambda-CAPTURED component `this` (a capture field in
+                    //   genCtx.capturedComponentSelfFields): at runtime that value is the
+                    //   component's m-scope AA, not a node, so interface fields route
+                    //   through its node handle (<receiverExpr>.top.fieldName)
                     // - any other receiver: interface fields compile to direct node field
                     //   access on the receiver handle (<receiverExpr>.fieldName)
                     run {
@@ -1411,7 +1444,7 @@ class IrExpressionToBrsTransformer(
 
                                 // Delegated properties must call the getter to unwrap the delegate
                                 if (componentProperty.isDelegated) {
-                                    return BrsMethodCall(componentM, "__get_${fieldName}_k_", mutableListOf())
+                                    return BrsMethodCall(componentM, componentAccessorShortName(function), mutableListOf())
                                 }
 
                                 return if (hasInterfaceFieldAnnotation(componentProperty)) {
@@ -1427,6 +1460,11 @@ class IrExpressionToBrsTransformer(
                                 }
                             }
                             if (!isSelfAccess && hasInterfaceFieldAnnotation(componentProperty) && !componentProperty.isDelegated) {
+                                // A lambda-captured component `this` is the m-scope AA at
+                                // runtime — reach the node interface field through .top
+                                if (isCapturedComponentSelfReceiver(receiver)) {
+                                    return BrsDotAccess(BrsDotAccess(receiverExpr, "top"), fieldName)
+                                }
                                 // Another instance's interface field: direct node field access
                                 // works on the raw roSGNode handle
                                 return BrsDotAccess(receiverExpr, fieldName)
@@ -1451,10 +1489,11 @@ class IrExpressionToBrsTransformer(
                         BrsDotAccess(receiverExpr, fieldName)
                     } else {
                         // Call getter for computed properties, overridden properties, etc.
-                        // SceneGraph component property accessors use mangled names (with _k_ suffix)
-                        // Regular class property accessors use simple names (no suffix)
+                        // SceneGraph component property accessors use their mangled short
+                        // name (derived from getBrsName so it always matches what init
+                        // attaches to m); regular class accessors use simple names
                         val isComponentProperty = parentClass != null && context.intrinsics.isSceneGraphComponent(parentClass)
-                        val getterName = if (isComponentProperty) "__get_${fieldName}_k_" else "__get_$fieldName"
+                        val getterName = if (isComponentProperty) componentAccessorShortName(function) else "__get_$fieldName"
                         BrsMethodCall(receiverExpr, getterName, mutableListOf())
                     }
                 }
@@ -1470,7 +1509,9 @@ class IrExpressionToBrsTransformer(
                     // Mirrors the getter logic above: fake overrides are resolved so
                     // inherited klib properties expose their annotations/backing field;
                     // `this` of the current component writes m.top.fieldName / m.fieldName,
-                    // any other receiver writes the interface field directly on the handle.
+                    // a lambda-captured component `this` writes the interface field through
+                    // .top on the captured m-object, any other receiver writes the
+                    // interface field directly on the node handle.
                     run {
                         val resolvedSetter = (if (function.isFakeOverride) function.resolveFakeOverride() else null) ?: function
                         val componentProperty = resolvedSetter.correspondingPropertySymbol?.owner
@@ -1484,7 +1525,7 @@ class IrExpressionToBrsTransformer(
 
                                 // Delegated properties must call the setter
                                 if (componentProperty.isDelegated) {
-                                    return BrsMethodCall(componentM, "__set_${fieldName}_k_", mutableListOf(value))
+                                    return BrsMethodCall(componentM, componentAccessorShortName(function), mutableListOf(value))
                                 }
 
                                 val target = if (hasInterfaceFieldAnnotation(componentProperty)) {
@@ -1498,6 +1539,15 @@ class IrExpressionToBrsTransformer(
                                 return BrsBinaryOp(target, BrsBinaryOperator.EQ, value)
                             }
                             if (!isSelfAccess && hasInterfaceFieldAnnotation(componentProperty) && !componentProperty.isDelegated) {
+                                // A lambda-captured component `this` is the m-scope AA at
+                                // runtime — reach the node interface field through .top
+                                if (isCapturedComponentSelfReceiver(receiver)) {
+                                    return BrsBinaryOp(
+                                        BrsDotAccess(BrsDotAccess(receiverExpr, "top"), fieldName),
+                                        BrsBinaryOperator.EQ,
+                                        value
+                                    )
+                                }
                                 // Another instance's interface field: direct node field access
                                 // works on the raw roSGNode handle
                                 return BrsBinaryOp(BrsDotAccess(receiverExpr, fieldName), BrsBinaryOperator.EQ, value)
@@ -1523,10 +1573,12 @@ class IrExpressionToBrsTransformer(
                         )
                     } else {
                         // Call setter for computed properties, overridden properties, etc.
-                        // SceneGraph component property accessors use mangled names (with _k_ suffix)
-                        // Regular class property accessors use simple names (no suffix)
+                        // SceneGraph component property accessors use their mangled short
+                        // name — derived from getBrsName so the value-type overload suffix
+                        // (e.g. __set_count_I_k_) always matches what init attaches to m;
+                        // regular class accessors use simple names
                         val isComponentProperty = parentClass != null && context.intrinsics.isSceneGraphComponent(parentClass)
-                        val setterName = if (isComponentProperty) "__set_${fieldName}_k_" else "__set_$fieldName"
+                        val setterName = if (isComponentProperty) componentAccessorShortName(function) else "__set_$fieldName"
                         BrsMethodCall(receiverExpr, setterName, mutableListOf(value))
                     }
                 }
@@ -2857,14 +2909,7 @@ class IrExpressionToBrsTransformer(
      * and must compile to direct node field access, not m/m.top.
      */
     private fun isCurrentComponentSelfReceiver(receiver: IrExpression): Boolean {
-        var unwrapped: IrExpression = receiver
-        while (unwrapped is IrTypeOperatorCall &&
-            (unwrapped.operator == IrTypeOperator.IMPLICIT_CAST ||
-                unwrapped.operator == IrTypeOperator.CAST ||
-                unwrapped.operator == IrTypeOperator.IMPLICIT_NOTNULL)
-        ) {
-            unwrapped = unwrapped.argument
-        }
+        val unwrapped = unwrapReceiverCasts(receiver)
         if (unwrapped !is IrGetValue) return false
         // Extension-lambda receivers (e.g. a T.() -> Unit block) are values, not the component's this
         if (unwrapped.symbol == genCtx.currentLambdaExtensionReceiver) return false
@@ -2876,22 +2921,29 @@ class IrExpressionToBrsTransformer(
     }
 
     /**
-     * Checks if a property is a SceneGraph interface field.
-     *
-     * Interface fields are accessed via m.top.fieldName instead of m.fieldName.
-     * This includes properties annotated with any @SG*Field annotation or @BrsField.
+     * True when [receiver] reads a lambda/coroutine capture field known to hold a
+     * component's own captured `this` (see
+     * [BrsGenerationContext.capturedComponentSelfFields]). At runtime that value is
+     * the component's m-scope AA — NOT a node handle — so interface-field access
+     * through it must route via `.top` to reach the node.
      */
-    internal fun hasInterfaceFieldAnnotation(property: IrProperty): Boolean {
-        val sgFieldAnnotations = setOf(
-            "SGStringField", "SGIntegerField", "SGLongIntegerField", "SGFloatField",
-            "SGDoubleField", "SGBooleanField", "SGArrayField", "SGAssocArrayField",
-            "SGNodeField", "SGFunctionField", "SGUriField", "SGTimeField",
-            "SGVector2DField", "SGColorField", "BrsField"
-        )
-        return property.annotations.any { annotation ->
-            val annotationClass = annotation.type.classifierOrNull?.owner as? IrClass
-            annotationClass?.name?.asString() in sgFieldAnnotations
-        }
+    private fun isCapturedComponentSelfReceiver(receiver: IrExpression): Boolean {
+        val unwrapped = unwrapReceiverCasts(receiver)
+        return unwrapped is IrGetField && unwrapped.symbol in genCtx.capturedComponentSelfFields
+    }
+
+    /**
+     * The m-attached name of a component property accessor: the accessor's mangled
+     * BRS name — which carries value-type overload suffixes (e.g. __set_count_I_k_) —
+     * minus the declaring class prefix, exactly mirroring how
+     * transformComponentInitBlock attaches it to the component m. Deriving this via
+     * getBrsName instead of hand-building "__set_<field>_k_" keeps call sites and
+     * attachments from drifting apart.
+     */
+    private fun componentAccessorShortName(accessor: IrSimpleFunction): String {
+        val resolved = accessor.resolveFakeOverride() ?: accessor
+        val declaringClass = resolved.parent as? IrClass ?: return context.getBrsName(resolved)
+        return context.getBrsName(resolved).removePrefix("${context.getBrsName(declaringClass)}_")
     }
 
     /**

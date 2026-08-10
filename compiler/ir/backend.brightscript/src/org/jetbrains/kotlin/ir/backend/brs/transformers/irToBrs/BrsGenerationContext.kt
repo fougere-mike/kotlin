@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.ir.expressions.IrFunctionExpression
 import org.jetbrains.kotlin.ir.expressions.IrGetValue
 import org.jetbrains.kotlin.ir.expressions.IrLoop
 import org.jetbrains.kotlin.ir.expressions.IrSetValue
+import org.jetbrains.kotlin.ir.symbols.IrFieldSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
 import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
@@ -324,6 +325,25 @@ class BrsGenerationContext(
             BrsMRef()
         }
     }
+
+    /**
+     * Capture fields (LocalDeclarationsLowering's `this$N` fields on lambda/coroutine
+     * classes) known to hold a SceneGraph component's own captured `this`.
+     *
+     * Component code only ever executes m-scoped (init, observers, attached methods),
+     * so a captured component `this` is at runtime the component's m-scope AA — NOT a
+     * node handle. A component-typed value captured under any other name (e.g. a
+     * `createComponent<T>()` result held in a local) IS a node handle. Two runtime
+     * shapes behind one static type: @SG*Field access through a field in this set must
+     * route through `.top` to reach the node's interface field; access through any
+     * other component-typed value keeps direct node-field emission.
+     *
+     * Populated per file by [IrToBrsTransformer.collectCapturedComponentSelfFields]
+     * from constructor call-site provenance (which is why this covers only
+     * compiler-introduced lambda captures — see that function's KDoc for the residual
+     * user-visible aliasing hole).
+     */
+    internal val capturedComponentSelfFields = mutableSetOf<IrFieldSymbol>()
 
     // ==================== File + enum tracking ====================
 

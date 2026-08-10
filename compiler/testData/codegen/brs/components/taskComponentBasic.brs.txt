@@ -65,17 +65,17 @@ sub __kotlinTaskMain()
 end sub
 
 function BasicTask___get_inputText_k_() as String
-    return m.inputText
+    return m.top.inputText
 end function
 
 sub BasicTask___set_inputText_Str_k_(value as String)
-    m.inputText = value
+    m.top.inputText = value
 end sub
 
 function BasicTask___get_outputText_k_() as String
-    return m.outputText
+    return m.top.outputText
 end function
 
 sub BasicTask___set_outputText_Str_k_(value as String)
-    m.outputText = value
+    m.top.outputText = value
 end sub

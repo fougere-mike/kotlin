@@ -131,19 +131,19 @@ sub __kotlinTaskMain()
 end sub
 
 function EchoCallTask___get_input_k_() as String
-    return m.input
+    return m.top.input
 end function
 
 sub EchoCallTask___set_input_Str_k_(value as String)
-    m.input = value
+    m.top.input = value
 end sub
 
 function EchoCallTask___get_result_k_() as String
-    return m.result
+    return m.top.result
 end function
 
 sub EchoCallTask___set_result_Str_k_(value as String)
-    m.result = value
+    m.top.result = value
 end sub
 
 function launchEcho_ContinuationStr_k_(_completion as Object) as Object

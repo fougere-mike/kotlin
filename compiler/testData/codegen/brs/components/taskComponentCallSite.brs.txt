@@ -61,19 +61,19 @@ sub __kotlinTaskMain()
 end sub
 
 function FetchTask___get_url_k_() as String
-    return m.url
+    return m.top.url
 end function
 
 sub FetchTask___set_url_Str_k_(value as String)
-    m.url = value
+    m.top.url = value
 end sub
 
 function FetchTask___get_payload_k_() as String
-    return m.payload
+    return m.top.payload
 end function
 
 sub FetchTask___set_payload_Str_k_(value as String)
-    m.payload = value
+    m.top.payload = value
 end sub
 
 function launchFetch_k_() as String

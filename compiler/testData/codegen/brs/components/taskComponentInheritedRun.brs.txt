@@ -74,11 +74,11 @@ sub __kotlinTaskMain()
 end sub
 
 function BaseEchoTask___get_result_k_() as String
-    return m.result
+    return m.top.result
 end function
 
 sub BaseEchoTask___set_result_Str_k_(value as String)
-    m.result = value
+    m.top.result = value
 end sub
 
 sub init()

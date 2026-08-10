@@ -25,6 +25,8 @@ import org.jetbrains.kotlin.ir.expressions.IrContinue
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrGetEnumValue
 import org.jetbrains.kotlin.ir.expressions.IrLoop
+import org.jetbrains.kotlin.ir.expressions.IrTypeOperator
+import org.jetbrains.kotlin.ir.expressions.IrTypeOperatorCall
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classOrNull
@@ -371,6 +373,42 @@ fun isExternalClass(irClass: IrClass): Boolean {
     return irClass.annotations.any { annotation ->
         val annotationClass = annotation.type.classifierOrNull?.owner as? IrClass
         annotationClass?.name?.asString() == "BrsExternal"
+    }
+}
+
+/**
+ * Peel value-preserving type operators (implicit/explicit casts, not-null assertions)
+ * off a receiver expression so receiver-identity checks see the underlying value.
+ */
+internal fun unwrapReceiverCasts(expression: IrExpression): IrExpression {
+    var unwrapped: IrExpression = expression
+    while (unwrapped is IrTypeOperatorCall &&
+        (unwrapped.operator == IrTypeOperator.IMPLICIT_CAST ||
+            unwrapped.operator == IrTypeOperator.CAST ||
+            unwrapped.operator == IrTypeOperator.IMPLICIT_NOTNULL)
+    ) {
+        unwrapped = unwrapped.argument
+    }
+    return unwrapped
+}
+
+/**
+ * Checks if a property is a SceneGraph interface field.
+ *
+ * Interface fields live on the NODE (accessed via `<node m>.top.fieldName`), not on
+ * the component m-scope object. This includes properties annotated with any
+ * @SG*Field annotation or @BrsField.
+ */
+internal fun hasInterfaceFieldAnnotation(property: IrProperty): Boolean {
+    val sgFieldAnnotations = setOf(
+        "SGStringField", "SGIntegerField", "SGLongIntegerField", "SGFloatField",
+        "SGDoubleField", "SGBooleanField", "SGArrayField", "SGAssocArrayField",
+        "SGNodeField", "SGFunctionField", "SGUriField", "SGTimeField",
+        "SGVector2DField", "SGColorField", "BrsField"
+    )
+    return property.annotations.any { annotation ->
+        val annotationClass = annotation.type.classifierOrNull?.owner as? IrClass
+        annotationClass?.name?.asString() in sgFieldAnnotations
     }
 }
 

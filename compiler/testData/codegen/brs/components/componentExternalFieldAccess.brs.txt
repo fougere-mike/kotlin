@@ -36,11 +36,11 @@ function onKeyEvent(key as String, press as Boolean) as Boolean
 end function
 
 function StatusCard___get_label_k_() as String
-    return m.label
+    return m.top.label
 end function
 
 sub StatusCard___set_label_Str_k_(value as String)
-    m.label = value
+    m.top.label = value
 end sub
 
 sub syncLabels_StatusCard_StatusCard_k_(a as Object, b as Object)

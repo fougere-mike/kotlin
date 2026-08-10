@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.backend.common.capturedFields
 import org.jetbrains.kotlin.backend.common.lower.AbstractSuspendFunctionsLowering
 import org.jetbrains.kotlin.backend.common.lower.BOUND_VALUE_PARAMETER
 import org.jetbrains.kotlin.backend.common.lower.BOUND_RECEIVER_PARAMETER
+import org.jetbrains.kotlin.backend.common.lower.LocalDeclarationsLowering
 import org.jetbrains.kotlin.backend.common.lower.WebCallableReferenceLowering
 import org.jetbrains.kotlin.brs.backend.ast.*
 import org.jetbrains.kotlin.brs.backend.ast.parser.parseBrightScriptStatements
@@ -44,6 +45,7 @@ import org.jetbrains.kotlin.ir.util.parentClassOrNull
 import org.jetbrains.kotlin.ir.util.resolveFakeOverride
 import org.jetbrains.kotlin.name.BrsStandardClassIds
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
+import org.jetbrains.kotlin.ir.symbols.IrFieldSymbol
 import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
 import org.jetbrains.kotlin.ir.visitors.IrVisitor
@@ -87,6 +89,11 @@ class IrToBrsTransformer(
         // Clear tracked enums from any previous transformation
         genCtx.enumClassNames.clear()
 
+        // Resolve which lambda/coroutine capture fields hold a component's own `this`
+        // (lambda classes live in the same file as the component that spawned them,
+        // so a per-file scan sees every creation site)
+        collectCapturedComponentSelfFields(irFile)
+
         for (declaration in irFile.declarations) {
             when (declaration) {
                 is IrFunction -> {
@@ -120,6 +127,103 @@ class IrToBrsTransformer(
         }
 
         return BrsProgram(declarations, statements)
+    }
+
+    /**
+     * Populate [BrsGenerationContext.capturedComponentSelfFields] for [irFile].
+     *
+     * LocalDeclarationsLowering (and the coroutine lowering built on top of it) turns
+     * lambdas into classes whose captured values arrive as constructor parameters and
+     * are stored into capture fields. Whether such a field holds the component's own
+     * `this` (the m-scope AA at runtime — component code only ever executes m-scoped)
+     * or an unrelated component-typed value (a real node handle, e.g. a
+     * createComponent<T>() result held in a local) is invisible at the access site,
+     * so it is recovered from creation-site provenance: a capture field is marked
+     * self iff some constructor call in this file feeds it from a dispatch-receiver
+     * `<this>` of a SceneGraph component class — transitively, for capture fields
+     * re-fed from an already-marked field (a coroutine's create() copy method passes
+     * its own capture field to the fresh instance's constructor).
+     *
+     * RESIDUAL HOLE (documented, not statically solvable at this layer): a component
+     * `this` the USER passes around as a T-typed value — stored in a property, passed
+     * as an argument, returned from a function — is indistinguishable from a node
+     * handle of the same static type, keeps direct node-field emission, and its
+     * @SG*Field writes will silently vanish into the m-scope AA. Only
+     * compiler-introduced lambda captures are provenance-tracked here; a FIR warning
+     * on using component `this` as a value is a possible follow-up guard.
+     */
+    private fun collectCapturedComponentSelfFields(irFile: IrFile) {
+        genCtx.capturedComponentSelfFields.clear()
+
+        // Constructor parameter -> the capture field it initializes (LDL's `this.f = p` shape)
+        val paramToCaptureField = mutableMapOf<IrValueSymbol, IrFieldSymbol>()
+        // Every (parameter, argument) pair from constructor invocations in this file
+        val constructorArguments = mutableListOf<Pair<IrValueSymbol, IrExpression>>()
+
+        irFile.acceptVoid(object : IrVisitorVoid() {
+            override fun visitElement(element: IrElement) {
+                element.acceptChildrenVoid(this)
+            }
+
+            override fun visitConstructor(declaration: IrConstructor) {
+                val statements = (declaration.body as? IrBlockBody)?.statements.orEmpty()
+                for (statement in statements) {
+                    val setField = statement as? IrSetField ?: continue
+                    val fieldOrigin = setField.symbol.owner.origin
+                    if (fieldOrigin != LocalDeclarationsLowering.DECLARATION_ORIGIN_FIELD_FOR_CAPTURED_VALUE) continue
+                    val value = setField.value as? IrGetValue ?: continue
+                    val parameter = value.symbol.owner as? IrValueParameter ?: continue
+                    if (parameter.parent == declaration) {
+                        paramToCaptureField[parameter.symbol] = setField.symbol
+                    }
+                }
+                declaration.acceptChildrenVoid(this)
+            }
+
+            override fun visitConstructorCall(expression: IrConstructorCall) {
+                val parameters = expression.symbol.owner.parameters
+                for ((parameter, argument) in parameters.zip(expression.arguments)) {
+                    if (argument != null) {
+                        constructorArguments.add(parameter.symbol to argument)
+                    }
+                }
+                expression.acceptChildrenVoid(this)
+            }
+        })
+
+        // Fixpoint: marking a field can make further constructor arguments self-feeding
+        var changed = true
+        while (changed) {
+            changed = false
+            for ((parameterSymbol, argument) in constructorArguments) {
+                val field = paramToCaptureField[parameterSymbol] ?: continue
+                if (field in genCtx.capturedComponentSelfFields) continue
+                if (isComponentSelfValue(argument)) {
+                    genCtx.capturedComponentSelfFields.add(field)
+                    changed = true
+                }
+            }
+        }
+    }
+
+    /**
+     * True when [expression] is (through value-preserving casts) a component's own
+     * `this` — either directly (a dispatch-receiver `<this>` typed as a SceneGraph
+     * component class) or transitively (a read of a capture field already marked in
+     * [BrsGenerationContext.capturedComponentSelfFields]).
+     */
+    private fun isComponentSelfValue(expression: IrExpression): Boolean {
+        return when (val unwrapped = unwrapReceiverCasts(expression)) {
+            is IrGetValue -> {
+                val parameter = unwrapped.symbol.owner as? IrValueParameter ?: return false
+                if (parameter.name.asString() != "<this>") return false
+                if (parameter.kind != IrParameterKind.DispatchReceiver) return false
+                val parameterClass = parameter.type.classOrNull?.owner ?: return false
+                context.intrinsics.isSceneGraphComponent(parameterClass)
+            }
+            is IrGetField -> unwrapped.symbol in genCtx.capturedComponentSelfFields
+            else -> false
+        }
     }
 
     /**
@@ -785,7 +889,7 @@ class IrToBrsTransformer(
                 val hoisted = genCtx.takeHoistedStatements()
                 bodyStatements.addAll(hoisted)
                 // Interface fields (with SGField annotations) go on m.top, internal state goes on m
-                val target = if (expressionTransformer.hasInterfaceFieldAnnotation(property)) {
+                val target = if (hasInterfaceFieldAnnotation(property)) {
                     BrsDotAccess(BrsDotAccess(BrsMRef(), "top"), fieldName)  // m.top.fieldName
                 } else {
                     BrsDotAccess(BrsMRef(), fieldName)  // m.fieldName
