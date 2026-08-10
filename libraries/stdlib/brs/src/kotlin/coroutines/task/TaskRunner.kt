@@ -212,6 +212,15 @@ public suspend fun <T : TaskComponent> T.awaitCompletion(): T {
     }
     // val so the suspension block below captures an immutable (no shared box).
     val taskId = assignedId
+    // Double-await guard BEFORE the arm: unobserveFieldScoped removes every
+    // observer this scope holds on the field, so disarming on this error path
+    // would also strip the first awaiter's observer and strand its
+    // continuation. Bailing before the arm leaks nothing and leaves the
+    // pending await intact; past this point no await is pending, so the fast
+    // paths below may unobserve unconditionally.
+    if (TaskRunner.hasPending(taskId)) {
+        throw IllegalStateException("Task node (kotlinTaskId=$taskId) is already being awaited")
+    }
     node.observeFieldScoped(TASK_STATE_FIELD, brsName(::onKotlinTaskStateChanged))
     val state = this.kotlinTaskState
     if (state == "done") {
@@ -221,9 +230,6 @@ public suspend fun <T : TaskComponent> T.awaitCompletion(): T {
     if (state == "error") {
         node.unobserveFieldScoped(TASK_STATE_FIELD)
         throw taskExceptionFrom(node)
-    }
-    if (TaskRunner.hasPending(taskId)) {
-        throw IllegalStateException("Task node (kotlinTaskId=$taskId) is already being awaited")
     }
     // Tail-delegating suspension (the stdlib delay() shape — stdlib suspend
     // functions get no state machine, so the suspension must be the last step).
