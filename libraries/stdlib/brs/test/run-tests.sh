@@ -297,10 +297,10 @@ MONITOR_BASELINE_LINES=${MONITOR_BASELINE_LINES:-0}
 # non-zero otherwise.
 find_fresh_sentinel_line() {
     local line sent raw ts epoch diff
-    line=$(grep -n '===KOTLINTEST_SENTINEL_[0-9.e+]*===' "$TEST_OUTPUT" 2>/dev/null \
+    line=$(grep -nE '===KOTLINTEST_SENTINEL_[0-9.eE+-]+===' "$TEST_OUTPUT" 2>/dev/null \
         | awk -F: -v base="$MONITOR_BASELINE_LINES" '$1 > base {print $1}' | tail -1)
     [[ -z "$line" ]] && return 1
-    sent=$(sed -n "${line}p" "$TEST_OUTPUT" | grep -oE '===KOTLINTEST_SENTINEL_[0-9.e+]*===')
+    sent=$(sed -n "${line}p" "$TEST_OUTPUT" | grep -oE '===KOTLINTEST_SENTINEL_[0-9.eE+-]+===')
     raw=$(echo "$sent" | sed 's/===KOTLINTEST_SENTINEL_//' | sed 's/===//')
     ts=$(printf "%.0f" "$raw" 2>/dev/null || echo 0)
     epoch=$((ts / 1000))
@@ -497,11 +497,11 @@ TOTAL_LINES_BEFORE=$(wc -l < "$TEST_OUTPUT" | tr -d ' ')
 # Look for the sentinel pattern: ===KOTLINTEST_SENTINEL_<timestamp>===
 # The timestamp may be in scientific notation (e.g., 1.767901e+12) due to BrightScript
 # We look for the LAST occurrence (after the buffer flush)
-SENTINEL_LINE=$(grep -n '===KOTLINTEST_SENTINEL_[0-9.e+]*===' "$TEST_OUTPUT" | tail -1 | cut -d: -f1)
+SENTINEL_LINE=$(grep -nE '===KOTLINTEST_SENTINEL_[0-9.eE+-]+===' "$TEST_OUTPUT" | tail -1 | cut -d: -f1)
 
 if [[ -n "$SENTINEL_LINE" ]]; then
     # Extract the sentinel value and timestamp
-    SENTINEL=$(sed -n "${SENTINEL_LINE}p" "$TEST_OUTPUT" | grep -oE '===KOTLINTEST_SENTINEL_[0-9.e+]*===')
+    SENTINEL=$(sed -n "${SENTINEL_LINE}p" "$TEST_OUTPUT" | grep -oE '===KOTLINTEST_SENTINEL_[0-9.eE+-]+===')
     SENTINEL_TIMESTAMP_RAW=$(echo "$SENTINEL" | sed 's/===KOTLINTEST_SENTINEL_//' | sed 's/===//')
     # Convert scientific notation to integer (e.g., 1.767901e+12 -> 1767901000000)
     SENTINEL_TIMESTAMP=$(printf "%.0f" "$SENTINEL_TIMESTAMP_RAW" 2>/dev/null || echo "$SENTINEL_TIMESTAMP_RAW")

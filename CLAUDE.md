@@ -287,6 +287,8 @@ synthesizes a typed task per block (M3 backlog); until then any new
 
 The layout story: declare the component's children ONCE in the `sceneLayout {}`
 DSL; access them through the generated `<ClassName>_Layout` accessor class.
+The living end-to-end example is
+`../roku-test-app/components/TestLayout/TestLayout.kt`.
 
 ```kotlin
 class MainScreen : SceneComponent() {
