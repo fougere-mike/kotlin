@@ -226,8 +226,22 @@ touch "$TEST_OUTPUT"
 echo ""
 echo "Step 5: Connecting to debug console..."
 
-# No need to kill existing telnet connection - if there's one, the new connection
-# will work anyway (The Roku only allows one telnet connection at a time)
+# Pre-flight: the Roku debug console allows exactly ONE client. If another
+# client already holds it (BrightScript Studio's Roku console tool window, a
+# killed run's leftover process), the device answers every new connection with
+# just "Console connection is already in use" — the sentinel never appears and
+# the run fails as "no sentinel found". Detect that up front with a short probe
+# and name the holder instead of failing cryptically later.
+# nc (not telnet) on purpose: the probe WANTS to exit after the first read —
+# -w bounds the read so a free-but-quiet console can't hang the probe.
+CONSOLE_PROBE=$(echo | nc -w 3 "$ROKU_DEVICE_IP" 8085 2>/dev/null | head -5)
+if echo "$CONSOLE_PROBE" | grep -q "already in use"; then
+    echo -e "${RED}Error: the Roku debug console (port 8085) is held by another client${NC}"
+    echo "Only one console connection is allowed. Close the holder and retry:"
+    echo "  - BrightScript Studio / IDE Roku console tool window"
+    echo "  - a leftover process from a killed run (find it: lsof -nP -iTCP | grep 8085)"
+    exit 1
+fi
 
 # Start telnet in background - it will receive stale buffer + fresh app output
 # NOTE: We use telnet instead of nc because nc exits after receiving the initial

@@ -134,8 +134,9 @@ public external interface ISGNodeField {
      *   returns false.
      * - UNDECLARED name: silently dropped — no error, no ad-hoc field, no
      *   observer fires anywhere — and the return value cannot be trusted:
-     *   true from a non-render thread (it reports dispatch, not field
-     *   acceptance), false only when called on the node's own thread.
+     *   true from another thread (it reports dispatch, not field acceptance;
+     *   verified from the app main thread, expected but not yet exercised
+     *   from task threads), false only when called on the node's own thread.
      *
      * Prefer typed property access for `@SG*Field`-annotated fields: the
      * name comes from a validated annotation, so a misnamed field cannot
@@ -154,8 +155,10 @@ public external interface ISGNodeField {
      * Sets multiple field values from an associative array.
      *
      * Carries the same raw-string-name hazard as [setField]: a misnamed key
-     * is silently dropped with no runtime signal. Prefer typed property
-     * access for `@SG*Field`-annotated fields.
+     * is expected to be silently dropped with no runtime signal (extrapolated
+     * from setField's device-verified drop; setFields itself is not yet
+     * exercised by the FieldSemantics suite). Prefer typed property access
+     * for `@SG*Field`-annotated fields.
      *
      * @param fields An associative array mapping field names to values.
      * @return True if all fields were set successfully.

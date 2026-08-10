@@ -246,18 +246,23 @@ configures the inputs, runs it on the task thread, and suspends until the task
 completes - resuming with the completed node so typed outputs read directly:
 
 ```kotlin
-val node = top   // alias: a coroutine lambda's `m` is the coroutine object,
-                 // not the component scope, so hand results back via the node
 CoroutineScope(Dispatchers.Main).launch {
     try {
         val task = runTask<FetchShelfTask> { count = 5 }
-        node.setField("shelfItems", task.items)
+        shelfItems = task.items   // typed self-write works in lambda scope
     } catch (e: TaskException) {
         // run() threw on the task thread; message/number/backtrace preserved
         println("fetch failed: ${e.message}")
     }
 }
 ```
+
+(Historical note: lambda bodies used to hand results back through an aliased
+`val node = top` + `setField`, because the compiler miscompiled typed
+self-writes in lambda scope — the captured `this` is the component m-object,
+and the write landed there as a dead AA key. Fixed 2026-08-10: the compiler
+routes lambda-captured self access through `.top`; the alias workaround is
+retired.)
 
 Key facts:
 
@@ -341,17 +346,27 @@ download; every claim here is device-observed.
 | Declared field, new value | Observers fire (function AND port form), each write delivers its own value, in write order — no coalescing (case 1) | Identical (case 2); returns `true` |
 | Declared field, same value (no `alwaysNotify`) | Observer skipped (case 6) | Identical (case 6) |
 | Declared field, wrong type | Silent no-op: no throw, value intact (case 5) | No-op, returns `false` (case 5) |
-| UNDECLARED name (the typo trap) | Complete silent no-op: no error, no ad-hoc field, no readback, no observer anywhere (cases 3, render companion) | Same silent drop — and returns `true` from a non-render thread (`false` same-thread): the Boolean reports dispatch, not field acceptance (case 4, render companion) |
+| UNDECLARED name (the typo trap) | Complete silent no-op: no error, no ad-hoc field, no readback, no observer anywhere (cases 3, render companion) | Same silent drop — and returns `true` from the app main thread (`false` same-thread): the Boolean reports dispatch, not field acceptance (case 4, render companion; task threads expected same but not yet exercised) |
 | Runtime `addField` named after an ifSGNodeDict method (`update`) | Behaves as a normal field on current OS, even dot-read (case 7 — informative, don't rely on it) | Works (case 7) |
+| Own field, from a LAMBDA body (captured `this` — coroutine or plain) | Works: the compiler routes captured-self access through `.top` (`m.this_0.top.f`), observers fire, reads see the node (case 8; fixed 2026-08-10 — previously a silent AA-key write on the captured m-object) | n/a — with a typed property there is no reason to setField |
 
 **The rule of thumb:** typed property access (`@SG*Field` properties,
 compiled to dot-assign) is the safe form — field names derive from validated
-annotations, so a misnamed field cannot compile. `setField` is for receivers
-the type system can't see through: `RoSGNode`-typed handles (SDK built-in
-fields like `control`/`duration`, `addField`-dynamic fields, generic node
-code). Raw string names are where typos hide, and the platform gives them NO
-runtime signal: the write silently vanishes, and setField's return value
-lies about it cross-thread.
+annotations, so a misnamed field cannot compile — and it is safe in lambda
+scope too (case 8). `setField` is for receivers the type system can't see
+through: `RoSGNode`-typed handles (SDK built-in fields like
+`control`/`duration`, `addField`-dynamic fields, generic node code). Raw
+string names are where typos hide, and the platform gives them NO runtime
+signal: the write silently vanishes, and setField's return value lies about
+it cross-thread.
+
+**Residual hole (KDoc'd on `collectCapturedComponentSelfFields`):** the
+captured-self routing covers compiler-introduced lambda captures only. A
+component `this` the user passes around as a T-typed VALUE (stored in a
+property, passed as an argument) is statically indistinguishable from a
+`createComponent<T>()` node handle — its @SG writes still vanish into the
+m-scope AA. Don't alias component `this` into values; a FIR warning is a
+possible follow-up guard.
 
 **Observer parity is total on declared fields** — there is no
 observer-not-firing trap in choosing dot-assign over setField (cross-thread
@@ -461,6 +476,18 @@ This handles everything automatically. After completion, all artifacts are in Ma
 Local under `com.nuvyyo:*` at version `2.2.20-brs.1`.
 
 ## Troubleshooting
+
+### Device Test Run Dies Immediately ("no sentinel found" / "no fresh [KOTLINTEST_END] marker")
+
+The Roku debug console (telnet port 8085) allows exactly ONE client. If another
+client holds it — most commonly BrightScript Studio's Roku console tool window,
+or a leftover process from a killed run — the device answers every new
+connection with a single line, `Console connection is already in use`, and the
+runner sees an empty stream: the stdlib runner fails with "no sentinel found",
+the E2E runner with "no fresh [KOTLINTEST_END] marker received" within seconds
+of launch. Both runners now pre-flight probe the console and abort with a
+message naming this cause. Find the holder with `lsof -nP -iTCP | grep 8085`;
+if it's the IDE, ask Mike to disconnect its Roku console. Do NOT kill the IDE.
 
 ### SSL Errors During Gradle Builds
 
@@ -618,7 +645,7 @@ cd ../roku-test-app && ./gradlew rokuTest
 the stdlib runner: replayed events from a previous run are discarded).
 Results land in `build/test-results/roku/` as JSON + JUnit XML.
 
-**The suites (5 suites, 21 active tests + 3 red-guarded `xtest` placeholders):**
+**The suites (6 suites, 30 active tests + 3 red-guarded `xtest` placeholders):**
 
 | Suite | File | Exercises |
 |-------|------|-----------|
@@ -627,6 +654,7 @@ Results land in `build/test-results/roku/` as JSON + JUnit XML.
 | 2 RenderCoroutines | `tests/RenderCoroutineTests.kt` | coroutines on the render thread, captured vars |
 | 3 TaskBoundary | `tests/TaskBoundaryTests.kt` | task-thread round trips via EchoTask fixtures |
 | 4 TypedTaskAcceptance | `tests/TypedTaskTests.kt` | `runTask` success/error/overlap/round-trip/derived |
+| 6 FieldSemantics | `tests/FieldSemanticsTests.kt` | dot-assign vs setField truth table + lambda self-write routing (case 8) |
 
 **The main-thread driver:** `tests/TestMain.kt` is a `main()` that creates the
 SceneGraph screen, installs the screen's message port as the shared `TestPort`,
@@ -679,7 +707,7 @@ These are the whole-branch green gates; a drop in any of them is a regression.
 | Golden file tests | 53 |
 | FIR diagnostic suite (checkers.brs) | 214 |
 | Stdlib device suite | 409 tests / 40 suites |
-| rokuTest E2E | 21 active tests / 5 suites (+3 red-guarded xtests) |
+| rokuTest E2E | 30 active tests / 6 suites (+3 red-guarded xtests) |
 | `validateComponentIncludes` | strict mode, 0 findings (no allowlist) |
 
 ### Test Output
