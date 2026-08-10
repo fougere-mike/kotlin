@@ -328,6 +328,39 @@ slot that external code can set/observe. Use Layout accessors for nodes the
 component declares itself; use `@SGNodeField` only for node-valued
 inputs/outputs on the component's public interface.
 
+## Field Writes: dot-assign vs setField
+
+Device-verified truth table (executable spec: the FieldSemantics suite,
+`../roku-test-app/src/brsTest/kotlin/tests/FieldSemanticsTests.kt`, Suite 6;
+pinned on device 2026-08-10; case numbers below are that suite's tests).
+Roku's ifSGNodeField SDK page is not in `../RokuDocs` yet — SDK doc pending
+download; every claim here is device-observed.
+
+| Write | dot-assign (`m.top.f = v` — what `@SG*Field` property writes compile to) | `setField("f", v)` |
+|---|---|---|
+| Declared field, new value | Observers fire (function AND port form), each write delivers its own value, in write order — no coalescing (case 1) | Identical (case 2); returns `true` |
+| Declared field, same value (no `alwaysNotify`) | Observer skipped (case 6) | Identical (case 6) |
+| Declared field, wrong type | Silent no-op: no throw, value intact (case 5) | No-op, returns `false` (case 5) |
+| UNDECLARED name (the typo trap) | Complete silent no-op: no error, no ad-hoc field, no readback, no observer anywhere (cases 3, render companion) | Same silent drop — and returns `true` from a non-render thread (`false` same-thread): the Boolean reports dispatch, not field acceptance (case 4, render companion) |
+| Runtime `addField` named after an ifSGNodeDict method (`update`) | Behaves as a normal field on current OS, even dot-read (case 7 — informative, don't rely on it) | Works (case 7) |
+
+**The rule of thumb:** typed property access (`@SG*Field` properties,
+compiled to dot-assign) is the safe form — field names derive from validated
+annotations, so a misnamed field cannot compile. `setField` is for receivers
+the type system can't see through: `RoSGNode`-typed handles (SDK built-in
+fields like `control`/`duration`, `addField`-dynamic fields, generic node
+code). Raw string names are where typos hide, and the platform gives them NO
+runtime signal: the write silently vanishes, and setField's return value
+lies about it cross-thread.
+
+**Observer parity is total on declared fields** — there is no
+observer-not-firing trap in choosing dot-assign over setField (cross-thread
+included: the typed-task protocol's `m.top.kotlinTaskState` writes are
+dot-assign, proven by Suite 4). The real observer trap is ARMING ORDER: an
+observer attached after a write never sees it — arm before triggering
+(TaskRunner.kt:250-256 arms the state observer before `control=RUN`;
+`roundTrip`/`awaitField` in DeviceTestLoop.kt arm before writing).
+
 ## Key Directories
 
 ### Compiler Modules

@@ -71,6 +71,11 @@ public external interface ISGNodeField {
     /**
      * Gets the value of a field.
      *
+     * Reading an UNDECLARED field name returns null (invalid) — it does not
+     * throw and does not create the field. Since a misnamed [setField] write
+     * is silently dropped (never stored under the wrong name), a read-back
+     * check cannot detect the typo either; see [setField].
+     *
      * @param fieldName The name of the field.
      * @return The field value, or null if the field doesn't exist.
      */
@@ -120,14 +125,37 @@ public external interface ISGNodeField {
     /**
      * Sets the value of a field.
      *
+     * Device-verified semantics (FieldSemantics suite, roku-test-app):
+     * - Declared field, matching type: the value is set and observers fire
+     *   exactly as for a typed property write (dot-assign) — full parity,
+     *   cross-thread included; returns true. Same-value rewrites of a
+     *   non-alwaysNotify field skip observers under both forms.
+     * - Declared field, wrong type: rejected without corrupting the field;
+     *   returns false.
+     * - UNDECLARED name: silently dropped — no error, no ad-hoc field, no
+     *   observer fires anywhere — and the return value cannot be trusted:
+     *   true from a non-render thread (it reports dispatch, not field
+     *   acceptance), false only when called on the node's own thread.
+     *
+     * Prefer typed property access for `@SG*Field`-annotated fields: the
+     * name comes from a validated annotation, so a misnamed field cannot
+     * compile. setField is for fields the static type can't express —
+     * RoSGNode-typed handles (SDK built-in fields like `control`,
+     * `addField`-dynamic fields, generic node code).
+     *
      * @param fieldName The name of the field.
      * @param value The value to set.
-     * @return True if the field was set successfully.
+     * @return True if the write was accepted — but a true from a non-render
+     *         thread is NOT proof the field exists (see above).
      */
     public fun setField(fieldName: String, value: Any?): Boolean
 
     /**
      * Sets multiple field values from an associative array.
+     *
+     * Carries the same raw-string-name hazard as [setField]: a misnamed key
+     * is silently dropped with no runtime signal. Prefer typed property
+     * access for `@SG*Field`-annotated fields.
      *
      * @param fields An associative array mapping field names to values.
      * @return True if all fields were set successfully.
