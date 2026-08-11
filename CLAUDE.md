@@ -13,6 +13,16 @@ This is a fork of the Kotlin compiler that adds a BrightScript backend for Roku 
 
 This affects code generation - there's no need to use uppercase for "disambiguation" since case doesn't disambiguate anything in BrightScript.
 
+**Bare `and` short-circuited on device** (probe-verified 2026-08-11, Roku Ultra
+4802CA, Roku OS 15.3.4 build 841): with a false boolean LHS, spliced
+`probeArr <> invalid and probeArr.count() > 0` did NOT evaluate the RHS — no
+crash on the invalid receiver (stdlib suite "Short-circuit semantics", PROBE
+test). The compiler still emits guarded temps for Kotlin `&&`/`||` with an
+effectful RHS regardless: the compile target floor is Roku OS 9.4 (older-OS
+behavior unverified), and the pre-fix crashes came from the compiler hoisting
+the RHS into an unguarded temp evaluated BEFORE the operator — a shape no
+platform short-circuit can rescue.
+
 ## MANDATORY BUILD RULES
 
 ### The ONE Command: `./rebuild.sh`
