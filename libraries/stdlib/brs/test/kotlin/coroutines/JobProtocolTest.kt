@@ -115,6 +115,20 @@ fun TestRunner.jobProtocolTests() {
             assertEquals(boom, d.getCompletionExceptionOrNull())
         }
 
+        test("complete(value) after cancel records completion without storing the value") {
+            val d = CompletableDeferred<String>()
+            d.cancel()
+            assertFalse(d.complete("late"))
+            assertTrue(d.isCompleted)
+            var thrown: Throwable? = null
+            try {
+                d.getCompleted()
+            } catch (e: Throwable) {
+                thrown = e
+            }
+            assertTrue(thrown is CancellationException)
+        }
+
         test("cancelled deferred getCompleted throws CancellationException") {
             val d = CompletableDeferred<String>()
             d.cancel()

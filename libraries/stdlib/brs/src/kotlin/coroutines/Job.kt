@@ -366,9 +366,13 @@ internal class CompletableDeferredImpl<T>(
         innerJob.completeExceptionally(exception)
 
     override fun complete(value: T): Boolean {
-        if (innerJob.isCompleted || innerJob.isCancelled) return false
-        // Value stored BEFORE complete() so handlers observe it.
-        _value = value
+        if (innerJob.isCompleted) return false
+        if (!innerJob.isCancelled) {
+            // Value stored BEFORE complete() so handlers observe it.
+            _value = value
+        }
+        // Records body completion even when cancel-requested (outcome stays
+        // cancelled; the job can now reach terminal) — JobImpl.complete() parity.
         return innerJob.complete()
     }
 
