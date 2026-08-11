@@ -1,0 +1,20 @@
+// --- File: emptyVarargCallKt.brs ---
+function joinParts_Arr_k_(parts as Object) as String
+    out = ""
+    indexedObject = parts
+    inductionVariable = 0
+    last = indexedObject.count()
+    while inductionVariable < last
+        p = indexedObject[inductionVariable]
+        inductionVariable = (inductionVariable + 1)
+
+        out = (out + p)
+
+    end while
+
+    return out
+end function
+
+function callBoth_k_() as String
+    return joinParts_Arr_k_([]) + joinParts_Arr_k_(["a", "b"])
+end function

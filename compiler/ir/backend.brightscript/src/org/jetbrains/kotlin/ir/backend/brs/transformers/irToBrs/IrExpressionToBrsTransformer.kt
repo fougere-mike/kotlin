@@ -580,6 +580,20 @@ class IrExpressionToBrsTransformer(
 
     // ==================== Function Calls ====================
 
+    /**
+     * Placeholder for a value argument that is absent at the call site.
+     * Default-valued parameters are filled callee-side (the callee guards on
+     * invalid), so invalid preserves the position. A missing VARARG has no
+     * callee-side default — the absent argument IS the empty array, and
+     * callees index/dot into it immediately (e.g. toList_rArr_k_), so it
+     * must materialize as [] at the call site.
+     */
+    private fun absentArgumentPlaceholder(function: IrFunction, index: Int): BrsExpression =
+        if (function.valueParameters.getOrNull(index)?.varargElementType != null)
+            BrsArrayLiteral(mutableListOf())
+        else
+            BrsInvalidLiteral()
+
     override fun visitCall(expression: IrCall, data: Unit): BrsExpression {
         val function = expression.symbol.owner
 
@@ -1117,8 +1131,8 @@ class IrExpressionToBrsTransformer(
                 if (arg != null) {
                     args.add(arg.accept(this, data))
                 } else {
-                    // Parameter uses default value - add invalid to preserve position
-                    args.add(BrsInvalidLiteral())
+                    // Absent argument: default (filled callee-side) or empty vararg
+                    args.add(absentArgumentPlaceholder(function, i))
                 }
             }
             // Generate mangled invoke method name based on function parameters
@@ -1620,8 +1634,8 @@ class IrExpressionToBrsTransformer(
                     if (arg != null) {
                         args.add(arg.accept(this, data))
                     } else {
-                        // Parameter uses default value - add invalid to preserve position
-                        args.add(BrsInvalidLiteral())
+                        // Absent argument: default (filled callee-side) or empty vararg
+                        args.add(absentArgumentPlaceholder(function, i))
                     }
                 }
                 return BrsMethodCall(receiverExpr, methodName, args)
@@ -1677,8 +1691,8 @@ class IrExpressionToBrsTransformer(
                     if (arg != null) {
                         args.add(arg.accept(this, data))
                     } else {
-                        // Parameter uses default value - add invalid to preserve position
-                        args.add(BrsInvalidLiteral())
+                        // Absent argument: default (filled callee-side) or empty vararg
+                        args.add(absentArgumentPlaceholder(function, i))
                     }
                 }
                 return createFunctionCall(correctedName, args, context)
@@ -1693,8 +1707,8 @@ class IrExpressionToBrsTransformer(
             if (arg != null) {
                 arguments.add(arg.accept(this, data))
             } else {
-                // Parameter uses default value - add invalid to preserve position
-                arguments.add(BrsInvalidLiteral())
+                // Absent argument: default (filled callee-side) or empty vararg
+                arguments.add(absentArgumentPlaceholder(function, i))
             }
         }
 

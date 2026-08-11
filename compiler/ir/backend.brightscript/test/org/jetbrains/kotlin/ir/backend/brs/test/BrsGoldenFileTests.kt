@@ -55,6 +55,9 @@ class BrsExpressionGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun shortCircuit() = runTest("expressions/shortCircuit.kt")
+
+    @Test
+    fun emptyVarargCall() = runTest("expressions/emptyVarargCall.kt")
 }
 
 // ==================== Control Flow Tests ====================
