@@ -74,3 +74,18 @@ function tryNothingArm_StrN_k_(s as Dynamic) as Integer
     return __try_tmp4
 
 end function
+
+sub unitCall_k_()
+end sub
+
+function boolReturningCall_k_() as Boolean
+    return true
+end function
+
+sub tryStatementDiscarded_k_()
+        try
+        unitCall_k_()
+    catch e
+        boolReturningCall_k_()
+    end try
+end sub

@@ -23,10 +23,11 @@ import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.Name
 
 /**
- * Rewrites non-Unit `try` expressions into statement-level try/catch with a
- * temp result variable — BrightScript's try/catch is statement-only, and the
- * expression transformer's fallback (BrsStatementAsExpression) rendered
- * invalid code like `x = return try` (Task 18 finisher ledger).
+ * Rewrites non-Unit `try` expressions in EXPRESSION position into
+ * statement-level try/catch with a temp result variable — BrightScript's
+ * try/catch is statement-only, and the expression transformer's fallback
+ * (BrsStatementAsExpression) rendered invalid code like `x = return try`
+ * (Task 18 finisher ledger).
  *
  * ```kotlin
  * val x = try { a() } catch (e: Throwable) { b() }
@@ -40,10 +41,17 @@ import org.jetbrains.kotlin.name.Name
  * }
  * ```
  *
- * Runs on every non-Unit IrTry regardless of position: a statement-position
- * non-Unit try just gains a harmless temp, and the block shape matches what
- * BrsWhenExpressionLowering already produces, so all downstream handling
- * (block-as-expression hoisting, condition consumption) applies unchanged.
+ * The block shape matches what BrsWhenExpressionLowering produces, so all
+ * downstream handling (block-as-expression hoisting) applies unchanged, and
+ * the expression-context tracking mirrors that lowering's proven model.
+ *
+ * Statement-position tries are left alone even when their IR type is non-Unit
+ * (e.g. `try { unitCall() } catch (e) { boolCall() }` — the discarded catch
+ * value makes the IrTry non-Unit): the statement transformer's visitTry
+ * handles them directly. Lowering them anyway would leave the block's
+ * trailing temp read in a discarded position, which the emitter renders as a
+ * bare identifier statement — a BrightScript SYNTAX ERROR (broke the stdlib's
+ * Builders.kt on device; fix round 2).
  */
 class BrsTryExpressionLowering(
     private val context: BrsIrBackendContext
@@ -57,6 +65,10 @@ class BrsTryExpressionLowering(
     }
 
     private inner class TryExpressionTransformer : IrElementTransformerVoid() {
+
+        // Track whether we're in a position whose value is consumed. Mirrors
+        // BrsWhenExpressionLowering's WhenExpressionTransformer exactly.
+        private var insideExpressionContext = false
 
         private var currentDeclarationParent: IrDeclarationParent? = null
 
@@ -80,17 +92,170 @@ class BrsTryExpressionLowering(
             return result
         }
 
-        override fun visitTry(aTry: IrTry): IrExpression {
-            // Children first: nested tries inside arms get their own temps.
-            val transformed = super.visitTry(aTry) as IrTry
-            if (transformed.type.isUnit()) {
-                return transformed
+        // ==================== Expression-context tracking ====================
+
+        override fun visitExpressionBody(body: IrExpressionBody): IrBody {
+            val wasInExpression = insideExpressionContext
+            insideExpressionContext = true
+            val result = super.visitExpressionBody(body)
+            insideExpressionContext = wasInExpression
+            return result
+        }
+
+        override fun visitBlockBody(body: IrBlockBody): IrBody {
+            // Block body statements are NOT expression context
+            val wasInExpression = insideExpressionContext
+            insideExpressionContext = false
+            val result = super.visitBlockBody(body)
+            insideExpressionContext = wasInExpression
+            return result
+        }
+
+        override fun visitContainerExpression(expression: IrContainerExpression): IrExpression {
+            // Only the last statement of a block used as an expression is in
+            // expression context; the rest are statements.
+            if (expression is IrBlock || expression is IrComposite) {
+                val wasInExpression = insideExpressionContext
+                val statements = expression.statements
+                for (i in statements.indices) {
+                    insideExpressionContext =
+                        wasInExpression && i == statements.lastIndex && statements[i] is IrExpression
+                    statements[i] = statements[i].transform(this, null) as IrStatement
+                }
+                insideExpressionContext = wasInExpression
+                return expression
             }
-            // Nothing-typed tries (all arms throw) are lowered too: the arms stay
-            // unwrapped (Nothing guard in assignArmTo) and the tail read of the
-            // temp is dead but legal — leaving them would hit the statement-as-
-            // expression fallback and render `x = try ...` garbage.
-            return transformToBlock(transformed)
+            return super.visitContainerExpression(expression)
+        }
+
+        override fun visitVariable(declaration: IrVariable): IrStatement {
+            val wasInExpression = insideExpressionContext
+            insideExpressionContext = true
+            declaration.initializer = declaration.initializer?.transform(this, null)
+            insideExpressionContext = wasInExpression
+            return declaration
+        }
+
+        override fun visitSetValue(expression: IrSetValue): IrExpression {
+            val wasInExpression = insideExpressionContext
+            insideExpressionContext = true
+            val result = super.visitSetValue(expression)
+            insideExpressionContext = wasInExpression
+            return result
+        }
+
+        override fun visitSetField(expression: IrSetField): IrExpression {
+            val wasInExpression = insideExpressionContext
+            insideExpressionContext = true
+            val result = super.visitSetField(expression)
+            insideExpressionContext = wasInExpression
+            return result
+        }
+
+        override fun visitCall(expression: IrCall): IrExpression {
+            val wasInExpression = insideExpressionContext
+            insideExpressionContext = true
+            val result = super.visitCall(expression)
+            insideExpressionContext = wasInExpression
+            return result
+        }
+
+        override fun visitReturn(expression: IrReturn): IrExpression {
+            val wasInExpression = insideExpressionContext
+            insideExpressionContext = true
+            val result = super.visitReturn(expression)
+            insideExpressionContext = wasInExpression
+            return result
+        }
+
+        override fun visitWhileLoop(loop: IrWhileLoop): IrExpression {
+            val wasInExpression = insideExpressionContext
+            insideExpressionContext = true
+            loop.condition = loop.condition.transform(this, null)
+            insideExpressionContext = false
+            loop.body = loop.body?.transform(this, null)
+            insideExpressionContext = wasInExpression
+            return loop
+        }
+
+        override fun visitDoWhileLoop(loop: IrDoWhileLoop): IrExpression {
+            val wasInExpression = insideExpressionContext
+            insideExpressionContext = false
+            loop.body = loop.body?.transform(this, null)
+            insideExpressionContext = true
+            loop.condition = loop.condition.transform(this, null)
+            insideExpressionContext = wasInExpression
+            return loop
+        }
+
+        override fun visitStringConcatenation(expression: IrStringConcatenation): IrExpression {
+            val wasInExpression = insideExpressionContext
+            insideExpressionContext = true
+            val result = super.visitStringConcatenation(expression)
+            insideExpressionContext = wasInExpression
+            return result
+        }
+
+        override fun visitConstructorCall(expression: IrConstructorCall): IrExpression {
+            val wasInExpression = insideExpressionContext
+            insideExpressionContext = true
+            val result = super.visitConstructorCall(expression)
+            insideExpressionContext = wasInExpression
+            return result
+        }
+
+        override fun visitDelegatingConstructorCall(expression: IrDelegatingConstructorCall): IrExpression {
+            val wasInExpression = insideExpressionContext
+            insideExpressionContext = true
+            val result = super.visitDelegatingConstructorCall(expression)
+            insideExpressionContext = wasInExpression
+            return result
+        }
+
+        override fun visitTypeOperator(expression: IrTypeOperatorCall): IrExpression {
+            // IMPLICIT_COERCION_TO_UNIT wraps expressions used as statements —
+            // the value is discarded, so NOT expression context.
+            val wasInExpression = insideExpressionContext
+            if (expression.operator != IrTypeOperator.IMPLICIT_COERCION_TO_UNIT) {
+                insideExpressionContext = true
+            }
+            val result = super.visitTypeOperator(expression)
+            insideExpressionContext = wasInExpression
+            return result
+        }
+
+        // ==================== The rewrite ====================
+
+        override fun visitTry(aTry: IrTry): IrExpression {
+            val wasInExpression = insideExpressionContext
+
+            // Children first: nested tries inside arms get their own temps.
+            // Arm values are consumed iff the try's value is consumed, so the
+            // arms are visited under the try's own context; the finally block
+            // is executed purely for effect.
+            aTry.tryResult = aTry.tryResult.transform(this, null)
+            for (aCatch in aTry.catches) {
+                aCatch.result = aCatch.result.transform(this, null)
+            }
+            insideExpressionContext = false
+            aTry.finallyExpression = aTry.finallyExpression?.transform(this, null)
+            insideExpressionContext = wasInExpression
+
+            // Statement position: the statement transformer's visitTry handles
+            // it directly. Lowering here would strand the block's trailing temp
+            // read as a bare identifier statement — a BRS syntax error.
+            if (!wasInExpression) {
+                return aTry
+            }
+            if (aTry.type.isUnit()) {
+                return aTry
+            }
+            // Nothing-typed tries (all arms throw) in expression position are
+            // lowered too: the arms stay unwrapped (Nothing guard in
+            // assignArmTo) and the tail read of the temp is dead but legal —
+            // leaving them would hit the statement-as-expression fallback and
+            // render `x = try ...` garbage.
+            return transformToBlock(aTry)
         }
 
         private fun transformToBlock(aTry: IrTry): IrExpression {

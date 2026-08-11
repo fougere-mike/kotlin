@@ -58,3 +58,23 @@ fun tryNothingArm(s: String?): Int {
         -1
     }
 }
+
+fun unitCall() {
+}
+
+fun boolReturningCall(): Boolean {
+    return true
+}
+
+// STATEMENT-position non-Unit try: the catch arm's value (Boolean) makes the
+// IrTry non-Unit, but the value is discarded. This must NOT gain a trailing
+// bare temp-identifier statement (a BrightScript syntax error) — it takes the
+// plain statement-transformer path. Regression shape from
+// coroutines/builders/Builders.kt (startCoroutine/completeExceptionally).
+fun tryStatementDiscarded() {
+    try {
+        unitCall()
+    } catch (e: Throwable) {
+        boolReturningCall()
+    }
+}
