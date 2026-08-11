@@ -43,3 +43,34 @@ function tryInArgument_StrN_k_(s as Dynamic) as String
     return wrap_I_k_(__try_tmp2)
 
 end function
+
+function boomA_k_() as Dynamic
+    throw IllegalStateException_create_StrN_k_("boomA")
+end function
+
+function boomB_k_() as Dynamic
+    throw IllegalStateException_create_StrN_k_("boomB")
+end function
+
+function tryAllNothing_k_() as Integer
+    __try_tmp3 = invalid
+        try
+        boomA_k_()
+    catch e
+        boomB_k_()
+    end try
+    x = __try_tmp3
+
+    return 0
+end function
+
+function tryNothingArm_StrN_k_(s as Dynamic) as Integer
+    __try_tmp4 = invalid
+    try
+        boomA_k_()
+    catch e
+        __try_tmp4 = -1
+    end try
+    return __try_tmp4
+
+end function

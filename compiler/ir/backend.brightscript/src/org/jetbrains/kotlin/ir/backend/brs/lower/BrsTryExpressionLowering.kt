@@ -83,9 +83,13 @@ class BrsTryExpressionLowering(
         override fun visitTry(aTry: IrTry): IrExpression {
             // Children first: nested tries inside arms get their own temps.
             val transformed = super.visitTry(aTry) as IrTry
-            if (transformed.type.isUnit() || transformed.type.isNothing()) {
+            if (transformed.type.isUnit()) {
                 return transformed
             }
+            // Nothing-typed tries (all arms throw) are lowered too: the arms stay
+            // unwrapped (Nothing guard in assignArmTo) and the tail read of the
+            // temp is dead but legal — leaving them would hit the statement-as-
+            // expression fallback and render `x = try ...` garbage.
             return transformToBlock(transformed)
         }
 
