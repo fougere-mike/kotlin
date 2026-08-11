@@ -80,10 +80,7 @@ fun TestRunner.awaitTests() {
                 }
                 var thrown: Throwable? = null
                 try {
-                    // Bound to a local: a discarded non-Unit try over a suspend
-                    // call trips the open expression-position-try miscompile
-                    // (bare m.TRY_RESULT read = device compile error).
-                    val unused = d.await()
+                    d.await()
                 } catch (e: Throwable) {
                     thrown = e
                 }
@@ -97,9 +94,7 @@ fun TestRunner.awaitTests() {
                 d.cancel()
                 var thrown: Throwable? = null
                 try {
-                    // Local binding for the same miscompile as in
-                    // "await rethrows async failure" above.
-                    val unused = d.await()
+                    d.await()
                 } catch (e: Throwable) {
                     thrown = e
                 }

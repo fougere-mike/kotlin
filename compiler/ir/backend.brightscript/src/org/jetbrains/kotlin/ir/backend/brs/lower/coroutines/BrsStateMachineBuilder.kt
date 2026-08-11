@@ -712,7 +712,14 @@ class BrsStateMachineBuilder(
 
         setupExceptionState(tryState.catchState)
 
-        val tryResult = if (varSymbol != null) {
+        // Wrap an arm in a TRY_RESULT assignment only when the ARM itself carries a
+        // value. A Unit-typed arm (e.g. catch { thrown = e } while the other arm makes
+        // the try's LUB type non-Unit) must run unwrapped: wrapping it makes the arm's
+        // trailing assignment the RHS of the TRY_RESULT set, and BrightScript renders
+        // an assignment in expression position as a COMPARISON — the arm's effect is
+        // silently lost (m.TRY_RESULT = (m.thrown = e)). The consumer of an unassigned
+        // TRY_RESULT reads invalid, which is exactly the BRS mapping of Unit.
+        val tryResult = if (varSymbol != null && hasResultingValue(aTry.tryResult)) {
             BrsIrBuilder.buildSetVariable(varSymbol.symbol, aTry.tryResult, unit).also {
                 if (it.value in suspendableNodes) suspendableNodes += it
             }
@@ -742,7 +749,8 @@ class BrsStateMachineBuilder(
             val irVar = catch.catchParameter.also {
                 it.initializer = initializer
             }
-            val catchResult = if (varSymbol != null) {
+            // Same per-arm value guard as tryResult above.
+            val catchResult = if (varSymbol != null && hasResultingValue(catch.result)) {
                 BrsIrBuilder.buildSetVariable(varSymbol.symbol, catch.result, unit).also {
                     if (it.value in suspendableNodes) suspendableNodes += it
                 }
@@ -768,6 +776,12 @@ class BrsStateMachineBuilder(
         updateState(exitState)
         setupExceptionState(enclosingCatch)
 
+        // Expose the try's value as the last expression of the exit state so enclosing
+        // constructs (visitVariable, visitSetValue, visitReturn, visitTypeOperator) can
+        // consume it via transformLastExpression — same protocol as the resumed-value
+        // exposure in visitCall. If nothing consumes it, the emitter drops the pure
+        // read (isDiscardablePureExpression — which covers the IrGetField this read
+        // becomes after BrsLiveLocalsTransformer promotes TRY_RESULT to an m-field).
         if (varSymbol != null) {
             addStatement(BrsIrBuilder.buildGetValue(varSymbol.symbol))
         }

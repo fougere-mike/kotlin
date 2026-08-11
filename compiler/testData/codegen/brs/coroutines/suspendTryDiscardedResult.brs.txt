@@ -1,0 +1,71 @@
+// --- File: suspendTryDiscardedResultKt.brs ---
+function fetchValue_Z_ContinuationI_k_(flag as Boolean, _completion as Object) as Object
+    if flag then
+        throw IllegalStateException_create_StrN_k_("boom")
+    end if
+    return 7
+end function
+
+function guardedDiscard_Z_ContinuationI_k_(flag as Boolean, _completion as Object) as Object
+    tmp = _guardedDiscardCOROUTINE__create_Z_ContinuationI_k_(flag, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function _guardedDiscardCOROUTINE__create_Z_ContinuationI_k_(flag as Boolean, resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["_guardedDiscardCOROUTINE_", this.__proto]
+    this.__type = "_guardedDiscardCOROUTINE_"
+    this.doResume_k_ = _guardedDiscardCOROUTINE__doResume_k_
+    this.flag = flag
+    return this
+end function
+
+function _guardedDiscardCOROUTINE__doResume_k_() as Dynamic
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(3)
+                m.sawError0 = 0
+
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = fetchValue_Z_ContinuationI_k_(m.flag, m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                m.TRY_RESULT1 = suspendResult
+                m.__set_exceptionState(3)
+                m.__set_state(4)
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+                m.__set_exceptionState(3)
+                e = m.__get_exception()
+                m.sawError0 = 1
+
+                m.__set_state(4)
+                continue while
+            else if __kotlin_identityEquals(tmp, 3) then
+                throw m.__get_exception()
+            else if __kotlin_identityEquals(tmp, 4) then
+                m.__set_exceptionState(3)
+
+                                return m.sawError0
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 3) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function

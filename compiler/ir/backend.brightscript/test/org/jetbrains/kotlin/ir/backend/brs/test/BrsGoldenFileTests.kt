@@ -126,6 +126,9 @@ class BrsCoroutineGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun suspendInTryCatch() = runTest("coroutines/suspendInTryCatch.kt")
+
+    @Test
+    fun suspendTryDiscardedResult() = runTest("coroutines/suspendTryDiscardedResult.kt")
 }
 
 // ==================== Inline BrightScript Tests ====================

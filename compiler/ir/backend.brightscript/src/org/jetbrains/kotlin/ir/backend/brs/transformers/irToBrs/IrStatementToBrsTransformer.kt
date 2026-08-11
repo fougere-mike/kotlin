@@ -96,10 +96,17 @@ class IrStatementToBrsTransformer(
      * True for expressions that are side-effect free and therefore produce no code when
      * used in statement position (their value is discarded). BrightScript cannot emit a
      * bare identifier/constant as a statement, so such statements must be dropped.
+     *
+     * IrGetField with a pure receiver is included because the suspend lowering promotes
+     * state-machine locals to continuation fields (BrsLiveLocalsTransformer): the
+     * unconsumed TRY_RESULT value-exposure read that BrsStateMachineBuilder.visitTry
+     * leaves behind arrives here as IrGetField(m, TRY_RESULT), and rendering it emits a
+     * bare `m.TRY_RESULT` line — a BrightScript syntax error (Task 6 device repro).
      */
     private fun isDiscardablePureExpression(expression: IrExpression): Boolean = when (expression) {
         is IrGetValue -> true
         is IrConst -> true
+        is IrGetField -> expression.receiver.let { it == null || it is IrGetValue }
         is IrTypeOperatorCall ->
             (expression.operator == IrTypeOperator.IMPLICIT_CAST ||
                 expression.operator == IrTypeOperator.IMPLICIT_COERCION_TO_UNIT) &&
