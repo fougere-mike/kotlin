@@ -427,26 +427,46 @@ internal fun isEffectFreeShortCircuitOperand(expression: IrExpression): Boolean 
         is IrConst -> true
         is IrGetValue -> true
         is IrCall -> {
-            val pureOrigin = when (expression.origin) {
-                IrStatementOrigin.EQEQ, IrStatementOrigin.EXCLEQ,
-                IrStatementOrigin.LT, IrStatementOrigin.GT,
-                IrStatementOrigin.LTEQ, IrStatementOrigin.GTEQ,
-                IrStatementOrigin.EXCL -> true
-                else -> false
-            }
+            // Extension-receiver calls are user code — never effect-free.
+            if (expression.extensionReceiver != null) return false
             // Prefix `!` reaches the backend as a Boolean.not() call with a null
             // origin (not EXCL) — the same recognition the transformer uses to
-            // emit the prefix `not` operator.
-            val isBooleanNot = expression.symbol.owner.name.asString() == "not" &&
-                expression.dispatchReceiver?.type?.isBoolean() == true
-            if (!pureOrigin && !isBooleanNot) return false
-            val receiver = expression.dispatchReceiver
-            if (receiver != null && !isEffectFreeShortCircuitOperand(receiver)) return false
-            for (i in 0 until expression.valueArgumentsCount) {
-                val arg = expression.getValueArgument(i) ?: continue
-                if (!isEffectFreeShortCircuitOperand(arg)) return false
+            // emit the prefix `not` operator. Requiring a Boolean dispatch
+            // receiver excludes user-defined `not` operators.
+            val notReceiver = expression.dispatchReceiver
+            if (expression.symbol.owner.name.asString() == "not" &&
+                expression.valueArgumentsCount == 0 &&
+                notReceiver != null && notReceiver.type.isBoolean()
+            ) {
+                return isEffectFreeShortCircuitOperand(notReceiver)
             }
-            true
+            val isEquality = expression.origin == IrStatementOrigin.EQEQ ||
+                expression.origin == IrStatementOrigin.EXCLEQ
+            val isOrdering = when (expression.origin) {
+                IrStatementOrigin.LT, IrStatementOrigin.GT,
+                IrStatementOrigin.LTEQ, IrStatementOrigin.GTEQ -> true
+                else -> false
+            }
+            if (!isEquality && !isOrdering) return false
+            // Comparison origins also cover user-defined compareTo/equals
+            // operator calls, which run user code. Only accept a comparison the
+            // emitter compiles to a NATIVE operator: a null comparison (invalid
+            // compares safely with = / <>) or operands that are primitive for
+            // comparison — mirroring transformOperator's needsStructuralEquals
+            // / needsCompareTo tests.
+            val operands = mutableListOf<IrExpression>()
+            expression.dispatchReceiver?.let { operands.add(it) }
+            for (i in 0 until expression.valueArgumentsCount) {
+                operands.add(expression.getValueArgument(i) ?: return false)
+            }
+            if (operands.size != 2) return false
+            val (left, right) = operands
+            val isNullComparison = (left is IrConst && left.value == null) ||
+                (right is IrConst && right.value == null)
+            val nativeOperands = left.type.isPrimitiveForComparison() &&
+                right.type.isPrimitiveForComparison()
+            if (!(isEquality && isNullComparison) && !nativeOperands) return false
+            isEffectFreeShortCircuitOperand(left) && isEffectFreeShortCircuitOperand(right)
         }
         is IrWhen -> {
             val sc = expression.origin == IrStatementOrigin.ANDAND ||

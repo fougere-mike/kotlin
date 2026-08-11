@@ -84,3 +84,80 @@ function mixedChain_HolderN_Z_k_(h as Dynamic, enabled as Boolean) as Boolean
     return __sc_tmp4
 
 end function
+
+function Scored_create_I_k_(score as Integer) as Object
+    this = {}
+    this.__type = "Scored"
+    this.__proto = ["Scored", "Comparable"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.compareTo_AnyN_k_ = Scored_compareTo_AnyN_k_
+    this.__get_score = Scored___get_score_k_
+    this.score = score
+    return this
+end function
+
+function Scored_compareTo_AnyN_k_(other as Object) as Integer
+    return m.__get_score() - other.__get_score()
+end function
+
+function Scored___get_score_k_() as Integer
+    return m.score
+end function
+
+function whenMultiBranch_Z_HolderN_k_(a as Boolean, h as Dynamic) as String
+    __when_tmp0 = invalid
+    if a then
+        __when_tmp0 = "first"
+    else
+        __sc_tmp5 = false
+        if h <> invalid then
+            __sc_tmp5 = h.check_k_()
+        end if
+        if __sc_tmp5 then
+            __when_tmp0 = "second"
+        else
+            __when_tmp0 = "third"
+        end if
+    end if
+    return __when_tmp0
+
+end function
+
+function comparableGuard_ScoredN_Scored_k_(x as Dynamic, y as Object) as Boolean
+    __sc_tmp6 = false
+    if x <> invalid then
+        __sc_tmp6 = (x.compareTo_AnyN_k_(y) < 0)
+    end if
+    return __sc_tmp6
+
+end function
+
+function continueInWhile_ArrayListI_k_(items as Object) as Integer
+    n = 0
+    __sc_tmp7 = false
+    if items.__get_size() > 0 then
+        __sc_tmp7 = (items.get_I_k_(0) > 0)
+    end if
+    while true
+        if not __sc_tmp7 then
+            exit while
+        end if
+        while true
+            v = items.removeAt_I_k_(0)
+            if v = 2 then
+                exit while
+            end if
+            n = (n + 1)
+            exit while
+        end while
+        __sc_tmp7 = false
+        if items.__get_size() > 0 then
+            __sc_tmp7 = (items.get_I_k_(0) > 0)
+        end if
+    end while
+
+    return n
+end function

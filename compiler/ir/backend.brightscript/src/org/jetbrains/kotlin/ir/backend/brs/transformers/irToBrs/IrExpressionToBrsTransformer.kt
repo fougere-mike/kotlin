@@ -4016,7 +4016,7 @@ class IrExpressionToBrsTransformer(
  * Primitive types can use BrightScript's native = and <> operators.
  * Non-primitive types (classes, Any, type parameters) need brsStructuralEquals.
  */
-private fun IrType.isPrimitiveForComparison(): Boolean {
+internal fun IrType.isPrimitiveForComparison(): Boolean {
     // Get the non-nullable version for checking
     val baseType = this.makeNotNull()
 

@@ -502,8 +502,14 @@ class IrStatementToBrsTransformer(
 
             // CRITICAL: Consume hoisted statements from condition transformation.
             // This handles cases like elvis operator where the condition references
-            // a variable that was declared in an enclosing ELVIS block.
-            precedingStatements.addAll(genCtx.takeHoistedStatements())
+            // a variable that was declared in an enclosing ELVIS block, and
+            // short-circuit guards hoisted from impure && / || conditions.
+            // Kotlin evaluates a branch condition only after all earlier branch
+            // conditions were false: the FIRST branch's hoists are unconditional
+            // and may precede the chain, but a later branch's hoists must run
+            // inside the preceding branch's else (nested below), never before
+            // the chain.
+            val conditionHoisted = genCtx.takeHoistedStatements()
 
             // Handle branch result - certain IR nodes need statement transformation
             val bodyStatement: BrsStatement = when (val branchResult = branch.result) {
@@ -558,10 +564,15 @@ class IrStatementToBrsTransformer(
             )
 
             if (result == null) {
+                precedingStatements.addAll(conditionHoisted)
                 result = ifStmt
                 current = ifStmt
             } else {
-                current?.elseBranch = ifStmt
+                current?.elseBranch = if (conditionHoisted.isEmpty()) {
+                    ifStmt
+                } else {
+                    BrsBlock((conditionHoisted + ifStmt).toMutableList())
+                }
                 current = ifStmt
             }
         }
@@ -584,7 +595,13 @@ class IrStatementToBrsTransformer(
         val conditionHoisted = genCtx.takeHoistedStatements()
         val bodyContainsContinue = containsContinueFor(loop.body, loop)
 
-        if (!context.supportsContinue && bodyContainsContinue) {
+        // The continue wrapper is needed when the target OS lacks native
+        // continue, and ALSO when the condition produced hoisted statements:
+        // native `continue while` would jump past the loop-tail re-evaluation
+        // of the hoisted condition, resuming with a stale temp. The wrapper
+        // turns continue into `exit while` on the inner loop, which falls
+        // through to the re-evaluation below.
+        if (bodyContainsContinue && (!context.supportsContinue || conditionHoisted.isNotEmpty())) {
             // Wrap body in inner while(true) loop to simulate continue.
             // continue becomes "exit while" which exits the inner loop, and the outer loop continues.
             // break needs special handling: set a flag, exit inner, check flag after inner loop.
@@ -751,7 +768,14 @@ class IrStatementToBrsTransformer(
         // First execution runs unconditionally, then subsequent iterations check condition
         val bodyContainsContinue = containsContinueFor(loop.body, loop)
 
-        if (!context.supportsContinue && bodyContainsContinue) {
+        // Transform the condition up front so hoisted statements (elvis temps,
+        // short-circuit guards) are consumed here — previously they leaked into
+        // the enclosing hoist queue — and can steer the wrapper routing below,
+        // mirroring visitWhileLoop.
+        val condition = parent.transformExpression(loop.condition)
+        val conditionHoisted = genCtx.takeHoistedStatements()
+
+        if (bodyContainsContinue && (!context.supportsContinue || conditionHoisted.isNotEmpty())) {
             // Similar to while loop, but do-while executes body first, then checks condition
             // We transform to: body; while(condition) { body }
             // But with continue wrapper for the while part
@@ -775,8 +799,6 @@ class IrStatementToBrsTransformer(
             try {
                 // Transform the body again for the while loop (with continue wrapper)
                 val innerBody = loop.body?.let { transformBlockOrStatement(it) } ?: BrsBlock()
-
-                val condition = parent.transformExpression(loop.condition)
 
                 // Ensure inner loop always exits at the end
                 val innerBodyStatements = when (innerBody) {
@@ -808,6 +830,29 @@ class IrStatementToBrsTransformer(
                     )
                 }
 
+                if (conditionHoisted.isNotEmpty()) {
+                    // do-while checks the condition AFTER the body: evaluate the
+                    // hoisted guard after the first unconditional execution and
+                    // re-evaluate at the end of every iteration. continue (exit
+                    // while on the inner loop) falls through to the re-evaluation.
+                    val fullBodyStatements = mutableListOf<BrsStatement>()
+                    fullBodyStatements.add(
+                        BrsIf(
+                            condition = BrsUnaryOp(BrsUnaryOperator.NOT, condition),
+                            thenBranch = BrsExit(BrsExitKind.WHILE),
+                            elseBranch = null
+                        )
+                    )
+                    fullBodyStatements.addAll(whileBodyStatements)
+                    fullBodyStatements.addAll(conditionHoisted)
+
+                    val whileLoop = BrsWhile(
+                        condition = BrsBooleanLiteral(true),
+                        body = BrsBlock(fullBodyStatements)
+                    )
+                    return BrsBlock((listOf(firstBody) + conditionHoisted + whileLoop).toMutableList())
+                }
+
                 val whileLoop = BrsWhile(
                     condition = condition,
                     body = BrsBlock(whileBodyStatements)
@@ -827,7 +872,29 @@ class IrStatementToBrsTransformer(
         } else {
             // Original transformation without continue wrapper
             val body = loop.body?.let { transformBlockOrStatement(it) } ?: BrsBlock()
-            val condition = parent.transformExpression(loop.condition)
+
+            if (conditionHoisted.isNotEmpty()) {
+                // do-while checks the condition AFTER the body — run the hoisted
+                // guard right after the body, then test. No body duplication.
+                // continue never reaches here: hoisted + continue routes through
+                // the wrapper path above.
+                val bodyStatements = when (body) {
+                    is BrsBlock -> body.statements.toMutableList()
+                    else -> mutableListOf<BrsStatement>(body)
+                }
+                bodyStatements.addAll(conditionHoisted)
+                bodyStatements.add(
+                    BrsIf(
+                        condition = BrsUnaryOp(BrsUnaryOperator.NOT, condition),
+                        thenBranch = BrsExit(BrsExitKind.WHILE),
+                        elseBranch = null
+                    )
+                )
+                return BrsWhile(
+                    condition = BrsBooleanLiteral(true),
+                    body = BrsBlock(bodyStatements)
+                )
+            }
 
             return BrsBlock(mutableListOf(
                 body,
