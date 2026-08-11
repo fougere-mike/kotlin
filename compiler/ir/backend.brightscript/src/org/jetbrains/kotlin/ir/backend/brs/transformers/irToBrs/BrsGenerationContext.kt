@@ -354,6 +354,13 @@ class BrsGenerationContext(
     internal var currentFilePath: String? = null
 
     /**
+     * True while transforming a file that references coroutine machinery
+     * (per-file pre-scan in transformFile). Gates the `__kotlinPumpAttach`
+     * injection in generated component init().
+     */
+    internal var currentFileUsesCoroutines: Boolean = false
+
+    /**
      * Track enum classes encountered during transformation for initialization.
      */
     internal val enumClassNames = mutableListOf<String>()

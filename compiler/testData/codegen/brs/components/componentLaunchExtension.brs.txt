@@ -1,7 +1,7 @@
-// --- File: LambdaSelfWrite.deps.json ---
+// --- File: LaunchExtension.deps.json ---
 {
   "version": 1,
-  "component": "LambdaSelfWrite",
+  "component": "LaunchExtension",
   "dependencies": [
     "AnyKt.brs",
     "ArrayListKt.brs",
@@ -11,6 +11,7 @@
     "CharCategoryBrsKt.brs",
     "CollectionExtensionsKt.brs",
     "CombinedContextKt.brs",
+    "ComponentCoroutinesKt.brs",
     "ContinuationInterceptorKt.brs",
     "ContinuationKt.brs",
     "CoroutineDispatcherKt.brs",
@@ -58,9 +59,9 @@
 }
 
 
-// --- File: LambdaSelfWrite.xml ---
+// --- File: LaunchExtension.xml ---
 <?xml version="1.0" encoding="utf-8" ?>
-<component name="LambdaSelfWrite" extends="Group">
+<component name="LaunchExtension" extends="Group">
     <interface>
         <field id="status" type="string" />
     </interface>
@@ -72,6 +73,7 @@
     <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CoroutineDispatcherKt.brs" />
@@ -115,77 +117,61 @@
     <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
-    <script type="text/brightscript" uri="pkg:/components/LambdaSelfWrite/LambdaSelfWriteKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/LaunchExtension/LaunchExtensionKt.brs" />
 </component>
 
 
-// --- File: lambdaSelfWriteToFieldKt.brs ---
+// --- File: componentLaunchExtensionKt.brs ---
 sub init()
     __kotlinPumpAttach(m.top, m.global)
     m.top.status = ""
-    m.internalCount = 0
-    m.__get_status_k_ = LambdaSelfWrite___get_status_k_
-    m.__set_status_Str_k_ = LambdaSelfWrite___set_status_Str_k_
-    m.__get_internalCount_k_ = LambdaSelfWrite___get_internalCount_k_
-    m.__set_internalCount_I_k_ = LambdaSelfWrite___set_internalCount_I_k_
-    launch_rCoroutineScope_CoroutineContext_SuspendFunction1CoroutineScopeV_k_(CoroutineScope_CoroutineContext_k_(Dispatchers_getInstance().__get_Main()), invalid, LambdaSelfWrite_slambda_create_LambdaSelfWrite_ContinuationAnyNN_k_(m, invalid))
-    block = LambdaSelfWrite_lambda_create_LambdaSelfWrite_k_(m)
-    block.invoke_k_()
+    m.__get_status_k_ = LaunchExtension___get_status_k_
+    m.__set_status_Str_k_ = LaunchExtension___set_status_Str_k_
+    launch_rComponentBase_CoroutineContext_SuspendFunction1CoroutineScopeV_k_(m, invalid, LaunchExtension_slambda_create_LaunchExtension_ContinuationAnyNN_k_(m, invalid))
 end sub
 
 function onKeyEvent(key as String, press as Boolean) as Boolean
     return false
 end function
 
-function LambdaSelfWrite___get_status_k_() as String
+function LaunchExtension___get_status_k_() as String
     return m.top.status
 end function
 
-sub LambdaSelfWrite___set_status_Str_k_(value as String)
+sub LaunchExtension___set_status_Str_k_(value as String)
     m.top.status = value
 end sub
 
-function LambdaSelfWrite___get_internalCount_k_() as Integer
-    return m.internalCount
-end function
-
-sub LambdaSelfWrite___set_internalCount_I_k_(value as Integer)
-    m.internalCount = value
-end sub
-
-function LambdaSelfWrite_slambda_create_LambdaSelfWrite_ContinuationAnyNN_k_(this_0 as Object, resultContinuation as Dynamic) as Object
+function LaunchExtension_slambda_create_LaunchExtension_ContinuationAnyNN_k_(this_0 as Object, resultContinuation as Dynamic) as Object
     this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
     this._super = {}
     this._super.invoke_AnyN_Continuation_k_ = this.invoke_AnyN_Continuation_k_
     this._super.doResume_k_ = this.doResume_k_
     this._super.create_AnyN_Continuation_k_ = this.create_AnyN_Continuation_k_
-    this.__proto = ["LambdaSelfWrite_slambda", "SuspendFunction1", this.__proto]
-    this.__type = "LambdaSelfWrite_slambda"
-    this.invoke_AnyN_Continuation_k_ = LambdaSelfWrite_slambda_invoke_AnyN_Continuation_k_
-    this.doResume_k_ = LambdaSelfWrite_slambda_doResume_k_
-    this.create_AnyN_Continuation_k_ = LambdaSelfWrite_slambda_create_AnyN_Continuation_k_
+    this.__proto = ["LaunchExtension_slambda", "SuspendFunction1", this.__proto]
+    this.__type = "LaunchExtension_slambda"
+    this.invoke_AnyN_Continuation_k_ = LaunchExtension_slambda_invoke_AnyN_Continuation_k_
+    this.doResume_k_ = LaunchExtension_slambda_doResume_k_
+    this.create_AnyN_Continuation_k_ = LaunchExtension_slambda_create_AnyN_Continuation_k_
     this.this_0 = this_0
     return this
 end function
 
-function LambdaSelfWrite_slambda_invoke_AnyN_Continuation_k_(_this_launch as Object, _completion as Object) as Object
+function LaunchExtension_slambda_invoke_AnyN_Continuation_k_(_this_launch as Object, _completion as Object) as Object
     tmp = m.create_AnyN_Continuation_k_(_this_launch, _completion)
     tmp.__set_result(invalid)
     tmp.__set_exception(invalid)
     return tmp.doResume_k_()
 end function
 
-function LambdaSelfWrite_slambda_doResume_k_() as Dynamic
+function LaunchExtension_slambda_doResume_k_() as Dynamic
     suspendResult = m.__get_result()
     while true
                 try
             tmp = m.__get_state()
             if __kotlin_identityEquals(tmp, 0) then
                 m.__set_exceptionState(1)
-                m.this_0.top.status = "from-coroutine"
-                echo = m.this_0.top.status
-                m.this_0.top.status = (echo + "!")
-                m.this_0.__set_internalCount_I_k_(m.this_0.__get_internalCount_k_() + 1)
+                m.this_0.top.status = "done"
 
                                 return invalid
             else if __kotlin_identityEquals(tmp, 1) then
@@ -197,25 +183,8 @@ function LambdaSelfWrite_slambda_doResume_k_() as Dynamic
     end while
 end function
 
-function LambdaSelfWrite_slambda_create_AnyN_Continuation_k_(_this_launch as Dynamic, completion as Object) as Object
-    i = LambdaSelfWrite_slambda_create_LambdaSelfWrite_ContinuationAnyNN_k_(m.this_0, completion)
+function LaunchExtension_slambda_create_AnyN_Continuation_k_(_this_launch as Dynamic, completion as Object) as Object
+    i = LaunchExtension_slambda_create_LaunchExtension_ContinuationAnyNN_k_(m.this_0, completion)
     i._this_launch = _this_launch
     return i
 end function
-
-function LambdaSelfWrite_lambda_create_LambdaSelfWrite_k_(this_0 as Object) as Object
-    this = {}
-    this.__type = "LambdaSelfWrite_lambda"
-    this.__proto = ["LambdaSelfWrite_lambda", "Function0", "Function"]
-    this.__id = __kotlin_nextObjectId()
-    this.equals = Any_equals_AnyN_k_
-    this.hashCode = Any_hashCode_k_
-    this.toString = Any_toString_k_
-    this.invoke_k_ = LambdaSelfWrite_lambda_invoke_k_
-    this.this_0 = this_0
-    return this
-end function
-
-sub LambdaSelfWrite_lambda_invoke_k_()
-    m.this_0.top.status = "from-lambda"
-end sub

@@ -94,6 +94,10 @@ class IrToBrsTransformer(
         // so a per-file scan sees every creation site)
         collectCapturedComponentSelfFields(irFile)
 
+        // Decide whether components in this file get the pump-scheduler attach
+        // injected into their generated init()
+        genCtx.currentFileUsesCoroutines = fileUsesCoroutines(irFile)
+
         for (declaration in irFile.declarations) {
             when (declaration) {
                 is IrFunction -> {
@@ -205,6 +209,67 @@ class IrToBrsTransformer(
             }
         }
     }
+
+    /**
+     * True when [irFile] contains any reference into the coroutine machinery —
+     * gates the `__kotlinPumpAttach(m.top, m.global)` injection in the generated
+     * init() of components declared in this file. File granularity matches
+     * script-include granularity (dependencies are computed per file), so a
+     * positive match adds no include bloat beyond what the file already pulls.
+     *
+     * KNOWN HOLE: coroutine use hidden entirely inside ANOTHER file's helper
+     * (the component's own file never naming a coroutine symbol) escapes this
+     * scan; the lazy attach in kotlin.brs componentScope()/launch() covers
+     * those components at runtime.
+     */
+    private fun fileUsesCoroutines(irFile: IrFile): Boolean {
+        var found = false
+        irFile.acceptVoid(object : IrVisitorVoid() {
+            override fun visitElement(element: IrElement) {
+                if (!found) element.acceptChildrenVoid(this)
+            }
+
+            override fun visitClass(declaration: IrClass) {
+                if (found) return
+                // Lowered suspend lambdas/state machines extend CoroutineImpl —
+                // catches kotlin.brs.launch{} blocks whose call symbol lives
+                // outside kotlin.coroutines.
+                for (superType in declaration.superTypes) {
+                    val fq = superType.classFqName?.asString() ?: continue
+                    if (isCoroutineMachineryFqName(fq)) {
+                        found = true
+                        return
+                    }
+                }
+                declaration.acceptChildrenVoid(this)
+            }
+
+            override fun visitCall(expression: IrCall) {
+                if (found) return
+                val fq = expression.symbol.owner.fqNameWhenAvailable?.asString()
+                if (fq != null && isCoroutineMachineryFqName(fq)) {
+                    found = true
+                    return
+                }
+                expression.acceptChildrenVoid(this)
+            }
+
+            override fun visitConstructorCall(expression: IrConstructorCall) {
+                if (found) return
+                val fq = expression.symbol.owner.fqNameWhenAvailable?.asString()
+                if (fq != null && isCoroutineMachineryFqName(fq)) {
+                    found = true
+                    return
+                }
+                expression.acceptChildrenVoid(this)
+            }
+        })
+        return found
+    }
+
+    private fun isCoroutineMachineryFqName(fq: String): Boolean =
+        fq.startsWith("kotlin.coroutines.") ||
+            fq == "kotlin.brs.launch" || fq == "kotlin.brs.componentScope"
 
     /**
      * True when [expression] is (through value-preserving casts) a component's own
@@ -851,6 +916,28 @@ class IrToBrsTransformer(
                         BrsDotAccess(BrsDotAccess(BrsMRef(), "top"), "functionName"),
                         BrsBinaryOperator.EQ,
                         BrsStringLiteral(KOTLIN_TASK_MAIN_FUNCTION_NAME)
+                    )
+                )
+            )
+        }
+
+        // Self-scheduling coroutine pump: components in coroutine-using files
+        // get the scheduler attached at init, so every dispatch path (launch{},
+        // legacy CoroutineScope(Dispatchers.Main), runTask resumptions, delay
+        // deadlines) wakes the render thread without user-wired pump timers.
+        // Runs BEFORE property initializers, which may already launch work.
+        // Task components are excluded: their init runs on the render thread
+        // but their work runs on the task thread, where the run loop pumps.
+        if (genCtx.currentFileUsesCoroutines && !isConcreteTaskComponent(irClass)) {
+            bodyStatements.add(
+                BrsExpressionStatement(
+                    createFunctionCall(
+                        "__kotlinPumpAttach",
+                        mutableListOf(
+                            BrsDotAccess(BrsMRef(), "top"),
+                            BrsDotAccess(BrsMRef(), "global")
+                        ),
+                        context
                     )
                 )
             )

@@ -187,6 +187,15 @@ class BrsComponentGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun layoutStubAccess() = runTest("components/layoutStubAccess.kt")
+
+    @Test
+    fun componentLaunchExtension() = runTest("components/componentLaunchExtension.kt")
+
+    @Test
+    fun componentPumpAttachMethodUse() = runTest("components/componentPumpAttachMethodUse.kt")
+
+    @Test
+    fun componentNoCoroutinesNoPumpAttach() = runTest("components/componentNoCoroutinesNoPumpAttach.kt")
 }
 
 // ==================== Intrinsics Tests ====================
