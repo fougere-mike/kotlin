@@ -25,15 +25,27 @@ public abstract class CoroutineDispatcher : ContinuationInterceptor {
 
     /**
      * Key for [CoroutineDispatcher] in a coroutine context.
+     *
+     * NOTE: this is NOT the element key dispatchers are stored under — see [key].
      */
     @Suppress("BRS_NAME_CASE_CLASH")
     public companion object Key : CoroutineContext.Key<CoroutineDispatcher>
 
     /**
-     * Returns the key for this dispatcher element.
+     * The element key: [ContinuationInterceptor.Key].
+     *
+     * Every framework lookup (`context[ContinuationInterceptor]` in
+     * `intercepted()`, `delay`'s resume path, `TaskRunner.resumeTask`,
+     * `withContext`) queries the [ContinuationInterceptor] companion key, and
+     * key matching is identity-based on this platform (no polymorphic-key
+     * machinery). When this returned the [CoroutineDispatcher] companion
+     * instead, those lookups NEVER matched — coroutine bodies and resumptions
+     * ran inline and the dispatch queue sat unused (root cause found by the
+     * PumpScheduler backend assertion, 2026-08-10). Dispatchers must be
+     * stored under the one key the framework asks for.
      */
     @Suppress("BRS_NAME_CASE_CLASH")
-    override val key: CoroutineContext.Key<*> get() = CoroutineDispatcher
+    override val key: CoroutineContext.Key<*> get() = ContinuationInterceptor
 
     /**
      * Dispatches execution of a runnable [block] onto another thread in the given [context].

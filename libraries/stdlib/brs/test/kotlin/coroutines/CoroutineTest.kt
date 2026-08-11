@@ -231,6 +231,24 @@ fun TestRunner.dispatcherTests() {
             assertNotNull(dispatcher)
         }
 
+        // Root-cause pin (2026-08-10): every framework lookup — intercepted(),
+        // delay's resume, TaskRunner.resumeTask, withContext — queries
+        // context[ContinuationInterceptor], and key matching is identity-based.
+        // Dispatchers must therefore be stored under ContinuationInterceptor.Key;
+        // when their key was the CoroutineDispatcher companion, these lookups
+        // returned null and ALL coroutine bodies/resumptions ran inline (the
+        // dispatch queue was never used).
+        test("dispatcher resolvable via ContinuationInterceptor key") {
+            val direct = kotlin.coroutines.dispatchers.Dispatchers.Main[ContinuationInterceptor]
+            assertNotNull(direct)
+        }
+
+        test("plus Job keeps the dispatcher resolvable") {
+            val ctx = kotlin.coroutines.dispatchers.Dispatchers.Main + Job()
+            assertNotNull(ctx[ContinuationInterceptor])
+            assertNotNull(ctx[Job])
+        }
+
         test("Unconfined dispatcher does not need dispatch") {
             val dispatcher = kotlin.coroutines.dispatchers.Dispatchers.Unconfined
             assertFalse(dispatcher.isDispatchNeeded(EmptyCoroutineContext))
