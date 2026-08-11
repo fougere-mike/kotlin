@@ -29,6 +29,9 @@ class BrsDeclarationGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun dataClassWithCompanion() = runTest("declarations/dataClassWithCompanion.kt")
+
+    @Test
+    fun namedArgsSkipDefaults() = runTest("declarations/namedArgsSkipDefaults.kt")
 }
 
 // ==================== Expression Tests ====================

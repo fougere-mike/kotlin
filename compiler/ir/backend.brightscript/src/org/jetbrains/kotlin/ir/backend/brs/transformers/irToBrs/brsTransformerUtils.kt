@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.ir.backend.brs.transformers.irToBrs
 
+import org.jetbrains.kotlin.brs.backend.ast.BrsArrayLiteral
 import org.jetbrains.kotlin.brs.backend.ast.BrsConditional
 import org.jetbrains.kotlin.brs.backend.ast.BrsExpression
 import org.jetbrains.kotlin.brs.backend.ast.BrsFunctionCall
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.brs.backend.ast.BrsType
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
 import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.expressions.IrBreak
 import org.jetbrains.kotlin.ir.expressions.IrCall
@@ -479,6 +481,20 @@ internal fun isEffectFreeShortCircuitOperand(expression: IrExpression): Boolean 
         else -> false
     }
 }
+
+/**
+ * Placeholder for a value argument that is absent at the call site.
+ * Default-valued parameters are filled callee-side (the callee guards on
+ * invalid), so invalid preserves the position. A missing VARARG has no
+ * callee-side default — the absent argument IS the empty array, and
+ * callees index/dot into it immediately (e.g. toList_rArr_k_), so it
+ * must materialize as [] at the call site.
+ */
+fun absentArgumentPlaceholder(function: IrFunction, index: Int): BrsExpression =
+    if (function.valueParameters.getOrNull(index)?.varargElementType != null)
+        BrsArrayLiteral(mutableListOf())
+    else
+        BrsInvalidLiteral()
 
 /**
  * Ensure parameters satisfy BrightScript's constraint:

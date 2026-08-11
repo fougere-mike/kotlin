@@ -428,33 +428,7 @@ class IrToBrsTransformer(
         }
 
         // Generate runtime checks for parameters with default values
-        // When caller passes `invalid`, substitute with the actual default value
-        // BrightScript's default parameter syntax only applies when args are omitted, not when invalid is passed
-        val defaultValueChecks = mutableListOf<BrsStatement>()
-        irFunction.valueParameters.forEach { param ->
-            val defaultExpr = param.defaultValue?.expression
-            if (defaultExpr != null) {
-                val paramName = sanitizeParameterName(param.name.asString())
-                val defaultValue = transformExpression(defaultExpr)
-                defaultValueChecks.add(
-                    BrsIf(
-                        condition = BrsBinaryOp(
-                            BrsIdentifier(paramName),
-                            BrsBinaryOperator.EQ,
-                            BrsIdentifier("invalid")
-                        ),
-                        thenBranch = BrsExpressionStatement(
-                            BrsBinaryOp(
-                                BrsIdentifier(paramName),
-                                BrsBinaryOperator.EQ,
-                                defaultValue
-                            )
-                        ),
-                        elseBranch = null
-                    )
-                )
-            }
-        }
+        val defaultValueChecks = defaultValueGuards(irFunction)
         if (defaultValueChecks.isNotEmpty()) {
             val combinedStatements = defaultValueChecks.toMutableList()
             combinedStatements.addAll(body.statements)
@@ -490,6 +464,36 @@ class IrToBrsTransformer(
             BrsFunction(name, parameters.toMutableList(), effectiveReturnType, body)
         }
     }
+
+    /**
+     * Runtime guards that materialize a parameter's default value when the
+     * caller passed `invalid` — the call-site marker for a skipped defaulted
+     * parameter (see absentArgumentPlaceholder). BrightScript's own default
+     * parameter syntax only applies when arguments are OMITTED, so these
+     * guards are what make the invalid marker convention work. They must be
+     * the first statements of the body, before anything reads the parameters
+     * (constructor super-call arguments included).
+     */
+    private fun defaultValueGuards(irFunction: IrFunction): List<BrsStatement> =
+        irFunction.valueParameters.mapNotNull { param ->
+            val defaultExpr = param.defaultValue?.expression ?: return@mapNotNull null
+            val paramName = sanitizeParameterName(param.name.asString())
+            BrsIf(
+                condition = BrsBinaryOp(
+                    BrsIdentifier(paramName),
+                    BrsBinaryOperator.EQ,
+                    BrsIdentifier("invalid")
+                ),
+                thenBranch = BrsExpressionStatement(
+                    BrsBinaryOp(
+                        BrsIdentifier(paramName),
+                        BrsBinaryOperator.EQ,
+                        transformExpression(defaultExpr)
+                    )
+                ),
+                elseBranch = null
+            )
+        }
 
     /**
      * Transform class declarations into top-level functions and statements.
@@ -1708,8 +1712,12 @@ class IrToBrsTransformer(
                 val initExpr = init.expression
                 if (initExpr is IrEnumConstructorCall) {
                     for (i in 0 until initExpr.valueArgumentsCount) {
-                        initExpr.getValueArgument(i)?.let { arg ->
+                        val arg = initExpr.getValueArgument(i)
+                        if (arg != null) {
                             args.add(transformExpression(arg))
+                        } else {
+                            // Absent argument: default (filled callee-side) or empty vararg
+                            args.add(absentArgumentPlaceholder(initExpr.symbol.owner, i))
                         }
                     }
                 }
@@ -1862,6 +1870,9 @@ class IrToBrsTransformer(
 
         // Build constructor body
         val bodyStatements = mutableListOf<BrsStatement>()
+
+        // Materialize defaults over passed-invalid before anything reads the parameters
+        bodyStatements.addAll(defaultValueGuards(constructor))
 
         // this = {}
         bodyStatements.add(
@@ -2423,6 +2434,10 @@ class IrToBrsTransformer(
         // Build constructor body
         val bodyStatements = mutableListOf<BrsStatement>()
 
+        // Materialize defaults over passed-invalid FIRST — super-call and
+        // this(...)-delegation arguments below read the parameters.
+        bodyStatements.addAll(defaultValueGuards(constructor))
+
         // Check if this constructor delegates to another constructor of the same class (this(...))
         // If so, we just call that constructor and return the result - no object initialization here
         val delegatingCall = findDelegatingConstructorCall(constructor)
@@ -2910,7 +2925,12 @@ class IrToBrsTransformer(
         val arguments = mutableListOf<BrsExpression>()
 
         for (i in 0 until delegatingCall.valueArgumentsCount) {
-            val arg = delegatingCall.getValueArgument(i) ?: continue
+            val arg = delegatingCall.getValueArgument(i)
+            if (arg == null) {
+                // Absent argument: default (filled callee-side) or empty vararg
+                arguments.add(absentArgumentPlaceholder(delegatingCall.symbol.owner, i))
+                continue
+            }
 
             // Flatten nested blocks and extract the final expression value
             val (stmts, valueExpr) = flattenBlockForHoisting(arg)

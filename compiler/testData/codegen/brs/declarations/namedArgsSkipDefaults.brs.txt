@@ -1,0 +1,193 @@
+// --- File: namedArgsSkipDefaultsKt.brs ---
+function C_create_I_Z_Z_Z_k_(a as Integer, b = false, c = false, d = false) as Object
+    if b = invalid then
+        b = false
+    end if
+    if c = invalid then
+        c = false
+    end if
+    if d = invalid then
+        d = false
+    end if
+    this = {}
+    this.__type = "C"
+    this.__proto = ["C"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.__get_a = C___get_a_k_
+    this.__get_b = C___get_b_k_
+    this.__get_c = C___get_c_k_
+    this.__get_d = C___get_d_k_
+    this.a = a
+    this.b = b
+    this.c = c
+    this.d = d
+    return this
+end function
+
+function C___get_a_k_() as Integer
+    return m.a
+end function
+
+function C___get_b_k_() as Boolean
+    return m.b
+end function
+
+function C___get_c_k_() as Boolean
+    return m.c
+end function
+
+function C___get_d_k_() as Boolean
+    return m.d
+end function
+
+function D_create_I_k_(x as Integer) as Object
+    this = C_create_I_Z_Z_Z_k_(x, invalid, true, invalid)
+    this._super = {}
+    this.__proto = ["D", this.__proto]
+    this.__type = "D"
+    return this
+end function
+
+function E_create_I_Z_Str_k_(__name as String, __ordinal as Integer, x as Integer, flag = false, tag = "t") as Object
+    if flag = invalid then
+        flag = false
+    end if
+    if tag = invalid then
+        tag = "t"
+    end if
+    this = {}
+    this.__type = "E"
+    this.name = __name
+    this.ordinal = __ordinal
+    this.__proto = ["E", "Comparable"]
+    this.__id = __kotlin_nextObjectId()
+    this.x = x
+    this.flag = flag
+    this.tag = tag
+    this.__get_x = E___get_x_k_
+    this.__get_flag = E___get_flag_k_
+    this.__get_tag = E___get_tag_k_
+    return this
+end function
+
+sub E_initEntries()
+    if m.E_entriesInitialized = true then
+        return
+    end if
+    m.E_entriesInitialized = true
+    m.E_A = E_create_I_Z_Str_k_("A", 0, 1, invalid, "z")
+end sub
+
+function E_values() as Object
+    E_initEntries()
+    return [m.E_A]
+end function
+
+function E_valueOf(name as String) as Object
+    E_initEntries()
+    if name = "A" then
+        return m.E_A
+    else
+        return invalid
+    end if
+end function
+
+function E___get_x_k_() as Integer
+    return m.x
+end function
+
+function E___get_flag_k_() as Boolean
+    return m.flag
+end function
+
+function E___get_tag_k_() as String
+    return m.tag
+end function
+
+function O_create_k_() as Object
+    this = {}
+    this.__type = "O"
+    this.__proto = ["O"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.g_I_Z_Z_Z_k_ = O_g_I_Z_Z_Z_k_
+    return this
+end function
+
+function O_getInstance() as Object
+    if GetGlobalAA().O_instance = invalid then
+        GetGlobalAA().O_instance = O_create_k_()
+    end if
+    return GetGlobalAA().O_instance
+end function
+
+function O_g_I_Z_Z_Z_k_(a as Integer, b = false, c = false, d = false) as Integer
+    if b = invalid then
+        b = false
+    end if
+    if c = invalid then
+        c = false
+    end if
+    if d = invalid then
+        d = false
+    end if
+    r = a
+    if b then
+        r = (r + 1)
+    end if
+    if c then
+        r = (r + 2)
+    end if
+    if d then
+        r = (r + 4)
+    end if
+    return r
+end function
+
+function f_I_Z_Z_Z_k_(a as Integer, b = false, c = false, d = false) as Integer
+    if b = invalid then
+        b = false
+    end if
+    if c = invalid then
+        c = false
+    end if
+    if d = invalid then
+        d = false
+    end if
+    r = a
+    if b then
+        r = (r + 1)
+    end if
+    if c then
+        r = (r + 2)
+    end if
+    if d then
+        r = (r + 4)
+    end if
+    return r
+end function
+
+function testConstructorSkip_k_() as Object
+    return C_create_I_Z_Z_Z_k_(1, invalid, true, invalid)
+end function
+
+function testFunctionSkip_k_() as Integer
+    return f_I_Z_Z_Z_k_(1, invalid, invalid, true)
+end function
+
+function testObjectMethodSkip_k_() as Integer
+    return O_getInstance().g_I_Z_Z_Z_k_(1, invalid, true, invalid)
+end function
+
+function testSuperSkip_k_() as Object
+    return D_create_I_k_(2)
+end function
+
+function testEnumSkip_k_() as String
+    return "z"
+end function

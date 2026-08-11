@@ -580,19 +580,8 @@ class IrExpressionToBrsTransformer(
 
     // ==================== Function Calls ====================
 
-    /**
-     * Placeholder for a value argument that is absent at the call site.
-     * Default-valued parameters are filled callee-side (the callee guards on
-     * invalid), so invalid preserves the position. A missing VARARG has no
-     * callee-side default — the absent argument IS the empty array, and
-     * callees index/dot into it immediately (e.g. toList_rArr_k_), so it
-     * must materialize as [] at the call site.
-     */
-    private fun absentArgumentPlaceholder(function: IrFunction, index: Int): BrsExpression =
-        if (function.valueParameters.getOrNull(index)?.varargElementType != null)
-            BrsArrayLiteral(mutableListOf())
-        else
-            BrsInvalidLiteral()
+    // absentArgumentPlaceholder (the shared absent-argument marker for every
+    // argument-assembly site) lives in brsTransformerUtils.kt.
 
     override fun visitCall(expression: IrCall, data: Unit): BrsExpression {
         val function = expression.symbol.owner
@@ -1346,8 +1335,12 @@ class IrExpressionToBrsTransformer(
                     val args = mutableListOf<BrsExpression>()
                     args.add(receiverExpr)
                     for (i in 0 until expression.valueArgumentsCount) {
-                        expression.getValueArgument(i)?.let { arg ->
+                        val arg = expression.getValueArgument(i)
+                        if (arg != null) {
                             args.add(arg.accept(this, data))
+                        } else {
+                            // Absent argument: default (filled callee-side) or empty vararg
+                            args.add(absentArgumentPlaceholder(function, i))
                         }
                     }
                     // For extension functions on primitives, the function name should NOT have
@@ -1390,8 +1383,10 @@ class IrExpressionToBrsTransformer(
                 // as methods on the singleton instance, not as standalone functions.
                 val parentClass = function.parent as? IrClass
                 if (parentClass?.kind == ClassKind.OBJECT) {
-                    val args = (0 until expression.valueArgumentsCount).mapNotNull { i ->
-                        expression.getValueArgument(i)?.let { it.accept(this, data) }
+                    val args = (0 until expression.valueArgumentsCount).map { i ->
+                        // Null argument: default (filled callee-side) or empty vararg
+                        expression.getValueArgument(i)?.accept(this, data)
+                            ?: absentArgumentPlaceholder(function, i)
                     }
                     val singletonName = context.getBrsName(parentClass)
                     context.recordFunctionDependency("${singletonName}_getInstance")
@@ -2791,8 +2786,16 @@ class IrExpressionToBrsTransformer(
         // Add regular constructor arguments
         // For local class constructors, check if arguments are for captured variables
         // If a captured variable is a shared (boxed) variable, pass the box, not .value
+        val isExternalTarget = irClass.isExternal || isExternalClass(irClass)
         arguments.addAll((0 until expression.valueArgumentsCount).mapNotNull { i ->
-            val arg = expression.getValueArgument(i) ?: return@mapNotNull null
+            val arg = expression.getValueArgument(i)
+            if (arg == null) {
+                // Generated _create_ callees guard invalid with their default
+                // preamble, so the placeholder preserves positional alignment.
+                // External targets compile to native CreateObject, which has no
+                // preamble — absent trailing arguments must stay truncated.
+                return@mapNotNull if (isExternalTarget) null else absentArgumentPlaceholder(constructor, i)
+            }
 
             // Check if this argument is for a bound (captured) value parameter
             val param = constructor.valueParameters.getOrNull(i)
@@ -2858,8 +2861,12 @@ class IrExpressionToBrsTransformer(
         val constructor = expression.symbol.owner
         val irClass = constructor.parentAsClass
 
+        val isExternalTarget = isExternalClass(irClass)
         val arguments = (0 until expression.valueArgumentsCount).mapNotNull { i ->
-            expression.getValueArgument(i)?.let { it.accept(this, data) }
+            // Null argument: placeholder preserves positional alignment for
+            // generated callees; external callees keep trailing truncation.
+            expression.getValueArgument(i)?.accept(this, data)
+                ?: if (isExternalTarget) null else absentArgumentPlaceholder(constructor, i)
         }
 
         // Record dependency for delegating constructor call (e.g., calling super constructor)
@@ -2885,8 +2892,10 @@ class IrExpressionToBrsTransformer(
         val constructor = expression.symbol.owner
         val irClass = constructor.parentAsClass
 
-        val arguments = (0 until expression.valueArgumentsCount).mapNotNull { i ->
-            expression.getValueArgument(i)?.let { it.accept(this, data) }
+        val arguments = (0 until expression.valueArgumentsCount).map { i ->
+            // Null argument: default (filled callee-side) or empty vararg
+            expression.getValueArgument(i)?.accept(this, data)
+                ?: absentArgumentPlaceholder(constructor, i)
         }
 
         // Record dependency for enum constructor call
