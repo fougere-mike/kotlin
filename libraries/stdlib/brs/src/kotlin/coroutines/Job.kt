@@ -5,229 +5,390 @@
 
 package kotlin.coroutines
 
+import kotlin.coroutines.cancellation.CancellationException
+
 /**
- * A background job. Conceptually, a job is a cancellable thing with a life-cycle
- * that culminates in its completion.
- *
- * Jobs can be arranged into parent-child hierarchies where cancellation of a parent
- * leads to immediate cancellation of all its children recursively.
- *
- * The most basic instances of [Job] interface are created like this:
- *
- * * **Coroutine job** is created with [launch][CoroutineScope.launch] coroutine builder.
- *   It runs a specified block of code and completes on completion of this block.
- * * **[CompletableJob]** is created with a `Job()` factory function.
- *   It is completed by calling [CompletableJob.complete].
- *
- * Conceptually, an execution of a job does not produce a result value. Jobs are launched
- * solely for their side-effects.
+ * A handle to a registration (completion / cancel-request handler) that can be
+ * disposed to deregister it. Disposal after firing is a no-op.
  */
+public interface DisposableHandle {
+    public fun dispose()
+}
+
+internal object NoopHandle : DisposableHandle {
+    override fun dispose() {}
+}
+
 public interface Job : CoroutineContext.Element {
 
-    /**
-     * Key for [Job] instance in the coroutine context.
-     */
     @Suppress("BRS_NAME_CASE_CLASH")
     public companion object Key : CoroutineContext.Key<Job>
 
-    /**
-     * Returns `true` when this job is active -- it was already started and has not completed nor was cancelled yet.
-     */
+    /** Started and neither terminal nor cancel-requested. */
     public val isActive: Boolean
 
-    /**
-     * Returns `true` when this job has completed for any reason.
-     */
+    /** TERMINAL: body finished AND all children finished (any outcome). */
     public val isCompleted: Boolean
 
-    /**
-     * Returns `true` if this job was cancelled for any reason.
-     */
+    /** True from the moment cancellation (or failure) is requested. */
     public val isCancelled: Boolean
 
-    /**
-     * Cancels this job with an optional [cause].
-     *
-     * A [cause] can be used to specify an error message or to provide other details
-     * for debugging purposes.
-     */
     public fun cancel(cause: Throwable? = null)
 
     /**
-     * Suspends the coroutine until this job is complete.
-     *
-     * This suspending function is cancellable and **always** checks for a cancellation
-     * of the invoking coroutine's Job.
+     * Suspends until this job reaches its terminal state. Returns normally
+     * even when the target was cancelled or failed — only the CALLER's own
+     * cancellation makes join throw ([CancellationException]).
      */
     public suspend fun join()
 
-    /**
-     * Starts coroutine related to this job (if any) if it was not started yet.
-     *
-     * @return `true` if this invocation actually started the job.
-     */
     public fun start(): Boolean
+
+    /**
+     * Registers [handler] to run exactly once when this job reaches its
+     * terminal state, with the terminal cause: null = success,
+     * [CancellationException] = cancelled, anything else = failure.
+     * Runs the handler synchronously at registration when already terminal.
+     * The returned handle deregisters it (no-op after firing).
+     */
+    public fun invokeOnCompletion(handler: (Throwable?) -> Unit): DisposableHandle
 }
 
-/**
- * A job that can be completed using [complete] function.
- */
 public interface CompletableJob : Job {
-    /**
-     * Completes this job.
-     *
-     * The result of this function depends on the state of this job:
-     * * If this job is already completed, returns `false`.
-     * * If this job is active, moves it into completing state (only possible for uncompleted jobs),
-     *   returns `true`.
-     */
+    /** Marks the body finished successfully. False if already finished/cancelled. */
     public fun complete(): Boolean
 
-    /**
-     * Completes this job exceptionally with a given [exception].
-     */
+    /** Marks the body failed. A [CancellationException] cancels quietly instead. */
     public fun completeExceptionally(exception: Throwable): Boolean
 }
 
-/**
- * Creates a simple job.
- */
+/** Creates a plain job (no coroutine body): cancel() finishes it immediately. */
 public fun Job(parent: Job? = null): CompletableJob = JobImpl(parent)
 
 /**
- * Basic implementation of [CompletableJob].
+ * A job whose CHILDREN fail independently: a failed child never cancels this
+ * job or its other children (the child reports its own failure instead).
+ * Used as the root of [kotlin.brs.componentScope].
  */
-internal class JobImpl(private val parent: Job? = null) : CompletableJob {
-    private var _isActive: Boolean = true
-    private var _isCompleted: Boolean = false
-    private var _isCancelled: Boolean = false
-    private var completionException: Throwable? = null
+public fun SupervisorJob(parent: Job? = null): CompletableJob =
+    JobImpl(parent, isSupervisor = true)
+
+/** Resolves the concrete JobImpl participating in the hierarchy, if any. */
+internal fun jobImplOf(job: Job?): JobImpl? {
+    if (job is JobImpl) return job
+    if (job is CompletableDeferredImpl<*>) return job.innerJob
+    return null
+}
+
+/**
+ * Job state machine. Single-threaded per component (GetGlobalAA scoping), so
+ * plain booleans and lists are sound — no atomics, no locks.
+ *
+ * Lifecycle: Active -> Completing (body finished OR cancel requested, children
+ * still winding down) -> terminal Completed/Cancelled. The terminal transition
+ * fires ONLY when the body is done and the children list is empty; that is
+ * what makes coroutineScope's "no child still running when it returns"
+ * guarantee real.
+ *
+ * @param hasBody a coroutine writes the body outcome later (cancel must wait
+ *   for it); plain Job()/latches have none (cancel finishes immediately).
+ * @param isSupervisor children's failures are ignored (they self-report).
+ * @param upcallsFailure scope jobs (coroutineScope/withContext/withTimeout)
+ *   set false: their failure is DELIVERED to the parked caller (rethrow at
+ *   the call site), never upcalled into the caller's job.
+ * @param reportsUnhandled launch sets true: a failure that has no
+ *   non-supervisor parent to propagate to is printed to the console.
+ */
+internal open class JobImpl(
+    parent: Job? = null,
+    internal val hasBody: Boolean = false,
+    internal val isSupervisor: Boolean = false,
+    internal val upcallsFailure: Boolean = true,
+    internal val reportsUnhandled: Boolean = false,
+) : CompletableJob {
+
+    internal val parentImpl: JobImpl? = jobImplOf(parent)
+
+    private var bodyCompleted: Boolean = false
+    private var cancelRequested: Boolean = false
+    private var terminal: Boolean = false
+
+    /** Null iff completed successfully; CancellationException iff cancelled. */
+    internal var completionCauseInternal: Throwable? = null
+        private set
+
+    private val children = mutableListOf<JobImpl>()
+    private val completionHandlers = mutableListOf<HandlerEntry>()
+    private val cancelHandlers = mutableListOf<HandlerEntry>()
+
+    init {
+        parentImpl?.attachChild(this)
+    }
 
     override val key: CoroutineContext.Key<*> get() = Job
 
-    override val isActive: Boolean get() = _isActive && !_isCompleted && !_isCancelled
+    override val isActive: Boolean get() = !terminal && !cancelRequested
+    override val isCompleted: Boolean get() = terminal
+    override val isCancelled: Boolean get() = cancelRequested
 
-    override val isCompleted: Boolean get() = _isCompleted
+    override fun start(): Boolean = false // jobs are active from creation
 
-    override val isCancelled: Boolean get() = _isCancelled
-
-    override fun cancel(cause: Throwable?) {
-        if (_isCompleted || _isCancelled) return
-        _isCancelled = true
-        _isActive = false
-        completionException = cause
-    }
-
-    override suspend fun join() {
-        // Simple busy-wait implementation - in real implementation would use suspendCoroutine
-        while (!_isCompleted && !_isCancelled) {
-            // yield() would go here in a real implementation
+    private class HandlerEntry(
+        private val owner: MutableList<HandlerEntry>,
+        val handler: (Throwable?) -> Unit,
+    ) : DisposableHandle {
+        override fun dispose() {
+            owner.remove(this)
         }
     }
 
-    override fun start(): Boolean {
-        if (_isActive || _isCompleted || _isCancelled) return false
-        _isActive = true
-        return true
+    override fun invokeOnCompletion(handler: (Throwable?) -> Unit): DisposableHandle {
+        if (terminal) {
+            // CAUTION for stdlib suspend utilities: fires synchronously.
+            // Fast-path the terminal case BEFORE registering (or rely on
+            // ParkedContinuation's unarmed latch).
+            invokeHandlerSafely(handler, completionCauseInternal)
+            return NoopHandle
+        }
+        val entry = HandlerEntry(completionHandlers, handler)
+        completionHandlers.add(entry)
+        return entry
+    }
+
+    /**
+     * Fires the moment cancellation is REQUESTED (before children unwind) —
+     * the mid-park wakeup hook. Fires synchronously at registration when
+     * already cancel-requested; never fires for a normally-completed job.
+     */
+    internal fun invokeOnCancelRequest(handler: (Throwable?) -> Unit): DisposableHandle {
+        if (cancelRequested) {
+            invokeHandlerSafely(handler, completionCauseInternal)
+            return NoopHandle
+        }
+        if (terminal) return NoopHandle
+        val entry = HandlerEntry(cancelHandlers, handler)
+        cancelHandlers.add(entry)
+        return entry
     }
 
     override fun complete(): Boolean {
-        if (_isCompleted || _isCancelled) return false
-        _isCompleted = true
-        _isActive = false
-        return true
+        if (bodyCompleted || terminal) return false
+        bodyCompleted = true
+        val accepted = !cancelRequested
+        tryFinish()
+        return accepted
     }
 
     override fun completeExceptionally(exception: Throwable): Boolean {
-        if (_isCompleted || _isCancelled) return false
-        _isCompleted = true
-        _isCancelled = true
-        _isActive = false
-        completionException = exception
+        if (bodyCompleted || terminal) return false
+        bodyCompleted = true
+        if (cancelRequested) {
+            // Body unwound after an earlier cancel — outcome already decided.
+            tryFinish()
+            return false
+        }
+        // Both failure and uncaught CancellationException move to cancelling;
+        // the cause class decides failure-vs-quiet at the terminal transition.
+        cancelRequested = true
+        completionCauseInternal = exception
+        fireCancelHandlers()
+        cancelChildrenInternal(exception)
+        tryFinish()
         return true
+    }
+
+    override fun cancel(cause: Throwable?) {
+        if (terminal || cancelRequested) return
+        cancelRequested = true
+        completionCauseInternal = cause ?: CancellationException("Job was cancelled")
+        fireCancelHandlers()
+        cancelChildrenInternal(completionCauseInternal)
+        tryFinish()
+    }
+
+    internal fun attachChild(child: JobImpl) {
+        children.add(child)
+    }
+
+    internal fun detachChild(child: JobImpl) {
+        children.remove(child)
+        tryFinish()
+    }
+
+    /**
+     * A child finished with a FAILURE (non-CancellationException cause).
+     * First failure wins: cancels this job (and thereby the failed child's
+     * siblings) with the child's exception as the cause.
+     */
+    internal fun childFailed(child: JobImpl, cause: Throwable) {
+        if (!terminal && !cancelRequested) {
+            cancelRequested = true
+            completionCauseInternal = cause
+            fireCancelHandlers()
+            cancelChildrenInternal(cause)
+        }
+        detachChild(child)
+    }
+
+    private fun cancelChildrenInternal(cause: Throwable?) {
+        if (children.isEmpty()) return
+        val snapshot = children.toMutableList()
+        val childCause: Throwable =
+            if (cause is CancellationException) cause
+            else CancellationException("Parent job was cancelled", cause)
+        for (child in snapshot) {
+            child.cancel(childCause)
+        }
+    }
+
+    private fun tryFinish() {
+        if (terminal) return
+        if (children.isNotEmpty()) return
+        if (!bodyCompleted) {
+            // A coroutine-backed job must wait for its body to unwind; a
+            // plain job (latch) finishes at the cancel request itself.
+            if (!cancelRequested) return
+            if (hasBody) return
+        }
+        terminal = true
+        val cause = completionCauseInternal
+        val isFailure = cause != null && cause !is CancellationException
+        val parent = parentImpl
+        if (parent != null) {
+            if (isFailure && upcallsFailure && !parent.isSupervisor) {
+                parent.childFailed(this, cause!!)
+            } else {
+                if (isFailure && reportsUnhandled) reportUnhandled(cause!!)
+                parent.detachChild(this)
+            }
+        } else {
+            if (isFailure && reportsUnhandled) reportUnhandled(cause!!)
+        }
+        fireCompletionHandlers(cause)
+    }
+
+    private fun fireCancelHandlers() {
+        if (cancelHandlers.isEmpty()) return
+        val snapshot = cancelHandlers.toMutableList()
+        cancelHandlers.clear()
+        for (entry in snapshot) {
+            invokeHandlerSafely(entry.handler, completionCauseInternal)
+        }
+    }
+
+    private fun fireCompletionHandlers(cause: Throwable?) {
+        if (completionHandlers.isEmpty()) return
+        val snapshot = completionHandlers.toMutableList()
+        completionHandlers.clear()
+        for (entry in snapshot) {
+            invokeHandlerSafely(entry.handler, cause)
+        }
+    }
+
+    private fun invokeHandlerSafely(handler: (Throwable?) -> Unit, cause: Throwable?) {
+        try {
+            handler(cause)
+        } catch (e: Throwable) {
+            println("[kotlin.coroutines] Completion handler threw: $e")
+        }
+    }
+
+    private fun reportUnhandled(cause: Throwable) {
+        println("[kotlin.coroutines] Unhandled exception in coroutine: $cause")
+    }
+
+    override suspend fun join() {
+        // TEMPORARY (replaced in the next task by the parked-continuation
+        // implementation): pre-existing busy-wait retained so this task's
+        // flag-level protocol change lands green in isolation.
+        while (!isCompleted) {
+        }
     }
 }
 
 /**
- * A deferred value is a non-blocking cancellable future &mdash; it is a [Job] with a result.
- *
- * It is created with the [async][CoroutineScope.async] coroutine builder or via
- * constructor of [CompletableDeferred] class.
+ * A deferred value: a [Job] with a result.
  */
 public interface Deferred<out T> : Job {
     /**
-     * Awaits for completion of this value without blocking a thread and resumes when deferred computation
-     * is complete, returning the resulting value or throwing the corresponding exception if the deferred
-     * was cancelled.
+     * Suspends until complete; returns the value or throws the completion
+     * exception (a [CancellationException] when the deferred was cancelled).
      */
     public suspend fun await(): T
 
-    /**
-     * Returns the result immediately or throws [IllegalStateException] if this deferred value has not
-     * completed yet.
-     */
+    /** The result now, or [IllegalStateException] if not complete. */
     public fun getCompleted(): T
+
+    /**
+     * The terminal exception (failure or [CancellationException]), null on
+     * success; [IllegalStateException] if not complete.
+     */
+    public fun getCompletionExceptionOrNull(): Throwable?
 }
 
-/**
- * A [Deferred] that can be completed via public functions [complete] or [completeExceptionally].
- */
 public interface CompletableDeferred<T> : Deferred<T>, CompletableJob {
-    /**
-     * Completes this deferred value with a given [value].
-     */
     public fun complete(value: T): Boolean
 }
 
-/**
- * Creates a [CompletableDeferred] in an _active_ state.
- */
-public fun <T> CompletableDeferred(parent: Job? = null): CompletableDeferred<T> = CompletableDeferredImpl(parent)
+public fun <T> CompletableDeferred(parent: Job? = null): CompletableDeferred<T> =
+    CompletableDeferredImpl(parent)
 
 /**
- * Basic implementation of [CompletableDeferred].
+ * Deferred over an inner [JobImpl] (composition): the inner job carries ALL
+ * lifecycle/handler/hierarchy state; this wrapper adds only the value slot.
  */
-internal class CompletableDeferredImpl<T>(parent: Job? = null) : CompletableDeferred<T> {
-    private val job = JobImpl(parent)
+internal class CompletableDeferredImpl<T>(
+    parent: Job? = null,
+    hasBody: Boolean = false,
+) : CompletableDeferred<T> {
+
+    internal val innerJob = JobImpl(parent, hasBody = hasBody, reportsUnhandled = false)
     private var _value: T? = null
-    private var _exception: Throwable? = null
 
     override val key: CoroutineContext.Key<*> get() = Job
 
-    override val isActive: Boolean get() = job.isActive
-    override val isCompleted: Boolean get() = job.isCompleted
-    override val isCancelled: Boolean get() = job.isCancelled
+    override val isActive: Boolean get() = innerJob.isActive
+    override val isCompleted: Boolean get() = innerJob.isCompleted
+    override val isCancelled: Boolean get() = innerJob.isCancelled
 
-    override fun cancel(cause: Throwable?) = job.cancel(cause)
+    override fun cancel(cause: Throwable?) = innerJob.cancel(cause)
 
-    override suspend fun join() = job.join()
+    override suspend fun join() = innerJob.join()
 
-    override fun start(): Boolean = job.start()
+    override fun start(): Boolean = innerJob.start()
 
-    override fun complete(): Boolean = job.complete()
+    override fun invokeOnCompletion(handler: (Throwable?) -> Unit): DisposableHandle =
+        innerJob.invokeOnCompletion(handler)
 
-    override fun completeExceptionally(exception: Throwable): Boolean {
-        _exception = exception
-        return job.completeExceptionally(exception)
-    }
+    override fun complete(): Boolean = innerJob.complete()
+
+    override fun completeExceptionally(exception: Throwable): Boolean =
+        innerJob.completeExceptionally(exception)
 
     override fun complete(value: T): Boolean {
-        if (job.isCompleted || job.isCancelled) return false
+        if (innerJob.isCompleted || innerJob.isCancelled) return false
+        // Value stored BEFORE complete() so handlers observe it.
         _value = value
-        return job.complete()
-    }
-
-    override suspend fun await(): T {
-        job.join()
-        _exception?.let { throw it }
-        @Suppress("UNCHECKED_CAST")
-        return _value as T
+        return innerJob.complete()
     }
 
     override fun getCompleted(): T {
-        if (!job.isCompleted) throw IllegalStateException("Deferred has not completed yet")
-        _exception?.let { throw it }
+        if (!innerJob.isCompleted) throw IllegalStateException("Deferred has not completed yet")
+        val cause = innerJob.completionCauseInternal
+        if (cause != null) throw cause
         @Suppress("UNCHECKED_CAST")
         return _value as T
+    }
+
+    override fun getCompletionExceptionOrNull(): Throwable? {
+        if (!innerJob.isCompleted) throw IllegalStateException("Deferred has not completed yet")
+        return innerJob.completionCauseInternal
+    }
+
+    override suspend fun await(): T {
+        // TEMPORARY (replaced in the next task): join-then-read retained so
+        // this task lands green in isolation.
+        innerJob.join()
+        return getCompleted()
     }
 }

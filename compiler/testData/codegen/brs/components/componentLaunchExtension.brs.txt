@@ -8,6 +8,7 @@
     "ArraysBrsKt.brs",
     "ArraysKt.brs",
     "BuildersKt.brs",
+    "CancellationExceptionKt.brs",
     "CharCategoryBrsKt.brs",
     "CollectionExtensionsKt.brs",
     "CombinedContextKt.brs",
@@ -70,6 +71,7 @@
     <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/BuildersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CancellationExceptionKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />

@@ -47,6 +47,7 @@ import test.reflect.kclassTests
 
 // Coroutine tests
 import test.coroutines.coroutineTests
+import test.coroutines.jobProtocolTests
 import test.coroutines.suspendFunctionTests
 import test.coroutines.dispatcherTests
 import test.coroutines.delayTrackerTests
@@ -104,6 +105,7 @@ fun main() {
 
         // Coroutines
         coroutineTests()
+        jobProtocolTests()
         suspendFunctionTests()
         dispatcherTests()
         delayTrackerTests()
