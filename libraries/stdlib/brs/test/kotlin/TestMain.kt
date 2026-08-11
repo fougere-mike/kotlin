@@ -60,6 +60,7 @@ import test.coroutines.ioWorkerRegistryTests
 import test.coroutines.taskPoolTests
 import test.coroutines.withContextIOTests
 import test.coroutines.awaitTests
+import test.coroutines.delayCancellationTests
 
 /**
  * Main entry point for stdlib runtime tests.
@@ -119,5 +120,6 @@ fun main() {
         taskPoolTests()
         withContextIOTests()
         awaitTests()
+        delayCancellationTests()
     }
 }

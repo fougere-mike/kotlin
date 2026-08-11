@@ -41,22 +41,14 @@ public suspend fun delay(timeMillis: Long) {
     if (timeMillis <= 0) return
 
     return suspendCoroutineUninterceptedOrReturn { continuation ->
-        // Register a callback with the thread-local DelayTracker.
-        // The callback will fire when tick() is called after the deadline passes.
-        DelayTracker.current.register(timeMillis) {
-            // Resume the coroutine when the delay expires.
-            // We resume through the interceptor to ensure proper dispatching.
-            val interceptor = continuation.context[ContinuationInterceptor]
-            if (interceptor != null) {
-                val intercepted = interceptor.interceptContinuation(continuation)
-                intercepted.resume(Unit)
-            } else {
-                continuation.resume(Unit)
-            }
-        }
-        // Return COROUTINE_SUSPENDED to indicate the coroutine is suspended.
-        // Control returns to the run loop, which can process other work.
-        COROUTINE_SUSPENDED
+        continuation.context.ensureActive()
+        @Suppress("UNCHECKED_CAST")
+        val parked = ParkedContinuation(continuation as Continuation<Any?>)
+        // DelayTracker has no deregistration: after a mid-park cancel wakeup
+        // the deadline callback still fires and lands in the once-guard.
+        DelayTracker.current.register(timeMillis) { parked.tryResume(Unit) }
+        registerCallerCancel(parked, continuation.context)
+        parked.finish()
     }
 }
 
@@ -93,6 +85,7 @@ public suspend fun delay(timeMillis: Long) {
  * ```
  */
 public suspend fun yield(): Unit = suspendCoroutineUninterceptedOrReturn { continuation ->
+    continuation.context.ensureActive()
     // Re-dispatch the continuation through the interceptor to allow other coroutines to run.
     val interceptor = continuation.context[ContinuationInterceptor]
     if (interceptor != null) {

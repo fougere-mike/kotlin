@@ -151,3 +151,76 @@ fun TestRunner.awaitTests() {
         }
     }
 }
+
+fun TestRunner.delayCancellationTests() {
+    suite("delay/yield cancellation") {
+
+        test("cancel wakes a coroutine parked in delay") {
+            runBlocking {
+                var observed: Throwable? = null
+                var after = false
+                val sleeper = launch {
+                    try {
+                        delay(10000)
+                        after = true
+                    } catch (e: Throwable) {
+                        observed = e
+                    }
+                }
+                delay(20)                    // let it park
+                sleeper.cancel()
+                delay(20)                    // let the wakeup dispatch
+                assertTrue(observed is CancellationException)
+                assertFalse(after)
+                assertTrue(sleeper.isCompleted)
+            }
+        }
+
+        test("delay entry check throws when already cancelled") {
+            runBlocking {
+                var thrown: Throwable? = null
+                val job = launch {
+                    val self = coroutineContext[Job]
+                    self?.cancel()
+                    try {
+                        delay(10)
+                    } catch (e: Throwable) {
+                        thrown = e
+                    }
+                }
+                job.join()
+                assertTrue(thrown is CancellationException)
+            }
+        }
+
+        test("stale DelayTracker callback after cancel is a no-op") {
+            runBlocking {
+                val sleeper = launch {
+                    delay(50)
+                }
+                delay(10)
+                sleeper.cancel()
+                // Ride past the original deadline: the tracker still fires the
+                // registered callback; the once-guard must swallow it.
+                delay(100)
+                assertTrue(sleeper.isCompleted)
+            }
+        }
+
+        test("yield entry check throws when cancelled") {
+            runBlocking {
+                var thrown: Throwable? = null
+                val job = launch {
+                    coroutineContext[Job]?.cancel()
+                    try {
+                        yield()
+                    } catch (e: Throwable) {
+                        thrown = e
+                    }
+                }
+                job.join()
+                assertTrue(thrown is CancellationException)
+            }
+        }
+    }
+}
