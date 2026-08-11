@@ -72,11 +72,7 @@ public fun Job(parent: Job? = null): CompletableJob = JobImpl(parent)
  * Used as the root of [kotlin.brs.componentScope].
  */
 public fun SupervisorJob(parent: Job? = null): CompletableJob =
-    // hasBody stays explicit: the BRS backend emits supplied arguments
-    // positionally with gaps compacted, so a named argument that skips a
-    // defaulted parameter binds to the WRONG slot (isSupervisor=true used to
-    // land on hasBody). Keep the argument list contiguous.
-    JobImpl(parent, hasBody = false, isSupervisor = true)
+    JobImpl(parent, isSupervisor = true)
 
 /** Resolves the concrete JobImpl participating in the hierarchy, if any. */
 internal fun jobImplOf(job: Job?): JobImpl? {
@@ -363,10 +359,7 @@ internal class CompletableDeferredImpl<T>(
     hasBody: Boolean = false,
 ) : CompletableDeferred<T> {
 
-    // reportsUnhandled already defaults to false; naming it here would skip
-    // two defaulted parameters, which the BRS backend miscompiles (see
-    // SupervisorJob) — keep supplied arguments contiguous.
-    internal val innerJob = JobImpl(parent, hasBody = hasBody)
+    internal val innerJob = JobImpl(parent, hasBody = hasBody, reportsUnhandled = false)
     private var _value: T? = null
 
     override val key: CoroutineContext.Key<*> get() = Job
