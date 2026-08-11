@@ -59,6 +59,38 @@ fun tryNothingArm(s: String?): Int {
     }
 }
 
+// Elvis in the catch arm references the catch parameter: the elvis machinery
+// (lhs temp + if-chain) must be emitted INSIDE the catch block, after
+// `catch e` — hoisting it above the try reads `e` before it exists.
+fun tryCatchElvis(s: String?): String {
+    return try {
+        "len:" + throwingLength(s)
+    } catch (e: Throwable) {
+        "caught:" + (e.message ?: "?")
+    }
+}
+
+fun boomInt(): Int {
+    throw IllegalStateException("boomInt")
+}
+
+// Nested try expression: the INNER try's lowered statements (temp decl +
+// inner try) must nest INSIDE the outer try body, before the outer arm reads
+// the inner temp — so an exception from the inner catch arm still reaches the
+// outer catch.
+fun tryNested(): Int {
+    val n = try {
+        try {
+            boomInt()
+        } catch (e: Throwable) {
+            boomInt()
+        }
+    } catch (e: Throwable) {
+        42
+    }
+    return n
+}
+
 fun unitCall() {
 }
 

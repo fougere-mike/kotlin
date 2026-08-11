@@ -435,56 +435,48 @@ class IrStatementToBrsTransformer(
     }
 
     override fun visitTry(aTry: IrTry, data: Unit): BrsStatement {
-        // Helper to transform a statement/expression inside try/catch blocks
+        // Helper to transform a statement/expression inside try/catch blocks.
         // IrWhen needs special handling because it's technically an IrExpression
         // but when used in statement context (like `if (x) return`) it should be
-        // transformed as a statement, not an expression (which returns BrsInvalidLiteral for Unit)
-        fun transformBlockStatement(stmt: IrStatement): BrsStatement? {
-            return when (stmt) {
+        // transformed as a statement, not an expression (which returns BrsInvalidLiteral for Unit).
+        //
+        // CRITICAL: each statement's transformation may hoist statements into
+        // genCtx (elvis machinery, nested lowered try/when blocks). Those must
+        // be spliced immediately BEFORE the statement, INSIDE this try/catch
+        // block — an isolated scope per statement, mirroring the
+        // block-as-expression consumers. Without this the hoists leak to the
+        // next consumer OUTSIDE the try: a catch arm's elvis on the catch
+        // parameter was emitted above the try (reading `e` before it exists),
+        // and a nested try-expression's statements escaped the outer try
+        // entirely (device miscompiles, fix round 3).
+        fun transformBlockStatement(stmt: IrStatement): List<BrsStatement> {
+            genCtx.pushHoistedScope()
+            val transformed = when (stmt) {
                 is IrWhen -> visitWhen(stmt, data) // Transform as statement (if-then-else)
                 is IrExpression -> BrsExpressionStatement(parent.transformExpression(stmt))
                 else -> parent.transformStatement(stmt)
             }
+            val hoisted = genCtx.popHoistedScope()
+            return if (transformed != null) hoisted + transformed else hoisted
+        }
+
+        fun transformArmBlock(arm: IrExpression): BrsBlock = when (arm) {
+            is IrBlock -> BrsBlock(arm.statements.flatMap { transformBlockStatement(it) }.toMutableList())
+            else -> BrsBlock(transformBlockStatement(arm).toMutableList())
         }
 
         return if (context.supportsExceptions) {
             // Transform try block - tryResult is an IrExpression (often IrBlock)
-            val tryBlock = when (val tryResult = aTry.tryResult) {
-                is IrBlock -> {
-                    val statements = tryResult.statements.mapNotNull { stmt ->
-                        transformBlockStatement(stmt)
-                    }
-                    BrsBlock(statements.toMutableList())
-                }
-                else -> BrsBlock(mutableListOf(BrsExpressionStatement(parent.transformExpression(tryResult))))
-            }
+            val tryBlock = transformArmBlock(aTry.tryResult)
 
             // Transform catch block
-            val catchBlock = aTry.catches.firstOrNull()?.let { catch ->
-                when (val catchResult = catch.result) {
-                    is IrBlock -> {
-                        val statements = catchResult.statements.mapNotNull { stmt ->
-                            transformBlockStatement(stmt)
-                        }
-                        BrsBlock(statements.toMutableList())
-                    }
-                    else -> BrsBlock(mutableListOf(BrsExpressionStatement(parent.transformExpression(catchResult))))
-                }
-            }
+            val catchBlock = aTry.catches.firstOrNull()?.let { transformArmBlock(it.result) }
             val catchVar = aTry.catches.firstOrNull()?.catchParameter?.name?.asString()
 
             BrsTry(tryBlock, catchVar, catchBlock)
         } else {
             // Without exception support, just execute the try block
-            when (val tryResult = aTry.tryResult) {
-                is IrBlock -> {
-                    val statements = tryResult.statements.mapNotNull { stmt ->
-                        transformBlockStatement(stmt)
-                    }
-                    BrsBlock(statements.toMutableList())
-                }
-                else -> BrsExpressionStatement(parent.transformExpression(tryResult))
-            }
+            transformArmBlock(aTry.tryResult)
         }
     }
 

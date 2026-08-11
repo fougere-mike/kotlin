@@ -75,6 +75,46 @@ function tryNothingArm_StrN_k_(s as Dynamic) as Integer
 
 end function
 
+function tryCatchElvis_StrN_k_(s as Dynamic) as String
+    __try_tmp5 = invalid
+    try
+        __try_tmp5 = ("len:" + __kotlin_numToStr_I_k_(throwingLength_StrN_k_(s)))
+    catch e
+        tmp0_elvis_lhs = e.__get_message()
+        __when_tmp0 = invalid
+        if tmp0_elvis_lhs = invalid then
+            __when_tmp0 = "?"
+        else
+            __when_tmp0 = tmp0_elvis_lhs
+        end if
+        __try_tmp5 = ("caught:" + __when_tmp0)
+    end try
+    return __try_tmp5
+
+end function
+
+function boomInt_k_() as Integer
+    throw IllegalStateException_create_StrN_k_("boomInt")
+end function
+
+function tryNested_k_() as Integer
+    __try_tmp7 = invalid
+        try
+        __try_tmp6 = invalid
+        try
+            __try_tmp6 = boomInt_k_()
+        catch e
+            __try_tmp6 = boomInt_k_()
+        end try
+        __try_tmp7 = __try_tmp6
+    catch e
+        __try_tmp7 = 42
+    end try
+    n = __try_tmp7
+
+    return n
+end function
+
 sub unitCall_k_()
 end sub
 
