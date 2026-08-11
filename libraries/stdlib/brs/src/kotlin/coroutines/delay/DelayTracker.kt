@@ -6,6 +6,7 @@
 package kotlin.coroutines.delay
 
 import kotlin.brs.roku.RoTimespan
+import kotlin.coroutines.pump.PumpScheduler
 
 /**
  * Thread-local delay tracker using roTimespan for precise timing.
@@ -59,6 +60,28 @@ public class DelayTracker {
     public fun register(delayMs: Long, callback: () -> Unit) {
         val deadline = currentTimeMs() + delayMs.toInt()
         pendingDelays.add(PendingDelay(deadline, callback))
+        // Self-scheduling pump: in an attached component context this arms a
+        // one-shot wakeup at the next deadline; elsewhere it is a no-op.
+        PumpScheduler.onDelayRegistered()
+    }
+
+    /**
+     * Milliseconds until the earliest pending deadline, floored at 0, or -1
+     * when no delays are pending. Used by the pump scheduler to arm its
+     * one-shot deadline timer.
+     */
+    public fun msUntilNextDeadline(): Int {
+        if (pendingDelays.isEmpty()) return -1
+        val now = currentTimeMs()
+        var minDeadline = -1
+        var i = 0
+        while (i < pendingDelays.size) {
+            val dl = pendingDelays[i].deadlineMs
+            if (minDeadline < 0 || dl < minDeadline) minDeadline = dl
+            i++
+        }
+        val ms = minDeadline - now
+        return if (ms < 0) 0 else ms
     }
 
     /**

@@ -6,6 +6,7 @@
 package kotlin.coroutines.dispatchers
 
 import kotlin.concurrent.Runnable
+import kotlin.coroutines.pump.PumpScheduler
 
 /**
  * Internal queue for coroutine work items.
@@ -29,6 +30,10 @@ internal object CoroutineQueue {
      */
     fun enqueue(block: Runnable) {
         queue.add(block)
+        // Self-scheduling pump: in an attached component context this books a
+        // wakeup for the new work; everywhere else (main thread, task threads,
+        // and during a drain) it is a no-op and the run-loop owner pumps.
+        PumpScheduler.onEnqueue()
     }
 
     /**
