@@ -32,6 +32,7 @@ import test.text.stringExtensionsTests
 // Standard function tests
 import test.standard.standardFunctionsTests
 import test.standard.shortCircuitTests
+import test.standard.tryExpressionTests
 
 // Lazy delegate tests
 import test.lazy.lazyDelegateTests
@@ -88,6 +89,7 @@ fun main() {
         // Standard functions
         standardFunctionsTests()
         shortCircuitTests()
+        tryExpressionTests()
 
         // Lazy delegates
         lazyDelegateTests()
