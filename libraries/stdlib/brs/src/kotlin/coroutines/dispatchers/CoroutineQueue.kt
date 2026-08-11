@@ -82,13 +82,15 @@ internal object CoroutineQueue {
 /**
  * Processes all pending coroutine work on the current thread.
  *
- * Call this function from your run loop on each iteration to process dispatched
- * coroutine work.
+ * **For run-loop OWNERS only** — main-thread drivers (`runBlocking`, the
+ * kotlin.test device driver's `runPumping`) call this each iteration.
+ * Component code must NOT call it: components are pumped automatically by the
+ * self-scheduling [kotlin.coroutines.pump.PumpScheduler].
  *
  * Example usage in a main thread event loop:
  * ```kotlin
  * while (true) {
- *     val msg = port.getMessage()
+ *     val msg = port.waitMessage(10)
  *     processCoroutineQueue()  // Process dispatched work
  *     processCoroutineDelays() // Check and fire delays
  *     // ... handle messages

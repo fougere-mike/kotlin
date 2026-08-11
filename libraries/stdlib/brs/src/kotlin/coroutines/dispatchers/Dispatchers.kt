@@ -13,29 +13,23 @@ import kotlin.coroutines.CoroutineContext
  * In BrightScript/Roku, coroutines run on either the render thread (SceneGraph)
  * or Task node threads. This object provides access to dispatchers for both.
  *
- * **Important:** For dispatchers to work correctly, your run loop must call
- * [processCoroutineQueue] and [processCoroutineDelays] on each iteration:
+ * **In SceneGraph components** dispatched work needs no wiring: the
+ * self-scheduling pump ([kotlin.coroutines.pump.PumpScheduler], attached
+ * automatically at component init) drains the queue whenever work exists —
+ * use `launch {}` ([kotlin.brs.launch]) and never call the pump entry points
+ * from component code.
+ *
+ * **Main-thread drivers** (a `main()` port loop, test harnesses) own their run
+ * loop and must call [processCoroutineQueue] and [processCoroutineDelays] on
+ * each iteration — `runBlocking` and the kotlin.test device driver's
+ * `runPumping` already do:
  *
  * ```kotlin
  * // Main thread event loop
  * while (true) {
- *     val msg = port.getMessage()
+ *     val msg = port.waitMessage(10)
  *     processCoroutineQueue()  // Process dispatched coroutine work
  *     processCoroutineDelays() // Check and fire delay callbacks
- *     // ... handle messages
- * }
- *
- * // Render thread - use Timer node with observeField("fire", "onTick")
- * fun onTick() {
- *     processCoroutineQueue()
- *     processCoroutineDelays()
- * }
- *
- * // Task thread
- * while (running) {
- *     val msg = port.waitMessage(10)  // Short timeout for responsive delays
- *     processCoroutineQueue()
- *     processCoroutineDelays()
  *     // ... handle messages
  * }
  * ```
@@ -59,12 +53,14 @@ public object Dispatchers {
     /**
      * A coroutine dispatcher that confines coroutine execution to the main/UI thread.
      *
-     * In BrightScript, this is the SceneGraph render thread. Use this dispatcher
-     * when you need to update UI elements from a coroutine.
+     * In BrightScript, this is the SceneGraph render thread. This is the
+     * dispatcher [kotlin.brs.componentScope] uses — in components the
+     * self-scheduling pump services it automatically.
      *
      * **Note:** Currently, [Main] uses the same implementation as [Default].
-     * Both dispatch to the current thread's queue. True render-thread confinement
-     * will be added in a future milestone.
+     * Both dispatch to the current thread's queue (which, for component code,
+     * IS the render thread's queue). True cross-thread confinement will be
+     * added in a future milestone.
      */
     public val Main: CoroutineDispatcher = DefaultDispatcher
 
@@ -82,40 +78,19 @@ public object Dispatchers {
     public val Unconfined: CoroutineDispatcher = UnconfinedDispatcher
 
     /**
-     * A coroutine dispatcher designed for offloading blocking IO tasks
-     * to background Task threads.
+     * UNSUPPORTED — referencing this in user code is a compile ERROR
+     * (`BRS_IO_DISPATCHER_UNSUPPORTED`).
      *
-     * In BrightScript/Roku, this dispatcher uses [TaskPool] to execute work
-     * on SceneGraph Task nodes, which run on separate threads from the render thread.
+     * The IO/TaskPool pipeline is quarantined: with [TaskPool] uninitialized
+     * (always, in supported configurations), IO dispatch silently falls back
+     * to the current thread's queue — i.e. it behaves exactly like [Main],
+     * which is precisely the trap the diagnostic guards against. The
+     * sanctioned mechanism for background work is a typed task:
+     * `runTask<T> { ... }` (see kotlin.coroutines.task.TaskRunner).
      *
-     * **Setup Required:** [TaskPool] must be initialized before using this dispatcher:
-     *
-     * ```kotlin
-     * class MainScene : SceneComponent() {
-     *     init {
-     *         TaskPool.initialize(top, poolSize = 4)
-     *     }
-     * }
-     * ```
-     *
-     * **Usage:** Prefer [withContext] for context switching:
-     *
-     * ```kotlin
-     * val data = withContext(Dispatchers.IO) {
-     *     // This runs on a Task thread
-     *     val http = RoUrlTransfer.create()
-     *     http.setUrl("https://api.example.com/data")
-     *     http.getToString()
-     * }
-     * // Back on render thread - UI updates work!
-     * label.setField("text", data)
-     * ```
-     *
-     * **Fallback:** If TaskPool is not initialized, falls back to [Default]
-     * dispatcher (render-thread queue).
-     *
-     * @see TaskPool
-     * @see withContext
+     * The pipeline is slated to be re-layered as sugar that synthesizes a
+     * typed task per block (M3 backlog); deliberate experimentation requires
+     * `@Suppress("BRS_IO_DISPATCHER_UNSUPPORTED")`.
      */
     public val IO: CoroutineDispatcher = IODispatcher
 }

@@ -14,36 +14,23 @@ import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
  * Delays coroutine for a given time without blocking a thread and resumes it after a specified time.
  *
  * This suspending function is **non-blocking**: it suspends the coroutine and returns control
- * to the run loop immediately. The coroutine resumes when the delay expires and the run loop
- * calls [processCoroutineDelays].
+ * to the caller immediately.
  *
- * **Important:** Your run loop must call [processCoroutineDelays] on each iteration for delays
- * to fire:
+ * **In SceneGraph components** no wiring is needed: the self-scheduling pump
+ * ([kotlin.coroutines.pump.PumpScheduler], attached automatically at component init) arms a
+ * one-shot timer at the next deadline and resumes the coroutine — do NOT create pump timers
+ * or call [processCoroutineDelays] from component code.
+ *
+ * **Main-thread drivers** (a `main()` port loop, test harnesses) own their run loop and must
+ * call [processCoroutineDelays] each iteration — `runBlocking` and the kotlin.test device
+ * driver's `runPumping` already do:
  *
  * ```kotlin
  * // Main thread event loop
  * while (true) {
- *     val msg = port.getMessage()
- *     processCoroutineQueue()
- *     processCoroutineDelays()  // Check and fire completed delays
- *     // ... handle messages
- * }
- *
- * // Render thread - use Timer node
- * // In component init:
- * timer.observeField("fire", "onTimerTick")
- *
- * // In onTimerTick:
- * fun onTimerTick() {
- *     processCoroutineQueue()
- *     processCoroutineDelays()
- * }
- *
- * // Task thread event loop
- * while (running) {
  *     val msg = port.waitMessage(10)  // Short timeout for responsive delays
  *     processCoroutineQueue()
- *     processCoroutineDelays()
+ *     processCoroutineDelays()  // Check and fire completed delays
  *     // ... handle messages
  * }
  * ```
@@ -122,8 +109,10 @@ public suspend fun yield(): Unit = suspendCoroutineUninterceptedOrReturn { conti
 /**
  * Processes pending delays on the current thread.
  *
- * Call this function from your run loop on each iteration to check and fire any delays
- * whose deadlines have passed.
+ * **For run-loop OWNERS only** — main-thread drivers (`runBlocking`,
+ * `runPumping`) call this each iteration. Component code must NOT call it:
+ * the self-scheduling [kotlin.coroutines.pump.PumpScheduler] arms a one-shot
+ * timer at the next deadline and ticks the tracker itself.
  *
  * Delays are registered by the [delay] function and fire when their deadline passes and
  * this function is called.

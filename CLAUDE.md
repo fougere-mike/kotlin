@@ -241,12 +241,14 @@ class FetchShelfTask : TaskComponent() {
 }
 ```
 
-**2. Run it** from a render-thread coroutine. `runTask` creates a fresh node,
-configures the inputs, runs it on the task thread, and suspends until the task
-completes - resuming with the completed node so typed outputs read directly:
+**2. Run it** from a render-thread coroutine — `launch {}` is available on every
+component with zero imports and zero pump wiring (see "Component coroutine
+scaffolding" below). `runTask` creates a fresh node, configures the inputs,
+runs it on the task thread, and suspends until the task completes - resuming
+with the completed node so typed outputs read directly:
 
 ```kotlin
-CoroutineScope(Dispatchers.Main).launch {
+launch {
     try {
         val task = runTask<FetchShelfTask> { count = 5 }
         shelfItems = task.items   // typed self-write works in lambda scope
@@ -287,6 +289,67 @@ device, has zero E2E coverage, and its last consumer (ShelfView) was migrated
 to `runTask` in Phase 2. It is slated to be re-layered as sugar that
 synthesizes a typed task per block (M3 backlog); until then any new
 `withContext(Dispatchers.IO)` use is a review-blocking regression.
+
+The quarantine is now COMPILER-ENFORCED: any `Dispatchers.IO` reference in
+user code is a FIR ERROR (`BRS_IO_DISPATCHER_UNSUPPORTED` — "use runTask<T>").
+Deliberate opt-ins into the quarantined pipeline must
+`@Suppress("BRS_IO_DISPATCHER_UNSUPPORTED")`, which is exactly the review
+signal the quarantine wants.
+
+## Component Coroutine Scaffolding: `launch {}` + the self-scheduling pump
+
+Coroutines in SceneGraph components need ZERO wiring — no pump timers, no
+`processCoroutineQueue()` calls, no dispatcher choice:
+
+```kotlin
+class ShelfView : RectangleComponent() {
+    init {
+        launch {                                   // no imports needed
+            val task = runTask<FetchShelfTask> { count = 5 }
+            shelfItems = task.items
+        }
+    }
+}
+```
+
+How it works:
+
+- `ComponentBase.launch {}` / `componentScope()` (`kotlin.brs`,
+  default-imported) give every component a lazy per-instance scope
+  (`Dispatchers.Main + Job`, stored via the per-instance GetGlobalAA).
+- The **PumpScheduler** (`libraries/stdlib/brs/src/kotlin/coroutines/pump/`)
+  wakes the render thread exactly when work exists: `CoroutineQueue.enqueue`
+  and `DelayTracker.register` notify it; it schedules ONE wakeup per burst.
+  Backends: **roRenderThreadQueue** (Roku OS 15.0+, per-instance channel,
+  sub-frame latency — `spikes/render-thread-queue-spike/FINDINGS.md`) with a
+  **one-shot Timer** fallback (<15). `delay()` arms a one-shot timer at the
+  NEXT deadline (no 10ms polling). Idle components run zero timers. Backend is
+  detected once per app session (cached on the global node).
+- The compiler injects `__kotlinPumpAttach(m.top, m.global)` into the
+  generated `init()` of every component whose FILE uses coroutines (per-file
+  IR scan; task components excluded). Legacy
+  `CoroutineScope(Dispatchers.Main).launch` therefore auto-pumps too.
+  KNOWN HOLE: coroutine use hidden entirely inside another file's helper
+  escapes the scan — `launch {}`/`componentScope()` lazily attach at runtime,
+  so prefer them.
+- Test hooks: `kotlinPumpBackendName()`, `kotlinPumpForceTimerBackend(global)`
+  (session-wide), `kotlinPumpForceTimerBackendLocal()` (one component — used
+  by the PumpBackendProbe E2E fixture so both backends stay device-covered).
+- Do NOT hand-write pump timers or call `processCoroutineQueue()` /
+  `processCoroutineDelays()` from components — those entry points are for
+  run-loop OWNERS only (main-thread `runBlocking`, the kotlin.test driver's
+  `runPumping`). Task-thread `run()` bodies are synchronous by design: no
+  `launch {}` there.
+
+Historical note (root cause, 2026-08-10): before this scaffolding, dispatch
+through the coroutine queue had NEVER worked on device — `CoroutineDispatcher`
+stored itself under its own companion key while every framework lookup queried
+`ContinuationInterceptor.Key` (identity matching), so `intercepted()` returned
+null and ALL bodies/resumptions ran inline. The hand-written 10ms pump timers
+were only ever servicing `DelayTracker`. Fixed by storing dispatchers under
+`ContinuationInterceptor.Key` (CoroutineDispatcher.kt); pinned by stdlib tests
+("dispatcher resolvable via ContinuationInterceptor key") and the E2E backend
+assertion.
 
 ## SceneGraph Layouts: @SGLayout DSL + Layout Accessors
 
@@ -645,7 +708,7 @@ cd ../roku-test-app && ./gradlew rokuTest
 the stdlib runner: replayed events from a previous run are discarded).
 Results land in `build/test-results/roku/` as JSON + JUnit XML.
 
-**The suites (6 suites, 30 active tests + 3 red-guarded `xtest` placeholders):**
+**The suites (6 suites, 33 active tests + 3 red-guarded `xtest` placeholders):**
 
 | Suite | File | Exercises |
 |-------|------|-----------|
@@ -698,16 +761,16 @@ Predicates must return false rather than throw. Probe nodes are created via
 | E2E test suites + driver | `roku-test-app/src/brsTest/kotlin/tests/` (TestMain.kt is the main-thread driver) |
 | E2E fixture components | `roku-test-app/components/fixtures/` |
 
-### Current Gate Numbers (as of Task 14, 2026-08)
+### Current Gate Numbers (as of the coroutine-scaffolding program, 2026-08-10)
 
 These are the whole-branch green gates; a drop in any of them is a regression.
 
 | Gate | Count |
 |------|-------|
-| Golden file tests | 53 |
-| FIR diagnostic suite (checkers.brs) | 214 |
-| Stdlib device suite | 409 tests / 40 suites |
-| rokuTest E2E | 30 active tests / 6 suites (+3 red-guarded xtests) |
+| Golden file tests | 57 |
+| FIR diagnostic suite (checkers.brs) | 219 |
+| Stdlib device suite | 411 tests / 40 suites |
+| rokuTest E2E | 33 active tests / 6 suites (+3 red-guarded xtests) |
 | `validateComponentIncludes` | strict mode, 0 findings (no allowlist) |
 
 ### Test Output
