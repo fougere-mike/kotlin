@@ -295,12 +295,23 @@ public fun __kotlinPumpAttach(node: RoSGNode, global: RoSGNode) {
 /**
  * TEST HOOK: force the Timer backend for this app session (writes the
  * session-wide backend cache on the global node AND pins the calling
- * context's scheduler). Call from a component's `init` before any coroutine
- * work so both wakeup backends get device coverage on an OS 15+ device.
+ * context's scheduler). Components attached BEFORE the call keep whatever
+ * backend they already resolved. Call from a component's `init` before any
+ * coroutine work.
  */
 public fun kotlinPumpForceTimerBackend(global: RoSGNode) {
     global.addField(BACKEND_CACHE_FIELD, "string", false)
     global.setField(BACKEND_CACHE_FIELD, "timer")
+    PumpScheduler.forceTimerLocally()
+}
+
+/**
+ * TEST HOOK: force the Timer backend for the CALLING context's scheduler only
+ * — other components keep their resolved backend. Lets one E2E fixture
+ * exercise the Timer wakeup path on an OS 15+ device without flipping the
+ * rest of the app run off roRenderThreadQueue.
+ */
+public fun kotlinPumpForceTimerBackendLocal() {
     PumpScheduler.forceTimerLocally()
 }
 
