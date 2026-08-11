@@ -1,0 +1,15 @@
+// --- File: doWhileConditionScopeKt.brs ---
+function doWhileConditionScope_I_k_(seed as Integer) as Integer
+    x = seed + 10
+    total = x
+    x_1 = total - seed
+    total = (total + 1)
+
+    while x_1 < 0
+        x_1 = total - seed
+        total = (total + 1)
+    end while
+
+
+    return total
+end function

@@ -630,6 +630,13 @@ After making intentional changes to the compiler's output:
 ./gradlew :compiler:backend.brightscript:test --tests "*GoldenFile*" -PupdateGoldenFiles=true --no-configuration-cache -Dorg.gradle.dependency.verification=off
 ```
 
+**Golden testData is a tracked test-task input** (fixed 2026-08-11): the test task
+declares `compiler/testData/codegen/brs` via `inputs.dir` in
+`compiler/ir/backend.brightscript/build.gradle.kts`. Before that, editing only a
+testData `.kt`/`.brs.txt` left `:compiler:backend.brightscript:test` UP-TO-DATE and
+silently served stale results. If a golden edit ever appears not to take effect,
+check for exactly this class of bug.
+
 ### Stdlib Tests (Device Tests)
 
 Run stdlib unit tests on a physical Roku device. Requires device IP and password.

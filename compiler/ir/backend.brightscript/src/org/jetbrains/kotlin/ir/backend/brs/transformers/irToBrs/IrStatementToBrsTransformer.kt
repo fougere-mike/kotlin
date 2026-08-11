@@ -768,12 +768,23 @@ class IrStatementToBrsTransformer(
         // First execution runs unconditionally, then subsequent iterations check condition
         val bodyContainsContinue = containsContinueFor(loop.body, loop)
 
-        // Transform the condition up front so hoisted statements (elvis temps,
-        // short-circuit guards) are consumed here — previously they leaked into
-        // the enclosing hoist queue — and can steer the wrapper routing below,
-        // mirroring visitWhileLoop.
+        // Transform the body FIRST: do-while is the one loop whose condition can
+        // legally reference variables declared in the body, and reads resolve
+        // through getVariableName, which only knows a variable's (possibly
+        // collision-renamed) unique name once its declaration was transformed.
+        // This transform doubles as the first (unconditional) execution both
+        // paths below need; the wrapper path re-transforms the body for the
+        // loop iterations. Hoisted statements the body leaves pending belong to
+        // the enclosing consumer, not the condition — keep them separate.
+        val firstBody = loop.body?.let { transformBlockOrStatement(it) } ?: BrsBlock()
+        val bodyPending = genCtx.takeHoistedStatements()
+
+        // Consume the condition's hoisted statements (elvis temps, short-circuit
+        // guards) — previously they leaked into the enclosing hoist queue — and
+        // let them steer the wrapper routing below, mirroring visitWhileLoop.
         val condition = parent.transformExpression(loop.condition)
         val conditionHoisted = genCtx.takeHoistedStatements()
+        bodyPending.forEach { genCtx.addHoistedStatement(it) }
 
         if (bodyContainsContinue && (!context.supportsContinue || conditionHoisted.isNotEmpty())) {
             // Similar to while loop, but do-while executes body first, then checks condition
@@ -788,12 +799,10 @@ class IrStatementToBrsTransformer(
                 genCtx.loopBreakFlags[loop] = breakFlagName
             }
 
-            // Transform the body for the first (unconditional) execution
-            // The first execution is NOT inside the loop, so continues should NOT
-            // be converted to exit while. We don't push to the stack yet.
-            val firstBody = loop.body?.let { transformBlockOrStatement(it) } ?: BrsBlock()
-
-            // Now push to the stack for the while loop body transformation
+            // firstBody (transformed above, before the stack push) is the first
+            // (unconditional) execution: it is NOT inside the loop, so its
+            // continues were deliberately not converted to exit while.
+            // Now push to the stack for the while loop body transformation.
             genCtx.continueWrapperLoopStack.add(loop)
 
             try {
@@ -870,8 +879,9 @@ class IrStatementToBrsTransformer(
                 }
             }
         } else {
-            // Original transformation without continue wrapper
-            val body = loop.body?.let { transformBlockOrStatement(it) } ?: BrsBlock()
+            // Original transformation without continue wrapper; the single body
+            // transform above is the unconditional first execution.
+            val body = firstBody
 
             if (conditionHoisted.isNotEmpty()) {
                 // do-while checks the condition AFTER the body — run the hoisted

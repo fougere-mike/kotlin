@@ -38,6 +38,12 @@ tasks.test {
     // Run tests from the repo root so the compiler can find its resources
     workingDir = rootDir
 
+    // Golden test data lives OUTSIDE the module directory, so Gradle doesn't
+    // track it by default — without this, editing a testData .kt/.brs.txt file
+    // leaves the test task UP-TO-DATE and silently serves stale results.
+    inputs.dir(rootDir.resolve("compiler/testData/codegen/brs"))
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+
     // Pass the golden file update flag to tests
     systemProperty(
         "kotlin.test.update.golden.files",
