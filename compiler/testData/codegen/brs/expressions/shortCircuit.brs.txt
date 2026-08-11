@@ -1,0 +1,86 @@
+// --- File: shortCircuitKt.brs ---
+function Holder_create_Z_k_(flag as Boolean) as Object
+    this = {}
+    this.__type = "Holder"
+    this.__proto = ["Holder"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.check_k_ = Holder_check_k_
+    this.__get_flag = Holder___get_flag_k_
+    this.flag = flag
+    return this
+end function
+
+function Holder_check_k_() as Boolean
+    return m.__get_flag()
+end function
+
+function Holder___get_flag_k_() as Boolean
+    return m.flag
+end function
+
+function pureOperands_Z_Z_k_(a as Boolean, b as Boolean) as Boolean
+    return (a and b) or not a
+end function
+
+function nullGuardAnd_HolderN_k_(h as Dynamic) as Boolean
+    __sc_tmp0 = false
+    if h <> invalid then
+        __sc_tmp0 = h.check_k_()
+    end if
+    return __sc_tmp0
+
+end function
+
+function nullGuardOr_HolderN_k_(h as Dynamic) as Boolean
+    __sc_tmp1 = true
+    if not (h = invalid) then
+        __sc_tmp1 = h.check_k_()
+    end if
+    return __sc_tmp1
+
+end function
+
+function guardInIf_HolderN_k_(h as Dynamic) as String
+    __sc_tmp2 = false
+    if h <> invalid then
+        __sc_tmp2 = h.check_k_()
+    end if
+    if __sc_tmp2 then
+        return "yes"
+    end if
+
+    return "no"
+end function
+
+function guardInWhile_ArrayListI_k_(items as Object) as Integer
+    n = 0
+    __sc_tmp3 = false
+    if items.__get_size() > 0 then
+        __sc_tmp3 = (items.get_I_k_(0) > 0)
+    end if
+    while true
+        if not __sc_tmp3 then
+            exit while
+        end if
+        items.removeAt_I_k_(0)
+        n = (n + 1)
+        __sc_tmp3 = false
+        if items.__get_size() > 0 then
+            __sc_tmp3 = (items.get_I_k_(0) > 0)
+        end if
+    end while
+
+    return n
+end function
+
+function mixedChain_HolderN_Z_k_(h as Dynamic, enabled as Boolean) as Boolean
+    __sc_tmp4 = false
+    if enabled and (h <> invalid) then
+        __sc_tmp4 = h.check_k_()
+    end if
+    return __sc_tmp4
+
+end function

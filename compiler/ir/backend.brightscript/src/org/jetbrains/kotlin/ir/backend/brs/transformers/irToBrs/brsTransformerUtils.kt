@@ -24,9 +24,12 @@ import org.jetbrains.kotlin.ir.expressions.IrConst
 import org.jetbrains.kotlin.ir.expressions.IrContinue
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrGetEnumValue
+import org.jetbrains.kotlin.ir.expressions.IrGetValue
 import org.jetbrains.kotlin.ir.expressions.IrLoop
+import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.IrTypeOperator
 import org.jetbrains.kotlin.ir.expressions.IrTypeOperatorCall
+import org.jetbrains.kotlin.ir.expressions.IrWhen
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classOrNull
@@ -409,6 +412,51 @@ internal fun hasInterfaceFieldAnnotation(property: IrProperty): Boolean {
     return property.annotations.any { annotation ->
         val annotationClass = annotation.type.classifierOrNull?.owner as? IrClass
         annotationClass?.name?.asString() in sgFieldAnnotations
+    }
+}
+
+/**
+ * True when [expression] can be evaluated unconditionally with no side effects
+ * and no possibility of a runtime crash — the requirement for keeping a Kotlin
+ * `&&`/`||` operand inside a bare BrightScript `and`/`or`, which evaluates BOTH
+ * operands. Anything not on this whitelist (calls, member/indexed access,
+ * safe-calls) gets the hoisted guarded-temp form instead.
+ */
+internal fun isEffectFreeShortCircuitOperand(expression: IrExpression): Boolean {
+    return when (expression) {
+        is IrConst -> true
+        is IrGetValue -> true
+        is IrCall -> {
+            val pureOrigin = when (expression.origin) {
+                IrStatementOrigin.EQEQ, IrStatementOrigin.EXCLEQ,
+                IrStatementOrigin.LT, IrStatementOrigin.GT,
+                IrStatementOrigin.LTEQ, IrStatementOrigin.GTEQ,
+                IrStatementOrigin.EXCL -> true
+                else -> false
+            }
+            // Prefix `!` reaches the backend as a Boolean.not() call with a null
+            // origin (not EXCL) — the same recognition the transformer uses to
+            // emit the prefix `not` operator.
+            val isBooleanNot = expression.symbol.owner.name.asString() == "not" &&
+                expression.dispatchReceiver?.type?.isBoolean() == true
+            if (!pureOrigin && !isBooleanNot) return false
+            val receiver = expression.dispatchReceiver
+            if (receiver != null && !isEffectFreeShortCircuitOperand(receiver)) return false
+            for (i in 0 until expression.valueArgumentsCount) {
+                val arg = expression.getValueArgument(i) ?: continue
+                if (!isEffectFreeShortCircuitOperand(arg)) return false
+            }
+            true
+        }
+        is IrWhen -> {
+            val sc = expression.origin == IrStatementOrigin.ANDAND ||
+                expression.origin == IrStatementOrigin.OROR
+            sc && expression.branches.all {
+                isEffectFreeShortCircuitOperand(it.condition) &&
+                    isEffectFreeShortCircuitOperand(it.result)
+            }
+        }
+        else -> false
     }
 }
 

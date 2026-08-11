@@ -3217,15 +3217,27 @@ class IrExpressionToBrsTransformer(
         when (expression.origin) {
             IrStatementOrigin.ANDAND -> {
                 // a && b is represented as: if (a) b else false
-                val left = expression.branches[0].condition.accept(this, data)
-                val right = expression.branches[0].result.accept(this, data)
-                return BrsBinaryOp(left, BrsBinaryOperator.AND, right)
+                val rhsExpr = expression.branches[0].result
+                if (isEffectFreeShortCircuitOperand(rhsExpr)) {
+                    val left = expression.branches[0].condition.accept(this, data)
+                    val right = rhsExpr.accept(this, data)
+                    return BrsBinaryOp(left, BrsBinaryOperator.AND, right)
+                }
+                // BrightScript `and` evaluates both operands; an effectful RHS
+                // must only run when the LHS is true. Hoist:
+                //   __sc_tmpN = false : if <lhs> then __sc_tmpN = <rhs>
+                return hoistShortCircuit(expression.branches[0].condition, rhsExpr, false, data)
             }
             IrStatementOrigin.OROR -> {
                 // a || b is represented as: if (a) true else b
-                val left = expression.branches[0].condition.accept(this, data)
-                val right = expression.branches[1].result.accept(this, data)
-                return BrsBinaryOp(left, BrsBinaryOperator.OR, right)
+                val rhsExpr = expression.branches[1].result
+                if (isEffectFreeShortCircuitOperand(rhsExpr)) {
+                    val left = expression.branches[0].condition.accept(this, data)
+                    val right = rhsExpr.accept(this, data)
+                    return BrsBinaryOp(left, BrsBinaryOperator.OR, right)
+                }
+                //   __sc_tmpN = true : if not (<lhs>) then __sc_tmpN = <rhs>
+                return hoistShortCircuit(expression.branches[0].condition, rhsExpr, true, data)
             }
             else -> { /* fall through to default handling */ }
         }
@@ -3258,6 +3270,45 @@ class IrExpressionToBrsTransformer(
 
     private fun IrBranch.isElse(): Boolean {
         return condition is IrConst && (condition as IrConst).value == true
+    }
+
+    /**
+     * Emits the guarded-temp form of a short-circuit operator whose RHS is not
+     * effect-free. The temp declaration and guard `if` go through the hoisted-
+     * statement channel (the ELVIS precedent): statement positions flush them
+     * before the current statement; if/while condition positions consume them
+     * via takeHoistedStatements(), while-loops re-evaluating per iteration.
+     * RHS-internal hoists (nested impure short-circuits) must run only when
+     * the guard passes, so they are captured and moved INSIDE the guard body.
+     */
+    private fun hoistShortCircuit(
+        lhsExpr: IrExpression,
+        rhsExpr: IrExpression,
+        isOr: Boolean,
+        data: Unit,
+    ): BrsExpression {
+        val left = lhsExpr.accept(this, data)
+        // Statements hoisted while transforming the LHS run unconditionally —
+        // keep them pending, but separate them from the RHS's.
+        val lhsPending = genCtx.takeHoistedStatements()
+        val right = rhsExpr.accept(this, data)
+        val rhsHoisted = genCtx.takeHoistedStatements()
+        lhsPending.forEach { genCtx.addHoistedStatement(it) }
+
+        val tmpName = "__sc_tmp${genCtx.nextTempId()}"
+        genCtx.addHoistedStatement(BrsVariable(tmpName, null, BrsBooleanLiteral(isOr)))
+        val guardBody = mutableListOf<BrsStatement>()
+        guardBody.addAll(rhsHoisted)
+        guardBody.add(
+            BrsExpressionStatement(
+                BrsBinaryOp(BrsIdentifier(tmpName), BrsBinaryOperator.EQ, right)
+            )
+        )
+        val condition = if (isOr) BrsUnaryOp(BrsUnaryOperator.NOT, left) else left
+        genCtx.addHoistedStatement(
+            BrsIf(condition = condition, thenBranch = BrsBlock(guardBody))
+        )
+        return BrsIdentifier(tmpName)
     }
 
     // ==================== Function Expressions ====================
