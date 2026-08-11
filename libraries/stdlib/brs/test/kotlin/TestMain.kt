@@ -59,6 +59,7 @@ import test.coroutines.taskFunctionRefTests
 import test.coroutines.ioWorkerRegistryTests
 import test.coroutines.taskPoolTests
 import test.coroutines.withContextIOTests
+import test.coroutines.awaitTests
 
 /**
  * Main entry point for stdlib runtime tests.
@@ -117,5 +118,6 @@ fun main() {
         ioWorkerRegistryTests()
         taskPoolTests()
         withContextIOTests()
+        awaitTests()
     }
 }

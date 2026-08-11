@@ -34,6 +34,7 @@
     "KotlinKt.brs",
     "MapExtensionsBrsKt.brs",
     "PairKt.brs",
+    "ParkedContinuationKt.brs",
     "PreconditionsKt.brs",
     "PrimitiveIteratorsKt.brs",
     "PumpSchedulerKt.brs",
@@ -96,6 +97,7 @@
     <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/MapExtensionsBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/PairKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ParkedContinuationKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/PrimitiveIteratorsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/PumpSchedulerKt.brs" />

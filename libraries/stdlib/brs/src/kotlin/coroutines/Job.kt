@@ -6,6 +6,7 @@
 package kotlin.coroutines
 
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
 
 /**
  * A handle to a registration (completion / cancel-request handler) that can be
@@ -298,10 +299,18 @@ internal open class JobImpl(
     }
 
     override suspend fun join() {
-        // TEMPORARY (replaced in the next task by the parked-continuation
-        // implementation): pre-existing busy-wait retained so this task's
-        // flag-level protocol change lands green in isolation.
-        while (!isCompleted) {
+        return suspendCoroutineUninterceptedOrReturn { continuation ->
+            continuation.context.ensureActive()
+            if (terminal) {
+                Unit
+            } else {
+                @Suppress("UNCHECKED_CAST")
+                val parked = ParkedContinuation(continuation as Continuation<Any?>)
+                // join() resumes normally whatever the target's outcome.
+                parked.handles.add(invokeOnCompletion { parked.tryResume(Unit) })
+                registerCallerCancel(parked, continuation.context)
+                parked.finish()
+            }
         }
     }
 }
@@ -390,9 +399,26 @@ internal class CompletableDeferredImpl<T>(
     }
 
     override suspend fun await(): T {
-        // TEMPORARY (replaced in the next task): join-then-read retained so
-        // this task lands green in isolation.
-        innerJob.join()
-        return getCompleted()
+        return suspendCoroutineUninterceptedOrReturn { continuation ->
+            continuation.context.ensureActive()
+            if (innerJob.isCompleted) {
+                val cause = innerJob.completionCauseInternal
+                if (cause != null) throw cause
+                @Suppress("UNCHECKED_CAST")
+                (_value as T)
+            } else {
+                @Suppress("UNCHECKED_CAST")
+                val parked = ParkedContinuation(continuation as Continuation<Any?>)
+                parked.handles.add(innerJob.invokeOnCompletion { cause ->
+                    if (cause != null) {
+                        parked.tryResumeException(cause)
+                    } else {
+                        parked.tryResume(_value)
+                    }
+                })
+                registerCallerCancel(parked, continuation.context)
+                parked.finish()
+            }
+        }
     }
 }
