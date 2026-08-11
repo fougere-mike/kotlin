@@ -1,0 +1,166 @@
+// --- File: suspendStatementArgHoistKt.brs ---
+function tick_ContinuationI_k_(_completion as Object) as Object
+    return 1
+end function
+
+sub note_Str_I_k_(tag as String, value as Integer)
+    println_AnyN_k_((tag + ":") + __kotlin_numToStr_I_k_(value))
+end sub
+
+function record_Str_I_k_(tag as String, value as Integer) as Integer
+    println_AnyN_k_((tag + ":") + __kotlin_numToStr_I_k_(value))
+    return value
+end function
+
+function hoistInState_StrN_ContinuationI_k_(s as Dynamic, _completion as Object) as Object
+    tmp = _hoistInStateCOROUTINE__create_StrN_ContinuationI_k_(s, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function hoistInIfBody_StrN_Z_ContinuationI_k_(s as Dynamic, flag as Boolean, _completion as Object) as Object
+    tmp = _hoistInIfBodyCOROUTINE__create_StrN_Z_ContinuationI_k_(s, flag, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function _hoistInStateCOROUTINE__create_StrN_ContinuationI_k_(s as Dynamic, resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["_hoistInStateCOROUTINE_", this.__proto]
+    this.__type = "_hoistInStateCOROUTINE_"
+    this.doResume_k_ = _hoistInStateCOROUTINE__doResume_k_
+    this.s = s
+    return this
+end function
+
+function _hoistInStateCOROUTINE__doResume_k_() as Dynamic
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(3)
+                m.__set_state(1)
+                suspendResult = tick_ContinuationI_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+
+                tmp0_safe_receiver = m.s
+                __when_tmp0 = invalid
+                if tmp0_safe_receiver = invalid then
+                    __when_tmp0 = invalid
+                else
+                    __when_tmp0 = Len(tmp0_safe_receiver)
+                end if
+                tmp1_elvis_lhs = __when_tmp0
+                __when_tmp1 = invalid
+                if tmp1_elvis_lhs = invalid then
+                    __when_tmp1 = -1
+                else
+                    __when_tmp1 = tmp1_elvis_lhs
+                end if
+                note_Str_I_k_("len", __when_tmp1)
+
+                tmp2_safe_receiver = m.s
+                __when_tmp2 = invalid
+                if tmp2_safe_receiver = invalid then
+                    __when_tmp2 = invalid
+                else
+                    __when_tmp2 = Len(tmp2_safe_receiver)
+                end if
+                tmp3_elvis_lhs = __when_tmp2
+                __when_tmp3 = invalid
+                if tmp3_elvis_lhs = invalid then
+                    __when_tmp3 = -2
+                else
+                    __when_tmp3 = tmp3_elvis_lhs
+                end if
+                record_Str_I_k_("len2", __when_tmp3)
+
+                m.__set_state(2)
+                suspendResult = tick_ContinuationI_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+                                return suspendResult
+            else if __kotlin_identityEquals(tmp, 3) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 3) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function _hoistInIfBodyCOROUTINE__create_StrN_Z_ContinuationI_k_(s as Dynamic, flag as Boolean, resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["_hoistInIfBodyCOROUTINE_", this.__proto]
+    this.__type = "_hoistInIfBodyCOROUTINE_"
+    this.doResume_k_ = _hoistInIfBodyCOROUTINE__doResume_k_
+    this.s = s
+    this.flag = flag
+    return this
+end function
+
+function _hoistInIfBodyCOROUTINE__doResume_k_() as Dynamic
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = tick_ContinuationI_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+
+                if m.flag then
+                    tmp0_safe_receiver = m.s
+                    __when_tmp4 = invalid
+                    if tmp0_safe_receiver = invalid then
+                        __when_tmp4 = invalid
+                    else
+                        __when_tmp4 = Len(tmp0_safe_receiver)
+                    end if
+                    tmp1_elvis_lhs = __when_tmp4
+                    __when_tmp5 = invalid
+                    if tmp1_elvis_lhs = invalid then
+                        __when_tmp5 = -3
+                    else
+                        __when_tmp5 = tmp1_elvis_lhs
+                    end if
+                    note_Str_I_k_("cond", __when_tmp5)
+                end if
+                                return 0
+            else if __kotlin_identityEquals(tmp, 2) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 2) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function

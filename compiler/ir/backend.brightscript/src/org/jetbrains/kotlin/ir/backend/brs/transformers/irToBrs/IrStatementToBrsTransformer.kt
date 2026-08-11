@@ -529,20 +529,22 @@ class IrStatementToBrsTransformer(
                     transformed
                 }
                 // IrTypeOperatorCall with IMPLICIT_COERCION_TO_UNIT wraps expressions used as statements
+                // Expression fallbacks go through expressionStatementWithHoisted: a branch
+                // result whose argument transformation hoists statements (safe-call/elvis
+                // machinery) must keep those hoists INSIDE the branch body, before the call —
+                // otherwise they leak past the whole if and run unconditionally, and the
+                // branch body reads the machinery's temp before it is computed (task 6.6,
+                // brace-less `if (flag) note("cond", s?.length ?: -3)` shape).
                 is IrTypeOperatorCall -> {
                     if (branchResult.operator == IrTypeOperator.IMPLICIT_COERCION_TO_UNIT) {
                         val innerArg = branchResult.argument
                         when (innerArg) {
                             is IrBlock -> transformBlockOrStatement(innerArg)
-                            is IrCall -> BrsExpressionStatement(parent.transformExpression(innerArg))
-                            else -> {
-                                val body = parent.transformExpression(branchResult)
-                                BrsExpressionStatement(body)
-                            }
+                            is IrCall -> expressionStatementWithHoisted(innerArg)
+                            else -> expressionStatementWithHoisted(branchResult)
                         }
                     } else {
-                        val body = parent.transformExpression(branchResult)
-                        BrsExpressionStatement(body)
+                        expressionStatementWithHoisted(branchResult)
                     }
                 }
                 else -> {
@@ -551,8 +553,7 @@ class IrStatementToBrsTransformer(
                     if (branchResult is IrConst && (branchResult as IrConst).value == null) {
                         BrsEmpty()
                     } else {
-                        val body = parent.transformExpression(branchResult)
-                        BrsExpressionStatement(body)
+                        expressionStatementWithHoisted(branchResult)
                     }
                 }
             }
@@ -2385,16 +2386,7 @@ class IrStatementToBrsTransformer(
                             BrsBlock(brsStatements.toMutableList())
                         }
                     }
-                    else -> {
-                        // Transform and check for hoisted statements (from when expressions)
-                        val expr = parent.transformExpression(element)
-                        val hoisted = genCtx.takeHoistedStatements()
-                        if (hoisted.isNotEmpty()) {
-                            if (hoisted.size == 1) hoisted.first() else BrsBlock(hoisted.toMutableList())
-                        } else {
-                            BrsExpressionStatement(expr)
-                        }
-                    }
+                    else -> expressionStatementWithHoisted(element)
                 }
             }
             // Composite expressions might contain when statements
@@ -2408,18 +2400,32 @@ class IrStatementToBrsTransformer(
                     BrsBlock(brsStatements.toMutableList())
                 }
             }
-            is IrExpression -> {
-                // Transform and check for hoisted statements (from when expressions)
-                val expr = parent.transformExpression(element)
-                val hoisted = genCtx.takeHoistedStatements()
-                if (hoisted.isNotEmpty()) {
-                    if (hoisted.size == 1) hoisted.first() else BrsBlock(hoisted.toMutableList())
-                } else {
-                    BrsExpressionStatement(expr)
-                }
-            }
+            is IrExpression -> expressionStatementWithHoisted(element)
             is IrStatement -> parent.transformStatement(element) ?: BrsEmpty()
             else -> BrsEmpty()
         }
+    }
+
+    /**
+     * Emit a statement-position expression together with whatever its transformation
+     * hoisted (safe-call/elvis machinery, block-as-expression temps). The hoisted
+     * statements go BEFORE the expression statement — never INSTEAD of it: the old
+     * code returned hoisted-only, silently dropping the consuming call (state-machine
+     * states emitted `assertEquals("boom", thrown?.message)` as bare safe-call
+     * machinery — the assertion never executed and the test passed vacuously).
+     * A residual bare identifier or literal IS skipped (matching flattenBlockStatements):
+     * that is a when-lowered block's value read whose effect lives entirely in the
+     * hoisted machinery, and a bare identifier/literal statement is invalid BrightScript.
+     */
+    private fun expressionStatementWithHoisted(element: IrExpression): BrsStatement {
+        val expr = parent.transformExpression(element)
+        val hoisted = genCtx.takeHoistedStatements()
+        if (hoisted.isEmpty()) return BrsExpressionStatement(expr)
+        val keepExpr = expr !is BrsIdentifier && expr !is BrsInvalidLiteral &&
+            expr !is BrsIntLiteral && expr !is BrsDoubleLiteral &&
+            expr !is BrsStringLiteral && expr !is BrsBooleanLiteral
+        val stmts = hoisted.toMutableList()
+        if (keepExpr) stmts.add(BrsExpressionStatement(expr))
+        return if (stmts.size == 1) stmts.first() else BrsBlock(stmts)
     }
 }
