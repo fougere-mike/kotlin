@@ -142,3 +142,77 @@ fun TestRunner.jobProtocolTests() {
         }
     }
 }
+
+fun TestRunner.jobHierarchyTests() {
+    suite("Job hierarchy") {
+
+        test("parent completes only after children finish (Completing state)") {
+            val parent = Job()
+            val child = Job(parent)
+            var parentDone = false
+            parent.invokeOnCompletion { parentDone = true }
+            parent.complete()
+            assertFalse(parentDone)
+            assertFalse(parent.isCompleted)
+            assertTrue(parent.isActive)      // Completing counts as active (kotlinx parity)
+            child.complete()
+            assertTrue(parentDone)
+            assertTrue(parent.isCompleted)
+        }
+
+        test("cancel cascades to children recursively") {
+            val root = Job()
+            val mid = Job(root)
+            val leaf = Job(mid)
+            root.cancel()
+            assertTrue(mid.isCancelled)
+            assertTrue(leaf.isCancelled)
+            assertTrue(root.isCompleted)     // plain jobs: terminal once children drain
+        }
+
+        test("child failure cancels parent and sibling with original cause") {
+            val parent = Job()
+            val failing = Job(parent)
+            val sibling = Job(parent)
+            var parentCause: Throwable? = null
+            parent.invokeOnCompletion { cause -> parentCause = cause }
+            val boom = IllegalStateException("boom")
+            failing.completeExceptionally(boom)
+            assertTrue(parent.isCancelled)
+            assertTrue(sibling.isCancelled)
+            assertEquals(boom, parentCause)  // original exception, not a wrapper
+        }
+
+        test("supervisor parent ignores child failure") {
+            val parent = SupervisorJob()
+            val failing = Job(parent)
+            val sibling = Job(parent)
+            failing.completeExceptionally(IllegalStateException("boom"))
+            assertTrue(parent.isActive)
+            assertTrue(sibling.isActive)
+            sibling.complete()
+            parent.complete()
+            assertTrue(parent.isCompleted)
+        }
+
+        test("cancelled child detaches quietly (CancellationException is not failure)") {
+            val parent = Job()
+            val child = Job(parent)
+            child.cancel()
+            assertTrue(parent.isActive)
+            parent.complete()
+            assertTrue(parent.isCompleted)
+        }
+
+        test("first failure wins over later sibling failures") {
+            val parent = Job()
+            val a = Job(parent)
+            val b = Job(parent)
+            var parentCause: Throwable? = null
+            parent.invokeOnCompletion { cause -> parentCause = cause }
+            a.completeExceptionally(IllegalStateException("first"))
+            b.completeExceptionally(IllegalStateException("second"))
+            assertEquals("first", parentCause?.message)
+        }
+    }
+}
