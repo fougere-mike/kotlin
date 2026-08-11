@@ -201,6 +201,10 @@ abstract class AbstractBrsDiagnosticTest {
         "BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE" to
             "Captured '{0}' of type '{1}' cannot cross the Dispatchers.IO task thread boundary. " +
                 "Only primitives, String, RoArray, RoAssociativeArray, and Dynamic are serializable.",
+        "BRS_IO_DISPATCHER_UNSUPPORTED" to
+            "Dispatchers.IO is unsupported on this platform: IO dispatch silently falls back to the " +
+                "render-thread queue, so it behaves exactly like Dispatchers.Main. " +
+                "Use runTask<T> for background work.",
         "BRS_ADDFIELD_INVALID_TYPE" to "'{0}' is not a valid SceneGraph field type for addField(). Valid types: {1}.",
         "BRS_CREATE_OBJECT_INVALID_TYPE" to "'{0}' is not a valid BrightScript object type for createObject(). Valid types: {1}.",
         "BRS_STATIC_INVALID_TARGET" to

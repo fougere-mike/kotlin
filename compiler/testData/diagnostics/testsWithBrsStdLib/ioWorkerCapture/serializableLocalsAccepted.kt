@@ -1,4 +1,4 @@
-// Expected: no diagnostic — all captured locals are whitelisted serializable types.
+// Expected: no CAPTURE diagnostic (the IO-dispatcher error still marks Dispatchers.IO) — all captured locals are whitelisted serializable types.
 import kotlin.coroutines.builders.withContext
 import kotlin.coroutines.dispatchers.Dispatchers
 
@@ -10,7 +10,7 @@ suspend fun run() {
     val b: Boolean = true
     val s: String = "hi"
     val nullableString: String? = null
-    withContext(Dispatchers.IO) {
+    withContext(<!BRS_IO_DISPATCHER_UNSUPPORTED!>Dispatchers.IO<!>) {
         println(i)
         println(l)
         println(f)

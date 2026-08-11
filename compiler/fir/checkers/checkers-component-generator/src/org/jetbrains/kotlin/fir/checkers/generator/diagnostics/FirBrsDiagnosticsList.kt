@@ -73,6 +73,9 @@ object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
             parameter<String>("variableType")
             isSuppressible = true
         }
+        val BRS_IO_DISPATCHER_UNSUPPORTED by error<KtElement> {
+            isSuppressible = true
+        }
     }
 
     val STATIC by object : DiagnosticGroup("@BrsStatic") {

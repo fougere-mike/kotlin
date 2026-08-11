@@ -1,4 +1,4 @@
-// Expected: no diagnostic — the reference to `t` is inside a nested lambda passed to
+// Expected: no CAPTURE diagnostic (the IO-dispatcher error still marks Dispatchers.IO) — the reference to `t` is inside a nested lambda passed to
 // forEach, which is a separate FirAnonymousFunction. The checker stops descent into
 // nested lambdas to avoid complexity. This is a known limitation: captures inside
 // nested lambdas within withContext(Dispatchers.IO) are not currently detected.
@@ -10,7 +10,7 @@ class Thing
 
 suspend fun run() {
     val t = Thing()
-    withContext(Dispatchers.IO) {
+    withContext(<!BRS_IO_DISPATCHER_UNSUPPORTED!>Dispatchers.IO<!>) {
         listOf(1, 2, 3).forEach { _ ->
             println(t)
         }

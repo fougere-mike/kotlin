@@ -61,6 +61,7 @@ import kotlin.coroutines.task.TaskPool
  * @return The result of the block execution.
  * @throws IllegalStateException if using `Dispatchers.IO` without initializing [TaskPool]
  */
+@Suppress("BRS_IO_DISPATCHER_UNSUPPORTED") // stdlib-internal identity check on the quarantined IO pipeline
 public suspend fun <T> withContext(
     context: CoroutineContext,
     block: suspend CoroutineScope.() -> T

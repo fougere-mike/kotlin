@@ -6,7 +6,7 @@ class Config(val url: String)
 
 suspend fun run() {
     val config = Config("x")
-    withContext(Dispatchers.IO) {
+    withContext(<!BRS_IO_DISPATCHER_UNSUPPORTED!>Dispatchers.IO<!>) {
         println(<!BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE!>config<!>.url)
     }
 }

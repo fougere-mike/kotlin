@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_CREATE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_CREATE_OBJECT_INVALID_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_INTRINSIC_LITERAL_REQUIRED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_INTRINSIC_USER_DEFINED
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_IO_DISPATCHER_UNSUPPORTED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_INHERITED_NAME_CASE_CLASH
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_NAME_CASE_CLASH
@@ -84,6 +85,12 @@ object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             "Captured ''{0}'' of type ''{1}'' cannot cross the Dispatchers.IO task thread boundary. " +
                 "Only primitives, String, RoArray, RoAssociativeArray, and Dynamic are serializable.",
             CommonRenderers.STRING, CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_IO_DISPATCHER_UNSUPPORTED,
+            "Dispatchers.IO is unsupported on this platform: IO dispatch silently falls back to the " +
+                "render-thread queue, so it behaves exactly like Dispatchers.Main. " +
+                "Use runTask<T> for background work.",
         )
         map.put(
             BRS_STATIC_INVALID_TARGET,

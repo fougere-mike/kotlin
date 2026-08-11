@@ -40,6 +40,7 @@ object FirBrsErrors : KtDiagnosticsContainer() {
 
     // IO worker extraction
     val BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
+    val BRS_IO_DISPATCHER_UNSUPPORTED: KtDiagnosticFactory0 = KtDiagnosticFactory0("BRS_IO_DISPATCHER_UNSUPPORTED", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
 
     // @BrsStatic
     val BRS_STATIC_INVALID_TARGET: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("BRS_STATIC_INVALID_TARGET", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())

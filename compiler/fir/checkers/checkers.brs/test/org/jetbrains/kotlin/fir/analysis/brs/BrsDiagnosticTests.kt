@@ -384,6 +384,34 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
         runTest("ioWorkerCapture/roArrayCaptureAccepted.kt")
     }
 
+    // BRS_IO_DISPATCHER_UNSUPPORTED — Dispatchers.IO silently aliases the render-thread
+    // queue (TaskPool quarantined); background work goes through runTask<T>.
+
+    @Test
+    fun testIoDispatcherDirectReferenceRejected() {
+        runTest("ioDispatcherUnsupported/directReferenceRejected.kt")
+    }
+
+    @Test
+    fun testIoDispatcherWithContextIORejected() {
+        runTest("ioDispatcherUnsupported/withContextIORejected.kt")
+    }
+
+    @Test
+    fun testIoDispatcherSuppressedOk() {
+        runTest("ioDispatcherUnsupported/suppressedOk.kt")
+    }
+
+    @Test
+    fun testIoDispatcherOtherDispatchersOk() {
+        runTest("ioDispatcherUnsupported/otherDispatchersOk.kt")
+    }
+
+    @Test
+    fun testIoDispatcherAliasFlaggedAtSourceOnly() {
+        runTest("ioDispatcherUnsupported/aliasFlaggedAtSourceOnly.kt")
+    }
+
     // BRS_ONCHANGE_HANDLER_SIGNATURE — handler function must be zero-arg or single RoSGNodeEvent.
 
     @Test

@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.analysis.brs.checkers
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsAddFieldTypeChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsCreateComponentTypeChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsCreateObjectTypeChecker
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsIODispatcherChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsIOWorkerCaptureChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsIntrinsicArgChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsNameCallableRefChecker
@@ -22,5 +23,10 @@ object BrsExpressionCheckers : ExpressionCheckers() {
             FirBrsCreateObjectTypeChecker,
             FirBrsCreateComponentTypeChecker,
             FirBrsNameCallableRefChecker,
+        )
+
+    override val propertyAccessExpressionCheckers: Set<FirPropertyAccessExpressionChecker>
+        get() = setOf(
+            FirBrsIODispatcherChecker,
         )
 }

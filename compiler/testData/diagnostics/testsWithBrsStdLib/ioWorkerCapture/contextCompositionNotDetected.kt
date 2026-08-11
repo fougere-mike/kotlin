@@ -1,4 +1,4 @@
-// Expected: no diagnostic — Dispatchers.IO + X context composition is NOT recognized
+// Expected: no CAPTURE diagnostic (the IO-dispatcher error still marks Dispatchers.IO) — Dispatchers.IO + X context composition is NOT recognized
 // as an IO dispatch. Documents a known gap matching the IR lowering behavior:
 // users must write withContext(Dispatchers.IO) directly for the check to apply.
 import kotlin.coroutines.builders.withContext
@@ -9,7 +9,7 @@ class Thing
 
 suspend fun run() {
     val t = Thing()
-    withContext(Dispatchers.IO + EmptyCoroutineContext) {
+    withContext(<!BRS_IO_DISPATCHER_UNSUPPORTED!>Dispatchers.IO<!> + EmptyCoroutineContext) {
         println(t)
     }
 }

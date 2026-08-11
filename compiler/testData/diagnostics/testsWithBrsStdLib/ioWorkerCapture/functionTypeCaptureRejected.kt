@@ -4,7 +4,7 @@ import kotlin.coroutines.dispatchers.Dispatchers
 
 suspend fun run() {
     val cb: () -> Unit = {}
-    withContext(Dispatchers.IO) {
+    withContext(<!BRS_IO_DISPATCHER_UNSUPPORTED!>Dispatchers.IO<!>) {
         <!BRS_IO_WORKER_NON_SERIALIZABLE_CAPTURE!>cb<!>()
     }
 }

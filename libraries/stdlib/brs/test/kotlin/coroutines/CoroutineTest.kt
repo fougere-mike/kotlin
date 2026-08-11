@@ -226,6 +226,7 @@ fun TestRunner.dispatcherTests() {
         }
 
         test("Dispatchers.IO exists") {
+            @Suppress("BRS_IO_DISPATCHER_UNSUPPORTED")
             val dispatcher = kotlin.coroutines.dispatchers.Dispatchers.IO
             assertNotNull(dispatcher)
         }
