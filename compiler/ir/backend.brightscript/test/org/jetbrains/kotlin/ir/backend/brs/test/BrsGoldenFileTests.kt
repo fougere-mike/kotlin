@@ -69,6 +69,9 @@ class BrsControlFlowGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun doWhileConditionScope() = runTest("controlFlow/doWhileConditionScope.kt")
+
+    @Test
+    fun tryCatchExpression() = runTest("controlFlow/tryCatchExpression.kt")
 }
 
 // ==================== Class Tests ====================

@@ -253,6 +253,10 @@ object BrsLoweringPhases {
             // are transformed to blocks with temp variables
             BrsWhenExpressionLowering(context),
 
+            // Phase 12.1: try/catch used as an expression → statement try with
+            // a temp result variable (BrightScript try/catch is statement-only)
+            BrsTryExpressionLowering(context),
+
             // Phase 12.5: Destructuring declarations
             // Renames <destruct> placeholder variables to proper temp names
             // This must run before ForLoopsLowering to handle all destructuring cases

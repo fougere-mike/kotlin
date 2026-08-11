@@ -1,0 +1,45 @@
+// --- File: tryCatchExpressionKt.brs ---
+function throwingLength_StrN_k_(s as Dynamic) as Integer
+    if s = invalid then
+        throw IllegalStateException_create_StrN_k_("null input")
+    end if
+    return Len(s)
+end function
+
+function tryInInitializer_StrN_k_(s as Dynamic) as Integer
+    __try_tmp0 = invalid
+        try
+        __try_tmp0 = throwingLength_StrN_k_(s)
+    catch e
+        __try_tmp0 = -1
+    end try
+    n = __try_tmp0
+
+    return n
+end function
+
+function tryInReturn_StrN_k_(s as Dynamic) as String
+    __try_tmp1 = invalid
+    try
+        __try_tmp1 = ("ok:" + __kotlin_numToStr_I_k_(throwingLength_StrN_k_(s)))
+    catch e
+        __try_tmp1 = "fallback"
+    end try
+    return __try_tmp1
+
+end function
+
+function wrap_I_k_(n as Integer) as String
+    return "v" + __kotlin_numToStr_I_k_(n)
+end function
+
+function tryInArgument_StrN_k_(s as Dynamic) as String
+    __try_tmp2 = invalid
+    try
+        __try_tmp2 = throwingLength_StrN_k_(s)
+    catch e
+        __try_tmp2 = 0
+    end try
+    return wrap_I_k_(__try_tmp2)
+
+end function

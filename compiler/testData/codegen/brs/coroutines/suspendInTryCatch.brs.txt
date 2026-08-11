@@ -108,7 +108,7 @@ function _guardedValueCOROUTINE__doResume_k_() as Dynamic
             tmp = m.__get_state()
             if __kotlin_identityEquals(tmp, 0) then
                 m.__set_exceptionState(4)
-
+                m.__try_tmp00 = invalid
                 m.__set_exceptionState(2)
                 m.__set_state(1)
                 suspendResult = mayFail_Z_ContinuationI_k_(m.flag, m)
@@ -117,19 +117,20 @@ function _guardedValueCOROUTINE__doResume_k_() as Dynamic
                 end if
                 continue while
             else if __kotlin_identityEquals(tmp, 1) then
-                m.TRY_RESULT0 = suspendResult
+                m.__try_tmp00 = suspendResult
                 m.__set_exceptionState(4)
                 m.__set_state(3)
                 continue while
             else if __kotlin_identityEquals(tmp, 2) then
                 m.__set_exceptionState(4)
                 e = m.__get_exception()
-                m.TRY_RESULT0 = -1
+                m.__try_tmp00 = -1
+
                 m.__set_state(3)
                 continue while
             else if __kotlin_identityEquals(tmp, 3) then
                 m.__set_exceptionState(4)
-                r = m.TRY_RESULT0
+                r = m.__try_tmp00
                                 return r + 1
             else if __kotlin_identityEquals(tmp, 4) then
                 throw m.__get_exception()
