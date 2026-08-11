@@ -555,12 +555,29 @@ if [[ -n "$SENTINEL_LINE" ]]; then
     REMAINING=$(wc -l < "$TEST_OUTPUT" | tr -d ' ')
     echo "  Filtered: $REMAINING lines (discarded $DISCARDED stale lines from buffer)"
 else
-    echo -e "${YELLOW}  Warning: No sentinel found in output${NC}"
-    echo "  This could mean:"
-    echo "    - The app crashed before startRun() was called"
-    echo "    - The sentinel code wasn't included (rebuild needed)"
+    # HARD FAILURE. The capture may still hold a PREVIOUS run's replayed
+    # backlog (all-green JSON events included); parsing it "unfiltered" once
+    # produced a false "All tests passed" for an app that never launched.
+    # A healthy run ALWAYS captures the sentinel: the console is connected
+    # before deployment and the adapter prints it at startRun().
     echo ""
-    echo "  Proceeding with unfiltered output (may contain stale logs)..."
+    echo -e "${RED}╔══════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${RED}║  ERROR: No sentinel found — this run produced NO output      ║${NC}"
+    echo -e "${RED}╚══════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo "The console capture contains no ===KOTLINTEST_SENTINEL_...=== line,"
+    echo "so nothing in it can be attributed to THIS run. Refusing to parse"
+    echo "stale buffer contents. This means:"
+    echo "  - The app never launched (deployment failed - check the response"
+    echo "    printed under 'Step 6: Deploying to Roku device...')"
+    echo "  - Or it crashed before startRun() was called"
+    echo "  - Or the sentinel code wasn't included (rebuild needed)"
+    echo ""
+    echo "Raw capture saved to: $TEST_OUTPUT"
+    echo ""
+    echo "Last 30 lines of captured output:"
+    tail -30 "$TEST_OUTPUT"
+    exit 1
 fi
 echo ""
 

@@ -696,9 +696,17 @@ Filtering output by sentinel...
 - The current app didn't start correctly
 - Try: Re-run tests, or reboot the Roku device
 
-**If no sentinel found:**
+**If no sentinel found:** the run is a HARD FAILURE (exit 1) — the capture
+contains nothing attributable to this run, so the runner refuses to parse it.
+(Before 2026-08-11 it "proceeded with unfiltered output", which parsed a
+PREVIOUS run's replayed all-green backlog and reported "All tests passed" for
+an app that never launched.) Causes, in observed-frequency order:
+- The app never launched because the DEVICE-SIDE BrightScript compile failed —
+  look for `*** ERROR compiling pkg:/source/<file>.brs` in the raw capture
+  (the runner prints its tail). A generated-code syntax error means a compiler
+  codegen bug or a known miscompile pattern in new test code.
 - App crashed before `startRun()` was called
-- Check the unfiltered output for crash details
+- Check the unfiltered output (`test/build/test-output.txt`) for details
 
 The test output file is saved to: `libraries/stdlib/brs/test/build/test-output.txt`
 
