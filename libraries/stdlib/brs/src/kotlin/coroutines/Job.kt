@@ -72,13 +72,28 @@ public fun Job(parent: Job? = null): CompletableJob = JobImpl(parent)
  * Used as the root of [kotlin.brs.componentScope].
  */
 public fun SupervisorJob(parent: Job? = null): CompletableJob =
-    JobImpl(parent, isSupervisor = true)
+    // hasBody stays explicit: the BRS backend emits supplied arguments
+    // positionally with gaps compacted, so a named argument that skips a
+    // defaulted parameter binds to the WRONG slot (isSupervisor=true used to
+    // land on hasBody). Keep the argument list contiguous.
+    JobImpl(parent, hasBody = false, isSupervisor = true)
 
 /** Resolves the concrete JobImpl participating in the hierarchy, if any. */
 internal fun jobImplOf(job: Job?): JobImpl? {
     if (job is JobImpl) return job
     if (job is CompletableDeferredImpl<*>) return job.innerJob
     return null
+}
+
+/**
+ * Attaches [child] to [parent] and returns [parent]. Called from the
+ * `parentImpl` property initializer INSTEAD of an `init` block: the BRS
+ * backend currently drops init-block bodies from generated constructors,
+ * so an attach placed there is silently never emitted.
+ */
+private fun attachToParent(child: JobImpl, parent: JobImpl?): JobImpl? {
+    parent?.attachChild(child)
+    return parent
 }
 
 /**
@@ -108,7 +123,8 @@ internal open class JobImpl(
     internal val reportsUnhandled: Boolean = false,
 ) : CompletableJob {
 
-    internal val parentImpl: JobImpl? = jobImplOf(parent)
+    @Suppress("LeakingThis")
+    internal val parentImpl: JobImpl? = attachToParent(this, jobImplOf(parent))
 
     private var bodyCompleted: Boolean = false
     private var cancelRequested: Boolean = false
@@ -121,10 +137,6 @@ internal open class JobImpl(
     private val children = mutableListOf<JobImpl>()
     private val completionHandlers = mutableListOf<HandlerEntry>()
     private val cancelHandlers = mutableListOf<HandlerEntry>()
-
-    init {
-        parentImpl?.attachChild(this)
-    }
 
     override val key: CoroutineContext.Key<*> get() = Job
 
@@ -351,7 +363,10 @@ internal class CompletableDeferredImpl<T>(
     hasBody: Boolean = false,
 ) : CompletableDeferred<T> {
 
-    internal val innerJob = JobImpl(parent, hasBody = hasBody, reportsUnhandled = false)
+    // reportsUnhandled already defaults to false; naming it here would skip
+    // two defaulted parameters, which the BRS backend miscompiles (see
+    // SupervisorJob) — keep supplied arguments contiguous.
+    internal val innerJob = JobImpl(parent, hasBody = hasBody)
     private var _value: T? = null
 
     override val key: CoroutineContext.Key<*> get() = Job
