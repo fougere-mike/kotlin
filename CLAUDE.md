@@ -285,8 +285,11 @@ Key facts:
 - A failed `run()` surfaces as `TaskException` at the suspend point (fields of
   the BrightScript error object: `message`, `number`, `backtrace`).
 - v1 constraints: must be called from render-thread component context; a fresh
-  unparented node per invocation (no pooling); one-shot; no cancellation or
-  timeout yet (M3 backlog).
+  unparented node per invocation (no pooling); one-shot; no timeout yet. The
+  await IS cancellation-aware: cancelling the awaiting coroutine wakes it
+  promptly (CancellationException at the suspend point, registry entry dropped,
+  observer disarmed), but the task-thread `run()` still executes to completion
+  on the abandoned node (stopping it is M3 backlog).
 - FIR diagnostics guard the pattern: `BRS_TASK_STATE_NOT_FIELD` (task state
   must be @SG interface fields - plain properties are lost across the node
   clone) and `BRS_CREATE_COMPONENT_INVALID_TYPE` (+ an "[IR] " backstop).
@@ -405,12 +408,15 @@ loop, or an unrelated device test. An unhandled launch failure prints
 (`Job.kt:319`) — grep for that prefix when a fire-and-forget coroutine dies.
 
 **Cancellation promises (v1).** Every stdlib suspend point entry-checks the
-job (`delay`, `yield`, `join`, `await`, `awaitAll`, scope builders); a PARKED
-suspension is woken mid-park by caller cancel (CancellationException at the
-suspend point); cancellation cascades through the hierarchy. NOT promised:
-task-thread work is not stopped — cancelling a coroutine parked in
-`runTask` abandons the await, but the task's `run()` keeps executing on the
-task thread (runTask cancellation is M3 backlog).
+job (`delay`, `yield`, `join`, `await`, `awaitAll`, scope builders, `runTask`/
+`awaitCompletion`); a PARKED suspension is woken mid-park by caller cancel
+(CancellationException at the suspend point) — including a coroutine parked in
+`runTask`, whose cleanup drops the registry entry and disarms the state
+observer so the task's late terminal write finds nothing to do (E2E Suite 4
+"runTask await wakes promptly on caller cancellation"); cancellation cascades
+through the hierarchy. NOT promised: task-thread work is not stopped — the
+cancelled task's `run()` keeps executing to completion on the abandoned node
+(stopping it is M3 backlog).
 
 **Jobs are same-component-only.** GetGlobalAA — and therefore the queue, the
 DelayTracker, and the pump — is per-component-instance on the render thread.
@@ -827,7 +833,7 @@ window. Direct `./gradlew rokuTest` BYPASSES that guard.
 the stdlib runner: replayed events from a previous run are discarded).
 Results land in `build/test-results/roku/` as JSON + JUnit XML.
 
-**The suites (7 suites, 41 active tests + 3 red-guarded `xtest` placeholders):**
+**The suites (7 suites, 42 active tests + 3 red-guarded `xtest` placeholders):**
 
 | Suite | File | Exercises |
 |-------|------|-----------|
@@ -890,7 +896,7 @@ These are the whole-branch green gates; a drop in any of them is a regression.
 | Golden file tests | 65 |
 | FIR diagnostic suite (checkers.brs) | 219 |
 | Stdlib device suite | 493 tests / 50 suites |
-| rokuTest E2E | 41 active tests / 7 suites (+3 red-guarded xtests) |
+| rokuTest E2E | 42 active tests / 7 suites (+3 red-guarded xtests) |
 | `validateComponentIncludes` | strict mode, 0 findings (no allowlist) |
 
 ### Test Output

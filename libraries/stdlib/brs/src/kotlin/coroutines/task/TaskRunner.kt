@@ -14,11 +14,12 @@ import kotlin.brs.roku.RoAssociativeArray
 import kotlin.brs.roku.RoSGNode
 import kotlin.brs.roku.RoSGNodeEvent
 import kotlin.coroutines.Continuation
-import kotlin.coroutines.ContinuationInterceptor
-import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
+import kotlin.coroutines.ensureActive
 import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.Job
+import kotlin.coroutines.jobImplOf
+import kotlin.coroutines.ParkedContinuation
+import kotlin.coroutines.registerCallerCancel
 
 /**
  * Render-side runner for typed task components ([TaskComponent] subclasses).
@@ -36,7 +37,10 @@ import kotlin.coroutines.resumeWithException
  *   uses the function-name observer form, whose callback resolves in the
  *   observing component's scope.
  * - a fresh unparented node is created per invocation; no pooling.
- * - no cancellation or timeout; one-shot tasks only.
+ * - one-shot tasks; no timeout. The AWAIT is cancellation-aware: caller
+ *   cancellation wakes the parked coroutine with CancellationException and
+ *   tears down the await protocol, but the task-thread `run()` still executes
+ *   to completion on the abandoned node (stopping it is M3 backlog).
  */
 
 /**
@@ -77,12 +81,13 @@ private external fun taskNodeOf(task: TaskComponent): RoSGNode
 private external fun taskEventNodeOrNull(event: RoSGNodeEvent): RoSGNode?
 
 /**
- * Continuation registry keyed by the `kotlinTaskId` protocol field. Each
- * [awaitCompletion] registers exactly one continuation per id; the observer
- * callback removes and resumes it when the task reports a terminal state.
+ * Park registry keyed by the `kotlinTaskId` protocol field. Each
+ * [awaitCompletion] registers exactly one [ParkedContinuation] per id; the
+ * observer callback removes and settles it when the task reports a terminal
+ * state, and a cancelled await's cleanup handler removes its own entry.
  */
 internal object TaskRunner {
-    private val pending = mutableMapOf<Int, Continuation<Any?>>()
+    private val pending = mutableMapOf<Int, ParkedContinuation>()
     private var lastTaskId: Int = 0
 
     /** Allocates the next correlation id (ids start at 1; 0 = unassigned). */
@@ -93,11 +98,11 @@ internal object TaskRunner {
 
     fun hasPending(taskId: Int): Boolean = pending.containsKey(taskId)
 
-    fun register(taskId: Int, continuation: Continuation<Any?>) {
-        pending[taskId] = continuation
+    fun register(taskId: Int, parked: ParkedContinuation) {
+        pending[taskId] = parked
     }
 
-    fun remove(taskId: Int): Continuation<Any?>? = pending.remove(taskId)
+    fun remove(taskId: Int): ParkedContinuation? = pending.remove(taskId)
 }
 
 /**
@@ -129,10 +134,11 @@ internal fun onKotlinTaskStateChanged(event: RoSGNodeEvent) {
     if (taskId == null) {
         return
     }
-    val continuation = TaskRunner.remove(taskId)
-    if (continuation == null) {
+    val parked = TaskRunner.remove(taskId)
+    if (parked == null) {
         // No await registered (e.g. duplicate delivery after a double
-        // observe, or a stale event) — drop it.
+        // observe, a stale event, or a cancelled await whose cleanup already
+        // ran) — drop it.
         return
     }
     // Unobserve BEFORE resuming, so a dropped node can be collected and the
@@ -142,29 +148,15 @@ internal fun onKotlinTaskStateChanged(event: RoSGNodeEvent) {
     if (!TaskRunner.hasPending(taskId)) {
         node.unobserveFieldScoped(TASK_STATE_FIELD)
     }
+    // Settling through the park routes resumption via the context's
+    // ContinuationInterceptor when present (ParkedContinuation.resumeTarget):
+    // the coroutine continues on its dispatcher's queue instead of deep
+    // inside this SceneGraph observer callback. A park already settled by
+    // cancellation ignores this (settle-once guard).
     if (state == "error") {
-        resumeTask(continuation, node, true)
+        parked.tryResumeException(taskExceptionFrom(node))
     } else {
-        resumeTask(continuation, node, false)
-    }
-}
-
-/**
- * Resumes an awaiting continuation with the completed node (or [TaskException]).
- * Resumption goes through the context's [ContinuationInterceptor] when present
- * (the delay()/yield() shape): the coroutine then continues on its dispatcher's
- * queue instead of deep inside this SceneGraph observer callback.
- */
-private fun resumeTask(continuation: Continuation<Any?>, node: RoSGNode, failed: Boolean) {
-    var target = continuation
-    val interceptor = continuation.context[ContinuationInterceptor]
-    if (interceptor != null) {
-        target = interceptor.interceptContinuation(continuation)
-    }
-    if (failed) {
-        target.resumeWithException(taskExceptionFrom(node))
-    } else {
-        target.resume(node)
+        parked.tryResume(node)
     }
 }
 
@@ -201,7 +193,13 @@ private fun taskExceptionFrom(node: RoSGNode): TaskException {
  *
  * Awaiting an already-completed node returns (or throws) immediately.
  * A concurrent second await on the same node throws [IllegalStateException]:
- * the registry holds exactly one continuation per task id.
+ * the registry holds exactly one parked continuation per task id.
+ *
+ * Cancellation-aware await: cancelling the caller's job wakes the park
+ * promptly with [kotlin.coroutines.cancellation.CancellationException]; the
+ * cleanup handler drops the registry entry and disarms the observer first, so
+ * the task's late terminal write finds nothing to do. The task-thread `run()`
+ * is NOT stopped — it executes to completion on the abandoned node.
  */
 public suspend fun <T : TaskComponent> T.awaitCompletion(): T {
     val node = taskNodeOf(this)
@@ -233,10 +231,27 @@ public suspend fun <T : TaskComponent> T.awaitCompletion(): T {
     }
     // Tail-delegating suspension (the stdlib delay() shape — stdlib suspend
     // functions get no state machine, so the suspension must be the last step).
+    // Entry check inside the block (the Await.kt/join() shape): the
+    // coroutineContext intrinsic is unavailable in stdlib source, so the
+    // context is only reachable through the continuation.
     return suspendCoroutineUninterceptedOrReturn { continuation ->
+        continuation.context.ensureActive()
         @Suppress("UNCHECKED_CAST")
-        TaskRunner.register(taskId, continuation as Continuation<Any?>)
-        COROUTINE_SUSPENDED
+        val parked = ParkedContinuation(continuation as Continuation<Any?>)
+        TaskRunner.register(taskId, parked)
+        // Cancel-path cleanup the park cannot know about: drop the registry
+        // entry and disarm the observer so a late terminal write finds
+        // nothing to do. Registered BEFORE registerCallerCancel so protocol
+        // state is gone by the time the park wakes with the CE.
+        val jobImpl = jobImplOf(continuation.context[Job])
+        if (jobImpl != null) {
+            parked.handles.add(jobImpl.invokeOnCancelRequest {
+                TaskRunner.remove(taskId)
+                node.unobserveFieldScoped(TASK_STATE_FIELD)
+            })
+        }
+        registerCallerCancel(parked, continuation.context)
+        parked.finish()
     }
 }
 
@@ -280,9 +295,13 @@ internal suspend fun <T : TaskComponent> runTaskImpl(task: T, configure: T.() ->
  *   and coroutines launched from them). Completion uses the function-name
  *   observer form, which resolves its callback in the observing component's
  *   scope; the main-thread driver context is not supported.
- * - One-shot: no cancellation, no timeout, no node reuse. Every invocation
- *   creates a fresh node; concurrent invocations of the same task type are
- *   independent nodes correlated by `kotlinTaskId`.
+ * - One-shot: no timeout, no node reuse. Every invocation creates a fresh
+ *   node; concurrent invocations of the same task type are independent nodes
+ *   correlated by `kotlinTaskId`.
+ * - Cancelling the awaiting coroutine wakes it promptly (CancellationException
+ *   at the suspend point) and tears down the await protocol, but does NOT
+ *   stop the task thread: `run()` executes to completion on the abandoned
+ *   node (stopping it is M3 backlog).
  */
 public suspend inline fun <reified T : TaskComponent> runTask(noinline configure: T.() -> Unit): T =
     runTaskImpl(createComponent<T>(), configure)
