@@ -65,6 +65,7 @@ import test.coroutines.delayCancellationTests
 import test.coroutines.awaitAllTests
 import test.coroutines.builderHierarchyTests
 import test.coroutines.scopeFunctionTests
+import test.coroutines.withTimeoutTests
 
 /**
  * Main entry point for stdlib runtime tests.
@@ -129,5 +130,6 @@ fun main() {
         awaitAllTests()
         builderHierarchyTests()
         scopeFunctionTests()
+        withTimeoutTests()
     }
 }

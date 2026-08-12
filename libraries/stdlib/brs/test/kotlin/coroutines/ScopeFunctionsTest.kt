@@ -6,6 +6,9 @@ import kotlin.coroutines.builders.async
 import kotlin.coroutines.builders.launch
 import kotlin.coroutines.builders.runBlocking
 import kotlin.coroutines.builders.withContext
+import kotlin.coroutines.builders.withTimeout
+import kotlin.coroutines.builders.withTimeoutOrNull
+import kotlin.coroutines.builders.TimeoutCancellationException
 import kotlin.coroutines.cancellation.CancellationException
 
 fun TestRunner.builderHierarchyTests() {
@@ -203,6 +206,141 @@ fun TestRunner.scopeFunctionTests() {
                     thrown = e
                 }
                 assertEquals("wc-boom", thrown?.message)
+            }
+        }
+    }
+}
+
+fun TestRunner.withTimeoutTests() {
+    suite("withTimeout") {
+
+        test("block wins: value returned, no exception") {
+            runBlocking {
+                val v = withTimeout(5000) {
+                    delay(20)
+                    "fast"
+                }
+                assertEquals("fast", v)
+            }
+        }
+
+        test("timeout expires: TimeoutCancellationException thrown, child woken") {
+            runBlocking {
+                var childWoken = false
+                var thrown: Throwable? = null
+                try {
+                    withTimeout(60) {
+                        try {
+                            delay(10000)
+                        } catch (e: CancellationException) {
+                            childWoken = true
+                            throw e
+                        }
+                    }
+                } catch (e: Throwable) {
+                    thrown = e
+                }
+                assertTrue(thrown is TimeoutCancellationException)
+                assertTrue(childWoken)
+            }
+        }
+
+        test("timeout expiry waits for children to unwind before rethrowing") {
+            runBlocking {
+                var siblingUnwound = false
+                try {
+                    withTimeout(40) {
+                        launch {
+                            try {
+                                delay(10000)
+                            } catch (e: CancellationException) {
+                                siblingUnwound = true
+                                throw e
+                            }
+                        }
+                        delay(10000)
+                    }
+                } catch (e: Throwable) {
+                    // by the time withTimeout rethrows, no child is running
+                }
+                assertTrue(siblingUnwound)
+            }
+        }
+
+        test("block failure beats timeout and propagates as-is") {
+            runBlocking {
+                var thrown: Throwable? = null
+                try {
+                    withTimeout(5000) {
+                        delay(10)
+                        throw IllegalStateException("block-boom")
+                    }
+                } catch (e: Throwable) {
+                    thrown = e
+                }
+                assertEquals("block-boom", thrown?.message)
+                assertFalse(thrown is TimeoutCancellationException)
+            }
+        }
+
+        test("stale timeout callback after a win is a no-op") {
+            runBlocking {
+                val v = withTimeout(50) {
+                    delay(10)
+                    "won"
+                }
+                // Ride past the original deadline; the tracker fires the stale
+                // callback into a terminal scope job — nothing may explode.
+                delay(100)
+                assertEquals("won", v)
+            }
+        }
+
+        test("withTimeout(<=0) throws immediately") {
+            runBlocking {
+                var thrown: Throwable? = null
+                try {
+                    withTimeout(0) {
+                        "never"
+                    }
+                } catch (e: Throwable) {
+                    thrown = e
+                }
+                assertTrue(thrown is TimeoutCancellationException)
+            }
+        }
+
+        test("withTimeoutOrNull returns null on its own expiry") {
+            runBlocking {
+                val a = withTimeoutOrNull(40) {
+                    delay(10000)
+                    "a"
+                }
+                assertNull(a)
+                val b = withTimeoutOrNull(5000) {
+                    delay(10)
+                    "b"
+                }
+                assertEquals("b", b)
+            }
+        }
+
+        test("nested: inner timeout TCE propagates through outer withTimeoutOrNull") {
+            runBlocking {
+                var thrown: Throwable? = null
+                try {
+                    withTimeoutOrNull(5000) {
+                        withTimeout(30) {
+                            delay(10000)
+                        }
+                        "never"
+                    }
+                } catch (e: Throwable) {
+                    thrown = e
+                }
+                // The INNER timeout's TCE is not the outer's instance: it must
+                // propagate out as an exception, not become the outer's null.
+                assertTrue(thrown is TimeoutCancellationException)
             }
         }
     }
