@@ -465,9 +465,10 @@ raw verdict lines: `spikes/scope-handle-spike/FINDINGS.md` (channel-matrix =
 raw-BRS run; kotlin-probe = compiled-Kotlin runs). Facts only — the
 ScopeHandle design decision is recorded separately in that file.
 
-- Ordinary channels COPY, deep at every level — node field, global field,
-  callFunc arg, callFunc return, rtq PostMessage, observer `getData()`: a
-  receiver-side mutation is never visible to the sender, top-level or nested
+- Ordinary channels COPY — top-level on all six probed channels (node field,
+  global field, callFunc arg, callFunc return, rtq PostMessage, observer
+  `getData()`), deep on every channel probed for depth: a receiver-side
+  mutation is never visible to the sender, top-level or nested
   (channel-matrix Q1a all-FAIL; kotlin-probe `nested FAIL innerMarker=1` ×3).
 - Function references never survive an ordinary hop, in two SILENT strip
   modes: field channels and rtq DROP the key; callFunc (both directions)
@@ -481,7 +482,7 @@ ScopeHandle design decision is recorded separately in that file.
   `keys=0` at its top level, while the sender's direct references to nested
   values stay intact — externally-referenced nested objects are copied, not
   moved (channel-matrix `rtq.postState`; kotlin-probe `q1d.rtq.postState`).
-- A Kotlin object crosses an ordinary channel as a HUSK: data keys survive,
+- A Kotlin object crosses any probed ordinary channel as a HUSK: data keys survive,
   every fn slot is stripped, first method call crashes `Member function not
   found` — yet `as? T` still PASSES on the husk (the cast walks `__proto`,
   which is plain data). Explicit liveness markers, not type checks, are the

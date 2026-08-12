@@ -441,7 +441,12 @@ same-component coroutine work the existing runtime already proves on device
 
 `q4.1.addFieldObserver PASS observer-fired` and `q4.2.alwaysNotifyRepost PASS
 fires=2`: runtime-`addField` inbox fields observe correctly and `alwaysNotify`
-is honored on them. No declared-field fallback (stdlib base-class shim /
+is honored on them. The literal spec-Q4 shape (runtime-`addField` +
+`observeFieldScoped`) is also closed: `setref.observerOnSetField PASS fires=1`
+fired through a runtime-added field's SCOPED observer (SpikeOwner.kt —
+`addField("refStash", ...)` + `observeFieldScoped`). The alwaysNotify×scoped
+combination (identical-value repost through a scoped observer) remains
+unprobed. No declared-field fallback (stdlib base-class shim /
 compiler-injected XML) is needed; the mechanism ships as designed.
 
 ## 4. The shared-VM premise — the escalation the tree anticipated, now a floor decision
@@ -457,7 +462,11 @@ Three options for Mike:
 the floor raise being product-acceptable] The VM's identity is a shared state
 bag crossed via SetRef (stable, documented API); the VM's METHODS stay
 component-local — each component compiles the VM class into its own script
-scope via the include closure, so local code runs against shared state. Cost:
+scope via the include closure, so local code runs against shared state
+(design mechanism, not a probed verdict — the composed
+both-sides-method-mutation probe is Stage 2; the spike pinned the
+constituents, and the KGP packaging hole in the method notes above is the
+open caveat on the staging half). Cost:
 needs explicit liveness/validity markers, because Kotlin's type check is no
 guard — `as? SharedVm` PASSES on dead husks (`q1d.nodeField.cast PASS` and
 siblings; negative control `castControl.plainAA PASS castIsNull=true` proves
@@ -471,8 +480,8 @@ explicit do-not-depend label.
 
 **(iii) No floor raise (compile-target floor stays OS 9.4).** The shared-VM
 premise pivots — VM state lives on nodes, or message-only MVI. Everything else
-proven here (mailbox mechanism, node-ref passing, branch B protocol) works
-without any OS 15 API.
+proven here (mailbox mechanism, node-ref passing, branch B's constituent
+mechanics) works without any OS 15 API.
 
 Dual-mode variants of (i)/(ii) exist (SetRef on 15+, field-copy fallback
 below) but cost two carrier paths: two behaviors to test on device, two sets
