@@ -83,9 +83,11 @@ internal fun jobImplOf(job: Job?): JobImpl? {
 
 /**
  * Attaches [child] to [parent] and returns [parent]. Called from the
- * `parentImpl` property initializer INSTEAD of an `init` block: the BRS
- * backend currently drops init-block bodies from generated constructors,
- * so an attach placed there is silently never emitted.
+ * `parentImpl` property initializer rather than an `init` block: this
+ * predates the Task 9.6 fix (commit 6fe3084c93cc) that made plain-class init
+ * blocks emit correctly. Data-class and enum constructors still drop them, so
+ * the property-initializer form is kept as a (now optional) safety net.
+ * Reverting to an init block would need a device re-run to confirm.
  */
 private fun attachToParent(child: JobImpl, parent: JobImpl?): JobImpl? {
     parent?.attachChild(child)
