@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeA" extends="Group">
+    <interface>
+        <field id="doorbell" type="string" alwaysNotify="true" />
+        <function name="spikeCall" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/ProbeA.brs" />
+</component>

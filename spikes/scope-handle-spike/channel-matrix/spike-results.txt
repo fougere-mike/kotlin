@@ -1,0 +1,23 @@
+[SPIKE] BEGIN model=4800X os=15.3.4 build=841
+[SPIKE] rtq.register token=roRenderThreadQueueRegistration
+[SPIKE] q4.1.addFieldObserver PASS observer-fired
+[SPIKE] eventData.refIdentity FAIL getDataType=roAssociativeArray fieldType=roAssociativeArray
+[SPIKE] nodeField.nodeRef PASS type=roSGNode
+[SPIKE] nodeField.fnRef FAIL type=Invalid keyExists=FAIL
+[SPIKE] nodeField.refIdentity FAIL marker=1 keys=4 evProbe=invalid fieldProbe=invalid
+[SPIKE] q4.2.alwaysNotifyRepost PASS fires=2
+[SPIKE] globalField.nodeRef PASS type=roSGNode
+[SPIKE] globalField.fnRef FAIL type=Invalid keyExists=FAIL
+[SPIKE] globalField.refIdentity FAIL marker=1 keys=4
+[SPIKE] callFuncArg.nodeRef PASS type=roSGNode
+[SPIKE] callFuncArg.fnRef FAIL type=Invalid keyExists=PASS
+[SPIKE] callFuncArg.refIdentity FAIL marker=1 keys=4
+[SPIKE] callFuncRet.nodeRef FAIL type=roSGNode subtype=Node id= sameAsFound=FAIL
+[SPIKE] callFuncRet.fnRef FAIL type=Invalid keyExists=PASS
+[SPIKE] callFuncRet.refIdentity FAIL retMarker=1
+[SPIKE] rtq.postState keys=0 marker=invalid hasTheNode=FAIL
+[SPIKE] rtq.delivered type=roAssociativeArray keys=3 marker=1
+[SPIKE] rtq.nodeRef PASS type=roSGNode
+[SPIKE] rtq.fnRef FAIL type=Invalid keyExists=FAIL
+[SPIKE] rtq.refIdentity FAIL marker=invalid keys=0
+[SPIKE] END
