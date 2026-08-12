@@ -96,6 +96,36 @@ fun TestRunner.awaitAllTests() {
             }
         }
 
+        test("awaitAll delivers the original failure under a non-supervisor parent") {
+            // The deferreds share a NON-supervisor parent (the launch job)
+            // with the awaiting caller: the failing child's upcall cancels
+            // that parent. Own-handlers-first tryFinish ordering guarantees
+            // the park settles with the ORIGINAL exception, not the parent's
+            // "Job was cancelled" CE — while the parent still gets cancelled.
+            runBlocking {
+                var caught: Throwable? = null
+                val worker = launch {
+                    val slow = async {
+                        delay(5000)
+                        "slow"
+                    }
+                    val bad = async<String> {
+                        delay(10)
+                        throw IllegalStateException("boom")
+                    }
+                    try {
+                        awaitAll(slow, bad)
+                    } catch (e: Throwable) {
+                        caught = e
+                    }
+                    slow.cancel()
+                }
+                worker.join()
+                assertEquals("boom", caught?.message)
+                assertTrue(worker.isCancelled) // structural propagation intact
+            }
+        }
+
         test("awaitAll with an already-failed deferred throws on entry") {
             runBlocking {
                 val failed = CompletableDeferred<Int>()

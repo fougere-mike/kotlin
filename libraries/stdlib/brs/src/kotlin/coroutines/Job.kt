@@ -262,6 +262,20 @@ internal open class JobImpl(
         terminal = true
         val cause = completionCauseInternal
         val isFailure = cause != null && cause !is CancellationException
+        // OWN completion handlers fire BEFORE the parent is notified: a waiter
+        // parked on THIS job (await/awaitAll) must receive this job's ORIGINAL
+        // outcome. Parent-first let childFailed cancel a shared parent, whose
+        // cancel-request wakeup then won the park's once-guard and delivered
+        // CancellationException("Job was cancelled") instead of the failure.
+        // Settling the park also disposes its caller-cancel handle, so the
+        // subsequent parent cancellation cannot double-resume it. Structural
+        // propagation is unchanged — childFailed still runs below, so a
+        // caught await/awaitAll does not shield the parent (kotlinx parity).
+        // Inline (no-interceptor) note: an inline resume runs the caller to
+        // its next suspension before detachChild; if the caller's body
+        // completes in that window, its job holds in Completing until the
+        // detach that follows immediately — no wedge.
+        fireCompletionHandlers(cause)
         val parent = parentImpl
         if (parent != null) {
             if (isFailure && upcallsFailure && !parent.isSupervisor) {
@@ -273,7 +287,6 @@ internal open class JobImpl(
         } else {
             if (isFailure && reportsUnhandled) reportUnhandled(cause!!)
         }
-        fireCompletionHandlers(cause)
     }
 
     private fun fireCancelHandlers() {
