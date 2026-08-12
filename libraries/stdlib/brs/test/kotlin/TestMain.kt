@@ -63,6 +63,7 @@ import test.coroutines.withContextIOTests
 import test.coroutines.awaitTests
 import test.coroutines.delayCancellationTests
 import test.coroutines.awaitAllTests
+import test.coroutines.builderHierarchyTests
 
 /**
  * Main entry point for stdlib runtime tests.
@@ -125,5 +126,6 @@ fun main() {
         awaitTests()
         delayCancellationTests()
         awaitAllTests()
+        builderHierarchyTests()
     }
 }

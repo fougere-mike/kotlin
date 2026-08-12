@@ -10,6 +10,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.CoroutineScope
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.Job
+import kotlin.coroutines.SupervisorJob
 import kotlin.coroutines.builders.launch
 import kotlin.coroutines.dispatchers.Dispatchers
 import kotlin.coroutines.pump.PumpScheduler
@@ -32,7 +33,12 @@ private object ComponentScopeHolder {
 
 /**
  * The component's coroutine scope (created on first use, one per component
- * instance). Context: [Dispatchers.Main] + a root [Job].
+ * instance). Context: [Dispatchers.Main] + a root [SupervisorJob].
+ *
+ * The supervisor root means a failed top-level `launch` reports
+ * `[kotlin.coroutines] Unhandled exception in coroutine: ...` to the console
+ * and dies alone — it does not poison the component's scope or its sibling
+ * coroutines.
  *
  * Coroutines launched in this scope need NO pump wiring: attaching the scope
  * arms the self-scheduling pump, which wakes the render thread exactly when
@@ -51,7 +57,7 @@ public fun ComponentBase.componentScope(): CoroutineScope {
     // components whose files escape the injection predicate (e.g. coroutine
     // use hidden entirely inside another file's helper).
     PumpScheduler.attach(componentTopOf(this), componentGlobalOf(this))
-    val scope = CoroutineScope(Dispatchers.Main + Job())
+    val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     ComponentScopeHolder.scope = scope
     return scope
 }

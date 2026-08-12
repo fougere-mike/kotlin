@@ -6,6 +6,7 @@
 package kotlin.coroutines.builders
 
 import kotlin.coroutines.*
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.dispatchers.processCoroutineQueue
 import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
 import kotlin.coroutines.intrinsics.createCoroutineUnintercepted
@@ -17,6 +18,12 @@ import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
  * to the coroutine as a [Job]. The coroutine is cancelled when the resulting job is
  * [cancelled][Job.cancel].
  *
+ * The new job attaches as a child of the scope's [Job] (from the merged
+ * context): cancelling the scope cancels the coroutine, the parent does not
+ * complete until the child finishes, and a failure propagates to a
+ * non-supervisor parent. Launching on an already-cancelled scope returns a
+ * dead (cancelled, completed) job without ever running [block].
+ *
  * @param context additional context elements to the [CoroutineScope.coroutineContext] of the coroutine.
  * @param block the coroutine code which will be invoked.
  */
@@ -25,21 +32,29 @@ public fun CoroutineScope.launch(
     block: suspend CoroutineScope.() -> Unit
 ): Job {
     val newContext = coroutineContext + context
-    val job = Job()
+    val parent = newContext[Job]
+    if (parent != null && parent.isCancelled) {
+        // kotlinx parity: launching on a cancelled scope yields a dead job
+        // and never runs the block.
+        val dead = JobImpl(null)
+        dead.cancel(CancellationException("Parent job was cancelled"))
+        return dead
+    }
+    val job = JobImpl(parent, hasBody = true, reportsUnhandled = true)
     val newScope = CoroutineScope(newContext + job)
-
-    // Create the coroutine
     val continuation = LaunchContinuation(newScope, block, job)
-
-    // Start the coroutine immediately
     continuation.start()
-
     return job
 }
 
 /**
  * Creates a coroutine and returns its future result as an implementation of [Deferred].
  * The running coroutine is cancelled when the resulting deferred is [cancelled][Job.cancel].
+ *
+ * The deferred attaches as a child of the scope's [Job] like [launch], but a
+ * failure is held for [Deferred.await] rather than reported to the console.
+ * async on an already-cancelled scope returns a dead (cancelled) deferred
+ * without ever running [block].
  *
  * @param context additional context elements to the [CoroutineScope.coroutineContext] of the coroutine.
  * @param block the coroutine code.
@@ -49,15 +64,16 @@ public fun <T> CoroutineScope.async(
     block: suspend CoroutineScope.() -> T
 ): Deferred<T> {
     val newContext = coroutineContext + context
-    val deferred = CompletableDeferred<T>()
+    val parent = newContext[Job]
+    if (parent != null && parent.isCancelled) {
+        val dead = CompletableDeferredImpl<T>(null)
+        dead.cancel(CancellationException("Parent job was cancelled"))
+        return dead
+    }
+    val deferred = CompletableDeferredImpl<T>(parent, hasBody = true)
     val newScope = CoroutineScope(newContext + deferred)
-
-    // Create the coroutine
     val continuation = AsyncContinuation(newScope, block, deferred)
-
-    // Start the coroutine immediately
     continuation.start()
-
     return deferred
 }
 
@@ -80,7 +96,10 @@ public fun <T> runBlocking(
     context: CoroutineContext = EmptyCoroutineContext,
     block: suspend CoroutineScope.() -> T
 ): T {
-    val job = Job()
+    // Supervisor root (kotlinx divergence, deliberate): a failed top-level
+    // launch reports to the console instead of cancelling the whole
+    // runBlocking scope — same philosophy as componentScope's root.
+    val job = SupervisorJob()
     val scope = CoroutineScope(context + job)
     val deferred = CompletableDeferred<T>()
 
