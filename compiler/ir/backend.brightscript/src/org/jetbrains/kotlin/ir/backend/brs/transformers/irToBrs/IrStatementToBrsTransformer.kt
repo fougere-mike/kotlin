@@ -1516,14 +1516,6 @@ class IrStatementToBrsTransformer(
         // Check if any returns actually target this block
         // If not, we don't need the while wrapper - just emit statements directly
         val needsWhileWrapper = hasReturnsTargetingBlock(block)
-        val needsFlagApproachCheck = hasReturnsInsideWhileLoop(block)
-
-        // DEBUG: Log returnable block transformation
-        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB] transformReturnableBlock: needsWhileWrapper=$needsWhileWrapper, needsFlagApproach=$needsFlagApproachCheck\n")
-        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]   statements count: ${block.statements.size}\n")
-        block.statements.forEachIndexed { idx, stmt ->
-            java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]   [$idx] ${stmt::class.simpleName}: ${stmt.toString().take(100)}\n")
-        }
 
         if (!needsWhileWrapper) {
             // No returns target this block - just transform statements directly
@@ -1571,34 +1563,21 @@ class IrStatementToBrsTransformer(
             val bodyStatements = mutableListOf<BrsStatement>()
 
             for (stmt in block.statements) {
-                java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]   Processing stmt: ${stmt::class.simpleName}\n")
                 val transformed = when (stmt) {
                     is IrExpression -> {
                         genCtx.pushHoistedScope()
-                        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]     Is IrExpression, pushed scope\n")
                         val result = when (stmt) {
                             is IrWhen -> visitWhen(stmt, Unit)
                             is IrWhileLoop -> visitWhileLoop(stmt, Unit)
                             is IrDoWhileLoop -> visitDoWhileLoop(stmt, Unit)
                             is IrBlock -> visitBlock(stmt, Unit)
                             is IrReturn -> visitReturn(stmt, Unit)
-                            else -> {
-                                java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]     else branch: calling transformExpression on ${stmt::class.simpleName}\n")
-                                BrsExpressionStatement(parent.transformExpression(stmt))
-                            }
+                            else -> BrsExpressionStatement(parent.transformExpression(stmt))
                         }
                         val hoisted = genCtx.popHoistedScope()
-                        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]     popped scope, hoisted count: ${hoisted.size}\n")
-                        hoisted.forEachIndexed { idx, h ->
-                            java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]       hoisted[$idx]: ${h::class.simpleName}\n")
-                        }
                         if (hoisted.isNotEmpty()) {
-                            java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]     adding hoisted to bodyStatements BEFORE result\n")
                             bodyStatements.addAll(hoisted)
-                            java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]       bodyStatements now has ${bodyStatements.size} items\n")
                         }
-                        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]     result: ${result::class.simpleName}\n")
-                        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]       result content: ${if (result is BrsBlock) "BrsBlock with ${(result as BrsBlock).statements.size} items" else result.toString().take(100)}\n")
                         result
                     }
                     else -> parent.transformStatement(stmt)
@@ -1608,15 +1587,10 @@ class IrStatementToBrsTransformer(
                     // This ensures proper ordering when nested blocks contain variable declarations
                     // and assignments that depend on each other
                     if (transformed is BrsBlock) {
-                        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]   flattening BrsBlock with ${transformed.statements.size} items into bodyStatements\n")
                         bodyStatements.addAll(transformed.statements)
                     } else {
-                        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]   adding ${transformed::class.simpleName} to bodyStatements\n")
                         bodyStatements.add(transformed)
                     }
-
-                    // DEBUG: Log transformed type
-                    java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]   bodyStatements.size=${bodyStatements.size}\n")
                 }
             }
 
@@ -1639,7 +1613,6 @@ class IrStatementToBrsTransformer(
             // at any nesting level. This ensures early exit propagates correctly.
             if (flagName != null) {
                 whileBody = insertFlagChecksAfterWhileLoops(whileBody, flagName)
-                java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-RB]   Applied insertFlagChecksAfterWhileLoops for flag=$flagName\n")
             }
 
             val whileLoop = BrsWhile(

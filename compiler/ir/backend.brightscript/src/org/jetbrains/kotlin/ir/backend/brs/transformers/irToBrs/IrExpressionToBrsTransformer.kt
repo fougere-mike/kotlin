@@ -3574,10 +3574,6 @@ class IrExpressionToBrsTransformer(
         // is processed, the inner composite's hoisted statements (including its variable
         // declaration and while loop) are placed BEFORE the assignment statement.
         val statements = expression.statements
-        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-COMP] visitComposite: ${statements.size} statements\n")
-        statements.forEachIndexed { idx, s ->
-            java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-COMP]   [$idx] ${s::class.simpleName}\n")
-        }
         if (statements.isEmpty()) {
             return BrsInvalidLiteral()
         }
@@ -3586,14 +3582,12 @@ class IrExpressionToBrsTransformer(
         // Nested composites will hoist their own variables when processed
         val hoistedVars = mutableSetOf<IrVariable>()
         hoistDirectVariables(statements, hoistedVars)
-        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-COMP] PASS1: hoisted ${hoistedVars.size} vars\n")
 
         // PASS 2: Process other statements (skip variables, already done)
         for (i in 0 until statements.size - 1) {
             val stmt = statements[i]
             if (stmt is IrVariable) continue  // Already hoisted in pass 1
 
-            java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-COMP] PASS2: processing stmt[$i] ${stmt::class.simpleName}\n")
             genCtx.pushHoistedScope()
             val transformed = when (stmt) {
                 is IrWhen -> parent.statementVisitor.visitWhen(stmt, Unit)
@@ -3604,17 +3598,14 @@ class IrExpressionToBrsTransformer(
                 else -> parent.transformStatement(stmt)
             }
             val nestedHoisted = genCtx.popHoistedScope()
-            java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-COMP]   nestedHoisted: ${nestedHoisted.size}, adding each to parent\n")
             nestedHoisted.forEach { genCtx.addHoistedStatement(it) }
             transformed?.let {
-                java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-COMP]   adding transformed: ${it::class.simpleName}\n")
                 genCtx.addHoistedStatement(it)
             }
         }
 
         // Return the last statement's value
         val last = statements.last()
-        java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-COMP] returning last: ${last::class.simpleName}\n")
         return if (last is IrExpression) {
             last.accept(this, data)
         } else {
@@ -3642,8 +3633,6 @@ class IrExpressionToBrsTransformer(
         for (stmt in statements) {
             if (stmt is IrVariable && stmt !in hoistedVars) {
                 hoistedVars.add(stmt)
-                val varName = stmt.name.asString()
-                java.io.File("/tmp/returnable-block-debug.log").appendText("[DEBUG-HOIST] hoistDirectVariables: hoisting '$varName'\n")
                 val transformed = parent.statementVisitor.visitVariable(stmt, Unit)
                 genCtx.addHoistedStatement(transformed)
             }
