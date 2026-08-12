@@ -18,6 +18,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.CoroutineScope
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.Job
+import kotlin.coroutines.SupervisorJob
 import kotlin.coroutines.builders.startCoroutine
 import kotlin.coroutines.clearCoroutineDelays
 import kotlin.coroutines.dispatchers.clearCoroutineQueue
@@ -289,7 +290,9 @@ public fun <T> runPumping(
     while (port.getMessage() != null) {
     }
 
-    val job = Job()
+    // Supervisor root (runBlocking parity): a failing launch{} inside one
+    // testAsync body must not cancel the whole run's root.
+    val job = SupervisorJob()
     val scope = CoroutineScope(EmptyCoroutineContext + job)
     val deferred = CompletableDeferred<T>()
 
