@@ -379,7 +379,9 @@ structured-concurrency surface over the pump scaffolding above:
   `CoroutineScope.isActive` for cooperative checks.
 - **`awaitAll(vararg)` / `Collection<Deferred<T>>.awaitAll()`**, `joinAll`
   (both forms) — `libraries/stdlib/brs/src/kotlin/coroutines/Await.kt`.
-  awaitAll rethrows the FIRST failure fast (siblings cancelled).
+  awaitAll rethrows the FIRST failure as soon as it fires, WITHOUT cancelling
+  the remaining deferreds (kotlinx parity; wrap in `coroutineScope` if you
+  want sibling cancellation).
 - **`coroutineScope {}`** and **`withContext(context) {}`** — real scoped
   children over the shared `parkScopedBlock` engine (`Scopes.kt`,
   `builders/WithContext.kt`).
