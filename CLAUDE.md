@@ -458,6 +458,57 @@ pumping regime, incl. `awaitAll` over concurrent `runTask`s). The flagship
 demo (`../roku-test-app/components/ShelfView/ShelfView.kt`) fetches ip + shelf
 concurrently via `async`/`awaitAll`.
 
+## Cross-component channel semantics (scope-handle spike, 2026-08-12)
+
+Device-verified on Roku Ultra 4800X, OS 15.3.4 build 841. Full evidence and
+raw verdict lines: `spikes/scope-handle-spike/FINDINGS.md` (channel-matrix =
+raw-BRS run; kotlin-probe = compiled-Kotlin runs). Facts only — the
+ScopeHandle design decision is recorded separately in that file.
+
+- Ordinary channels COPY, deep at every level — node field, global field,
+  callFunc arg, callFunc return, rtq PostMessage, observer `getData()`: a
+  receiver-side mutation is never visible to the sender, top-level or nested
+  (channel-matrix Q1a all-FAIL; kotlin-probe `nested FAIL innerMarker=1` ×3).
+- Function references never survive an ordinary hop, in two SILENT strip
+  modes: field channels and rtq DROP the key; callFunc (both directions)
+  keeps the key valued `Invalid`. No crash on any channel (channel-matrix
+  fnRef row; kotlin-probe fn-slot strips).
+- Node references survive every ordinary channel EXCEPT the callFunc RETURN,
+  which detaches even a bare directly-returned node into an id-less `Node`;
+  the arg direction preserves identity, bare or AA-wrapped (channel-matrix
+  nodeRef row; kotlin-probe barenode probes).
+- rtq `PostMessage` has MOVE semantics: the sender's posted AA is gutted to
+  `keys=0` at its top level, while the sender's direct references to nested
+  values stay intact — externally-referenced nested objects are copied, not
+  moved (channel-matrix `rtq.postState`; kotlin-probe `q1d.rtq.postState`).
+- A Kotlin object crosses an ordinary channel as a HUSK: data keys survive,
+  every fn slot is stripped, first method call crashes `Member function not
+  found` — yet `as? T` still PASSES on the husk (the cast walks `__proto`,
+  which is plain data). Explicit liveness markers, not type checks, are the
+  only runtime guard (kotlin-probe Q1d ×3 channels; negative control
+  `castControl.plainAA`).
+- SetRef/GetRef (OS 15.0+, RENDER-THREAD-ONLY, AA fields only, unusable with
+  queueFields) give genuine cross-component shared identity — top-level AND
+  nested mutations visible both ways, `roUtils.IsSameObject` true — and are
+  observer-SILENT: SetRef never fires the field's observer, so a delivery
+  signal needs a separate ordinary write as doorbell (kotlin-probe run2
+  `setref.*`).
+- A Kotlin object passed via SetRef/GetRef arrives ALIVE today (fn slots
+  intact, cross-component dispatch works, state shared) — but this rides the
+  fn-ref namespacing behavior Roku explicitly says not to build dependencies
+  on (kotlin-probe run2 `setrefVm.*`; RokuDocs "Optimized data transfer and
+  reference handling").
+- `CanGetRef` returns false for a field written via ordinary setField —
+  references must be explicitly SetRef'd before GetRef succeeds (kotlin-probe
+  run2 `setref.canGetRefOnSetFieldField`).
+- Runtime-`addField` fields are first-class for observation: observers fire,
+  and `alwaysNotify=true` set at addField time is honored (channel-matrix
+  Q4.1/Q4.2).
+- MoveIntoField/MoveFromField (OS 15.0+, any thread) work cross-component;
+  nested objects with live external references are COPIED, not moved
+  (`move.into copiedCount=2`, held ref intact) — the pure-move half of the
+  rule is doc-only, not device-pinned (kotlin-probe run2 `move.*`).
+
 ## SceneGraph Layouts: @SGLayout DSL + Layout Accessors
 
 The layout story: declare the component's children ONCE in the `sceneLayout {}`

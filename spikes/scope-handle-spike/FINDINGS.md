@@ -360,3 +360,137 @@ live on the render thread — the exact regime the ScopeHandle design targets.
 [SPIKE] move.from gotKeys=held:roAssociativeArray,marker:roInteger,orphan:roAssociativeArray fieldAfterType=Invalid
 [SPIKE] END
 ```
+
+---
+
+# Decision — spec §5 tree walked against the evidence (2026-08-12)
+
+Spec: `docs/superpowers/plans/2026-08-12-scopehandle-design.md` §5 ("Decision
+tree"). The tree was written BEFORE the OS 15.0 SetRef/GetRef discovery — its
+branches assume RTQ was the only candidate reference-preserving channel. Where
+a branch's premise no longer matches the evidence, this walk answers the
+branch's INTENT and says so explicitly.
+
+## 1. Is there a reference-preserving channel for Kotlin objects?
+
+The answer has three layers.
+
+**(a) All six ordinary channels: NO.** Every Q1a cell is FAIL —
+`nodeField.refIdentity FAIL marker=1 keys=4`, `globalField.refIdentity FAIL
+marker=1 keys=4`, `callFuncArg.refIdentity FAIL marker=1 keys=4`,
+`callFuncRet.refIdentity FAIL retMarker=1`, `rtq.refIdentity FAIL
+marker=invalid keys=0`, `eventData.refIdentity FAIL
+getDataType=roAssociativeArray fieldType=roAssociativeArray` — and the copy is
+deep at every level (`q1d.<channel>.nested FAIL innerMarker=1` on all three
+Q1d channels). For Kotlin objects specifically, the Q1d probe covered the
+three carrier-relevant channels (nodeField, callFuncArg, rtq): every one
+delivered a husk — data keys survive, every fn slot stripped, first dispatch
+crashes (`q1d.nodeField.method FAIL via=typed threw:Member function not found
+in BrightScript Component or interface.`, same on callFuncArg and rtq). The
+unprobed ordinary channels offer nothing better at the raw-BRS level:
+globalField showed semantics identical to nodeField, and callFuncRet is
+strictly worse (also detaches nodes). The spec's "Q1 works only via RTQ"
+contingency is MOOT: RTQ is not reference-preserving either — it MOVES the
+sender's top level and delivers a stripped copy (`rtq.postState keys=0`;
+`q1d.rtq.arrived kobjKeys=__id...,counter` — data keys only).
+
+**(b) SetRef/GetRef (OS 15.0+, render-thread-only, AA fields, observer-silent):
+YES for plain AA state.** Genuine cross-component shared identity, top-level
+AND nested: `setref.sharedTopLevel PASS ownerMarker=2`, `setref.sharedNested
+PASS ownerInnerMarker=2`, `setref.isSameObjectAfterMutate PASS`. This is a
+documented, stable API surface (RokuDocs "Optimized data transfer and
+reference handling") — the reference-preserving channel the Q1 matrix said
+didn't exist.
+
+**(c) Kotlin OBJECTS via SetRef: alive today, but resting on behavior Roku
+officially disclaims.** The whole object crossed with all 10 keys including
+every fn slot (`setrefVm.gotten ... bump_k_:roFunction ...`), dispatch from
+the child's script scope worked (`setrefVm.method PASS via=typed
+bumpReturned=2 counterAfter=2`), and state is genuinely shared
+(`setrefVm.sharedState PASS ownerCounter=2`). But the fn-slot survival rides
+exactly the function-reference behavior the doc warns about: "As a result of a
+SceneGraph component namespacing, however, the function that is called is not
+the one that was referenced in the original component. The behavior of passing
+function references in this manner may change in a future release; therefore,
+developers should not build any dependencies on it." Usable as
+characterization; not a foundation.
+
+## 2. Branch A vs branch B → **branch B (typed named requests)**
+
+Recommendation: **branch B**, on two independent grounds:
+
+1. **Device evidence: blocks cannot ship on any signaling channel.** A Kotlin
+   lambda is a compiled object whose `invoke` slot is a function value, and
+   function references never survive an ordinary hop (`nodeField.fnRef FAIL
+   type=Invalid keyExists=FAIL`, `callFuncArg.fnRef FAIL type=Invalid
+   keyExists=PASS`, `rtq.fnRef FAIL type=Invalid keyExists=FAIL`; every Q1d fn
+   slot stripped). Branch A's precondition — "Q2 yes AND a block-delivery path
+   exists" — is unsatisfiable: Q2 is BLOCKED-BY-Q1 (nothing callable ever
+   arrives, so there is nothing to ask the question of).
+2. **Platform-stability disclaimer: even where fn slots DO survive (SetRef),
+   Roku says do not depend on it.** Building `owner.run { block }` on the one
+   surviving delivery path would rest the core API on an officially
+   may-change-in-a-future-release behavior.
+
+Q3 evaporates under branch B: the "handler" the owner runs in response to a
+request is the owner's OWN compiled code on the owner's scope and pump —
+same-component coroutine work the existing runtime already proves on device
+(see the Q3 section above).
+
+## 3. Q4 → field-mailbox mechanism as-designed
+
+`q4.1.addFieldObserver PASS observer-fired` and `q4.2.alwaysNotifyRepost PASS
+fires=2`: runtime-`addField` inbox fields observe correctly and `alwaysNotify`
+is honored on them. No declared-field fallback (stdlib base-class shim /
+compiler-injected XML) is needed; the mechanism ships as designed.
+
+## 4. The shared-VM premise — the escalation the tree anticipated, now a floor decision
+
+The tree's first two branches anticipated exactly this situation: among
+ordinary channels there is NO reference-preserving channel (the
+STOP-and-escalate half tripped), but a reference-preserving channel DOES exist
+with an OS floor attached — the intent of the "works only via RTQ → OS 15+
+only → Mike decides" branch, with SetRef standing where the tree guessed RTQ.
+Three options for Mike:
+
+**(i) OS 15+ floor; shared-STATE-AA via SetRef.** [RECOMMENDED — contingent on
+the floor raise being product-acceptable] The VM's identity is a shared state
+bag crossed via SetRef (stable, documented API); the VM's METHODS stay
+component-local — each component compiles the VM class into its own script
+scope via the include closure, so local code runs against shared state. Cost:
+needs explicit liveness/validity markers, because Kotlin's type check is no
+guard — `as? SharedVm` PASSES on dead husks (`q1d.nodeField.cast PASS` and
+siblings; negative control `castControl.plainAA PASS castIsNull=true` proves
+the mechanism is the `__proto`-chain walk).
+
+**(ii) OS 15+ floor; full shared Kotlin object via SetRef.** Best DX — the
+object with live methods really does cross today (`setrefVm.method PASS
+via=typed bumpReturned=2 counterAfter=2`). But it rests on the
+officially-unstable fn-slot behavior: one OS update from breakage, against an
+explicit do-not-depend label.
+
+**(iii) No floor raise (compile-target floor stays OS 9.4).** The shared-VM
+premise pivots — VM state lives on nodes, or message-only MVI. Everything else
+proven here (mailbox mechanism, node-ref passing, branch B protocol) works
+without any OS 15 API.
+
+Dual-mode variants of (i)/(ii) exist (SetRef on 15+, field-copy fallback
+below) but cost two carrier paths: two behaviors to test on device, two sets
+of semantics to document.
+
+## 5. ScopeHandle carrier consequence (Stage 2)
+
+The Stage 2 field-mailbox design is unchanged on the floor path, and gains an
+OPTIONAL OS 15+ payload path: SetRef-stash the payload on the mailbox node,
+then ring the proven doorbell. The pairing is NECESSARY, not stylistic —
+SetRef is observer-silent (`setref.observerSilentOnSetRef PASS fires=0`) while
+an ordinary setField write to the same field still fires its observer
+(`setref.observerOnSetField PASS fires=1`; plus the Q4 PASSes). MoveIntoField
+is a candidate zero-copy mailbox WRITE on 15+ (any-thread per doc); caveat:
+the spike device-pinned only the "copied because externally referenced" half
+of its move-vs-copy rule (`move.into copiedCount=2 srcKeysAfter=0
+heldIntact=PASS`) — the pure-move half is doc-only for now (deferred, minor).
+
+## 6. Decision record
+
+Decision (Mike, pending): [ ] branch [ ] shared-VM option [ ] floor
