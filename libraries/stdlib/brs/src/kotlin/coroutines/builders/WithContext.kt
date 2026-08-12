@@ -5,12 +5,10 @@
 
 package kotlin.coroutines.builders
 
-import kotlin.concurrent.Runnable
 import kotlin.coroutines.*
 import kotlin.coroutines.dispatchers.CoroutineDispatcher
 import kotlin.coroutines.dispatchers.Dispatchers
 import kotlin.coroutines.dispatchers.IODispatcher
-import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
 import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
 import kotlin.coroutines.task.TaskPool
 
@@ -73,44 +71,26 @@ public suspend fun <T> withContext(
         return withContextIOSuspend(context, block)
     }
 
-    // For other dispatchers, wrap the suspend block
+    // Scope-engine path: same machinery as coroutineScope with the requested
+    // context merged in. Replaces the old nested-runBlocking implementation,
+    // which BLOCKED the calling thread (inside a pump drain: froze frames).
     return suspendCoroutineUninterceptedOrReturn { continuation ->
-        if (dispatcher == null || !dispatcher.isDispatchNeeded(context)) {
-            // No dispatch needed - create scope and run
-            try {
-                val scope = CoroutineScope(continuation.context + context)
-                // We need to run the suspend block, so use runBlocking
-                val result = runBlocking(context) { scope.block() }
-                continuation.resume(result)
-            } catch (e: Throwable) {
-                continuation.resumeWithException(e)
+        val outerContext = continuation.context
+        outerContext.ensureActive()
+        val scopeJob = JobImpl(outerContext[Job], hasBody = true, upcallsFailure = false)
+        @Suppress("UNCHECKED_CAST")
+        parkScopedBlock(
+            continuation as Continuation<Any?>,
+            outerContext + context + scopeJob,
+            scopeJob,
+            block
+        ) { cause, value, parked ->
+            if (cause != null) {
+                parked.tryResumeException(cause)
+            } else {
+                parked.tryResume(value)
             }
-        } else {
-            // Dispatch to the target dispatcher
-            dispatcher.dispatch(context, Runnable {
-                try {
-                    val scope = CoroutineScope(continuation.context + context)
-                    val result = runBlocking(context) { scope.block() }
-                    // Resume on the original context
-                    val originalInterceptor = continuation.context[ContinuationInterceptor]
-                    if (originalInterceptor != null) {
-                        val intercepted = originalInterceptor.interceptContinuation(continuation)
-                        intercepted.resume(result)
-                    } else {
-                        continuation.resume(result)
-                    }
-                } catch (e: Throwable) {
-                    val originalInterceptor = continuation.context[ContinuationInterceptor]
-                    if (originalInterceptor != null) {
-                        val intercepted = originalInterceptor.interceptContinuation(continuation)
-                        intercepted.resumeWithException(e)
-                    } else {
-                        continuation.resumeWithException(e)
-                    }
-                }
-            })
         }
-        COROUTINE_SUSPENDED
     }
 }
 

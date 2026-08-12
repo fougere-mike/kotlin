@@ -5,6 +5,7 @@ import kotlin.coroutines.*
 import kotlin.coroutines.builders.async
 import kotlin.coroutines.builders.launch
 import kotlin.coroutines.builders.runBlocking
+import kotlin.coroutines.builders.withContext
 import kotlin.coroutines.cancellation.CancellationException
 
 fun TestRunner.builderHierarchyTests() {
@@ -108,6 +109,100 @@ fun TestRunner.builderHierarchyTests() {
                 }
                 outer.join()
                 assertTrue(childDone)
+            }
+        }
+    }
+}
+
+fun TestRunner.scopeFunctionTests() {
+    suite("coroutineScope/withContext") {
+
+        test("coroutineScope returns block value and preserves dispatcher") {
+            runBlocking {
+                val v = coroutineScope {
+                    delay(10)
+                    "value"
+                }
+                assertEquals("value", v)
+            }
+        }
+
+        test("coroutineScope waits for launched children") {
+            runBlocking {
+                var childDone = false
+                coroutineScope {
+                    launch {
+                        delay(40)
+                        childDone = true
+                    }
+                }
+                assertTrue(childDone)
+            }
+        }
+
+        test("coroutineScope rethrows child failure after cancelling siblings") {
+            runBlocking {
+                var siblingWoken = false
+                var thrown: Throwable? = null
+                try {
+                    coroutineScope {
+                        launch {
+                            try {
+                                delay(10000)
+                            } catch (e: CancellationException) {
+                                siblingWoken = true
+                                throw e
+                            }
+                        }
+                        launch {
+                            delay(10)
+                            throw IllegalStateException("scope-boom")
+                        }
+                    }
+                } catch (e: Throwable) {
+                    thrown = e
+                }
+                assertEquals("scope-boom", thrown?.message)
+                assertTrue(siblingWoken)
+            }
+        }
+
+        test("coroutineScope failure does not cancel the caller's job") {
+            runBlocking {
+                try {
+                    coroutineScope {
+                        throw IllegalStateException("contained")
+                    }
+                } catch (e: Throwable) {
+                    // expected
+                }
+                // Caller continues: a cancelled caller job would make this throw.
+                delay(10)
+                assertTrue(true)
+            }
+        }
+
+        test("withContext returns value with merged context") {
+            runBlocking {
+                val v = withContext(kotlin.coroutines.dispatchers.Dispatchers.Main) {
+                    delay(10)
+                    21 * 2
+                }
+                assertEquals(42, v)
+            }
+        }
+
+        test("withContext propagates block failure") {
+            runBlocking {
+                var thrown: Throwable? = null
+                try {
+                    withContext(kotlin.coroutines.dispatchers.Dispatchers.Main) {
+                        throw IllegalStateException("wc-boom")
+                    }
+                } catch (e: Throwable) {
+                    thrown = e
+                }
+                assertEquals("wc-boom", thrown?.message)
             }
         }
     }

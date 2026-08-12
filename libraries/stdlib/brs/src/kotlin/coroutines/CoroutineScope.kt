@@ -47,17 +47,3 @@ public fun CoroutineScope(context: CoroutineContext): CoroutineScope =
 internal class CoroutineScopeImpl(
     override val coroutineContext: CoroutineContext
 ) : CoroutineScope
-
-/**
- * Creates a [CoroutineScope] that is tied to the lifecycle of the current scope.
- *
- * This is a suspending function that creates a new scope and waits for all
- * coroutines launched in this scope to complete before returning.
- */
-@Suppress("BRS_NAME_CASE_CLASH")
-public suspend inline fun <R> coroutineScope(crossinline block: suspend CoroutineScope.() -> R): R {
-    // Create a new scope with the current coroutine's context
-    // For now, just run the block directly without structured concurrency enforcement
-    val scope = CoroutineScope(EmptyCoroutineContext)
-    return block(scope)
-}
