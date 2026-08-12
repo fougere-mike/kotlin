@@ -432,6 +432,9 @@ must TAIL-DELEGATE (return the inner call directly), not park around it.
 
 **DX traps:**
 
+- **`runBlocking`/`runPumping` return when the BLOCK completes, not when its
+  launched children do** — a kotlinx divergence; `join()` explicitly on any
+  child you need finished before returning.
 - **Nested `launch` inside `coroutineScope {}` IN A COMPONENT** resolves to
   `ComponentBase.launch` (a NEW top-level coroutine on the component scope),
   not to the scope receiver — the `coroutineScope` completes childless,
