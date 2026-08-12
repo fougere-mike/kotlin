@@ -107,9 +107,17 @@ if [[ -n "$SENT_TS" ]]; then
     echo "Sentinel fresh (${DELTA}s old)"
 fi
 
-# Raw run-attributable capture (sentinel-filtered slice) -> committed alongside
-tail -n "+$LINE" spike-output.txt > ../capture-kotlin-probe.txt
-grep -F "[SPIKE]" ../capture-kotlin-probe.txt > spike-results.txt || true
+# Raw run-attributable capture (sentinel-filtered slice) -> committed alongside.
+# Run-stamped filename: committed evidence must never be overwritten by a later
+# run (review round 1 — reproduction claims need per-run captures). The
+# original Q1d run lives at ../capture-kotlin-probe.txt; every subsequent run
+# gets the next free -runN suffix.
+N=2
+while [[ -e "../capture-kotlin-probe-run${N}.txt" ]]; do N=$((N+1)); done
+CAPTURE_OUT="../capture-kotlin-probe-run${N}.txt"
+tail -n "+$LINE" spike-output.txt > "$CAPTURE_OUT"
+echo "Capture: $CAPTURE_OUT"
+grep -F "[SPIKE]" "$CAPTURE_OUT" > spike-results.txt || true
 
 echo ""
 echo "===== SPIKE RESULTS ====="

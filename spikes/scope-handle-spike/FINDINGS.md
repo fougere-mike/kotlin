@@ -1,4 +1,4 @@
-# Scope-Handle Spike Findings — cross-component channel matrix (Q1, Q4; Q2/Q3 blocked) (2026-08-12)
+# Scope-Handle Spike Findings — cross-component channel matrix (Q1, Q4, OS15 ref APIs; Q2/Q3 blocked) (2026-08-12)
 
 Device: Roku Ultra at 192.168.1.125 (`roDeviceInfo.GetModel()` = 4800X),
 **Roku OS 15.3.4 build 841**. Raw BrightScript spike app in `channel-matrix/`
@@ -121,10 +121,13 @@ loss — needed probe-bug-vs-platform disambiguation. Both reproduced.
 Same device (Roku Ultra 4800X, OS 15.3.4 build 841). Kotlin app in
 `kotlin-probe/` (kotlin-roku project: SpikeScene `@SGLayout`-declares
 SpikeOwner + SpikeChild; step machine + 2s watchdog mirror ProbeB), deployed
-with `kotlin-probe/deploy.sh`. Run-attributable capture:
-`capture-kotlin-probe.txt`. The run reached `[SPIKE] END` with every cell
-reporting; the full verdict set reproduced identically across two complete
-runs (plus a third earlier-format run that agreed on every shared cell).
+with `kotlin-probe/deploy.sh`. Both runs reached `[SPIKE] END` with every
+cell reporting. COMMITTED evidence: `capture-kotlin-probe.txt` (the Q1d run)
+and `capture-kotlin-probe-run2.txt` (the OS15-addendum run, which re-executed
+the full Q1d matrix before the new steps and matched it cell-for-cell — the
+committed reproduction). Two still-earlier runs printed the same Q1d verdicts
+but their captures were overwritten before deploy.sh was made run-stamped;
+they are testimony, not evidence.
 
 The payload, built fresh per channel by SpikeChild:
 `{ marker: 1, kobj: SharedVm-instance, theFn: <the instance's bump_k_ fn value>, nested: {inner: {marker: 1}} }`
@@ -160,7 +163,10 @@ strip modes, reproduced from typed Kotlin.
    husk — the `is`/`as` machinery walks `__proto`, which is plain data and
    survives the copy. The failure surfaces only at first dispatch. Any
    "is this handle live?" runtime check would have to probe for a
-   function-valued slot, not a type.
+   function-valued slot, not a type. (Negative control, addendum run: `as?
+   SharedVm` on a plain `__proto`-less AA returns null —
+   `castControl.plainAA PASS castIsNull=true` — so the mechanism really is
+   the `__proto`-chain walk, not a vacuously-true cast.)
 3. **The copy is deep at every level** (the Task 3 "top-level only" caveat
    is resolved): the owner mutating `nested.inner.marker` on its received
    copy never appeared in the child's DIRECTLY-HELD `inner` reference —
@@ -273,3 +279,84 @@ than remains open.
   runs (SpikeOwner's `rtq.register` line precedes the scene's `BEGIN` line
   in the capture) — consistent with SceneGraph child-before-parent init
   order; the arming-order law holds under the layout DSL.
+
+---
+
+# OS 15.0 reference APIs (addendum, from RokuDocs "Optimized data transfer and reference handling")
+
+Doc: `../RokuDocs/Optimized data transfer and reference handling.html`
+(saved by Mike mid-review; APIs introduced in Roku OS 15.0 that the original
+matrix never tested). Probes added to the kotlin-probe app as step-machine
+steps 4–7; capture: `capture-kotlin-probe-run2.txt`. Platform floor per doc:
+OS 15.0+; SetRef/CanGetRef/GetRef are RENDER-THREAD-ONLY and AA-field-only
+(and unusable with queueFields); Move* are any-thread. Both spike components
+live on the render thread — the exact regime the ScopeHandle design targets.
+
+## Verdict table
+
+| probe | verdict | evidence |
+|---|---|---|
+| SetRef returns | Boolean function (doc's signature line says void; its Return Value section is right) | `setref.set ret=true`, `setrefVm.set ret=true` |
+| Same-thread identity (owner GetRefs its own SetRef'd field) | **PASS** | `setref.ownerIsSameObject PASS` (roUtils.IsSameObject) |
+| **Cross-component shared identity** (child GetRefs the OWNER's field, mutates top-level + nested; owner re-reads its DIRECT refs) | **PASS — genuinely shared, top-level AND nested** | `setref.sharedTopLevel PASS ownerMarker=2`, `setref.sharedNested PASS ownerInnerMarker=2`, `setref.isSameObjectAfterMutate PASS` |
+| CanGetRef gating (field written via ordinary setField, never SetRef'd) | **PASS** — returns false per doc ("must explicitly set references before getting them") | `setref.canGetRefOnSetFieldField PASS canGetRef=false` |
+| Observer silence on SetRef | **PASS** — zero fires through SetRef + GetRefs + mutations | `setref.observerSilentOnSetRef PASS fires=0` |
+| Observer on ordinary setField of the same field afterwards | **PASS** — fires normally | `setref.observerOnSetField PASS fires=1` |
+| **Kotlin object via SetRef/GetRef** | **ALIVE and SHARED** — arrived with ALL 10 keys incl. every fn slot (`bump_k_:roFunction` …); `as? SharedVm` passes (genuinely live here); `bump()` called FROM THE CHILD's script scope dispatched (`bumpReturned=2 counterAfter=2`); owner's direct ref then read `ownerCounter=2` | `setrefVm.gotten`, `setrefVm.cast PASS`, `setrefVm.method PASS via=typed`, `setrefVm.sharedState PASS` |
+| MoveIntoField (child → owner node, cross-component) | works; source AA gutted; returns copied-count | `move.into copiedCount=2 srcKeysAfter=0 heldIntact=PASS` |
+| MoveFromField (owner side) | works; field reads Invalid afterwards | `move.from gotKeys=held:roAssociativeArray,marker:roInteger,orphan:roAssociativeArray fieldAfterType=Invalid` |
+
+## What this means
+
+1. **SetRef/GetRef is the reference-preserving channel the Q1 matrix said
+   didn't exist** — with three hard constraints: OS 15.0+ only,
+   render-thread-only, and it is a SILENT STASH (no observer fires on
+   SetRef; a delivery signal needs a separate doorbell — ordinary setField
+   observers still work for that, proven above).
+2. **The Kotlin-object cell is works-today-but-officially-unstable.** The
+   fn-slot survival and cross-component dispatch ride exactly the
+   function-reference behavior the doc warns about: "As a result of
+   SceneGraph component namespacing … the function that is called is not the
+   one that was referenced in the original component. The behavior … may
+   change in a future release; therefore, developers should not build any
+   dependencies on it." In this probe both components compile SharedVm into
+   their script scopes (same-named functions exist in both namespaces), so
+   name-namespace re-resolution is indistinguishable from true fn-value
+   identity — and in the Kotlin-app world that same-class-in-both-scopes
+   condition usually holds. Roku's DO-NOT-DEPEND label stands regardless.
+   This does NOT reopen Q2/Q3 for design purposes.
+3. **`move.into copiedCount=2` (not 1) is the doc's external-reference rule
+   under BRS local-variable liveness:** the probe held BOTH nested AAs in
+   live locals at call time (`held` deliberately, `orphan` incidentally —
+   BRS locals live until function exit), so both were copied rather than
+   moved (`held` verified intact). This same rule is why the Q1d rtq
+   postState showed the sender's vm/inner references fully intact while the
+   posted AA was gutted — PostMessage moves the top level and copies
+   externally-referenced nested values.
+4. roUtils (OS 15.0) provides `IsSameObject`/`DeepCopy` — `IsSameObject` is
+   the identity oracle the raw-BRS spike lacked.
+
+## Raw addendum verdict lines (run2, verbatim; run2 also re-ran the full Q1d matrix — identical cell-for-cell)
+
+```
+[SPIKE] castControl.plainAA PASS castIsNull=true (as? SharedVm on a __proto-less AA)
+[SPIKE] setref.canGetRefOnSetFieldField PASS canGetRef=false (field written via setField, never SetRef)
+[SPIKE] setref.set ret=true
+[SPIKE] setref.ownerIsSameObject PASS
+[SPIKE] setref.canGetRef PASS canGetRef=true
+[SPIKE] setref.gotten type=roAssociativeArray keys=marker:roInteger,nested:roAssociativeArray
+[SPIKE] setref.sharedTopLevel PASS ownerMarker=2
+[SPIKE] setref.sharedNested PASS ownerInnerMarker=2
+[SPIKE] setref.isSameObjectAfterMutate PASS
+[SPIKE] setref.observerSilentOnSetRef PASS fires=0
+[SPIKE] setref.observerOnSetField PASS fires=1
+[SPIKE] setrefVm.pre vmType=roAssociativeArray counter=1 vmKeys=__get_counter:roFunction,__id:roInteger,__proto:roArray,__set_counter:roFunction,__type:roString,bump_k_:roFunction,counter:roInteger,equals:roFunction,hashcode:roFunction,tostring:roFunction
+[SPIKE] setrefVm.set ret=true
+[SPIKE] setrefVm.gotten canGetRef=PASS type=roAssociativeArray keys=__get_counter:roFunction,__id:roInteger,__proto:roArray,__set_counter:roFunction,__type:roString,bump_k_:roFunction,counter:roInteger,equals:roFunction,hashcode:roFunction,tostring:roFunction
+[SPIKE] setrefVm.cast PASS (as? SharedVm on the GetRef'd object)
+[SPIKE] setrefVm.method PASS via=typed bumpReturned=2 counterAfter=2
+[SPIKE] setrefVm.sharedState PASS ownerCounter=2
+[SPIKE] move.into copiedCount=2 srcKeysAfter=0 heldIntact=PASS
+[SPIKE] move.from gotKeys=held:roAssociativeArray,marker:roInteger,orphan:roAssociativeArray fieldAfterType=Invalid
+[SPIKE] END
+```

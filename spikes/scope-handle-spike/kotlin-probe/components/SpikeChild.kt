@@ -8,15 +8,20 @@ import kotlin.brs.roku.RoSGNode
 import kotlin.brs.roku.RoSGNodeEvent
 import kotlin.brs.typeOf
 import spike.shared.SharedVm
+import spike.shared.callBumpDynamic
+import spike.shared.canGetRefOn
 import spike.shared.countOf
 import spike.shared.createRtqOrInvalid
 import spike.shared.describeKeys
 import spike.shared.getMember
+import spike.shared.getRefOn
 import spike.shared.isSameNodeSafe
 import spike.shared.keyExistsIn
 import spike.shared.lookupOf
+import spike.shared.moveIntoFieldOn
 import spike.shared.pf
 import spike.shared.rawMessage
+import spike.shared.setMember
 import spike.shared.subtypeOf
 import spike.shared.valueOrInvalid
 
@@ -75,6 +80,14 @@ class SpikeChild : GroupComponent() {
             stepCallFunc()
         } else if (step == 3) {
             stepRtq()
+        } else if (step == 4) {
+            stepCastControl()
+        } else if (step == 5) {
+            stepSetRefAA()
+        } else if (step == 6) {
+            stepSetRefVm()
+        } else if (step == 7) {
+            stepMoveField()
         } else {
             println("[SPIKE] END")
         }
@@ -215,6 +228,144 @@ class SpikeChild : GroupComponent() {
         }
     }
 
+    // ---- OS 15 reference-API addendum steps (RokuDocs "Optimized data
+    // transfer and reference handling"; render-thread-only for SetRef/GetRef,
+    // which both components are on) ----
+
+    // Review MINOR-2 negative control: `as?` must be able to FAIL — a plain
+    // data AA with no __proto must not cast to SharedVm.
+    private fun stepCastControl() {
+        val plain = RoAssociativeArray.create()
+        plain.addReplace("marker", 1)
+        val anyObj: Any? = plain
+        val cast = anyObj as? SharedVm
+        println("[SPIKE] castControl.plainAA ${pf(cast == null)} castIsNull=${cast == null} (as? SharedVm on a __proto-less AA)")
+        advance()
+    }
+
+    private fun stepSetRefAA() {
+        val owner = ownerNode
+        if (owner == null) {
+            println("[SPIKE] setref.aa SKIP owner-node-missing")
+            advance()
+            return
+        }
+        // CanGetRef gating: mailbox was ordinary-setField'd in step 1 and
+        // never SetRef'd — doc says references must be explicitly set first.
+        try {
+            val can = canGetRefOn(owner, "mailbox")
+            println("[SPIKE] setref.canGetRefOnSetFieldField ${pf(!can)} canGetRef=$can (field written via setField, never SetRef)")
+        } catch (e: Throwable) {
+            println("[SPIKE] setref.canGetRefOnSetFieldField THREW ${valueOrInvalid(rawMessage(e))}")
+        }
+        try {
+            owner.callFunc("setupSetRef", null)
+        } catch (e: Throwable) {
+            println("[SPIKE] setref.setup THREW ${valueOrInvalid(rawMessage(e))}")
+        }
+        // Cross-component GetRef + behavioral shared-identity mutation.
+        try {
+            val can = canGetRefOn(owner, "refStash")
+            println("[SPIKE] setref.canGetRef ${pf(can)} canGetRef=$can")
+            val gotten = getRefOn(owner, "refStash")
+            println("[SPIKE] setref.gotten type=${typeOf(gotten)} keys=${describeKeys(gotten)}")
+            setMember(gotten, "marker", 2)
+            val inner = lookupOf(lookupOf(gotten, "nested"), "inner")
+            setMember(inner, "marker", 2)
+        } catch (e: Throwable) {
+            println("[SPIKE] setref.getMutate THREW ${valueOrInvalid(rawMessage(e))}")
+        }
+        // verifySetRef prints the shared-identity verdicts from the owner's
+        // direct refs, then does an ordinary setField whose observer fire
+        // (async) rings setrefObs — the watchdog turns silence into a FAIL.
+        armWatchdog("setrefObs")
+        try {
+            owner.callFunc("verifySetRef", null)
+        } catch (e: Throwable) {
+            println("[SPIKE] setref.verify THREW ${valueOrInvalid(rawMessage(e))}")
+        }
+    }
+
+    private fun stepSetRefVm() {
+        val owner = ownerNode
+        if (owner == null) {
+            println("[SPIKE] setrefVm SKIP owner-node-missing")
+            advance()
+            return
+        }
+        try {
+            owner.callFunc("setupSetRefVm", null)
+        } catch (e: Throwable) {
+            println("[SPIKE] setrefVm.setup THREW ${valueOrInvalid(rawMessage(e))}")
+        }
+        try {
+            val can = canGetRefOn(owner, "vmStash")
+            val gotten = getRefOn(owner, "vmStash")
+            println("[SPIKE] setrefVm.gotten canGetRef=${pf(can)} type=${typeOf(gotten)} keys=${describeKeys(gotten)}")
+            val anyObj: Any? = gotten
+            val cast = anyObj as? SharedVm
+            println("[SPIKE] setrefVm.cast ${pf(cast != null)} (as? SharedVm on the GetRef'd object)")
+            // Method dispatch FROM THE CHILD's script context on the owner's
+            // live object — the doc's officially-unstable fn-ref namespacing
+            // cell. Whatever happens is the finding.
+            if (cast != null) {
+                try {
+                    val n = cast.bump()
+                    println("[SPIKE] setrefVm.method PASS via=typed bumpReturned=$n counterAfter=${valueOrInvalid(getMember(gotten, "counter"))}")
+                } catch (e: Throwable) {
+                    println("[SPIKE] setrefVm.method FAIL via=typed threw:${valueOrInvalid(rawMessage(e))}")
+                }
+            } else {
+                try {
+                    val n = callBumpDynamic(gotten)
+                    println("[SPIKE] setrefVm.method PASS via=dynamic bumpReturned=${valueOrInvalid(n)} counterAfter=${valueOrInvalid(getMember(gotten, "counter"))}")
+                } catch (e: Throwable) {
+                    println("[SPIKE] setrefVm.method FAIL via=dynamic threw:${valueOrInvalid(rawMessage(e))}")
+                }
+            }
+        } catch (e: Throwable) {
+            println("[SPIKE] setrefVm.getcast THREW ${valueOrInvalid(rawMessage(e))}")
+        }
+        try {
+            owner.callFunc("verifySetRefVm", null)
+        } catch (e: Throwable) {
+            println("[SPIKE] setrefVm.verify THREW ${valueOrInvalid(rawMessage(e))}")
+        }
+        advance()
+    }
+
+    private fun stepMoveField() {
+        val owner = ownerNode
+        if (owner == null) {
+            println("[SPIKE] move SKIP owner-node-missing")
+            advance()
+            return
+        }
+        try {
+            // `held` keeps an external reference (this local) — per the doc
+            // it must be COPIED, not moved (copiedCount=1), and stay intact;
+            // `orphan` has no external ref and should be moved.
+            val held = RoAssociativeArray.create()
+            held.addReplace("h", 1)
+            val orphan = RoAssociativeArray.create()
+            orphan.addReplace("p", 1)
+            val src = RoAssociativeArray.create()
+            src.addReplace("marker", 1)
+            src.addReplace("held", held)
+            src.addReplace("orphan", orphan)
+            val copied = moveIntoFieldOn(owner, "moveBox", src)
+            println("[SPIKE] move.into copiedCount=$copied srcKeysAfter=${src.count()} heldIntact=${pf(valueOrInvalid(held.lookup("h")) == "1")}")
+        } catch (e: Throwable) {
+            println("[SPIKE] move.into THREW ${valueOrInvalid(rawMessage(e))}")
+        }
+        try {
+            owner.callFunc("moveVerify", null)
+        } catch (e: Throwable) {
+            println("[SPIKE] move.verify THREW ${valueOrInvalid(rawMessage(e))}")
+        }
+        advance()
+    }
+
     // ---- post-hop plumbing ----
 
     private fun onAck(msg: RoSGNodeEvent) {
@@ -226,7 +377,11 @@ class SpikeChild : GroupComponent() {
         }
         watchdog?.setField("control", "stop")
         expectedAck = ""
-        checkAfterHop(ch)
+        // Q1d channels re-read the shipped payload; addendum acks (setrefObs)
+        // carry their verdicts in the lines already printed by the owner.
+        if (ch == "nodeField" || ch == "rtq") {
+            checkAfterHop(ch)
+        }
         advance()
     }
 
@@ -235,9 +390,13 @@ class SpikeChild : GroupComponent() {
         if (ch == "") return
         expectedAck = ""
         println("[SPIKE] $ch.NO-ACK observer-or-handler-never-fired (2s timeout)")
-        println("[SPIKE] q1d.$ch.identity FAIL no-delivery")
-        println("[SPIKE] q1d.$ch.nested FAIL no-delivery")
-        println("[SPIKE] q1d.$ch.refIdentity FAIL no-delivery")
+        if (ch == "setrefObs") {
+            println("[SPIKE] setref.observerOnSetField FAIL no-fire (ordinary setField after SetRef did not notify)")
+        } else {
+            println("[SPIKE] q1d.$ch.identity FAIL no-delivery")
+            println("[SPIKE] q1d.$ch.nested FAIL no-delivery")
+            println("[SPIKE] q1d.$ch.refIdentity FAIL no-delivery")
+        }
         advance()
     }
 }

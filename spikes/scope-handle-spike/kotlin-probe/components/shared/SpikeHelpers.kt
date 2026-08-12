@@ -54,6 +54,39 @@ external interface SpikeRtq {
     fun postMessage(messageId: String, data: Any?)
 }
 
+// ---- OS 15.0 reference APIs (addendum) — RokuDocs "Optimized data transfer
+// and reference handling". SetRef/CanGetRef/GetRef are render-thread-only,
+// AA-typed fields; Move* callable from any thread. Not on the stdlib RoSGNode
+// interface yet, so spliced raw.
+
+// Statement form: the doc's signature says void but its Return Value section
+// says Boolean — setRefRet below captures whichever is true, this is the
+// fallback if the function-form call throws.
+@BrsInline("node.setRef(fieldName, data)")
+internal external fun setRefStmt(node: Any?, fieldName: String, data: Any?)
+
+@BrsInline("return node.setRef(fieldName, data)")
+internal external fun setRefRet(node: Any?, fieldName: String, data: Any?): Dynamic?
+
+@BrsInline("return node.canGetRef(fieldName)")
+internal external fun canGetRefOn(node: Any?, fieldName: String): Boolean
+
+@BrsInline("return node.getRef(fieldName)")
+internal external fun getRefOn(node: Any?, fieldName: String): Dynamic?
+
+@BrsInline("return node.moveIntoField(fieldName, data)")
+internal external fun moveIntoFieldOn(node: Any?, fieldName: String, data: Any?): Int
+
+@BrsInline("return node.moveFromField(fieldName)")
+internal external fun moveFromFieldOn(node: Any?, fieldName: String): Dynamic?
+
+@BrsInline("return CreateObject(\"roUtils\")")
+internal external fun createRoUtils(): RoUtils?
+
+external interface RoUtils {
+    fun isSameObject(data1: Any?, data2: Any?): Boolean
+}
+
 internal fun pf(ok: Boolean): String {
     if (ok) return "PASS"
     return "FAIL"

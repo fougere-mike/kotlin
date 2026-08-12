@@ -8,15 +8,20 @@ import kotlin.brs.roku.RoSGNodeEvent
 import kotlin.brs.typeOf
 import spike.shared.SharedVm
 import spike.shared.callBumpDynamic
+import spike.shared.createRoUtils
 import spike.shared.createRtqOrInvalid
 import spike.shared.describeKeys
 import spike.shared.getMember
+import spike.shared.getRefOn
 import spike.shared.isSameNodeSafe
 import spike.shared.keyExistsIn
 import spike.shared.lookupOf
+import spike.shared.moveFromFieldOn
 import spike.shared.pf
 import spike.shared.rawMessage
 import spike.shared.setMember
+import spike.shared.setRefRet
+import spike.shared.setRefStmt
 import spike.shared.subtypeOf
 import spike.shared.valueOrInvalid
 
@@ -37,6 +42,14 @@ class SpikeOwner : GroupComponent() {
     @SGNodeField
     var childNode: RoSGNode? = null
 
+    // Addendum (OS 15 reference APIs) state: direct references to the
+    // SetRef'd payloads, so shared-identity checks read the owner's OWN
+    // objects, plus the refStash observer fire counter.
+    private var refAA: RoAssociativeArray? = null
+    private var refInner: RoAssociativeArray? = null
+    private var refVm: SharedVm? = null
+    private var refStashFires: Int = 0
+
     init {
         val q = createRtqOrInvalid()
         if (q != null) {
@@ -44,6 +57,31 @@ class SpikeOwner : GroupComponent() {
             println("[SPIKE] rtq.register token=${typeOf(tok)}")
         } else {
             println("[SPIKE] rtq.register SKIP os<15 (CreateObject returned invalid)")
+        }
+        // Addendum fields: runtime-added AA fields for the OS 15 reference
+        // APIs (SetRef targets + Move* box). refStash observer armed HERE,
+        // before any SetRef, so the doc's observer-silence claim is testable.
+        top.addField("refStash", "assocarray", true)
+        top.addField("vmStash", "assocarray", true)
+        top.addField("moveBox", "assocarray", true)
+        top.observeFieldScoped("refStash", brsName(::onRefStashChanged))
+    }
+
+    // Fires for ordinary writes to refStash; the doc claims SetRef does NOT
+    // notify. The expected fire carries the {ping:1} AA written by
+    // verifySetRef's plain setField, and rings the child's ack bell.
+    private fun onRefStashChanged(msg: RoSGNodeEvent) {
+        refStashFires = refStashFires + 1
+        val d = msg.getData()
+        var isPing = false
+        if (typeOf(d) == "roAssociativeArray") {
+            isPing = valueOrInvalid(lookupOf(d, "ping")) == "1"
+        }
+        if (isPing) {
+            println("[SPIKE] setref.observerOnSetField PASS fires=$refStashFires")
+            ringChild("setrefObs")
+        } else {
+            println("[SPIKE] setref.observerFire UNEXPECTED n=$refStashFires dataType=${typeOf(d)} keys=${describeKeys(d)}")
         }
     }
 
@@ -88,6 +126,114 @@ class SpikeOwner : GroupComponent() {
     private fun onRtqPayload(data: RoAssociativeArray?, msgInfo: Dynamic?) {
         inspectPayload(data, "rtq")
         ringChild("rtq")
+    }
+
+    // ---- OS 15 reference-API addendum arrival points (all called by the
+    // child over callFunc; both components live on the render thread, which
+    // is the only thread SetRef/GetRef are legal on) ----
+
+    @BrsExport
+    @BrsName("setupSetRef")
+    fun setupSetRef(arg: Dynamic?): String {
+        val inner = RoAssociativeArray.create()
+        inner.addReplace("marker", 1)
+        val nested = RoAssociativeArray.create()
+        nested.addReplace("inner", inner)
+        val aa = RoAssociativeArray.create()
+        aa.addReplace("marker", 1)
+        aa.addReplace("nested", nested)
+        refAA = aa
+        refInner = inner
+        refStashFires = 0
+        // The doc's SetRef signature says void but its Return Value section
+        // says Boolean — capture whichever the device implements.
+        try {
+            val r = setRefRet(top, "refStash", aa)
+            println("[SPIKE] setref.set ret=${valueOrInvalid(r)}")
+        } catch (e: Throwable) {
+            setRefStmt(top, "refStash", aa)
+            println("[SPIKE] setref.set ret=void (function-form threw:${valueOrInvalid(rawMessage(e))})")
+        }
+        // Direct same-thread identity check on the owner's own node.
+        try {
+            val u = createRoUtils()
+            if (u != null) {
+                println("[SPIKE] setref.ownerIsSameObject ${pf(u.isSameObject(refAA, getRefOn(top, "refStash")))}")
+            } else {
+                println("[SPIKE] setref.ownerIsSameObject SKIP roUtils-invalid")
+            }
+        } catch (e: Throwable) {
+            println("[SPIKE] setref.ownerIsSameObject THREW ${valueOrInvalid(rawMessage(e))}")
+        }
+        return "ok"
+    }
+
+    @BrsExport
+    @BrsName("verifySetRef")
+    fun verifySetRef(arg: Dynamic?): String {
+        // The child has mutated the GetRef'd object (marker=2 top-level and
+        // nested). Re-read the owner's DIRECT references.
+        val m1 = valueOrInvalid(lookupOf(refAA, "marker"))
+        val m2 = valueOrInvalid(lookupOf(refInner, "marker"))
+        println("[SPIKE] setref.sharedTopLevel ${pf(m1 == "2")} ownerMarker=$m1")
+        println("[SPIKE] setref.sharedNested ${pf(m2 == "2")} ownerInnerMarker=$m2")
+        try {
+            val u = createRoUtils()
+            if (u != null) {
+                println("[SPIKE] setref.isSameObjectAfterMutate ${pf(u.isSameObject(refAA, getRefOn(top, "refStash")))}")
+            }
+        } catch (e: Throwable) {
+            println("[SPIKE] setref.isSameObjectAfterMutate THREW ${valueOrInvalid(rawMessage(e))}")
+        }
+        // Doc claim: SetRef does not notify observers. Everything so far
+        // (SetRef + GetRefs + mutations) should have produced zero fires.
+        println("[SPIKE] setref.observerSilentOnSetRef ${pf(refStashFires == 0)} fires=$refStashFires")
+        // Control: an ORDINARY setField on the same field must fire the
+        // observer (async — the handler rings the child's setrefObs bell).
+        val ping = RoAssociativeArray.create()
+        ping.addReplace("ping", 1)
+        top.setField("refStash", ping)
+        return "ok"
+    }
+
+    @BrsExport
+    @BrsName("setupSetRefVm")
+    fun setupSetRefVm(arg: Dynamic?): String {
+        val vm = SharedVm()
+        vm.bump()
+        refVm = vm
+        println("[SPIKE] setrefVm.pre vmType=${typeOf(vm)} counter=${vm.counter} vmKeys=${describeKeys(vm)}")
+        try {
+            val r = setRefRet(top, "vmStash", vm)
+            println("[SPIKE] setrefVm.set ret=${valueOrInvalid(r)}")
+        } catch (e: Throwable) {
+            setRefStmt(top, "vmStash", vm)
+            println("[SPIKE] setrefVm.set ret=void (function-form threw:${valueOrInvalid(rawMessage(e))})")
+        }
+        return "ok"
+    }
+
+    @BrsExport
+    @BrsName("verifySetRefVm")
+    fun verifySetRefVm(arg: Dynamic?): String {
+        // If the child's bump() on the GetRef'd object dispatched AND the
+        // object is genuinely shared, the owner's direct ref reads counter=2.
+        val c = valueOrInvalid(getMember(refVm, "counter"))
+        println("[SPIKE] setrefVm.sharedState ${pf(c == "2")} ownerCounter=$c")
+        return "ok"
+    }
+
+    @BrsExport
+    @BrsName("moveVerify")
+    fun moveVerify(arg: Dynamic?): String {
+        try {
+            val got = moveFromFieldOn(top, "moveBox")
+            val fieldAfter = top.getField("moveBox")
+            println("[SPIKE] move.from gotKeys=${describeKeys(got)} fieldAfterType=${typeOf(fieldAfter)}")
+        } catch (e: Throwable) {
+            println("[SPIKE] move.from THREW ${valueOrInvalid(rawMessage(e))}")
+        }
+        return "ok"
     }
 
     private fun ringChild(channel: String) {
