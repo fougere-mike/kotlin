@@ -107,6 +107,86 @@ function E___get_tag_k_() as String
     return m.tag
 end function
 
+function P_create_I_Z_Z_k_(a as Integer, b = false, c = false) as Object
+    if b = invalid then
+        b = false
+    end if
+    if c = invalid then
+        c = false
+    end if
+    this = {}
+    this.__type = "P"
+    this.__proto = ["P"]
+    this.__id = __kotlin_nextObjectId()
+    this.a = a
+    this.b = b
+    this.c = c
+    this.equals = P_equals
+    this.hashCode = P_hashCode
+    this.toString = P_toString
+    this.copy = P_copy
+    this.component1 = P_component1
+    this.component2 = P_component2
+    this.component3 = P_component3
+    return this
+end function
+
+function P_equals(other as Object) as Boolean
+    if Type(other) <> "roAssociativeArray" then
+        return false
+    end if
+    if other.__type <> "P" then
+        return false
+    end if
+    if m.a <> other.a then
+        return false
+    end if
+    if m.b <> other.b then
+        return false
+    end if
+    if m.c <> other.c then
+        return false
+    end if
+    return true
+end function
+
+function P_hashCode() as Integer
+    result = 1
+    result = ((result * 31) + m.a)
+    result = ((result * 31) + m.b)
+    result = ((result * 31) + m.c)
+    return result
+end function
+
+function P_toString() as String
+    return ((((("P(a=" + m.a) + ", b=") + m.b) + ", c=") + m.c) + ")"
+end function
+
+function P_copy(a = invalid, b = invalid, c = invalid) as Object
+    if a = invalid then
+        a = m.a
+    end if
+    if b = invalid then
+        b = m.b
+    end if
+    if c = invalid then
+        c = m.c
+    end if
+    return P_create_I_Z_Z_k_(a, b, c)
+end function
+
+function P_component1() as Integer
+    return m.a
+end function
+
+function P_component2() as Boolean
+    return m.b
+end function
+
+function P_component3() as Boolean
+    return m.c
+end function
+
 function O_create_k_() as Object
     this = {}
     this.__type = "O"
@@ -190,4 +270,8 @@ end function
 
 function testEnumSkip_k_() as String
     return "z"
+end function
+
+function testDataClassSkip_k_() as Object
+    return P_create_I_Z_Z_k_(1, invalid, true)
 end function

@@ -2069,6 +2069,9 @@ class IrToBrsTransformer(
 
         val bodyStatements = mutableListOf<BrsStatement>()
 
+        // Materialize defaults over passed-invalid before anything reads the parameters
+        bodyStatements.addAll(defaultValueGuards(constructor))
+
         // this = {}
         bodyStatements.add(
             BrsVariable(

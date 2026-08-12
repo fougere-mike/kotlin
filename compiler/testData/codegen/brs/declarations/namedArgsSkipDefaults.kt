@@ -11,6 +11,9 @@ enum class E(val x: Int, val flag: Boolean = false, val tag: String = "t") {
     A(1, tag = "z")
 }
 
+// Data classes have their own constructor generator; it needs the guard preamble too
+data class P(val a: Int, val b: Boolean = false, val c: Boolean = false)
+
 object O {
     fun g(a: Int, b: Boolean = false, c: Boolean = false, d: Boolean = false): Int {
         var r = a
@@ -47,4 +50,8 @@ fun testSuperSkip(): D {
 
 fun testEnumSkip(): String {
     return E.A.tag
+}
+
+fun testDataClassSkip(): P {
+    return P(1, c = true)
 }
