@@ -32,6 +32,9 @@ class BrsDeclarationGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun namedArgsSkipDefaults() = runTest("declarations/namedArgsSkipDefaults.kt")
+
+    @Test
+    fun initBlocks() = runTest("declarations/initBlocks.kt")
 }
 
 // ==================== Expression Tests ====================

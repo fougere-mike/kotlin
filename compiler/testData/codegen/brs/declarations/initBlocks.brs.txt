@@ -1,0 +1,125 @@
+// --- File: initBlocksKt.brs ---
+function Counter_create_I_k_(start as Integer) as Object
+    this = {}
+    this.__type = "Counter"
+    this.__proto = ["Counter"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.__get_count = Counter___get_count_k_
+    this.__set_count = Counter___set_count_I_k_
+    this.count = start
+    this.__set_count(this.__get_count() + 1)
+    return this
+end function
+
+function Counter___get_count_k_() as Integer
+    return m.count
+end function
+
+sub Counter___set_count_I_k_(value as Integer)
+    m.count = value
+end sub
+
+function Guarded_create_I_k_(step_ as Integer) as Object
+    this = {}
+    this.__type = "Guarded"
+    this.__proto = ["Guarded"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.__get_step = Guarded___get_step_k_
+    this.__get_magnitude = Guarded___get_magnitude_k_
+    this.step = step_
+    if this.__get_step() = 0 then
+        throw IllegalArgumentException_create_StrN_k_("Step must be non-zero.")
+    end if
+    __when_tmp0 = invalid
+    if this.__get_step() < 0 then
+        __when_tmp0 = -this.__get_step()
+    else
+        __when_tmp0 = this.__get_step()
+    end if
+    this.magnitude = __when_tmp0
+    return this
+end function
+
+function Guarded___get_step_k_() as Integer
+    return m.step
+end function
+
+function Guarded___get_magnitude_k_() as Integer
+    return m.magnitude
+end function
+
+function Ordered_create_I_k_(seed as Integer) as Object
+    this = {}
+    this.__type = "Ordered"
+    this.__proto = ["Ordered"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.__get_trace = Ordered___get_trace_k_
+    this.__set_trace = Ordered___set_trace_Str_k_
+    this.__get_doubled = Ordered___get_doubled_k_
+    this.trace = "p1"
+    this.__set_trace(this.__get_trace() + ":i1")
+    this.doubled = (seed * 2)
+    this.__set_trace((this.__get_trace() + ":i2:") + __kotlin_numToStr_I_k_(this.__get_doubled()))
+    return this
+end function
+
+function Ordered___get_trace_k_() as String
+    return m.trace
+end function
+
+sub Ordered___set_trace_Str_k_(value as String)
+    m.trace = value
+end sub
+
+function Ordered___get_doubled_k_() as Integer
+    return m.doubled
+end function
+
+function BaseWithInit_create_k_() as Object
+    this = {}
+    this.__type = "BaseWithInit"
+    this.__proto = ["BaseWithInit"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.__get_log = BaseWithInit___get_log_k_
+    this.__set_log = BaseWithInit___set_log_Str_k_
+    this.log = "base-prop"
+    this.__set_log(this.__get_log() + ":base-init")
+    return this
+end function
+
+function BaseWithInit___get_log_k_() as String
+    return m.log
+end function
+
+sub BaseWithInit___set_log_Str_k_(value as String)
+    m.log = value
+end sub
+
+function DerivedWithInit_create_k_() as Object
+    this = BaseWithInit_create_k_()
+    this._super = {}
+    this.__proto = ["DerivedWithInit", this.__proto]
+    this.__type = "DerivedWithInit"
+    this.__set_log(this.__get_log() + ":derived-init")
+    return this
+end function
+
+function useAll_k_() as String
+    c = Counter_create_I_k_(41)
+    g = Guarded_create_I_k_(-3)
+    o = Ordered_create_I_k_(7)
+    d = DerivedWithInit_create_k_()
+    return (((((__kotlin_numToStr_I_k_(c.__get_count()) + "|") + __kotlin_numToStr_I_k_(g.__get_magnitude())) + "|") + o.__get_trace()) + "|") + d.__get_log()
+end function

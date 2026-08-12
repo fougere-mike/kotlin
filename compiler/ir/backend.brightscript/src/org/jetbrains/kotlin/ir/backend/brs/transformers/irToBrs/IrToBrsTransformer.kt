@@ -2622,19 +2622,27 @@ class IrToBrsTransformer(
         // because initializers may call methods on 'this' (e.g., this.get_map().get_keyOrder())
         addMethodAttachments(irClass, className, bodyStatements)
 
-        // Initialize fields (direct field declarations)
+        // Initialize fields/property backing fields and execute init { } block bodies.
+        // Kotlin semantics: property initializers and anonymous initializers run in
+        // DECLARATION ORDER (after the super-constructor call), so this must be a
+        // single ordered pass over the class declarations — an init block between two
+        // properties observes the first initialized and the second not yet.
         val initializedFields = mutableSetOf<String>()
-        for (field in irClass.declarations.filterIsInstance<IrField>()) {
+
+        // Sanitize field name for special names like <this>. For delegated properties,
+        // the backing field is named <propertyName>$delegate (e.g., lazyValue$delegate).
+        fun sanitizeFieldName(rawName: String): String = when {
+            rawName == "<this>" -> "__this"
+            rawName.startsWith("<") && rawName.endsWith(">") ->
+                rawName.removePrefix("<").removeSuffix(">").replace("-", "_").replace(" ", "_")
+            else -> rawName.replace("$", "_")
+        }
+
+        fun emitFieldInitializer(field: IrField) {
+            val fieldName = sanitizeFieldName(field.name.asString())
+            if (fieldName in initializedFields) return
             field.initializer?.expression?.let { initializer ->
-                // Sanitize field name for special names like <this>
-                val rawName = field.name.asString()
-                val sanitizedName = when {
-                    rawName == "<this>" -> "__this"
-                    rawName.startsWith("<") && rawName.endsWith(">") ->
-                        rawName.removePrefix("<").removeSuffix(">").replace("-", "_").replace(" ", "_")
-                    else -> rawName.replace("$", "_")
-                }
-                initializedFields.add(sanitizedName)
+                initializedFields.add(fieldName)
                 val transformedInit = transformExpression(initializer)
                 // Consume hoisted statements from when-lowered blocks in the initializer
                 val hoisted = genCtx.takeHoistedStatements()
@@ -2642,7 +2650,7 @@ class IrToBrsTransformer(
                 bodyStatements.add(
                     BrsExpressionStatement(
                         BrsBinaryOp(
-                            BrsDotAccess(BrsIdentifier("this"), sanitizedName),
+                            BrsDotAccess(BrsIdentifier("this"), fieldName),
                             BrsBinaryOperator.EQ,
                             transformedInit
                         )
@@ -2651,35 +2659,22 @@ class IrToBrsTransformer(
             }
         }
 
-        // Also initialize property backing fields (may not be direct members of declarations)
-        for (property in irClass.declarations.filterIsInstance<IrProperty>()) {
-            val backingField = property.backingField ?: continue
-            // Use backing field name, not property name - for delegated properties, the backing field
-            // is named <propertyName>$delegate (e.g., lazyValue$delegate)
-            // Also sanitize special names like <this>
-            val rawFieldName = backingField.name.asString()
-            val fieldName = when {
-                rawFieldName == "<this>" -> "__this"
-                rawFieldName.startsWith("<") && rawFieldName.endsWith(">") ->
-                    rawFieldName.removePrefix("<").removeSuffix(">").replace("-", "_").replace(" ", "_")
-                else -> rawFieldName.replace("$", "_")
-            }
-            if (fieldName !in initializedFields) {
-                backingField.initializer?.expression?.let { initializer ->
-                    val transformedInit = transformExpression(initializer)
-                    // Consume hoisted statements from when-lowered blocks in the initializer
-                    val hoisted = genCtx.takeHoistedStatements()
-                    bodyStatements.addAll(hoisted)
-                    bodyStatements.add(
-                        BrsExpressionStatement(
-                            BrsBinaryOp(
-                                BrsDotAccess(BrsIdentifier("this"), fieldName),
-                                BrsBinaryOperator.EQ,
-                                transformedInit
-                            )
-                        )
-                    )
+        for (declaration in irClass.declarations) {
+            when (declaration) {
+                is IrField -> emitFieldInitializer(declaration)
+                // Property backing fields are usually not direct members of declarations
+                is IrProperty -> declaration.backingField?.let { emitFieldInitializer(it) }
+                is IrAnonymousInitializer -> if (!declaration.isStatic) {
+                    for (stmt in declaration.body.statements) {
+                        val transformed = transformStatement(stmt)
+                        // Statement visitors consume their own hoisted statements; the
+                        // bare-expression fall-through in transformStatement does not,
+                        // so drain any leftovers before the statement that needs them
+                        bodyStatements.addAll(genCtx.takeHoistedStatements())
+                        transformed?.let { bodyStatements.add(it) }
+                    }
                 }
+                else -> {}
             }
         }
 
