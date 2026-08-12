@@ -131,7 +131,7 @@ Native types are declared as `external interface`, which tells the compiler the 
 public external interface RoArray : IArray, IArrayJoin, IArraySort, IEnumNative {
     companion object {
         @BrsCreateObject("roArray")
-        fun create(size: Int = 0, resize: Boolean = true): RoArray = definedExternally
+        fun create(size: Int, resize: Boolean): RoArray = definedExternally
     }
 }
 ```
@@ -147,6 +147,10 @@ val arr = RoArray.create(10, true)
 // Compiles to BrightScript:
 arr = CreateObject("roArray", 10, true)
 ```
+
+Do NOT declare default parameter values on `@BrsCreateObject` factories —
+absent arguments at the call site currently misbind (the arg list compacts
+positionally; FIR guard is backlog). Declare all parameters required.
 
 **3. NativeArrayIterator Marker Type**
 
@@ -350,6 +354,9 @@ How it works:
   run-loop OWNERS only (main-thread `runBlocking`, the kotlin.test driver's
   `runPumping`). Task-thread `run()` bodies are synchronous by design: no
   `launch {}` there.
+- On top of this scaffolding sits the full utility surface — `join`/`await`,
+  `awaitAll`, `coroutineScope`, `withContext`, `withTimeout`, cancellation —
+  documented in "Coroutine Utilities" below (landed 2026-08-11).
 
 Historical note (root cause, 2026-08-10): before this scaffolding, dispatch
 through the coroutine queue had NEVER worked on device — `CoroutineDispatcher`
@@ -360,6 +367,85 @@ were only ever servicing `DelayTracker`. Fixed by storing dispatchers under
 `ContinuationInterceptor.Key` (CoroutineDispatcher.kt); pinned by stdlib tests
 ("dispatcher resolvable via ContinuationInterceptor key") and the E2E backend
 assertion.
+
+## Coroutine Utilities (awaitAll & friends)
+
+Landed 2026-08-11 (the coroutine-utilities program). The stdlib now has a real
+structured-concurrency surface over the pump scaffolding above:
+
+- **Job protocol**: `invokeOnCompletion` (settle-once, handler disposal),
+  real `join()`/`await()` — parked continuations, NOT busy-waits.
+  `Job.ensureActive()` / `CoroutineContext.ensureActive()` /
+  `CoroutineScope.isActive` for cooperative checks.
+- **`awaitAll(vararg)` / `Collection<Deferred<T>>.awaitAll()`**, `joinAll`
+  (both forms) — `libraries/stdlib/brs/src/kotlin/coroutines/Await.kt`.
+  awaitAll rethrows the FIRST failure fast (siblings cancelled).
+- **`coroutineScope {}`** and **`withContext(context) {}`** — real scoped
+  children over the shared `parkScopedBlock` engine (`Scopes.kt`,
+  `builders/WithContext.kt`).
+- **`withTimeout` / `withTimeoutOrNull`** + `TimeoutCancellationException`
+  (`builders/Timeout.kt`). `withTimeoutOrNull` maps only its OWN expiry to
+  null; other failures rethrow.
+- **`SupervisorJob(parent)`** — children's failures don't cancel siblings/parent.
+- **`delay()` / `yield()`** are cancellation-aware (entry checks + mid-park
+  wakeup).
+
+**Hierarchy and supervisor roots.** `launch`/`async` attach to the parent job;
+a child failure cancels siblings and propagates up — UNLESS the parent is a
+supervisor. ALL THREE root scopes are `SupervisorJob()` roots (deliberate
+kotlinx DIVERGENCE — kotlinx roots `runBlocking` on a regular Job):
+`componentScope()` (`brs/ComponentCoroutines.kt:60`), `runBlocking`
+(`coroutines/builders/Builders.kt:102`), and the kotlin.test driver's
+`runPumping` (`kotlin.test/.../device/DeviceTestLoop.kt:295`). One failing
+top-level `launch {}` therefore never kills the component scope, the app main
+loop, or an unrelated device test. An unhandled launch failure prints
+`[kotlin.coroutines] Unhandled exception in coroutine: ...` to the console
+(`Job.kt:319`) — grep for that prefix when a fire-and-forget coroutine dies.
+
+**Cancellation promises (v1).** Every stdlib suspend point entry-checks the
+job (`delay`, `yield`, `join`, `await`, `awaitAll`, scope builders); a PARKED
+suspension is woken mid-park by caller cancel (CancellationException at the
+suspend point); cancellation cascades through the hierarchy. NOT promised:
+task-thread work is not stopped — cancelling a coroutine parked in
+`runTask` abandons the await, but the task's `run()` keeps executing on the
+task thread (runTask cancellation is M3 backlog).
+
+**Jobs are same-component-only.** GetGlobalAA — and therefore the queue, the
+DelayTracker, and the pump — is per-component-instance on the render thread.
+A Job/Deferred handed to ANOTHER component cannot be serviced there; don't
+share Jobs across components (cross-component signalling is what @SG fields
+and observers are for).
+
+**The stdlib suspend-function idiom (for FUTURE utilities): tail-delegation +
+`parked.finish()`.** Suspend utilities are written over `ParkedContinuation`
+(`coroutines/ParkedContinuation.kt`): inside
+`suspendCoroutineUninterceptedOrReturn`, create the park, register completion/
+cancel handlers on it (it owns their disposal and the settle-once guard, and
+resumes through the ContinuationInterceptor when one is present), and make
+`parked.finish()` the block's LAST expression — the park starts UNARMED, so a
+handler firing synchronously (no-interceptor regime: runBlocking/runPumping)
+is recorded and `finish()` converts it into a synchronous return/throw instead
+of a double-execute. Suspend functions that merely wrap another suspend call
+must TAIL-DELEGATE (return the inner call directly), not park around it.
+
+**DX traps:**
+
+- **Nested `launch` inside `coroutineScope {}` IN A COMPONENT** resolves to
+  `ComponentBase.launch` (a NEW top-level coroutine on the component scope),
+  not to the scope receiver — the `coroutineScope` completes childless,
+  silently, and awaits nothing. Import `kotlin.coroutines.builders.launch`
+  explicitly in component files that use `coroutineScope { launch { } }`
+  (FIR-warning candidate, backlogged).
+- **Don't leak the scope receiver**: the `CoroutineScope` receiver of
+  `coroutineScope`/`withContext`/`withTimeout` is only valid INSIDE the block;
+  launching on a stored copy after the block returns is undefined (KDoc'd on
+  the builders; runtime/FIR guard backlogged).
+
+Device coverage: stdlib "join/await suspension", awaitAll, scopes, timeout
+suites (runBlocking regime) + E2E Suite 7 CoroutineUtilities (component
+pumping regime, incl. `awaitAll` over concurrent `runTask`s). The flagship
+demo (`../roku-test-app/components/ShelfView/ShelfView.kt`) fetches ip + shelf
+concurrently via `async`/`awaitAll`.
 
 ## SceneGraph Layouts: @SGLayout DSL + Layout Accessors
 
@@ -721,10 +807,13 @@ export ROKU_PASSWORD=your_password
 
 # Run E2E tests (from roku-test-app directory)
 cd ../roku-test-app && ./run-device-tests.sh
-
-# Or with Gradle
-cd ../roku-test-app && ./gradlew rokuTest
 ```
+
+**Always use the `./run-device-tests.sh` wrapper, not `./gradlew rokuTest`
+directly.** The plugin's stream parser will arm on a REPLAYED sentinel from a
+previous run if it's under 120s old (plugin nonce fix is backlogged in
+kotlin-roku); the wrapper adds a replay guard that closes this false-green
+window. Direct `./gradlew rokuTest` BYPASSES that guard.
 
 **What actually runs:** `rokuTest` (KGP task) packages the test app from
 `roku-test-app/src/brsTest/kotlin/tests/` + the fixture components in
@@ -733,7 +822,7 @@ cd ../roku-test-app && ./gradlew rokuTest
 the stdlib runner: replayed events from a previous run are discarded).
 Results land in `build/test-results/roku/` as JSON + JUnit XML.
 
-**The suites (6 suites, 33 active tests + 3 red-guarded `xtest` placeholders):**
+**The suites (7 suites, 41 active tests + 3 red-guarded `xtest` placeholders):**
 
 | Suite | File | Exercises |
 |-------|------|-----------|
@@ -743,6 +832,7 @@ Results land in `build/test-results/roku/` as JSON + JUnit XML.
 | 3 TaskBoundary | `tests/TaskBoundaryTests.kt` | task-thread round trips via EchoTask fixtures |
 | 4 TypedTaskAcceptance | `tests/TypedTaskTests.kt` | `runTask` success/error/overlap/round-trip/derived |
 | 6 FieldSemantics | `tests/FieldSemanticsTests.kt` | dot-assign vs setField truth table + lambda self-write routing (case 8) |
+| 7 CoroutineUtilities | `tests/CoroutineUtilityTests.kt` | awaitAll/coroutineScope/supervisor/withTimeout in the component pumping regime + awaitAll over concurrent `runTask`s |
 
 **The main-thread driver:** `tests/TestMain.kt` is a `main()` that creates the
 SceneGraph screen, installs the screen's message port as the shared `TestPort`,
@@ -786,16 +876,16 @@ Predicates must return false rather than throw. Probe nodes are created via
 | E2E test suites + driver | `roku-test-app/src/brsTest/kotlin/tests/` (TestMain.kt is the main-thread driver) |
 | E2E fixture components | `roku-test-app/components/fixtures/` |
 
-### Current Gate Numbers (as of the coroutine-scaffolding program, 2026-08-10)
+### Current Gate Numbers (as of the coroutine-utilities program, 2026-08-11)
 
 These are the whole-branch green gates; a drop in any of them is a regression.
 
 | Gate | Count |
 |------|-------|
-| Golden file tests | 57 |
+| Golden file tests | 65 |
 | FIR diagnostic suite (checkers.brs) | 219 |
-| Stdlib device suite | 411 tests / 40 suites |
-| rokuTest E2E | 33 active tests / 6 suites (+3 red-guarded xtests) |
+| Stdlib device suite | 493 tests / 50 suites |
+| rokuTest E2E | 41 active tests / 7 suites (+3 red-guarded xtests) |
 | `validateComponentIncludes` | strict mode, 0 findings (no allowlist) |
 
 ### Test Output
