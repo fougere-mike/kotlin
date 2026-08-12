@@ -1,0 +1,37 @@
+===SPIKE_SENTINEL_1786573945===
+[SPIKE] rtq.register token=roRenderThreadQueueRegistration
+[SPIKE] BEGIN model=4800X os=15.3.4 build=841
+[SPIKE] q1d.nodeField.pre vmType=roAssociativeArray counter=1 vmKeys=__get_counter:roFunction,__id:roInteger,__proto:roArray,__set_counter:roFunction,__type:roString,bump_k_:roFunction,counter:roInteger,equals:roFunction,hashcode:roFunction,tostring:roFunction
+[SPIKE] q1d.nodeField.preFn keyExists=PASS type=roFunction
+[SPIKE] q1d.nodeField.arrived kobjType=roAssociativeArray kobjKeys=__id:roInt,__proto:roArray,__type:roString,counter:roInt
+[SPIKE] q1d.nodeField.fnKey keyExists=FAIL type=Invalid
+[SPIKE] q1d.nodeField.cast PASS (as? SharedVm on the arrived value)
+[SPIKE] q1d.nodeField.method FAIL via=typed threw:Member function not found in BrightScript Component or interface.
+[SPIKE] q1d.nodeField.ownerMutate ok counter=99 innerMarker=2
+[SPIKE] q1d.nodeField.identity FAIL localCounter=1
+[SPIKE] q1d.nodeField.nested FAIL innerMarker=1
+[SPIKE] q1d.nodeField.refIdentity FAIL marker=1
+[SPIKE] q1d.callFuncArg.pre vmType=roAssociativeArray counter=1 vmKeys=__get_counter:roFunction,__id:roInteger,__proto:roArray,__set_counter:roFunction,__type:roString,bump_k_:roFunction,counter:roInteger,equals:roFunction,hashcode:roFunction,tostring:roFunction
+[SPIKE] q1d.callFuncArg.preFn keyExists=PASS type=roFunction
+[SPIKE] q1d.callFuncArg.arrived kobjType=roAssociativeArray kobjKeys=__get_counter:roInvalid,__id:roInt,__proto:roArray,__set_counter:roInvalid,__type:roString,bump_k_:roInvalid,counter:roInt,equals:roInvalid,hashcode:roInvalid,tostring:roInvalid
+[SPIKE] q1d.callFuncArg.fnKey keyExists=PASS type=roInvalid
+[SPIKE] q1d.callFuncArg.cast PASS (as? SharedVm on the arrived value)
+[SPIKE] q1d.callFuncArg.method FAIL via=typed threw:Member function not found in BrightScript Component or interface.
+[SPIKE] q1d.callFuncArg.ownerMutate ok counter=99 innerMarker=2
+[SPIKE] q1d.callFuncArg.identity FAIL localCounter=1
+[SPIKE] q1d.callFuncArg.nested FAIL innerMarker=1
+[SPIKE] q1d.callFuncArg.refIdentity FAIL marker=1
+[SPIKE] barenode.callFuncArg PASS type=roSGNode subtype=SpikeChild id=spike_child
+[SPIKE] barenode.callFuncRet FAIL type=roSGNode subtype=Node id=
+[SPIKE] q1d.rtq.pre vmType=roAssociativeArray counter=1 vmKeys=__get_counter:roFunction,__id:roInteger,__proto:roArray,__set_counter:roFunction,__type:roString,bump_k_:roFunction,counter:roInteger,equals:roFunction,hashcode:roFunction,tostring:roFunction
+[SPIKE] q1d.rtq.preFn keyExists=PASS type=roFunction
+[SPIKE] q1d.rtq.postState payloadKeys=0 vmType=roAssociativeArray vmKeys=__get_counter:roFunction,__id:roInteger,__proto:roArray,__set_counter:roFunction,__type:roString,bump_k_:roFunction,counter:roInteger,equals:roFunction,hashcode:roFunction,tostring:roFunction vmCounter=1 innerMarker=1
+[SPIKE] q1d.rtq.arrived kobjType=roAssociativeArray kobjKeys=__id:roInteger,__proto:roArray,__type:roString,counter:roInteger
+[SPIKE] q1d.rtq.fnKey keyExists=FAIL type=Invalid
+[SPIKE] q1d.rtq.cast PASS (as? SharedVm on the arrived value)
+[SPIKE] q1d.rtq.method FAIL via=typed threw:Member function not found in BrightScript Component or interface.
+[SPIKE] q1d.rtq.ownerMutate ok counter=99 innerMarker=2
+[SPIKE] q1d.rtq.identity FAIL localCounter=1
+[SPIKE] q1d.rtq.nested FAIL innerMarker=1
+[SPIKE] q1d.rtq.refIdentity FAIL marker=invalid
+[SPIKE] END
