@@ -125,6 +125,12 @@ object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
         }
     }
 
+    val TRY_FINALLY by object : DiagnosticGroup("try/finally") {
+        val BRS_TRY_FINALLY_UNSUPPORTED by error<KtElement> {
+            isSuppressible = true
+        }
+    }
+
     val TYPED_TASKS by object : DiagnosticGroup("Typed task components") {
         val BRS_TASK_STATE_NOT_FIELD by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
             parameter<String>("propertyName")

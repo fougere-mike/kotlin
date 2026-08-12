@@ -1181,4 +1181,13 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testCreateComponentRunTaskAbstractRejected() {
         runTest("createComponentInvalidType/runTaskAbstractRejected.kt")
     }
+
+    // BRS_TRY_FINALLY_UNSUPPORTED — non-suspend visitTry silently drops the finally block
+    // at BRS codegen. Stopgap FIR error on any try/finally whose nearest containing callable
+    // is not suspend; suspend bodies (state-machine path) stay clean.
+
+    @Test
+    fun testTryFinallyNonSuspend() {
+        runTest("tryFinallyNonSuspend.kt")
+    }
 }

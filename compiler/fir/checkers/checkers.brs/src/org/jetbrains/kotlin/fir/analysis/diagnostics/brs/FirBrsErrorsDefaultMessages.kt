@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCENEG
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_STATIC_INVALID_TARGET
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_STATIC_OVERLOAD
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_TASK_STATE_NOT_FIELD
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_TRY_FINALLY_UNSUPPORTED
 
 @Suppress("unused")
 object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
@@ -132,6 +133,12 @@ object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             BRS_BRSCREATEOBJECT_INVALID_TYPE,
             "''{0}'' is not a valid BrightScript object type for @BrsCreateObject. Valid types: {1}.",
             CommonRenderers.STRING, CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_TRY_FINALLY_UNSUPPORTED,
+            "try/finally is not supported outside suspend functions on the BrightScript backend: " +
+                "the 'finally' block is silently dropped. Move this code into a suspend function, " +
+                "restructure without 'finally', or @Suppress(\"BRS_TRY_FINALLY_UNSUPPORTED\") with a tracking comment.",
         )
         map.put(
             BRS_TASK_STATE_NOT_FIELD,

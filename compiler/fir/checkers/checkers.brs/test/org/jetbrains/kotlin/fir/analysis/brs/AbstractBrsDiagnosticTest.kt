@@ -222,6 +222,10 @@ abstract class AbstractBrsDiagnosticTest {
         "BRS_BRSCONSTANT_VAR" to "@BrsConstant objects cannot contain var properties. Use val instead: '{0}'.",
         "BRS_BRSCONSTANT_NON_OBJECT" to "@BrsConstant is only valid on object declarations. Found on {0} declaration.",
         "BRS_BRSCREATEOBJECT_INVALID_TYPE" to "'{0}' is not a valid BrightScript object type for @BrsCreateObject. Valid types: {1}.",
+        "BRS_TRY_FINALLY_UNSUPPORTED" to
+            "try/finally is not supported outside suspend functions on the BrightScript backend: " +
+                "the 'finally' block is silently dropped. Move this code into a suspend function, " +
+                "restructure without 'finally', or @Suppress(\"BRS_TRY_FINALLY_UNSUPPORTED\") with a tracking comment.",
         "BRS_TASK_STATE_NOT_FIELD" to
             "Property '{0}' in task component '{1}' compiles to plain m-state: run() executes against a task-thread copy, " +
                 "and writes from run() are silently lost. Annotate it with an @SG*Field annotation (or @BrsField), " +
