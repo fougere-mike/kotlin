@@ -31,8 +31,9 @@ B re-reads its LOCAL copy; **nodeRef** = `isSameNode` against the real node;
 DIFFERENT objects (both `roAssociativeArray`): a probe key planted on the
 `getData()` AA was not visible in the field read, and neither probe key
 (`evProbe` on getData, `fieldProbe` on the field read) ever appeared in B's
-original copy (`evProbe=invalid fieldProbe=invalid`). Every read path hands out
-its own copy; no read path shares identity with the sender's object.
+original copy (`evProbe=invalid fieldProbe=invalid`). Every probed read path
+hands out its own copy (getData(), dot-read; getField() untested); no read
+path shares identity with the sender's object.
 
 ## Q4 — runtime-addField observers
 

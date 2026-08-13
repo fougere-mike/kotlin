@@ -23,8 +23,9 @@ E2E (Suite 8), kotlin-roku toolchain.
 - **Build:** `./rebuild.sh` only. Exceptions: the two `generateCheckersComponents`
   regen commands (documented manual step) and the test-run commands in CLAUDE.md
   "Running Tests".
-- **Device:** credentials auto-resolve from `../roku-test-app/local.properties`
-  (192.168.1.125 / rokudev / `pass`). Console preflight before EVERY device run:
+- **Device:** credentials auto-resolve from `../roku-test-app/local.properties`;
+  if a script demands env vars, source the same values from that file.
+  Console preflight before EVERY device run:
   `echo | nc -w 3 192.168.1.125 8085` → `Console connection is already in use`
   means STOP and ask Mike. Builds/device runs are long; foreground, never kill.
 - **Gate baselines at Stage 2 start (must not drop):** goldens 65 · FIR 220 ·
@@ -374,7 +375,10 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - [ ] **Step 1: Add owner-side request + fixture:**
   `object FetchViaTask : ScopeRequest1<Int, String>("FetchViaTask")` whose
   handler does `runTask<SleepTask> { durationMs = it }` then returns "done" —
-  wire SleepTask input so 0 → instant, big → cancellable.
+  wire SleepTask input so 0 → instant, big → cancellable. Also bump the
+  Stage 1 `cancelawait` probe's SleepTask duration 5000→8000ms in the same
+  commit (ledgered knife-edge: 5000 == roundTrip timeout made regression modes
+  ambiguous).
 - [ ] **Step 2: Tests:**
   11. `scopeVmFacade` — child op constructs `VmFixture(scopeHandleOf(ownerNode))`
       and calls `vm.echo("hi")` → "HI" (the facade layering, call-site-invisible
@@ -442,7 +446,11 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
   calls whose argument is not an `IrFunctionExpression`-shaped literal — at FIR
   level: not an anonymous-function/lambda argument), fixture with: literal
   lambda CLEAN, `val f: suspend () -> Int = {...}; owner.run(f)` ERROR,
-  `@Suppress` escape CLEAN. Run the FIR suite — 220 + new (record).
+  `@Suppress` escape CLEAN. Run the FIR suite — 220 + new (record). Also
+  append case 6 to tryFinallyNonSuspend.kt in the same commit: try/finally in
+  a property initializer (no containing callable) → ERROR via the else->false
+  fall-through (ledgered gap — pins the initializer path against future
+  checker refactors).
 - [ ] **Step 2: Golden red.** Write `runBlockLowering.kt` testData: a component
   file with two `owner.run { }` sites — one zero-capture, one capturing a
   `val shelfId: Int` and a `val node: RoSGNode` — plus one hand-written-request
@@ -513,8 +521,11 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
   `suspend fun echoLowered(s: String): String = owner.run { echoUpperLocal(s) }`
   (echoUpperLocal = a plain private fun in the fixture FILE — exercising a
   capture (`s`) and a same-file helper call). ScopeOwnerProbe constructs the
-  VmFixture (pulling the file into its closure). Tests (mirror the part-1
-  numbering, lowered flavor):
+  VmFixture (pulling the file into its closure). Lowered-surface coverage is
+  deliberately the protocol-affecting subset (see addendum A.6's rationale):
+  value/failure/cancel/close/fast-path/dispatch-miss/capture-semantics;
+  surface-agnostic behaviors are covered once in Tasks 2–3. Tests (mirror the
+  part-1 numbering, lowered flavor):
   16. `scopeLoweredValueRoundTrip` — `vm.echoLowered("abc")` → "ABC".
   17. `scopeLoweredFailure` — a `vm.failLowered()` op whose block throws
       IllegalStateException("boom-lowered") → ScopeRequestException carrying
@@ -570,11 +581,19 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
     the VM"). Getter call → husk results crash on first property read → ERROR.
     Record the verification outcome in the fixture file's header comment and
     the report.
+  - `BRS_SCOPE_ARG_NOT_MARSHALLABLE` (ERROR): fires at
+    `object X : ScopeRequest1/2<...>` DECLARATION sites whose A1/A2/R type
+    arguments are outside the marshallable set (same set as captures; same
+    severity-decision procedure for a data-class R as RESULT_NOT_DATA — they
+    share the Step 1 verification). Message names the offending type argument,
+    the marshallable set, and: "pass plain data or restructure the request".
 - [ ] **Step 1:** severity verification golden/scratch (above) — decide, record.
 - [ ] **Step 2:** diagnostics + regens + messages + checker + fixtures: each
   diagnostic gets a firing case, a clean case, and a `@Suppress` case; the
   UNMARSHALLABLE fixture includes the component-`this` capture case and a
-  kotlin-List capture case.
+  kotlin-List capture case; the ARG_NOT_MARSHALLABLE fixture adds a
+  declaration-site firing case, a clean case, and a `@Suppress` case (the FIR
+  total grows accordingly).
 - [ ] **Step 3:** FIR suite green (record new total); `./rebuild.sh` step 7
   green (no stdlib run{} blocks exist — if step 7 fires anyway, a swept site
   snuck in: fix, don't suppress blindly).
@@ -621,7 +640,10 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
   24–27. Re-run tests 1, 3, 4, 16 under `kotlinScopeForceFieldBackendLocal()`
   (field backend forced on the probes — proves the floor path on a 15.x
   device; the unforced suite already covers rtq end-to-end). Mirror
-  PumpBackendProbe's local-force pattern.
+  PumpBackendProbe's local-force pattern. Field-force twins are deliberately
+  the carrier-affecting subset (round-trip, failure, cancel, lowered
+  round-trip); carrier-agnostic behaviors (watchdog, fast path, registration
+  guards) are not duplicated — rationale mirrors addendum A.6.
   28. `scopeMixedBackendInterop` — child forced to field backend, owner on rtq
   (or vice versa — whichever the force hook makes constructible): round trip
   still green.
@@ -642,7 +664,12 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
   program's own backlog notes in the spec — record: SetRef payload stash
   (decision A5), MoveIntoField typed-task output optimization (M3), the VM
   program's item list (A.4), alwaysNotify×scoped-observer unprobed cell,
-  Move* "moved half" unpinned cell
+  Move* "moved half" unpinned cell,
+  TaskRunner awaitCompletion fast-paths run before entry ensureActive
+  (already-cancelled caller + already-done task returns value instead of CE)
+  — fix on next TaskRunner touch with the Await.kt all-inside-block shape,
+  channel-matrix vs kotlin-probe deploy.sh run-stamping asymmetry (fixed in
+  this wave for consistency)
 
 - [ ] **Step 1: Full sweep** — every gate, both repos:
   `./run-compiler-tests.sh` (goldens: 65+2), FIR suite (220 + Tasks 4/6
@@ -667,7 +694,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 **Numbering truth (record ACTUALS in the ledger as you go):** goldens 65 → 67
 (Tasks 4, 5). FIR 220 → +BLOCK_NOT_LITERAL fixture (T4) + captures fixtures
 (T6). Stdlib device 493/50 → +Task 1 units (~6). E2E 42/7 → ~70/8 by Task 8
-(10 + 5 + 7 + 6 new in Tasks 2/3/5/7 — counts are estimates; the recorded
+(11 + 5 + 7 + 6 (Task 2 item 9 defines two tests) new in Tasks 2/3/5/7 — counts are estimates; the recorded
 actual is the gate).
 
 **Known unknowns each executor must verify in place:**

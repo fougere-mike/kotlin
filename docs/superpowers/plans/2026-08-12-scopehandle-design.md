@@ -503,9 +503,9 @@ the body disagree, the addendum governs Stage 2.
 
 ```kotlin
 // ── Hand-written requests (always available) ────────────────────
-object RefreshWatchlist : ScopeRequest<Items>                  // 0-arg
-object FetchEpisode : ScopeRequest1<EpisodeId, Episode>        // 1-arg (arities 0–2;
-                                                               // more args → one data holder)
+object RefreshWatchlist : ScopeRequest<Items>("RefreshWatchlist")          // 0-arg
+object FetchEpisode : ScopeRequest1<EpisodeId, Episode>("FetchEpisode")    // 1-arg (arities 0–2;
+                                                                           // more args → one data holder)
 class VmHost : RectangleComponent() {
     private val host = exposeScope {
         handle(RefreshWatchlist) { refreshInternal() }         // owner's own code, owner's scope
@@ -521,6 +521,11 @@ class WatchlistVm(private val owner: ScopeHandle) {
     suspend fun refresh(): Items = owner.run { refreshInternal() }
 }
 ```
+
+Request classes take an explicit wire-name constructor argument
+(compile-time-derived names would require compiler magic on the hand-written
+surface, which stays compiler-free by design); '#' is reserved for
+compiler-generated block names.
 
 Compiler lowering of `owner.run { block }` (per call site with a literal lambda):
 
@@ -584,6 +589,9 @@ brainstorm picks these up.
 
 Compiler lowering means GOLDENS grow (new lowered shapes: run-block call sites,
 binding-table init injection) and the FIR suite grows (A.3 family + fixtures).
-Suite 8 (§6.6) gains dual-surface coverage: every core test runs via BOTH the
-hand-written request path and the lowered-block path, plus a dispatch-miss test
-and a captured-var-warning fixture.
+Suite 8 (§6.6) gains dual-surface coverage: the core protocol behaviors (value
+round-trip, failure marshalling, child-cancel, close-with-in-flight, fast path)
+run via BOTH surfaces; surface-agnostic tests (watchdog, unknown-kind,
+per-child mint, interleaving, withTimeout) run once on the hand-written
+surface — they exercise carrier/protocol machinery the surface choice cannot
+affect, plus a dispatch-miss test and a captured-var-warning fixture.

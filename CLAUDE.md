@@ -14,7 +14,7 @@ This is a fork of the Kotlin compiler that adds a BrightScript backend for Roku 
 This affects code generation - there's no need to use uppercase for "disambiguation" since case doesn't disambiguate anything in BrightScript.
 
 **Bare `and` short-circuited on device** (probe-verified 2026-08-11, Roku Ultra
-4802CA, Roku OS 15.3.4 build 841): with a false boolean LHS, spliced
+4800X, Roku OS 15.3.4 build 841): with a false boolean LHS, spliced
 `probeArr <> invalid and probeArr.count() > 0` did NOT evaluate the RHS — no
 crash on the invalid receiver (stdlib suite "Short-circuit semantics", PROBE
 test). The compiler still emits guarded temps for Kotlin `&&`/`||` with an
@@ -893,7 +893,7 @@ Results land in `build/test-results/roku/` as JSON + JUnit XML.
 | 1 ComponentObserver | `tests/ComponentObserverTests.kt` | @SG field writes, @BrsOnChange, rapid sets |
 | 2 RenderCoroutines | `tests/RenderCoroutineTests.kt` | coroutines on the render thread, captured vars |
 | 3 TaskBoundary | `tests/TaskBoundaryTests.kt` | task-thread round trips via EchoTask fixtures |
-| 4 TypedTaskAcceptance | `tests/TypedTaskTests.kt` | `runTask` success/error/overlap/round-trip/derived |
+| 4 TypedTaskAcceptance | `tests/TypedTaskTests.kt` | `runTask` success/error/overlap/round-trip/derived/cancellation |
 | 6 FieldSemantics | `tests/FieldSemanticsTests.kt` | dot-assign vs setField truth table + lambda self-write routing (case 8) |
 | 7 CoroutineUtilities | `tests/CoroutineUtilityTests.kt` | awaitAll/coroutineScope/supervisor/withTimeout in the component pumping regime + awaitAll over concurrent `runTask`s |
 
@@ -939,14 +939,14 @@ Predicates must return false rather than throw. Probe nodes are created via
 | E2E test suites + driver | `roku-test-app/src/brsTest/kotlin/tests/` (TestMain.kt is the main-thread driver) |
 | E2E fixture components | `roku-test-app/components/fixtures/` |
 
-### Current Gate Numbers (as of the coroutine-utilities program, 2026-08-11)
+### Current Gate Numbers (as of ScopeHandle Stage 1, 2026-08-12)
 
 These are the whole-branch green gates; a drop in any of them is a regression.
 
 | Gate | Count |
 |------|-------|
 | Golden file tests | 65 |
-| FIR diagnostic suite (checkers.brs) | 219 |
+| FIR diagnostic suite (checkers.brs) | 220 |
 | Stdlib device suite | 493 tests / 50 suites |
 | rokuTest E2E | 42 active tests / 7 suites (+3 red-guarded xtests) |
 | `validateComponentIncludes` | strict mode, 0 findings (no allowlist) |
