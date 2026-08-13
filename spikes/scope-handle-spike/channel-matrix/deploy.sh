@@ -77,9 +77,17 @@ if [[ -n "$SENT_TS" ]]; then
     echo "Sentinel fresh (${DELTA}s old)"
 fi
 
-# Raw run-attributable capture (sentinel-filtered slice) -> committed alongside
-tail -n "+$LINE" spike-output.txt > ../capture-channel-matrix.txt
-grep -F "[SPIKE]" ../capture-channel-matrix.txt > spike-results.txt || true
+# Raw run-attributable capture (sentinel-filtered slice) -> committed alongside.
+# Run-stamped filename: committed evidence must never be overwritten by a later
+# run (review round 1 — reproduction claims need per-run captures). The
+# original run lives at ../capture-channel-matrix.txt; every subsequent run
+# gets the next free -runN suffix.
+N=2
+while [[ -e "../capture-channel-matrix-run${N}.txt" ]]; do N=$((N+1)); done
+CAPTURE_OUT="../capture-channel-matrix-run${N}.txt"
+tail -n "+$LINE" spike-output.txt > "$CAPTURE_OUT"
+echo "Capture: $CAPTURE_OUT"
+grep -F "[SPIKE]" "$CAPTURE_OUT" > spike-results.txt || true
 
 echo ""
 echo "===== SPIKE RESULTS ====="
