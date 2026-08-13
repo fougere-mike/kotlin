@@ -109,6 +109,16 @@ internal object PumpScheduler {
     fun backendName(): String = if (backend == "") "none" else backend
 
     /**
+     * The attached host component's `top`, or null when unattached (main
+     * thread, or a component that never ran coroutine machinery). This is the
+     * ambient-component oracle for stdlib code with no component receiver
+     * (ScopeHandle.run): attach() received the literal `m.top` at component
+     * init or via componentScope()/launch — the only ways a coroutine exists
+     * in a component.
+     */
+    fun hostTopOrNull(): RoSGNode? = hostTop
+
+    /**
      * Test hook: pin THIS scheduler to the Timer backend (used together with
      * the session-wide cache write in [kotlinPumpForceTimerBackend]).
      */

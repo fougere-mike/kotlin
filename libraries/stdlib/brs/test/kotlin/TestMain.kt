@@ -66,6 +66,7 @@ import test.coroutines.awaitAllTests
 import test.coroutines.builderHierarchyTests
 import test.coroutines.scopeFunctionTests
 import test.coroutines.withTimeoutTests
+import test.coroutines.scopeWireTests
 
 /**
  * Main entry point for stdlib runtime tests.
@@ -131,5 +132,6 @@ fun main() {
         builderHierarchyTests()
         scopeFunctionTests()
         withTimeoutTests()
+        scopeWireTests()
     }
 }

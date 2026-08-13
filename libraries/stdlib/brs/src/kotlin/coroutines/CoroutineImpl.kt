@@ -164,6 +164,18 @@ internal abstract class CoroutineImpl(
     open fun create(value: Any?, completion: Continuation<*>): Continuation<Unit> {
         throw UnsupportedOperationException("create(Any?;Continuation) has not been overridden")
     }
+
+    /**
+     * Creates a new coroutine instance with two values and a completion
+     * continuation. Used by 2-parameter suspend lambdas (ScopeHandle's
+     * 2-arg request handlers). Declaring this here makes the suspend-lambda
+     * lowering type the generated `create` with erased (Any?) parameters and
+     * mark it an override — the same mechanism the 1-parameter form relies on
+     * (see AbstractSuspendFunctionsLowering's superCreateFunction handling).
+     */
+    open fun create(value1: Any?, value2: Any?, completion: Continuation<*>): Continuation<Unit> {
+        throw UnsupportedOperationException("create(Any?;Any?;Continuation) has not been overridden")
+    }
 }
 
 /**
