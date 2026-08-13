@@ -372,12 +372,16 @@ in-flight) + two child probes (`ScopeChildProbe`, `ScopeChildProbeB`) under
   Registration strictly before the channel id is advertised/used as a reply address.
 - Reply address on this backend: the child's channel id string in the payload.
 - Test hooks: force-field-backend (session + local variants, mirroring
-  `kotlinPumpForceTimerBackend*`). Suite 8's core tests (1–6) run on BOTH backends
-  via the local-force hook (PumpBackendProbe precedent).
+  `kotlinPumpForceTimerBackend*`). Suite 8's carrier-affecting tests (value
+  round-trip, failure marshalling, child-cancel, plus the lowered round-trip)
+  run on BOTH backends via the local-force hook (PumpBackendProbe precedent);
+  carrier-agnostic behaviors are not duplicated — see Addendum A.6's narrowing
+  rationale.
 
 ## 8. Phase 4 — acceptance + documentation
 
-- Full acceptance sweep of Suite 8 on both backends; all gates green.
+- Full acceptance sweep of Suite 8 on both backends (carrier-affecting subset,
+  A.6); all gates green.
 - CLAUDE.md: new "ScopeHandle" section (API, the teardown convention as LAW, the
   watchdog line format, VM-facade guidance, DX notes: node-not-component handles,
   render-thread-only, no timeouts + withTimeout pattern). Spike facts merged into
@@ -390,7 +394,7 @@ in-flight) + two child probes (`ScopeChildProbe`, `ScopeChildProbeB`) under
 | Regime | What it carries |
 |---|---|
 | Stdlib device suite (runBlocking regime) | Locally-testable units only: `ScopeClosedException` type/identity, request-key allocation, envelope encode/decode helpers, failure-marshalling round-trip (AA→exception→AA), `run()` outside component context throws IllegalStateException |
-| E2E rokuTest (component pumping regime) | Everything real: Suite 8 (§6.6) + the Suite 4 cancellation test (rider 0a) — both backends for the core protocol |
+| E2E rokuTest (component pumping regime) | Everything real: Suite 8 (§6.6) + the Suite 4 cancellation test (rider 0a) — both backends for the core protocol (carrier-affecting subset, A.6) |
 | FIR diagnostic suite | 0b stopgap fixtures (positive, suspend-context negative, @Suppress) |
 | Spike | Its own fixture app; results in FINDINGS.md, not a recurring gate |
 
@@ -591,7 +595,7 @@ Compiler lowering means GOLDENS grow (new lowered shapes: run-block call sites,
 binding-table init injection) and the FIR suite grows (A.3 family + fixtures).
 Suite 8 (§6.6) gains dual-surface coverage: the core protocol behaviors (value
 round-trip, failure marshalling, child-cancel, close-with-in-flight, fast path)
-run via BOTH surfaces; surface-agnostic tests (watchdog, unknown-kind,
-per-child mint, interleaving, withTimeout) run once on the hand-written
-surface — they exercise carrier/protocol machinery the surface choice cannot
-affect, plus a dispatch-miss test and a captured-var-warning fixture.
+run via BOTH surfaces, plus a dispatch-miss test and a captured-var-warning
+fixture; surface-agnostic tests (watchdog, unknown-kind, per-child mint,
+interleaving, withTimeout) run once on the hand-written surface — they
+exercise carrier/protocol machinery the surface choice cannot affect.
