@@ -502,4 +502,35 @@ heldIntact=PASS`) — the pure-move half is doc-only for now (deferred, minor).
 
 ## 6. Decision record
 
-Decision (Mike, pending): [ ] branch [ ] shared-VM option [ ] floor
+Decision (Mike, 2026-08-12, Stage 1 checkpoint):
+
+- **[x] Branch: B wire protocol, DUAL user surface — compiler sugar in-program.**
+  Hand-written requests (`object Refresh : ScopeRequest<R>` + `exposeScope {
+  handle(...) }` registration + `owner.run(Request, args)`) AND compiler-lowered
+  `owner.run { block }` (block lifted to a named function, request name
+  synthesized, captures marshalled as the payload, per-component binding table
+  name→local-fn-ref injected into scope hosts' generated init from each host's
+  own include closure; dispatch miss = clean error outcome naming the fix).
+  Diagnostics mandate: FIR ERRORS for code that cannot work (unmarshallable /
+  function-typed / component-`this` captures), WARNINGS for code that behaves
+  differently than it reads (captured-var mutation lost across the by-copy
+  hop), corrective guidance in every message. Rationale: blocks cannot cross
+  any signaling channel (§2), and the disclaimed fn-ref path stays out of the
+  wire protocol so a Roku behavior change cannot break the primitive.
+- **[x] Shared-VM option: (ii) + toolchain demotion path. Floor: MVVM layer
+  requires OS 15.0+ (ScopeHandle primitive itself stays on the 9.4 compile
+  floor).** Full shared Kotlin object via SetRef, with the demotion to
+  methods-run-locally engineered into the toolchain, not user code: day-one
+  FIR rules (shared VM classes final; no function-typed properties; liveness
+  marker helper — `as?` passes on husks per §1), a permanent device canary
+  pinning fn-slot-through-SetRef behavior, and early verification that a
+  static-dispatch lowering (`WatchlistVm_refresh(vm)` against the shared AA
+  receiver) is feasible so a future Roku change is a recompile, not a fleet
+  migration. These items belong to the VM/MVVM program, not ScopeHandle
+  Stage 2.
+- **[x] Carrier: SetRef payload stash BACKLOGGED.** Stage 2 v1 mailbox =
+  field-copy floor + RTQ-move fast path as previously decided. Large-payload
+  reality routed where it actually flows: MoveIntoField as a typed-task
+  OUTPUT optimization → M3/runTask backlog; "build ContentNode trees on the
+  task thread" and "big results land in shared VM state, responses stay
+  small" → documented patterns in Stage 2 docs.

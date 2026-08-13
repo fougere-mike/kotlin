@@ -479,3 +479,111 @@ public fun scopeHandleOf(owner: RoSGNode): ScopeHandle
 // New FIR diagnostic (Phase 0b): BRS_TRY_FINALLY_UNSUPPORTED — error on
 // try/finally whose nearest containing callable is not suspend.
 ```
+
+---
+
+# Addendum — Stage 1 checkpoint decisions (Mike, 2026-08-12)
+
+Stage 1 (riders + spike) is complete; the spike record and decision walk live in
+`spikes/scope-handle-spike/FINDINGS.md` (§6 is the decision of record). This
+addendum revises §5–§6 and §12 of this spec accordingly. Where this addendum and
+the body disagree, the addendum governs Stage 2.
+
+## A.1 Decisions
+
+| # | Decision | Choice |
+|---|----------|--------|
+| A1 | API branch | **Branch B wire protocol** — nothing callable crosses any signaling channel (device-proven), and the one fn-slot-preserving path (SetRef) is officially disclaimed by Roku, so the wire never depends on it |
+| A2 | User surface | **DUAL, both in Stage 2**: hand-written requests AND compiler-lowered `owner.run { block }` (branch-A ergonomics on branch-B wire) |
+| A3 | Diagnostics | **Immaculate-errors mandate**: FIR errors for cannot-work, warnings for reads-differently-than-it-behaves, corrective guidance in every message; runtime protocol errors name the fix |
+| A4 | Shared-VM architecture (MVVM track, not Stage 2 scope) | **(ii) + toolchain demotion path**, MVVM layer floor = OS 15.0+; ScopeHandle primitive stays on the 9.4 compile floor |
+| A5 | Carrier | Field-copy floor + RTQ-move fast path as decided; **SetRef payload stash backlogged**; MoveIntoField → typed-task output optimization (M3 backlog) |
+
+## A.2 Revised user surface (replaces §6.1's branch alternatives and §6.4)
+
+```kotlin
+// ── Hand-written requests (always available) ────────────────────
+object RefreshWatchlist : ScopeRequest<Items>                  // 0-arg
+object FetchEpisode : ScopeRequest1<EpisodeId, Episode>        // 1-arg (arities 0–2;
+                                                               // more args → one data holder)
+class VmHost : RectangleComponent() {
+    private val host = exposeScope {
+        handle(RefreshWatchlist) { refreshInternal() }         // owner's own code, owner's scope
+        handle(FetchEpisode) { id -> library.fetch(id) }
+    }
+    fun onDismiss() = host.close()
+}
+val items = owner.run(RefreshWatchlist)
+val ep    = owner.run(FetchEpisode, episodeId)
+
+// ── Compiler-lowered blocks (same wire, branch-A ergonomics) ────
+class WatchlistVm(private val owner: ScopeHandle) {
+    suspend fun refresh(): Items = owner.run { refreshInternal() }
+}
+```
+
+Compiler lowering of `owner.run { block }` (per call site with a literal lambda):
+
+- Block lifted to a named generated function (existing lambda machinery); request
+  name synthesized deterministically per compilation (e.g. `<fileFq>#<ordinal>`)
+  — names only need to agree within one build, both sides are generated together.
+- Captures marshalled BY COPY into the request payload AA (see A.3 for what may
+  be captured). Wire envelope: `{kind:"request", key, replyTo, name, captures}`.
+- **Binding table**: into the generated `init()` of every component that calls
+  `exposeScope` (injection precedent: `__kotlinPumpAttach`), the compiler emits a
+  name→local-function-reference AA covering every lifted block whose FILE is in
+  that component's include closure. Function references are legal within one
+  component's own scope — the ban is only on crossing. The VM-facade pattern
+  makes coverage automatic: the block lives in the VM class file, and the owner
+  includes it because it constructs/references the VM.
+- **Dispatch miss** (block's file not in the owner's closure): immediate error
+  outcome at the child's suspend point with guidance — "declare the operation in
+  a file the owner component includes (typically your VM class)". Never a hang,
+  never a husk crash.
+- Results marshal back as data (RTQ backend moves on 15+). Large results belong
+  in shared VM state, not the response — documented pattern (A.5).
+
+Everything else in §6 stands unchanged: two-hop correlation protocol, request
+keys, single-egress owner side, TaskException-style failure marshalling
+(original message/number/backtrace rethrown at the suspend point; exception
+TYPES do not cross — domain failures that need typed handling are result
+values), `ScopeClosedException` on `close()`, watchdog, same-component fast
+path, construction-context-free handles, kind-tagged envelope.
+
+## A.3 Diagnostics family (Stage 2 deliverable, per the immaculate mandate)
+
+| Diagnostic | Severity | Fires on | Guidance in message |
+|---|---|---|---|
+| `BRS_SCOPE_CAPTURE_UNMARSHALLABLE` | ERROR | run-block capturing a function-typed value, component `this`, or other non-marshallable | name the capture, list marshallable kinds, suggest passing data or moving code into the block |
+| `BRS_SCOPE_CAPTURE_MUTATION_LOST` | WARNING | run-block writing to a captured `var` (captures cross by copy; owner-side writes never propagate back) | "return a value from the block instead of mutating a capture" |
+| `BRS_SCOPE_RESULT_NOT_DATA` | WARNING | run-block/request result type that loses behavior crossing the hop (function-typed, method-bearing class) | "results cross as data; share large/behavioral state via the VM, return data here" |
+| runtime dispatch-miss | error outcome | name not in owner's binding table | names the missing file-inclusion fix |
+
+Existing rules continue to apply at the boundary (no component-`this` aliasing;
+args/results marshallable — same family as `runTask` inputs and future
+`spawnTask` captures; suppression escapes documented per house convention).
+
+## A.4 Decision A4 consequences (recorded here, scoped to the VM/MVVM program)
+
+Day-one FIR rules for shared VMs (final classes; no function-typed properties;
+liveness marker helper — `as?` passes on husks), a permanent device canary
+pinning fn-slot-through-SetRef behavior, and early verification of the
+static-dispatch demotion lowering. NOT Stage 2 scope; the VM program's
+brainstorm picks these up.
+
+## A.5 Documented patterns (Stage 2 docs deliverable)
+
+- Big results land in shared VM state; ScopeHandle responses stay small.
+- Build ContentNode trees on the task thread; node refs cross every channel by
+  reference on every supported OS.
+- MoveIntoField typed-task output optimization → M3/runTask backlog (any-thread
+  per RokuDocs; only the "copied because externally referenced" half is
+  device-pinned so far).
+
+## A.6 Gates impact for Stage 2
+
+Compiler lowering means GOLDENS grow (new lowered shapes: run-block call sites,
+binding-table init injection) and the FIR suite grows (A.3 family + fixtures).
+Suite 8 (§6.6) gains dual-surface coverage: every core test runs via BOTH the
+hand-written request path and the lowered-block path, plus a dispatch-miss test
+and a captured-var-warning fixture.
