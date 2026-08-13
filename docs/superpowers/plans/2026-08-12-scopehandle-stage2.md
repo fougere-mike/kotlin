@@ -26,7 +26,8 @@ E2E (Suite 8), kotlin-roku toolchain.
 - **Device:** credentials auto-resolve from `../roku-test-app/local.properties`;
   if a script demands env vars, source the same values from that file.
   Console preflight before EVERY device run:
-  `echo | nc -w 3 192.168.1.125 8085` → `Console connection is already in use`
+  `echo | nc -w 3 $(grep roku.deviceIp ../roku-test-app/local.properties | cut -d= -f2) 8085`
+  → `Console connection is already in use`
   means STOP and ask Mike. Builds/device runs are long; foreground, never kill.
 - **Gate baselines at Stage 2 start (must not drop):** goldens 65 · FIR 220 ·
   stdlib device 493/50 · E2E 42 active / 7 suites (+3 xtests) ·
@@ -248,7 +249,7 @@ Task 2/3):
   - Registration guards: duplicate name throws; '#' in name throws.
 - [ ] **Step 2: Implement the four files** to the contract above.
 - [ ] **Step 3: `./rebuild.sh`** — green including step 7.
-- [ ] **Step 4: `ROKU_DEVICE_IP=192.168.1.125 ROKU_PASSWORD=pass ./run-stdlib-tests.sh`**
+- [ ] **Step 4: `ROKU_DEVICE_IP=$(grep roku.deviceIp ../roku-test-app/local.properties | cut -d= -f2) ROKU_PASSWORD=$(grep roku.devicePassword ../roku-test-app/local.properties | cut -d= -f2) ./run-stdlib-tests.sh`**
   — 493 + new units, 0 failures. Record the new total.
 - [ ] **Step 5: `./run-compiler-tests.sh`** — 65 goldens unchanged (no compiler
   changes in this task; any golden diff here is a stop-and-investigate).
