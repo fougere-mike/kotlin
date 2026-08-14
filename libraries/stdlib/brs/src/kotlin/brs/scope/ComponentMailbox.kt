@@ -86,12 +86,15 @@ public fun allocateScopeRequestKey(): String {
 }
 
 /**
- * Installs and arms this component's response inbox, once. Armed strictly
- * BEFORE the component's first request post can produce a reply (arming-order
- * law: an observer attached after a write never sees it). A node that is also
- * a scope OWNER already has the field — addField is then a no-op and the
- * outcome observer stacks alongside the owner's inbox observer (scoped
- * observers on one field stack; each handler ignores the other's kinds).
+ * Installs and arms this component's FIELD-carrier response inbox, once (an
+ * rtq-backend child replies on its channel instead — see ScopeRtqBackend.kt).
+ * Armed strictly BEFORE the component's first request post can produce a
+ * reply (arming-order law: an observer attached after a write never sees it).
+ * A node that is also a FIELD-backend scope OWNER already has the field —
+ * addField is then a no-op and the outcome observer stacks alongside the
+ * owner's inbox observer (scoped observers on one field stack; each handler
+ * ignores the other's kinds). An rtq-backend owner never declared the field,
+ * so a field-forced child role installs it fresh here.
  */
 internal fun ensureScopeChildInbox(top: RoSGNode) {
     if (ComponentMailbox.inboxInstalled) {
@@ -104,9 +107,7 @@ internal fun ensureScopeChildInbox(top: RoSGNode) {
 
 /**
  * Observer for outcome envelopes on the CHILD's inbox (function-name observer
- * form: runs in the registering — child — component's context). Late or
- * duplicate deliveries drop via registry miss; a park already settled by
- * cancellation ignores the resume (settle-once guard).
+ * form: runs in the registering — child — component's context).
  */
 internal fun onKotlinScopeOutcome(event: RoSGNodeEvent) {
     // Destroyed-node guard (TaskRunner precedent): a delivery can outlive its
@@ -125,6 +126,16 @@ internal fun onKotlinScopeOutcome(event: RoSGNodeEvent) {
         // someone else's or nobody's; ignore silently (decision 9).
         return
     }
+    deliverScopeOutcome(env)
+}
+
+/**
+ * Carrier-agnostic outcome delivery (the field observer above and the rtq
+ * handler in ScopeRtqBackend.kt both land here). Late or duplicate deliveries
+ * drop via registry miss; a park already settled by cancellation ignores the
+ * resume (settle-once guard).
+ */
+internal fun deliverScopeOutcome(env: ScopeEnvelope) {
     val parked = ComponentMailbox.pending.remove(env.key)
     if (parked == null) {
         return
@@ -139,10 +150,11 @@ internal fun onKotlinScopeOutcome(event: RoSGNodeEvent) {
 
 /**
  * The child-side engine behind every `ScopeHandle.run(...)` overload: posts a
- * request envelope to [ownerNode]'s inbox and parks until the outcome arrives
- * (or dispatches locally on the same-component fast path). Tail-delegating
- * suspension with the entry check inside the intrinsic block (Job.join /
- * TaskRunner.awaitCompletion shape).
+ * request envelope to [ownerNode] — over the carrier its advertisement
+ * declares — and parks until the outcome arrives (or dispatches locally on
+ * the same-component fast path). Tail-delegating suspension with the entry
+ * check inside the intrinsic block (Job.join / TaskRunner.awaitCompletion
+ * shape).
  */
 internal suspend fun <R> postScopeRequestAndAwait(
     ownerNode: RoSGNode,
@@ -177,8 +189,23 @@ internal suspend fun <R> postScopeRequestAndAwait(
                         "call exposeScope() in the owner component before minting handles"
                 )
             }
-            // Child inbox armed before this first post can produce a reply.
-            ensureScopeChildInbox(ambientTop)
+            // Reply-address duality: transport TO the owner comes from the
+            // owner's ADVERTISEMENT; the reply address comes from THIS
+            // component's resolved backend — so mixed-backend pairs (local
+            // force hooks) interoperate in both directions.
+            val ownerChannel = scopeAdChannelId(adValue)
+            var replyChannel = ""
+            if (resolveScopeBackend() == SCOPE_BACKEND_RTQ) {
+                // Child channel registered STRICTLY before the first post
+                // that could produce a reply (registration-before-
+                // advertisement law, child side).
+                replyChannel = ensureScopeRtqChannel()
+            }
+            if (replyChannel == "") {
+                // Field floor (and the defensive queue-unavailable fallback):
+                // child inbox armed before this first post can produce a reply.
+                ensureScopeChildInbox(ambientTop)
+            }
             val key = allocateScopeRequestKey()
             ComponentMailbox.pending[key] = parked
             // Cancel wiring: cleanup handle FIRST (registry remove +
@@ -189,7 +216,7 @@ internal suspend fun <R> postScopeRequestAndAwait(
             if (jobImpl != null) {
                 parked.handles.add(jobImpl.invokeOnCancelRequest {
                     ComponentMailbox.pending.remove(key)
-                    ownerNode.setField(SCOPE_INBOX_FIELD, buildScopeCancelEnvelope(key))
+                    postScopeEnvelopeToOwner(ownerNode, ownerChannel, buildScopeCancelEnvelope(key))
                 })
             }
             registerCallerCancel(parked, continuation.context)
@@ -210,10 +237,19 @@ internal suspend fun <R> postScopeRequestAndAwait(
                     ComponentMailbox.watchdogFires = ComponentMailbox.watchdogFires + 1
                 }
             }
-            ownerNode.setField(
-                SCOPE_INBOX_FIELD,
-                buildScopeRequestEnvelope(key, ambientTop, name, args, captures)
-            )
+            if (replyChannel != "") {
+                postScopeEnvelopeToOwner(
+                    ownerNode,
+                    ownerChannel,
+                    buildScopeChannelRequestEnvelope(key, replyChannel, name, args, captures)
+                )
+            } else {
+                postScopeEnvelopeToOwner(
+                    ownerNode,
+                    ownerChannel,
+                    buildScopeRequestEnvelope(key, ambientTop, name, args, captures)
+                )
+            }
         }
         parked.finish()
     }

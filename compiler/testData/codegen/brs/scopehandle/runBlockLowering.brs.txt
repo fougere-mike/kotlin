@@ -45,6 +45,7 @@
     "ResultKt.brs",
     "ScopeApiKt.brs",
     "ScopeHostImplKt.brs",
+    "ScopeRtqBackendKt.brs",
     "ScopeWireKt.brs",
     "ScopesKt.brs",
     "StringBuilderBrsKt.brs",
@@ -114,6 +115,7 @@
     <script type="text/brightscript" uri="pkg:/source/ResultKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ScopeApiKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ScopeHostImplKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopeRtqBackendKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ScopeWireKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ScopesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />

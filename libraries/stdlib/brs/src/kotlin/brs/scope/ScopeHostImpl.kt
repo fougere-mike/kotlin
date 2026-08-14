@@ -181,12 +181,36 @@ internal fun onKotlinScopeInbox(event: RoSGNodeEvent) {
     }
 }
 
-private fun handleScopeRequest(env: ScopeEnvelope) {
+/**
+ * A request's reply address — exactly one form is populated: a node ref
+ * (field carrier) or a channel id (rtq carrier). The outcome rides whichever
+ * form the REQUEST declared, independent of this owner's own backend
+ * (reply-address duality; mixed-mode pairs depend on it).
+ */
+internal class ScopeReplyAddress(
+    internal val node: RoSGNode?,
+    internal val channel: String,
+)
+
+/** The request's reply address, or null when it carries neither form. */
+internal fun scopeReplyAddressOf(env: ScopeEnvelope): ScopeReplyAddress? {
+    if (env.replyToChannel != "") {
+        return ScopeReplyAddress(null, env.replyToChannel)
+    }
+    val node = env.replyTo
+    if (node == null) {
+        return null
+    }
+    return ScopeReplyAddress(node, "")
+}
+
+/** Kind-dispatch target for both carriers (field observer above; rtq handler). */
+internal fun handleScopeRequest(env: ScopeEnvelope) {
     // No state means this node never exposed a scope — the advertisement was
     // never set, so a request here is a stray; drop it like any dead-receiver
     // post on this platform.
     val state = ScopeHostHolder.state ?: return
-    val replyTo = env.replyTo ?: return
+    val replyTo = scopeReplyAddressOf(env) ?: return
     if (scopeHostClosed(state)) {
         postScopeOutcome(replyTo, buildScopeClosedOutcome(env.key))
         return
@@ -194,7 +218,8 @@ private fun handleScopeRequest(env: ScopeEnvelope) {
     // Dispatch order: hand-registered map → binding table → guided miss.
     val entry = state.handlers[env.name]
     if (entry != null) {
-        // Wire-path args arrive already deep-copied by the field write itself.
+        // Wire-path args arrive as a private copy on BOTH carriers (field
+        // write clones; rtq PostMessage moves/copies — spike-pinned).
         finishScopeRequestDispatch(state, env.key, replyTo, startScopeRequestJob(state, entry, env.args))
         return
     }
@@ -208,7 +233,7 @@ private fun handleScopeRequest(env: ScopeEnvelope) {
         )
         return
     }
-    // Wire-path captures arrive already deep-copied by the field write itself.
+    // Wire-path captures arrive as a private copy on BOTH carriers (see above).
     finishScopeRequestDispatch(state, env.key, replyTo, startScopeBindingJob(state, binding, env.captures))
 }
 
@@ -223,7 +248,7 @@ private fun handleScopeRequest(env: ScopeEnvelope) {
 private fun finishScopeRequestDispatch(
     state: ScopeOwnerState,
     key: String,
-    replyTo: RoSGNode,
+    replyTo: ScopeReplyAddress,
     started: ScopeRequestJob,
 ) {
     state.inFlight[key] = started.job
@@ -239,7 +264,8 @@ private fun finishScopeRequestDispatch(
     }
 }
 
-private fun handleScopeCancel(env: ScopeEnvelope) {
+/** Kind-dispatch target for both carriers (field observer above; rtq handler). */
+internal fun handleScopeCancel(env: ScopeEnvelope) {
     val state = ScopeHostHolder.state ?: return
     val job = state.inFlight[env.key]
     // Miss = the request already settled — drop (best-effort by design).
@@ -248,11 +274,21 @@ private fun handleScopeCancel(env: ScopeEnvelope) {
     }
 }
 
-private fun postScopeOutcome(replyTo: RoSGNode, outcome: RoAssociativeArray) {
+private fun postScopeOutcome(replyTo: ScopeReplyAddress, outcome: RoAssociativeArray) {
+    // Reply-address duality: the outcome rides whichever form the request
+    // declared — independent of this owner's own backend (mixed-mode law).
+    if (replyTo.channel != "") {
+        postScopeEnvelopeToChannel(replyTo.channel, outcome)
+        return
+    }
+    val node = replyTo.node
+    if (node == null) {
+        return
+    }
     // Best-effort: a write to a dead/destroyed receiver is silently dropped
     // by the platform (spike-pinned); the child side handles absence via
     // registry miss + watchdog.
-    replyTo.setField(SCOPE_INBOX_FIELD, outcome)
+    node.setField(SCOPE_INBOX_FIELD, outcome)
 }
 
 /** A started request job plus the slot its result lands in. */

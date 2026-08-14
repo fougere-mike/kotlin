@@ -11,13 +11,20 @@ import kotlin.brs.roku.RoSGNode
 import kotlin.brs.scope.ComponentMailbox
 import kotlin.brs.scope.SCOPE_AD_FIELD
 import kotlin.brs.scope.SCOPE_AD_FIELD_BACKEND
+import kotlin.brs.scope.SCOPE_AD_RTQ_PREFIX
+import kotlin.brs.scope.SCOPE_BACKEND_RTQ
 import kotlin.brs.scope.SCOPE_INBOX_FIELD
 import kotlin.brs.scope.ScopeHandlerEntry
 import kotlin.brs.scope.ScopeHostHolder
 import kotlin.brs.scope.ScopeHostImpl
 import kotlin.brs.scope.ScopeOwnerState
+import kotlin.brs.scope.ensureScopeRtqChannel
+import kotlin.brs.scope.forceScopeFieldBackendLocally
+import kotlin.brs.scope.forceScopeFieldBackendSessionWide
 import kotlin.brs.scope.onKotlinScopeInbox
 import kotlin.brs.scope.postScopeRequestAndAwait
+import kotlin.brs.scope.resolveScopeBackend
+import kotlin.brs.scope.scopeBackendNameOrNone
 import kotlin.coroutines.CoroutineScope
 import kotlin.coroutines.Job
 import kotlin.coroutines.SupervisorJob
@@ -187,17 +194,31 @@ public fun ComponentBase.exposeScope(
     val top = scopeHostTopOf(this)
     // Belt-and-braces pump attach (componentScope precedent): owner-side
     // request jobs dispatch through this component's queue even when a custom
-    // scope was passed and no other coroutine machinery ran here yet.
+    // scope was passed and no other coroutine machinery ran here yet. Also a
+    // precondition for carrier resolution (the ambient-global oracle).
     PumpScheduler.attach(top, scopeHostGlobalOf(this))
     val state = ScopeOwnerState(scope, top)
     ScopeHostHolder.state = state
-    // Inbox armed BEFORE the advertisement can be observed by any child.
-    top.addField(SCOPE_INBOX_FIELD, "assocarray", true)
-    top.observeFieldScoped(SCOPE_INBOX_FIELD, brsName(::onKotlinScopeInbox))
+    // Carrier-resolved arming, STRICTLY BEFORE the advertisement can be
+    // observed by any child (registration-before-advertisement law): rtq —
+    // the owner's channel handler registered before the channel id lands in
+    // the ad; field (floor, and the defensive registration-failure fallback)
+    // — the inbox observer armed before any child can post to it.
+    var ad = SCOPE_AD_FIELD_BACKEND
+    if (resolveScopeBackend() == SCOPE_BACKEND_RTQ) {
+        val channel = ensureScopeRtqChannel()
+        if (channel != "") {
+            ad = SCOPE_AD_RTQ_PREFIX + channel
+        }
+    }
+    if (ad == SCOPE_AD_FIELD_BACKEND) {
+        top.addField(SCOPE_INBOX_FIELD, "assocarray", true)
+        top.observeFieldScoped(SCOPE_INBOX_FIELD, brsName(::onKotlinScopeInbox))
+    }
     val registry = ScopeHandlerRegistry(state.handlers)
     registry.register()
     top.addField(SCOPE_AD_FIELD, "string", false)
-    top.setField(SCOPE_AD_FIELD, SCOPE_AD_FIELD_BACKEND)
+    top.setField(SCOPE_AD_FIELD, ad)
     return ScopeHostImpl(state)
 }
 
@@ -278,3 +299,30 @@ public fun kotlinScopeWatchdogFires(): Int = ComponentMailbox.watchdogFires
  */
 public fun kotlinScopeTestRegistry(): ScopeHandlerRegistry =
     ScopeHandlerRegistry(mutableMapOf())
+
+/**
+ * TEST HOOK: force the FIELD scope carrier for this app session (writes the
+ * session-wide backend cache on the global node AND pins the calling
+ * component's carrier — kotlinPumpForceTimerBackend precedent). Components
+ * that already resolved keep their backend.
+ */
+public fun kotlinScopeForceFieldBackend(global: RoSGNode) {
+    forceScopeFieldBackendSessionWide(global)
+}
+
+/**
+ * TEST HOOK: force the FIELD scope carrier for the CALLING component only —
+ * its exposeScope advertises "field"; its requests carry a node reply
+ * address. Other components keep their resolved backend, which is exactly
+ * what lets the dual-backend E2E construct mixed pairs (an rtq-advertising
+ * owner answering a field child, and vice versa).
+ */
+public fun kotlinScopeForceFieldBackendLocal() {
+    forceScopeFieldBackendLocally()
+}
+
+/**
+ * TEST HOOK: the calling component's active scope carrier — "none" until the
+ * first exposeScope/request resolves it, then "rtq" or "field".
+ */
+public fun kotlinScopeBackendName(): String = scopeBackendNameOrNone()

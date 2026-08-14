@@ -21,6 +21,9 @@ import kotlin.brs.roku.RoSGNode
  *
  * Envelope shapes:
  * - request: `{ kind:"request", key, replyTo:<child node>, name, args:<RoArray?>, captures:<AA?> }`
+ *   (rtq-carrier reply form: `replyToChannel:<child channel id>` replaces the
+ *   `replyTo` node ref — the envelope is otherwise identical; the owner's
+ *   outcome-posting switches on which reply key is present)
  * - cancel:  `{ kind:"cancel",  key }`
  * - outcome: `{ kind:"outcome", key, status:"value"|"error"|"closed", value?, message?, number?, backtrace? }`
  *
@@ -36,8 +39,14 @@ import kotlin.brs.roku.RoSGNode
 /** Advertisement field on an owner node: absent = not a host; "field" = field backend. */
 internal const val SCOPE_AD_FIELD: String = "__kotlinScope"
 
-/** The field-backend advertisement value (Task 7 adds "rtq:<channelId>"). */
+/** The field-backend advertisement value (doubles as the floor backend's name). */
 internal const val SCOPE_AD_FIELD_BACKEND: String = "field"
+
+/**
+ * Prefix of the rtq-backend advertisement: `"rtq:<channelId>"` — the suffix IS
+ * the owner's registered scope channel (the ad doubles as the routing address).
+ */
+internal const val SCOPE_AD_RTQ_PREFIX: String = "rtq:"
 
 /** Inbox AA field (alwaysNotify=true), installed on BOTH owner and child nodes. */
 internal const val SCOPE_INBOX_FIELD: String = "__kotlinScopeInbox"
@@ -64,6 +73,7 @@ public class ScopeEnvelope internal constructor(
     public val name: String,
     public val status: String,
     public val replyTo: RoSGNode?,
+    public val replyToChannel: String,
     public val args: RoArray?,
     public val captures: RoAssociativeArray?,
     public val value: Dynamic?,
@@ -80,6 +90,7 @@ public fun parseScopeEnvelope(envelope: RoAssociativeArray): ScopeEnvelope {
         name = envelope.lookup("name") as? String ?: "",
         status = envelope.lookup("status") as? String ?: "",
         replyTo = envelope.lookup("replyTo") as? RoSGNode,
+        replyToChannel = envelope.lookup("replyToChannel") as? String ?: "",
         args = envelope.lookup("args") as? RoArray,
         captures = envelope.lookup("captures") as? RoAssociativeArray,
         value = envelope.lookup("value"),
@@ -104,6 +115,40 @@ public fun buildScopeRequestEnvelope(
     aa.addReplace("args", args)
     aa.addReplace("captures", captures)
     return aa
+}
+
+/**
+ * The rtq-carrier request form: the child's own registered CHANNEL ID as the
+ * reply address (`replyToChannel` replaces the `replyTo` node ref).
+ */
+public fun buildScopeChannelRequestEnvelope(
+    key: String,
+    replyToChannel: String,
+    name: String,
+    args: RoArray?,
+    captures: RoAssociativeArray?,
+): RoAssociativeArray {
+    val aa = RoAssociativeArray.create()
+    aa.addReplace("kind", SCOPE_KIND_REQUEST)
+    aa.addReplace("key", key)
+    aa.addReplace("replyToChannel", replyToChannel)
+    aa.addReplace("name", name)
+    aa.addReplace("args", args)
+    aa.addReplace("captures", captures)
+    return aa
+}
+
+/**
+ * The owner channel id carried by an `"rtq:<channelId>"` advertisement, or ""
+ * for the field form (any unrecognized value degrades to the field carrier —
+ * forward-compat: an older child talking to a future backend still posts
+ * somewhere harmless rather than crashing).
+ */
+public fun scopeAdChannelId(ad: String): String {
+    if (ad.startsWith(SCOPE_AD_RTQ_PREFIX)) {
+        return ad.substring(SCOPE_AD_RTQ_PREFIX.length)
+    }
+    return ""
 }
 
 public fun buildScopeCancelEnvelope(key: String): RoAssociativeArray {

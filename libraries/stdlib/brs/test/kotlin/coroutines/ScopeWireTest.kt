@@ -6,6 +6,8 @@ import kotlin.brs.ScopeRequest
 import kotlin.brs.ScopeRequest1
 import kotlin.brs.ScopeRequest2
 import kotlin.brs.ScopeRequestException
+import kotlin.brs.kotlinScopeBackendName
+import kotlin.brs.kotlinScopeForceFieldBackendLocal
 import kotlin.brs.kotlinScopeTestRegistry
 import kotlin.brs.scopeHandleOf
 import kotlin.brs.roku.RoArray
@@ -14,6 +16,7 @@ import kotlin.brs.roku.RoSGNode
 import kotlin.brs.roku.strToI
 import kotlin.brs.scope.allocateScopeRequestKey
 import kotlin.brs.scope.buildScopeCancelEnvelope
+import kotlin.brs.scope.buildScopeChannelRequestEnvelope
 import kotlin.brs.scope.buildScopeClosedOutcome
 import kotlin.brs.scope.buildScopeErrorOutcome
 import kotlin.brs.scope.buildScopeFailureOutcome
@@ -21,6 +24,7 @@ import kotlin.brs.scope.buildScopeRequestEnvelope
 import kotlin.brs.scope.buildScopeValueOutcome
 import kotlin.brs.scope.deepCopyAA
 import kotlin.brs.scope.parseScopeEnvelope
+import kotlin.brs.scope.scopeAdChannelId
 import kotlin.brs.scope.scopeThrowableForOutcome
 import kotlin.coroutines.builders.runBlocking
 import kotlin.coroutines.cancellation.CancellationException
@@ -90,6 +94,47 @@ fun TestRunner.scopeWireTests() {
             assertTrue(replyTo.isSameNode(gotReply!!))
             assertEquals(1, env.args?.count())
             assertEquals("v", "${env.captures?.lookup("c")}")
+        }
+
+        test("channel request envelope round-trips replyToChannel") {
+            // The rtq-carrier request form: identical envelope, channel-id
+            // reply address instead of the node ref.
+            val args = RoArray.create(0, true)
+            args.push(7)
+            val aa = buildScopeChannelRequestEnvelope("u#9", "kotlin.scope.abc", "wireProbe", args, null)
+            val env = parseScopeEnvelope(aa)
+            assertEquals("request", env.kind)
+            assertEquals("u#9", env.key)
+            assertEquals("wireProbe", env.name)
+            assertEquals("kotlin.scope.abc", env.replyToChannel)
+            assertTrue(env.replyTo == null)
+            assertEquals(1, env.args?.count())
+        }
+
+        test("node-form request envelope has an empty replyToChannel") {
+            val replyTo = RoSGNode.create("Node")
+            val env = parseScopeEnvelope(buildScopeRequestEnvelope("u#10", replyTo, "wireProbe", null, null))
+            assertEquals("", env.replyToChannel)
+            assertTrue(env.replyTo != null)
+        }
+
+        test("advertisement parse: rtq form yields its channel id, field form yields empty") {
+            assertEquals("kotlin.scope.abc-123", scopeAdChannelId("rtq:kotlin.scope.abc-123"))
+            assertEquals("", scopeAdChannelId("field"))
+            assertEquals("", scopeAdChannelId(""))
+        }
+
+        test("scope backend name: 'none' before resolution, 'field' after local force") {
+            // Main-thread carrier state: nothing in the runBlocking regime
+            // ever posts a wire request (run() throws on the missing ambient
+            // component first), so the backend here is unresolved until this
+            // test forces it. ORDER-COUPLED within this suite: the force
+            // below pins this GetGlobalAA scope's carrier to "field" for the
+            // rest of the app run (harmless — main-thread code never reaches
+            // carrier selection).
+            assertEquals("none", kotlinScopeBackendName())
+            kotlinScopeForceFieldBackendLocal()
+            assertEquals("field", kotlinScopeBackendName())
         }
 
         test("envelope round-trip: cancel") {

@@ -119,6 +119,13 @@ internal object PumpScheduler {
     fun hostTopOrNull(): RoSGNode? = hostTop
 
     /**
+     * The attached host component's `global`, or null when unattached — the
+     * ambient-global oracle for stdlib code with no component receiver
+     * (scope carrier detection), mirroring [hostTopOrNull].
+     */
+    fun hostGlobalOrNull(): RoSGNode? = hostGlobal
+
+    /**
      * Test hook: pin THIS scheduler to the Timer backend (used together with
      * the session-wide cache write in [kotlinPumpForceTimerBackend]).
      */
