@@ -41,6 +41,7 @@ import test.lazy.lazyDelegateTests
 import test.roku.dateTimeTests
 import test.roku.jsonTests
 import test.roku.globalFunctionsTests
+import test.roku.roUtilsTests
 
 // Reflection tests
 import test.reflect.kclassTests
@@ -107,6 +108,7 @@ fun main() {
         dateTimeTests()
         jsonTests()
         globalFunctionsTests()
+        roUtilsTests()
 
         // Reflection
         kclassTests()

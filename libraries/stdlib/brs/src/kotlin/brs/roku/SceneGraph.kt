@@ -239,6 +239,84 @@ public external interface ISGNodeField {
      * @return True if the observer was removed.
      */
     public fun unobserveFieldScoped(fieldName: String): Boolean
+
+    /**
+     * Assigns an associative array to a field of this node BY REFERENCE,
+     * avoiding the copy of an ordinary field write. Roku OS 15.0+.
+     *
+     * Constraints (Roku doc + device-verified, scope-handle spike run2):
+     * - Render-thread-only; the field must be associative-array-typed;
+     *   unusable with queueFields.
+     * - Observer-SILENT: setRef never fires the field's observer — a delivery
+     *   signal needs a separate ordinary write as a doorbell.
+     * - The reference is genuinely shared: top-level AND nested mutations are
+     *   visible on both sides, and [RoUtils.isSameObject] returns true across
+     *   the hop.
+     *
+     * Note: the doc's signature line says void, but its Return Value section
+     * (and the device) say Boolean.
+     *
+     * @param fieldName The name of the associative-array-typed field.
+     * @param data The associative array the field should reference.
+     * @return True if the reference was set; false if it could not be.
+     * @see <a href="https://developer.roku.com/dev/docs/data-transfer-apis">Optimized data transfer and reference handling</a>
+     */
+    public fun setRef(fieldName: String, data: Dynamic): Boolean
+
+    /**
+     * Indicates whether [getRef] will succeed in the current context.
+     * Roku OS 15.0+.
+     *
+     * Render-thread-only; unusable with queueFields. True only for an
+     * associative-array-typed field previously written via [setRef] — a field
+     * populated by an ordinary write (dot-assign or [setField]) answers false
+     * (device-verified, scope-handle spike run2).
+     *
+     * @param fieldName The name of the field to check.
+     * @return True if a [getRef] call on the field will succeed here.
+     * @see <a href="https://developer.roku.com/dev/docs/data-transfer-apis">Optimized data transfer and reference handling</a>
+     */
+    public fun canGetRef(fieldName: String): Boolean
+
+    /**
+     * Returns a REFERENCE to the value of an associative-array-typed field
+     * previously written via [setRef]. Roku OS 15.0+.
+     *
+     * Render-thread-only; unusable with queueFields. When reference access is
+     * not valid the device yields invalid — check [canGetRef] first.
+     *
+     * @param fieldName The name of the field to reference.
+     * @return A reference to the field's value (shared identity, not a copy).
+     * @see <a href="https://developer.roku.com/dev/docs/data-transfer-apis">Optimized data transfer and reference handling</a>
+     */
+    public fun getRef(fieldName: String): Dynamic
+
+    /**
+     * Moves an object into an associative-array-typed field, emptying the
+     * source object on success. Roku OS 15.0+; callable from ANY thread.
+     *
+     * Nested objects that have live external references are COPIED instead of
+     * moved — the external holder's reference stays intact (device-verified,
+     * scope-handle spike run2); the return value counts those copies. Called
+     * from a task thread on an object the task thread does not own, a
+     * rendezvous occurs.
+     *
+     * @param fieldName The associative-array-typed destination field.
+     * @param data The source object to move; empty after a successful call.
+     * @return The number of nested objects copied rather than moved.
+     * @see <a href="https://developer.roku.com/dev/docs/data-transfer-apis">Optimized data transfer and reference handling</a>
+     */
+    public fun moveIntoField(fieldName: String, data: Dynamic): Int
+
+    /**
+     * Moves the associative array OUT of a field, leaving the field empty.
+     * Roku OS 15.0+; callable from ANY thread.
+     *
+     * @param fieldName The associative-array-typed source field.
+     * @return The associative array moved out of the field.
+     * @see <a href="https://developer.roku.com/dev/docs/data-transfer-apis">Optimized data transfer and reference handling</a>
+     */
+    public fun moveFromField(fieldName: String): Dynamic
 }
 
 /**
@@ -682,6 +760,52 @@ public external interface RoSGNode : ISGNodeField, ISGNodeChildren, ISGNodeDict,
          */
         @BrsCreateObject("roSGNode")
         public fun create(nodeType: String): RoSGNode = definedExternally
+    }
+}
+
+/**
+ * Interface representing a native BrightScript roUtils.
+ *
+ * roUtils is a namespace for the data utilities introduced alongside the
+ * Roku OS 15.0 reference APIs: deep-copying objects and checking whether two
+ * references point at the same instance. Unlike [ISGNodeField.setRef] /
+ * [ISGNodeField.getRef], roUtils has no render-thread restriction.
+ *
+ * @see <a href="https://developer.roku.com/dev/docs/data-transfer-apis">Optimized data transfer and reference handling</a>
+ */
+public external interface RoUtils {
+    /**
+     * Checks whether two BrightScript values reference the SAME instance.
+     *
+     * @param data1 The first value.
+     * @param data2 The second value.
+     * @return True if both reference the same object; false otherwise
+     *         (including for a [deepCopy] of the same data).
+     */
+    public fun isSameObject(data1: Dynamic, data2: Dynamic): Boolean
+
+    /**
+     * Performs a deep copy of an object and all of its nested objects.
+     * Nested items that are not copyable are skipped (their slots arrive
+     * invalid).
+     *
+     * @param data The object to copy.
+     * @return A copy of the object, distinct per [isSameObject].
+     */
+    public fun deepCopy(data: Dynamic): Dynamic
+
+    public companion object {
+        /**
+         * Creates a native roUtils object.
+         *
+         * Compiles to: `CreateObject("roUtils")`
+         *
+         * Roku OS 15.0+ — on older OS versions CreateObject yields invalid.
+         *
+         * @return A new roUtils instance.
+         */
+        @BrsCreateObject("roUtils")
+        public fun create(): RoUtils = definedExternally
     }
 }
 

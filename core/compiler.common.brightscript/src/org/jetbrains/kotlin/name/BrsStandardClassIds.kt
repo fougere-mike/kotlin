@@ -93,6 +93,9 @@ object BrsStandardClassIds {
         @JvmField
         val roRegistrySection = "roRegistrySection".brsInternalId()
 
+        @JvmField
+        val roUtils = "roUtils".brsInternalId()
+
         // Native iteration marker types (kotlin.brs.roku package)
         @JvmField
         val nativeArrayIterator = "NativeArrayIterator".brsRokuId()
@@ -549,7 +552,7 @@ object BrsStandardClassIds {
         BuiltIns.roByteArray, BuiltIns.roUrlTransfer, BuiltIns.roMessagePort,
         BuiltIns.roInput, BuiltIns.roPath, BuiltIns.roFileSystem,
         BuiltIns.roDeviceInfo, BuiltIns.roAppInfo, BuiltIns.roRegistry,
-        BuiltIns.roRegistrySection,
+        BuiltIns.roRegistrySection, BuiltIns.roUtils,
     ).map { it.shortClassName.asString() }.toSet()
 }
 
