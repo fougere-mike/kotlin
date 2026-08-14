@@ -43,6 +43,9 @@ import test.roku.jsonTests
 import test.roku.globalFunctionsTests
 import test.roku.roUtilsTests
 
+// SharedService tests
+import test.shared.sharedServiceTests
+
 // Reflection tests
 import test.reflect.kclassTests
 
@@ -109,6 +112,9 @@ fun main() {
         jsonTests()
         globalFunctionsTests()
         roUtilsTests()
+
+        // SharedService
+        sharedServiceTests()
 
         // Reflection
         kclassTests()
