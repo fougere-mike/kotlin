@@ -56,3 +56,14 @@ suspend fun deliberateWrite(owner: ScopeHandle): Int {
         flag
     }
 }
+
+// Case 7: write from a lambda NESTED inside the block — still lost (the nested lambda
+// closes over the owner-side copy, exactly like a direct write) — WARNING
+suspend fun nestedLambdaWriteLost(owner: ScopeHandle): Int {
+    var tally = 0
+    return owner.run {
+        val bump = { <!BRS_SCOPE_CAPTURE_MUTATION_LOST!>tally<!> = 3 }
+        bump()
+        tally
+    }
+}

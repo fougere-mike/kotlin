@@ -78,3 +78,22 @@ suspend fun deliberateHusk(owner: ScopeHandle): Int {
     val box = CapBox(8)
     return owner.run { box.value }
 }
+
+// Case 8: capture referenced ONLY from a lambda nested inside the block — still a
+// capture of the run block (the lowering marshals free values transitively through
+// nested function bodies) — ERROR
+suspend fun nestedLambdaCaptureRejected(owner: ScopeHandle): Int {
+    val hidden: List<Int> = listOf(6)
+    return owner.run {
+        val inner = { <!BRS_SCOPE_CAPTURE_UNMARSHALLABLE!>hidden<!>.size }
+        inner()
+    }
+}
+
+// Case 9: lambda-with-receiver nested in the block — its `this` binds to the NESTED
+// receiver, declared inside the block, so it is not a capture — CLEAN
+suspend fun nestedReceiverThisOk(owner: ScopeHandle): Int {
+    return owner.run {
+        "abc".run { length }
+    }
+}
