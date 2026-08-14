@@ -36,3 +36,86 @@ Source ranges: Kotlin 44573c8df0d8..bb3bc656af1e, roku-test-app aa524b6..11ca54d
 
 ## Consciously dropped
 - DeepDepsProbe runtime fixture (plan Phase 1b) — coverage subsumed by deps.json goldens + strict validator + device suites.
+
+# ScopeHandle Stage 2 backlog (recorded 2026-08-14, Task 8)
+
+Source ranges: Kotlin e56b1603b368..HEAD of the Stage 2 program, roku-test-app
+5cf871e.. , kotlin-roku 4fe70b2. Decisions of record:
+`docs/superpowers/plans/2026-08-12-scopehandle-design.md` Addendum A.1–A.6 +
+`spikes/scope-handle-spike/FINDINGS.md` §6. Execution ledger:
+`.superpowers/sdd/2026-08-12-scopehandle-stage2/progress.md`.
+
+## Deferred by design decision (pointer items)
+- **SetRef payload stash** (decision A5): roSGNode SetRef as a zero-copy
+  payload channel — deliberately NOT in v1; revisit with the VM program.
+- **MoveIntoField typed-task output optimization** (M3/runTask backlog):
+  any-thread per RokuDocs; only the "copied because externally referenced"
+  half is device-pinned so far — the "moved half" (uniquely-referenced value
+  actually MOVES, no copy) is UNPINNED; pin before relying on it.
+- **VM-program items** (decision A.4 — picked up by the VM/MVVM brainstorm,
+  not Stage 2): day-one FIR rules for shared VMs (final classes, no
+  function-typed properties), a liveness marker helper (`as?` PASSES on husks
+  — no type-check guard exists), a permanent device canary pinning
+  fn-slot-through-SetRef behavior, static-dispatch demotion feasibility.
+
+## Protocol/runtime residuals
+- **alwaysNotify × scoped-observer cell unprobed**: the inbox fields are
+  declared alwaysNotify=true; the identical-envelope-value re-delivery cell of
+  the FieldSemantics truth table has no scope-carrier probe.
+- **exposeScope partial-failure retry message misdescribes**: the
+  double-call guard's "reuse the ScopeHost returned by the first call" wording
+  is wrong for a first call that THREW mid-arming (nothing to reuse; state
+  holder already installed). Low stakes, wording + maybe holder rollback.
+- **missing-advertisement fail-fast un-pinned on device**: the "node has not
+  exposed a scope" IllegalStateException path has unit coverage only;
+  ScopeOwnerProbe's "neverReply" mode is the natural fixture (kept alive for
+  exactly this).
+- **unknown-kind law on rtq = structural whitelist only**: the rtq handler
+  ignores unknown kinds by code shape (explicit kind whitelist), but no device
+  test can POST an unknown kind to a live rtq channel from outside the
+  protocol; the field-carrier device pin was restored by Task 8's fieldForced
+  ride-along. Acceptable: the law is structural on rtq by construction.
+- **Session-wide force hook unconsumed**: `kotlinScopeForceFieldBackend(global)`
+  has no E2E consumer (local hook covers the mixed-pair tests); kept for pump
+  parity (`kotlinPumpForceTimerBackend` precedent). Exercise or accept.
+- **TaskRunner awaitCompletion fast-paths run before entry ensureActive**
+  (Stage 1 finding): an already-cancelled caller awaiting an already-done task
+  gets the value instead of CancellationException. Fix on next TaskRunner
+  touch with the Await.kt all-inside-block shape.
+
+## Compiler/FIR residuals
+- **Single-narrow-clause-catches-everything hole** (pre-existing, deliberately
+  preserved by Task 4's multi-catch fix): a suspend-context `try` with ONE
+  typed catch clause still catches everything (clause type ignored). The fix
+  B asymmetry (multi-catch dispatches correctly, single-catch doesn't) is
+  documented in the lowering; closing it is a behavior change needing its own
+  goldens.
+- **Cross-module `run {}` blocks**: lowering + binding table are single-module
+  today; a block declared in another module gets the guided dispatch-miss at
+  runtime (never a hang). Document until multi-module lands.
+- **Int-division-emits-float-division codegen wrinkle** (Task 1 observation):
+  Kotlin `Int / Int` emits BrightScript `/` (float division) with a
+  truncation wrapper only in some positions; audit the arithmetic lowering.
+- **nested run{}-in-run{} double-report unexamined**: whether the capture
+  checkers report twice (outer + inner walk) for a run block nested in
+  another run block was not examined; fixture it before touching the walker.
+- **generic-intermediate-base ScopeRequest evasion** (documented v1): a
+  request class deriving ScopeRequest via a user generic intermediate base
+  evades the declaration checker's direct-supertype scan.
+- **apply-receiver-nested false-positive fixture**: `apply {}` receiver use
+  nested inside a run block — suspected capture-checker false positive;
+  fixture to pin intended behavior.
+
+## Test-infrastructure residuals
+- **FIR harness verifies name multisets, not positions**: the checkers.brs
+  fixture harness matches diagnostic NAME multisets per file, not marker
+  positions — a diagnostic firing on the wrong element with the right name
+  passes. Note when reading fixtures as evidence; harness upgrade is its own
+  task.
+- **kotlin-roku fold-ins**: (1) plain `.kt` files under `components/` are
+  staged by neither pipeline — the consumer-side wiring workaround lives in
+  roku-test-app's build; fold into the plugin (joins the spike KGP hole).
+  (2) rokuTest sentinel nonce (replay guard) still wrapper-side; plugin-side
+  fix pre-existing backlog.
+- **channel-matrix vs kotlin-probe deploy.sh run-stamping asymmetry**: fixed
+  during Stage 1 for consistency (record only — no open work).

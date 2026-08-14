@@ -313,6 +313,191 @@ Deliberate opt-ins into the quarantined pipeline must
 `@Suppress("BRS_IO_DISPATCHER_UNSUPPORTED")`, which is exactly the review
 signal the quarantine wants.
 
+## ScopeHandle (cross-component scope borrowing)
+
+Landed 2026-08-14 (the ScopeHandle Stage 2 program). A child component awaits
+work that GENUINELY EXECUTES in an owner component's coroutine scope — the
+sanctioned cross-component request/response mechanism. (Jobs are
+same-component-only; @SG fields and observers are for signalling; ScopeHandle
+is for awaiting owner-side work.) Design of record:
+`docs/superpowers/plans/2026-08-12-scopehandle-design.md` + Addendum A.1–A.6;
+spike truth in `spikes/scope-handle-spike/FINDINGS.md`. Device coverage: E2E
+Suite 8 (ScopeHandle, 30 tests — both carriers, mixed pairs, cancellation both
+directions, the flagship child→owner→task-thread chain) + the stdlib wire/
+registry unit suites.
+
+### The two surfaces
+
+**1. Hand-written requests** — declare a request object with an explicit wire
+name, register a handler owner-side, run it from any child holding a handle:
+
+```kotlin
+object RefreshWatchlist : ScopeRequest<String>("RefreshWatchlist")   // 0-arg
+object SlowAdd : ScopeRequest2<Int, Int, Int>("SlowAdd")             // arities 0–2
+
+class VmHost : RectangleComponent() {
+    private var host: ScopeHost? = null
+    init {
+        host = exposeScope {                       // one host per component
+            handle(RefreshWatchlist) { refreshInternal() }  // owner's code, owner's scope
+            handle(SlowAdd) { a, b -> a + b }
+        }
+    }
+    fun onDismiss() = host?.close()                // THE teardown convention
+}
+
+// Child side — handle minted from the owner's NODE, never a component ref:
+val owner = scopeHandleOf(ownerNode)
+val items = owner.run(RefreshWatchlist)            // suspends; executes owner-side
+val sum = owner.run(SlowAdd, 2, 3)                 // args cross BY COPY
+```
+
+**2. Compiler-lowered blocks** — `owner.run { ... }` with a LITERAL lambda;
+the compiler lifts the block to a named function and synthesizes the request:
+
+```kotlin
+val shelf = owner.run { buildShelf(genre) }   // genre crosses BY COPY
+```
+
+- Literal lambdas only: a stored function value is a FIR ERROR
+  (`BRS_SCOPE_BLOCK_NOT_LITERAL`) — declare a `ScopeRequest` instead.
+- Captures are marshalled BY COPY into the request payload; the marshallable
+  set below applies (`BRS_SCOPE_CAPTURE_UNMARSHALLABLE` guards it).
+- Dispatch needs the block's FILE in the owner's include closure: the compiler
+  injects a binding table (`__kotlinScopeBindingsInstall`) into the generated
+  `init()` of every component whose file calls `exposeScope`, covering every
+  lifted block in that component's closure. The VM-facade pattern makes this
+  automatic (the block lives in the VM class file; the owner includes it by
+  constructing the VM). A miss is never a hang: the child gets an immediate
+  `ScopeRequestException` naming the fix ("declare the operation in a file the
+  owner includes — typically your VM class"). Cross-module `run {}` blocks get
+  the guided miss too — single-module only today (backlog).
+
+**v1 laws (both surfaces):** render-thread component callers only (like
+`runTask`); no timeouts in the API — compose with `withTimeout`; one
+`exposeScope` per component (second call throws); request names unique per
+owner, `'#'` reserved for compiler-lowered block names; handles are
+construction-context-free (mint owner-side, inject into a plain-class VM, call
+from any child — all caller-side machinery resolves from the ambient component
+at each `run`); `run` against a node that never exposed a scope fails fast
+with `IllegalStateException`. Failures cross as DATA:
+`ScopeRequestException(message, number, backtrace)` — exception TYPES never
+cross a component boundary; domain failures needing typed handling belong in
+result values. Caller cancellation sends a best-effort cancel envelope and the
+owner cancels the request job (`runTask`'s task-thread non-stop law is
+unchanged underneath). A request from the owner to ITSELF dispatches locally
+(same-component fast path) with wire-identical semantics — including by-copy
+args (`deepCopyAA`).
+
+### The teardown LAW: `host.close()` before retiring an owner node
+
+`close()` (idempotent) tears down the EXPOSED scope only. The default exposed
+scope is a DEDICATED child supervisor scope of `componentScope()` — close()
+never touches the owner's unrelated coroutines (device-pinned:
+scopePostCloseOwnerLaunchAlive), and component-scope cancellation still
+cascades into exposed requests. An explicitly-passed scope is cancelled
+as-given — the caller owns its blast radius.
+
+- In-flight requests settle "closed": the child's `run` throws
+  `ScopeClosedException` (extends `CancellationException`, so an uncaught one
+  winds the child down quietly — TimeoutCancellationException precedent).
+- Post-close requests are answered "closed" immediately, for as long as the
+  node lives (the inbox stays armed).
+- UNSIGNALED owner death (node retired without close()) cannot be signalled on
+  this platform — writes to dead receivers drop silently. The child's watchdog
+  makes it diagnosable: after 30s (default) pending, ONE console line per
+  request, exact format:
+
+  ```
+  [kotlin.coroutines] ScopeHandle request <uuid>#<n> to owner <Subtype>(id=<id>) still pending after 30s (caller: <Subtype>) — owner torn down without close()?
+  ```
+
+  Once-only per request, never re-arms (a settled request makes the deadline
+  callback a registry-miss no-op). Hooks: `kotlinScopeWatchdogMillis(ms)`
+  (per-component override), `kotlinScopeWatchdogFires()` (counter — assert the
+  counter, not line text, in sub-second tests).
+
+### The marshallable set (what crosses the boundary)
+
+Device-pinned truth (spike Q1d; the FIR family below enforces it at compile
+time):
+
+| Value | Crossing behavior |
+|---|---|
+| Primitives, String, Dynamic | Cross fine (by copy) |
+| RoAssociativeArray / RoArray | Cross by DEEP copy (every level — owner-side mutation never propagates back) |
+| Node refs (RoSGNode, ContentNode) | Cross BY REFERENCE on every carrier |
+| Function values | STRIPPED (dropped or Invalid — never callable) |
+| Class instances (incl. data classes, ArrayList/HashMap, component `this`) | HUSK: data keys survive, every method slot stripped; first method call crashes "Member function not found" (&hf4) |
+
+**The husk trap:** `as?` PASSES on husks (the `is`/`as` machinery walks
+`__proto`, which is plain data and survives the copy) — Kotlin's type check is
+NO liveness guard; the failure surfaces only at first dispatch.
+
+**The FIR family** (all fixture-pinned in the checkers.brs suite):
+
+| Diagnostic | Severity | Fires on |
+|---|---|---|
+| `BRS_SCOPE_BLOCK_NOT_LITERAL` | ERROR | `run { }` argument that isn't a literal lambda |
+| `BRS_SCOPE_CAPTURE_UNMARSHALLABLE` | ERROR | run-block capturing a function-typed value or class instance |
+| `BRS_SCOPE_ARG_NOT_MARSHALLABLE` | ERROR | `run(request, args)` argument type outside the marshallable set |
+| `BRS_SCOPE_CAPTURE_MUTATION_LOST` | WARNING | run-block assigning to a captured `var` (copies — the write never reaches the caller) |
+| `BRS_SCOPE_RESULT_NOT_DATA` | WARNING | request/block result type that loses behavior crossing the hop |
+
+### Carrier: field floor + rtq fast path
+
+Two transports, one protocol (kind-tagged envelope AAs: request/cancel/
+outcome; unknown kinds ignored silently — forward-compat, decision 9):
+
+- **Field floor** (every OS): per-node `__kotlinScopeInbox` AA fields with
+  scoped observers.
+- **roRenderThreadQueue fast path** (Roku OS 15.0+): one per-instance channel
+  per component (`kotlin.scope.<uuid>` — NEVER the pump's channel), detected
+  once per app session, cached on the global node under `__kotlinScopeBackend`
+  (NEVER the pump's field) and memoized per-component. PostMessage MOVE
+  semantics are safe here: envelopes are built fresh per post, and nested
+  values copy — the by-copy law holds on this carrier with no explicit
+  deepCopyAA (spike-pinned move-vs-copy rule).
+- **Registration-before-advertisement law** (both sides, both carriers): the
+  owner's inbox observer/channel handler is armed strictly BEFORE the
+  advertisement (`__kotlinScope` = `"field"` or `"rtq:<channelId>"`) lands on
+  the node; the child's reply inbox/channel is armed before its first post.
+- **Mixed interop is supported and device-pinned** (Suite 8 dual-backend
+  tests): transport TO a peer always follows the PEER's declaration — the
+  owner's ad says how to post requests; the request's reply key
+  (`replyTo` node ref vs `replyToChannel` id) says how to post outcomes. A
+  field-forced child interoperates with an rtq owner and vice versa.
+
+Test hooks: `kotlinScopeForceFieldBackend(global)` (session-wide),
+`kotlinScopeForceFieldBackendLocal()` (calling component only — how the E2E
+constructs mixed pairs), `kotlinScopeBackendName()` ("none" until resolved,
+then "rtq"/"field"), plus the watchdog pair above.
+
+### Documented patterns
+
+- **Big results land in shared VM state; responses stay small.** The response
+  envelope is a by-copy hop; share bulk via the VM (or node refs).
+- **Build ContentNode trees task-side** and pass the ROOT node ref — node refs
+  cross every channel by reference on every supported OS.
+- **Return values — don't mutate captures.** Captures cross by copy; an
+  owner-side write to one is silently lost (`BRS_SCOPE_CAPTURE_MUTATION_LOST`).
+
+### Key files
+
+| File | Purpose |
+|------|---------|
+| `libraries/stdlib/brs/src/kotlin/brs/scope/ScopeApi.kt` | User API: `exposeScope`, `ScopeHandle.run`, `scopeHandleOf`, test hooks |
+| `libraries/stdlib/brs/src/kotlin/brs/scope/ScopeHostImpl.kt` | Owner half: dispatch, single egress, close(), same-component fast path |
+| `libraries/stdlib/brs/src/kotlin/brs/scope/ComponentMailbox.kt` | Child half: request keys, parked awaits, watchdog |
+| `libraries/stdlib/brs/src/kotlin/brs/scope/ScopeWire.kt` | Envelope contract + `deepCopyAA` |
+| `libraries/stdlib/brs/src/kotlin/brs/scope/ScopeRtqBackend.kt` | rtq carrier: detection, channels, reply-address duality |
+| `compiler/ir/backend.brightscript/src/.../lower/BrsScopeRunBlockLowering.kt` | `run {}` block lifting + binding-table synthesis |
+| `compiler/fir/checkers/checkers.brs/src/.../BrsScopeMarshallability.kt` + Scope checkers | The FIR family above |
+
+Canonical example: `../roku-test-app/components/fixtures/ScopeOwnerProbe.kt` +
+`ScopeChildProbe.kt` + `ScopeVmFixture.kt` (owner, child, and the VM-facade
+layering the design ships for).
+
 ## Component Coroutine Scaffolding: `launch {}` + the self-scheduling pump
 
 Coroutines in SceneGraph components need ZERO wiring — no pump timers, no
@@ -885,7 +1070,7 @@ window. Direct `./gradlew rokuTest` BYPASSES that guard.
 the stdlib runner: replayed events from a previous run are discarded).
 Results land in `build/test-results/roku/` as JSON + JUnit XML.
 
-**The suites (7 suites, 42 active tests + 3 red-guarded `xtest` placeholders):**
+**The suites (8 suites, 72 active tests + 3 red-guarded `xtest` placeholders):**
 
 | Suite | File | Exercises |
 |-------|------|-----------|
@@ -896,6 +1081,7 @@ Results land in `build/test-results/roku/` as JSON + JUnit XML.
 | 4 TypedTaskAcceptance | `tests/TypedTaskTests.kt` | `runTask` success/error/overlap/round-trip/derived/cancellation |
 | 6 FieldSemantics | `tests/FieldSemanticsTests.kt` | dot-assign vs setField truth table + lambda self-write routing (case 8) |
 | 7 CoroutineUtilities | `tests/CoroutineUtilityTests.kt` | awaitAll/coroutineScope/supervisor/withTimeout in the component pumping regime + awaitAll over concurrent `runTask`s |
+| 8 ScopeHandle | `tests/ScopeHandleTests.kt` | cross-component scope borrowing: both surfaces, close/watchdog, cancellation both directions, dual-backend + mixed pairs, the flagship child→owner→task-thread chain |
 
 **The main-thread driver:** `tests/TestMain.kt` is a `main()` that creates the
 SceneGraph screen, installs the screen's message port as the shared `TestPort`,
@@ -939,17 +1125,20 @@ Predicates must return false rather than throw. Probe nodes are created via
 | E2E test suites + driver | `roku-test-app/src/brsTest/kotlin/tests/` (TestMain.kt is the main-thread driver) |
 | E2E fixture components | `roku-test-app/components/fixtures/` |
 
-### Current Gate Numbers (as of ScopeHandle Stage 1, 2026-08-12)
+### Current Gate Numbers (as of the ScopeHandle Stage 2 program, 2026-08-14)
 
 These are the whole-branch green gates; a drop in any of them is a regression.
+(Counting note: the gate is EXECUTED tests. A raw `grep -c "@Test"` on
+BrsGoldenFileTests.kt reads one high — it counts the commented-out
+`// @Test` on the long-disabled brsName golden.)
 
 | Gate | Count |
 |------|-------|
-| Golden file tests | 65 |
-| FIR diagnostic suite (checkers.brs) | 220 |
-| Stdlib device suite | 493 tests / 50 suites |
-| rokuTest E2E | 42 active tests / 7 suites (+3 red-guarded xtests) |
-| `validateComponentIncludes` | strict mode, 0 findings (no allowlist) |
+| Golden file tests | 71 |
+| FIR diagnostic suite (checkers.brs) | 225 |
+| Stdlib device suite | 514 tests / 51 suites |
+| rokuTest E2E | 72 active tests / 8 suites (+3 red-guarded xtests) |
+| `validateComponentIncludes` + `validateTestComponentIncludes` | strict mode, 0 findings (no allowlist) |
 
 ### Test Output
 
