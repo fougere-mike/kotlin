@@ -162,8 +162,9 @@ internal suspend fun <R> postScopeRequestAndAwait(
         val parked = ParkedContinuation(continuation as Continuation<Any?>)
         if (ambientTop.isSameNode(ownerNode)) {
             // Same-component fast path: local dispatch, NO mailbox round-trip.
-            // Args still cross by copy (deepCopyAA) for wire-identical semantics.
-            dispatchScopeRequestLocally(parked, continuation.context, ownerNode, name, args)
+            // Args and captures still cross by copy (deepCopyAA) for
+            // wire-identical semantics on both surfaces.
+            dispatchScopeRequestLocally(parked, continuation.context, ownerNode, name, args, captures)
         } else {
             val ad = ownerNode.getField(SCOPE_AD_FIELD)
             var adValue = ""

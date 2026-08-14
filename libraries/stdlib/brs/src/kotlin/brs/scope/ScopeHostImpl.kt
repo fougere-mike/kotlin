@@ -6,6 +6,8 @@
 package kotlin.brs.scope
 
 import kotlin.brs.BrsInline
+import kotlin.brs.BrsStatic
+import kotlin.brs.Dynamic
 import kotlin.brs.ScopeClosedException
 import kotlin.brs.ScopeHost
 import kotlin.brs.ScopeRequestException
@@ -24,10 +26,12 @@ import kotlin.coroutines.ScopeBlockCompletion
 import kotlin.coroutines.ScopeResultHolder
 import kotlin.coroutines.builders.startCoroutine
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
 import kotlin.coroutines.intrinsics.intercepted
 import kotlin.coroutines.jobImplOf
 import kotlin.coroutines.registerCallerCancel
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 /**
  * The OWNER half of the ScopeHandle protocol: per-component host state, the
@@ -65,6 +69,34 @@ internal class ScopeOwnerState(
 /** The component's installed host state (one host per component). */
 internal object ScopeHostHolder {
     internal var state: ScopeOwnerState? = null
+}
+
+/**
+ * Per-component holder for the compiler-installed lowered run{}-block binding
+ * table (request name `"<fileFq>#<n>"` → lifted function pointer). `object`
+ * state lives on GetGlobalAA — per-COMPONENT-INSTANCE on the render thread —
+ * so each owner reads its own table ([ScopeHostHolder] precedent).
+ */
+internal object ScopeBindingsHolder {
+    internal var table: RoAssociativeArray? = null
+}
+
+/**
+ * Called by compiler-generated component init() (components whose FILE calls
+ * exposeScope): installs the lowered run{}-block binding table for this
+ * component instance. The `__kotlinPumpAttach` idiom — injected init code
+ * hands m-scope values to per-instance stdlib holders; dispatch reads the
+ * holder, never ambient `m`.
+ */
+@BrsStatic
+public fun __kotlinScopeBindingsInstall(table: RoAssociativeArray) {
+    ScopeBindingsHolder.table = table
+}
+
+/** The installed binding for [name], or null (no table / no such block). */
+internal fun scopeBindingFor(name: String): Dynamic? {
+    val table = ScopeBindingsHolder.table ?: return null
+    return table.lookup(name)
 }
 
 /** One registered handler: arity + the matching typed function slot. */
@@ -159,23 +191,42 @@ private fun handleScopeRequest(env: ScopeEnvelope) {
         postScopeOutcome(replyTo, buildScopeClosedOutcome(env.key))
         return
     }
+    // Dispatch order: hand-registered map → binding table → guided miss.
     val entry = state.handlers[env.name]
-    if (entry == null) {
-        // Task 5 adds the compiler binding-table fallback for run{} blocks.
+    if (entry != null) {
+        // Wire-path args arrive already deep-copied by the field write itself.
+        finishScopeRequestDispatch(state, env.key, replyTo, startScopeRequestJob(state, entry, env.args))
+        return
+    }
+    // Compiler-lowered run{} blocks: the table installed by generated init()
+    // maps the synthesized request name to the lifted block function.
+    val binding = scopeBindingFor(env.name)
+    if (binding == null) {
         postScopeOutcome(
             replyTo,
             buildScopeErrorOutcome(env.key, scopeMissMessage(env.name, state.ownerTop.subtype()), 0, null)
         )
         return
     }
-    // Wire-path args arrive already deep-copied by the field write itself.
-    val started = startScopeRequestJob(state, entry, env.args)
-    val key = env.key
+    // Wire-path captures arrive already deep-copied by the field write itself.
+    finishScopeRequestDispatch(state, env.key, replyTo, startScopeBindingJob(state, binding, env.captures))
+}
+
+/**
+ * Shared wire-path egress for a started request job (hand-registered handler
+ * or lowered-block binding). Single egress: one code path for value, failure,
+ * and cancellation (close()'s ScopeClosedException included). Registered
+ * after the start — if the job settled synchronously (a lowered block with no
+ * suspension runs inline), invokeOnCompletion fires the handler immediately
+ * (JobImpl terminal-registration behavior), after the inFlight put.
+ */
+private fun finishScopeRequestDispatch(
+    state: ScopeOwnerState,
+    key: String,
+    replyTo: RoSGNode,
+    started: ScopeRequestJob,
+) {
     state.inFlight[key] = started.job
-    // Single egress: one code path for value, failure, and cancellation
-    // (close()'s ScopeClosedException included). Registered after the start —
-    // if the job somehow settled synchronously, invokeOnCompletion fires the
-    // handler immediately (JobImpl terminal-registration behavior).
     started.job.invokeOnCompletion { cause ->
         state.inFlight.remove(key)
         if (cause == null) {
@@ -224,7 +275,9 @@ internal fun startScopeRequestJob(
     val parentContext = state.scope.coroutineContext
     // Child of the exposed scope's job: close() cascades here; a failure
     // reports to the deferred-style egress (reportsUnhandled=false) and, under
-    // the componentScope SupervisorJob root, never poisons sibling requests.
+    // the exposed scope's own SupervisorJob (a dedicated child supervisor of
+    // componentScope by default — the 2026-08-13 default-scope correction),
+    // never poisons sibling requests.
     val job = JobImpl(parentContext[Job], hasBody = true)
     val jobContext = parentContext + job
     val holder = ScopeResultHolder()
@@ -278,15 +331,65 @@ private fun startScopeHandler2(
     impl.create(a1, a2, completion).intercepted().resume(Unit)
 }
 
+// Raw invocation of a lifted block function pointer. Generated top-level
+// suspend functions follow the startCoroutineUninterceptedOrReturn
+// convention: `fn(captures, completion)` runs the body up to its first
+// suspension and returns either the synchronous result (completion untouched)
+// or COROUTINE_SUSPENDED (the block's state machine later settles through
+// the completion).
+@BrsInline("return binding(captures, completion)")
+private external fun invokeScopeBinding(
+    binding: Dynamic?,
+    captures: RoAssociativeArray?,
+    completion: Continuation<Any?>,
+): Any?
+
+/**
+ * Starts a compiler-lowered run{}-block [binding] as a child job of the
+ * exposed scope — the binding-table twin of [startScopeRequestJob], sharing
+ * its job/completion/egress machinery. Unlike the handler starters (deferred
+ * entry via `create(...).intercepted().resume(Unit)`), a raw function pointer
+ * has no create factory: the first segment runs INLINE and a block with no
+ * suspension settles synchronously — both egress paths handle that (terminal
+ * invokeOnCompletion registration; the fast path's sync-settle latch). A
+ * synchronous throw (a non-suspending block body that fails) is routed into
+ * the completion, exactly where a state-machined block's failure would land.
+ *
+ * Wire-path captures arrive already deep-copied by the field write itself;
+ * the fast path passes a [deepCopyAA] copy.
+ */
+internal fun startScopeBindingJob(
+    state: ScopeOwnerState,
+    binding: Dynamic?,
+    captures: RoAssociativeArray?,
+): ScopeRequestJob {
+    val parentContext = state.scope.coroutineContext
+    val job = JobImpl(parentContext[Job], hasBody = true)
+    val jobContext = parentContext + job
+    val holder = ScopeResultHolder()
+    val completion = ScopeBlockCompletion<Any?>(jobContext, job, holder)
+    try {
+        val result = invokeScopeBinding(binding, captures, completion)
+        if (result !== COROUTINE_SUSPENDED) {
+            completion.resume(result)
+        }
+    } catch (e: Throwable) {
+        completion.resumeWithException(e)
+    }
+    return ScopeRequestJob(job, holder)
+}
+
 /**
  * Same-component fast path (design §6.2): the ambient component IS the owner,
  * so the request dispatches locally — no mailbox, no key, no watchdog — with
- * semantics identical to the wire path: closed → [ScopeClosedException], no
- * handler → [ScopeRequestException] with the guided message, args cross by
- * copy, the handler runs as a child job of the exposed scope, and caller
- * cancellation best-effort cancels the request job. Settlements before the
- * engine's `parked.finish()` convert to synchronous return/throw via the
- * park's sync-settle latch.
+ * semantics identical to the wire path for BOTH surfaces: closed →
+ * [ScopeClosedException]; hand-registered map → binding table → no match →
+ * [ScopeRequestException] with the guided message; args AND captures cross by
+ * copy ([deepCopyAA] — the wire's field write copies for it); the handler or
+ * lowered block runs as a child job of the exposed scope; caller cancellation
+ * best-effort cancels the request job. Settlements before the engine's
+ * `parked.finish()` convert to synchronous return/throw via the park's
+ * sync-settle latch.
  */
 internal fun dispatchScopeRequestLocally(
     parked: ParkedContinuation,
@@ -294,6 +397,7 @@ internal fun dispatchScopeRequestLocally(
     ownerNode: RoSGNode,
     name: String,
     args: RoArray?,
+    captures: RoAssociativeArray?,
 ) {
     val state = ScopeHostHolder.state
     if (state == null) {
@@ -307,16 +411,32 @@ internal fun dispatchScopeRequestLocally(
         return
     }
     val entry = state.handlers[name]
-    if (entry == null) {
+    if (entry != null) {
+        val argsCopy = deepCopyAA(args) as? RoArray
+        parkLocalScopeRequest(parked, callerContext, startScopeRequestJob(state, entry, argsCopy))
+        return
+    }
+    val binding = scopeBindingFor(name)
+    if (binding == null) {
         parked.tryResumeException(
             ScopeRequestException(scopeMissMessage(name, state.ownerTop.subtype()), 0, null)
         )
         return
     }
-    val argsCopy = deepCopyAA(args) as? RoArray
-    val started = startScopeRequestJob(state, entry, argsCopy)
-    // Single egress, local edition: same outcome mapping the wire's outcome
-    // envelope + onKotlinScopeOutcome would produce.
+    val capturesCopy = deepCopyAA(captures) as? RoAssociativeArray
+    parkLocalScopeRequest(parked, callerContext, startScopeBindingJob(state, binding, capturesCopy))
+}
+
+/**
+ * Shared fast-path egress for a started request job (hand-registered handler
+ * or lowered-block binding): single egress, local edition — the same outcome
+ * mapping the wire's outcome envelope + onKotlinScopeOutcome would produce.
+ */
+private fun parkLocalScopeRequest(
+    parked: ParkedContinuation,
+    callerContext: CoroutineContext,
+    started: ScopeRequestJob,
+) {
     parked.handles.add(started.job.invokeOnCompletion { cause ->
         if (cause == null) {
             parked.tryResume(started.holder.value)
