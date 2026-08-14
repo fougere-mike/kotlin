@@ -102,6 +102,21 @@ internal fun <T : SharedService> sharedAcquire(
             "sharedFrom must be called from a render-thread component context (like runTask)"
         )
     }
+    // OS floor gate BEFORE any node call: canGetRef is itself an OS 15.0
+    // reference API, so touching it pre-15 would crash on the missing member
+    // function instead of failing guided. Pre-15, nothing can ever be shared:
+    // orNull answers a truthful null; the throwing variant gets the same
+    // guided floor error as shareOn. (This branch is unpinnable on the OS 15
+    // test device — off-render calls throw the context ISE above first.)
+    if (!canShare()) {
+        if (orNull) {
+            return null
+        }
+        throw IllegalStateException(
+            "SharedService requires Roku OS 15.0+ (SetRef) — the MVVM-layer floor decision " +
+                "(design A4); gate with canShare()"
+        )
+    }
     var stash: RoAssociativeArray? = null
     if (node.canGetRef(SHARED_STASH_FIELD)) {
         stash = node.getRef(SHARED_STASH_FIELD) as? RoAssociativeArray

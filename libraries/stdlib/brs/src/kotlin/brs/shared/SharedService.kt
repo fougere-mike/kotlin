@@ -167,7 +167,8 @@ public fun canShare(): Boolean {
  * visible to every holder. Nothing shared → guided [IllegalStateException]
  * ([sharedFromOrNull] answers null instead); an entry of the wrong type →
  * guided ISE naming the key collision (both variants — a collision is a
- * caller bug, not an absence).
+ * caller bug, not an absence). Pre-OS-15 → the same guided floor ISE as
+ * [shareOn] (gate with [canShare]).
  */
 public inline fun <reified T : SharedService> sharedFrom(node: RoSGNode): T =
     sharedAcquire<T>(node, brsSharedServiceName<T>(), brsSharedServiceName<T>(), false)!!
@@ -178,7 +179,9 @@ public inline fun <reified T : SharedService> sharedFrom(node: RoSGNode, key: St
 
 /**
  * Like [sharedFrom], but answers null when nothing is shared under the key
- * (publish-order races, optional services). Caller bugs still throw: a wrong
+ * (publish-order races, optional services) — including pre-OS-15, where
+ * nothing can ever be shared (a truthful null; degrade-gracefully callers
+ * need no [canShare] gate of their own). Caller bugs still throw: a wrong
  * calling context or a wrong-type entry is guided, never swallowed into null.
  */
 public inline fun <reified T : SharedService> sharedFromOrNull(node: RoSGNode): T? =
