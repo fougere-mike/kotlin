@@ -284,6 +284,9 @@ class BrsSharedServiceGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun sharedEmission() = runTest("shared/sharedEmission.kt")
+
+    @Test
+    fun sharedDispatch() = runTest("shared/sharedDispatch.kt")
 }
 
 // ==================== Reflection Tests ====================

@@ -1,0 +1,444 @@
+// --- File: sharedDispatchKt.brs ---
+function TaggedG_tagOf_k_() as String
+end function
+
+function pauseG_ContinuationI_k_(_completion as Object) as Object
+    return 1
+end function
+
+function DispatchBaseG_create_k_() as Object
+    this = SharedService_create_k_()
+    this._super = {}
+    this.__proto = ["DispatchBaseG", this.__proto]
+    this.__type = "DispatchBaseG"
+    this.touchBase_k_ = DispatchBaseG_touchBase_k___slot
+    this.hook_Str_k_ = DispatchBaseG_hook_Str_k___slot
+    this.describe_k_ = DispatchBaseG_describe_k___slot
+    this.template_k_ = DispatchBaseG_template_k___slot
+    this.slowHook_I_ContinuationI_k_ = DispatchBaseG_slowHook_I_ContinuationI_k___slot
+    this.__get_baseTouches = DispatchBaseG___get_baseTouches_k_
+    this.__set_baseTouches = DispatchBaseG___set_baseTouches_I_k_
+    this.__get_label = DispatchBaseG___get_label_k___slot
+    this.baseTouches = 0
+    return this
+end function
+
+function DispatchBaseG_touchBase_k_(m as Object) as Integer
+    m.baseTouches = (m.baseTouches + 1)
+    return m.baseTouches
+end function
+
+function DispatchBaseG_touchBase_k___slot() as Integer
+    return DispatchBaseG_touchBase_k_(m)
+end function
+
+function DispatchBaseG_hook_Str_k_(m as Object, tag as String) as String
+end function
+
+function DispatchBaseG_hook_Str_k___slot(tag as String) as String
+    return DispatchBaseG_hook_Str_k_(m, tag)
+end function
+
+function DispatchBaseG_hook_Str_k___dispatch(recv as Object, tag as String) as String
+    runtimeClass = recv.__proto[0]
+    if runtimeClass = "DispatchSvcG" then
+        return DispatchSvcG_hook_Str_k_(recv, tag)
+    else if runtimeClass = "DispatchVmG" then
+        return DispatchVmG_hook_Str_k_(recv, tag)
+    else
+        exc = {type: "IllegalStateException", message: ("SharedService dispatch: no compiled implementation of DispatchBaseG.hook for runtime class '" + runtimeClass) + "' — dispatchers enumerate this compilation's concrete shared classes (closed world, single module); recompile with the module containing it"}
+        throw exc
+    end if
+end function
+
+function DispatchBaseG_describe_k_(m as Object) as String
+    return "base"
+end function
+
+function DispatchBaseG_describe_k___slot() as String
+    return DispatchBaseG_describe_k_(m)
+end function
+
+function DispatchBaseG_describe_k___dispatch(recv as Object) as String
+    runtimeClass = recv.__proto[0]
+    if runtimeClass = "DispatchSvcG" then
+        return DispatchBaseG_describe_k_(recv)
+    else if runtimeClass = "DispatchVmG" then
+        return DispatchVmG_describe_k_(recv)
+    else
+        exc = {type: "IllegalStateException", message: ("SharedService dispatch: no compiled implementation of DispatchBaseG.describe for runtime class '" + runtimeClass) + "' — dispatchers enumerate this compilation's concrete shared classes (closed world, single module); recompile with the module containing it"}
+        throw exc
+    end if
+end function
+
+function DispatchBaseG_template_k_(m as Object) as String
+    return "T:" + DispatchBaseG_hook_Str_k___dispatch(m, "t")
+end function
+
+function DispatchBaseG_template_k___slot() as String
+    return DispatchBaseG_template_k_(m)
+end function
+
+function DispatchBaseG_slowHook_I_ContinuationI_k_(m as Object, n as Integer, _completion as Object) as Object
+end function
+
+function DispatchBaseG_slowHook_I_ContinuationI_k___slot(n as Integer, _completion as Object) as Object
+    return DispatchBaseG_slowHook_I_ContinuationI_k_(m, n, _completion)
+end function
+
+function DispatchBaseG_slowHook_I_ContinuationI_k___dispatch(recv as Object, n as Integer, _completion as Object) as Object
+    runtimeClass = recv.__proto[0]
+    if runtimeClass = "DispatchSvcG" then
+        return DispatchSvcG_slowHook_I_ContinuationI_k_(recv, n, _completion)
+    else if runtimeClass = "DispatchVmG" then
+        return DispatchVmG_slowHook_I_ContinuationI_k_(recv, n, _completion)
+    else
+        exc = {type: "IllegalStateException", message: ("SharedService dispatch: no compiled implementation of DispatchBaseG.slowHook for runtime class '" + runtimeClass) + "' — dispatchers enumerate this compilation's concrete shared classes (closed world, single module); recompile with the module containing it"}
+        throw exc
+    end if
+end function
+
+function DispatchBaseG___get_baseTouches_k_() as Integer
+    return m.baseTouches
+end function
+
+sub DispatchBaseG___set_baseTouches_I_k_(value as Integer)
+    m.baseTouches = value
+end sub
+
+function DispatchBaseG___get_label_k_(m as Object) as String
+    return "base"
+end function
+
+function DispatchBaseG___get_label_k___slot() as String
+    return DispatchBaseG___get_label_k_(m)
+end function
+
+function DispatchBaseG___get_label_k___dispatch(recv as Object) as String
+    runtimeClass = recv.__proto[0]
+    if runtimeClass = "DispatchSvcG" then
+        return DispatchBaseG___get_label_k_(recv)
+    else if runtimeClass = "DispatchVmG" then
+        return DispatchVmG___get_label_k_(recv)
+    else
+        exc = {type: "IllegalStateException", message: ("SharedService dispatch: no compiled implementation of DispatchBaseG.label for runtime class '" + runtimeClass) + "' — dispatchers enumerate this compilation's concrete shared classes (closed world, single module); recompile with the module containing it"}
+        throw exc
+    end if
+end function
+
+function DispatchSvcG_create_k_() as Object
+    this = DispatchBaseG_create_k_()
+    this._super = {}
+    this._super.hook_Str_k_ = this.hook_Str_k_
+    this._super.slowHook_I_ContinuationI_k_ = this.slowHook_I_ContinuationI_k_
+    this.__proto = ["DispatchSvcG", this.__proto]
+    this.__type = "DispatchSvcG"
+    this.hook_Str_k_ = DispatchSvcG_hook_Str_k___slot
+    this.slowHook_I_ContinuationI_k_ = DispatchSvcG_slowHook_I_ContinuationI_k___slot
+    return this
+end function
+
+function DispatchSvcG_hook_Str_k_(m as Object, tag as String) as String
+    return tag + ":svc"
+end function
+
+function DispatchSvcG_hook_Str_k___slot(tag as String) as String
+    return DispatchSvcG_hook_Str_k_(m, tag)
+end function
+
+function DispatchSvcG_slowHook_I_ContinuationI_k_(m as Object, n as Integer, _completion as Object) as Object
+    return n
+end function
+
+function DispatchSvcG_slowHook_I_ContinuationI_k___slot(n as Integer, _completion as Object) as Object
+    return DispatchSvcG_slowHook_I_ContinuationI_k_(m, n, _completion)
+end function
+
+function DispatchVmG_create_k_() as Object
+    this = DispatchBaseG_create_k_()
+    this._super = {}
+    this._super.hook_Str_k_ = this.hook_Str_k_
+    this._super.describe_k_ = this.describe_k_
+    this._super.slowHook_I_ContinuationI_k_ = this.slowHook_I_ContinuationI_k_
+    this._super.tagOf_k_ = this.tagOf_k_
+    this.__proto = ["DispatchVmG", "TaggedG", this.__proto]
+    this.__type = "DispatchVmG"
+    this.bump_k_ = DispatchVmG_bump_k___slot
+    this.hook_Str_k_ = DispatchVmG_hook_Str_k___slot
+    this.describe_k_ = DispatchVmG_describe_k___slot
+    this.slowHook_I_ContinuationI_k_ = DispatchVmG_slowHook_I_ContinuationI_k___slot
+    this.tagOf_k_ = DispatchVmG_tagOf_k___slot
+    this.__get_counter = DispatchVmG___get_counter_k_
+    this.__set_counter = DispatchVmG___set_counter_I_k_
+    this.__get_summary = DispatchVmG___get_summary_k___slot
+    this.__get_label = DispatchVmG___get_label_k___slot
+    this.counter = 0
+    return this
+end function
+
+function DispatchVmG_bump_k_(m as Object) as Integer
+    m.counter = (m.counter + 1)
+    return m.counter
+end function
+
+function DispatchVmG_bump_k___slot() as Integer
+    return DispatchVmG_bump_k_(m)
+end function
+
+function DispatchVmG_hook_Str_k_(m as Object, tag as String) as String
+    return (tag + ":vm:") + __kotlin_numToStr_I_k_(m.counter)
+end function
+
+function DispatchVmG_hook_Str_k___slot(tag as String) as String
+    return DispatchVmG_hook_Str_k_(m, tag)
+end function
+
+function DispatchVmG_describe_k_(m as Object) as String
+    return DispatchBaseG_describe_k_(m) + ":vm"
+end function
+
+function DispatchVmG_describe_k___slot() as String
+    return DispatchVmG_describe_k_(m)
+end function
+
+function DispatchVmG_slowHook_I_ContinuationI_k_(m as Object, n as Integer, _completion as Object) as Object
+    tmp = DispatchVmG__slowHookCOROUTINE__create_DispatchVmG_I_ContinuationI_k_(m, n, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function DispatchVmG_slowHook_I_ContinuationI_k___slot(n as Integer, _completion as Object) as Object
+    return DispatchVmG_slowHook_I_ContinuationI_k_(m, n, _completion)
+end function
+
+function DispatchVmG_tagOf_k_(m as Object) as String
+    return "tag:vm"
+end function
+
+function DispatchVmG_tagOf_k___slot() as String
+    return DispatchVmG_tagOf_k_(m)
+end function
+
+function DispatchVmG___get_counter_k_() as Integer
+    return m.counter
+end function
+
+sub DispatchVmG___set_counter_I_k_(value as Integer)
+    m.counter = value
+end sub
+
+function DispatchVmG___get_summary_k_(m as Object) as String
+    return "vm:" + __kotlin_numToStr_I_k_(m.counter)
+end function
+
+function DispatchVmG___get_summary_k___slot() as String
+    return DispatchVmG___get_summary_k_(m)
+end function
+
+function DispatchVmG___get_label_k_(m as Object) as String
+    return "vm"
+end function
+
+function DispatchVmG___get_label_k___slot() as String
+    return DispatchVmG___get_label_k_(m)
+end function
+
+function DispatchVmG__slowHookCOROUTINE__create_DispatchVmG_I_ContinuationI_k_(__this as Object, n as Integer, resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["DispatchVmG__slowHookCOROUTINE_", this.__proto]
+    this.__type = "DispatchVmG__slowHookCOROUTINE_"
+    this.doResume_k_ = DispatchVmG__slowHookCOROUTINE__doResume_k_
+    this.__this = __this
+    this.n = n
+    return this
+end function
+
+function DispatchVmG__slowHookCOROUTINE__doResume_k_() as Dynamic
+    t = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = pauseG_ContinuationI_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                t = suspendResult
+                                return (m.__this.counter + m.n) + t
+            else if __kotlin_identityEquals(tmp, 2) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 2) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function OrphanBaseG_create_k_() as Object
+    this = SharedService_create_k_()
+    this._super = {}
+    this.__proto = ["OrphanBaseG", this.__proto]
+    this.__type = "OrphanBaseG"
+    this.ghost_k_ = OrphanBaseG_ghost_k___slot
+    return this
+end function
+
+function OrphanBaseG_ghost_k_(m as Object) as Integer
+end function
+
+function OrphanBaseG_ghost_k___slot() as Integer
+    return OrphanBaseG_ghost_k_(m)
+end function
+
+function OrphanBaseG_ghost_k___dispatch(recv as Object) as Integer
+    runtimeClass = recv.__proto[0]
+    exc = {type: "IllegalStateException", message: ("SharedService dispatch: no compiled implementation of OrphanBaseG.ghost for runtime class '" + runtimeClass) + "' — dispatchers enumerate this compilation's concrete shared classes (closed world, single module); recompile with the module containing it"}
+    throw exc
+end function
+
+function ControlOpenG_create_k_() as Object
+    this = {}
+    this.__type = "ControlOpenG"
+    this.__proto = ["ControlOpenG"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.poke_k_ = ControlOpenG_poke_k_
+    return this
+end function
+
+function ControlOpenG_poke_k_() as Integer
+    return 1
+end function
+
+function ControlLeafG_create_k_() as Object
+    this = ControlOpenG_create_k_()
+    this._super = {}
+    this._super.poke_k_ = this.poke_k_
+    this.__proto = ["ControlLeafG", this.__proto]
+    this.__type = "ControlLeafG"
+    this.poke_k_ = ControlLeafG_poke_k_
+    return this
+end function
+
+function ControlLeafG_poke_k_() as Integer
+    return 2
+end function
+
+function driveDirect_DispatchVmG_k_(vm as Object) as Integer
+    return DispatchVmG_bump_k_(vm) + DispatchBaseG_touchBase_k_(vm)
+end function
+
+function driveBaseFinal_DispatchBaseG_k_(b as Object) as Integer
+    return DispatchBaseG_touchBase_k_(b)
+end function
+
+function driveHook_DispatchBaseG_k_(b as Object) as String
+    return DispatchBaseG_hook_Str_k___dispatch(b, "h")
+end function
+
+function driveLeafHook_DispatchVmG_k_(vm as Object) as String
+    return DispatchVmG_hook_Str_k_(vm, "x")
+end function
+
+function driveTemplate_DispatchBaseG_k_(b as Object) as String
+    return DispatchBaseG_template_k_(b)
+end function
+
+function driveDescribe_DispatchBaseG_k_(b as Object) as String
+    return DispatchBaseG_describe_k___dispatch(b)
+end function
+
+function driveSlow_DispatchBaseG_I_ContinuationI_k_(b as Object, n as Integer, _completion as Object) as Object
+    tmp0 = DispatchBaseG_slowHook_I_ContinuationI_k___dispatch(b, n, _completion)
+    return tmp0
+end function
+
+function driveSlowChained_DispatchBaseG_I_ContinuationI_k_(b as Object, n as Integer, _completion as Object) as Object
+    tmp = _driveSlowChainedCOROUTINE__create_DispatchBaseG_I_ContinuationI_k_(b, n, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function driveOrphan_OrphanBaseG_k_(o as Object) as Integer
+    return OrphanBaseG_ghost_k___dispatch(o)
+end function
+
+function driveProps_DispatchVmG_DispatchBaseG_k_(vm as Object, b as Object) as Integer
+    vm.counter = 5
+    return vm.counter + b.baseTouches
+end function
+
+function driveAccessors_DispatchVmG_DispatchBaseG_k_(vm as Object, b as Object) as String
+    return DispatchVmG___get_summary_k_(vm) + DispatchBaseG___get_label_k___dispatch(b)
+end function
+
+function driveResidualInterface_TaggedG_k_(t as Object) as String
+    return t.tagOf_k_()
+end function
+
+function driveResidualAny_Any_k_(x as Object) as String
+    return toString_AnyN_k_(x)
+end function
+
+function driveControl_ControlOpenG_k_(c as Object) as Integer
+    return c.poke_k_()
+end function
+
+function _driveSlowChainedCOROUTINE__create_DispatchBaseG_I_ContinuationI_k_(b as Object, n as Integer, resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["_driveSlowChainedCOROUTINE_", this.__proto]
+    this.__type = "_driveSlowChainedCOROUTINE_"
+    this.doResume_k_ = _driveSlowChainedCOROUTINE__doResume_k_
+    this.b = b
+    this.n = n
+    return this
+end function
+
+function _driveSlowChainedCOROUTINE__doResume_k_() as Dynamic
+    ARGUMENT = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = DispatchBaseG_slowHook_I_ContinuationI_k___dispatch(m.b, m.n, m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                ARGUMENT = suspendResult
+                                return ARGUMENT + 1
+            else if __kotlin_identityEquals(tmp, 2) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 2) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function

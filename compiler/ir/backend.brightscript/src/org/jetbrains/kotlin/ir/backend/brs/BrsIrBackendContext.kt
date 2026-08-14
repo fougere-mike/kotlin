@@ -342,6 +342,18 @@ class BrsIrBackendContext(
      */
     val pendingScopeBindingTables = mutableListOf<BrsAALiteral>()
 
+    // ==================== SharedService Dispatch Registry ====================
+
+    /**
+     * Whole-module SharedService dispatch registry (shared classes → concrete
+     * descendants). Built by [BrsCompiler] after lowering and the manifest
+     * pass (the manifest pass must stay the first exhaustive getBrsName walk
+     * — class-name uniquification is first-come); consulted by the call-site
+     * classification and the dispatcher generation in
+     * [org.jetbrains.kotlin.ir.backend.brs.lower.BrsSharedDispatchLowering].
+     */
+    var sharedDispatchRegistry: org.jetbrains.kotlin.ir.backend.brs.lower.BrsSharedDispatchRegistry? = null
+
     // ==================== IO Worker Registry ====================
 
     /**

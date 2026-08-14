@@ -11,6 +11,9 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.backend.brs.lower.BrsLoweringPhases
+import org.jetbrains.kotlin.ir.backend.brs.lower.BrsSharedDispatchRegistry
+import org.jetbrains.kotlin.ir.backend.brs.lower.SHARED_DISPATCH_SUFFIX
+import org.jetbrains.kotlin.ir.backend.brs.lower.sharedDispatcherCandidate
 import org.jetbrains.kotlin.ir.backend.brs.transformers.irToBrs.IrToBrsTransformer
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
@@ -189,6 +192,12 @@ class BrsCompiler(
 
         // Copy manifest to context for use during dependency tracking
         context.functionManifest.putAll(functionManifest)
+
+        // SharedService static dispatch: build the whole-module registry
+        // (shared classes → concrete descendants) AFTER the manifest pass —
+        // class-name uniquification is first-come, and the manifest pass must
+        // stay the first exhaustive getBrsName walk over the module.
+        context.sharedDispatchRegistry = BrsSharedDispatchRegistry.build(loweredModule, context)
 
         // ==================== Pass 2: Transform files (with dependency tracking) ====================
         for (file in loweredModule.files) {
@@ -376,16 +385,28 @@ class BrsCompiler(
                 is IrFunction -> {
                     val methodName = context.getBrsName(member)
                     manifest[methodName] = outputFileName
+                    // SharedService: the __proto-name dispatcher is generated
+                    // (with no IR declaration) next to the implementation, so
+                    // cross-file call sites can resolve it for include tracking.
+                    if (sharedDispatcherCandidate(member, context)) {
+                        manifest[methodName + SHARED_DISPATCH_SUFFIX] = outputFileName
+                    }
                 }
                 is IrProperty -> {
                     // Record getter and setter if present
                     member.getter?.let { getter ->
                         val getterName = context.getBrsName(getter)
                         manifest[getterName] = outputFileName
+                        if (sharedDispatcherCandidate(getter, context)) {
+                            manifest[getterName + SHARED_DISPATCH_SUFFIX] = outputFileName
+                        }
                     }
                     member.setter?.let { setter ->
                         val setterName = context.getBrsName(setter)
                         manifest[setterName] = outputFileName
+                        if (sharedDispatcherCandidate(setter, context)) {
+                            manifest[setterName + SHARED_DISPATCH_SUFFIX] = outputFileName
+                        }
                     }
                 }
                 is IrClass -> {

@@ -17,6 +17,9 @@ import org.jetbrains.kotlin.ir.backend.brs.BrsIntrinsics
 import org.jetbrains.kotlin.ir.backend.brs.lower.BrsCodeOutliningLowering
 import org.jetbrains.kotlin.ir.backend.brs.lower.BrsDeclarationOrigin
 import org.jetbrains.kotlin.ir.backend.brs.lower.BrsInlineCallTransformer
+import org.jetbrains.kotlin.ir.backend.brs.lower.SHARED_DISPATCH_SUFFIX
+import org.jetbrains.kotlin.ir.backend.brs.lower.SharedCallShape
+import org.jetbrains.kotlin.ir.backend.brs.lower.classifySharedCall
 import org.jetbrains.kotlin.ir.backend.brs.lower.coroutines.BrsStatementOrigins
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
@@ -1204,6 +1207,15 @@ class IrExpressionToBrsTransformer(
                 }
             }
 
+            // SharedService static dispatch (design §4, Task 6): members of
+            // shared classes never dispatch through fn slots — direct static
+            // calls to the extension-shaped impls, __proto-name dispatchers,
+            // or direct member reads/writes for simple accessors. Residual
+            // shapes (interface/Any-typed receivers, member extensions,
+            // synthetic data-class members, dependency-klib open members)
+            // answer null and stay on the slot paths below.
+            transformSharedDispatchCall(expression, receiverExpr, data)?.let { return it }
+
             // For method calls, transform to dot notation
             // Use expression.dispatchReceiver to detect dispatch calls (more reliable than
             // function.dispatchReceiverParameter which may be null for interface methods)
@@ -1751,6 +1763,61 @@ class IrExpressionToBrsTransformer(
             return BrsFunctionCall(BrsIdentifier(functionName), arguments)
         }
         return createFunctionCall(functionName, arguments, context)
+    }
+
+    /**
+     * SharedService static dispatch for a dispatch-receiver call, or null when
+     * the call stays on today's slot paths (see [classifySharedCall] for the
+     * classification and the documented residual shapes).
+     *
+     * Emitted shapes (receiver FIRST, the Task 5 extension convention; suspend
+     * calls arrive here post-continuation-lowering, so `_completion` is already
+     * the last value argument and threads through both forms transparently):
+     * - [SharedCallShape.StaticImpl] → `C_f_<mangle>(recv, args...)`
+     * - [SharedCallShape.Dispatch] → `Base_f_<mangle>__dispatch(recv, args...)`
+     * - [SharedCallShape.DirectFieldAccess] → `recv.<field>` / `recv.<field> = value`
+     *
+     * Static and dispatcher calls go through [createFunctionCall], so the
+     * call-site file records an include dependency on the defining file (the
+     * impl's for statics, the declaring base's for dispatchers).
+     */
+    private fun transformSharedDispatchCall(
+        expression: IrCall,
+        receiverExpr: BrsExpression,
+        data: Unit,
+    ): BrsExpression? {
+        val shape = classifySharedCall(expression, context) ?: return null
+        return when (shape) {
+            is SharedCallShape.DirectFieldAccess -> {
+                val fieldName = shape.property.name.asString()
+                if (shape.isSetter) {
+                    val value = expression.getValueArgument(0)?.accept(this, data) ?: BrsInvalidLiteral()
+                    BrsBinaryOp(BrsDotAccess(receiverExpr, fieldName), BrsBinaryOperator.EQ, value)
+                } else {
+                    BrsDotAccess(receiverExpr, fieldName)
+                }
+            }
+            is SharedCallShape.StaticImpl,
+            is SharedCallShape.Dispatch -> {
+                val functionName = when (shape) {
+                    is SharedCallShape.StaticImpl -> context.getBrsName(shape.target)
+                    is SharedCallShape.Dispatch -> context.getBrsName(shape.declaration) + SHARED_DISPATCH_SUFFIX
+                    else -> error("unreachable")
+                }
+                val callee = expression.symbol.owner
+                val args = mutableListOf(receiverExpr)
+                for (i in 0 until expression.valueArgumentsCount) {
+                    val arg = expression.getValueArgument(i)
+                    if (arg != null) {
+                        args.add(arg.accept(this, data))
+                    } else {
+                        // Absent argument: default (filled callee-side) or empty vararg
+                        args.add(absentArgumentPlaceholder(callee, i))
+                    }
+                }
+                createFunctionCall(functionName, args, context)
+            }
+        }
     }
 
     /**

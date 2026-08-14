@@ -17,8 +17,16 @@
 //   Simple val/var accessors (default accessor, backing field, final,
 //   overriding nothing) are NOT treated: their m-reading globals stay
 //   directly attached (data-class direct-read precedent) — this is also what
-//   keeps the sharedFromLowering golden byte-identical. The non-trivial
-//   accessor (custom getter `summary`) IS treated: extension-shaped + wrapper.
+//   kept the sharedFromLowering golden byte-identical through Task 5. The
+//   non-trivial accessor (custom getter `summary`) IS treated:
+//   extension-shaped + wrapper.
+//
+// Task 6 (static dispatch) later rewrote CALL SITES, which shows in this
+// golden's bodies: self-accesses read the receiver param directly
+// (m.baseTouches, m.counter — no accessor-slot calls) and the abstract hook
+// gained its __proto-name dispatcher next to the impl. The full call-site
+// matrix is pinned by sharedDispatch.kt; attachments, wrappers, and
+// __proto/__type/__id emission here are unchanged from Task 5.
 // - ControlPlainG (non-shared control): keeps today's slot-attached,
 //   m-reading shape FOREVER — any drift here means the emission switch
 //   leaked past the shared predicate.

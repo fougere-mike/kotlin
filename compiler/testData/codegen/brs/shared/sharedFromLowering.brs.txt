@@ -27,12 +27,12 @@ function acquireAll_RoSGNode_k_(node as Object) as Integer
     byKey = sharedAcquire_RoSGNode_Str_Str_Z_k_(node, "guide", "GuideVm", false)
     orNullByType = sharedAcquire_RoSGNode_Str_Str_Z_k_(node, "GuideVm", "GuideVm", true)
     orNullByKey = sharedAcquire_RoSGNode_Str_Str_Z_k_(node, "guide", "GuideVm", true)
-    total = byType.__get_selectedDay() + byKey.__get_selectedDay()
+    total = byType.selectedDay + byKey.selectedDay
     if orNullByType <> invalid then
-        total = (total + orNullByType.__get_selectedDay())
+        total = (total + orNullByType.selectedDay)
     end if
     if orNullByKey <> invalid then
-        total = (total + orNullByKey.__get_selectedDay())
+        total = (total + orNullByKey.selectedDay)
     end if
     return total
 end function
