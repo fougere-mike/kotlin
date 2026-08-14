@@ -326,6 +326,17 @@ class BrsSymbols(
         findOptionalFunction(BrsStandardClassIds.BASE_BRS_PACKAGE, "brsCreateComponent")
     }
 
+    // ==================== SharedService Symbols ====================
+
+    /**
+     * `kotlin.brs.sharedAcquire` — the rewrite target for reified
+     * `sharedFrom<T>`/`sharedFromOrNull<T>` call sites (see
+     * BrsSharedFromCallLowering).
+     */
+    val sharedAcquireOrNull: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(BrsStandardClassIds.BASE_BRS_PACKAGE, "sharedAcquire")
+    }
+
     // ==================== ScopeHandle Symbols ====================
 
     /**

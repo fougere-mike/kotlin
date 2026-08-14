@@ -275,6 +275,14 @@ class BrsScopeHandleGoldenFileTests : AbstractBrsGoldenFileTest() {
     fun bindingTableInjection() = runTest("scopehandle/bindingTableInjection.kt")
 }
 
+// ==================== SharedService Tests ====================
+
+class BrsSharedServiceGoldenFileTests : AbstractBrsGoldenFileTest() {
+
+    @Test
+    fun sharedFromLowering() = runTest("shared/sharedFromLowering.kt")
+}
+
 // ==================== Reflection Tests ====================
 
 class BrsReflectionGoldenFileTests : AbstractBrsGoldenFileTest() {

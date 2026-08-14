@@ -516,6 +516,23 @@ object BrsStandardClassIds {
         @JvmField
         val scopeRunLowered = "runLowered".callableId(BASE_BRS_PACKAGE)
 
+        // ==================== SharedService Callables ====================
+
+        /**
+         * sharedFrom<T>(node[, key]) — reified shared-instance acquisition
+         * (kotlin.brs.SharedService.kt). Call sites are rewritten to
+         * `sharedAcquire(node, key, "<ClassName>", orNull)` by
+         * BrsSharedFromCallLowering — klib inline functions are never inlined
+         * at user call sites, so the reified type argument only exists on the
+         * un-inlined IrCall.
+         */
+        @JvmField
+        val sharedFrom = "sharedFrom".callableId(BASE_BRS_PACKAGE)
+
+        /** sharedFromOrNull<T>(node[, key]) — the null-on-absence variant of [sharedFrom]. */
+        @JvmField
+        val sharedFromOrNull = "sharedFromOrNull".callableId(BASE_BRS_PACKAGE)
+
         // ==================== Coroutine Callables ====================
 
         /**

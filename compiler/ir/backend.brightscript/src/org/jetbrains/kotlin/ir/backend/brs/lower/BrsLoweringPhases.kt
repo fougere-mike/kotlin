@@ -147,6 +147,15 @@ object BrsLoweringPhases {
         // suspend call replaces another).
         phases += BrsRunTaskCallLowering(context)
 
+        // Phase 0.056: sharedFrom call-site rewrite
+        // sharedFrom<T>/sharedFromOrNull<T> are klib inline functions, which this
+        // backend never inlines at user call sites; the reified type argument only
+        // exists on the un-inlined IrCall. Rewrites to
+        // sharedAcquire(node, key, "<ClassName>", orNull), resolving the class name
+        // through context.getBrsName — the same source as __proto emission and
+        // is-check names, so publish and acquire derive identical strings.
+        phases += BrsSharedFromCallLowering(context)
+
         // Phase 0.057: ScopeHandle.run{block} rewrite
         // Rewrites literal-lambda run(block) call sites to runLowered(name, capturesAA)
         // and lifts each block into a top-level suspend function. Must run BEFORE
