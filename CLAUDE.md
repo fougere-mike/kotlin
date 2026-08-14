@@ -643,10 +643,15 @@ classification, dispatcher generation — its header documents why it is NOT a
 pipeline pass).
 
 **Residual slot paths** (documented — the CANARY watches these): receivers
-statically typed `Any` or an interface; shared overrides of
-`toString`/`equals`/`hashCode` (the Any special paths win — never static);
-member extensions; synthetic data-class members; dependency-klib open
-members.
+statically typed `Any` or an interface; `toString()` on any shared receiver
+(the Any toString interception wins — never static; hand-written
+`equals`/`hashCode` overrides on class-typed receivers DO go static, and
+resolve correctly — they are extension-shaped like any hand-written member);
+member extensions; data-class generated-member NAMES on a shared DATA class
+(equals/hashCode/toString/copy/componentN — excluded by NAME, hand-written
+same-named members included, because the data-class emitters own those names
+and emit simple-named globals; `isDataClassGeneratedMemberName` is the single
+source); dependency-klib open members.
 
 **Include-closure:** static calls and dispatchers record file dependencies
 automatically — no include anchor needed; a data-only acquirer records

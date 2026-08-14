@@ -185,18 +185,29 @@ facts, and the CANARY runbook.
   (`firstOrNull { param.name == "value"/"arg" }`) is vararg-fragile — KDoc'd
   caveat in FirBrsSharedCopyChannelChecker; harden if the binding surface
   grows vararg forms.
-- **Shared golden coverage additions**: param-carrying + default-arg +
-  Unit-returning (sub-shaped) dispatcher/wrapper cases — the current
+- **Shared golden coverage additions**: default-arg + Unit-returning
+  (sub-shaped) dispatcher/wrapper cases — the current
   sharedEmission/sharedDispatch goldens pin the return-carrying function
-  shapes.
+  shapes. (Param-carrying wrapper forwarding is now pinned:
+  sharedDataClass.kt's `scale(factor)`, Task 6 fix wave.)
 - **buildSharedDispatcher leading-m guard**: internal-invariant failure
   throws a bare IllegalStateException; switch to `compilationException` for
   consistency with the backend's other invariant failures.
 
 ## Pre-existing (surfaced by this program, not caused by it)
 
-- **Data-class emission skip vs attachment skip mismatch**: the emission-side
-  skip uses a bare `startsWith("component")` name test while the
-  attachment-side skip is digit-checked — a hand-written member named
-  `componentFoo()` has its emission skipped but its slot attachment kept
-  (dangling slot). Align the two predicates.
+- **`data class X : SharedService()` is PARTIALLY supported** until the
+  pre-existing data-class ctor-chaining gap closes (broader than
+  SharedService): data-class constructors do not chain the superclass ctor —
+  no SharedService base-field init (`__sharedGen`/`__sharedKey`/`__sharedNode`
+  start undefined, so `isLive()` semantics are unreliable), no base `__proto`
+  entry (runtime `is SharedService` answers false), and body-property
+  initializers are skipped (the known data/enum init-block defect). Call-site
+  SHAPES are correct and golden-pinned (`sharedDataClass.kt`, Task 6 fix wave
+  C1: generated-member names slot-dispatch, hand-written members static) —
+  do NOT read that golden as full support.
+- **Data-class emission skip vs attachment skip mismatch**: RESOLVED in the
+  Task 6 fix wave — both skips (and the shared-dispatch exclusion) now share
+  one digit-checked predicate, `isDataClassGeneratedMemberName`
+  (BrsSharedDispatchLowering.kt); a hand-written `componentFoo()` is emitted
+  and attached like any ordinary member.
