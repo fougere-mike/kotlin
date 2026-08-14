@@ -73,7 +73,9 @@ private external fun scopeChannelUuid(): String
  * pump scheduler's attach state — non-null in every context that reaches
  * this (exposeScope attaches explicitly; the child wire path is gated on the
  * ambient top, which implies attach ran). A null global (unattachable
- * context) resolves conservatively to the field floor, uncached.
+ * context) skips only the session-wide cache: the component still
+ * feature-detects and memoizes the result per-component
+ * ([ScopeCarrier.backend]).
  */
 internal fun resolveScopeBackend(): String {
     if (ScopeCarrier.backend != "") {
