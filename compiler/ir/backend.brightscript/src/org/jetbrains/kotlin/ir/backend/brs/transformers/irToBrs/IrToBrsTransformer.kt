@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.ir.backend.brs.lower.BrsCodeOutliningLowering
 import org.jetbrains.kotlin.ir.backend.brs.lower.BrsDeclarationOrigin
 import org.jetbrains.kotlin.ir.backend.brs.lower.BrsInlineCallTransformer
 import org.jetbrains.kotlin.ir.backend.brs.lower.buildSharedDispatcher
+import org.jetbrains.kotlin.ir.backend.brs.lower.isDataClassGeneratedMemberName
 import org.jetbrains.kotlin.ir.backend.brs.lower.isSharedExtensionShapedFunction
 import org.jetbrains.kotlin.ir.backend.brs.lower.sharedDispatcherCandidate
 import org.jetbrains.kotlin.ir.backend.brs.lower.coroutines.BrsStatementOrigins
@@ -2121,14 +2122,14 @@ class IrToBrsTransformer(
             declarations.add(generateDataClassComponent(className, param, index + 1))
         }
 
-        // Generate any additional member functions (not synthetic data class methods)
+        // Generate any additional member functions. Data-class generated-member
+        // NAMES are skipped (the generators above own them, simple-named);
+        // single source with the attachment skip and the shared-dispatch
+        // exclusion (isDataClassGeneratedMemberName) - the digit check keeps
+        // hand-written component-prefixed members (componentFoo) ordinary.
         for (function in irClass.declarations.filterIsInstance<IrSimpleFunction>()) {
             val name = function.name.asString()
-            // Skip synthetic data class methods
-            if (!function.isFakeOverride &&
-                name != "equals" && name != "hashCode" && name != "toString" &&
-                name != "copy" && !name.startsWith("component")
-            ) {
+            if (!function.isFakeOverride && !isDataClassGeneratedMemberName(name)) {
                 transformFunctionWithSharedWrapper(function, declarations)
             }
         }
@@ -2941,9 +2942,6 @@ class IrToBrsTransformer(
      * implementation directly would be arity-broken as a slot (its explicit
      * receiver parameter would swallow the first argument).
      */
-    // Synthetic data class method names that are handled separately with simple names
-    private val syntheticDataClassMethods = setOf("equals", "hashCode", "toString", "copy")
-
     private fun addMethodAttachments(
         irClass: IrClass,
         className: String,
@@ -2958,14 +2956,13 @@ class IrToBrsTransformer(
             if (!function.isFakeOverride && !function.isExternal) {
                 val methodBaseName = function.name.asString()
 
-                // Skip synthetic data class methods - they're attached separately with simple names
-                // This prevents creating references like Pair_toString_Str_k_ which don't exist
-                if (isDataClass && syntheticDataClassMethods.contains(methodBaseName)) {
-                    continue
-                }
-
-                // Skip componentN methods for data classes - also handled separately
-                if (isDataClass && methodBaseName.startsWith("component") && methodBaseName.drop(9).toIntOrNull() != null) {
+                // Skip data-class generated-member names - they're attached separately
+                // with simple names by the data-class ctor emitter. This prevents
+                // creating references like Pair_toString_Str_k_ which don't exist.
+                // Single source with the emission skip and the shared-dispatch
+                // exclusion (isDataClassGeneratedMemberName) - a mismatch between
+                // these skips is exactly what produced dangling attachments before.
+                if (isDataClass && isDataClassGeneratedMemberName(methodBaseName)) {
                     continue
                 }
 

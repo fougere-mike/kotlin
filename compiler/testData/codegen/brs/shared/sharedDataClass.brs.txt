@@ -1,0 +1,111 @@
+// --- File: sharedDataClassKt.brs ---
+function SharedDataVmG_create_I_Str_k_(n as Integer, tag as String) as Object
+    this = {}
+    this.__type = "SharedDataVmG"
+    this.__proto = ["SharedDataVmG"]
+    this.__id = __kotlin_nextObjectId()
+    this.n = n
+    this.tag = tag
+    this.scale_I_k_ = SharedDataVmG_scale_I_k___slot
+    this.equals = SharedDataVmG_equals
+    this.hashCode = SharedDataVmG_hashCode
+    this.toString = SharedDataVmG_toString
+    this.copy = SharedDataVmG_copy
+    this.component1 = SharedDataVmG_component1
+    this.component2 = SharedDataVmG_component2
+    return this
+end function
+
+function SharedDataVmG_equals(other as Object) as Boolean
+    if Type(other) <> "roAssociativeArray" then
+        return false
+    end if
+    if other.__type <> "SharedDataVmG" then
+        return false
+    end if
+    if m.n <> other.n then
+        return false
+    end if
+    if m.tag <> other.tag then
+        return false
+    end if
+    return true
+end function
+
+function SharedDataVmG_hashCode() as Integer
+    result = 1
+    result = ((result * 31) + m.n)
+    result = ((result * 31) + m.tag)
+    return result
+end function
+
+function SharedDataVmG_toString() as String
+    return ((("SharedDataVmG(n=" + m.n) + ", tag=") + m.tag) + ")"
+end function
+
+function SharedDataVmG_copy(n = invalid, tag = invalid) as Object
+    if n = invalid then
+        n = m.n
+    end if
+    if tag = invalid then
+        tag = m.tag
+    end if
+    return SharedDataVmG_create_I_Str_k_(n, tag)
+end function
+
+function SharedDataVmG_component1() as Integer
+    return m.n
+end function
+
+function SharedDataVmG_component2() as String
+    return m.tag
+end function
+
+function SharedDataVmG_scale_I_k_(m as Object, factor as Integer) as Integer
+    m.hits = (m.hits + 1)
+    return m.n * factor
+end function
+
+function SharedDataVmG_scale_I_k___slot(factor as Integer) as Integer
+    return SharedDataVmG_scale_I_k_(m, factor)
+end function
+
+function driveCopy_SharedDataVmG_k_(vm as Object) as Object
+    return vm.copy(5, "x")
+end function
+
+function driveCopyDefaults_SharedDataVmG_k_(vm as Object) as Object
+    return vm.copy(7, invalid)
+end function
+
+function driveDestructure_SharedDataVmG_k_(vm as Object) as String
+    __destruct_0 = vm
+    a = __destruct_0.component1()
+    b = __destruct_0.component2()
+    return b + __kotlin_numToStr_I_k_(a)
+end function
+
+function driveComponentExplicit_SharedDataVmG_k_(vm as Object) as Integer
+    return vm.component1()
+end function
+
+function driveEqualsCall_SharedDataVmG_SharedDataVmG_k_(a as Object, b as Object) as Boolean
+    return a.equals(b)
+end function
+
+function driveEqEq_SharedDataVmG_SharedDataVmG_k_(a as Object, b as Object) as Boolean
+    return brsStructuralEquals_AnyN_AnyN_k_(a, b)
+end function
+
+function driveHash_SharedDataVmG_k_(vm as Object) as Integer
+    return vm.hashCode()
+end function
+
+function driveHandWritten_SharedDataVmG_k_(vm as Object) as Integer
+    return SharedDataVmG_scale_I_k_(vm, 3)
+end function
+
+function driveDataProps_SharedDataVmG_k_(vm as Object) as Integer
+    vm.hits = 2
+    return vm.n + vm.hits
+end function
