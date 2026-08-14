@@ -4,7 +4,7 @@ function echoUpper_Str_ContinuationStr_k_(s as String, _completion as Object) as
 end function
 
 function topLevelHandler_k_() as Object
-    return echoUpper_ref_create_k_()
+    return echoUpper_ref_create_ContinuationAnyNN_k_(invalid)
 end function
 
 function RefHolder_create_k_() as Object
@@ -25,49 +25,128 @@ function RefHolder_member_Str_ContinuationStr_k_(s as String, _completion as Obj
 end function
 
 function RefHolder_boundHandler_k_() as Object
-    return RefHolder_member_ref_create_RefHolder_k_(m)
+    return RefHolder_member_ref_create_RefHolder_ContinuationAnyNN_k_(m, invalid)
 end function
 
-function echoUpper_ref_create_k_() as Object
-    this = {}
+function echoUpper_ref_create_ContinuationAnyNN_k_(resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_AnyN_Continuation_k_ = this.invoke_AnyN_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_AnyN_Continuation_k_ = this.create_AnyN_Continuation_k_
+    this.__proto = ["echoUpper_ref", "KSuspendFunction1", "SuspendFunction1", this.__proto]
     this.__type = "echoUpper_ref"
-    this.__proto = ["echoUpper_ref", "KSuspendFunction1", "KFunction", "KCallable", "Function", "SuspendFunction1"]
-    this.__id = __kotlin_nextObjectId()
-    this.equals = Any_equals_AnyN_k_
-    this.hashCode = Any_hashCode_k_
-    this.toString = Any_toString_k_
     this.invoke_AnyN_Continuation_k_ = echoUpper_ref_invoke_AnyN_Continuation_k_
+    this.doResume_k_ = echoUpper_ref_doResume_k_
+    this.create_AnyN_Continuation_k_ = echoUpper_ref_create_AnyN_Continuation_k_
     this.__get_name = echoUpper_ref___get_name_k_
     return this
 end function
 
 function echoUpper_ref_invoke_AnyN_Continuation_k_(p0 as String, _completion as Object) as Object
-    tmp0 = echoUpper_Str_ContinuationStr_k_(p0, _completion)
-    return tmp0
+    tmp = m.create_AnyN_Continuation_k_(p0, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function echoUpper_ref_doResume_k_() as Dynamic
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = echoUpper_Str_ContinuationStr_k_(m.p0, m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                                return suspendResult
+            else if __kotlin_identityEquals(tmp, 2) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 2) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function echoUpper_ref_create_AnyN_Continuation_k_(p0 as Dynamic, completion as Object) as Object
+    i = echoUpper_ref_create_ContinuationAnyNN_k_(completion)
+    i.p0 = p0
+    return i
 end function
 
 function echoUpper_ref___get_name_k_() as String
     return "echoUpper"
 end function
 
-function RefHolder_member_ref_create_RefHolder_k_(p0 as Object) as Object
-    this = {}
+function RefHolder_member_ref_create_RefHolder_ContinuationAnyNN_k_(p0 as Object, resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_AnyN_Continuation_k_ = this.invoke_AnyN_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_AnyN_Continuation_k_ = this.create_AnyN_Continuation_k_
+    this.__proto = ["RefHolder_member_ref", "KSuspendFunction1", "SuspendFunction1", this.__proto]
     this.__type = "RefHolder_member_ref"
-    this.__proto = ["RefHolder_member_ref", "KSuspendFunction1", "KFunction", "KCallable", "Function", "SuspendFunction1"]
-    this.__id = __kotlin_nextObjectId()
-    this.equals = Any_equals_AnyN_k_
-    this.hashCode = Any_hashCode_k_
-    this.toString = Any_toString_k_
     this.invoke_AnyN_Continuation_k_ = RefHolder_member_ref_invoke_AnyN_Continuation_k_
+    this.doResume_k_ = RefHolder_member_ref_doResume_k_
+    this.create_AnyN_Continuation_k_ = RefHolder_member_ref_create_AnyN_Continuation_k_
     this.__get_name = RefHolder_member_ref___get_name_k_
     this.f_0 = p0
     return this
 end function
 
-function RefHolder_member_ref_invoke_AnyN_Continuation_k_(__this as String, _completion as Object) as Object
-    tmp0 = m.f_0
-    tmp0_1 = tmp0.member_Str_ContinuationStr_k_(m, _completion)
-    return tmp0_1
+function RefHolder_member_ref_invoke_AnyN_Continuation_k_(p1 as String, _completion as Object) as Object
+    tmp = m.create_AnyN_Continuation_k_(p1, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function RefHolder_member_ref_doResume_k_() as Dynamic
+    tmp0 = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(2)
+                tmp0 = m.f_0
+                m.__set_state(1)
+                suspendResult = tmp0.member_Str_ContinuationStr_k_(m.p1, m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                                return suspendResult
+            else if __kotlin_identityEquals(tmp, 2) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 2) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function RefHolder_member_ref_create_AnyN_Continuation_k_(p1 as Dynamic, completion as Object) as Object
+    i = RefHolder_member_ref_create_RefHolder_ContinuationAnyNN_k_(m.f_0, completion)
+    i.p1 = p1
+    return i
 end function
 
 function RefHolder_member_ref___get_name_k_() as String

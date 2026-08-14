@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.ir.declarations.IrConstructor
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrParameterKind
+import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.expressions.IrDelegatingConstructorCall
 import org.jetbrains.kotlin.ir.expressions.IrRichFunctionReference
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classOrFail
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.primaryConstructor
+import org.jetbrains.kotlin.name.Name
 
 /**
  * Transforms lambda expressions and function references into anonymous classes.
@@ -47,13 +49,35 @@ class BrsCallableReferenceLowering(
 ) : WebCallableReferenceLowering(brsContext) {
 
     /**
-     * Check if the lambda is a suspend lambda that needs coroutine support.
-     * Suspend lambdas need to extend CoroutineImpl and have a continuation parameter.
+     * Any SUSPEND function value — lambda or function reference — needs the
+     * CoroutineImpl base and a continuation constructor parameter, so that
+     * BrsSuspendFunctionsLowering can give the class the create/doResume
+     * factory shape the runtime starters dispatch through
+     * (impl.create_..._k_(args, completion)). Restricting this to lambdas
+     * left suspend ::refs as plain classes with invoke only — every
+     * create-dispatching starter crashed at the first dispatch
+     * (device-pinned; golden: coroutines/suspendFunctionReference).
      */
-    private val IrRichFunctionReference.isSuspendLambda: Boolean
-        get() = isLambda && invokeFunction.isSuspend
+    private val IrRichFunctionReference.isSuspendFunctionValue: Boolean
+        get() = invokeFunction.isSuspend
 
     override fun getConstructorCallOrigin(reference: IrRichFunctionReference): IrStatementOrigin? = null
+
+    override fun postprocessInvoke(invokeFunction: IrSimpleFunction, functionReference: IrRichFunctionReference) {
+        super.postprocessInvoke(invokeFunction, functionReference)
+        // For BOUND references, the upstream-synthesized invoke names its value
+        // parameters positionally from the TARGET's parameter list INCLUDING the
+        // target's dispatch receiver — so a Regular value parameter can arrive
+        // named exactly "<this>". The BRS emitter renders every read of a
+        // "<this>"-named value as `m` (IrExpressionToBrsTransformer), which
+        // miscompiled the argument pass: the ref object was passed instead of
+        // the argument. Rename such parameters to positional names.
+        invokeFunction.parameters.forEachIndexed { index, parameter ->
+            if (parameter.kind == IrParameterKind.Regular && parameter.name.asString() == "<this>") {
+                parameter.name = Name.identifier("p$index")
+            }
+        }
+    }
 
     override fun getClassOrigin(reference: IrRichFunctionReference): IrDeclarationOrigin {
         return if (reference.isKReference || !reference.isLambda)
@@ -63,9 +87,9 @@ class BrsCallableReferenceLowering(
     }
 
     override fun getSuperClassType(reference: IrRichFunctionReference): IrType {
-        // Suspend lambdas must extend CoroutineImpl so that BrsSuspendFunctionsLowering
+        // Suspend function values must extend CoroutineImpl so that BrsSuspendFunctionsLowering
         // can find the create() method to override and build the state machine.
-        return if (reference.isSuspendLambda) {
+        return if (reference.isSuspendFunctionValue) {
             // Check if CoroutineImpl is available (not during stdlib compilation)
             brsContext.brsSymbols.coroutineSymbols.coroutineImpl?.owner?.defaultType
                 ?: context.irBuiltIns.anyType
@@ -75,8 +99,8 @@ class BrsCallableReferenceLowering(
     }
 
     override fun getExtraConstructorParameters(constructor: IrConstructor, reference: IrRichFunctionReference): List<IrValueParameter> {
-        // Suspend lambdas need a continuation parameter to pass to CoroutineImpl's constructor
-        if (!reference.isSuspendLambda) return emptyList()
+        // Suspend function values need a continuation parameter to pass to CoroutineImpl's constructor
+        if (!reference.isSuspendFunctionValue) return emptyList()
 
         val coroutineImpl = brsContext.brsSymbols.coroutineSymbols.coroutineImpl?.owner
             ?: return emptyList()
@@ -102,8 +126,8 @@ class BrsCallableReferenceLowering(
         val superConstructor = superClassType.classOrFail.owner.primaryConstructor
             ?: error("Missing primary constructor for ${superClassType.classOrFail.owner.name}")
         return irDelegatingConstructorCall(superConstructor).apply {
-            // For suspend lambdas, pass the continuation parameter to CoroutineImpl's constructor
-            if (functionReference.isSuspendLambda) {
+            // For suspend function values, pass the continuation parameter to CoroutineImpl's constructor
+            if (functionReference.isSuspendFunctionValue) {
                 val continuation = constructor.parameters.singleOrNull { it.origin == IrDeclarationOrigin.CONTINUATION }
                 if (continuation != null) {
                     arguments[0] = IrGetValueImpl(

@@ -6,6 +6,9 @@
 package org.jetbrains.kotlin.ir.backend.brs.lower.coroutines
 
 import org.jetbrains.kotlin.backend.common.BodyLoweringPass
+import org.jetbrains.kotlin.backend.common.capturedConstructor
+import org.jetbrains.kotlin.backend.common.capturedFields
+import org.jetbrains.kotlin.backend.common.compilationException
 import org.jetbrains.kotlin.backend.common.descriptors.synthesizedName
 import org.jetbrains.kotlin.backend.common.lower.AbstractSuspendFunctionsLowering
 import org.jetbrains.kotlin.backend.common.lower.FinallyBlocksLowering
@@ -30,6 +33,7 @@ import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
 import org.jetbrains.kotlin.ir.symbols.IrVariableSymbol
 import org.jetbrains.kotlin.ir.symbols.impl.IrVariableSymbolImpl
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.types.isUnit
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.*
@@ -82,17 +86,68 @@ class BrsSuspendFunctionsLowering(
                 null
             }
             is SuspendFunctionKind.NEEDS_STATE_MACHINE -> {
-                val isLoweredSuspendLambda = function.isOperator &&
-                    function.name == OperatorNameConventions.INVOKE &&
-                    function.parentClassOrNull?.let { it.origin === WebCallableReferenceLowering.LAMBDA_IMPL } == true
+                val isLoweredSuspendLambda = function.isSuspendFunctionValueInvoke()
+                if (isLoweredSuspendLambda) {
+                    prepareFunctionReferenceCapturedFields(function)
+                }
                 val coroutine = buildCoroutine(function, isLoweredSuspendLambda)
                 if (isLoweredSuspendLambda) {
-                    // Suspend lambdas are called through factory method <create>
+                    // Suspend function values (lambdas and ::refs) are called through factory method <create>
                     null
                 } else {
                     coroutine
                 }
             }
+        }
+    }
+
+    /**
+     * The `invoke` of a class the callable-reference lowering built as a
+     * SUSPEND function VALUE: a LAMBDA_IMPL class, or a FUNCTION_REFERENCE_IMPL
+     * class that was given the CoroutineImpl base (suspend ::refs — the
+     * supertype check keys exactly on BrsCallableReferenceLowering's
+     * isSuspendFunctionValue decision). Both must get the create/doResume
+     * factory shape: runtime starters dispatch through
+     * impl.create_..._k_(args, completion). Restricting this to LAMBDA_IMPL
+     * left suspend ::refs without create — a device-pinned dispatch crash
+     * (golden: coroutines/suspendFunctionReference).
+     */
+    private fun IrSimpleFunction.isSuspendFunctionValueInvoke(): Boolean {
+        if (name != OperatorNameConventions.INVOKE) return false
+        val parentClass = parentClassOrNull ?: return false
+        return when (parentClass.origin) {
+            WebCallableReferenceLowering.LAMBDA_IMPL -> true
+            WebCallableReferenceLowering.FUNCTION_REFERENCE_IMPL ->
+                coroutineSymbols.coroutineImpl != null &&
+                    parentClass.superTypes.any { it.classOrNull == coroutineSymbols.coroutineImpl }
+            else -> false
+        }
+    }
+
+    /**
+     * FUNCTION_REFERENCE_IMPL classes carry their bound receivers as f$N
+     * fields created by the callable-reference lowering — NOT as
+     * LocalDeclarationsLowering capture fields — but buildCreateMethod fills
+     * the constructor's leading arguments from [capturedFields]. Prepend the
+     * bound fields (declaration order == constructor parameter order) so the
+     * generated create passes them through, and verify the constructor shape
+     * loudly rather than miscompiling.
+     */
+    private fun prepareFunctionReferenceCapturedFields(function: IrSimpleFunction) {
+        val klass = function.parentClassOrNull ?: return
+        if (klass.origin !== WebCallableReferenceLowering.FUNCTION_REFERENCE_IMPL) return
+        val boundFields = klass.declarations.filterIsInstance<IrField>().filter { it.name.asString().startsWith("f\$") }
+        val ldlFields = (klass.capturedFields ?: emptyList()).filter { it !in boundFields }
+        klass.capturedFields = boundFields + ldlFields
+        val constructor = klass.declarations.filterIsInstance<IrConstructor>().single().let { it.capturedConstructor ?: it }
+        val expectedParameters = boundFields.size + ldlFields.size + 1 // + continuation
+        if (constructor.parameters.size != expectedParameters) {
+            compilationException(
+                "Suspend function reference class has unexpected constructor shape: " +
+                    "${constructor.parameters.size} parameters, expected $expectedParameters " +
+                    "(${boundFields.size} bound + ${ldlFields.size} captured + continuation)",
+                klass
+            )
         }
     }
 
@@ -384,11 +439,8 @@ class BrsSuspendFunctionsLowering(
     // ==================== Suspend Function Analysis ====================
 
     private fun getSuspendFunctionKind(function: IrSimpleFunction, body: IrBody): SuspendFunctionKind {
-        fun IrSimpleFunction.isSuspendLambda() =
-            name.asString() == "invoke" && parentClassOrNull?.let { it.origin === WebCallableReferenceLowering.LAMBDA_IMPL } == true
-
-        if (function.isSuspendLambda())
-            return SuspendFunctionKind.NEEDS_STATE_MACHINE // Suspend lambdas always need coroutine implementation.
+        if (function.isSuspendFunctionValueInvoke())
+            return SuspendFunctionKind.NEEDS_STATE_MACHINE // Suspend function values always need coroutine implementation.
 
         var numberOfSuspendCalls = 0
         body.acceptVoid(object : IrVisitorVoid() {
