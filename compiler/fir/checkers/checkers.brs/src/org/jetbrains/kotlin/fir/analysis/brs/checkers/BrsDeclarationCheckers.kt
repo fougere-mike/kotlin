@@ -15,7 +15,10 @@ import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsNameClas
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsOnChangeHandlerChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsSceneGraphFieldTypeChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsScopeRequestDeclarationChecker
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsSharedClassNotFinalChecker
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsSharedFnPropertyChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsStaticClassChecker
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsSharedTaskFieldChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsStaticOverloadFileChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsStaticTopLevelExtensionChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsTaskStateNotFieldChecker
@@ -44,6 +47,7 @@ object BrsDeclarationCheckers : DeclarationCheckers() {
         get() = setOf(
             FirBrsConstantVarChecker,
             FirBrsScopeRequestDeclarationChecker,
+            FirBrsSharedClassNotFinalChecker,
         )
 
     override val propertyCheckers: Set<FirPropertyChecker>
@@ -51,6 +55,10 @@ object BrsDeclarationCheckers : DeclarationCheckers() {
             FirBrsSceneGraphFieldTypeChecker,
             FirBrsOnChangeHandlerChecker,
             FirBrsTaskStateNotFieldChecker,
+            FirBrsSharedFnPropertyChecker,
+            // Declaration half of the copy-channel rule; lives with its call-site
+            // sibling in expression/FirBrsSharedCopyChannelChecker.kt.
+            FirBrsSharedTaskFieldChecker,
         )
 
     override val simpleFunctionCheckers: Set<FirSimpleFunctionChecker>

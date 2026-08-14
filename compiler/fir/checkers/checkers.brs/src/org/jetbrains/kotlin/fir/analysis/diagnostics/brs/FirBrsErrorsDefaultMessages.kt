@@ -32,6 +32,9 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCOPE_
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCOPE_CAPTURE_MUTATION_LOST
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCOPE_CAPTURE_UNMARSHALLABLE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCOPE_RESULT_NOT_DATA
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SHARED_CLASS_NOT_FINAL
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SHARED_FN_PROPERTY
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SHARED_THROUGH_COPYING_CHANNEL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_STATIC_INVALID_TARGET
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_STATIC_OVERLOAD
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_TASK_STATE_NOT_FIELD
@@ -179,6 +182,28 @@ object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
                 "interfaces like RoArray/RoAssociativeArray/RoSGNode): arguments cross by copy as plain data — " +
                 "pass plain data or restructure the request.",
             CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_SHARED_CLASS_NOT_FINAL,
+            "Concrete SharedService class ''{0}'' is declared open: shared classes must be final — static dispatch " +
+                "enumerates the concrete leaves of a shared hierarchy. Remove ''open'', or move the shared behavior " +
+                "into an abstract base.",
+            CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_SHARED_FN_PROPERTY,
+            "Function-typed property ''{0}'' in shared class ''{1}'': a stored callback is a function reference in the " +
+                "shared bag — the one shape static dispatch cannot rescue. Use an overridable method on the base, " +
+                "or fields/observers/ScopeHandle for cross-component behavior.",
+            CommonRenderers.STRING, CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_SHARED_THROUGH_COPYING_CHANNEL,
+            "SharedService-typed value of type ''{0}'' into {1}: this channel copies, and a copy of a shared instance " +
+                "is a husk — data survives, every method is stripped, and it is not the shared instance. Shared " +
+                "instances cross by reference only — pass the stash node and acquire with sharedFrom<T>() on the " +
+                "other side.",
+            CommonRenderers.STRING, CommonRenderers.STRING,
         )
         map.put(
             BRS_TASK_STATE_NOT_FIELD,

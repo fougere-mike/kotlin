@@ -138,6 +138,9 @@ object BrsStandardClassIds {
         val iSGNodeFieldInterface = "ISGNodeField".brsRokuId()
 
         @JvmField
+        val iSGNodeDictInterface = "ISGNodeDict".brsRokuId()
+
+        @JvmField
         val roSGScreenEventInterface = "RoSGScreenEvent".brsRokuId()
 
         @JvmField
@@ -421,6 +424,20 @@ object BrsStandardClassIds {
     }
 
     /**
+     * SharedService (kotlin.brs) — reference-shared classes across components.
+     */
+    object Shared {
+        /**
+         * kotlin.brs.SharedService — the SOLE machinery root (design §4.5): the
+         * BRS_SHARED_* FIR rules, the Phase 3 dispatch lowering, and
+         * publish/acquire all key on this one ClassId. No other type name is
+         * known to the compiler.
+         */
+        @JvmField
+        val sharedService = "SharedService".brsId()
+    }
+
+    /**
      * BrightScript-specific callable IDs.
      */
     object Callables {
@@ -515,6 +532,45 @@ object BrsStandardClassIds {
          */
         @JvmField
         val scopeRunLowered = "runLowered".callableId(BASE_BRS_PACKAGE)
+
+        // ==================== Copying-Channel Callables ====================
+
+        /**
+         * ISGNodeField.setField / RoSGNode.setField — the field-write copying
+         * channel (FirBrsSharedCopyChannelChecker flags SharedService-typed
+         * value arguments). Both ids: RoSGNode overrides the declaration, and
+         * subtype receivers resolve to the override (addFieldCallables
+         * precedent).
+         */
+        @JvmField
+        val iSGNodeFieldSetField = CallableId(BuiltIns.iSGNodeFieldInterface, Name.identifier("setField"))
+
+        @JvmField
+        val roSGNodeSetField = CallableId(BuiltIns.roSGNodeInterface, Name.identifier("setField"))
+
+        @JvmField
+        val setFieldCallables: Set<CallableId> = setOf(iSGNodeFieldSetField, roSGNodeSetField)
+
+        /** ISGNodeDict.callFunc / RoSGNode.callFunc — the cross-component call copying channel. */
+        @JvmField
+        val iSGNodeDictCallFunc = CallableId(BuiltIns.iSGNodeDictInterface, Name.identifier("callFunc"))
+
+        @JvmField
+        val roSGNodeCallFunc = CallableId(BuiltIns.roSGNodeInterface, Name.identifier("callFunc"))
+
+        @JvmField
+        val callFuncCallables: Set<CallableId> = setOf(iSGNodeDictCallFunc, roSGNodeCallFunc)
+
+        /**
+         * kotlin.brs.asDynamic / unsafeCast — type-erasing casts the copy-channel
+         * checker unwraps to classify the underlying value (a Dynamic-typed
+         * parameter forces `value.asDynamic()` at the call site).
+         */
+        @JvmField
+        val asDynamic = "asDynamic".callableId(BASE_BRS_PACKAGE)
+
+        @JvmField
+        val unsafeCast = "unsafeCast".callableId(BASE_BRS_PACKAGE)
 
         // ==================== SharedService Callables ====================
 

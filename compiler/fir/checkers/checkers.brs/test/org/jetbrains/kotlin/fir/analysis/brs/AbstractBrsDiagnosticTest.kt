@@ -245,6 +245,19 @@ abstract class AbstractBrsDiagnosticTest {
             "Scope request argument type '{0}' is outside the marshallable set (primitives, String, Dynamic, and external " +
                 "interfaces like RoArray/RoAssociativeArray/RoSGNode): arguments cross by copy as plain data — " +
                 "pass plain data or restructure the request.",
+        "BRS_SHARED_CLASS_NOT_FINAL" to
+            "Concrete SharedService class '{0}' is declared open: shared classes must be final — static dispatch " +
+                "enumerates the concrete leaves of a shared hierarchy. Remove 'open', or move the shared behavior " +
+                "into an abstract base.",
+        "BRS_SHARED_FN_PROPERTY" to
+            "Function-typed property '{0}' in shared class '{1}': a stored callback is a function reference in the " +
+                "shared bag — the one shape static dispatch cannot rescue. Use an overridable method on the base, " +
+                "or fields/observers/ScopeHandle for cross-component behavior.",
+        "BRS_SHARED_THROUGH_COPYING_CHANNEL" to
+            "SharedService-typed value of type '{0}' into {1}: this channel copies, and a copy of a shared instance " +
+                "is a husk — data survives, every method is stripped, and it is not the shared instance. Shared " +
+                "instances cross by reference only — pass the stash node and acquire with sharedFrom<T>() on the " +
+                "other side.",
         "BRS_TASK_STATE_NOT_FIELD" to
             "Property '{0}' in task component '{1}' compiles to plain m-state: run() executes against a task-thread copy, " +
                 "and writes from run() are silently lost. Annotate it with an @SG*Field annotation (or @BrsField), " +

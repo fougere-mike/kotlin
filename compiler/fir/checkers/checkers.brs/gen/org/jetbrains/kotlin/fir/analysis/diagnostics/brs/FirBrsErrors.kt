@@ -69,6 +69,11 @@ object FirBrsErrors : KtDiagnosticsContainer() {
     val BRS_SCOPE_RESULT_NOT_DATA: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("BRS_SCOPE_RESULT_NOT_DATA", WARNING, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
     val BRS_SCOPE_ARG_NOT_MARSHALLABLE: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("BRS_SCOPE_ARG_NOT_MARSHALLABLE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
 
+    // SharedService
+    val BRS_SHARED_CLASS_NOT_FINAL: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("BRS_SHARED_CLASS_NOT_FINAL", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
+    val BRS_SHARED_FN_PROPERTY: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_SHARED_FN_PROPERTY", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
+    val BRS_SHARED_THROUGH_COPYING_CHANNEL: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_SHARED_THROUGH_COPYING_CHANNEL", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
+
     // Typed task components
     val BRS_TASK_STATE_NOT_FIELD: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_TASK_STATE_NOT_FIELD", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
     val BRS_CREATE_COMPONENT_INVALID_TYPE: KtDiagnosticFactory3<String, String, String> = KtDiagnosticFactory3("BRS_CREATE_COMPONENT_INVALID_TYPE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())

@@ -1229,4 +1229,22 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testScopeArgNotMarshallable() {
         runTest("scopeArgNotMarshallable.kt")
     }
+
+    // The SharedService family (spec §5): BRS_SHARED_CLASS_NOT_FINAL (error — open concrete
+    // SharedService descendants break Phase 3's dispatcher enumeration of concrete leaves;
+    // abstract bases with members/overrides/hooks are LEGAL), BRS_SHARED_FN_PROPERTY (error —
+    // a stored callback is a function reference in the shared bag, the one shape static
+    // dispatch cannot rescue), BRS_SHARED_THROUGH_COPYING_CHANNEL (error — shared instances
+    // cross by reference only; setField/callFunc args and @SG*Field task-component
+    // declarations copy, and copies are husks).
+
+    @Test
+    fun testSharedClassRules() {
+        runTest("sharedClassRules.kt")
+    }
+
+    @Test
+    fun testSharedCopyChannel() {
+        runTest("sharedCopyChannel.kt")
+    }
 }

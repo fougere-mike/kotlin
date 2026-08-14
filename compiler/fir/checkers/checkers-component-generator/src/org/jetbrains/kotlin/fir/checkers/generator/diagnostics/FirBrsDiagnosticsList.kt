@@ -152,6 +152,23 @@ object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
         }
     }
 
+    val SHARED_SERVICE by object : DiagnosticGroup("SharedService") {
+        val BRS_SHARED_CLASS_NOT_FINAL by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
+            parameter<String>("className")
+            isSuppressible = true
+        }
+        val BRS_SHARED_FN_PROPERTY by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
+            parameter<String>("propertyName")
+            parameter<String>("className")
+            isSuppressible = true
+        }
+        val BRS_SHARED_THROUGH_COPYING_CHANNEL by error<KtElement> {
+            parameter<String>("sharedType")
+            parameter<String>("channel")
+            isSuppressible = true
+        }
+    }
+
     val TYPED_TASKS by object : DiagnosticGroup("Typed task components") {
         val BRS_TASK_STATE_NOT_FIELD by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
             parameter<String>("propertyName")

@@ -44,6 +44,10 @@ tasks.test {
     // Run tests from the repo root so the compiler can find testData and the prebuilt klib
     workingDir = rootDir
     useJUnitPlatform()
+    // Diagnostic fixtures are a tracked input (mirrors the golden-testData fix in
+    // compiler/ir/backend.brightscript): without this, a fixture-only edit leaves the
+    // task UP-TO-DATE and silently serves stale results.
+    inputs.dir(rootDir.resolve("compiler/testData/diagnostics/testsWithBrsStdLib"))
 }
 
 generatedDiagnosticContainersAndCheckerComponents()
