@@ -17,8 +17,18 @@ function classifyPlain_Str_k_(input as String) as String
             throw IllegalStateException_create_StrN_k_("boom")
         end if
         __try_tmp1 = "ok"
-    catch e
-        __try_tmp1 = "ise"
+    catch __caught2
+        __when_tmp2 = invalid
+        if __kotlin_isInstanceOf(__caught2, "IllegalStateException") then
+            e = __caught2
+            __when_tmp2 = "ise"
+        else if __kotlin_isInstanceOf(__caught2, "Exception") then
+            e = __caught2
+            __when_tmp2 = "exc"
+        else
+            throw __caught2
+        end if
+        __try_tmp1 = __when_tmp2
     end try
     return __try_tmp1
 
@@ -31,8 +41,16 @@ function classifyWithCatchAll_Str_k_(input as String) as String
             throw IllegalArgumentException_create_StrN_k_("nope")
         end if
         __try_tmp2 = "ok"
-    catch e
-        __try_tmp2 = "iae"
+    catch __caught3
+        __when_tmp3 = invalid
+        if __kotlin_isInstanceOf(__caught3, "IllegalArgumentException") then
+            e = __caught3
+            __when_tmp3 = "iae"
+        else
+            e = __caught3
+            __when_tmp3 = "other"
+        end if
+        __try_tmp2 = __when_tmp3
     end try
     return __try_tmp2
 
@@ -71,20 +89,25 @@ function _classifySuspendCOROUTINE__doResume_k_() as Dynamic
                 continue while
             else if __kotlin_identityEquals(tmp, 2) then
                 m.__set_exceptionState(3)
-                e = m.__get_exception()
-                tmp0_elvis_lhs = e.__get_message()
-                __when_tmp0 = invalid
-                if tmp0_elvis_lhs = invalid then
-                    __when_tmp0 = ""
+                __caught = m.__get_exception()
+                __when_tmp1 = invalid
+                if __kotlin_isInstanceOf(__caught, "IllegalStateException") then
+                    e = __caught
+                    tmp0_elvis_lhs = e.__get_message()
+                    __when_tmp0 = invalid
+                    if tmp0_elvis_lhs = invalid then
+                        __when_tmp0 = ""
+                    else
+                        __when_tmp0 = tmp0_elvis_lhs
+                    end if
+                    __when_tmp1 = ("ise:" + __when_tmp0)
+                else if __kotlin_isInstanceOf(__caught, "Exception") then
+                    e = __caught
+                    __when_tmp1 = "exc"
                 else
-                    __when_tmp0 = tmp0_elvis_lhs
+                    throw __caught
                 end if
-                m.__try_tmp00 = ("ise:" + __when_tmp0)
-
-                m.__set_state(4)
-                continue while
-                e_1 = m.__get_exception()
-                m.__try_tmp00 = "exc"
+                m.__try_tmp00 = __when_tmp1
 
                 m.__set_state(4)
                 continue while

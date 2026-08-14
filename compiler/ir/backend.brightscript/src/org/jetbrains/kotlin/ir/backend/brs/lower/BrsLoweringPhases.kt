@@ -129,6 +129,14 @@ object BrsLoweringPhases {
         // - brsName(::function) -> extracts the mangled function name as a string literal
         phases += BrsIntrinsicLowering(context)
 
+        // Phase 0.052: Multi-catch merge
+        // try with >1 catch clauses merges into ONE catch-all clause with an
+        // explicit is-dispatch when — the device-proven hand-written idiom.
+        // Must run before every other try consumer: both the suspend state
+        // machine and the non-suspend emitter handle only single-catch tries
+        // correctly (BrsTry carries a single catch).
+        phases += BrsMultiCatchLowering(context)
+
         // Phase 0.055: runTask call-site rewrite
         // runTask<T>{} is a klib inline function, which this backend never inlines at
         // user call sites; the reified type argument only exists on the un-inlined
