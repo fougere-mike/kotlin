@@ -75,6 +75,10 @@ class BrsSharedFromCallLowering(
                     typeNameConst()
                 }
 
+                // Deliberate nullability mismatch: the call keeps the site's T
+                // while sharedAcquire declares T? — harmless in this untyped
+                // backend (no null-check codegen), and the throwing overloads
+                // never actually return null (runTask rewrite precedent).
                 return IrCallImpl(
                     startOffset = expression.startOffset,
                     endOffset = expression.endOffset,
