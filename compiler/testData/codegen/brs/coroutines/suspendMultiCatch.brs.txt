@@ -1,0 +1,106 @@
+// --- File: suspendMultiCatchKt.brs ---
+function pause_ContinuationI_k_(_completion as Object) as Object
+    return 1
+end function
+
+function classifySuspend_ContinuationStr_k_(_completion as Object) as Object
+    tmp = _classifySuspendCOROUTINE__create_ContinuationStr_k_(_completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function classifyPlain_Str_k_(input as String) as String
+    __try_tmp1 = invalid
+    try
+        if input = "x" then
+            throw IllegalStateException_create_StrN_k_("boom")
+        end if
+        __try_tmp1 = "ok"
+    catch e
+        __try_tmp1 = "ise"
+    end try
+    return __try_tmp1
+
+end function
+
+function classifyWithCatchAll_Str_k_(input as String) as String
+    __try_tmp2 = invalid
+    try
+        if input = "x" then
+            throw IllegalArgumentException_create_StrN_k_("nope")
+        end if
+        __try_tmp2 = "ok"
+    catch e
+        __try_tmp2 = "iae"
+    end try
+    return __try_tmp2
+
+end function
+
+function _classifySuspendCOROUTINE__create_ContinuationStr_k_(resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["_classifySuspendCOROUTINE_", this.__proto]
+    this.__type = "_classifySuspendCOROUTINE_"
+    this.doResume_k_ = _classifySuspendCOROUTINE__doResume_k_
+    return this
+end function
+
+function _classifySuspendCOROUTINE__doResume_k_() as Dynamic
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(3)
+                m.__try_tmp00 = invalid
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = pause_ContinuationI_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+
+                m.__try_tmp00 = "ok"
+                m.__set_exceptionState(3)
+                m.__set_state(4)
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+                m.__set_exceptionState(3)
+                e = m.__get_exception()
+                tmp0_elvis_lhs = e.__get_message()
+                __when_tmp0 = invalid
+                if tmp0_elvis_lhs = invalid then
+                    __when_tmp0 = ""
+                else
+                    __when_tmp0 = tmp0_elvis_lhs
+                end if
+                m.__try_tmp00 = ("ise:" + __when_tmp0)
+
+                m.__set_state(4)
+                continue while
+                e_1 = m.__get_exception()
+                m.__try_tmp00 = "exc"
+
+                m.__set_state(4)
+                continue while
+            else if __kotlin_identityEquals(tmp, 3) then
+                throw m.__get_exception()
+            else if __kotlin_identityEquals(tmp, 4) then
+                m.__set_exceptionState(3)
+                                return m.__try_tmp00
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 3) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function

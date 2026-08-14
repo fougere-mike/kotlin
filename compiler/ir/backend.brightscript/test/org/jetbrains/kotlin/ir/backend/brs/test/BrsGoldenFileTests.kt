@@ -141,6 +141,12 @@ class BrsCoroutineGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun suspendStatementArgHoist() = runTest("coroutines/suspendStatementArgHoist.kt")
+
+    @Test
+    fun suspendFunctionReference() = runTest("coroutines/suspendFunctionReference.kt")
+
+    @Test
+    fun suspendMultiCatch() = runTest("coroutines/suspendMultiCatch.kt")
 }
 
 // ==================== Inline BrightScript Tests ====================

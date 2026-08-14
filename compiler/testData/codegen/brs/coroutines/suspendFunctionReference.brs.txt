@@ -1,0 +1,75 @@
+// --- File: suspendFunctionReferenceKt.brs ---
+function echoUpper_Str_ContinuationStr_k_(s as String, _completion as Object) as Object
+    return s + "!"
+end function
+
+function topLevelHandler_k_() as Object
+    return echoUpper_ref_create_k_()
+end function
+
+function RefHolder_create_k_() as Object
+    this = {}
+    this.__type = "RefHolder"
+    this.__proto = ["RefHolder"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.member_Str_ContinuationStr_k_ = RefHolder_member_Str_ContinuationStr_k_
+    this.boundHandler_k_ = RefHolder_boundHandler_k_
+    return this
+end function
+
+function RefHolder_member_Str_ContinuationStr_k_(s as String, _completion as Object) as Object
+    return s + "?"
+end function
+
+function RefHolder_boundHandler_k_() as Object
+    return RefHolder_member_ref_create_RefHolder_k_(m)
+end function
+
+function echoUpper_ref_create_k_() as Object
+    this = {}
+    this.__type = "echoUpper_ref"
+    this.__proto = ["echoUpper_ref", "KSuspendFunction1", "KFunction", "KCallable", "Function", "SuspendFunction1"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.invoke_AnyN_Continuation_k_ = echoUpper_ref_invoke_AnyN_Continuation_k_
+    this.__get_name = echoUpper_ref___get_name_k_
+    return this
+end function
+
+function echoUpper_ref_invoke_AnyN_Continuation_k_(p0 as String, _completion as Object) as Object
+    tmp0 = echoUpper_Str_ContinuationStr_k_(p0, _completion)
+    return tmp0
+end function
+
+function echoUpper_ref___get_name_k_() as String
+    return "echoUpper"
+end function
+
+function RefHolder_member_ref_create_RefHolder_k_(p0 as Object) as Object
+    this = {}
+    this.__type = "RefHolder_member_ref"
+    this.__proto = ["RefHolder_member_ref", "KSuspendFunction1", "KFunction", "KCallable", "Function", "SuspendFunction1"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.invoke_AnyN_Continuation_k_ = RefHolder_member_ref_invoke_AnyN_Continuation_k_
+    this.__get_name = RefHolder_member_ref___get_name_k_
+    this.f_0 = p0
+    return this
+end function
+
+function RefHolder_member_ref_invoke_AnyN_Continuation_k_(__this as String, _completion as Object) as Object
+    tmp0 = m.f_0
+    tmp0_1 = tmp0.member_Str_ContinuationStr_k_(m, _completion)
+    return tmp0_1
+end function
+
+function RefHolder_member_ref___get_name_k_() as String
+    return "member"
+end function
