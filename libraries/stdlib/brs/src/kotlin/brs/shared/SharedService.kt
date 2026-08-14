@@ -7,7 +7,6 @@ package kotlin.brs
 
 import kotlin.brs.roku.RoAssociativeArray
 import kotlin.brs.roku.RoSGNode
-import kotlin.brs.roku.RoUtils
 import kotlin.coroutines.pump.PumpScheduler
 
 /**
@@ -45,17 +44,27 @@ public abstract class SharedService {
     /** Stash back-reference: the key this instance was last published under. */
     internal var __sharedKey: String = ""
 
+    /** Generation stamp: which publish generation of its key this instance is (0 until shared). */
+    internal var __sharedGen: Int = 0
+
     /**
-     * Identity-based liveness: true iff THIS instance is the one currently in
-     * the stash entry it was published to — `roUtils.IsSameObject` against
-     * the live stash (a boolean flag could not discriminate: it would cross a
-     * copying channel along with the rest of the husk).
+     * Generation-based liveness: true iff THIS instance is the CURRENT
+     * generation of the stash entry it was published to — its publish-time
+     * stamp compared against the stash's per-key generation counter. Plain
+     * Int reads through the GetRef proxy (pure data), so the verdict is
+     * immune to per-access proxy identity.
      *
      * False when the instance was never [shareOn]'d, when a republish under
-     * the same key replaced it, or when the stash is unreachable (node
-     * destroyed, or read from a context where GetRef cannot succeed).
+     * the same key bumped the generation, or when the stash is unreachable
+     * (node destroyed, or read from a context where GetRef cannot succeed).
      * Defense-in-depth/debug — acquisition via [sharedFrom] returns GetRef
-     * references, which are live by construction.
+     * references, which are current-generation by construction.
+     *
+     * Residual: a same-generation instance that crossed a COPYING channel (a
+     * husk) would still stamp-match. Acceptable by design: the copying
+     * channels are compile-errors for SharedService types (the
+     * BRS_SHARED_THROUGH_COPYING_CHANNEL FIR rule) — the same residual class
+     * the design accepts for casts (spec §5 non-rules note).
      */
     public fun isLive(): Boolean {
         val node = __sharedNode
@@ -71,11 +80,26 @@ public abstract class SharedService {
         if (stash == null) {
             return false
         }
-        val entry = stash.lookup(__sharedKey)
-        if (entry == null) {
+        val gens = stash.lookup(SHARED_GENS_KEY) as? RoAssociativeArray
+        if (gens == null) {
             return false
         }
-        return RoUtils.create().isSameObject(this.asDynamic(), entry)
+        // WHY generation stamps and not roUtils.IsSameObject (device fact,
+        // 2026-08-14, Suite 9 runs 1-4): IsSameObject answered FALSE for a
+        // nested stash entry reached through two SEPARATE GetRef accesses in
+        // every run, while state sharing on the same entries was green in the
+        // same runs. Two candidate sub-explanations, not yet discriminated:
+        // per-access proxy identity blur (each getRef mints a distinct
+        // wrapper over shared backing) vs IsSameObject semantics on
+        // node-backed nested reads. Un-run discriminating probes (SPIKE
+        // BAIT): (1) owner-side isLive() immediately post-publish (local
+        // instance vs entry through one getRef); (2) consumer-side
+        // IsSameObject of two back-to-back sharedFrom results. The scope-
+        // handle spike's IsSameObject-true pin covered only the TOP-LEVEL
+        // SetRef'd AA, never nested entries.
+        // A missing counter reads 0, which no stamped instance carries
+        // (generations start at 1) — false, never a crash.
+        return (gens.lookup(__sharedKey) as? Int ?: 0) == __sharedGen
     }
 }
 
@@ -99,7 +123,10 @@ public fun shareOn(node: RoSGNode, instance: SharedService) {
  * SetRefs it. (Device fact, 2026-08-14 Suite 9 run: GetRef-handle READS are
  * live, but INSERTS through the handle store a copy — so instances reach the
  * stash only via local-AA insert + SetRef, the identity-preserving
- * primitive.)
+ * primitive.) The stash also carries a per-key generation counter (the
+ * reserved '__gens' map): each publish stamps the instance and bumps the
+ * counter — [SharedService.isLive]'s oracle. Keys starting with '__' are
+ * reserved for that machinery and throw a guided [IllegalStateException].
  *
  * Republish under the same key REPLACES the entry: the prior generation's
  * [SharedService.isLive] goes false, and holders of stale references should
@@ -121,14 +148,14 @@ public fun shareOn(node: RoSGNode, instance: SharedService, key: String) {
                 "(design A4); gate with canShare()"
         )
     }
-    // Back-refs BEFORE the instance enters the stash: the SetRef'd container
-    // shares its entries by reference (device-pinned by the sharedSameInstance
-    // E2E), so state the instance carries at SetRef time is demonstrably on
-    // the shared entry.
-    instance.__sharedNode = node
-    instance.__sharedKey = key
+    if (key.startsWith(SHARED_RESERVED_PREFIX)) {
+        throw IllegalStateException(
+            "shareOn key '$key' uses the reserved '__' prefix (stash machinery namespace, " +
+                "e.g. '__gens') — choose a key without it"
+        )
+    }
     // EVERY publish builds the next stash generation as a plain LOCAL AA and
-    // SetRefs it. Device fact (Suite 9 run, 2026-08-14): READS through a
+    // SetRefs it. Device fact (Suite 9 runs, 2026-08-14): READS through a
     // GetRef handle are live — they return the real entry objects — but
     // INSERTS through the handle store a slot-preserving intra-thread COPY,
     // which silently breaks shared identity (the owner's local instance would
@@ -136,20 +163,44 @@ public fun shareOn(node: RoSGNode, instance: SharedService, key: String) {
     // The caller's instance therefore only ever reaches the stash via the
     // provably-safe primitive: plain local insert + SetRef.
     val next = RoAssociativeArray.create()
+    val gens = RoAssociativeArray.create()
+    var generation = 1
     if (node.canGetRef(SHARED_STASH_FIELD)) {
         val prior = node.getRef(SHARED_STASH_FIELD) as? RoAssociativeArray
         if (prior != null) {
-            // Carry the prior generation's entries into the new container:
+            // Carry the prior generation's ENTRIES into the new container:
             // live reads + plain local inserts, so entries under OTHER keys
-            // keep their identity across a republish (and stale holders'
-            // isLive() keeps answering truthfully against the new stash).
+            // keep their identity across a republish. Machinery keys are
+            // skipped — the gens map is rebuilt fresh below.
             val priorKeys = prior.keys()
             while (priorKeys.count() > 0) {
                 val priorKey = "${priorKeys.shift()}"
-                next.addReplace(priorKey, prior.lookup(priorKey))
+                if (!priorKey.startsWith(SHARED_RESERVED_PREFIX)) {
+                    next.addReplace(priorKey, prior.lookup(priorKey))
+                }
+            }
+            // Carry the per-key generation counters (plain Ints — live reads
+            // of pure data) into a fresh map, and bump THIS key's generation.
+            val priorGens = prior.lookup(SHARED_GENS_KEY) as? RoAssociativeArray
+            if (priorGens != null) {
+                val genKeys = priorGens.keys()
+                while (genKeys.count() > 0) {
+                    val genKey = "${genKeys.shift()}"
+                    gens.addReplace(genKey, priorGens.lookup(genKey) as? Int ?: 0)
+                }
+                generation = (priorGens.lookup(key) as? Int ?: 0) + 1
             }
         }
     }
+    // Back-refs and the generation stamp BEFORE the instance enters the
+    // stash: the SetRef'd container shares its entries by reference
+    // (device-pinned by the sharedSameInstance E2E), so state the instance
+    // carries at SetRef time is demonstrably on the shared entry.
+    instance.__sharedNode = node
+    instance.__sharedKey = key
+    instance.__sharedGen = generation
+    gens.addReplace(key, generation)
+    next.addReplace(SHARED_GENS_KEY, gens)
     next.addReplace(key, instance)
     // Declare the field (a no-op when it already exists), then SetRef the new
     // generation.

@@ -11,13 +11,21 @@ import kotlin.brs.roku.RoUtils
 import kotlin.coroutines.pump.PumpScheduler
 
 /**
- * The per-node stash field: an AA of key → instance entries, ALWAYS written
- * via SetRef (never ordinary setField — that would copy) and read via GetRef
- * (references, live by construction). Every publish SetRefs a freshly built
- * LOCAL container — device fact (2026-08-14): GetRef-handle reads are live,
- * but inserts through the handle copy. One field per publishing node.
+ * The per-node stash field, ALWAYS written via SetRef (never ordinary
+ * setField — that would copy) and read via GetRef. Layout: key → instance
+ * entries plus the reserved [SHARED_GENS_KEY] AA (key → Int, the current
+ * publish generation per key — [SharedService.isLive]'s oracle). Every
+ * publish SetRefs a freshly built LOCAL container — device fact
+ * (2026-08-14): GetRef-handle reads are live, but inserts through the handle
+ * copy. One field per publishing node.
  */
 internal const val SHARED_STASH_FIELD: String = "__kotlinShared"
+
+/** Reserved stash key namespace: '__'-prefixed keys are machinery, never entries. */
+internal const val SHARED_RESERVED_PREFIX: String = "__"
+
+/** The reserved stash key holding the per-key generation counters (AA: key → Int). */
+internal const val SHARED_GENS_KEY: String = "__gens"
 
 /**
  * Per-component-instance holder (`object` singletons live on GetGlobalAA,
@@ -130,6 +138,18 @@ internal fun <T : SharedService> sharedAcquire(
         throw IllegalStateException(
             "nothing shared on node '${node.getField("id")}' — shareOn(node, instance) " +
                 "in the owner first, or use sharedFromOrNull"
+        )
+    }
+    // Reserved machinery keys (e.g. '__gens') can never hold entries —
+    // shareOn rejects the prefix — so acquisition treats them as absent
+    // rather than proto-walking a machinery AA in the collision path.
+    if (key.startsWith(SHARED_RESERVED_PREFIX)) {
+        if (orNull) {
+            return null
+        }
+        throw IllegalStateException(
+            "nothing shared under key '$key' on node '${node.getField("id")}' — " +
+                "'__'-prefixed keys are reserved stash machinery; shareOn rejects them"
         )
     }
     val entry = stash.lookup(key)
