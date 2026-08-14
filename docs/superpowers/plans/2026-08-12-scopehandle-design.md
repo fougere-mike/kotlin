@@ -526,6 +526,11 @@ class WatchlistVm(private val owner: ScopeHandle) {
 }
 ```
 
+Default scope correction (2026-08-13, device-pinned): the default exposed
+scope is a dedicated child SupervisorJob scope of componentScope() — close()
+tears down the exposed scope only, never the owner's unrelated coroutines;
+explicitly-passed scopes are cancelled as-given.
+
 Request classes take an explicit wire-name constructor argument
 (compile-time-derived names would require compiler magic on the hand-written
 surface, which stays compiler-free by design); '#' is reserved for

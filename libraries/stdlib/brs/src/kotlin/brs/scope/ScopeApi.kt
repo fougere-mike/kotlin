@@ -19,7 +19,10 @@ import kotlin.brs.scope.ScopeOwnerState
 import kotlin.brs.scope.onKotlinScopeInbox
 import kotlin.brs.scope.postScopeRequestAndAwait
 import kotlin.coroutines.CoroutineScope
+import kotlin.coroutines.Job
+import kotlin.coroutines.SupervisorJob
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.coroutines.dispatchers.Dispatchers
 import kotlin.coroutines.pump.PumpScheduler
 
 /**
@@ -144,15 +147,35 @@ private external fun scopeHostTopOf(component: ComponentBase): RoSGNode
 private external fun scopeHostGlobalOf(component: ComponentBase): RoSGNode
 
 /**
- * Exposes this component's coroutine scope as a request host — owner-side,
- * typically once in `init`. Installs and arms the request inbox strictly
- * BEFORE the advertisement lands on the node (arming-order law), then runs
- * [register] against the registry, then advertises readiness.
+ * The default exposed scope: a DEDICATED child supervisor scope of
+ * [componentScope] (device-pinned correction, 2026-08-13). [ScopeHost.close]
+ * cancels the exposed scope — were that componentScope() itself, close()
+ * would still-birth every unrelated post-close `launch {}` on the owner.
+ * Supervisor: request-job failures already have the single egress as their
+ * consumer, so siblings must not die. Child of the component scope's job:
+ * component-scope cancellation still cascades into exposed requests.
+ */
+private fun ComponentBase.defaultExposedScope(): CoroutineScope {
+    val parent = componentScope().coroutineContext[Job]
+    return CoroutineScope(Dispatchers.Main + SupervisorJob(parent))
+}
+
+/**
+ * Exposes a coroutine scope as a request host — owner-side, typically once in
+ * `init`. Installs and arms the request inbox strictly BEFORE the
+ * advertisement lands on the node (arming-order law), then runs [register]
+ * against the registry, then advertises readiness.
+ *
+ * When [scope] is not passed, the host runs on a dedicated child supervisor
+ * scope of [componentScope]: [ScopeHost.close] tears down THAT scope (all
+ * in-flight requests answer "closed") and never touches the component's
+ * unrelated coroutines. An explicitly-passed [scope] is cancelled as-given by
+ * close() — the caller owns its blast radius.
  *
  * One host per component: a second call throws [IllegalStateException].
  */
 public fun ComponentBase.exposeScope(
-    scope: CoroutineScope = componentScope(),
+    scope: CoroutineScope = defaultExposedScope(),
     register: ScopeHandlerRegistry.() -> Unit = {},
 ): ScopeHost {
     if (ScopeHostHolder.state != null) {
