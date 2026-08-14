@@ -397,6 +397,15 @@ object BrsStandardClassIds {
     }
 
     /**
+     * ScopeHandle (kotlin.brs) — cross-component scope borrowing.
+     */
+    object Scope {
+        /** kotlin.brs.ScopeHandle — the borrowed-scope handle class. */
+        @JvmField
+        val scopeHandle = "ScopeHandle".brsId()
+    }
+
+    /**
      * BrightScript-specific callable IDs.
      */
     object Callables {
@@ -473,6 +482,24 @@ object BrsStandardClassIds {
          */
         @JvmField
         val componentFactoryCallables: Set<CallableId> = setOf(createComponent, brsCreateComponent, runTask)
+
+        // ==================== ScopeHandle Callables ====================
+
+        /**
+         * ScopeHandle.run — member overloads. The suspend-block overload
+         * (single `suspend () -> R` parameter) is rewritten by the compiler
+         * to [scopeRunLowered]; FirBrsScopeBlockChecker requires its argument
+         * to be a literal lambda so the rewrite can lift it.
+         */
+        @JvmField
+        val scopeHandleRun = CallableId(Scope.scopeHandle, Name.identifier("run"))
+
+        /**
+         * kotlin.brs.runLowered — the lowered entry point targeted by the
+         * `ScopeHandle.run { block }` rewrite (BrsScopeRunBlockLowering).
+         */
+        @JvmField
+        val scopeRunLowered = "runLowered".callableId(BASE_BRS_PACKAGE)
 
         // ==================== Coroutine Callables ====================
 

@@ -131,6 +131,12 @@ object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
         }
     }
 
+    val SCOPE_HANDLE by object : DiagnosticGroup("ScopeHandle") {
+        val BRS_SCOPE_BLOCK_NOT_LITERAL by error<KtElement> {
+            isSuppressible = true
+        }
+    }
+
     val TYPED_TASKS by object : DiagnosticGroup("Typed task components") {
         val BRS_TASK_STATE_NOT_FIELD by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
             parameter<String>("propertyName")

@@ -250,6 +250,14 @@ class BrsConstantGoldenFileTests : AbstractBrsGoldenFileTest() {
     fun brsConstantEnum() = runTest("constants/brsConstantEnum.kt")
 }
 
+// ==================== ScopeHandle Tests ====================
+
+class BrsScopeHandleGoldenFileTests : AbstractBrsGoldenFileTest() {
+
+    @Test
+    fun runBlockLowering() = runTest("scopehandle/runBlockLowering.kt")
+}
+
 // ==================== Reflection Tests ====================
 
 class BrsReflectionGoldenFileTests : AbstractBrsGoldenFileTest() {

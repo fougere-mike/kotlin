@@ -139,6 +139,14 @@ object BrsLoweringPhases {
         // suspend call replaces another).
         phases += BrsRunTaskCallLowering(context)
 
+        // Phase 0.057: ScopeHandle.run{block} rewrite
+        // Rewrites literal-lambda run(block) call sites to runLowered(name, capturesAA)
+        // and lifts each block into a top-level suspend function. Must run BEFORE
+        // UpgradeCallableReferences (the block must still be an IrFunctionExpression
+        // with implicit captures) and before any coroutine lowering (one suspend call
+        // replaces another; the lifted function is an ordinary top-level suspend fun).
+        phases += BrsScopeRunBlockLowering(context)
+
         // Phase 0.06: IO Worker Detection (Warning-only for now)
         // Detects withContext(Dispatchers.IO) calls and emits warnings about the
         // lambda serialization limitation. Full automatic extraction is planned

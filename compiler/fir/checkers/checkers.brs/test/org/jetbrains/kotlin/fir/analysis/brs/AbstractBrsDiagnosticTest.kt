@@ -226,6 +226,9 @@ abstract class AbstractBrsDiagnosticTest {
             "try/finally is not supported outside suspend functions on the BrightScript backend: " +
                 "the 'finally' block is silently dropped. Move this code into a suspend function, " +
                 "restructure without 'finally', or @Suppress(\"BRS_TRY_FINALLY_UNSUPPORTED\") with a tracking comment.",
+        "BRS_SCOPE_BLOCK_NOT_LITERAL" to
+            "ScopeHandle.run { } requires a literal lambda at the call site (the compiler lifts it into a named request). " +
+                "Passing a stored function value cannot be lowered — declare a ScopeRequest object and use run(request, args) instead.",
         "BRS_TASK_STATE_NOT_FIELD" to
             "Property '{0}' in task component '{1}' compiles to plain m-state: run() executes against a task-thread copy, " +
                 "and writes from run() are silently lost. Annotate it with an @SG*Field annotation (or @BrsField), " +

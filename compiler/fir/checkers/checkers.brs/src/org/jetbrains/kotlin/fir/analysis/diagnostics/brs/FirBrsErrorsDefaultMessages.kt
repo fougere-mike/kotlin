@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_ONCHAN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_ONCHANGE_HANDLER_SIGNATURE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCENEGRAPH_FIELD_CONFLICT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCENEGRAPH_FIELD_TYPE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCOPE_BLOCK_NOT_LITERAL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_STATIC_INVALID_TARGET
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_STATIC_OVERLOAD
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_TASK_STATE_NOT_FIELD
@@ -139,6 +140,11 @@ object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             "try/finally is not supported outside suspend functions on the BrightScript backend: " +
                 "the 'finally' block is silently dropped. Move this code into a suspend function, " +
                 "restructure without 'finally', or @Suppress(\"BRS_TRY_FINALLY_UNSUPPORTED\") with a tracking comment.",
+        )
+        map.put(
+            BRS_SCOPE_BLOCK_NOT_LITERAL,
+            "ScopeHandle.run { } requires a literal lambda at the call site (the compiler lifts it into a named request). " +
+                "Passing a stored function value cannot be lowered — declare a ScopeRequest object and use run(request, args) instead.",
         )
         map.put(
             BRS_TASK_STATE_NOT_FIELD,

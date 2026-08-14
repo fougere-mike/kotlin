@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsIODispatc
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsIOWorkerCaptureChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsIntrinsicArgChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsNameCallableRefChecker
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsScopeBlockChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsTryFinallyChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.*
 
@@ -24,6 +25,7 @@ object BrsExpressionCheckers : ExpressionCheckers() {
             FirBrsCreateObjectTypeChecker,
             FirBrsCreateComponentTypeChecker,
             FirBrsNameCallableRefChecker,
+            FirBrsScopeBlockChecker,
         )
 
     override val propertyAccessExpressionCheckers: Set<FirPropertyAccessExpressionChecker>

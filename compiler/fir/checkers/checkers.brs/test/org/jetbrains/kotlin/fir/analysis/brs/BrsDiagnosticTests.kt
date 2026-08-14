@@ -1190,4 +1190,13 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testTryFinallyNonSuspend() {
         runTest("tryFinallyNonSuspend.kt")
     }
+
+    // BRS_SCOPE_BLOCK_NOT_LITERAL — ScopeHandle.run(block) requires a literal lambda at
+    // the call site (the compiler lifts it into a named request). Stored function values
+    // and function references cannot be lowered and would hit the runtime backstop ISE.
+
+    @Test
+    fun testScopeBlockNotLiteral() {
+        runTest("scopeBlockNotLiteral.kt")
+    }
 }

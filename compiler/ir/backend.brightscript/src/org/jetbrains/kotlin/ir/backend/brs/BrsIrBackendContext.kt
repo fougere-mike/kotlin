@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.backend.brs.lower.BrsInnerClassesSupport
 import org.jetbrains.kotlin.ir.backend.brs.lower.BrsSharedVariablesManager
+import org.jetbrains.kotlin.ir.backend.brs.lower.ScopeRunBlock
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrExternalPackageFragmentImpl
@@ -319,6 +320,16 @@ class BrsIrBackendContext(
      * Populated by BrsSharedVariableDetectionLowering.
      */
     val sharedVariableFields = mutableSetOf<String>()
+
+    // ==================== ScopeHandle Run-Block Registry ====================
+
+    /**
+     * Lifted `ScopeHandle.run { block }` blocks per file, in call-site order:
+     * compiler-synthesized request name ("<fileFq>#<n>") → lifted top-level
+     * function. Populated by BrsScopeRunBlockLowering; the binding-table
+     * injection (owner components' generated init()) is built from this.
+     */
+    val scopeRunBlocks = mutableMapOf<IrFile, MutableList<ScopeRunBlock>>()
 
     // ==================== IO Worker Registry ====================
 

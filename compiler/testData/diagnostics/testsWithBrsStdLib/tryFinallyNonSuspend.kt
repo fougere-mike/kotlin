@@ -53,3 +53,13 @@ fun deliberate() {
         println("b")
     }
 }
+
+// Case 6: property initializer — no containing callable at all, so the checker's
+// else->false fall-through classifies it non-suspend — ERROR. Pins the initializer
+// path against future refactors of the nearest-callable walk (ledgered gap).
+val propInit: Int = <!BRS_TRY_FINALLY_UNSUPPORTED!>try {
+    1
+} finally {
+    println("cleanup")
+}<!>
+

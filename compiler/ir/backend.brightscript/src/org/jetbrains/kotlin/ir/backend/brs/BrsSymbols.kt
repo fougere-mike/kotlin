@@ -326,6 +326,24 @@ class BrsSymbols(
         findOptionalFunction(BrsStandardClassIds.BASE_BRS_PACKAGE, "brsCreateComponent")
     }
 
+    // ==================== ScopeHandle Symbols ====================
+
+    /**
+     * `kotlin.brs.runLowered` — the lowered entry point targeted by the
+     * `ScopeHandle.run { block }` rewrite (see BrsScopeRunBlockLowering).
+     */
+    val scopeRunLoweredOrNull: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(BrsStandardClassIds.BASE_BRS_PACKAGE, "runLowered")
+    }
+
+    /**
+     * `kotlin.brs.roku.IAssociativeArray` — the native AA interface; the
+     * run-block lowering emits `lookup`/`addReplace` calls against it.
+     */
+    val iAssociativeArrayClass: IrClassSymbol? by lazy {
+        findOptionalClass(FqName("kotlin.brs.roku"), "IAssociativeArray")
+    }
+
     // ==================== BrightScript-specific Symbols ====================
 
     /**
