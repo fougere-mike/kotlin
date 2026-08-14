@@ -83,6 +83,17 @@ fun TestRunner.sharedServiceTests() {
             assertFalse(SharedKeyProbe().isLive(), "an instance never passed to shareOn cannot be live")
         }
 
+        test("isLive(node) is false on a never-shared instance") {
+            // Overload parity: the caller-supplied-handle form answers the
+            // same false for a never-shared instance (the gen-0 rung guards
+            // it — an unstamped instance must never match a stash), and
+            // touches no render-thread API doing so.
+            assertFalse(
+                SharedKeyProbe().isLive(RoSGNode.create("Node")),
+                "a never-shared instance cannot be live on any node"
+            )
+        }
+
         test("default key derives the runtime class simple name") {
             assertEquals("SharedKeyProbe", sharedServiceKeyOf(SharedKeyProbe()))
         }

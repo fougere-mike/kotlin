@@ -48,31 +48,64 @@ public abstract class SharedService {
     internal var __sharedGen: Int = 0
 
     /**
-     * Generation-based liveness: true iff THIS instance is the CURRENT
-     * generation of the stash entry it was published to — its publish-time
-     * stamp compared against the stash's per-key generation counter. Plain
-     * Int reads through the GetRef proxy (pure data), so the verdict is
-     * immune to per-access proxy identity.
+     * Generation-based liveness via the PUBLISH-TIME node handle stored by
+     * [shareOn] — reliable in the OWNER, where the stored handle never
+     * crossed a channel. In a CONSUMER, the stored handle may have lost its
+     * GetRef capability crossing inside the SetRef graph (device-pinned
+     * 2026-08-14, Suite 9 diagnostic runs 6-8: `canGetRef` false / `getRef`
+     * Invalid on the stored handle while the SAME node through an ordinarily
+     * passed handle answers true in the same op sequence) and this form then
+     * answers false — prefer [isLive] with the node handle you acquired
+     * from.
      *
-     * False when the instance was never [shareOn]'d, when a republish under
-     * the same key bumped the generation, or when the stash is unreachable
-     * (node destroyed, or read from a context where GetRef cannot succeed).
-     * Defense-in-depth/debug — acquisition via [sharedFrom] returns GetRef
-     * references, which are current-generation by construction.
-     *
-     * Residual: a same-generation instance that crossed a COPYING channel (a
-     * husk) would still stamp-match. Acceptable by design: the copying
-     * channels are compile-errors for SharedService types (the
-     * BRS_SHARED_THROUGH_COPYING_CHANNEL FIR rule) — the same residual class
-     * the design accepts for casts (spec §5 non-rules note).
+     * Semantics (both forms): never [shareOn]'d → false; replaced by a
+     * republish under the same key → false; current generation → true;
+     * stash unreachable (node destroyed, off-context, crippled handle) →
+     * false, never a crash.
      */
-    public fun isLive(): Boolean {
-        val node = __sharedNode
+    public fun isLive(): Boolean = isLiveAgainst(__sharedNode)
+
+    /**
+     * Generation-based liveness against the CALLER-supplied [node] handle —
+     * the handle you acquired from ([sharedFrom]'s argument, an
+     * `@SGNodeField`-passed ref, `getScene()`, ...). Reliable on BOTH sides:
+     * a handle with caller-local provenance carries GetRef capability
+     * (device-pinned, Suite 9 runs 6-8). Same semantics as the no-arg form.
+     *
+     * Residual (both forms): a same-generation instance that crossed a
+     * COPYING channel (a husk) would still stamp-match. Acceptable by
+     * design: the copying channels are compile-errors for SharedService
+     * types (the BRS_SHARED_THROUGH_COPYING_CHANNEL FIR rule) — the same
+     * residual class the design accepts for casts (spec §5 non-rules note).
+     */
+    public fun isLive(node: RoSGNode): Boolean = isLiveAgainst(node)
+
+    private fun isLiveAgainst(node: RoSGNode?): Boolean {
+        // Never shared: no stamp to compare (generations start at 1). This
+        // rung carries the never-shared semantics for BOTH forms — the
+        // overload's caller-supplied node must not let an unstamped instance
+        // (gen 0, empty key) accidentally match a stash.
+        if (__sharedGen == 0) {
+            return false
+        }
         if (node == null) {
             return false
         }
-        // Destroyed-node/off-context guard: a failing GetRef answers false,
-        // never crashes.
+        // Destroyed-node/off-context/crippled-handle guard: a failing GetRef
+        // answers false, never crashes. Device fact (2026-08-14, runs 6-8):
+        // a node ref that itself crossed INSIDE the SetRef'd stash graph
+        // answers canGetRef=false / getRef=Invalid on the receiving side —
+        // either the nested node ref detaches on the consumer's read, or
+        // CanGetRef capability is per-handle-provenance. SPIKE BAIT
+        // (discriminator, un-run): compare the stored handle's
+        // getField("id")/isSameNode against the acquired-from handle —
+        // detach shows a different/id-less node; capability loss shows the
+        // same node refusing GetRef. REJECTED alternative (recorded): having
+        // sharedAcquire re-stamp __sharedNode with the caller's handle —
+        // that writes shared state through the GetRef proxy, the exact
+        // unpinned insert-copy territory that produced fix rounds 2-3 (and
+        // an owner-side isLive after a consumer acquire would then read a
+        // consumer-provenance handle).
         if (!node.canGetRef(SHARED_STASH_FIELD)) {
             return false
         }
@@ -87,16 +120,9 @@ public abstract class SharedService {
         // WHY generation stamps and not roUtils.IsSameObject (device fact,
         // 2026-08-14, Suite 9 runs 1-4): IsSameObject answered FALSE for a
         // nested stash entry reached through two SEPARATE GetRef accesses in
-        // every run, while state sharing on the same entries was green in the
-        // same runs. Two candidate sub-explanations, not yet discriminated:
-        // per-access proxy identity blur (each getRef mints a distinct
-        // wrapper over shared backing) vs IsSameObject semantics on
-        // node-backed nested reads. Un-run discriminating probes (SPIKE
-        // BAIT): (1) owner-side isLive() immediately post-publish (local
-        // instance vs entry through one getRef); (2) consumer-side
-        // IsSameObject of two back-to-back sharedFrom results. The scope-
-        // handle spike's IsSameObject-true pin covered only the TOP-LEVEL
-        // SetRef'd AA, never nested entries.
+        // every run, while state sharing on the same entries was green in
+        // the same runs — the scope-handle spike's IsSameObject-true pin
+        // covered only the TOP-LEVEL SetRef'd AA, never nested entries.
         // A missing counter reads 0, which no stamped instance carries
         // (generations start at 1) — false, never a crash.
         return (gens.lookup(__sharedKey) as? Int ?: 0) == __sharedGen
