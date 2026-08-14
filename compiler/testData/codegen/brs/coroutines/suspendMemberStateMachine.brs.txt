@@ -1,0 +1,72 @@
+// --- File: suspendMemberStateMachineKt.brs ---
+function fetchNumber_I_ContinuationI_k_(x as Integer, _completion as Object) as Object
+    return x + 1
+end function
+
+function TaggedFetcher_create_Str_k_(label as String) as Object
+    this = {}
+    this.__type = "TaggedFetcher"
+    this.__proto = ["TaggedFetcher"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.tagged_I_ContinuationStr_k_ = TaggedFetcher_tagged_I_ContinuationStr_k_
+    this.__get_label = TaggedFetcher___get_label_k_
+    this.label = label
+    return this
+end function
+
+function TaggedFetcher_tagged_I_ContinuationStr_k_(x as Integer, _completion as Object) as Object
+    tmp = TaggedFetcher__taggedCOROUTINE__create_TaggedFetcher_I_ContinuationStr_k_(m, x, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function TaggedFetcher___get_label_k_() as String
+    return m.label
+end function
+
+function TaggedFetcher__taggedCOROUTINE__create_TaggedFetcher_I_ContinuationStr_k_(__this as Object, x as Integer, resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["TaggedFetcher__taggedCOROUTINE_", this.__proto]
+    this.__type = "TaggedFetcher__taggedCOROUTINE_"
+    this.doResume_k_ = TaggedFetcher__taggedCOROUTINE__doResume_k_
+    this.__this = __this
+    this.x = x
+    return this
+end function
+
+function TaggedFetcher__taggedCOROUTINE__doResume_k_() as Dynamic
+    n = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = fetchNumber_I_ContinuationI_k_(m.x, m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                n = suspendResult
+                                return m.__this.__get_label() + __kotlin_numToStr_I_k_(n)
+            else if __kotlin_identityEquals(tmp, 2) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 2) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function

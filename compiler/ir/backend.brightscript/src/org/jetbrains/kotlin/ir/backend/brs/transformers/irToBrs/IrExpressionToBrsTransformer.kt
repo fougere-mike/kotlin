@@ -240,6 +240,15 @@ class IrExpressionToBrsTransformer(
         }
 
         return when {
+            // A REGULAR-kind value parameter literally named '<this>' is a MOVED receiver —
+            // e.g. the captured instance parameter of a suspend member function's COROUTINE
+            // constructor — not the object the enclosing function runs on. It must render as
+            // its sanitized signature name ('__this'); the constructor fall-through below
+            // would alias it to the local 'this' (the object under construction), emitting
+            // the self-assignment `this.__this = this` — a device-crashing capture loss
+            // (first hit: ScopeVmFixture.echoLowered's state machine, 2026-08-14).
+            rawName == "<this>" && (owner as? IrValueParameter)?.kind == IrParameterKind.Regular ->
+                BrsIdentifier(sanitizeParameterName(rawName))
             // In constructor bodies, '<this>' refers to the local 'this' variable being constructed
             // In regular methods, '<this>' refers to 'm' (the object the method was called on)
             rawName == "<this>" -> if (genCtx.isInConstructorBody) BrsIdentifier("this") else BrsMRef()

@@ -147,6 +147,9 @@ class BrsCoroutineGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun suspendMultiCatch() = runTest("coroutines/suspendMultiCatch.kt")
+
+    @Test
+    fun suspendMemberStateMachine() = runTest("coroutines/suspendMemberStateMachine.kt")
 }
 
 // ==================== Inline BrightScript Tests ====================
@@ -262,6 +265,9 @@ class BrsScopeHandleGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun runBlockLowering() = runTest("scopehandle/runBlockLowering.kt")
+
+    @Test
+    fun bindingTableInjection() = runTest("scopehandle/bindingTableInjection.kt")
 }
 
 // ==================== Reflection Tests ====================
