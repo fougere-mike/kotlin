@@ -1,0 +1,176 @@
+// --- File: sharedEmissionKt.brs ---
+function tickG_ContinuationI_k_(_completion as Object) as Object
+    return 1
+end function
+
+function FixtureBaseG_create_k_() as Object
+    this = SharedService_create_k_()
+    this._super = {}
+    this.__proto = ["FixtureBaseG", this.__proto]
+    this.__type = "FixtureBaseG"
+    this.touchBase_k_ = FixtureBaseG_touchBase_k___slot
+    this.hook_k_ = FixtureBaseG_hook_k___slot
+    this.slowTouch_ContinuationI_k_ = FixtureBaseG_slowTouch_ContinuationI_k___slot
+    this.__get_baseTouches = FixtureBaseG___get_baseTouches_k_
+    this.__set_baseTouches = FixtureBaseG___set_baseTouches_I_k_
+    this.baseTouches = 0
+    return this
+end function
+
+function FixtureBaseG_touchBase_k_(m as Object) as Integer
+    m.__set_baseTouches(m.__get_baseTouches() + 1)
+    return m.__get_baseTouches()
+end function
+
+function FixtureBaseG_touchBase_k___slot() as Integer
+    return FixtureBaseG_touchBase_k_(m)
+end function
+
+function FixtureBaseG_hook_k_(m as Object) as String
+end function
+
+function FixtureBaseG_hook_k___slot() as String
+    return FixtureBaseG_hook_k_(m)
+end function
+
+function FixtureBaseG_slowTouch_ContinuationI_k_(m as Object, _completion as Object) as Object
+    tmp = FixtureBaseG__slowTouchCOROUTINE__create_FixtureBaseG_ContinuationI_k_(m, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function FixtureBaseG_slowTouch_ContinuationI_k___slot(_completion as Object) as Object
+    return FixtureBaseG_slowTouch_ContinuationI_k_(m, _completion)
+end function
+
+function FixtureBaseG___get_baseTouches_k_() as Integer
+    return m.baseTouches
+end function
+
+sub FixtureBaseG___set_baseTouches_I_k_(value as Integer)
+    m.baseTouches = value
+end sub
+
+function FixtureBaseG__slowTouchCOROUTINE__create_FixtureBaseG_ContinuationI_k_(__this as Object, resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["FixtureBaseG__slowTouchCOROUTINE_", this.__proto]
+    this.__type = "FixtureBaseG__slowTouchCOROUTINE_"
+    this.doResume_k_ = FixtureBaseG__slowTouchCOROUTINE__doResume_k_
+    this.__this = __this
+    return this
+end function
+
+function FixtureBaseG__slowTouchCOROUTINE__doResume_k_() as Dynamic
+    t = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = tickG_ContinuationI_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                t = suspendResult
+                                return m.__this.__get_baseTouches() + t
+            else if __kotlin_identityEquals(tmp, 2) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 2) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function FixtureVmG_create_k_() as Object
+    this = FixtureBaseG_create_k_()
+    this._super = {}
+    this._super.hook_k_ = this.hook_k_
+    this.__proto = ["FixtureVmG", this.__proto]
+    this.__type = "FixtureVmG"
+    this.bump_k_ = FixtureVmG_bump_k___slot
+    this.hook_k_ = FixtureVmG_hook_k___slot
+    this.__get_counter = FixtureVmG___get_counter_k_
+    this.__set_counter = FixtureVmG___set_counter_I_k_
+    this.__get_summary = FixtureVmG___get_summary_k___slot
+    this.counter = 0
+    return this
+end function
+
+function FixtureVmG_bump_k_(m as Object) as Integer
+    m.__set_counter(m.__get_counter() + 1)
+    return m.__get_counter()
+end function
+
+function FixtureVmG_bump_k___slot() as Integer
+    return FixtureVmG_bump_k_(m)
+end function
+
+function FixtureVmG_hook_k_(m as Object) as String
+    return "vm:" + __kotlin_numToStr_I_k_(m.__get_counter())
+end function
+
+function FixtureVmG_hook_k___slot() as String
+    return FixtureVmG_hook_k_(m)
+end function
+
+function FixtureVmG___get_counter_k_() as Integer
+    return m.counter
+end function
+
+sub FixtureVmG___set_counter_I_k_(value as Integer)
+    m.counter = value
+end sub
+
+function FixtureVmG___get_summary_k_(m as Object) as String
+    return "vm:" + __kotlin_numToStr_I_k_(m.__get_counter())
+end function
+
+function FixtureVmG___get_summary_k___slot() as String
+    return FixtureVmG___get_summary_k_(m)
+end function
+
+function ControlPlainG_create_k_() as Object
+    this = {}
+    this.__type = "ControlPlainG"
+    this.__proto = ["ControlPlainG"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.poke_k_ = ControlPlainG_poke_k_
+    this.__get_count = ControlPlainG___get_count_k_
+    this.__set_count = ControlPlainG___set_count_I_k_
+    this.__get_label = ControlPlainG___get_label_k_
+    this.count = 0
+    return this
+end function
+
+function ControlPlainG_poke_k_() as Integer
+    m.__set_count(m.__get_count() + 1)
+    return m.__get_count()
+end function
+
+function ControlPlainG___get_count_k_() as Integer
+    return m.count
+end function
+
+sub ControlPlainG___set_count_I_k_(value as Integer)
+    m.count = value
+end sub
+
+function ControlPlainG___get_label_k_() as String
+    return "c:" + __kotlin_numToStr_I_k_(m.__get_count())
+end function

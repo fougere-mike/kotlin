@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.backend.common.lower.WebCallableReferenceLowering
 import org.jetbrains.kotlin.brs.backend.ast.*
 import org.jetbrains.kotlin.brs.backend.ast.parser.parseBrightScriptStatements
 import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.backend.brs.BrsIntrinsics
 import org.jetbrains.kotlin.ir.backend.brs.lower.BrsCodeOutliningLowering
 import org.jetbrains.kotlin.ir.backend.brs.lower.BrsDeclarationOrigin
@@ -54,6 +55,13 @@ import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import java.io.File
+
+/**
+ * Suffix of the forwarding wrapper slot generated next to every
+ * extension-shaped SharedService member implementation (`<impl>__slot`).
+ * Collision-free: user-derived globals always end in `_k_`.
+ */
+private const val SHARED_SLOT_WRAPPER_SUFFIX = "__slot"
 
 /**
  * Transforms Kotlin IR to BrightScript AST.
@@ -417,6 +425,21 @@ class IrToBrsTransformer(
                     defaultValue = null
                 ))
             }
+            // SharedService members are EXTENSION-SHAPED (design §4.1): the
+            // implementation takes its receiver as an explicit first parameter,
+            // reusing the extension convention above — same "m" name (so `<this>`
+            // body references, rendered as "m", read the parameter), same first
+            // position (suspend members therefore order `(m, params..., _completion)`,
+            // matching the device-proven suspend-extension shape). The constructor
+            // attaches a forwarding wrapper slot in its place — see
+            // buildSharedSlotWrapper.
+            if (isSharedExtensionShapedFunction(irFunction)) {
+                allParameters.add(BrsParameter(
+                    name = "m",
+                    type = mapTypeToBrs(irFunction.dispatchReceiverParameter!!.type),
+                    defaultValue = null
+                ))
+            }
         }
 
         // Add value parameters
@@ -582,10 +605,10 @@ class IrToBrsTransformer(
             transformConstructor(irClass, constructor)?.let { declarations.add(it) }
         }
 
-        // Generate member functions
+        // Generate member functions (+ forwarding wrapper slots for SharedService members)
         for (function in irClass.declarations.filterIsInstance<IrSimpleFunction>()) {
             if (!function.isFakeOverride) {
-                transformFunction(function)?.let { declarations.add(it) }
+                transformFunctionWithSharedWrapper(function, declarations)
             }
         }
 
@@ -1657,10 +1680,10 @@ class IrToBrsTransformer(
             )
         )
 
-        // Generate member functions
+        // Generate member functions (+ forwarding wrapper slots for SharedService members)
         for (function in irClass.declarations.filterIsInstance<IrSimpleFunction>()) {
             if (!function.isFakeOverride) {
-                transformFunction(function)?.let { declarations.add(it) }
+                transformFunctionWithSharedWrapper(function, declarations)
             }
         }
 
@@ -2103,7 +2126,7 @@ class IrToBrsTransformer(
                 name != "equals" && name != "hashCode" && name != "toString" &&
                 name != "copy" && !name.startsWith("component")
             ) {
-                transformFunction(function)?.let { declarations.add(it) }
+                transformFunctionWithSharedWrapper(function, declarations)
             }
         }
 
@@ -2825,12 +2848,132 @@ class IrToBrsTransformer(
         )
     }
 
+    // ==================== SharedService extension-shaped emission ====================
+
+    /**
+     * True when [function] emits EXTENSION-SHAPED because it is a member of a
+     * SharedService-reaching class (design §4.1, the static-dispatch program):
+     * the implementation global takes the receiver as an explicit FIRST
+     * parameter named `m` (the existing extension convention — suspend members
+     * therefore order `(m, params..., _completion)`), and the constructor
+     * attaches a thin forwarding wrapper slot in its place (see
+     * [buildSharedSlotWrapper]) so every slot-shaped call site keeps working
+     * until the call-site lowering rewrites them to direct static calls.
+     *
+     * Deliberately NOT treated:
+     * - SIMPLE property accessors (default accessor of a final, non-overriding,
+     *   non-delegated property with a backing field): their call sites become
+     *   direct member reads under static dispatch (data-class precedent), so
+     *   their m-reading globals stay directly attached, byte-identical.
+     * - Member EXTENSION functions (dispatch + extension receiver): their
+     *   emitted `m` parameter is the extension receiver; a second injected
+     *   receiver would collide. They remain slot-dispatched (documented
+     *   residual, same bucket as Any/interface-typed receivers).
+     * - Synthetic DATA-CLASS members (equals/hashCode/toString/copy/componentN)
+     *   of a shared data class: generated by the data-class emitters with
+     *   m-reading bodies and simple-name attachment; they stay slot-shaped
+     *   (residual — hand-written members of shared data classes ARE treated,
+     *   since they flow through [transformFunction] like any other member).
+     */
+    private fun isSharedExtensionShapedFunction(function: IrFunction): Boolean {
+        if (function !is IrSimpleFunction) return false
+        if (function.isFakeOverride || function.isExternal) return false
+        if (function.dispatchReceiverParameter == null) return false
+        if (function.extensionReceiverParameter != null) return false
+        val parentClass = function.parentClassOrNull ?: return false
+        if (!context.intrinsics.isSharedServiceClass(parentClass)) return false
+        val property = function.correspondingPropertySymbol?.owner
+        if (property != null && isSimpleSharedAccessor(function, property)) return false
+        return true
+    }
+
+    /**
+     * A simple accessor: the default accessor of a final, non-overriding,
+     * non-delegated property with a backing field — reads/writes the field and
+     * nothing else, so no override can ever change its behavior and static
+     * dispatch replaces its call sites with direct member access.
+     */
+    private fun isSimpleSharedAccessor(accessor: IrSimpleFunction, property: IrProperty): Boolean {
+        return accessor.origin == IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR &&
+            property.backingField != null &&
+            !property.isDelegated &&
+            accessor.overriddenSymbols.isEmpty() &&
+            accessor.modality == Modality.FINAL
+    }
+
+    /**
+     * Emit [function] via [transformFunction] plus, for SharedService members,
+     * the forwarding wrapper slot the constructor attaches in its place.
+     */
+    private fun transformFunctionWithSharedWrapper(
+        function: IrSimpleFunction,
+        declarations: MutableList<BrsDeclaration>
+    ) {
+        val impl = transformFunction(function) ?: return
+        declarations.add(impl)
+        if (isSharedExtensionShapedFunction(function)) {
+            declarations.add(buildSharedSlotWrapper(impl))
+        }
+    }
+
+    /**
+     * The forwarding wrapper slot for an extension-shaped SharedService member:
+     * invoked AS A SLOT (so its implicit `m` is the receiver), it forwards to
+     * the implementation global with the receiver made explicit.
+     *
+     * ```brightscript
+     * function C_f_I_k___slot(x as Integer) as Integer
+     *     return C_f_I_k_(m, x)
+     * end function
+     * ```
+     *
+     * The wrapper is derived from the EMITTED implementation's final parameter
+     * list — never re-derived from IR — so its arity (suspend `_completion`
+     * included) cannot drift from the implementation's (the spec's named
+     * wrapper-arg-shift hazard): params = impl params minus the injected
+     * receiver, defaults included; args = `m` plus those params in order.
+     */
+    private fun buildSharedSlotWrapper(impl: BrsDeclaration): BrsDeclaration {
+        val (implName, implParams) = when (impl) {
+            is BrsFunction -> impl.name to impl.parameters
+            is BrsSub -> impl.name to impl.parameters
+            else -> error("SharedService wrapper: unexpected implementation shape ${impl::class.simpleName}")
+        }
+        check(implParams.firstOrNull()?.name == "m") {
+            "SharedService wrapper: implementation $implName has no leading receiver parameter"
+        }
+        val forwarded = implParams.drop(1)
+        val callArgs = mutableListOf<BrsExpression>(BrsMRef())
+        forwarded.mapTo(callArgs) { BrsIdentifier(it.name) }
+        val call = BrsFunctionCall(BrsIdentifier(implName), callArgs)
+        val wrapperName = implName + SHARED_SLOT_WRAPPER_SUFFIX
+        return when (impl) {
+            is BrsFunction -> BrsFunction(
+                wrapperName,
+                forwarded.toMutableList(),
+                impl.returnType,
+                BrsBlock(mutableListOf(BrsReturn(call)))
+            )
+            is BrsSub -> BrsSub(
+                wrapperName,
+                forwarded.toMutableList(),
+                BrsBlock(mutableListOf(BrsExpressionStatement(call)))
+            )
+            else -> error("unreachable")
+        }
+    }
+
     /**
      * Add method and property accessor attachments to a class instance.
      * This attaches both IrSimpleFunction methods and property getter/setters.
      *
      * Important: Regular methods use mangled names (with type signatures) to support overloading.
      * Property accessors use simple names (via sanitizeMethodName) to match call sites.
+     *
+     * SharedService members attach their forwarding WRAPPER (`<impl>__slot`)
+     * instead of the extension-shaped implementation — attaching the
+     * implementation directly would be arity-broken as a slot (its explicit
+     * receiver parameter would swallow the first argument).
      */
     // Synthetic data class method names that are handled separately with simple names
     private val syntheticDataClassMethods = setOf("equals", "hashCode", "toString", "copy")
@@ -2868,12 +3011,19 @@ class IrToBrsTransformer(
 
                 val fullMethodName = context.getBrsName(function)
                 val methodName = fullMethodName.removePrefix("${className}_")
+                // SharedService members attach the forwarding wrapper, not the
+                // extension-shaped implementation (see class KDoc above).
+                val attachedName = if (isSharedExtensionShapedFunction(function)) {
+                    fullMethodName + SHARED_SLOT_WRAPPER_SUFFIX
+                } else {
+                    fullMethodName
+                }
                 bodyStatements.add(
                     BrsExpressionStatement(
                         BrsBinaryOp(
                             BrsDotAccess(BrsIdentifier("this"), methodName),
                             BrsBinaryOperator.EQ,
-                            BrsIdentifier(fullMethodName)
+                            BrsIdentifier(attachedName)
                         )
                     )
                 )
@@ -2886,7 +3036,7 @@ class IrToBrsTransformer(
                             BrsBinaryOp(
                                 BrsDotAccess(BrsIdentifier("this"), methodBaseName),
                                 BrsBinaryOperator.EQ,
-                                BrsIdentifier(fullMethodName)
+                                BrsIdentifier(attachedName)
                             )
                         )
                     )
@@ -2907,12 +3057,19 @@ class IrToBrsTransformer(
                     if (!getter.isFakeOverride && !getter.isExternal) {
                         val fullMethodName = context.getBrsName(getter)
                         val methodName = sanitizeMethodName(getter.name.asString())
+                        // Non-trivial SharedService accessors are extension-shaped
+                        // like methods; simple ones keep their direct attachment.
+                        val attachedName = if (isSharedExtensionShapedFunction(getter)) {
+                            fullMethodName + SHARED_SLOT_WRAPPER_SUFFIX
+                        } else {
+                            fullMethodName
+                        }
                         bodyStatements.add(
                             BrsExpressionStatement(
                                 BrsBinaryOp(
                                     BrsDotAccess(BrsIdentifier("this"), methodName),
                                     BrsBinaryOperator.EQ,
-                                    BrsIdentifier(fullMethodName)
+                                    BrsIdentifier(attachedName)
                                 )
                             )
                         )
@@ -2922,12 +3079,17 @@ class IrToBrsTransformer(
                     if (!setter.isFakeOverride && !setter.isExternal) {
                         val fullMethodName = context.getBrsName(setter)
                         val methodName = sanitizeMethodName(setter.name.asString())
+                        val attachedName = if (isSharedExtensionShapedFunction(setter)) {
+                            fullMethodName + SHARED_SLOT_WRAPPER_SUFFIX
+                        } else {
+                            fullMethodName
+                        }
                         bodyStatements.add(
                             BrsExpressionStatement(
                                 BrsBinaryOp(
                                     BrsDotAccess(BrsIdentifier("this"), methodName),
                                     BrsBinaryOperator.EQ,
-                                    BrsIdentifier(fullMethodName)
+                                    BrsIdentifier(attachedName)
                                 )
                             )
                         )
@@ -3089,17 +3251,19 @@ class IrToBrsTransformer(
         declarations: MutableList<BrsDeclaration>,
         statements: MutableList<BrsStatement>
     ) {
-        // Generate getter function if present
+        // Generate getter function if present (+ wrapper slot for non-trivial
+        // SharedService accessors — simple ones stay direct, see
+        // isSharedExtensionShapedFunction)
         property.getter?.let { getter ->
             if (!getter.isFakeOverride) {
-                transformFunction(getter)?.let { declarations.add(it) }
+                transformFunctionWithSharedWrapper(getter, declarations)
             }
         }
 
         // Generate setter function if present
         property.setter?.let { setter ->
             if (!setter.isFakeOverride) {
-                transformFunction(setter)?.let { declarations.add(it) }
+                transformFunctionWithSharedWrapper(setter, declarations)
             }
         }
 

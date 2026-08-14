@@ -29,12 +29,15 @@ import org.jetbrains.kotlin.name.BrsStandardClassIds
  * subclass. `lookupInterfaces = false` because SharedService is a class: it is only
  * reachable through the superclass chain.
  *
- * MIRROR NOTE (Phase 3): the dispatch lowering in compiler/ir/backend.brightscript
- * (BrsSharedDispatchLowering per the SharedService plan's file map) needs this same
- * predicate over IR types. checkers.brs (FIR/Cone types) and backend.brightscript
- * (IrClass/IrType) share no type-system source, so the walk is MIRRORED there rather
- * than imported — the shared root is the ClassId in [BrsStandardClassIds.Shared].
- * If the classification here changes, change the IR mirror in the same commit.
+ * MIRROR NOTE (Phase 3): the emission switch and dispatch lowering in
+ * compiler/ir/backend.brightscript need this same predicate over IR types. The IR
+ * mirror lives at `BrsIntrinsics.isSharedServiceClass` / `sharedServiceClassOrNull`
+ * (org.jetbrains.kotlin.ir.backend.brs — used by IrToBrsTransformer's
+ * extension-shaped emission and BrsSharedDispatchLowering). checkers.brs (FIR/Cone
+ * types) and backend.brightscript (IrClass/IrType) share no type-system source, so
+ * the walk is MIRRORED there rather than imported — the shared root is the ClassId
+ * in [BrsStandardClassIds.Shared]. If the classification here changes, change the
+ * IR mirror in the same commit.
  */
 internal object BrsSharedServiceTypes {
 

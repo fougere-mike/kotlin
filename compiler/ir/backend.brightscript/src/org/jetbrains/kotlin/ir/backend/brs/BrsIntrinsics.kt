@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.getAnnotation
 import org.jetbrains.kotlin.ir.util.hasAnnotation
+import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.ir.util.superTypes
 import org.jetbrains.kotlin.name.BrsStandardClassIds
 import org.jetbrains.kotlin.name.FqName
@@ -101,6 +102,65 @@ class BrsIntrinsics(
     val roAssociativeArrayInterfaceClass: IrClassSymbol? by lazy {
         val classId = BrsStandardClassIds.BuiltIns.roAssociativeArrayInterface
         symbolFinder.findClass(classId.shortClassName, classId.packageFqName)
+    }
+
+    // =============================================================================
+    // SharedService (reference-shared classes)
+    // =============================================================================
+
+    /**
+     * The kotlin.brs.SharedService class symbol — the SOLE machinery root for
+     * reference-shared classes ([BrsStandardClassIds.Shared.sharedService]).
+     */
+    val sharedServiceClass: IrClassSymbol? by lazy {
+        val classId = BrsStandardClassIds.Shared.sharedService
+        symbolFinder.findClass(classId.shortClassName, classId.packageFqName)
+    }
+
+    /**
+     * Whether [irClass] is SharedService or reaches it through the transitive
+     * superclass chain. Drives the SharedService emission switch (extension-shaped
+     * methods + forwarding wrapper slots, IrToBrsTransformer) and the static
+     * dispatch lowering (BrsSharedDispatchLowering).
+     *
+     * MIRROR NOTE: this is the IR-side mirror of the FIR predicate in
+     * checkers.brs (`BrsSharedServiceTypes.isSharedServiceClass`) — the two
+     * modules share no type-system source, so the classification is mirrored
+     * rather than imported; the shared root is the ClassId in
+     * [BrsStandardClassIds.Shared]. Contract (keep both sides identical, change
+     * them in the same commit):
+     * - the walk follows the SUPERCLASS chain only (SharedService is a class —
+     *   it is unreachable through interfaces; FIR uses
+     *   `lookupSuperTypes(lookupInterfaces = false, deep = true)`),
+     * - type aliases are expanded at each hop (already true structurally in IR:
+     *   supertypes arrive alias-expanded from FIR),
+     * - the root itself classifies as shared,
+     * - unclassifiable inputs answer false/null (under-approximate, never
+     *   false-positive — BrsScopeMarshallability precedent).
+     */
+    fun isSharedServiceClass(irClass: IrClass): Boolean {
+        val sharedSymbol = sharedServiceClass ?: return false
+        var current: IrClass? = irClass
+        val visited = mutableSetOf<IrClass>()
+        while (current != null && visited.add(current)) {
+            if (current.symbol == sharedSymbol) return true
+            current = current.superTypes.firstNotNullOfOrNull { superType ->
+                superType.classOrNull?.owner?.takeIf { !it.isInterface }
+            }
+        }
+        return false
+    }
+
+    /**
+     * The SharedService-reaching class of [type], or null when the type does not
+     * reach SharedService. Nullability never affects the answer (classifier
+     * extraction ignores it); type parameters, error types, and non-class types
+     * answer null — the same under-approximation as the FIR mirror's
+     * `sharedClassSymbolOrNull` (see the MIRROR NOTE on [isSharedServiceClass]).
+     */
+    fun sharedServiceClassOrNull(type: IrType): IrClass? {
+        val irClass = type.classOrNull?.owner ?: return null
+        return irClass.takeIf { isSharedServiceClass(it) }
     }
 
     // =============================================================================
