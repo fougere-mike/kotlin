@@ -1199,4 +1199,34 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testScopeBlockNotLiteral() {
         runTest("scopeBlockNotLiteral.kt")
     }
+
+    // The capture/result/arg family (ScopeHandle A.3): run{} captures and results cross
+    // the component boundary BY COPY as plain data. BRS_SCOPE_CAPTURE_UNMARSHALLABLE
+    // (error) rejects captures outside the marshallable set (incl. the component-`this`
+    // hole); BRS_SCOPE_CAPTURE_MUTATION_LOST (warning) flags writes to captured vars;
+    // BRS_SCOPE_RESULT_NOT_DATA (warning — severity verified via the
+    // dataClassPropertyRead golden: property reads are direct member reads, so husk
+    // results are usable as data) covers block results and declaration-site R;
+    // BRS_SCOPE_ARG_NOT_MARSHALLABLE (error) covers A1/A2 at ScopeRequest1/2
+    // declaration sites.
+
+    @Test
+    fun testScopeCaptureUnmarshallable() {
+        runTest("scopeCaptureUnmarshallable.kt")
+    }
+
+    @Test
+    fun testScopeCaptureMutationLost() {
+        runTest("scopeCaptureMutationLost.kt")
+    }
+
+    @Test
+    fun testScopeResultNotData() {
+        runTest("scopeResultNotData.kt")
+    }
+
+    @Test
+    fun testScopeArgNotMarshallable() {
+        runTest("scopeArgNotMarshallable.kt")
+    }
 }

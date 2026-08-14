@@ -27,7 +27,11 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_ONCHAN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_ONCHANGE_HANDLER_SIGNATURE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCENEGRAPH_FIELD_CONFLICT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCENEGRAPH_FIELD_TYPE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCOPE_ARG_NOT_MARSHALLABLE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCOPE_BLOCK_NOT_LITERAL
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCOPE_CAPTURE_MUTATION_LOST
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCOPE_CAPTURE_UNMARSHALLABLE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SCOPE_RESULT_NOT_DATA
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_STATIC_INVALID_TARGET
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_STATIC_OVERLOAD
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_TASK_STATE_NOT_FIELD
@@ -145,6 +149,36 @@ object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             BRS_SCOPE_BLOCK_NOT_LITERAL,
             "ScopeHandle.run { } requires a literal lambda at the call site (the compiler lifts it into a named request). " +
                 "Passing a stored function value cannot be lowered — declare a ScopeRequest object and use run(request, args) instead.",
+        )
+        map.put(
+            BRS_SCOPE_CAPTURE_UNMARSHALLABLE,
+            "Captured ''{0}'' of type ''{1}'' cannot cross the scope boundary: captures cross by copy as plain data, and this " +
+                "type''s methods do not survive the copy. Marshallable: primitives, String, Dynamic, and native BrightScript " +
+                "types (RoArray, RoAssociativeArray, RoSGNode, and other external interfaces). Pass plain data (an " +
+                "RoAssociativeArray or primitives) or move the value''s construction inside the block.",
+            CommonRenderers.STRING, CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_SCOPE_CAPTURE_MUTATION_LOST,
+            // No literal braces here: parameterized messages go through MessageFormat,
+            // where a bare '{' is a parse error that poisons the whole renderer map.
+            "Assignment to captured variable ''{0}'' inside a ScopeHandle.run block: captures cross by copy; " +
+                "this write never reaches the caller — return a value from the block instead.",
+            CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_SCOPE_RESULT_NOT_DATA,
+            "Scope request result type ''{0}'' is outside the marshallable set (primitives, String, Dynamic, and external " +
+                "interfaces like RoArray/RoAssociativeArray/RoSGNode): results cross as data; methods/equals/copy will not " +
+                "survive — share behavioral state via the VM.",
+            CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_SCOPE_ARG_NOT_MARSHALLABLE,
+            "Scope request argument type ''{0}'' is outside the marshallable set (primitives, String, Dynamic, and external " +
+                "interfaces like RoArray/RoAssociativeArray/RoSGNode): arguments cross by copy as plain data — " +
+                "pass plain data or restructure the request.",
+            CommonRenderers.STRING,
         )
         map.put(
             BRS_TASK_STATE_NOT_FIELD,

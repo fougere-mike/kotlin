@@ -229,6 +229,22 @@ abstract class AbstractBrsDiagnosticTest {
         "BRS_SCOPE_BLOCK_NOT_LITERAL" to
             "ScopeHandle.run { } requires a literal lambda at the call site (the compiler lifts it into a named request). " +
                 "Passing a stored function value cannot be lowered — declare a ScopeRequest object and use run(request, args) instead.",
+        "BRS_SCOPE_CAPTURE_UNMARSHALLABLE" to
+            "Captured '{0}' of type '{1}' cannot cross the scope boundary: captures cross by copy as plain data, and this " +
+                "type's methods do not survive the copy. Marshallable: primitives, String, Dynamic, and native BrightScript " +
+                "types (RoArray, RoAssociativeArray, RoSGNode, and other external interfaces). Pass plain data (an " +
+                "RoAssociativeArray or primitives) or move the value's construction inside the block.",
+        "BRS_SCOPE_CAPTURE_MUTATION_LOST" to
+            "Assignment to captured variable '{0}' inside a ScopeHandle.run block: captures cross by copy; " +
+                "this write never reaches the caller — return a value from the block instead.",
+        "BRS_SCOPE_RESULT_NOT_DATA" to
+            "Scope request result type '{0}' is outside the marshallable set (primitives, String, Dynamic, and external " +
+                "interfaces like RoArray/RoAssociativeArray/RoSGNode): results cross as data; methods/equals/copy will not " +
+                "survive — share behavioral state via the VM.",
+        "BRS_SCOPE_ARG_NOT_MARSHALLABLE" to
+            "Scope request argument type '{0}' is outside the marshallable set (primitives, String, Dynamic, and external " +
+                "interfaces like RoArray/RoAssociativeArray/RoSGNode): arguments cross by copy as plain data — " +
+                "pass plain data or restructure the request.",
         "BRS_TASK_STATE_NOT_FIELD" to
             "Property '{0}' in task component '{1}' compiles to plain m-state: run() executes against a task-thread copy, " +
                 "and writes from run() are silently lost. Annotate it with an @SG*Field annotation (or @BrsField), " +
@@ -274,14 +290,23 @@ abstract class AbstractBrsDiagnosticTest {
         val errors = actual.filter { it.severity == CompilerMessageSeverity.ERROR }
             .filterNot { err -> ignoredMessagePatterns.any { it.containsMatchIn(err.message) } }
 
-        // Resolve each reported error to a diagnostic name via the inverse message map.
-        val actualNames = errors.map { err -> resolveDiagnosticName(err.message) }.sorted()
+        // WARNING-severity BRS diagnostics (e.g. BRS_SCOPE_CAPTURE_MUTATION_LOST) are
+        // verified too — but only those resolving to a known template. Upstream
+        // warnings (unused variable, name shadowing, ...) fire incidentally on many
+        // fixtures and stay out of verification, exactly as before warnings existed
+        // in the BRS diagnostic set.
+        val warnings = actual
+            .filter { it.severity == CompilerMessageSeverity.WARNING || it.severity == CompilerMessageSeverity.STRONG_WARNING }
+            .filter { resolveDiagnosticName(it.message) != "<unknown>" }
+
+        // Resolve each reported diagnostic to a name via the inverse message map.
+        val actualNames = (errors + warnings).map { err -> resolveDiagnosticName(err.message) }.sorted()
         val expectedNames = expected.map { it.diagnostic }.sorted()
 
         if (expectedNames != actualNames) {
             val expectedStr = expectedNames.joinToString(", ").ifEmpty { "<none>" }
             val actualStr = actualNames.joinToString(", ").ifEmpty { "<none>" }
-            val actualMessages = errors.joinToString("\n  ") {
+            val actualMessages = (errors + warnings).joinToString("\n  ") {
                 "${resolveDiagnosticName(it.message)} @ L${it.line}:${it.column} — ${it.message}"
             }
             fail(

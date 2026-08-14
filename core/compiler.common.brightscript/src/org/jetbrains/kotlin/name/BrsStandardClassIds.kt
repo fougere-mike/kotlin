@@ -403,6 +403,18 @@ object BrsStandardClassIds {
         /** kotlin.brs.ScopeHandle — the borrowed-scope handle class. */
         @JvmField
         val scopeHandle = "ScopeHandle".brsId()
+
+        /** kotlin.brs.ScopeRequest — 0-arg request declaration base (`<R>`). */
+        @JvmField
+        val scopeRequest = "ScopeRequest".brsId()
+
+        /** kotlin.brs.ScopeRequest1 — 1-arg request declaration base (`<A1, R>`). */
+        @JvmField
+        val scopeRequest1 = "ScopeRequest1".brsId()
+
+        /** kotlin.brs.ScopeRequest2 — 2-arg request declaration base (`<A1, A2, R>`). */
+        @JvmField
+        val scopeRequest2 = "ScopeRequest2".brsId()
     }
 
     /**

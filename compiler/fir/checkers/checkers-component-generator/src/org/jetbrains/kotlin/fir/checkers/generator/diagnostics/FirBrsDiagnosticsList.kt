@@ -135,6 +135,21 @@ object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
         val BRS_SCOPE_BLOCK_NOT_LITERAL by error<KtElement> {
             isSuppressible = true
         }
+        val BRS_SCOPE_CAPTURE_UNMARSHALLABLE by error<KtElement> {
+            parameter<String>("captureName")
+            parameter<String>("captureType")
+            isSuppressible = true
+        }
+        val BRS_SCOPE_CAPTURE_MUTATION_LOST by warning<KtElement> {
+            parameter<String>("captureName")
+        }
+        val BRS_SCOPE_RESULT_NOT_DATA by warning<KtElement> {
+            parameter<String>("resultType")
+        }
+        val BRS_SCOPE_ARG_NOT_MARSHALLABLE by error<KtElement> {
+            parameter<String>("argumentType")
+            isSuppressible = true
+        }
     }
 
     val TYPED_TASKS by object : DiagnosticGroup("Typed task components") {

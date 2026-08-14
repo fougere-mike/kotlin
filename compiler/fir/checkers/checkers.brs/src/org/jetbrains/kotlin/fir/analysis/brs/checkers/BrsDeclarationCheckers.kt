@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsNameClas
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsNameClashFunctionBodyChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsOnChangeHandlerChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsSceneGraphFieldTypeChecker
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsScopeRequestDeclarationChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsStaticClassChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsStaticOverloadFileChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsStaticTopLevelExtensionChecker
@@ -42,6 +43,7 @@ object BrsDeclarationCheckers : DeclarationCheckers() {
     override val regularClassCheckers: Set<FirRegularClassChecker>
         get() = setOf(
             FirBrsConstantVarChecker,
+            FirBrsScopeRequestDeclarationChecker,
         )
 
     override val propertyCheckers: Set<FirPropertyChecker>

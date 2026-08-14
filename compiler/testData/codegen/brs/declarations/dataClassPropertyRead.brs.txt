@@ -1,0 +1,71 @@
+// --- File: dataClassPropertyReadKt.brs ---
+function ProbePoint_create_I_I_k_(x as Integer, y as Integer) as Object
+    this = {}
+    this.__type = "ProbePoint"
+    this.__proto = ["ProbePoint"]
+    this.__id = __kotlin_nextObjectId()
+    this.x = x
+    this.y = y
+    this.equals = ProbePoint_equals
+    this.hashCode = ProbePoint_hashCode
+    this.toString = ProbePoint_toString
+    this.copy = ProbePoint_copy
+    this.component1 = ProbePoint_component1
+    this.component2 = ProbePoint_component2
+    return this
+end function
+
+function ProbePoint_equals(other as Object) as Boolean
+    if Type(other) <> "roAssociativeArray" then
+        return false
+    end if
+    if other.__type <> "ProbePoint" then
+        return false
+    end if
+    if m.x <> other.x then
+        return false
+    end if
+    if m.y <> other.y then
+        return false
+    end if
+    return true
+end function
+
+function ProbePoint_hashCode() as Integer
+    result = 1
+    result = ((result * 31) + m.x)
+    result = ((result * 31) + m.y)
+    return result
+end function
+
+function ProbePoint_toString() as String
+    return ((("ProbePoint(x=" + m.x) + ", y=") + m.y) + ")"
+end function
+
+function ProbePoint_copy(x = invalid, y = invalid) as Object
+    if x = invalid then
+        x = m.x
+    end if
+    if y = invalid then
+        y = m.y
+    end if
+    return ProbePoint_create_I_I_k_(x, y)
+end function
+
+function ProbePoint_component1() as Integer
+    return m.x
+end function
+
+function ProbePoint_component2() as Integer
+    return m.y
+end function
+
+function readX_ProbePoint_k_(p as Object) as Integer
+    return p.x
+end function
+
+function readBoth_ProbePoint_k_(p as Object) as Integer
+    a = p.x
+    b = p.y
+    return a + b
+end function

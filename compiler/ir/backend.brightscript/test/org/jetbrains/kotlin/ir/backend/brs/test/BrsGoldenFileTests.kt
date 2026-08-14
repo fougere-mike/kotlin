@@ -30,6 +30,11 @@ class BrsDeclarationGoldenFileTests : AbstractBrsGoldenFileTest() {
     @Test
     fun dataClassWithCompanion() = runTest("declarations/dataClassWithCompanion.kt")
 
+    // Pins direct-member-read property access on data classes — the evidence behind
+    // BRS_SCOPE_RESULT_NOT_DATA's WARNING severity (see the fixture header comment).
+    @Test
+    fun dataClassPropertyRead() = runTest("declarations/dataClassPropertyRead.kt")
+
     @Test
     fun namedArgsSkipDefaults() = runTest("declarations/namedArgsSkipDefaults.kt")
 

@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory2
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory3
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticsContainer
 import org.jetbrains.kotlin.diagnostics.Severity.ERROR
+import org.jetbrains.kotlin.diagnostics.Severity.WARNING
 import org.jetbrains.kotlin.diagnostics.SourceElementPositioningStrategies
 import org.jetbrains.kotlin.diagnostics.rendering.BaseDiagnosticRendererFactory
 import org.jetbrains.kotlin.fir.analysis.diagnostics.*
@@ -63,6 +64,10 @@ object FirBrsErrors : KtDiagnosticsContainer() {
 
     // ScopeHandle
     val BRS_SCOPE_BLOCK_NOT_LITERAL: KtDiagnosticFactory0 = KtDiagnosticFactory0("BRS_SCOPE_BLOCK_NOT_LITERAL", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
+    val BRS_SCOPE_CAPTURE_UNMARSHALLABLE: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_SCOPE_CAPTURE_UNMARSHALLABLE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
+    val BRS_SCOPE_CAPTURE_MUTATION_LOST: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("BRS_SCOPE_CAPTURE_MUTATION_LOST", WARNING, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
+    val BRS_SCOPE_RESULT_NOT_DATA: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("BRS_SCOPE_RESULT_NOT_DATA", WARNING, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
+    val BRS_SCOPE_ARG_NOT_MARSHALLABLE: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("BRS_SCOPE_ARG_NOT_MARSHALLABLE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
 
     // Typed task components
     val BRS_TASK_STATE_NOT_FIELD: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_TASK_STATE_NOT_FIELD", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
