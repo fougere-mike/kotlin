@@ -126,3 +126,77 @@ Source ranges: Kotlin e56b1603b368..HEAD of the Stage 2 program, roku-test-app
 - **golden-registration bundling** (record only — no action): commit 827e6c2
   carries the bindingTableInjection golden's @Test registration that belonged
   with 050592d; history note.
+
+# SharedService program backlog (recorded 2026-08-14, Task 8)
+
+Source ranges: Kotlin 29b02c2b1ca3..41a6e1bcf4b7, roku-test-app
+31f4dd0 + 9f25c92. Design of record:
+`docs/superpowers/plans/2026-08-14-shared-service-design.md`; execution
+ledger: `.superpowers/sdd/2026-08-14-shared-service/progress.md`. CLAUDE.md's
+"SharedService" section carries the shipped laws, the device-pinned platform
+facts, and the CANARY runbook.
+
+## Deferred by design decision (pointer items)
+
+- **Interface-typed receiver dispatch**: receivers statically typed as an
+  interface still slot-dispatch through the wrapper slots (documented
+  residual, design §4/§11 — the CANARY covers the day Roku breaks slots).
+  Closing it means dispatcher enumeration over interface implementors, not
+  just class descendants.
+- **Multi-module dispatchers**: dispatcher enumeration is closed-world
+  single-module; a separately-compiled module's shared subclass is invisible
+  to the base's dispatcher (silently missing else-arm case). Promote to a FIR
+  diagnostic when multi-module becomes real (same note as ScopeHandle `run{}`
+  blocks).
+- **Unpublish/retract API**: v1 = republish + node death (design §11). Add an
+  explicit retraction only if screens need to empty a key without replacing
+  it.
+- **Component-input DX pair** (design decision 10, recorded adjacent):
+  `createComponent<T> { field = v }` configure-lambda + `@SGRequired` inputs
+  with a generated `onInputsReady()` hook. Interim idiom (`@SGNodeField` +
+  `@BrsOnChange`, acquire in the onChange) documented in CLAUDE.md.
+- **Accessor-slot treatment revisit**: non-trivial/open accessors emit
+  `__get_X` statics + dispatchers today; revisit the shape if non-trivial
+  accessors prove common in real VMs.
+- **Consumer-side no-arg `isLive()`**: answers false in consumers (the stored
+  publish-time handle loses GetRef capability crossing inside the SetRef
+  graph — device-pinned, Suite 9 runs 6-8; `isLive(node)` is THE consumer
+  form). Revisit only if a usable cross-graph identity/handle API appears;
+  the detach-vs-capability discriminator probe is named spike bait in
+  SharedService.kt.
+- **Canary retirement runbook**: pointer only — CLAUDE.md "SharedService"
+  CANARY subsection (sharedCanaryFnSlot RED + tests 8-12 green → wrapper-slot
+  residual paths are dead → schedule removal, retire the canary; never "fix"
+  the test).
+
+## Compiler/FIR residuals
+
+- **`top`-read-inside-lambda codegen hole** (discovered in Suite 9 fixture
+  work; NOT SharedService-specific): a component `top` READ inside a lambda
+  body emits a call to an uninstalled `__get_top_k_()` → "Member function not
+  found" at runtime. The natural user shape `launch { shareOn(top, vm) }`
+  crashes; workaround = hoist `val node = top` to method scope and capture
+  that. The 2026-08-10 captured-self routing fixed top WRITES
+  (`m.this_0.top.f = v`); the read path needs the same routing.
+- **FIR rule-3 hardening** (BRS_SHARED_THROUGH_COPYING_CHANNEL): (a) add a
+  fixture pinning a setField/callFunc call resolved through a SUBTYPE-typed
+  receiver (the fake-override classId trap family — same class the onChange
+  extractor fix closed); (b) the checker's arg extraction
+  (`firstOrNull { param.name == "value"/"arg" }`) is vararg-fragile — KDoc'd
+  caveat in FirBrsSharedCopyChannelChecker; harden if the binding surface
+  grows vararg forms.
+- **Shared golden coverage additions**: param-carrying + default-arg +
+  Unit-returning (sub-shaped) dispatcher/wrapper cases — the current
+  sharedEmission/sharedDispatch goldens pin the return-carrying function
+  shapes.
+- **buildSharedDispatcher leading-m guard**: internal-invariant failure
+  throws a bare IllegalStateException; switch to `compilationException` for
+  consistency with the backend's other invariant failures.
+
+## Pre-existing (surfaced by this program, not caused by it)
+
+- **Data-class emission skip vs attachment skip mismatch**: the emission-side
+  skip uses a bare `startsWith("component")` name test while the
+  attachment-side skip is digit-checked — a hand-written member named
+  `componentFoo()` has its emission skipped but its slot attachment kept
+  (dangling slot). Align the two predicates.

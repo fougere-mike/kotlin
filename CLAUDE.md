@@ -503,6 +503,215 @@ Canonical example: `../roku-test-app/components/fixtures/ScopeOwnerProbe.kt` +
 `ScopeChildProbe.kt` + `ScopeVmFixture.kt` (owner, child, and the VM-facade
 layering the design ships for).
 
+## SharedService (reference-shared classes)
+
+Landed 2026-08-14 (the SharedService program). An OWNER component publishes a
+live class instance onto a node it controls; any component holding that node
+acquires THE SAME instance — genuine shared identity over SetRef/GetRef, never
+a copy, never a husk. This is the cross-component OBJECTS mechanism (shared
+ViewModels, services); ScopeHandle above is the cross-component EXECUTION
+mechanism — they compose (a VM holding a ScopeHandle is the canonical
+layering). Design of record:
+`docs/superpowers/plans/2026-08-14-shared-service-design.md`. Device coverage:
+E2E Suite 9 (SharedService, 13 tests — sharing acceptance, static dispatch
+cross-component, the CANARY) + the stdlib SharedService unit suite.
+
+### The API (package kotlin.brs, default-imported)
+
+```kotlin
+abstract class ViewModel : SharedService() {            // APP-owned vocabulary + common code
+    protected fun log(t: String, m: String) { ... }     // final member: static call
+    abstract fun onAction(action: String)               // hook: dispatcher-served
+}
+class ApiClient(baseUrl: String) : SharedService() { ... }
+class GuideVm(private val owner: ScopeHandle, private val api: ApiClient) : ViewModel() {
+    var selectedDay: Int = 0
+    override fun onAction(action: String) { ... }
+    suspend fun refresh(): Int = owner.run { ... }      // composes with ScopeHandle
+}
+// Scene bootstrap:      shareOn(top, ApiClient("https://..."))         // app-wide services live on the SCENE
+// Owner screen:         shareOn(top, GuideVm(scopeHandleOf(top), api))
+// Any component:        val api = sharedFrom<ApiClient>(top.getScene())
+// Child of the screen:  val vm  = sharedFrom<GuideVm>(screenNode)      // node via getParent()/findNode/@SGNodeField
+```
+
+Surface: `shareOn(node, instance[, key])` / `sharedFrom<T>(node[, key])` /
+`sharedFromOrNull<T>(node[, key])` / `SharedService.isLive()` +
+`isLive(node)` / `canShare()`. ONE stdlib marker type (`abstract class
+SharedService`) — the toolchain has no ViewModel opinion; apps mint their own
+vocabulary on top. REAL base-class hierarchies are legal (members, overridable
+hooks, any depth); the only structural rule is concrete descendants are final
+(FIR-enforced below).
+
+- **Stash:** one runtime-added AA field `__kotlinShared` per publishing node
+  (key → instance entries + the reserved `__gens` counters map), ALWAYS
+  written via SetRef — an ordinary setField would copy. Keys default to the
+  class name (the `__proto` head, the same string `is`-checks use; reified
+  `sharedFrom<T>` call sites are REWRITTEN by the backend —
+  `BrsSharedFromCallLowering` — because klib inline functions never inline at
+  user call sites); explicit `key` covers two-instances-of-one-type. Keys
+  starting `__` are RESERVED — guided ISE at `shareOn`.
+- **Live by construction:** `sharedFrom` returns the GetRef reference; no API
+  path returns a copy. Acquire type-checks the entry (proto walk): a
+  wrong-type entry is a guided ISE naming it ("key collision; use explicit
+  keys") in BOTH the throwing and orNull variants — a collision is a caller
+  bug, not an absence. Nothing shared: guided ISE ("shareOn(node, instance)
+  in the owner first, or use sharedFromOrNull"); `sharedFromOrNull` answers
+  null.
+- **Republish replaces** (same key, same node): the prior generation's
+  `isLive` goes false; holders re-acquire. Pairs with the
+  recreate-don't-reuse screen convention — a retiring screen takes its VM
+  with it (and ScopeHandle's close-is-terminal law applies to any host the VM
+  fronted); a fresh screen constructs + publishes a fresh VM, never revives
+  one. No unpublish/retract API in v1 — republish + node death cover it
+  (backlog).
+- **v1 laws:** render-thread component callers only (guided ISE otherwise —
+  runTask/ScopeHandle precedent). OS 15.0+ floor: `shareOn` AND `sharedFrom`
+  THROW the guided floor ISE pre-15 ("SharedService requires Roku OS 15.0+
+  (SetRef) — the MVVM-layer floor decision (design A4); gate with
+  canShare()"); `sharedFromOrNull` answers a truthful null pre-15 (nothing
+  can ever be shared there — degrade-gracefully callers need no canShare gate
+  of their own). Single-module closed world (dispatch section below).
+
+**Input timing (interim DX):** node handles arrive via `@SGNodeField` +
+`@BrsOnChange` — acquire in the onChange, not in `init` (SG sets fields after
+creation). The `createComponent<T> { }` configure-lambda +
+`@SGRequired`/`onInputsReady()` pair is the recorded adjacent program (design
+decision 10, backlogged). Scene-stash idiom for app-wide services: publish on
+the SCENE at bootstrap, acquire anywhere via `sharedFrom<T>(top.getScene())`.
+
+**Publish-in-lambda trap (backlogged codegen hole, discovered here):**
+`launch { shareOn(top, vm) }` crashes — a `top` READ inside a lambda emits an
+uninstalled `__get_top_k_()` ("Member function not found"). Hoist
+`val node = top` to method scope and capture that (the Suite 9 fixtures'
+shape). Not SharedService-specific.
+
+### isLive: generation stamps, two forms
+
+Liveness is GENERATION-STAMP based — per-key counters in the stash's `__gens`
+map + a `__sharedGen` stamp on the instance — NOT IsSameObject identity: the
+identity oracle is device-FALSE for nested stash entries across separate
+GetRefs (platform facts below), so the design's original oracle was unusable.
+Semantics, both forms: never shared → false; replaced by a republish → false;
+current generation → true; stash unreachable (node destroyed, off-context,
+crippled handle) → false, never a crash.
+
+- `isLive()` (no-arg) checks via the PUBLISH-TIME node handle — reliable
+  OWNER-side. In a consumer the stored handle may have lost GetRef capability
+  crossing inside the SetRef graph → answers false (KDoc'd).
+- `isLive(node: RoSGNode)` (caller-supplied handle — the node you acquired
+  from) — reliable both sides. THE consumer form.
+
+Residual (KDoc'd): a same-generation instance that crossed a COPYING channel
+(a husk) would still stamp-match — acceptable because copying channels are
+compile errors for shared types (rule 3 below).
+
+### Device-pinned platform facts (new facts of record, 2026-08-14, Suite 9 diagnostic runs 1–8)
+
+- **GetRef-handle READS are live; INSERTS through the handle COPY**
+  (intra-thread, fn slots intact — a silent identity break, not a husk).
+  `shareOn` therefore rebuilds the stash as a fresh LOCAL AA + re-SetRef on
+  every publish: instances reach the stash only via plain local insert +
+  SetRef, the identity-preserving primitive.
+- **roUtils.IsSameObject answers false for NESTED stash entries** reached via
+  two separate GetRefs — while state sharing on the same entries is green in
+  the same runs. The scope-handle spike had pinned IsSameObject-true only for
+  the TOP-LEVEL SetRef'd AA.
+- **A node handle nested inside a SetRef'd graph loses its GetRef capability
+  on the receiving side** (`canGetRef` false / `getRef` Invalid) while the
+  SAME node passed over ordinary channels works. Detach-vs-capability
+  discriminator probe = spike bait (named in SharedService.kt's isLiveAgainst
+  comments).
+
+### The dispatch model (no normal path reads a fn slot)
+
+Methods of shared classes emit as receiver-first globals —
+`GuideVm_onAction_Str_k_(m, action)`; suspend members append `_completion`
+LAST (and the mangle includes the Continuation parameter). Call sites: a FINAL
+method → direct static call; an open/abstract method reached through a base
+static type (including base-internal `this.hook()` template calls) → a
+generated dispatcher `<implName>__dispatch(recv, args...)` that reads
+`recv.__proto[0]` and if-chains over the compilation's concrete descendants
+(source-name order) with a guided closed-world else-arm; `super.f()` → direct
+static call to the base impl (the old self-recursive super emission is
+FIXED). Simple val/var reads stay direct member access; non-trivial/open
+accessors get the same static + dispatcher treatment (`__get_X` shapes).
+Wrapper slots are still attached under the original slot names for the
+residual shapes. Machinery: `BrsIntrinsics.isSharedServiceClass` (the sole
+predicate root) + `BrsSharedDispatchLowering` (registry, call-site
+classification, dispatcher generation — its header documents why it is NOT a
+pipeline pass).
+
+**Residual slot paths** (documented — the CANARY watches these): receivers
+statically typed `Any` or an interface; shared overrides of
+`toString`/`equals`/`hashCode` (the Any special paths win — never static);
+member extensions; synthetic data-class members; dependency-klib open
+members.
+
+**Include-closure:** static calls and dispatchers record file dependencies
+automatically — no include anchor needed; a data-only acquirer records
+nothing and needs nothing; a dispatcher makes the BASE's file pull ALL leaf
+files (closed-world consequence). Single-module closed world today — a
+separately-compiled module's shared subclass would be invisible to
+dispatchers; promote to a FIR diagnostic when multi-module becomes real
+(backlog, same note as ScopeHandle's `run {}` blocks).
+
+### CANARY: `sharedCanaryFnSlot` (E2E Suite 9)
+
+Pins Roku's officially-disclaimed fn-ref-through-SetRef behavior by invoking a
+wrapper slot AS a slot cross-component (a `@BrsInline` splice in
+SharedConsumerProbe — deliberately immune to call-site-lowering evolution).
+RED here + everything else green = Roku changed the disclaimed behavior;
+normal operation is unaffected (no normal path reads fn slots). Runbook:
+verify tests 8–12 (sharedFinalStaticCall through sharedSuspendMember) green,
+then the wrapper-slot residual paths are dead — schedule their removal and
+retire the canary. Do NOT "fix" the test. (Informational: tests 8/11/12 would
+catch a correct-but-slot call-site regression only via include-closure
+collapse — "Function is not defined in component's namespace" — not shape
+assertions; the shape pins live in the sharedEmission/sharedDispatch
+goldens.)
+
+### The FIR family (fixture-pinned in the checkers.brs suite)
+
+| Diagnostic | Severity | Fires on |
+|---|---|---|
+| `BRS_SHARED_CLASS_NOT_FINAL` | ERROR | a CONCRETE SharedService descendant declared `open` (dispatchers enumerate concrete leaves; member-bearing abstract bases are LEGAL — the rule is purely structural) |
+| `BRS_SHARED_FN_PROPERTY` | ERROR | a function-typed property anywhere in a shared hierarchy (a stored callback is a fn ref in the shared bag — the one shape static dispatch cannot rescue) |
+| `BRS_SHARED_THROUGH_COPYING_CHANNEL` | ERROR | a SharedService-typed value into a copying channel: `setField` value args and `callFunc` args (both unwrap `asDynamic()`/`unsafeCast()` first), plus `@SG*Field`/`@BrsField` DECLARATIONS — task components only (the render/task clone is the statically checkable copying hop) |
+
+Rule 3's four disclosed STATIC holes (under-approximation by design,
+BrsScopeMarshallability precedent): values pre-erased to `Any`/`Dynamic`
+before the call site; `setFields(aa)` (the plural form); observer `getData()`
+values; generic `T : SharedService`-typed values (ConeTypeParameterType).
+ScopeHandle's channels need NO new rule — its marshallability checkers
+already classify shared types as unmarshallable. The shared-class predicate
+is MIRRORED, not imported (module boundary): checkers.brs
+`BrsSharedServiceTypes` ↔ backend `BrsIntrinsics.isSharedServiceClass`, with
+cross-referencing comments both sites — divergence law: any change lands in
+BOTH in the same commit.
+
+### Test hooks
+
+`canShare(): Boolean` — true iff ambient render-thread component context AND
+the OS 15.0 reference APIs exist (`CreateObject("roUtils")` probe — the
+crash-free detection family; cached per component instance). Never throws;
+the gate for apps that degrade features on older devices.
+
+### Key files
+
+| File | Purpose |
+|------|---------|
+| `libraries/stdlib/brs/src/kotlin/brs/shared/SharedService.kt` | Marker class, `isLive` (both forms), `shareOn`, `canShare`, `sharedFrom`/`OrNull` |
+| `libraries/stdlib/brs/src/kotlin/brs/shared/SharedStash.kt` | Stash layout + `sharedAcquire` (the guided messages), key derivation |
+| `libraries/stdlib/brs/src/kotlin/brs/roku/SceneGraph.kt` | SetRef/GetRef/CanGetRef/Move bindings + `RoUtils` (OS 15 reference APIs) |
+| `compiler/ir/backend.brightscript/src/.../lower/BrsSharedFromCallLowering.kt` | Reified `sharedFrom` call-site rewrite |
+| `compiler/ir/backend.brightscript/src/.../lower/BrsSharedDispatchLowering.kt` | Dispatch registry + call-site classification + `__proto`-name dispatchers |
+| `compiler/fir/checkers/checkers.brs/src/.../BrsSharedServiceTypes.kt` + Shared checkers | The FIR family above (mirrored predicate) |
+
+Canonical example: `../roku-test-app/components/fixtures/SharedOwnerProbe.kt`
++ `SharedConsumerProbe.kt` + `SharedFixtures.kt` (owner, consumer, and the
+base-with-hook + final-subclass hierarchy Suite 9 exercises on device).
+
 ## Component Coroutine Scaffolding: `launch {}` + the self-scheduling pump
 
 Coroutines in SceneGraph components need ZERO wiring — no pump timers, no
@@ -1075,7 +1284,7 @@ window. Direct `./gradlew rokuTest` BYPASSES that guard.
 the stdlib runner: replayed events from a previous run are discarded).
 Results land in `build/test-results/roku/` as JSON + JUnit XML.
 
-**The suites (8 suites, 72 active tests + 3 red-guarded `xtest` placeholders):**
+**The suites (9 suites, 85 active tests + 3 red-guarded `xtest` placeholders):**
 
 | Suite | File | Exercises |
 |-------|------|-----------|
@@ -1087,6 +1296,7 @@ Results land in `build/test-results/roku/` as JSON + JUnit XML.
 | 6 FieldSemantics | `tests/FieldSemanticsTests.kt` | dot-assign vs setField truth table + lambda self-write routing (case 8) |
 | 7 CoroutineUtilities | `tests/CoroutineUtilityTests.kt` | awaitAll/coroutineScope/supervisor/withTimeout in the component pumping regime + awaitAll over concurrent `runTask`s |
 | 8 ScopeHandle | `tests/ScopeHandleTests.kt` | cross-component scope borrowing: both surfaces, close/watchdog, cancellation both directions, dual-backend + mixed pairs, the flagship child→owner→task-thread chain |
+| 9 SharedService | `tests/SharedServiceTests.kt` | reference-shared classes over SetRef: shared-identity mutation chains, guided ISEs, explicit keys, republish + isLive generations, scene stash, static dispatch cross-component (final/base-hook/template/super/suspend), the fn-slot CANARY |
 
 **The main-thread driver:** `tests/TestMain.kt` is a `main()` that creates the
 SceneGraph screen, installs the screen's message port as the shared `TestPort`,
@@ -1130,7 +1340,7 @@ Predicates must return false rather than throw. Probe nodes are created via
 | E2E test suites + driver | `roku-test-app/src/brsTest/kotlin/tests/` (TestMain.kt is the main-thread driver) |
 | E2E fixture components | `roku-test-app/components/fixtures/` |
 
-### Current Gate Numbers (as of the ScopeHandle Stage 2 program, 2026-08-14)
+### Current Gate Numbers (as of the SharedService program, 2026-08-14)
 
 These are the whole-branch green gates; a drop in any of them is a regression.
 (Counting note: the gate is EXECUTED tests. A raw `grep -c "@Test"` on
@@ -1139,10 +1349,10 @@ BrsGoldenFileTests.kt reads one high — it counts the commented-out
 
 | Gate | Count |
 |------|-------|
-| Golden file tests | 71 |
-| FIR diagnostic suite (checkers.brs) | 225 |
-| Stdlib device suite | 514 tests / 51 suites |
-| rokuTest E2E | 72 active tests / 8 suites (+3 red-guarded xtests) |
+| Golden file tests | 74 |
+| FIR diagnostic suite (checkers.brs) | 227 |
+| Stdlib device suite | 524 tests / 53 suites |
+| rokuTest E2E | 85 active tests / 9 suites (+3 red-guarded xtests) |
 | `validateComponentIncludes` + `validateTestComponentIncludes` | strict mode, 0 findings (no allowlist) |
 
 ### Test Output
