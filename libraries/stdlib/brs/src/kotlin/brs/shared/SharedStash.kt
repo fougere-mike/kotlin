@@ -13,7 +13,9 @@ import kotlin.coroutines.pump.PumpScheduler
 /**
  * The per-node stash field: an AA of key → instance entries, ALWAYS written
  * via SetRef (never ordinary setField — that would copy) and read via GetRef
- * (references, live by construction). One field per publishing node.
+ * (references, live by construction). Every publish SetRefs a freshly built
+ * LOCAL container — device fact (2026-08-14): GetRef-handle reads are live,
+ * but inserts through the handle copy. One field per publishing node.
  */
 internal const val SHARED_STASH_FIELD: String = "__kotlinShared"
 

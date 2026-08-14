@@ -94,9 +94,12 @@ public fun shareOn(node: RoSGNode, instance: SharedService) {
  * Publishes [instance] on [node] under [key]: any component holding [node]
  * acquires THE SAME instance via [sharedFrom] — shared identity, not a copy.
  *
- * The stash entry crosses via SetRef only; the stash field is added on first
- * publish and read-modify-written through GetRef references afterwards
- * (reference semantics make the mutation live — no re-SetRef needed).
+ * Every publish builds the next stash generation as a plain local AA —
+ * carrying the prior generation's entries over via live GetRef reads — and
+ * SetRefs it. (Device fact, 2026-08-14 Suite 9 run: GetRef-handle READS are
+ * live, but INSERTS through the handle store a copy — so instances reach the
+ * stash only via local-AA insert + SetRef, the identity-preserving
+ * primitive.)
  *
  * Republish under the same key REPLACES the entry: the prior generation's
  * [SharedService.isLive] goes false, and holders of stale references should
@@ -118,24 +121,40 @@ public fun shareOn(node: RoSGNode, instance: SharedService, key: String) {
                 "(design A4); gate with canShare()"
         )
     }
-    var stash: RoAssociativeArray? = null
-    if (node.canGetRef(SHARED_STASH_FIELD)) {
-        stash = node.getRef(SHARED_STASH_FIELD) as? RoAssociativeArray
-    }
-    if (stash != null) {
-        // Later publish: the GetRef reference IS the live stash — mutating it
-        // is visible to every holder without another SetRef.
-        stash.addReplace(key, instance)
-    } else {
-        // First publish on this node: declare the field (a no-op when it
-        // already exists), then the one and only SetRef of a fresh stash.
-        node.addField(SHARED_STASH_FIELD, "assocarray", false)
-        val fresh = RoAssociativeArray.create()
-        fresh.addReplace(key, instance)
-        node.setRef(SHARED_STASH_FIELD, fresh.asDynamic())
-    }
+    // Back-refs BEFORE the instance enters the stash: the SetRef'd container
+    // shares its entries by reference (device-pinned by the sharedSameInstance
+    // E2E), so state the instance carries at SetRef time is demonstrably on
+    // the shared entry.
     instance.__sharedNode = node
     instance.__sharedKey = key
+    // EVERY publish builds the next stash generation as a plain LOCAL AA and
+    // SetRefs it. Device fact (Suite 9 run, 2026-08-14): READS through a
+    // GetRef handle are live — they return the real entry objects — but
+    // INSERTS through the handle store a slot-preserving intra-thread COPY,
+    // which silently breaks shared identity (the owner's local instance would
+    // not be the stash entry, and post-insert writes would never reach it).
+    // The caller's instance therefore only ever reaches the stash via the
+    // provably-safe primitive: plain local insert + SetRef.
+    val next = RoAssociativeArray.create()
+    if (node.canGetRef(SHARED_STASH_FIELD)) {
+        val prior = node.getRef(SHARED_STASH_FIELD) as? RoAssociativeArray
+        if (prior != null) {
+            // Carry the prior generation's entries into the new container:
+            // live reads + plain local inserts, so entries under OTHER keys
+            // keep their identity across a republish (and stale holders'
+            // isLive() keeps answering truthfully against the new stash).
+            val priorKeys = prior.keys()
+            while (priorKeys.count() > 0) {
+                val priorKey = "${priorKeys.shift()}"
+                next.addReplace(priorKey, prior.lookup(priorKey))
+            }
+        }
+    }
+    next.addReplace(key, instance)
+    // Declare the field (a no-op when it already exists), then SetRef the new
+    // generation.
+    node.addField(SHARED_STASH_FIELD, "assocarray", false)
+    node.setRef(SHARED_STASH_FIELD, next.asDynamic())
 }
 
 /**
