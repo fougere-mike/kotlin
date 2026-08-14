@@ -371,7 +371,12 @@ val shelf = owner.run { buildShelf(genre) }   // genre crosses BY COPY
   constructing the VM). A miss is never a hang: the child gets an immediate
   `ScopeRequestException` naming the fix ("declare the operation in a file the
   owner includes — typically your VM class"). Cross-module `run {}` blocks get
-  the guided miss too — single-module only today (backlog).
+  the guided miss too — single-module only today (backlog). KNOWN HOLE
+  (pump-scan parity): an `exposeScope` call reached only via another file's
+  helper escapes the per-file scan — no binding table is injected; hand-
+  registered requests still work, and `run {}` blocks get the guided
+  dispatch-miss error (lower stakes than the pump hole; KDoc'd at
+  `IrToBrsTransformer.fileCallsExposeScope`).
 
 **v1 laws (both surfaces):** render-thread component callers only (like
 `runTask`); no timeouts in the API — compose with `withTimeout`; one
@@ -428,7 +433,7 @@ time):
 | RoAssociativeArray / RoArray | Cross by DEEP copy (every level — owner-side mutation never propagates back) |
 | Node refs (RoSGNode, ContentNode) | Cross BY REFERENCE on every carrier |
 | Function values | STRIPPED (dropped or Invalid — never callable) |
-| Class instances (incl. data classes, ArrayList/HashMap, component `this`) | HUSK: data keys survive, every method slot stripped; first method call crashes "Member function not found" (&hf4) |
+| Class instances (incl. data classes, ArrayList/HashMap, component `this`) | HUSK: data keys survive, every method slot stripped; first method call crashes "Member function not found" |
 
 **The husk trap:** `as?` PASSES on husks (the `is`/`as` machinery walks
 `__proto`, which is plain data and survives the copy) — Kotlin's type check is
@@ -440,7 +445,7 @@ NO liveness guard; the failure surfaces only at first dispatch.
 |---|---|---|
 | `BRS_SCOPE_BLOCK_NOT_LITERAL` | ERROR | `run { }` argument that isn't a literal lambda |
 | `BRS_SCOPE_CAPTURE_UNMARSHALLABLE` | ERROR | run-block capturing a function-typed value or class instance |
-| `BRS_SCOPE_ARG_NOT_MARSHALLABLE` | ERROR | `run(request, args)` argument type outside the marshallable set |
+| `BRS_SCOPE_ARG_NOT_MARSHALLABLE` | ERROR | `ScopeRequest1`/`ScopeRequest2` DECLARATION whose `A1`/`A2` type argument is outside the marshallable set (no call-site checker — call sites are constrained by the declaration's generics) |
 | `BRS_SCOPE_CAPTURE_MUTATION_LOST` | WARNING | run-block assigning to a captured `var` (copies — the write never reaches the caller) |
 | `BRS_SCOPE_RESULT_NOT_DATA` | WARNING | request/block result type that loses behavior crossing the hop |
 

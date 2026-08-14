@@ -65,7 +65,9 @@ Source ranges: Kotlin e56b1603b368..HEAD of the Stage 2 program, roku-test-app
 - **exposeScope partial-failure retry message misdescribes**: the
   double-call guard's "reuse the ScopeHost returned by the first call" wording
   is wrong for a first call that THREW mid-arming (nothing to reuse; state
-  holder already installed). Low stakes, wording + maybe holder rollback.
+  holder already installed) — and also wrong after close(): close is terminal
+  and no re-expose exists, so there is no host to reuse there either. Low
+  stakes, wording + maybe holder rollback.
 - **missing-advertisement fail-fast un-pinned on device**: the "node has not
   exposed a scope" IllegalStateException path has unit coverage only;
   ScopeOwnerProbe's "neverReply" mode is the natural fixture (kept alive for
@@ -105,6 +107,8 @@ Source ranges: Kotlin e56b1603b368..HEAD of the Stage 2 program, roku-test-app
 - **apply-receiver-nested false-positive fixture**: `apply {}` receiver use
   nested inside a run block — suspected capture-checker false positive;
   fixture to pin intended behavior.
+- **FIR checker keying-prologue duplicated** between FirBrsScopeBlockChecker
+  and FirBrsScopeCaptureChecker (~6 lines); cosmetic dedup candidate.
 
 ## Test-infrastructure residuals
 - **FIR harness verifies name multisets, not positions**: the checkers.brs
@@ -119,3 +123,6 @@ Source ranges: Kotlin e56b1603b368..HEAD of the Stage 2 program, roku-test-app
   fix pre-existing backlog.
 - **channel-matrix vs kotlin-probe deploy.sh run-stamping asymmetry**: fixed
   during Stage 1 for consistency (record only — no open work).
+- **golden-registration bundling** (record only — no action): commit 827e6c2
+  carries the bindingTableInjection golden's @Test registration that belonged
+  with 050592d; history note.
