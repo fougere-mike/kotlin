@@ -361,6 +361,16 @@ class BrsGenerationContext(
     internal var currentFileUsesCoroutines: Boolean = false
 
     /**
+     * True while transforming a file that calls `kotlin.brs.exposeScope`
+     * (per-file pre-scan in transformFile, pump-attach granularity). Gates the
+     * `m.__kotlinScopeBindings` table + `__kotlinScopeBindingsInstall`
+     * injection in generated component init(): owner components need the
+     * lowered run{}-block binding table for dispatch; a same-file non-owner
+     * component picking it up too is inert state.
+     */
+    internal var currentFileCallsExposeScope: Boolean = false
+
+    /**
      * Track enum classes encountered during transformation for initialization.
      */
     internal val enumClassNames = mutableListOf<String>()

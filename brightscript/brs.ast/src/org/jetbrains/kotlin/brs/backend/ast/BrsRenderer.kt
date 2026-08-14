@@ -596,7 +596,16 @@ class BrsRenderer(
         builder.append("{")
         aaLiteral.entries.forEachIndexed { index, entry ->
             if (index > 0) builder.append(", ")
-            builder.append("${entry.key}: ")
+            // Keys that aren't valid BrightScript identifiers (e.g. the '#'-bearing
+            // compiler-synthesized scope-binding request names) must render as
+            // quoted string keys; bare rendering is a device-side syntax error.
+            val key = entry.key
+            fun isIdentChar(c: Char) = c in 'a'..'z' || c in 'A'..'Z' || c in '0'..'9' || c == '_'
+            if (key.isNotEmpty() && !(key[0] in '0'..'9') && key.all(::isIdentChar)) {
+                builder.append("$key: ")
+            } else {
+                builder.append("\"$key\": ")
+            }
             entry.value.accept(this, data)
         }
         builder.append("}")

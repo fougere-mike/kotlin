@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.ir.backend.brs.lower.coroutines.BrsStatementOrigins
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
+import org.jetbrains.kotlin.ir.backend.brs.KOTLIN_SCOPE_BINDINGS_FIELD
 import org.jetbrains.kotlin.ir.backend.brs.KOTLIN_TASK_ERROR_FIELD
 import org.jetbrains.kotlin.ir.backend.brs.KOTLIN_TASK_MAIN_FUNCTION_NAME
 import org.jetbrains.kotlin.ir.backend.brs.KOTLIN_TASK_STATE_FIELD
@@ -97,6 +98,10 @@ class IrToBrsTransformer(
         // Decide whether components in this file get the pump-scheduler attach
         // injected into their generated init()
         genCtx.currentFileUsesCoroutines = fileUsesCoroutines(irFile)
+
+        // Decide whether components in this file get the lowered run{}-block
+        // binding table injected into their generated init() (scope owners)
+        genCtx.currentFileCallsExposeScope = fileCallsExposeScope(irFile)
 
         for (declaration in irFile.declarations) {
             when (declaration) {
@@ -270,6 +275,35 @@ class IrToBrsTransformer(
     private fun isCoroutineMachineryFqName(fq: String): Boolean =
         fq.startsWith("kotlin.coroutines.") ||
             fq == "kotlin.brs.launch" || fq == "kotlin.brs.componentScope"
+
+    /**
+     * True when [irFile] contains a call to `kotlin.brs.exposeScope` — gates
+     * the `m.__kotlinScopeBindings` + `__kotlinScopeBindingsInstall` injection
+     * in the generated init() of components declared in this file (the owner
+     * half of the compiler-lowered `ScopeHandle.run { }` surface). Same file
+     * granularity — and the same helper-file hole — as [fileUsesCoroutines]:
+     * an exposeScope call hidden entirely inside another file's helper escapes
+     * the scan, and such an owner serves hand-registered requests only (run{}
+     * blocks dispatch to the guided-miss outcome, which names the fix).
+     */
+    private fun fileCallsExposeScope(irFile: IrFile): Boolean {
+        var found = false
+        irFile.acceptVoid(object : IrVisitorVoid() {
+            override fun visitElement(element: IrElement) {
+                if (!found) element.acceptChildrenVoid(this)
+            }
+
+            override fun visitCall(expression: IrCall) {
+                if (found) return
+                if (expression.symbol.owner.fqNameWhenAvailable?.asString() == "kotlin.brs.exposeScope") {
+                    found = true
+                    return
+                }
+                expression.acceptChildrenVoid(this)
+            }
+        })
+        return found
+    }
 
     /**
      * True when [expression] is (through value-preserving casts) a component's own
@@ -941,6 +975,38 @@ class IrToBrsTransformer(
                             BrsDotAccess(BrsMRef(), "top"),
                             BrsDotAccess(BrsMRef(), "global")
                         ),
+                        context
+                    )
+                )
+            )
+        }
+
+        // Scope owners (files that call exposeScope): install the lowered
+        // run{}-block binding table — request name → lifted function pointer —
+        // so owner dispatch can serve `owner.run { }` requests. The AA literal
+        // is EMPTY here: entries need the component's include closure, which
+        // is only computable after the whole file transforms; BrsCompiler
+        // populates the registered literal before rendering. The m-scope
+        // assignment is the inspectable artifact; the install call hands the
+        // same table to the stdlib's per-component holder (GetGlobalAA domain
+        // — the __kotlinPumpAttach idiom), which is what dispatch reads.
+        if (genCtx.currentFileCallsExposeScope && !isConcreteTaskComponent(irClass)) {
+            val bindingTable = BrsAALiteral()
+            context.pendingScopeBindingTables.add(bindingTable)
+            bodyStatements.add(
+                BrsExpressionStatement(
+                    BrsBinaryOp(
+                        BrsDotAccess(BrsMRef(), KOTLIN_SCOPE_BINDINGS_FIELD),
+                        BrsBinaryOperator.EQ,
+                        bindingTable
+                    )
+                )
+            )
+            bodyStatements.add(
+                BrsExpressionStatement(
+                    createFunctionCall(
+                        "__kotlinScopeBindingsInstall",
+                        mutableListOf(BrsDotAccess(BrsMRef(), KOTLIN_SCOPE_BINDINGS_FIELD)),
                         context
                     )
                 )

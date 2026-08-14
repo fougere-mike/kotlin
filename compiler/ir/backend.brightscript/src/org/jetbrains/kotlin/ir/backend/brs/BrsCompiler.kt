@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.ir.backend.brs.lower.BrsLoweringPhases
 import org.jetbrains.kotlin.ir.backend.brs.transformers.irToBrs.IrToBrsTransformer
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.backend.common.compilationException
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrFunction
@@ -437,6 +438,11 @@ class BrsCompiler(
             context.needsRuntimeHelpers = false
         }
 
+        // Scope-owner binding tables registered during this file's transform:
+        // fill their entries now that the file's dependency recording is
+        // complete (must precede render — the literal is rendered in init()).
+        populateScopeBindingTables(irFile, context)
+
         val sourceCode = program.render()
 
         val originalPath = irFile.path
@@ -448,6 +454,61 @@ class BrsCompiler(
             originalFilePath = originalPath,
             outputFilePath = outputPath
         )
+    }
+
+    /**
+     * Fill the entries of any binding-table AA literals the transformer
+     * registered while transforming [irFile] (scope-owner component init()).
+     *
+     * Entries: one per lifted `ScopeHandle.run { }` block whose FILE is in
+     * this component's include closure — the same closure the component XML's
+     * script tags are generated from, so every referenced function pointer is
+     * guaranteed packaged (an out-of-closure entry would be an uninitialized
+     * identifier at device compile time). Blocks in the component's OWN file
+     * qualify too (a file is not listed in its own dependency set). Sorted by
+     * request name for deterministic output.
+     *
+     * Runs between transformFile and render: the closure needs the file's
+     * completed dependency recording, and [BrsIrBackendContext.scopeRunBlocks]
+     * is fully populated at lowering time, before any file transforms.
+     */
+    private fun populateScopeBindingTables(irFile: IrFile, context: BrsIrBackendContext) {
+        if (context.pendingScopeBindingTables.isEmpty()) return
+        val tables = context.pendingScopeBindingTables.toList()
+        context.pendingScopeBindingTables.clear()
+
+        val ownFileName = File(irFile.path).nameWithoutExtension + "Kt.brs"
+        val closure = computeComponentDependencies(ownFileName, context)
+
+        val entries = mutableListOf<BrsAAEntry>()
+        for ((blockFile, blocks) in context.scopeRunBlocks) {
+            val blockFileName = File(blockFile.path).nameWithoutExtension + "Kt.brs"
+            if (blockFileName != ownFileName && blockFileName !in closure) continue
+            for (block in blocks) {
+                // The registry holds the function as BUILT by the run-block
+                // lowering; the coroutine pipeline later gives the emitted
+                // declaration its continuation parameter (a mangle-changing
+                // transform), so the emitted BRS name must come from the
+                // CURRENT declaration in the lowered file — resolved by the
+                // lifted function's unique Kotlin name.
+                val emitted = blockFile.declarations
+                    .filterIsInstance<IrSimpleFunction>()
+                    .filter { it.name == block.liftedFunction.name }
+                if (emitted.size != 1) {
+                    compilationException(
+                        "Expected exactly one lifted scope-block function named " +
+                            "'${block.liftedFunction.name}' in ${blockFile.path}, found ${emitted.size}",
+                        block.liftedFunction
+                    )
+                }
+                entries.add(BrsAAEntry(block.requestName, BrsIdentifier(context.getBrsName(emitted[0]))))
+            }
+        }
+        entries.sortBy { it.key }
+
+        for (table in tables) {
+            table.entries.addAll(entries)
+        }
     }
 
     /**

@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.ir.backend.brs.lower
 
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
+import org.jetbrains.kotlin.backend.common.compilationException
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.IrElement
@@ -148,7 +149,13 @@ class BrsScopeRunBlockLowering(
                 val blockArg = expression.getValueArgument(0) as? IrFunctionExpression ?: return expression
                 val receiver = expression.dispatchReceiver ?: return expression
                 val resultType = expression.typeArguments.getOrNull(0) ?: return expression
-                val enclosing = currentFunction ?: return expression
+                // run() is suspend, so FIR guarantees every call site sits inside
+                // some function (suspend fun or suspend lambda) by this phase; a
+                // null here is a broken IR shape — fail loudly, never skip the
+                // rewrite silently (the un-lowered call would throw the stdlib
+                // backstop ISE at runtime instead of compiling correctly).
+                val enclosing = currentFunction
+                    ?: compilationException("ScopeHandle.run { } call site outside any function", expression)
 
                 ordinal += 1
                 val requestName = "$fileFq#$ordinal"

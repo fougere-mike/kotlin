@@ -26,6 +26,14 @@ const val KOTLIN_TASK_STATE_FIELD = "kotlinTaskState"
 const val KOTLIN_TASK_ERROR_FIELD = "kotlinTaskError"
 
 /**
+ * m-scope slot holding a scope-owner component's lowered run{}-block binding
+ * table (request name → lifted function pointer), assigned in generated
+ * init() and handed to the stdlib's per-component holder via
+ * `__kotlinScopeBindingsInstall` (which is what owner dispatch reads).
+ */
+const val KOTLIN_SCOPE_BINDINGS_FIELD = "__kotlinScopeBindings"
+
+/**
  * Information about a SceneGraph node entry extracted from the DSL.
  *
  * This represents a single node in the component's children hierarchy.

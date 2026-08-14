@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.backend.common.linkage.partial.partialLinkageConfig
 import org.jetbrains.kotlin.backend.common.lower.InnerClassesSupport
 import org.jetbrains.kotlin.brs.BrsTargetConfig
 import org.jetbrains.kotlin.brs.RokuOSVersion
+import org.jetbrains.kotlin.brs.backend.ast.BrsAALiteral
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
@@ -330,6 +331,16 @@ class BrsIrBackendContext(
      * injection (owner components' generated init()) is built from this.
      */
     val scopeRunBlocks = mutableMapOf<IrFile, MutableList<ScopeRunBlock>>()
+
+    /**
+     * Binding-table AA literals injected into component init() during the
+     * CURRENT file's transform, awaiting entry population. The entries need
+     * the component's include closure, which is only computable after the
+     * whole file has transformed (dependency recording happens during
+     * transform) — BrsCompiler.compileFile populates and clears this between
+     * transformFile and render.
+     */
+    val pendingScopeBindingTables = mutableListOf<BrsAALiteral>()
 
     // ==================== IO Worker Registry ====================
 
