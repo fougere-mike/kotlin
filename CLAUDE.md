@@ -365,13 +365,20 @@ val shelf = owner.run { buildShelf(genre) }   // genre crosses BY COPY
   set below applies (`BRS_SCOPE_CAPTURE_UNMARSHALLABLE` guards it).
 - Dispatch needs the block's FILE in the owner's include closure: the compiler
   injects a binding table (`__kotlinScopeBindingsInstall`) into the generated
-  `init()` of every component whose file calls `exposeScope`, covering every
-  lifted block in that component's closure. The VM-facade pattern makes this
-  automatic (the block lives in the VM class file; the owner includes it by
-  constructing the VM). A miss is never a hang: the child gets an immediate
-  `ScopeRequestException` naming the fix ("declare the operation in a file the
-  owner includes — typically your VM class"). Cross-module `run {}` blocks get
-  the guided miss too — single-module only today (backlog). KNOWN HOLE
+  `init()` of every component whose file calls `exposeScope`. The table is
+  filled MID-TRANSFORM, so it covers the lifted blocks visible in the closure
+  at that point — a SUBSET of the final include closure (which is resolved in
+  a dedicated pass after all files transform): a `run {}` block in a project
+  file that transforms after the owner (a second-hop helper) can be silently
+  absent from the table and gets the guided dispatch-miss below (Pass-3
+  backfill of the table is backlogged; KDoc'd at
+  `BrsCompiler.populateScopeBindingTables`). The VM-facade pattern makes
+  coverage automatic in practice (the block lives in the VM class file; the
+  owner includes it by constructing the VM). A miss is never a hang: the child
+  gets an immediate `ScopeRequestException` naming the fix ("declare the
+  operation in a file the owner includes — typically your VM class").
+  Cross-module `run {}` blocks get the guided miss too — single-module only
+  today (backlog). KNOWN HOLE
   (pump-scan parity): an `exposeScope` call reached only via another file's
   helper escapes the per-file scan — no binding table is injected; hand-
   registered requests still work, and `run {}` blocks get the guided
@@ -1373,7 +1380,7 @@ Predicates must return false rather than throw. Probe nodes are created via
 | E2E test suites + driver | `roku-test-app/src/brsTest/kotlin/tests/` (TestMain.kt is the main-thread driver) |
 | E2E fixture components | `roku-test-app/components/fixtures/` |
 
-### Current Gate Numbers (as of the top-in-lambda scope-read fix, 2026-08-14)
+### Current Gate Numbers (as of the include-closure transitivity fix, 2026-08-14)
 
 These are the whole-branch green gates; a drop in any of them is a regression.
 (Counting note: the gate is EXECUTED tests. A raw `grep -c "@Test"` on
@@ -1382,7 +1389,7 @@ BrsGoldenFileTests.kt reads one high — it counts the commented-out
 
 | Gate | Count |
 |------|-------|
-| Golden file tests | 78 |
+| Golden file tests | 79 |
 | FIR diagnostic suite (checkers.brs) | 227 |
 | Stdlib device suite | 524 tests / 53 suites |
 | rokuTest E2E | 86 active tests / 9 suites (+3 red-guarded xtests) |

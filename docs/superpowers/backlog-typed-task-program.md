@@ -238,3 +238,37 @@ facts, and the CANARY runbook.
   inconsistency — a method literally named `copy`/`componentX` on a plain
   class renders simple at call sites against a mangled attachment — remains
   pre-existing and open.
+
+# Include-closure transitivity fix backlog (recorded 2026-08-14)
+
+Fix of record: commit 57936b2c7945 — component XML + deps.json generation
+moved to a dedicated Pass 3 after all files transform, closing the
+order-dependent hole where a project file transformed after the component's
+own file (the VM-facade shape) had its deps silently dropped from the
+component's includes.
+
+## Compiler residuals
+
+- **Scope binding tables are filled from a mid-transform closure SUBSET**
+  (sibling hole the Pass 3 split exposed): `populateScopeBindingTables` runs
+  between transformFile and render, so its `computeComponentDependencies`
+  call sees only the files transformed so far — a `run {}` block in a
+  second-hop project file (component → helper → block file) that transforms
+  after the owner is silently absent from the table and surfaces as the
+  guided dispatch-miss `ScopeRequestException` (never a hang; packaging
+  safety unaffected — every emitted entry is inside the larger Pass 3
+  closure). Real fix: backfill the table literal from the Pass 3 closure
+  (the AA literal object is reachable after render only if retained — retain
+  and fill before final write-out), or a pre-pass dependency scan; the table
+  is rendered into init(), so the fill cannot simply move after render.
+  KDoc'd at `BrsCompiler.populateScopeBindingTables`.
+
+## Test-infrastructure residuals
+
+- **Multi-file golden order assumption**: the discriminating power of
+  `components/projectHelperTransitiveDeps` assumes `loweredModule.files`
+  preserves freeArgs order (component before helper — verified by the
+  pre-fix red run, not asserted anywhere). Hardening ideas: assert module
+  file order in the harness, or make the golden self-checking with an
+  absent-then-present style assertion so a silent order change can't turn
+  the golden into a tautology.
