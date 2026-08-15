@@ -222,8 +222,8 @@ function BindingTableInjection_slambda_doResume_k_() as Dynamic
             tmp = m.__get_state()
             if __kotlin_identityEquals(tmp, 0) then
                 m.__set_exceptionState(3)
-                m.self2 = scopeHandleOf_RoSGNode_k_(m.this_0.__get_top_k_())
-                m.node1 = m.this_0.__get_top_k_()
+                m.self2 = scopeHandleOf_RoSGNode_k_(m.this_0.top)
+                m.node1 = m.this_0.top
                 m.__set_state(1)
                 suspendResult = runLowered_rScopeHandle_Str_RoAssociativeArrayN_Continuation_k_(m.self2, "bindingTableInjection#1", invalid, m)
                 if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then

@@ -1,7 +1,7 @@
-// --- File: RunBlockLowering.deps.json ---
+// --- File: LambdaScopeRead.deps.json ---
 {
   "version": 1,
-  "component": "RunBlockLowering",
+  "component": "LambdaScopeRead",
   "dependencies": [
     "AnyKt.brs",
     "ArrayListKt.brs",
@@ -13,7 +13,7 @@
     "CollectionExtensionsKt.brs",
     "CombinedContextKt.brs",
     "ComponentCoroutinesKt.brs",
-    "ComponentMailboxKt.brs",
+    "ContainerNodesKt.brs",
     "ContinuationInterceptorKt.brs",
     "ContinuationKt.brs",
     "CoroutineDispatcherKt.brs",
@@ -34,7 +34,9 @@
     "IntrinsicsBrsKt.brs",
     "JobKt.brs",
     "KotlinKt.brs",
+    "LayoutBuilderKt.brs",
     "MapExtensionsBrsKt.brs",
+    "NodeEntryKt.brs",
     "PairKt.brs",
     "ParkedContinuationKt.brs",
     "PreconditionsKt.brs",
@@ -42,12 +44,9 @@
     "PumpSchedulerKt.brs",
     "RangeOperatorsBrsKt.brs",
     "RangesKt.brs",
+    "RenderableNodesKt.brs",
     "ResultKt.brs",
-    "ScopeApiKt.brs",
-    "ScopeHostImplKt.brs",
-    "ScopeRtqBackendKt.brs",
-    "ScopeWireKt.brs",
-    "ScopesKt.brs",
+    "SceneLayoutKt.brs",
     "StringBuilderBrsKt.brs",
     "TaskPoolKt.brs",
     "ThrowableKt.brs",
@@ -58,6 +57,7 @@
     "UShortKt.brs",
     "UnconfinedDispatcherKt.brs",
     "UnsignedUtilsKt.brs",
+    "WidgetNodesKt.brs",
     "charBrsKt.brs",
     "consoleKt.brs",
     "coreRuntimeKt.brs",
@@ -67,9 +67,9 @@
 }
 
 
-// --- File: RunBlockLowering.xml ---
+// --- File: LambdaScopeRead.xml ---
 <?xml version="1.0" encoding="utf-8" ?>
-<component name="RunBlockLowering" extends="Group">
+<component name="LambdaScopeRead" extends="Group">
     <interface>
         <field id="status" type="string" />
     </interface>
@@ -83,7 +83,7 @@
     <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/ComponentMailboxKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContainerNodesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CoroutineDispatcherKt.brs" />
@@ -104,7 +104,9 @@
     <script type="text/brightscript" uri="pkg:/source/IntrinsicsBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/JobKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/LayoutBuilderKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/MapExtensionsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/NodeEntryKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/PairKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ParkedContinuationKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
@@ -112,12 +114,9 @@
     <script type="text/brightscript" uri="pkg:/source/PumpSchedulerKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RenderableNodesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ResultKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/ScopeApiKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/ScopeHostImplKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/ScopeRtqBackendKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/ScopeWireKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/ScopesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/SceneLayoutKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/TaskPoolKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
@@ -128,146 +127,177 @@
     <script type="text/brightscript" uri="pkg:/source/UShortKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/UnconfinedDispatcherKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/UnsignedUtilsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/WidgetNodesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/consoleKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
-    <script type="text/brightscript" uri="pkg:/components/RunBlockLowering/RunBlockLoweringKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/LambdaScopeRead/LambdaScopeReadKt.brs" />
+    <children>
+        <ShelfWidget id="shelfNode"/>
+    </children>
 </component>
 
 
-// --- File: runBlockLoweringKt.brs ---
-function ControlReq_create_k_() as Object
-    this = ScopeRequest_create_Str_k_("ControlReq")
-    this._super = {}
-    this.__proto = ["ControlReq", this.__proto]
-    this.__type = "ControlReq"
+// --- File: lambdaComponentScopeReadKt.brs ---
+function LambdaScopeRead_Layout_create_RoSGNode_k_(top_ as Object) as Object
+    this = {}
+    this.__type = "LambdaScopeRead_Layout"
+    this.__proto = ["LambdaScopeRead_Layout"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.__get_top = LambdaScopeRead_Layout___get_top_k_
+    this.__get__shelfNode = LambdaScopeRead_Layout___get__shelfNode_k_
+    this.__set__shelfNode = LambdaScopeRead_Layout___set__shelfNode_RoSGNodeN_k_
+    this.__get_shelfNode = LambdaScopeRead_Layout___get_shelfNode_k_
+    this.top = top_
+    this._shelfNode = invalid
     return this
 end function
 
-function ControlReq_getInstance() as Object
-    if GetGlobalAA().ControlReq_instance = invalid then
-        GetGlobalAA().ControlReq_instance = ControlReq_create_k_()
-    end if
-    return GetGlobalAA().ControlReq_instance
+function LambdaScopeRead_Layout___get_top_k_() as Object
+    return m.top
 end function
 
-function loadShelf_I_RoSGNode_k_(shelfId as Integer, node as Object) as Integer
-    return shelfId + 1
+function LambdaScopeRead_Layout___get__shelfNode_k_() as Dynamic
+    return m._shelfNode
+end function
+
+sub LambdaScopeRead_Layout___set__shelfNode_RoSGNodeN_k_(value as Dynamic)
+    m._shelfNode = value
+end sub
+
+function LambdaScopeRead_Layout___get_shelfNode_k_() as Object
+    if m.__get__shelfNode() = invalid then
+        tmp0_elvis_lhs = m.__get_top().findNode("shelfNode")
+        __when_tmp0 = invalid
+        if tmp0_elvis_lhs = invalid then
+            __when_tmp0 = error_Any_k_("Layout node 'shelfNode' not found in component")
+        else
+            __when_tmp0 = tmp0_elvis_lhs
+        end if
+        m.__set__shelfNode(__when_tmp0)
+    end if
+    return m.__get__shelfNode()
 end function
 
 sub init()
     __kotlinPumpAttach(m.top, m.global)
     m.top.status = ""
-    m.__get_status_k_ = RunBlockLowering___get_status_k_
-    m.__set_status_Str_k_ = RunBlockLowering___set_status_Str_k_
-    launch_rComponentBase_CoroutineContext_SuspendFunction1CoroutineScopeV_k_(m, invalid, RunBlockLowering_slambda_create_RunBlockLowering_ContinuationAnyNN_k_(m, invalid))
+    m.layout = LambdaScopeRead_Layout_create_RoSGNode_k_(m.top)
+    m.__get_status_k_ = LambdaScopeRead___get_status_k_
+    m.__set_status_Str_k_ = LambdaScopeRead___set_status_Str_k_
+    m.__get_layout_k_ = LambdaScopeRead___get_layout_k_
+    launch_rComponentBase_CoroutineContext_SuspendFunction1CoroutineScopeV_k_(m, invalid, LambdaScopeRead_slambda_create_LambdaScopeRead_ContinuationAnyNN_k_(m, invalid))
 end sub
 
 function onKeyEvent(key as String, press as Boolean) as Boolean
     return false
 end function
 
-function RunBlockLowering___get_status_k_() as String
+function LambdaScopeRead___get_status_k_() as String
     return m.top.status
 end function
 
-sub RunBlockLowering___set_status_Str_k_(value as String)
+sub LambdaScopeRead___set_status_Str_k_(value as String)
     m.top.status = value
 end sub
 
-function __scopeBlock_runBlockLowering_1_RoAssociativeArrayN_ContinuationI_k_(captures as Dynamic, _completion as Object) as Object
-    return 7
+function LambdaScopeRead___get_layout_k_() as Object
+    return m.layout
 end function
 
-function __scopeBlock_runBlockLowering_2_RoAssociativeArrayN_ContinuationI_k_(captures as Dynamic, _completion as Object) as Object
-    shelfId = captures.lookup("shelfId")
-    node = captures.lookup("node")
-    return loadShelf_I_RoSGNode_k_(shelfId, node)
+function LambdaScopeRead_Companion_create_k_() as Object
+    this = {}
+    this.__type = "LambdaScopeRead_Companion"
+    this.__proto = ["LambdaScopeRead_Companion"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.defineLayout_k_ = LambdaScopeRead_Companion_defineLayout_k_
+    return this
 end function
 
-function RunBlockLowering_slambda_create_RunBlockLowering_ContinuationAnyNN_k_(this_0 as Object, resultContinuation as Dynamic) as Object
+function LambdaScopeRead_Companion_getInstance() as Object
+    if GetGlobalAA().LambdaScopeRead_Companion_instance = invalid then
+        GetGlobalAA().LambdaScopeRead_Companion_instance = LambdaScopeRead_Companion_create_k_()
+    end if
+    return GetGlobalAA().LambdaScopeRead_Companion_instance
+end function
+
+function LambdaScopeRead_Companion_defineLayout_k_() as Object
+    return sceneLayout_Function1LayoutBuilderV_k_(LambdaScopeRead_Companion_defineLayout_lambda_create_k_())
+end function
+
+function LambdaScopeRead_slambda_create_LambdaScopeRead_ContinuationAnyNN_k_(this_0 as Object, resultContinuation as Dynamic) as Object
     this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
     this._super = {}
     this._super.invoke_AnyN_Continuation_k_ = this.invoke_AnyN_Continuation_k_
     this._super.doResume_k_ = this.doResume_k_
     this._super.create_AnyN_Continuation_k_ = this.create_AnyN_Continuation_k_
-    this.__proto = ["RunBlockLowering_slambda", "SuspendFunction1", this.__proto]
-    this.__type = "RunBlockLowering_slambda"
-    this.invoke_AnyN_Continuation_k_ = RunBlockLowering_slambda_invoke_AnyN_Continuation_k_
-    this.doResume_k_ = RunBlockLowering_slambda_doResume_k_
-    this.create_AnyN_Continuation_k_ = RunBlockLowering_slambda_create_AnyN_Continuation_k_
+    this.__proto = ["LambdaScopeRead_slambda", "SuspendFunction1", this.__proto]
+    this.__type = "LambdaScopeRead_slambda"
+    this.invoke_AnyN_Continuation_k_ = LambdaScopeRead_slambda_invoke_AnyN_Continuation_k_
+    this.doResume_k_ = LambdaScopeRead_slambda_doResume_k_
+    this.create_AnyN_Continuation_k_ = LambdaScopeRead_slambda_create_AnyN_Continuation_k_
     this.this_0 = this_0
     return this
 end function
 
-function RunBlockLowering_slambda_invoke_AnyN_Continuation_k_(_this_launch as Object, _completion as Object) as Object
+function LambdaScopeRead_slambda_invoke_AnyN_Continuation_k_(_this_launch as Object, _completion as Object) as Object
     tmp = m.create_AnyN_Continuation_k_(_this_launch, _completion)
     tmp.__set_result(invalid)
     tmp.__set_exception(invalid)
     return tmp.doResume_k_()
 end function
 
-function RunBlockLowering_slambda_doResume_k_() as Dynamic
-    scopeRecv = invalid
-    scopeCaptures = invalid
-    control = invalid
+function LambdaScopeRead_slambda_doResume_k_() as Dynamic
     suspendResult = m.__get_result()
     while true
                 try
             tmp = m.__get_state()
             if __kotlin_identityEquals(tmp, 0) then
-                m.__set_exceptionState(4)
-                m.owner2 = scopeHandleOf_RoSGNode_k_(m.this_0.top)
-                m.shelfId4 = 41
-                m.node3 = m.this_0.top
-                m.__set_state(1)
-                suspendResult = runLowered_rScopeHandle_Str_RoAssociativeArrayN_Continuation_k_(m.owner2, "runBlockLowering#1", invalid, m)
-                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
-                    return suspendResult
-                end if
-                continue while
-            else if __kotlin_identityEquals(tmp, 1) then
-                m.zeroCapture1 = suspendResult
-                scopeRecv = m.owner2
-                scopeCaptures = CreateObject("roAssociativeArray")
-                scopeCaptures.addReplace("shelfId", m.shelfId4)
-                scopeCaptures.addReplace("node", m.node3)
-                m.__set_state(2)
-                suspendResult = runLowered_rScopeHandle_Str_RoAssociativeArrayN_Continuation_k_(scopeRecv, "runBlockLowering#2", scopeCaptures, m)
-                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
-                    return suspendResult
-                end if
-                continue while
-            else if __kotlin_identityEquals(tmp, 2) then
-                m.withCaptures0 = suspendResult
-                m.__set_state(3)
-                suspendResult = m.owner2.run_ScopeRequest_Continuation_k_(ControlReq_getInstance(), m)
-                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
-                    return suspendResult
-                end if
-                continue while
-            else if __kotlin_identityEquals(tmp, 3) then
-                control = suspendResult
-                m.this_0.top.status = ((("" + __kotlin_numToStr_I_k_(m.zeroCapture1)) + __kotlin_numToStr_I_k_(m.withCaptures0)) + __kotlin_numToStr_I_k_(control))
+                m.__set_exceptionState(1)
+                node = m.this_0.top
+                node.setFocus(true)
+                g = m.this_0.global
+                m.this_0.addReplace("marker", g.hasField("beacon"))
+                shelf = m.this_0.layout.__get_shelfNode()
+                shelf.setFocus(true)
+                m.this_0.top.status = "done"
+
                                 return invalid
-            else if __kotlin_identityEquals(tmp, 4) then
+            else if __kotlin_identityEquals(tmp, 1) then
                 throw m.__get_exception()
             end if
         catch e
-            if __kotlin_identityEquals(m.__get_exceptionState(), 4) then
-                throw e
-            else
-                m.__set_state(m.__get_exceptionState())
-                m.__set_exception(e)
-            end if
+                        throw e
         end try
     end while
 end function
 
-function RunBlockLowering_slambda_create_AnyN_Continuation_k_(_this_launch as Dynamic, completion as Object) as Object
-    i = RunBlockLowering_slambda_create_RunBlockLowering_ContinuationAnyNN_k_(m.this_0, completion)
+function LambdaScopeRead_slambda_create_AnyN_Continuation_k_(_this_launch as Dynamic, completion as Object) as Object
+    i = LambdaScopeRead_slambda_create_LambdaScopeRead_ContinuationAnyNN_k_(m.this_0, completion)
     i._this_launch = _this_launch
     return i
 end function
+
+function LambdaScopeRead_Companion_defineLayout_lambda_create_k_() as Object
+    this = {}
+    this.__type = "LambdaScopeRead_Companion_defineLayout_lambda"
+    this.__proto = ["LambdaScopeRead_Companion_defineLayout_lambda", "Function1", "Function"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.invoke_AnyN_k_ = LambdaScopeRead_Companion_defineLayout_lambda_invoke_AnyN_k_
+    return this
+end function
+
+sub LambdaScopeRead_Companion_defineLayout_lambda_invoke_AnyN_k_(_this_sceneLayout as Object)
+    _this_sceneLayout.component("ShelfWidget", "shelfNode", invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid)
+end sub

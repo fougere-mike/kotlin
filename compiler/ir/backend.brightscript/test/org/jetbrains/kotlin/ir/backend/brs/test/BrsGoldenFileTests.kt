@@ -218,6 +218,9 @@ class BrsComponentGoldenFileTests : AbstractBrsGoldenFileTest() {
     fun lambdaSelfWriteToField() = runTest("components/lambdaSelfWriteToField.kt")
 
     @Test
+    fun lambdaComponentScopeRead() = runTest("components/lambdaComponentScopeRead.kt")
+
+    @Test
     fun brsFieldNamedArgs() = runTest("components/brsFieldNamedArgs.kt")
 
     @Test

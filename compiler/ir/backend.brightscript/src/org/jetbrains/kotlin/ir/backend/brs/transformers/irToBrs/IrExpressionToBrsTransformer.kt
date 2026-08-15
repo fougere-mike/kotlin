@@ -1438,14 +1438,32 @@ class IrExpressionToBrsTransformer(
                     val property = function.correspondingPropertySymbol?.owner
                     val backingField = property?.backingField
 
-                    // Special handling for SceneGraph component scope properties (top, global, m)
-                    // When in component context, these compile to m.top, m.global, m
-                    // When inside a lambda, use getComponentMRef() to get the captured component reference
-                    if (genCtx.isInComponentContext && context.intrinsics.isComponentScopeProperty(fieldName)) {
-                        val componentM = genCtx.getComponentMRef()
-                        return when (fieldName) {
-                            "m" -> componentM  // Just m (or m._componentM in lambda)
-                            else -> BrsDotAccess(componentM, fieldName)  // m.top, m.global
+                    // Special handling for SceneGraph component scope properties (top, global, m).
+                    // The resolved-declaration guard keys this to ComponentBase's OWN properties —
+                    // an unrelated property that merely shares one of these names (a plain class's
+                    // `top` val, SceneLayoutBase.top) stays on the ordinary accessor paths below.
+                    if (context.intrinsics.isComponentScopeProperty(fieldName) && isComponentBaseScopeGetter(function)) {
+                        // In component context (init/methods, closure-AA lambdas): m / m.top /
+                        // m.global, via getComponentMRef() so closure bodies use m._componentM
+                        if (genCtx.isInComponentContext) {
+                            val componentM = genCtx.getComponentMRef()
+                            return when (fieldName) {
+                                "m" -> componentM  // Just m (or m._componentM in lambda)
+                                else -> BrsDotAccess(componentM, fieldName)  // m.top, m.global
+                            }
+                        }
+                        // Read through a lambda/coroutine-captured component `this` (a capture
+                        // field in genCtx.capturedComponentSelfFields — lowered suspend lambdas
+                        // are file-level classes, so isInComponentContext is false here): at
+                        // runtime the captured value IS the component's m-scope AA, which
+                        // natively carries .top and .global. The generic path below would emit
+                        // an accessor call (__get_top_k_()) that component init deliberately
+                        // never attaches — "Member function not found" on device.
+                        if (isCapturedComponentSelfReceiver(receiver)) {
+                            return when (fieldName) {
+                                "m" -> receiverExpr  // the captured value IS the m-scope AA
+                                else -> BrsDotAccess(receiverExpr, fieldName)  // m.this_0.top / m.this_0.global
+                            }
                         }
                     }
 
@@ -1498,6 +1516,19 @@ class IrExpressionToBrsTransformer(
                                 }
                                 // Another instance's interface field: direct node field access
                                 // works on the raw roSGNode handle
+                                return BrsDotAccess(receiverExpr, fieldName)
+                            }
+                            // A Layout-stub property read through a captured component `this`:
+                            // the stub lives at m.<name> on the m-scope AA (which the captured
+                            // value IS at runtime), and layout-class accessors are deliberately
+                            // never emitted or attached (transformSceneGraphComponent skips
+                            // them) — mirror the method-scope emission with the captured value
+                            // as the m reference.
+                            if (!isSelfAccess && !componentProperty.isDelegated &&
+                                componentProperty.backingField != null &&
+                                isCapturedComponentSelfReceiver(receiver) &&
+                                isLayoutClassProperty(componentProperty, componentPropertyClass)
+                            ) {
                                 return BrsDotAccess(receiverExpr, fieldName)
                             }
                             // Computed self properties and un-annotated state on another
@@ -3036,6 +3067,19 @@ class IrExpressionToBrsTransformer(
         val componentClass = genCtx.currentComponentClass ?: return false
         val parameterClass = parameter.type.classOrNull?.owner ?: return false
         return parameterClass == componentClass || componentClass.isSubclassOf(parameterClass)
+    }
+
+    /**
+     * True when [getter] is a property getter whose RESOLVED declaration lives on
+     * kotlin.brs.ComponentBase — i.e. the real component-scope `top`/`global`/`m`,
+     * as opposed to an unrelated property that shares the name (SceneLayoutBase.top,
+     * a user class's `top` val). Keeps the component-scope special case from
+     * hijacking ordinary accessor emission by name alone.
+     */
+    private fun isComponentBaseScopeGetter(getter: IrSimpleFunction): Boolean {
+        val resolved = (if (getter.isFakeOverride) getter.resolveFakeOverride() else null) ?: getter
+        val parentClass = resolved.parent as? IrClass ?: return false
+        return parentClass.fqNameWhenAvailable == BrsStandardClassIds.Components.ComponentBase.asSingleFqName()
     }
 
     /**
