@@ -509,11 +509,21 @@ class BrsCompiler(
      * registered while transforming [irFile] (scope-owner component init()).
      *
      * Entries: one per lifted `ScopeHandle.run { }` block whose FILE is in
-     * this component's include closure — the same closure the component XML's
-     * script tags are generated from, so every referenced function pointer is
-     * guaranteed packaged (an out-of-closure entry would be an uninitialized
-     * identifier at device compile time). Blocks in the component's OWN file
-     * qualify too (a file is not listed in its own dependency set). Sorted by
+     * this component's include closure AS KNOWN MID-TRANSFORM. That is a
+     * SUBSET of the closure the component XML's script tags are generated
+     * from (Pass 3, after every file transforms): a project file not yet
+     * transformed has no dependency entries, so a run{} block living in a
+     * second-hop project file (component → helper → block file) that
+     * transforms after the owner is silently absent from the table — the
+     * child gets the guided dispatch-miss ScopeRequestException, never a
+     * hang. Packaging safety is unaffected: every entry that IS emitted
+     * refers to a file inside the (larger) Pass 3 closure, so its function
+     * pointer is guaranteed packaged (an out-of-closure entry would be an
+     * uninitialized identifier at device compile time). Backfilling the
+     * table literal from the Pass 3 closure (or a pre-pass dep scan) is
+     * backlogged — the table is rendered into init(), so filling cannot
+     * simply move after render. Blocks in the component's OWN file qualify
+     * too (a file is not listed in its own dependency set). Sorted by
      * request name for deterministic output.
      *
      * Runs between transformFile and render: the closure needs the file's
