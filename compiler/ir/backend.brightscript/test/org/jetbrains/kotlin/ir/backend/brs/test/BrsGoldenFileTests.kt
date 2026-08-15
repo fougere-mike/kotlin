@@ -221,6 +221,9 @@ class BrsComponentGoldenFileTests : AbstractBrsGoldenFileTest() {
     fun lambdaComponentScopeRead() = runTest("components/lambdaComponentScopeRead.kt")
 
     @Test
+    fun plainTopNameNoHijack() = runTest("components/plainTopNameNoHijack.kt")
+
+    @Test
     fun brsFieldNamedArgs() = runTest("components/brsFieldNamedArgs.kt")
 
     @Test

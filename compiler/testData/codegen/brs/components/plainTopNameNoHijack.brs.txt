@@ -1,0 +1,113 @@
+// --- File: PlainTopNameNoHijack.deps.json ---
+{
+  "version": 1,
+  "component": "PlainTopNameNoHijack",
+  "dependencies": [
+    "AnyKt.brs",
+    "ArrayListKt.brs",
+    "ArraysBrsKt.brs",
+    "ArraysKt.brs",
+    "CharCategoryBrsKt.brs",
+    "ExceptionsKt.brs",
+    "HashMapKt.brs",
+    "HashSetKt.brs",
+    "KotlinKt.brs",
+    "PreconditionsKt.brs",
+    "PrimitiveIteratorsKt.brs",
+    "RangeOperatorsBrsKt.brs",
+    "RangesKt.brs",
+    "StringBuilderBrsKt.brs",
+    "ThrowableKt.brs",
+    "UByteKt.brs",
+    "UIntKt.brs",
+    "ULongKt.brs",
+    "URangesKt.brs",
+    "UShortKt.brs",
+    "UnsignedUtilsKt.brs",
+    "charBrsKt.brs",
+    "consoleKt.brs",
+    "coreRuntimeKt.brs",
+    "primitivesKt.brs",
+    "stringBrsKt.brs"
+  ]
+}
+
+
+// --- File: PlainTopNameNoHijack.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="PlainTopNameNoHijack" extends="Group">
+    <interface>
+        <field id="status" type="string" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PrimitiveIteratorsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ULongKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/URangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UShortKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnsignedUtilsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/consoleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/PlainTopNameNoHijack/PlainTopNameNoHijackKt.brs" />
+</component>
+
+
+// --- File: plainTopNameNoHijackKt.brs ---
+function TopNamedHolder_create_Str_k_(top_ as String) as Object
+    this = {}
+    this.__type = "TopNamedHolder"
+    this.__proto = ["TopNamedHolder"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.__get_top = TopNamedHolder___get_top_k_
+    this.__get_globalTag = TopNamedHolder___get_globalTag_k_
+    this.top = top_
+    return this
+end function
+
+function TopNamedHolder___get_top_k_() as String
+    return m.top
+end function
+
+function TopNamedHolder___get_globalTag_k_() as String
+    return "tag:" + m.__get_top()
+end function
+
+sub init()
+    m.top.status = ""
+    m.__get_status_k_ = PlainTopNameNoHijack___get_status_k_
+    m.__set_status_Str_k_ = PlainTopNameNoHijack___set_status_Str_k_
+    marker = TopNamedHolder_create_Str_k_("plain")
+    m.top.status = ((marker.__get_top() + ":") + marker.__get_globalTag())
+end sub
+
+function onKeyEvent(key as String, press as Boolean) as Boolean
+    return false
+end function
+
+function PlainTopNameNoHijack___get_status_k_() as String
+    return m.top.status
+end function
+
+sub PlainTopNameNoHijack___set_status_Str_k_(value as String)
+    m.top.status = value
+end sub

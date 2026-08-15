@@ -1519,11 +1519,16 @@ class IrExpressionToBrsTransformer(
                                 return BrsDotAccess(receiverExpr, fieldName)
                             }
                             // A Layout-stub property read through a captured component `this`:
-                            // the stub lives at m.<name> on the m-scope AA (which the captured
-                            // value IS at runtime), and layout-class accessors are deliberately
-                            // never emitted or attached (transformSceneGraphComponent skips
-                            // them) — mirror the method-scope emission with the captured value
-                            // as the m reference.
+                            // mirror the method-scope emission (m.<name> — the captured value
+                            // IS the m-scope AA where init stored the stub), so lambda reads
+                            // are shape-identical to method-scope reads. This is emission
+                            // PARITY, not a crash fix like top/global/m above: in the live
+                            // regime (layoutInfo == null — a companion DSL of component(...)
+                            // entries is not recognized as layout info) the layout accessor IS
+                            // generated and attached, so the generic accessor call below would
+                            // resolve; only the recognized-layoutInfo regime skips attachment
+                            // (transformSceneGraphComponent). Direct member access is correct
+                            // in both.
                             if (!isSelfAccess && !componentProperty.isDelegated &&
                                 componentProperty.backingField != null &&
                                 isCapturedComponentSelfReceiver(receiver) &&
