@@ -1527,7 +1527,7 @@ class IrExpressionToBrsTransformer(
                             // entries is not recognized as layout info) the layout accessor IS
                             // generated and attached, so the generic accessor call below would
                             // resolve; only the recognized-layoutInfo regime skips attachment
-                            // (transformSceneGraphComponent). Direct member access is correct
+                            // (transformSceneGraphComponent). Shape-identical to method scope
                             // in both.
                             if (!isSelfAccess && !componentProperty.isDelegated &&
                                 componentProperty.backingField != null &&
