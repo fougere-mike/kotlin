@@ -215,8 +215,18 @@ facts, and the CANARY runbook.
   Fix belongs at emission (generate-only-if-not-user-declared, or emit the
   user's body under the simple name); a FIR warning naming the replacement is
   the cheap interim guard.
-- **Data-class emission skip vs attachment skip mismatch**: RESOLVED in the
-  Task 6 fix wave — both skips (and the shared-dispatch exclusion) now share
-  one digit-checked predicate, `isDataClassGeneratedMemberName`
-  (BrsSharedDispatchLowering.kt); a hand-written `componentFoo()` is emitted
-  and attached like any ordinary member.
+- **Data-class generated-member heuristic drift**: RESOLVED across fix waves
+  1+2 — every consumer now shares the one digit-checked predicate,
+  `isDataClassGeneratedMemberName` (BrsSharedDispatchLowering.kt): the
+  data-class emission skip, the attachment skip, the shared-dispatch
+  exclusion (C1), the DATA-class call-site simple-name render gate (D2), the
+  dispatcher rung shape (D1: rungs into generated members slot-dispatch),
+  and the function manifest (generated members recorded under their emitted
+  SIMPLE names — the mangled entries were phantoms). A hand-written
+  `componentFoo()` on a data class is emitted, attached, AND called mangled —
+  the round trip is callable. NON-data classes keep the legacy call-site
+  render heuristic VERBATIM (load-bearing: layoutStubAccess pins the
+  sceneLayout `component(...)` simple render); the latent non-data
+  inconsistency — a method literally named `copy`/`componentX` on a plain
+  class renders simple at call sites against a mangled attachment — remains
+  pre-existing and open.

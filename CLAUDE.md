@@ -645,9 +645,13 @@ pipeline pass).
 **Residual slot paths** (documented — the CANARY watches these): receivers
 statically typed `Any` or an interface; `toString()` on any shared receiver
 (the Any toString interception wins — never static; hand-written
-`equals`/`hashCode` overrides on class-typed receivers DO go static, and
-resolve correctly — they are extension-shaped like any hand-written member);
-member extensions; data-class generated-member NAMES on a shared DATA class
+`equals`/`hashCode` overrides on class-typed receivers go static/dispatcher
+and resolve correctly, with ONE rung exception: a dispatcher rung that
+resolves to a DATA-class leaf's GENERATED structural override emits a SLOT
+call through the leaf's simple-named attachment — no mangled global exists
+for generated members, a mangled rung was fix-wave-2 finding D1 — so that
+rung joins this residual family); member extensions; data-class
+generated-member NAMES on a shared DATA class
 (equals/hashCode/toString/copy/componentN — excluded by NAME, hand-written
 same-named members included, because the data-class emitters own those names
 and emit simple-named globals; `isDataClassGeneratedMemberName` is the single
