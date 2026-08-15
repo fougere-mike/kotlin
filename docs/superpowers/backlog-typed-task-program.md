@@ -206,6 +206,15 @@ facts, and the CANARY runbook.
   SHAPES are correct and golden-pinned (`sharedDataClass.kt`, Task 6 fix wave
   C1: generated-member names slot-dispatch, hand-written members static) —
   do NOT read that golden as full support.
+- **Hand-written `equals`/`hashCode`/`toString` bodies in ANY data class are
+  silently replaced at BRS level** (all data classes, not just shared ones):
+  the data-class generators emit the structural forms unconditionally and the
+  member loop skips same-named class members BY NAME
+  (`isDataClassGeneratedMemberName`), so a user override's body is never
+  emitted — calls hit the generated structural global with no warning.
+  Fix belongs at emission (generate-only-if-not-user-declared, or emit the
+  user's body under the simple name); a FIR warning naming the replacement is
+  the cheap interim guard.
 - **Data-class emission skip vs attachment skip mismatch**: RESOLVED in the
   Task 6 fix wave — both skips (and the shared-dispatch exclusion) now share
   one digit-checked predicate, `isDataClassGeneratedMemberName`
