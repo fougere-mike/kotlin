@@ -580,11 +580,14 @@ creation). The `createComponent<T> { }` configure-lambda +
 decision 10, backlogged). Scene-stash idiom for app-wide services: publish on
 the SCENE at bootstrap, acquire anywhere via `sharedFrom<T>(top.getScene())`.
 
-**Publish-in-lambda trap (backlogged codegen hole, discovered here):**
-`launch { shareOn(top, vm) }` crashes — a `top` READ inside a lambda emits an
-uninstalled `__get_top_k_()` ("Member function not found"). Hoist
-`val node = top` to method scope and capture that (the Suite 9 fixtures'
-shape). Not SharedService-specific.
+**Publish-in-lambda (FIXED 2026-08-14):** `launch { shareOn(top, vm) }` used
+to crash — a `top` READ inside a lowered lambda emitted an uninstalled
+`__get_top_k_()` ("Member function not found"). The compiler now routes
+component-scope property reads (`top`/`global`/`m`, plus layout-stub
+properties) through the captured self (`m.this_0.top`), the same mechanism as
+the case-8 @SG-write routing — no hoisting needed. Pinned by the
+lambdaComponentScopeRead golden + E2E Suite 6 `lambdaScopePropertyReads`; the
+Suite 9 fixtures' `val node = top` hoists are retired.
 
 ### isLive: generation stamps, two forms
 
@@ -660,7 +663,9 @@ source); dependency-klib open members.
 **Include-closure:** static calls and dispatchers record file dependencies
 automatically — no include anchor needed; a data-only acquirer records
 nothing and needs nothing; a dispatcher makes the BASE's file pull ALL leaf
-files (closed-world consequence). Single-module closed world today — a
+files (closed-world consequence — EXCEPTION: data-class leaves, whose slot
+rungs record no dependency; the leaf's file arrives via its constructor
+call). Single-module closed world today — a
 separately-compiled module's shared subclass would be invisible to
 dispatchers; promote to a FIR diagnostic when multi-module becomes real
 (backlog, same note as ScopeHandle's `run {}` blocks).
@@ -1302,7 +1307,7 @@ Results land in `build/test-results/roku/` as JSON + JUnit XML.
 | 2 RenderCoroutines | `tests/RenderCoroutineTests.kt` | coroutines on the render thread, captured vars |
 | 3 TaskBoundary | `tests/TaskBoundaryTests.kt` | task-thread round trips via EchoTask fixtures |
 | 4 TypedTaskAcceptance | `tests/TypedTaskTests.kt` | `runTask` success/error/overlap/round-trip/derived/cancellation |
-| 6 FieldSemantics | `tests/FieldSemanticsTests.kt` | dot-assign vs setField truth table + lambda self-write routing (case 8) |
+| 6 FieldSemantics | `tests/FieldSemanticsTests.kt` | dot-assign vs setField truth table + lambda self-write routing (case 8) + lambda scope-property reads (case 9) |
 | 7 CoroutineUtilities | `tests/CoroutineUtilityTests.kt` | awaitAll/coroutineScope/supervisor/withTimeout in the component pumping regime + awaitAll over concurrent `runTask`s |
 | 8 ScopeHandle | `tests/ScopeHandleTests.kt` | cross-component scope borrowing: both surfaces, close/watchdog, cancellation both directions, dual-backend + mixed pairs, the flagship child→owner→task-thread chain |
 | 9 SharedService | `tests/SharedServiceTests.kt` | reference-shared classes over SetRef: shared-identity mutation chains, guided ISEs, explicit keys, republish + isLive generations, scene stash, static dispatch cross-component (final/base-hook/template/super/suspend), the fn-slot CANARY |
@@ -1349,7 +1354,7 @@ Predicates must return false rather than throw. Probe nodes are created via
 | E2E test suites + driver | `roku-test-app/src/brsTest/kotlin/tests/` (TestMain.kt is the main-thread driver) |
 | E2E fixture components | `roku-test-app/components/fixtures/` |
 
-### Current Gate Numbers (as of the SharedService program, 2026-08-14)
+### Current Gate Numbers (as of the top-in-lambda scope-read fix, 2026-08-14)
 
 These are the whole-branch green gates; a drop in any of them is a regression.
 (Counting note: the gate is EXECUTED tests. A raw `grep -c "@Test"` on
@@ -1358,10 +1363,10 @@ BrsGoldenFileTests.kt reads one high — it counts the commented-out
 
 | Gate | Count |
 |------|-------|
-| Golden file tests | 74 |
+| Golden file tests | 77 |
 | FIR diagnostic suite (checkers.brs) | 227 |
 | Stdlib device suite | 524 tests / 53 suites |
-| rokuTest E2E | 85 active tests / 9 suites (+3 red-guarded xtests) |
+| rokuTest E2E | 86 active tests / 9 suites (+3 red-guarded xtests) |
 | `validateComponentIncludes` + `validateTestComponentIncludes` | strict mode, 0 findings (no allowlist) |
 
 ### Test Output

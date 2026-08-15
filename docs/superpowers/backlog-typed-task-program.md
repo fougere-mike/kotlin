@@ -171,13 +171,21 @@ facts, and the CANARY runbook.
 
 ## Compiler/FIR residuals
 
-- **`top`-read-inside-lambda codegen hole** (discovered in Suite 9 fixture
-  work; NOT SharedService-specific): a component `top` READ inside a lambda
-  body emits a call to an uninstalled `__get_top_k_()` → "Member function not
-  found" at runtime. The natural user shape `launch { shareOn(top, vm) }`
-  crashes; workaround = hoist `val node = top` to method scope and capture
-  that. The 2026-08-10 captured-self routing fixed top WRITES
-  (`m.this_0.top.f = v`); the read path needs the same routing.
+- **`top`-read-inside-lambda codegen hole — FIXED 2026-08-14** (discovered in
+  Suite 9 fixture work; NOT SharedService-specific): a component `top` READ
+  inside a lowered lambda body emitted a call to an uninstalled
+  `__get_top_k_()` → "Member function not found" at runtime; the natural user
+  shape `launch { shareOn(top, vm) }` crashed. The captured-self routing now
+  covers component-scope property READS too: `top`/`global`/`m` and
+  layout-stub properties emit direct member access on the captured self
+  (`m.this_0.top` / `.global` / the captured value itself / `.layout`) — the
+  same mechanism as the 2026-08-10 WRITE routing — gated by a resolved-parent
+  guard (`isComponentBaseScopeGetter`) so unrelated `top`-named properties
+  keep ordinary accessor emission (the previously receiver-blind in-component
+  gate is tightened by the same guard). Pinned by the lambdaComponentScopeRead
+  golden (+ the de-broken runBlockLowering/bindingTableInjection goldens) and
+  E2E Suite 6 `lambdaScopePropertyReads`; the Suite 9 fixture hoists are
+  retired.
 - **FIR rule-3 hardening** (BRS_SHARED_THROUGH_COPYING_CHANNEL): (a) add a
   fixture pinning a setField/callFunc call resolved through a SUBTYPE-typed
   receiver (the fake-override classId trap family — same class the onChange
