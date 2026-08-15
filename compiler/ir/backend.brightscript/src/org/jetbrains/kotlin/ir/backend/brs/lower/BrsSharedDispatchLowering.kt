@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.brs.backend.ast.BrsIdentifier
 import org.jetbrains.kotlin.brs.backend.ast.BrsIf
 import org.jetbrains.kotlin.brs.backend.ast.BrsIndexAccess
 import org.jetbrains.kotlin.brs.backend.ast.BrsIntLiteral
+import org.jetbrains.kotlin.brs.backend.ast.BrsMethodCall
 import org.jetbrains.kotlin.brs.backend.ast.BrsParameter
 import org.jetbrains.kotlin.brs.backend.ast.BrsReturn
 import org.jetbrains.kotlin.brs.backend.ast.BrsStatement
@@ -319,6 +320,12 @@ internal fun classifySharedCall(expression: IrCall, context: BrsIrBackendContext
  * single-source rule as the wrapper slots). The else-arm is the guided
  * closed-world error; an abstract member with no concrete descendants in the
  * compilation gets ONLY the guided error.
+ *
+ * Rung shape exception (review D1): a rung whose resolved implementation is
+ * a DATA-class leaf's GENERATED member (structural equals/hashCode/toString
+ * overriding an open base member) emits a SLOT call on the receiver
+ * (`return recv.equals(other)`) instead of a static — generated data members
+ * have no mangled global to call (see [isDataClassGeneratedMemberName]).
  */
 internal fun buildSharedDispatcher(
     declaration: IrSimpleFunction,
@@ -407,11 +414,28 @@ internal fun buildSharedDispatcher(
         var chain: BrsStatement = BrsBlock(throwStatements.toMutableList())
         for (leaf in leaves.asReversed()) {
             val target = resolveSharedImplIn(leaf, declaration, context)
-            val callArgs = mutableListOf<BrsExpression>(BrsIdentifier(recvName))
-            forwarded.mapTo(callArgs) { BrsIdentifier(it.name) }
-            val targetName = context.getBrsName(target)
-            context.recordFunctionDependency(targetName)
-            val call = BrsFunctionCall(BrsIdentifier(targetName), callArgs)
+            val targetParent = target.parentClassOrNull
+            val call = if (targetParent?.isData == true && isDataClassGeneratedMemberName(target.name.asString())) {
+                // A DATA-class leaf's GENERATED override (structural
+                // equals/hashCode/toString overriding an open base member):
+                // no mangled global exists — the data-class emitters produce
+                // simple-named m-reading globals and attach them under the
+                // bare name in the leaf's ctor. Dispatch through that
+                // attachment (the rung's proto-head match makes the leaf's
+                // runtime identity exact, so the slot IS the structural
+                // implementation by construction). This rung is a residual
+                // slot path (canary-watched family); a mangled static here
+                // was review finding D1 — "Function is not defined" on device.
+                val slotArgs = mutableListOf<BrsExpression>()
+                forwarded.mapTo(slotArgs) { BrsIdentifier(it.name) }
+                BrsMethodCall(BrsIdentifier(recvName), target.name.asString(), slotArgs)
+            } else {
+                val callArgs = mutableListOf<BrsExpression>(BrsIdentifier(recvName))
+                forwarded.mapTo(callArgs) { BrsIdentifier(it.name) }
+                val targetName = context.getBrsName(target)
+                context.recordFunctionDependency(targetName)
+                BrsFunctionCall(BrsIdentifier(targetName), callArgs)
+            }
             val branch = if (impl is BrsFunction) {
                 BrsBlock(mutableListOf(BrsReturn(call)))
             } else {

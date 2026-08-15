@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.ir.backend.brs.lower.BrsInlineCallTransformer
 import org.jetbrains.kotlin.ir.backend.brs.lower.SHARED_DISPATCH_SUFFIX
 import org.jetbrains.kotlin.ir.backend.brs.lower.SharedCallShape
 import org.jetbrains.kotlin.ir.backend.brs.lower.classifySharedCall
+import org.jetbrains.kotlin.ir.backend.brs.lower.isDataClassGeneratedMemberName
 import org.jetbrains.kotlin.ir.backend.brs.lower.coroutines.BrsStatementOrigins
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
@@ -1622,10 +1623,28 @@ class IrExpressionToBrsTransformer(
                 val isExternalInterfaceMethod = parentClass != null &&
                     (parentClass.isExternal || isExternalClass(parentClass))
 
-                // Data class synthetic methods (componentN, copy, equals, hashCode, toString)
-                // are attached with simple names, so we should not mangle them
-                val isDataClassSyntheticMethod = rawMethodName.startsWith("component") ||
-                    rawMethodName in listOf("copy", "equals", "hashCode", "toString")
+                // Simple-name render gate (review D2):
+                // - DATA classes: exactly the generated-member names render
+                //   simple (isDataClassGeneratedMemberName, digit-checked —
+                //   single source with the emission/attachment skips and the
+                //   shared-dispatch exclusion). A hand-written componentFoo()
+                //   on a data class therefore renders MANGLED, matching its
+                //   mangled emission + attachment (callable round trip).
+                // - NON-data classes keep the legacy heuristic VERBATIM:
+                //   equals/hashCode/toString genuinely attach simple on every
+                //   class (hand-written overrides get a simple Any-alias next
+                //   to the mangled slot; non-overriding classes attach the Any
+                //   defaults simple-ONLY — kclassEquality pins the KClass
+                //   hashCode shape), and the pre-existing simple render for
+                //   copy/component-prefixed names stays as-is (load-bearing:
+                //   layoutStubAccess pins the sceneLayout `component(...)`
+                //   call; re-shaping non-data behavior is outside D2's scope).
+                val isDataClassSyntheticMethod = if (parentClass?.isData == true) {
+                    isDataClassGeneratedMemberName(rawMethodName)
+                } else {
+                    rawMethodName.startsWith("component") ||
+                        rawMethodName in listOf("copy", "equals", "hashCode", "toString")
+                }
 
                 val methodName = if (isExternalInterfaceMethod || isDataClassSyntheticMethod) {
                     // Use simple name for external interface methods and data class synthetic

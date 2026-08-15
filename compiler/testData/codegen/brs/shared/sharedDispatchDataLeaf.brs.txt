@@ -1,0 +1,264 @@
+// --- File: sharedDispatchDataLeafKt.brs ---
+function DispatchDataBaseG_create_k_() as Object
+    this = SharedService_create_k_()
+    this._super = {}
+    this._super.equals_AnyN_k_ = this.equals_AnyN_k_
+    this._super.hashCode_k_ = this.hashCode_k_
+    this.__proto = ["DispatchDataBaseG", this.__proto]
+    this.__type = "DispatchDataBaseG"
+    this.equals_AnyN_k_ = DispatchDataBaseG_equals_AnyN_k___slot
+    this.equals = DispatchDataBaseG_equals_AnyN_k___slot
+    this.hashCode_k_ = DispatchDataBaseG_hashCode_k___slot
+    this.hashCode = DispatchDataBaseG_hashCode_k___slot
+    return this
+end function
+
+function DispatchDataBaseG_equals_AnyN_k_(m as Object, other as Dynamic) as Boolean
+    return __kotlin_isInstanceOf(other, "DispatchDataBaseG")
+end function
+
+function DispatchDataBaseG_equals_AnyN_k___slot(other as Dynamic) as Boolean
+    return DispatchDataBaseG_equals_AnyN_k_(m, other)
+end function
+
+function DispatchDataBaseG_equals_AnyN_k___dispatch(recv as Object, other as Dynamic) as Boolean
+    runtimeClass = recv.__proto[0]
+    if runtimeClass = "DataLeafG" then
+        return recv.equals(other)
+    else if runtimeClass = "PlainLeafG" then
+        return PlainLeafG_equals_AnyN_k_(recv, other)
+    else
+        exc = {type: "IllegalStateException", message: ("SharedService dispatch: no compiled implementation of DispatchDataBaseG.equals for runtime class '" + runtimeClass) + "' — dispatchers enumerate this compilation's concrete shared classes (closed world, single module); recompile with the module containing it"}
+        throw exc
+    end if
+end function
+
+function DispatchDataBaseG_hashCode_k_(m as Object) as Integer
+    return 7
+end function
+
+function DispatchDataBaseG_hashCode_k___slot() as Integer
+    return DispatchDataBaseG_hashCode_k_(m)
+end function
+
+function DispatchDataBaseG_hashCode_k___dispatch(recv as Object) as Integer
+    runtimeClass = recv.__proto[0]
+    if runtimeClass = "DataLeafG" then
+        return recv.hashCode()
+    else if runtimeClass = "PlainLeafG" then
+        return PlainLeafG_hashCode_k_(recv)
+    else
+        exc = {type: "IllegalStateException", message: ("SharedService dispatch: no compiled implementation of DispatchDataBaseG.hashCode for runtime class '" + runtimeClass) + "' — dispatchers enumerate this compilation's concrete shared classes (closed world, single module); recompile with the module containing it"}
+        throw exc
+    end if
+end function
+
+function DataLeafG_create_I_k_(x as Integer) as Object
+    this = {}
+    this.__type = "DataLeafG"
+    this.__proto = ["DataLeafG"]
+    this.__id = __kotlin_nextObjectId()
+    this.x = x
+    this.equals = DataLeafG_equals
+    this.hashCode = DataLeafG_hashCode
+    this.toString = DataLeafG_toString
+    this.copy = DataLeafG_copy
+    this.component1 = DataLeafG_component1
+    return this
+end function
+
+function DataLeafG_equals(other as Object) as Boolean
+    if Type(other) <> "roAssociativeArray" then
+        return false
+    end if
+    if other.__type <> "DataLeafG" then
+        return false
+    end if
+    if m.x <> other.x then
+        return false
+    end if
+    return true
+end function
+
+function DataLeafG_hashCode() as Integer
+    result = 1
+    result = ((result * 31) + m.x)
+    return result
+end function
+
+function DataLeafG_toString() as String
+    return ("DataLeafG(x=" + m.x) + ")"
+end function
+
+function DataLeafG_copy(x = invalid) as Object
+    if x = invalid then
+        x = m.x
+    end if
+    return DataLeafG_create_I_k_(x)
+end function
+
+function DataLeafG_component1() as Integer
+    return m.x
+end function
+
+function PlainLeafG_create_k_() as Object
+    this = DispatchDataBaseG_create_k_()
+    this._super = {}
+    this._super.equals_AnyN_k_ = this.equals_AnyN_k_
+    this._super.hashCode_k_ = this.hashCode_k_
+    this.__proto = ["PlainLeafG", this.__proto]
+    this.__type = "PlainLeafG"
+    this.equals_AnyN_k_ = PlainLeafG_equals_AnyN_k___slot
+    this.equals = PlainLeafG_equals_AnyN_k___slot
+    this.hashCode_k_ = PlainLeafG_hashCode_k___slot
+    this.hashCode = PlainLeafG_hashCode_k___slot
+    return this
+end function
+
+function PlainLeafG_equals_AnyN_k_(m as Object, other as Dynamic) as Boolean
+    return false
+end function
+
+function PlainLeafG_equals_AnyN_k___slot(other as Dynamic) as Boolean
+    return PlainLeafG_equals_AnyN_k_(m, other)
+end function
+
+function PlainLeafG_hashCode_k_(m as Object) as Integer
+    return 3
+end function
+
+function PlainLeafG_hashCode_k___slot() as Integer
+    return PlainLeafG_hashCode_k_(m)
+end function
+
+function PlainPairG_create_I_I_k_(v as Integer, w as Integer) as Object
+    this = {}
+    this.__type = "PlainPairG"
+    this.__proto = ["PlainPairG"]
+    this.__id = __kotlin_nextObjectId()
+    this.v = v
+    this.w = w
+    this.componentFoo_I_k_ = PlainPairG_componentFoo_I_k_
+    this.equals = PlainPairG_equals
+    this.hashCode = PlainPairG_hashCode
+    this.toString = PlainPairG_toString
+    this.copy = PlainPairG_copy
+    this.component1 = PlainPairG_component1
+    this.component2 = PlainPairG_component2
+    return this
+end function
+
+function PlainPairG_equals(other as Object) as Boolean
+    if Type(other) <> "roAssociativeArray" then
+        return false
+    end if
+    if other.__type <> "PlainPairG" then
+        return false
+    end if
+    if m.v <> other.v then
+        return false
+    end if
+    if m.w <> other.w then
+        return false
+    end if
+    return true
+end function
+
+function PlainPairG_hashCode() as Integer
+    result = 1
+    result = ((result * 31) + m.v)
+    result = ((result * 31) + m.w)
+    return result
+end function
+
+function PlainPairG_toString() as String
+    return ((("PlainPairG(v=" + m.v) + ", w=") + m.w) + ")"
+end function
+
+function PlainPairG_copy(v = invalid, w = invalid) as Object
+    if v = invalid then
+        v = m.v
+    end if
+    if w = invalid then
+        w = m.w
+    end if
+    return PlainPairG_create_I_I_k_(v, w)
+end function
+
+function PlainPairG_component1() as Integer
+    return m.v
+end function
+
+function PlainPairG_component2() as Integer
+    return m.w
+end function
+
+function PlainPairG_componentFoo_I_k_(k as Integer) as Integer
+    return m.v + k
+end function
+
+function ControlEqG_create_k_() as Object
+    this = {}
+    this.__type = "ControlEqG"
+    this.__proto = ["ControlEqG"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.equals_AnyN_k_ = ControlEqG_equals_AnyN_k_
+    this.equals = ControlEqG_equals_AnyN_k_
+    this.hashCode_k_ = ControlEqG_hashCode_k_
+    this.hashCode = ControlEqG_hashCode_k_
+    return this
+end function
+
+function ControlEqG_equals_AnyN_k_(other as Dynamic) as Boolean
+    return __kotlin_isInstanceOf(other, "ControlEqG")
+end function
+
+function ControlEqG_hashCode_k_() as Integer
+    return 5
+end function
+
+function ControlBareG_create_k_() as Object
+    this = {}
+    this.__type = "ControlBareG"
+    this.__proto = ["ControlBareG"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    return this
+end function
+
+function driveBaseEquals_DispatchDataBaseG_DispatchDataBaseG_k_(a as Object, b as Object) as Boolean
+    return DispatchDataBaseG_equals_AnyN_k___dispatch(a, b)
+end function
+
+function driveBaseHash_DispatchDataBaseG_k_(a as Object) as Integer
+    return DispatchDataBaseG_hashCode_k___dispatch(a)
+end function
+
+function driveComponentFoo_PlainPairG_k_(p as Object) as Integer
+    return p.componentFoo_I_k_(2)
+end function
+
+function drivePlainCanonical_PlainPairG_k_(p as Object) as Integer
+    q = p.copy(3, 4)
+    __destruct_0 = q
+    v = __destruct_0.component1()
+    w = __destruct_0.component2()
+    return v + w
+end function
+
+function driveControlEq_ControlEqG_ControlEqG_k_(c as Object, d as Object) as Boolean
+    return c.equals(d)
+end function
+
+function driveControlHash_ControlEqG_k_(c as Object) as Integer
+    return c.hashCode()
+end function
+
+function driveBareEq_ControlBareG_ControlBareG_k_(c as Object, d as Object) as Boolean
+    return c.equals(d)
+end function
