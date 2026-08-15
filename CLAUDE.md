@@ -1298,7 +1298,7 @@ window. Direct `./gradlew rokuTest` BYPASSES that guard.
 the stdlib runner: replayed events from a previous run are discarded).
 Results land in `build/test-results/roku/` as JSON + JUnit XML.
 
-**The suites (9 suites, 85 active tests + 3 red-guarded `xtest` placeholders):**
+**The suites (9 suites, 86 active tests + 3 red-guarded `xtest` placeholders):**
 
 | Suite | File | Exercises |
 |-------|------|-----------|
