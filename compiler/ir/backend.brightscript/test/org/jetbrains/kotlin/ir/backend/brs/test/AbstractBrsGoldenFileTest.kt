@@ -48,14 +48,48 @@ abstract class AbstractBrsGoldenFileTest {
      */
     protected fun runTest(testPath: String) {
         val inputFile = TEST_DATA_ROOT.resolve(testPath)
-        val expectedFile = TEST_DATA_ROOT.resolve(testPath.replace(".kt", ".brs.txt"))
-
         if (!inputFile.exists()) {
             fail("Input file does not exist: ${inputFile.absolutePath}")
         }
+        runGoldenComparison(
+            inputFiles = listOf(inputFile),
+            expectedFile = TEST_DATA_ROOT.resolve(testPath.replace(".kt", ".brs.txt")),
+            testPath = testPath
+        )
+    }
 
+    /**
+     * Run a golden file test that compiles ALL .kt files in a directory as one module.
+     *
+     * Files are passed to the compiler sorted by name, so module file order is
+     * deterministic — multi-file goldens can pin order-sensitive behavior (e.g. the
+     * component include closure resolving through a helper file compiled later).
+     *
+     * @param testDirPath Path to the directory relative to TEST_DATA_ROOT
+     *        (e.g., "components/projectHelperTransitiveDeps"); the golden is the
+     *        sibling file "<testDirPath>.brs.txt".
+     */
+    protected fun runMultiFileTest(testDirPath: String) {
+        val inputDir = TEST_DATA_ROOT.resolve(testDirPath)
+        if (!inputDir.isDirectory) {
+            fail("Input directory does not exist: ${inputDir.absolutePath}")
+        }
+        val inputFiles = inputDir.listFiles { f: File -> f.extension == "kt" }
+            ?.sortedBy { it.name }
+            .orEmpty()
+        if (inputFiles.isEmpty()) {
+            fail("No .kt files in input directory: ${inputDir.absolutePath}")
+        }
+        runGoldenComparison(
+            inputFiles = inputFiles,
+            expectedFile = TEST_DATA_ROOT.resolve("$testDirPath.brs.txt"),
+            testPath = testDirPath
+        )
+    }
+
+    private fun runGoldenComparison(inputFiles: List<File>, expectedFile: File, testPath: String) {
         // Compile Kotlin to BrightScript
-        val actualOutput = compileKotlinToBrightScript(inputFile)
+        val actualOutput = compileKotlinToBrightScript(inputFiles)
 
         if (UPDATE_GOLDEN_FILES) {
             // Update the golden file
@@ -93,14 +127,14 @@ abstract class AbstractBrsGoldenFileTest {
     }
 
     /**
-     * Compile a Kotlin file to BrightScript and return the output as a string.
+     * Compile Kotlin files to BrightScript and return the output as a string.
      */
-    private fun compileKotlinToBrightScript(inputFile: File): String {
+    private fun compileKotlinToBrightScript(inputFiles: List<File>): String {
         val tempOutputDir = createTempDir("brs-golden-test")
         try {
             val compiler = K2BrsCompiler()
             val arguments = K2BrsCompilerArguments().apply {
-                freeArgs = listOf(inputFile.absolutePath)
+                freeArgs = inputFiles.map { it.absolutePath }
                 outputDir = tempOutputDir.absolutePath
                 // Include stdlib so coroutine symbols and other builtins are available
                 if (STDLIB_KLIB.exists()) {
@@ -127,7 +161,7 @@ abstract class AbstractBrsGoldenFileTest {
 
             if (exitCode != ExitCode.OK) {
                 fail("""
-                    Compilation failed for ${inputFile.name}: $exitCode
+                    Compilation failed for ${inputFiles.joinToString(", ") { it.name }}: $exitCode
 
                     Messages:
                     ${messages.joinToString("\n")}

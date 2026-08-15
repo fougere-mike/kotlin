@@ -211,12 +211,6 @@ class BrsCompiler(
 
                 val output = compileFile(file, transformer, context)
                 outputs.add(output)
-
-                // Generate component XML and deps.json using pre-extracted component info
-                generateComponentOutputForFile(file, preExtractedComponents, context).forEach { (name, xml, depsJson) ->
-                    componentXml[name] = xml
-                    componentDepsJson[name] = depsJson
-                }
             } catch (e: Exception) {
                 errors.add("Error compiling ${file.name}: ${e.message}")
             }
@@ -224,6 +218,24 @@ class BrsCompiler(
 
         // Clear current file after all files are processed
         context.currentSourceFile = null
+
+        // ==================== Pass 3: Generate component XML and deps.json ====================
+        // Must run AFTER every file is transformed: computeComponentDependencies resolves
+        // the include closure through context.fileDependencies, and a project file's entry
+        // only exists once that file has been code-generated. Generating inside the Pass 2
+        // loop made the closure order-dependent — deps of project files transformed after
+        // the component's own file were invisible to the walk (treated as leaves), so their
+        // stdlib/helper dependencies were silently dropped from the component's includes.
+        for (file in loweredModule.files) {
+            try {
+                generateComponentOutputForFile(file, preExtractedComponents, context).forEach { (name, xml, depsJson) ->
+                    componentXml[name] = xml
+                    componentDepsJson[name] = depsJson
+                }
+            } catch (e: Exception) {
+                errors.add("Error generating component output for ${file.name}: ${e.message}")
+            }
+        }
 
         // Convert mutable sets to immutable for the result
         val fileDependencies = context.fileDependencies.mapValues { it.value.toSet() }

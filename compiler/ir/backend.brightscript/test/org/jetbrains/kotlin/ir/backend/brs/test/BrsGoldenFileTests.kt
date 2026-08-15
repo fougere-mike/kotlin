@@ -200,6 +200,9 @@ class BrsComponentGoldenFileTests : AbstractBrsGoldenFileTest() {
     fun deepTransitiveDeps() = runTest("components/deepTransitiveDeps.kt")
 
     @Test
+    fun projectHelperTransitiveDeps() = runMultiFileTest("components/projectHelperTransitiveDeps")
+
+    @Test
     fun taskComponentBasic() = runTest("components/taskComponentBasic.kt")
 
     @Test

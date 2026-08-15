@@ -1011,6 +1011,25 @@ observer attached after a write never sees it — arm before triggering
 (TaskRunner.kt:250-256 arms the state observer before `control=RUN`;
 `roundTrip`/`awaitField` in DeviceTestLoop.kt arm before writing).
 
+## Component Include Closure (deps.json)
+
+Each SceneGraph component's include closure (the `dependencies` list in
+`<Component>.deps.json`, materialized into XML `<script>` tags by the KGP
+plugin) is computed in `BrsCompiler`: per-file deps are recorded at emission
+time (`recordFunctionDependency`), merged with the stdlib klib manifest's
+`brs_file_dependencies`, and resolved transitively. Component XML + deps.json
+generation runs in a DEDICATED PASS after every file in the module is
+transformed (fixed 2026-08-14). It used to run inside the transform loop,
+which made the closure order-dependent: a project file transformed after the
+component's own file (the VM-facade shape — a plain-class VM calling stdlib
+suspend helpers) had no graph entry yet, so its own deps were silently
+dropped from the component's includes — a runtime "Function is not defined"
+in component scope without the strict validators. Pinned by the multi-file
+golden `components/projectHelperTransitiveDeps` (harness support:
+`runMultiFileTest`, which compiles a testData directory as one module in
+sorted-name order) and by `validateComponentIncludes` /
+`validateTestComponentIncludes` in roku-test-app.
+
 ## Key Directories
 
 ### Compiler Modules
