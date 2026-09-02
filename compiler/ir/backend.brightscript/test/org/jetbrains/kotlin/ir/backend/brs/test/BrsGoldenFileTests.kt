@@ -155,6 +155,22 @@ class BrsCoroutineGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun suspendMemberStateMachine() = runTest("coroutines/suspendMemberStateMachine.kt")
+
+    // IR-special local names (<iterator>) lifted to state-machine fields must be
+    // sanitized — the raw name is a BrightScript syntax error (flow cold core defect).
+    @Test
+    fun suspendLambdaForLoopIterator() = runTest("flow/suspendLambdaForLoopIterator.kt")
+
+    // `if (a && !suspendCall())` in a suspend body — the guarded-temp wiring must
+    // survive the state-machine split (flow cold core defect: FirstCollector).
+    @Test
+    fun suspendNegatedAndCondition() = runTest("flow/suspendNegatedAndCondition.kt")
+
+    // Shared-box coroutine fields must be keyed by field SYMBOL, not raw
+    // class-name strings — same-named locals in two suspend lambdas collide
+    // (flow cold core defect: FlowCore flowEmitsValuesInOrder device failure).
+    @Test
+    fun sharedBoxFieldKeyCollision() = runTest("flow/sharedBoxFieldKeyCollision.kt")
 }
 
 // ==================== Inline BrightScript Tests ====================

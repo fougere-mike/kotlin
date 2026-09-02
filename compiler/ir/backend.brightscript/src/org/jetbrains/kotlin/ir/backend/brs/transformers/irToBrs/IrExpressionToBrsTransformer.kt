@@ -332,9 +332,8 @@ class IrExpressionToBrsTransformer(
 
         // Check if this field holds a shared variable box (mutable captured variable)
         // If so, we need to read field.value instead of field
-        val className = fieldParentClass?.name?.asString() ?: ""
-        val fieldKey = "$className.$fieldName"
-        val isSharedVariableField = fieldKey in context.sharedVariableFields
+        val isSharedVariableField = expression.symbol in context.sharedVariableBoxFields ||
+                (fieldParentClass != null && fieldParentClass to fieldName in context.sharedVariableClassBoxFields)
 
         return if (isSharedVariableField) {
             // Read the box's value: m.fieldName.value
@@ -383,9 +382,8 @@ class IrExpressionToBrsTransformer(
 
         // Check if this field holds a shared variable box (mutable captured variable)
         // EXCEPTION: In constructor body, we're initializing the field with the box itself
-        val className = parentClass?.name?.asString() ?: ""
-        val fieldKey = "$className.$fieldName"
-        val isSharedVariableField = fieldKey in context.sharedVariableFields
+        val isSharedVariableField = expression.symbol in context.sharedVariableBoxFields ||
+                (parentClass != null && parentClass to fieldName in context.sharedVariableClassBoxFields)
         val isInConstructor = genCtx.isInConstructorBody
 
         // A shared variable moved to a coroutine field keeps its SHARED_BOX_INIT-tagged
@@ -2953,9 +2951,8 @@ class IrExpressionToBrsTransformer(
                 val fieldParentClass = field.parent as? IrClass
                 val rawFieldName = field.name.asString()
                 val fieldName = rawFieldName.replace("$", "_")
-                val className = fieldParentClass?.name?.asString() ?: ""
-                val fieldKey = "$className.$fieldName"
-                val isSharedVariableField = fieldKey in context.sharedVariableFields
+                val isSharedVariableField = arg.symbol in context.sharedVariableBoxFields ||
+                        (fieldParentClass != null && fieldParentClass to fieldName in context.sharedVariableClassBoxFields)
 
                 if (isSharedVariableField) {
                     // Pass the box itself, not the dereferenced .value

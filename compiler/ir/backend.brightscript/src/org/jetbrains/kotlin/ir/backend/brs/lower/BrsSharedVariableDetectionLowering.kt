@@ -100,11 +100,11 @@ class BrsSharedVariableDetectionLowering(
 
                             // Track that this class will have a field holding a shared variable box.
                             // The field name is the variable name (after LocalDeclarationsLowering adds $ prefix
-                            // which gets sanitized to _). We track by variable name since the field
-                            // doesn't exist yet at this lowering phase.
+                            // which gets sanitized to _). We track by class IDENTITY + variable name since the
+                            // field doesn't exist yet at this lowering phase — a class-NAME key collides across
+                            // sibling lambdas (same raw name; pinned by flow/sharedBoxFieldKeyCollision).
                             val varName = captured.symbol.owner.name.asString()
-                            val className = declaration.name.asString()
-                            context.sharedVariableFields.add("$className._$varName")
+                            context.sharedVariableClassBoxFields.add(declaration to "_$varName")
                         }
                     }
                 }

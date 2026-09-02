@@ -315,12 +315,24 @@ class BrsIrBackendContext(
     val sharedVariablesByFunction = mutableMapOf<IrFunctionSymbol, Set<org.jetbrains.kotlin.ir.symbols.IrValueSymbol>>()
 
     /**
-     * Set of class-field combinations where the field holds a shared variable box.
-     * When accessing these fields, we need to use .value to get/set the actual value.
-     * Key format: "ClassName.fieldName"
-     * Populated by BrsSharedVariableDetectionLowering.
+     * Class fields that hold a shared variable box: accesses read/write .value.
+     * Two producers, two key shapes — NEVER name-string keys: sibling lambdas at
+     * the same nesting path share a raw class name, so "ClassName.fieldName"
+     * strings registered for one lambda falsely reclassified same-named plain
+     * fields in siblings (device errors "Invalid value for left-side of
+     * expression" / "Interface not a member of BrightScript Component"; pinned
+     * by flow/sharedBoxFieldKeyCollision).
+     *
+     * [sharedVariableBoxFields]: coroutine-class fields, keyed by field SYMBOL.
+     * Populated by BrsSuspendFunctionsLowering when a SHARED_VARIABLE_WRAPPER
+     * local moves to a coroutine field.
+     *
+     * [sharedVariableClassBoxFields]: local-class capture fields, keyed by class
+     * IDENTITY + sanitized field name ("_varName" — the field itself does not
+     * exist yet at detection time). Populated by BrsSharedVariableDetectionLowering.
      */
-    val sharedVariableFields = mutableSetOf<String>()
+    val sharedVariableBoxFields = mutableSetOf<org.jetbrains.kotlin.ir.symbols.IrFieldSymbol>()
+    val sharedVariableClassBoxFields = mutableSetOf<Pair<IrClass, String>>()
 
     // ==================== ScopeHandle Run-Block Registry ====================
 

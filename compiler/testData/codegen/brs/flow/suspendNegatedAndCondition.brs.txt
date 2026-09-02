@@ -1,0 +1,70 @@
+// --- File: suspendNegatedAndConditionKt.brs ---
+function pred_I_ContinuationZ_k_(x as Integer, _completion as Object) as Object
+    return x > 1
+end function
+
+function check_I_ContinuationI_k_(x as Integer, _completion as Object) as Object
+    tmp = _checkCOROUTINE__create_I_ContinuationI_k_(x, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function _checkCOROUTINE__create_I_ContinuationI_k_(x as Integer, resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["_checkCOROUTINE_", this.__proto]
+    this.__type = "_checkCOROUTINE_"
+    this.doResume_k_ = _checkCOROUTINE__doResume_k_
+    this.x = x
+    return this
+end function
+
+function _checkCOROUTINE__doResume_k_() as Dynamic
+    ARGUMENT = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(4)
+                if m.x <> 0 then
+                    m.__set_state(1)
+                    suspendResult = pred_I_ContinuationZ_k_(m.x, m)
+                    if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                        return suspendResult
+                    end if
+                    continue while
+                else
+                    m.WHEN_RESULT0 = false
+                    m.__set_state(2)
+                    continue while
+                end if
+            else if __kotlin_identityEquals(tmp, 1) then
+                ARGUMENT = suspendResult
+                m.WHEN_RESULT0 = not ARGUMENT
+                m.__set_state(2)
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+                if m.WHEN_RESULT0 then
+                                        return -1
+                else
+                    m.__set_state(3)
+                    continue while
+                end if
+            else if __kotlin_identityEquals(tmp, 3) then
+                                return 1
+            else if __kotlin_identityEquals(tmp, 4) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 4) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function

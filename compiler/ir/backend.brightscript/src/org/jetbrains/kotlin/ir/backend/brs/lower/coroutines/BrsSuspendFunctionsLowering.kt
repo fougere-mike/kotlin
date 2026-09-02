@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
 import org.jetbrains.kotlin.ir.backend.brs.lower.BrsDeclarationOrigin
+import org.jetbrains.kotlin.ir.backend.brs.transformers.irToBrs.sanitizeParameterName
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
@@ -342,13 +343,19 @@ class BrsSuspendFunctionsLowering(
         liveLocals.forEach {
             if (it !== suspendState && it !== suspendResult && it !== stateVar) {
                 localToPropertyMap.getOrPut(it.symbol) {
-                    val field = coroutineClass.addField(Name.identifier("${it.name}${localCounter++}"), it.type, (it as? IrVariable)?.isVar ?: false)
+                    // IR-special local names (<iterator>, <destruct>, ...) must be sanitized
+                    // here: field accesses emit the name verbatim, and `m.<iterator>0` is a
+                    // BrightScript syntax error (pinned by flow/suspendLambdaForLoopIterator).
+                    val safeName = sanitizeParameterName(it.name.asString())
+                    val field = coroutineClass.addField(Name.identifier("$safeName${localCounter++}"), it.type, (it as? IrVariable)?.isVar ?: false)
                     // If a shared (closure-boxed) variable moves to a coroutine field, record the
                     // field so the emitter keeps box semantics: reads/writes go through .value and
-                    // constructor calls pass the box itself (see sharedVariableFields consumers).
+                    // constructor calls pass the box itself. Registered by SYMBOL — a
+                    // "ClassName.fieldName" string key collides across sibling suspend lambdas
+                    // (same raw class name) and reclassified unrelated same-named plain fields
+                    // (pinned by flow/sharedBoxFieldKeyCollision).
                     if ((it as? IrVariable)?.origin == BrsDeclarationOrigin.SHARED_VARIABLE_WRAPPER) {
-                        val fieldName = field.name.asString().replace("$", "_")
-                        brsContext.sharedVariableFields.add("${coroutineClass.name.asString()}.$fieldName")
+                        brsContext.sharedVariableBoxFields.add(field.symbol)
                     }
                     field.symbol
                 }

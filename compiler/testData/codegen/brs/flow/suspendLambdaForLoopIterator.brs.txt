@@ -1,0 +1,147 @@
+// --- File: suspendLambdaForLoopIteratorKt.brs ---
+function consume_I_ContinuationI_k_(value as Integer, _completion as Object) as Object
+    return value * 2
+end function
+
+function makeSummingBlock_ListI_k_(items as Object) as Object
+    return makeSummingBlock_slambda_create_ListI_ContinuationAnyNN_k_(items, invalid)
+end function
+
+function sumDirect_ListI_ContinuationI_k_(items as Object, _completion as Object) as Object
+    tmp = _sumDirectCOROUTINE__create_ListI_ContinuationI_k_(items, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function makeSummingBlock_slambda_create_ListI_ContinuationAnyNN_k_(_items as Object, resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_Continuation_k_ = this.invoke_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_Continuation_k_ = this.create_Continuation_k_
+    this.__proto = ["makeSummingBlock_slambda", "SuspendFunction0", this.__proto]
+    this.__type = "makeSummingBlock_slambda"
+    this.invoke_Continuation_k_ = makeSummingBlock_slambda_invoke_Continuation_k_
+    this.doResume_k_ = makeSummingBlock_slambda_doResume_k_
+    this.create_Continuation_k_ = makeSummingBlock_slambda_create_Continuation_k_
+    this._items = _items
+    return this
+end function
+
+function makeSummingBlock_slambda_invoke_Continuation_k_(_completion as Object) as Object
+    tmp = m.create_Continuation_k_(_completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function makeSummingBlock_slambda_doResume_k_() as Dynamic
+    item = invalid
+    ARGUMENT = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(4)
+                m.total0 = 0
+                m.iterator2 = m._items.iterator_k_()
+                m.__set_state(1)
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                if not m.iterator2.hasNext_k_() then
+                    m.__set_state(3)
+                    continue while
+                end if
+                item = m.iterator2.next_k_()
+                m.ARGUMENT1 = m.total0
+                m.__set_state(2)
+                suspendResult = consume_I_ContinuationI_k_(item, m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+                ARGUMENT = suspendResult
+                m.total0 = (m.ARGUMENT1 + ARGUMENT)
+                m.__set_state(1)
+                continue while
+            else if __kotlin_identityEquals(tmp, 3) then
+                                return m.total0
+            else if __kotlin_identityEquals(tmp, 4) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 4) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function makeSummingBlock_slambda_create_Continuation_k_(completion as Object) as Object
+    i = makeSummingBlock_slambda_create_ListI_ContinuationAnyNN_k_(m._items, completion)
+    return i
+end function
+
+function _sumDirectCOROUTINE__create_ListI_ContinuationI_k_(items as Object, resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["_sumDirectCOROUTINE_", this.__proto]
+    this.__type = "_sumDirectCOROUTINE_"
+    this.doResume_k_ = _sumDirectCOROUTINE__doResume_k_
+    this.items = items
+    return this
+end function
+
+function _sumDirectCOROUTINE__doResume_k_() as Dynamic
+    item = invalid
+    ARGUMENT = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(4)
+                m.total0 = 0
+                m.iterator2 = m.items.iterator_k_()
+                m.__set_state(1)
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                if not m.iterator2.hasNext_k_() then
+                    m.__set_state(3)
+                    continue while
+                end if
+                item = m.iterator2.next_k_()
+                m.ARGUMENT1 = m.total0
+                m.__set_state(2)
+                suspendResult = consume_I_ContinuationI_k_(item, m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+                ARGUMENT = suspendResult
+                m.total0 = (m.ARGUMENT1 + ARGUMENT)
+                m.__set_state(1)
+                continue while
+            else if __kotlin_identityEquals(tmp, 3) then
+                                return m.total0
+            else if __kotlin_identityEquals(tmp, 4) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 4) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function

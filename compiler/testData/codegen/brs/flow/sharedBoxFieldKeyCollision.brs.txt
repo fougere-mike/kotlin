@@ -1,0 +1,176 @@
+// --- File: sharedBoxFieldKeyCollisionKt.brs ---
+function tick_ContinuationI_k_(_completion as Object) as Object
+    return 1
+end function
+
+function hold_SuspendFunction0I_k_(block as Object) as Object
+    return block
+end function
+
+function driver_k_() as Integer
+    plain = hold_SuspendFunction0I_k_(driver_slambda_create_ContinuationAnyNN_k_(invalid))
+    boxed = hold_SuspendFunction0I_k_(driver_slambda_1_create_ContinuationAnyNN_k_(invalid))
+    if __kotlin_identityEquals(plain, boxed) then
+        return 0
+    end if
+    return 1
+end function
+
+function driver_slambda_create_ContinuationAnyNN_k_(resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_Continuation_k_ = this.invoke_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_Continuation_k_ = this.create_Continuation_k_
+    this.__proto = ["driver_slambda", "SuspendFunction0", this.__proto]
+    this.__type = "driver_slambda"
+    this.invoke_Continuation_k_ = driver_slambda_invoke_Continuation_k_
+    this.doResume_k_ = driver_slambda_doResume_k_
+    this.create_Continuation_k_ = driver_slambda_create_Continuation_k_
+    return this
+end function
+
+function driver_slambda_invoke_Continuation_k_(_completion as Object) as Object
+    tmp = m.create_Continuation_k_(_completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function driver_slambda_doResume_k_() as Dynamic
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(3)
+                m.__set_state(1)
+                suspendResult = tick_ContinuationI_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                m.shared0 = suspendResult
+                m.note1 = driver_slambda_lambda_create_I_k_(m.shared0)
+                m.__set_state(2)
+                suspendResult = tick_ContinuationI_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+
+                m.note1.invoke_k_()
+                                return m.shared0
+            else if __kotlin_identityEquals(tmp, 3) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 3) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function driver_slambda_create_Continuation_k_(completion as Object) as Object
+    i = driver_slambda_create_ContinuationAnyNN_k_(completion)
+    return i
+end function
+
+function driver_slambda_lambda_create_I_k_(_shared as Integer) as Object
+    this = {}
+    this.__type = "driver_slambda_lambda"
+    this.__proto = ["driver_slambda_lambda", "Function0", "Function"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.invoke_k_ = driver_slambda_lambda_invoke_k_
+    this._shared = _shared
+    return this
+end function
+
+function driver_slambda_lambda_invoke_k_() as Integer
+    return m._shared + 1
+end function
+
+function driver_slambda_1_create_ContinuationAnyNN_k_(resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_Continuation_k_ = this.invoke_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_Continuation_k_ = this.create_Continuation_k_
+    this.__proto = ["driver_slambda_1", "SuspendFunction0", this.__proto]
+    this.__type = "driver_slambda_1"
+    this.invoke_Continuation_k_ = driver_slambda_1_invoke_Continuation_k_
+    this.doResume_k_ = driver_slambda_1_doResume_k_
+    this.create_Continuation_k_ = driver_slambda_1_create_Continuation_k_
+    return this
+end function
+
+function driver_slambda_1_invoke_Continuation_k_(_completion as Object) as Object
+    tmp = m.create_Continuation_k_(_completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function driver_slambda_1_doResume_k_() as Dynamic
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(2)
+                m.shared0 = {value: 0}
+                m.bump1 = driver_slambda_lambda_1_create_AnyN_k_(m.shared0)
+                m.__set_state(1)
+                suspendResult = tick_ContinuationI_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+
+                m.bump1.invoke_k_()
+                                return m.shared0.value
+            else if __kotlin_identityEquals(tmp, 2) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 2) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function driver_slambda_1_create_Continuation_k_(completion as Object) as Object
+    i = driver_slambda_1_create_ContinuationAnyNN_k_(completion)
+    return i
+end function
+
+function driver_slambda_lambda_1_create_AnyN_k_(_shared as Dynamic) as Object
+    this = {}
+    this.__type = "driver_slambda_lambda_1"
+    this.__proto = ["driver_slambda_lambda_1", "Function0", "Function"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.invoke_k_ = driver_slambda_lambda_1_invoke_k_
+    this._shared = _shared
+    return this
+end function
+
+sub driver_slambda_lambda_1_invoke_k_()
+    m._shared.value = (m._shared.value + 1)
+end sub

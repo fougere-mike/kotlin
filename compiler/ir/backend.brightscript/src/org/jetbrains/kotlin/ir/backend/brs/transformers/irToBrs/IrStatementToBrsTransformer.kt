@@ -2264,9 +2264,8 @@ class IrStatementToBrsTransformer(
         // If so, we need to write to field.value instead of field
         // EXCEPTION: In constructor body, we're initializing the field with the box itself,
         // so we write directly to the field, not field.value
-        val className = parentClass?.name?.asString() ?: ""
-        val fieldKey = "$className.$fieldName"
-        val isSharedVariableField = fieldKey in context.sharedVariableFields
+        val isSharedVariableField = expression.symbol in context.sharedVariableBoxFields ||
+                (parentClass != null && parentClass to fieldName in context.sharedVariableClassBoxFields)
         val isInConstructor = genCtx.isInConstructorBody
 
         // A shared variable moved to a coroutine field keeps its SHARED_BOX_INIT-tagged

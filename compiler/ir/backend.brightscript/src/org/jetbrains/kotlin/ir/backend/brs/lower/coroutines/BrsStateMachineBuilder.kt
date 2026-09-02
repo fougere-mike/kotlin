@@ -21,17 +21,19 @@ import org.jetbrains.kotlin.ir.irAttribute
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrReturnableBlockSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueParameterSymbol
+import org.jetbrains.kotlin.ir.symbols.IrVariableSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.isNothing
 import org.jetbrains.kotlin.ir.types.isUnit
 import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.util.deepCopyWithSymbols
+import org.jetbrains.kotlin.ir.util.isElseBranch
 import org.jetbrains.kotlin.ir.util.isSuspend
-import org.jetbrains.kotlin.ir.util.isTrueConst
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
+import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 
 /**
  * Represents a state in the coroutine state machine.
@@ -618,49 +620,82 @@ class BrsStateMachineBuilder(
         allTheIntermediateLocals.add(variable)
     }
 
+    // Ported from the JS backend's StateMachineBuilder.visitWhen. The previous BRS
+    // version dropped the branch CONDITION whenever the branch RESULT was suspendable
+    // (it computed the check and never used it, dispatching to the branch state
+    // unconditionally) and never captured a value-producing when's result — a
+    // lowered `a && suspendCall()` condition therefore collapsed to garbage
+    // (`not ARGUMENT` bare statements, `if invalid` branches — device syntax
+    // errors). Pinned by flow/suspendNegatedAndCondition.
     override fun visitWhen(expression: IrWhen) {
         if (expression !in suspendableNodes) {
             addStatement(expression)
             return
         }
 
-        val exitState = SuspendState(unit)
+        val exitState = SuspendState(expression.type)
 
-        for (branch in expression.branches) {
-            if (branch.condition in suspendableNodes) {
-                branch.condition.acceptVoid(this)
-            } else {
-                addStatement(branch.condition)
+        val varSymbol: IrVariableSymbol?
+        val branches: List<IrBranch>
+
+        if (hasResultingValue(expression)) {
+            // Branch results land in a temp so the enclosing construct can consume
+            // the when's value via lastExpression() after the exit state.
+            val irVar = tempVar(expression.type, "WHEN_RESULT")
+            varSymbol = irVar.symbol
+
+            branches = expression.branches.map {
+                val wrapped = BrsIrBuilder.buildSetVariable(varSymbol, it.result, unit)
+                if (it.result in suspendableNodes) {
+                    suspendableNodes += wrapped
+                }
+                when {
+                    isElseBranch(it) -> IrElseBranchImpl(it.startOffset, it.endOffset, it.condition, wrapped)
+                    else -> IrBranchImpl(it.startOffset, it.endOffset, it.condition, wrapped)
+                }
             }
+        } else {
+            varSymbol = null
+            branches = expression.branches
+        }
 
-            if (branch.result in suspendableNodes) {
-                val condition = lastExpression()
-                val branchBlock = BrsIrBuilder.buildBlock(unit)
+        var exitStateDispatched = false
+        for (branch in branches) {
+            if (!isElseBranch(branch)) {
+                branch.condition.acceptVoid(this)
+                val branchBlock = BrsIrBuilder.buildComposite(branch.result.type)
+                val elseBlock = BrsIrBuilder.buildComposite(expression.type)
 
-                transformLastExpression { branchBlock }
-
-                newState()
-                val branchState = currentState
-                doDispatchImpl(branchState, branchBlock, true)
-
-                // Add condition check
-                val check = if (branch === expression.branches.last() && branch.condition.isTrueConst()) {
-                    // else branch - always taken
-                    condition
-                } else {
-                    condition
+                val dispatchState = currentState
+                transformLastExpression {
+                    BrsIrBuilder.buildIfElse(unit, it, branchBlock, elseBlock)
                 }
 
+                currentBlock = branchBlock
                 branch.result.acceptVoid(this)
-                maybeDoDispatch(exitState)
+
+                maybeDoDispatch(exitState).ifTrue { exitStateDispatched = true }
+
+                currentState = dispatchState
+                currentBlock = elseBlock
             } else {
-                transformLastExpression { cond ->
-                    BrsIrBuilder.buildIfElse(expression.type, cond, branch.result)
-                }
+                branch.result.acceptVoid(this)
+
+                maybeDoDispatch(exitState).ifTrue { exitStateDispatched = true }
+
+                break
             }
         }
 
-        updateState(exitState)
+        maybeDoDispatch(exitState).ifTrue { exitStateDispatched = true }
+
+        if (exitStateDispatched) {
+            updateState(exitState)
+        }
+
+        if (varSymbol != null) {
+            addStatement(BrsIrBuilder.buildGetValue(varSymbol))
+        }
     }
 
     private fun buildTryState() = TryState(currentState, SuspendState(unit))
