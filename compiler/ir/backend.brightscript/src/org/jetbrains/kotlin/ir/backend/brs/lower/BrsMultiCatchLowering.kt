@@ -96,7 +96,14 @@ class BrsMultiCatchLowering(
                     isVar = false,
                     isConst = false,
                     isLateinit = false,
-                )
+                ).apply {
+                    // Declarations need a parent: lambda-hosted tries reach
+                    // callable-reference lowering, which queries it and crashes
+                    // on an unset one ("Parent of element ... is not
+                    // initialized"). The original clause parameters carry the
+                    // enclosing declaration.
+                    parent = aTry.catches.first().catchParameter.parent
+                }
 
                 fun readMerged() = IrGetValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, throwableType, merged.symbol)
 

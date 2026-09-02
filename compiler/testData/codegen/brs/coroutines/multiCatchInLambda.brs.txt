@@ -1,0 +1,45 @@
+// --- File: multiCatchInLambdaKt.brs ---
+function runBlock_Function0Str_k_(block as Object) as String
+    return block.invoke_k_()
+end function
+
+function classifyInLambda_Str_k_(input as String) as String
+    return runBlock_Function0Str_k_(classifyInLambda_lambda_create_Str_k_(input))
+end function
+
+function classifyInLambda_lambda_create_Str_k_(_input as String) as Object
+    this = {}
+    this.__type = "classifyInLambda_lambda"
+    this.__proto = ["classifyInLambda_lambda", "Function0", "Function"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.invoke_k_ = classifyInLambda_lambda_invoke_k_
+    this._input = _input
+    return this
+end function
+
+function classifyInLambda_lambda_invoke_k_() as String
+    __try_tmp0 = invalid
+    try
+        if m._input = "x" then
+            throw IllegalStateException_create_StrN_k_("boom")
+        end if
+        __try_tmp0 = "ok"
+    catch __caught
+        __when_tmp0 = invalid
+        if __kotlin_isInstanceOf(__caught, "IllegalStateException") then
+            e = __caught
+            __when_tmp0 = "ise"
+        else if __kotlin_isInstanceOf(__caught, "IllegalArgumentException") then
+            e = __caught
+            __when_tmp0 = "iae"
+        else
+            throw __caught
+        end if
+        __try_tmp0 = __when_tmp0
+    end try
+    return __try_tmp0
+
+end function

@@ -159,6 +159,11 @@ class BrsCoroutineGoldenFileTests : AbstractBrsGoldenFileTest() {
     @Test
     fun suspendTypedCatch() = runTest("coroutines/suspendTypedCatch.kt")
 
+    // Multi-catch inside a LAMBDA: the merged __caught variable must get a
+    // parent, or callable-reference lowering crashes the compile (task 3b).
+    @Test
+    fun multiCatchInLambda() = runTest("coroutines/multiCatchInLambda.kt")
+
     @Test
     fun suspendMemberStateMachine() = runTest("coroutines/suspendMemberStateMachine.kt")
 
