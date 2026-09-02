@@ -230,6 +230,43 @@ fun TestRunner.flowOperatorsTests() {
             }
         }
 
+        // Upstream failures must PROPAGATE through take's abort machinery, not be
+        // captured by it: the state machine treats typed catch clauses as
+        // catch-alls (BrsStateMachineBuilder visitTry), so take/collectFirst catch
+        // Throwable and discriminate manually — a foreign exception rethrows.
+        test("upstreamFailurePropagatesThroughTake") {
+            runBlocking {
+                var received = 0
+                var propagated: Throwable? = null
+                try {
+                    flow {
+                        emit(1)
+                        throw IllegalArgumentException("boom")
+                    }.take(5).collect { received++ }
+                } catch (e: IllegalArgumentException) {
+                    propagated = e
+                }
+                assertEquals(1, received)
+                assertTrue(propagated is IllegalArgumentException, "upstream failure must propagate through take as ITSELF, got: " + (propagated?.message ?: "null"))
+                assertEquals("boom", (propagated as IllegalArgumentException).message)
+            }
+        }
+
+        test("upstreamFailurePropagatesThroughFirst") {
+            runBlocking {
+                var propagated: Throwable? = null
+                try {
+                    flow<Int> {
+                        throw IllegalArgumentException("boom")
+                    }.first()
+                } catch (e: IllegalArgumentException) {
+                    propagated = e
+                }
+                assertTrue(propagated is IllegalArgumentException, "upstream failure must propagate through first() as ITSELF, got: " + (propagated?.message ?: "null"))
+                assertEquals("boom", (propagated as IllegalArgumentException).message)
+            }
+        }
+
         test("dropSkipsCount") {
             runBlocking {
                 assertEquals(listOf(3, 4), flowOf(1, 2, 3, 4).drop(2).toList())

@@ -212,8 +212,13 @@ public fun <T> Flow<T>.take(count: Int): Flow<T> {
                 downstream.emit(value)
                 if (consumed >= count) throw AbortFlowException(downstream)
             }
-        } catch (e: AbortFlowException) {
-            if (e.owner !== downstream) throw e
+        } catch (e: Throwable) {
+            // Throwable + manual discrimination, NOT `catch (e: AbortFlowException)`:
+            // the suspend state machine emits every typed catch clause as a
+            // catch-all (BrsStateMachineBuilder.visitTry), so a typed clause here
+            // would run the owner check on a foreign exception — a crash instead
+            // of propagation (device-pinned: upstreamFailurePropagatesThroughTake).
+            if (e !is AbortFlowException || e.owner !== downstream) throw e
         }
     }
 }
