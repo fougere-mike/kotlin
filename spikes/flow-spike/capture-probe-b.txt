@@ -1,0 +1,58 @@
+===SPIKE_SENTINEL_1788373052===
+[SPIKE] BEGIN probe-b model=4800X os=15.3.4 build=2402
+[SPIKE] b.b1.info start sceneT=501ms
+[SPIKE] b.b1.hb run-entry t=0ms
+[SPIKE] b.b1.hb beat=1 t=250ms
+[SPIKE] b.b1.hb beat=2 t=501ms
+[SPIKE] b.b1.hb beat=3 t=752ms
+[SPIKE] b.b1.hb beat=4 t=1002ms
+[SPIKE] b.b1.hb beat=5 t=1253ms
+[SPIKE] b.b1.hb beat=6 t=1503ms
+[SPIKE] b.b1.hb beat=7 t=1754ms
+[SPIKE] b.b1.info stopIssued sceneT=2502ms beatAtStop=7
+[SPIKE] b.b1.control PASS beatAtStop=7 (loop was live and beating pre-STOP)
+[SPIKE] b.b1 PASS beatAtStop=7 beatStopPlus2s=7 beatStopPlus4s=7 (equal=frozen=STOP killed the sleep loop; climbing=STOP did not kill it FINDING; promptness: last b.b1.hb t vs stopIssued sceneT)
+[SPIKE] b.b7 PASS postStopWriteReadCoherent=true coherentAfterRepeatedStop=true (no-crash implied by the run reaching END)
+[SPIKE] b.b2.info start sceneT=7004ms
+[SPIKE] b.b2.hb run-entry t=0ms
+[SPIKE] b.b2.hb blocking t=0ms
+[SPIKE] b.b2.info stopIssued sceneT=9005ms phaseAtStop=blocking
+[SPIKE] b.b2.control PASS phaseAtStop=blocking (run entered the blocking sleep pre-STOP)
+[SPIKE] b.b2.info sceneT=14005ms phaseAtStopPlus5s=blocking cleanupRan=false
+[SPIKE] b.b2 PASS phaseAtRunEnd=blocking cleanupRan=false (blocking+false=STOP killed the thread INSIDE one blocking sleep - valid ONLY together with no b.b2.hb woke line in the capture; woke/true=STOP is checkpoint-based FINDING)
+[SPIKE] b.b3.info start sceneT=29507ms
+[SPIKE] b.b3.hb run-entry t=0ms
+[SPIKE] b.b3.hb waiting t=0ms
+[SPIKE] b.b3.info stopIssued sceneT=31509ms phaseAtStop=waiting
+[SPIKE] b.b3.control PASS phaseAtStop=waiting (run entered wait() pre-STOP)
+[SPIKE] b.b3.info sceneT=34509ms phaseAtStopPlus3s=waiting
+[SPIKE] b.b3 PASS phaseAtRunEnd=waiting cleanupRan=false (waiting+false=STOP killed the wait()ing thread - valid ONLY together with no b.b3.hb wokeFromWait line in the capture, and read against the b.b6.hb waitTimeoutWorks positive control; wokeFromWait=STOP does not interrupt wait FINDING)
+[SPIKE] b.b4.info start sceneT=47010ms
+[SPIKE] b.b4.hb run-entry t=0ms
+[SPIKE] b.b4.hb beat=10 t=533ms
+[SPIKE] b.b4.hb beat=20 t=1050ms
+[SPIKE] b.b4.hb beat=30 t=1569ms
+[SPIKE] b.b4.info stopIssued sceneT=49012ms beatAtStop=38
+[SPIKE] b.b4.control PASS beatAtStop=38 (compute loop was live and beating pre-STOP)
+[SPIKE] b.b4 PASS beatAtStop=38 beatStopPlus2s=38 beatStopPlus4s=38 (equal=STOP killed a compute loop whose only system calls were one field write per ~100k iterations + a print per 10 beats - NOT a strictly-call-free loop, which is unobservable; climbing=STOP needs interpreter checkpoints FINDING)
+[SPIKE] b.b5.info start sceneT=53513ms
+[SPIKE] b.b5.hb run-entry t=0ms
+[SPIKE] b.b5.hb transfer t=0ms
+[SPIKE] b.b5.hb afterTransfer len=0 t=39ms
+[SPIKE] b.b5.info stopIssued sceneT=55513ms phaseAtStop=afterTransfer
+[SPIKE] b.b5.control FAIL phaseAtStop=afterTransfer (transfer=connect still in flight at STOP; afterTransfer=connect failed fast pre-STOP - sub-run inconclusive, step 19 emits INFORMATIVE)
+[SPIKE] b.b5 INFORMATIVE connect failed fast pre-STOP (phaseAtStop=afterTransfer phase=afterTransfer); sub-run inconclusive - cross-check b.b5.hb afterTransfer t= (< ~2000ms confirms pre-STOP)
+[SPIKE] b.b6.info start sceneT=60015ms
+[SPIKE] b.b6.hb run-entry t=0ms
+[SPIKE] b.b6.hb waitTimeoutWorks t=100ms (wait(100,port) timeout-woke a live task thread - B3's discriminator mechanism proven in-run)
+[SPIKE] b.b6.hb beat=5 t=503ms
+[SPIKE] b.b6.hb beat=10 t=1007ms
+[SPIKE] b.b6.hb beat=15 t=1511ms
+[SPIKE] b.b6.control PASS beatsBeforeCancel=19 (loop was live before the cancel write)
+[SPIKE] b.b6.info cancelIssued sceneT=62017ms
+[SPIKE] b.b6.hb beat=20 t=2016ms
+[SPIKE] b.b6.hb sawCancel beat=20 t=2016ms
+[SPIKE] b.b6.hb exit phase=cleanExit t=2017ms
+[SPIKE] b.b6 PASS phase=cleanExit cleanupRan=true (cleanExit+true=mid-run field reads see render-side writes AND clean unwinding runs post-loop code; looping=cancel write never seen within 2s FINDING - loopBound natural exit is post-capture, never observable here)
+[SPIKE] b.b8 PASS b1.cleanupRan=false b2.cleanupRan=false (false+false=hard kill skips trailing cleanup; any true=trailing cleanup survived STOP FINDING - consistent with a FINDING on the matching b.b1/b.b2 verdict)
+[SPIKE] END

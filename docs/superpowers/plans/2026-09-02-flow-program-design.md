@@ -67,8 +67,24 @@ scope-handle spike FINDINGS):
 - **Task threads are synchronous** (no pump): blocking I/O is natural there;
   pump-based suspension is impossible there.
 
-Unpinned corners are §8's spikes; per the platform-truth discipline they run BEFORE
-the implementation plan is written.
+Unpinned corners were §8's spikes — **EXECUTED 2026-09-02** (Roku Ultra 4800X,
+OS 15.3.4 build 2402; facts of record in `spikes/flow-spike/FINDINGS.md`). No
+design assumption was falsified. New pinned facts this design now rides:
+
+- **Global-node doorbell carrier (Probe A, 12/12):** runtime-addField int on the
+  GLOBAL node + `observeFieldScoped` from other components = per-write in-order
+  delivery, each handler in its OWN component's context; alwaysNotify honored;
+  observers stack; observer-component death detaches IMMEDIATELY (no ghost
+  fires, no crash, survivors unaffected, late re-observe works); main-thread
+  writes deliver too (informative).
+- **Task STOP (Probe B):** `control="STOP"` is a PROMPT HARD KILL — mid
+  sleep-loop, mid single 20s blocking sleep, mid `wait()`, and mid compute loop;
+  code after the killed point never runs (`finally` cannot run on hard STOP);
+  the abandoned node stays safe (reads/writes coherent, repeated STOP no-op);
+  a render-side bool-field write IS seen by mid-run task dot-reads and clean
+  cooperative unwinding runs post-loop code. RESIDUAL (spike bait): blocked
+  sync roUrlTransfer interruptibility — inconclusive on this network (TEST-NET
+  connect failed fast); re-probe against a stalling LAN listener.
 
 ## 3. Public surface (package `kotlin.coroutines.flow` unless noted)
 
@@ -216,12 +232,15 @@ BrightScript unwinding, task-side `try/finally` RUNS. `ensureTaskActive()` gives
 user code checkpoints inside long non-emitting compute (kotlinx `ensureActive`
 parity for the task world).
 
-**Hard layer (platform):** `control="STOP"` semantics are UNPINNED (Probe B):
-whether it kills a thread blocked in a synchronous `roUrlTransfer`/sleep or only
-at interpreter checkpoints; node-abandonment safety after STOP; whether finallys
-run. The Task node SDK page is not in `../RokuDocs` yet
-(https://developer.roku.com/docs/references/scenegraph/control-nodes/task.md) —
-the device is the authority regardless.
+**Hard layer (platform):** `control="STOP"` semantics are PINNED (Probe B,
+2026-09-02): a prompt hard kill in every probed shape — sleep loop, single 20s
+blocking sleep, blocked `wait()`, compute loop; sub-second promptness in all of
+them; node-abandonment safe, repeated STOP idempotent; trailing code (finally)
+NEVER runs after a hard kill. Residual: blocked sync roUrlTransfer specifically
+was inconclusive on this network (fast-fail connect) — recorded spike bait; the
+docs promise "hard-prompt" with that one shape footnoted. The Task node SDK page
+is still absent from `../RokuDocs`
+(https://developer.roku.com/docs/references/scenegraph/control-nodes/task.md).
 
 **runTask rider:** once Probe B pins STOP, `runTask`'s cancellation path adopts the
 same sequence — closing the M3 "task-thread work is not stopped" backlog item
@@ -232,8 +251,9 @@ and the CLAUDE.md runTask/cancellation-promises sections update accordingly.
 (cancellation included). Task-side `finally` is best-effort at cooperative
 checkpoints; a hard STOP mid-blocking-call skips it — the platform
 refcount-releases the dead thread's objects, so native handles don't leak, but
-user cleanup code is skipped. If Probe B proves STOP checkpoint-based, task-side
-finallys run in practice and the docs state the stronger truth.
+user cleanup code is skipped. Probe B PINNED both halves: cooperative unwinding
+runs post-loop cleanup (B6); hard STOP skips trailing code entirely (B8) — the
+best-effort caveat is required truth, not pessimism.
 
 ### `spawnTask {}`
 
@@ -347,9 +367,11 @@ generated files committed; messages in `FirBrsErrorsDefaultMessages.kt`.
 
 ## 8. Pre-plan device spikes (raw fixtures, scope-handle-spike precedent)
 
-Run BEFORE writing-plans; findings land in `spikes/flow-spike/FINDINGS.md`, dated,
-with raw verdict lines. Facts get folded into §2 and any falsified assumption
-re-opens the affected section with Mike.
+**EXECUTED 2026-09-02** — findings in `spikes/flow-spike/FINDINGS.md`; facts
+folded into §2/§5; NO assumption falsified (Probe A 12 PASS/0 FAIL; Probe B
+12 PASS/1 control-FAIL/1 INFORMATIVE — the B5 transfer sub-question is the one
+recorded residual). The probe specs below are kept as the record of what was
+asked; the packages live at `spikes/flow-spike/probe-a/`, `probe-b/`.
 
 **Probe A — global-node doorbell:**
 1. runtime-`addField` int on the GLOBAL node from component A; component B
@@ -417,10 +439,10 @@ re-opens the affected section with Mike.
 
 - **Suspend-codegen latent defects** (heaviest exercise yet): front-loaded phase-1
   device suite; fix in-phase (precedent: 4 defects fixed during ScopeHandle).
-- **STOP semantics unpinned**: if STOP can't kill blocked transfers, cancellation
-  promptness is bounded by the blocking call; cooperative layer still bounds at
-  emit granularity; Probe B decides the documented promise. Worst case (STOP
-  unusable): decision 8 falls back to cooperative-only — re-opened with Mike.
+- **STOP semantics**: RESOLVED by Probe B — hard-prompt kill in all probed
+  shapes; the sole residual is blocked sync roUrlTransfer (inconclusive on this
+  network, recorded spike bait). Documented promise: hard-prompt, transfer shape
+  footnoted.
 - **Literal-upstream law surprises ported code** (repositories passing `Flow`
   params to a central flowOn helper): FIR message teaches the rewrite; documented
   prominently.

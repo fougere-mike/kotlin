@@ -1,0 +1,52 @@
+===SPIKE_SENTINEL_1788373013===
+[SPIKE] BEGIN probe-a model=4800X os=15.3.4 build=2402
+[SPIKE] a.evidence.armed who=ObsB via=init t=0ms
+[SPIKE] a.evidence.armed who=ObsC via=init t=0ms
+[SPIKE] a.evidence.write who=Scene values=1,2,3 t=601ms
+[SPIKE] a.evidence.fire who=ObsB value=1 fires=1 parent=attached t=601ms
+[SPIKE] a.evidence.fire who=ObsC value=1 fires=1 parent=attached t=601ms
+[SPIKE] a.evidence.fire who=ObsB value=2 fires=2 parent=attached t=602ms
+[SPIKE] a.evidence.fire who=ObsC value=2 fires=2 parent=attached t=601ms
+[SPIKE] a.evidence.fire who=ObsB value=3 fires=3 parent=attached t=602ms
+[SPIKE] a.evidence.fire who=ObsC value=3 fires=3 parent=attached t=602ms
+[SPIKE] a.a1.order.B PASS fires=3 received=1,2,3
+[SPIKE] a.a1.order.C PASS fires=3 received=1,2,3
+[SPIKE] a.a1.context.B PASS whoSeen=ObsB
+[SPIKE] a.a1.context.C PASS whoSeen=ObsC
+[SPIKE] a.a3.stacking PASS bFires=3 cFires=3
+[SPIKE] a.evidence.write who=Scene values=7,7 (same value twice) t=1205ms
+[SPIKE] a.evidence.fire who=ObsB value=7 fires=4 parent=attached t=1204ms
+[SPIKE] a.evidence.fire who=ObsC value=7 fires=4 parent=attached t=1204ms
+[SPIKE] a.evidence.fire who=ObsB value=7 fires=5 parent=attached t=1205ms
+[SPIKE] a.evidence.fire who=ObsC value=7 fires=5 parent=attached t=1204ms
+[SPIKE] a.a2.alwaysNotify.B PASS delta=2 received=1,2,3,7,7
+[SPIKE] a.a2.alwaysNotify.C PASS delta=2 received=1,2,3,7,7
+[SPIKE] a.evidence.write who=Scene values=6 (ghost-detector control: B alive+retired) t=1807ms
+[SPIKE] a.evidence.ghostFire who=ObsB value=6
+[SPIKE] a.evidence.fire who=ObsB value=6 fires=6 parent=attached t=1807ms
+[SPIKE] a.evidence.fire who=ObsC value=6 fires=6 parent=attached t=1806ms
+[SPIKE] a.a4.ghostDetectorControl PASS ghosts=6
+[SPIKE] a.evidence.removedB refs-released t=2408ms
+[SPIKE] a.evidence.write who=Scene values=8,9 (same-stack post-removal, INFORMATIVE window) t=2408ms
+[SPIKE] a.evidence.fire who=ObsC value=8 fires=7 parent=attached t=2407ms
+[SPIKE] a.evidence.fire who=ObsC value=9 fires=8 parent=attached t=2408ms
+[SPIKE] a.a4.survivorAdvances PASS no-crash cFires=8 delta=2 cReceived=1,2,3,7,7,6,8,9
+[SPIKE] a.a4.ghostFires.immediate INFORMATIVE same-stack-window ghosts=none
+[SPIKE] a.evidence.write who=Scene values=10,11 (settled post-removal, PRIMARY window) t=3009ms
+[SPIKE] a.evidence.fire who=ObsC value=10 fires=9 parent=attached t=3008ms
+[SPIKE] a.evidence.fire who=ObsC value=11 fires=10 parent=attached t=3009ms
+[SPIKE] a.a4.noGhostFires PASS settled-window ghosts=none
+[SPIKE] a.evidence.armed who=ObsD via=init t=0ms
+[SPIKE] a.evidence.createdD t=3611ms
+[SPIKE] a.evidence.write who=Scene values=12 t=4212ms
+[SPIKE] a.evidence.fire who=ObsC value=12 fires=11 parent=attached t=4211ms
+[SPIKE] a.evidence.fire who=ObsD value=12 fires=1 parent=attached t=601ms
+[SPIKE] a.a4.lateReobserve.D PASS fires=1 received=12 whoSeen=ObsD
+[SPIKE] a.a5.info signaling-main t=4812ms
+[SPIKE] a.evidence.fire who=ObsC value=13 fires=12 parent=attached t=4842ms
+[SPIKE] a.evidence.fire who=ObsD value=13 fires=2 parent=attached t=1232ms
+[SPIKE] a.a5.info main-thread-wrote value=13 waited=4842ms
+[SPIKE] a.a5 INFORMATIVE main-thread-emit delivered=true cDelta=1 dDelta=1 cReceived=1,2,3,7,7,6,8,9,10,11,12,13 dReceived=12,13
+[SPIKE] a.a4.noGhostFires.final PASS post-settle ghosts=none
+[SPIKE] a.evidence.summary cReceived=1,2,3,7,7,6,8,9,10,11,12,13 dReceived=12,13 t=6813ms
+[SPIKE] END

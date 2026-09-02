@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ObsB" extends="Group">
+    <interface>
+        <field id="fires" type="integer" value="0" />
+        <field id="received" type="string" value="" />
+        <field id="whoSeen" type="string" value="" />
+        <field id="retired" type="boolean" value="false" />
+        <field id="armNow" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/ObsB.brs" />
+</component>
