@@ -153,6 +153,12 @@ class BrsCoroutineGoldenFileTests : AbstractBrsGoldenFileTest() {
     @Test
     fun suspendMultiCatch() = runTest("coroutines/suspendMultiCatch.kt")
 
+    // Typed catch clauses in a suspend state machine must is-dispatch and
+    // rethrow non-matching exceptions; exact-Throwable stays unconditional
+    // (task 3b — the state machine used to run every clause as a catch-all).
+    @Test
+    fun suspendTypedCatch() = runTest("coroutines/suspendTypedCatch.kt")
+
     @Test
     fun suspendMemberStateMachine() = runTest("coroutines/suspendMemberStateMachine.kt")
 
