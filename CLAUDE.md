@@ -1391,7 +1391,7 @@ BrsGoldenFileTests.kt reads one high — it counts the commented-out
 |------|-------|
 | Golden file tests | 84 |
 | FIR diagnostic suite (checkers.brs) | 227 |
-| Stdlib device suite | 557 tests / 56 suites |
+| Stdlib device suite | 559 tests / 56 suites |
 | rokuTest E2E | 86 active tests / 9 suites (+3 red-guarded xtests) |
 | `validateComponentIncludes` + `validateTestComponentIncludes` | strict mode, 0 findings (no allowlist) |
 
