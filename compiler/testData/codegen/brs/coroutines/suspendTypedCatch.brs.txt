@@ -83,11 +83,15 @@ function _typedCaughtCOROUTINE__doResume_k_() as Dynamic
                 continue while
             else if __kotlin_identityEquals(tmp, 3) then
                 m.__set_exceptionState(4)
-                e = m.__get_exception()
-                m.r0 = -1
+                if __kotlin_isInstanceOf(m.__get_exception(), "IllegalStateException") then
+                    e = m.__get_exception()
+                    m.r0 = -1
 
-                m.__set_state(5)
-                continue while
+                    m.__set_state(5)
+                    continue while
+                else
+                    throw m.__get_exception()
+                end if
             else if __kotlin_identityEquals(tmp, 4) then
                 throw m.__get_exception()
             else if __kotlin_identityEquals(tmp, 5) then
@@ -138,11 +142,15 @@ function _typedMissValueCOROUTINE__doResume_k_() as Dynamic
                 continue while
             else if __kotlin_identityEquals(tmp, 2) then
                 m.__set_exceptionState(4)
-                e = m.__get_exception()
-                m.__try_tmp00 = -1
+                if __kotlin_isInstanceOf(m.__get_exception(), "IllegalStateException") then
+                    e = m.__get_exception()
+                    m.__try_tmp00 = -1
 
-                m.__set_state(3)
-                continue while
+                    m.__set_state(3)
+                    continue while
+                else
+                    throw m.__get_exception()
+                end if
             else if __kotlin_identityEquals(tmp, 3) then
                 m.__set_exceptionState(4)
                 r = m.__try_tmp00

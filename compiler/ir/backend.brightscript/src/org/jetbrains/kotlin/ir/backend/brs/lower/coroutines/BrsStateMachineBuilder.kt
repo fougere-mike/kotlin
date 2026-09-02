@@ -23,7 +23,10 @@ import org.jetbrains.kotlin.ir.symbols.IrReturnableBlockSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueParameterSymbol
 import org.jetbrains.kotlin.ir.symbols.IrVariableSymbol
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.classFqName
+import org.jetbrains.kotlin.ir.types.isAny
 import org.jetbrains.kotlin.ir.types.isNothing
+import org.jetbrains.kotlin.ir.types.isNullableAny
 import org.jetbrains.kotlin.ir.types.isUnit
 import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.util.deepCopyWithSymbols
@@ -716,6 +719,26 @@ class BrsStateMachineBuilder(
             value
         )
 
+    // Mirrors BrsMultiCatchLowering's catch-all rule: a clause typed exactly
+    // kotlin.Throwable is unconditional. Every other USER clause type
+    // is-dispatches (and native BrightScript errors, which fail every `is`
+    // test, propagate past it). Any/Any? is also a catch-all: it is not a
+    // legal user catch type — it only appears on clauses SYNTHESIZED by
+    // FinallyBlocksLowering (catchAllThrowableType is anyN on this backend),
+    // the analogue of the JS builder's IrDynamicType catch-all branch. An
+    // is-check there skips finally blocks: __proto chains never list "Any".
+    private fun isCatchAllType(type: IrType) =
+        type.isAny() || type.isNullableAny() || type.classFqName?.asString() == "kotlin.Throwable"
+
+    private fun buildIsCheck(value: IrExpression, toType: IrType) =
+        IrTypeOperatorCallImpl(
+            UNDEFINED_OFFSET, UNDEFINED_OFFSET,
+            context.irBuiltIns.booleanType,
+            IrTypeOperator.INSTANCEOF,
+            toType,
+            value
+        )
+
     private fun tempVar(type: IrType, name: String = "tmp") =
         BrsIrBuilder.buildVar(type, function.owner, name)
             .also(::registerLocal)
@@ -791,14 +814,47 @@ class BrsStateMachineBuilder(
                 }
             } else catch.result
 
-            // BrightScript doesn't have dynamic types, so we use a simpler approach:
-            // Just handle the catch block directly (no type checking needed as
-            // all exceptions are the same base type in BrightScript)
-            rethrowNeeded = false
+            if (isCatchAllType(type)) {
+                // A clause typed exactly kotlin.Throwable runs UNCONDITIONALLY:
+                // native BrightScript errors carry no Kotlin __proto and fail
+                // every `is` test, so the catch-all must not gain one
+                // (BrsMultiCatchLowering's rule — multi-clause tries were
+                // already merged there into this single-clause shape).
+                rethrowNeeded = false
 
-            addStatement(irVar)
-            catchResult.acceptVoid(this)
-            maybeDoDispatch(exitState)
+                addStatement(irVar)
+                catchResult.acceptVoid(this)
+                maybeDoDispatch(exitState)
+            } else {
+                // Typed clause: is-dispatch on the stored exception, JS
+                // StateMachineBuilder precedent. A non-matching exception falls
+                // through to the next clause and ultimately to the rethrow
+                // below. (The old emission ran the FIRST clause unconditionally
+                // — a typed catch in a suspend body silently swallowed
+                // everything.)
+                val check = buildIsCheck(pendingException(), type)
+
+                val branchBlock = BrsIrBuilder.buildComposite(catchResult.type)
+                val elseBlock = BrsIrBuilder.buildComposite(catchResult.type)
+                val irIf = BrsIrBuilder.buildIfElse(unit, check, branchBlock, elseBlock)
+                val ifBlock = currentBlock
+                val dispatchState = currentState
+
+                currentBlock = branchBlock
+
+                addStatement(irVar)
+                catchResult.acceptVoid(this)
+                maybeDoDispatch(exitState)
+
+                // Restore the state alongside the block (visitWhen discipline):
+                // a suspending clause body leaves currentState on its resume
+                // state, and successor edges for the else-chain belong to the
+                // catch state, not to that body state.
+                currentState = dispatchState
+                currentBlock = ifBlock
+                addStatement(irIf)
+                currentBlock = elseBlock
+            }
         }
 
         if (rethrowNeeded) {

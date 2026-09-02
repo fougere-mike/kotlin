@@ -164,6 +164,12 @@ class BrsCoroutineGoldenFileTests : AbstractBrsGoldenFileTest() {
     @Test
     fun multiCatchInLambda() = runTest("coroutines/multiCatchInLambda.kt")
 
+    // try/finally around a suspension: the finally-lowering's synthesized
+    // Any?-typed clause must stay an UNCONDITIONAL catch-all — an is-check
+    // there skips the finally on the exceptional path (task 3b near-miss).
+    @Test
+    fun suspendTryFinally() = runTest("coroutines/suspendTryFinally.kt")
+
     @Test
     fun suspendMemberStateMachine() = runTest("coroutines/suspendMemberStateMachine.kt")
 

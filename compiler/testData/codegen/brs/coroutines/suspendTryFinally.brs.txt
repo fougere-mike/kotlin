@@ -1,0 +1,77 @@
+// --- File: suspendTryFinallyKt.brs ---
+function beat_ContinuationI_k_(_completion as Object) as Object
+    return 1
+end function
+
+function guardedCleanup_Z_ContinuationI_k_(flag as Boolean, _completion as Object) as Object
+    tmp = _guardedCleanupCOROUTINE__create_Z_ContinuationI_k_(flag, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function _guardedCleanupCOROUTINE__create_Z_ContinuationI_k_(flag as Boolean, resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["_guardedCleanupCOROUTINE_", this.__proto]
+    this.__type = "_guardedCleanupCOROUTINE_"
+    this.doResume_k_ = _guardedCleanupCOROUTINE__doResume_k_
+    this.flag = flag
+    return this
+end function
+
+function _guardedCleanupCOROUTINE__doResume_k_() as Dynamic
+    tmp = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp_1 = m.__get_state()
+            if __kotlin_identityEquals(tmp_1, 0) then
+                m.__set_exceptionState(5)
+                m.cleanups0 = 0
+                m.__set_state(1)
+                continue while
+            else if __kotlin_identityEquals(tmp_1, 1) then
+                m.__set_exceptionState(4)
+                if m.flag then
+                    throw IllegalStateException_create_StrN_k_("boom")
+                end if
+                m.__set_state(2)
+                suspendResult = beat_ContinuationI_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp_1, 2) then
+                m.tmp_ret_01 = suspendResult
+                m.__set_exceptionState(5)
+                m.__set_state(3)
+                continue while
+            else if __kotlin_identityEquals(tmp_1, 3) then
+                tmp = m.tmp_ret_01
+                m.cleanups0 = (m.cleanups0 + 1)
+
+
+
+                                return m.cleanups0
+            else if __kotlin_identityEquals(tmp_1, 4) then
+                m.__set_exceptionState(5)
+                t = m.__get_exception()
+                m.cleanups0 = (m.cleanups0 + 1)
+
+                throw t
+
+            else if __kotlin_identityEquals(tmp_1, 5) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 5) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
