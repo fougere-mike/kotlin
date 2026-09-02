@@ -171,6 +171,20 @@ class BrsCoroutineGoldenFileTests : AbstractBrsGoldenFileTest() {
     // (flow cold core defect: FlowCore flowEmitsValuesInOrder device failure).
     @Test
     fun sharedBoxFieldKeyCollision() = runTest("flow/sharedBoxFieldKeyCollision.kt")
+
+    // Class TYPE names mangled into function names must be sanitized: a
+    // "$"-named suspend-lambda SAM wrapper typing a coroutine's __this
+    // parameter leaked "$" into the create function's name — a BrightScript
+    // syntax error (flow simple-operators defect: OperatorsKt device compile).
+    @Test
+    fun samWrapperCoroutineCreateName() = runTest("flow/samWrapperCoroutineCreateName.kt")
+
+    // Ordering comparisons on shared-box primitives must emit native operators:
+    // the box read degrades the expression type to anyN, and the emitter fell
+    // back to a compareTo METHOD call on a bare integer — "Member function not
+    // found" on device (flow simple-operators defect: take/drop counters).
+    @Test
+    fun sharedBoxPrimitiveComparison() = runTest("flow/sharedBoxPrimitiveComparison.kt")
 }
 
 // ==================== Inline BrightScript Tests ====================

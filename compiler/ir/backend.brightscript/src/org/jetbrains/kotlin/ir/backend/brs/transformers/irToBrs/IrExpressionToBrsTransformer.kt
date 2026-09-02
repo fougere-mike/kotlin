@@ -2674,7 +2674,30 @@ class IrExpressionToBrsTransformer(
                 val leftType = leftIr.type
                 val rightType = rightIr.type
 
-                val needsCompareTo = !leftType.isPrimitiveForComparison() || !rightType.isPrimitiveForComparison()
+                // Like the arithmetic branch below, consult the function's DECLARED
+                // operand types as well as the expression types: shared-variable box
+                // reads degrade the expression type to anyN, while the resolved builtin
+                // comparison (a static function carrying both operands as value
+                // parameters) still declares the primitives. Declared types only ever
+                // rescue a side INTO the native path — a side already primitive by
+                // expression type is never demoted.
+                val declaredLeftType: IrType?
+                val declaredRightType: IrType?
+                val comparisonReceiverType = function.dispatchReceiverParameter?.type
+                    ?: function.extensionReceiverParameter?.type
+                if (comparisonReceiverType != null) {
+                    declaredLeftType = comparisonReceiverType
+                    declaredRightType = function.valueParameters.firstOrNull()?.type
+                } else {
+                    declaredLeftType = function.valueParameters.getOrNull(0)?.type
+                    declaredRightType = function.valueParameters.getOrNull(1)?.type
+                }
+                val leftPrimitive = leftType.isPrimitiveForComparison() ||
+                    declaredLeftType?.isPrimitiveForComparison() == true
+                val rightPrimitive = rightType.isPrimitiveForComparison() ||
+                    declaredRightType?.isPrimitiveForComparison() == true
+
+                val needsCompareTo = !leftPrimitive || !rightPrimitive
 
                 if (needsCompareTo) {
                     val left = leftIr.accept(this, Unit)

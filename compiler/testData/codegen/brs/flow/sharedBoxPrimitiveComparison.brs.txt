@@ -1,0 +1,156 @@
+// --- File: sharedBoxPrimitiveComparisonKt.brs ---
+function use_I_ContinuationI_k_(value as Integer, _completion as Object) as Object
+    return value
+end function
+
+function runEach_ListI_SuspendFunction1IV_k_(items as Object, action as Object) as Object
+    return runEach_slambda_create_ListI_SuspendFunction1IV_ContinuationAnyNN_k_(items, action, invalid)
+end function
+
+function skipper_I_k_(count as Integer) as Object
+    skipped = {value: 0}
+    return runEach_ListI_SuspendFunction1IV_k_(listOf_Arr_k_([1, 2, 3]), skipper_slambda_create_AnyN_I_ContinuationAnyNN_k_(skipped, count, invalid))
+end function
+
+function runEach_slambda_create_ListI_SuspendFunction1IV_ContinuationAnyNN_k_(_items as Object, _action as Object, resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_Continuation_k_ = this.invoke_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_Continuation_k_ = this.create_Continuation_k_
+    this.__proto = ["runEach_slambda", "SuspendFunction0", this.__proto]
+    this.__type = "runEach_slambda"
+    this.invoke_Continuation_k_ = runEach_slambda_invoke_Continuation_k_
+    this.doResume_k_ = runEach_slambda_doResume_k_
+    this.create_Continuation_k_ = runEach_slambda_create_Continuation_k_
+    this._items = _items
+    this._action = _action
+    return this
+end function
+
+function runEach_slambda_invoke_Continuation_k_(_completion as Object) as Object
+    tmp = m.create_Continuation_k_(_completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function runEach_slambda_doResume_k_() as Dynamic
+    item = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(4)
+                m.iterator0 = m._items.iterator_k_()
+                m.__set_state(1)
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                if not m.iterator0.hasNext_k_() then
+                    m.__set_state(3)
+                    continue while
+                end if
+                item = m.iterator0.next_k_()
+                m.__set_state(2)
+                suspendResult = m._action.invoke_AnyN_Continuation_k_(item, m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+                m.__set_state(1)
+                continue while
+            else if __kotlin_identityEquals(tmp, 3) then
+                                return invalid
+            else if __kotlin_identityEquals(tmp, 4) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 4) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function runEach_slambda_create_Continuation_k_(completion as Object) as Object
+    i = runEach_slambda_create_ListI_SuspendFunction1IV_ContinuationAnyNN_k_(m._items, m._action, completion)
+    return i
+end function
+
+function skipper_slambda_create_AnyN_I_ContinuationAnyNN_k_(_skipped as Dynamic, _count as Integer, resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_AnyN_Continuation_k_ = this.invoke_AnyN_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_AnyN_Continuation_k_ = this.create_AnyN_Continuation_k_
+    this.__proto = ["skipper_slambda", "SuspendFunction1", this.__proto]
+    this.__type = "skipper_slambda"
+    this.invoke_AnyN_Continuation_k_ = skipper_slambda_invoke_AnyN_Continuation_k_
+    this.doResume_k_ = skipper_slambda_doResume_k_
+    this.create_AnyN_Continuation_k_ = skipper_slambda_create_AnyN_Continuation_k_
+    this._skipped = _skipped
+    this._count = _count
+    return this
+end function
+
+function skipper_slambda_invoke_AnyN_Continuation_k_(value as Integer, _completion as Object) as Object
+    tmp = m.create_AnyN_Continuation_k_(value, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function skipper_slambda_doResume_k_() as Dynamic
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(3)
+                if m._skipped.value >= m._count then
+                    m.__set_state(1)
+                    suspendResult = use_I_ContinuationI_k_(m.value, m)
+                    if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                        return suspendResult
+                    end if
+                    continue while
+                else
+                    __incr_tmp_0 = m._skipped.value
+                    m._skipped.value = (__incr_tmp_0 + 1)
+
+                    m.WHEN_RESULT0 = __incr_tmp_0
+
+                    m.__set_state(2)
+                    continue while
+                end if
+            else if __kotlin_identityEquals(tmp, 1) then
+                m.WHEN_RESULT0 = suspendResult
+                m.__set_state(2)
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+
+                                return invalid
+            else if __kotlin_identityEquals(tmp, 3) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 3) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function skipper_slambda_create_AnyN_Continuation_k_(value as Dynamic, completion as Object) as Object
+    i = skipper_slambda_create_AnyN_I_ContinuationAnyNN_k_(m._skipped, m._count, completion)
+    i.value = value
+    return i
+end function

@@ -1,0 +1,145 @@
+// --- File: samWrapperCoroutineCreateNameKt.brs ---
+function Sink_push_AnyN_ContinuationV_k_(value as Dynamic, _completion as Object) as Object
+end function
+
+function identity_AnyN_ContinuationAnyN_k_(value as Dynamic, _completion as Object) as Dynamic
+    return value
+end function
+
+function feed_Sink_ContinuationV_k_(sink as Object, _completion as Object) as Object
+    tmp0 = sink.push_AnyN_ContinuationV_k_(1, _completion)
+    return tmp0
+end function
+
+function build_SuspendFunction0V_k_(block as Object) as Object
+    return block
+end function
+
+function chain_SuspendFunction1AnyNAnyN_k_(transform as Object) as Object
+    return build_SuspendFunction0V_k_(chain_slambda_create_SuspendFunction1AnyNAnyN_ContinuationAnyNN_k_(transform, invalid))
+end function
+
+function chain_slambda_create_SuspendFunction1AnyNAnyN_ContinuationAnyNN_k_(_transform as Object, resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_Continuation_k_ = this.invoke_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_Continuation_k_ = this.create_Continuation_k_
+    this.__proto = ["chain_slambda", "SuspendFunction0", this.__proto]
+    this.__type = "chain_slambda"
+    this.invoke_Continuation_k_ = chain_slambda_invoke_Continuation_k_
+    this.doResume_k_ = chain_slambda_doResume_k_
+    this.create_Continuation_k_ = chain_slambda_create_Continuation_k_
+    this._transform = _transform
+    return this
+end function
+
+function chain_slambda_invoke_Continuation_k_(_completion as Object) as Object
+    tmp = m.create_Continuation_k_(_completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function chain_slambda_doResume_k_() as Dynamic
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = feed_Sink_ContinuationV_k_(chain_slambda_slambda_create_SuspendFunction1AnyNAnyN_ContinuationAnyNN_k_(m._transform, invalid), m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                                return invalid
+            else if __kotlin_identityEquals(tmp, 2) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 2) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function chain_slambda_create_Continuation_k_(completion as Object) as Object
+    i = chain_slambda_create_SuspendFunction1AnyNAnyN_ContinuationAnyNN_k_(m._transform, completion)
+    return i
+end function
+
+function chain_slambda_slambda_create_SuspendFunction1AnyNAnyN_ContinuationAnyNN_k_(_transform as Object, resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.push_AnyN_ContinuationV_k_ = this.push_AnyN_ContinuationV_k_
+    this.__proto = ["chain_slambda_slambda", "Sink", this.__proto]
+    this.__type = "chain_slambda_slambda"
+    this.push_AnyN_ContinuationV_k_ = chain_slambda_slambda_push_AnyN_ContinuationV_k_
+    this._transform = _transform
+    return this
+end function
+
+function chain_slambda_slambda_push_AnyN_ContinuationV_k_(value as Dynamic, _completion as Object) as Object
+    tmp = chain_slambda_slambda__pushCOROUTINE__create_chain_slambda_slambda_AnyN_ContinuationV_k_(m, value, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function chain_slambda_slambda__pushCOROUTINE__create_chain_slambda_slambda_AnyN_ContinuationV_k_(__this as Object, value as Dynamic, resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["chain_slambda_slambda__pushCOROUTINE_", this.__proto]
+    this.__type = "chain_slambda_slambda__pushCOROUTINE_"
+    this.doResume_k_ = chain_slambda_slambda__pushCOROUTINE__doResume_k_
+    this.__this = __this
+    this.value = value
+    return this
+end function
+
+function chain_slambda_slambda__pushCOROUTINE__doResume_k_() as Dynamic
+    ARGUMENT = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(3)
+                m.__set_state(1)
+                suspendResult = m.__this._transform.invoke_AnyN_Continuation_k_(m.value, m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                ARGUMENT = suspendResult
+                m.__set_state(2)
+                suspendResult = identity_AnyN_ContinuationAnyN_k_(ARGUMENT, m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+
+                                return invalid
+            else if __kotlin_identityEquals(tmp, 3) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 3) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function

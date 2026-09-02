@@ -555,11 +555,15 @@ class BrsIrBackendContext(
             when (classifier) {
                 is IrClass -> {
                     val name = classifier.name.asString()
-                    // Handle anonymous class names like "<no name provided>"
+                    // Handle anonymous class names like "<no name provided>".
+                    // Named lambda classes (e.g. "map$slambda$slambda" — a suspend
+                    // lambda class typing a coroutine's __this parameter) carry $
+                    // separators that are invalid mid-identifier in BrightScript,
+                    // so the mangled piece is sanitized like every class name.
                     val baseName = if (name.startsWith("<") && name.endsWith(">")) {
                         "Anon"
                     } else {
-                        name
+                        sanitizeBrsIdentifier(name)
                     }
 
                     // Type erasure: Only erase TYPE PARAMETERS (like T, K, V), keep concrete types
