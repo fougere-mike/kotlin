@@ -35,7 +35,7 @@ platform short-circuit can rescue.
 
 That's it. This script:
 1. Cleans BRS module build directories (forces ~42 BRS-specific tasks to re-execute)
-2. Runs all 7 build steps every invocation — Gradle's up-to-date checks skip unchanged modules
+2. Runs all 9 build steps every invocation — Gradle's up-to-date checks skip unchanged modules
 3. Uses `-Pkotlin.build.useBootstrapStdlib=true` (prevents metadata version mismatch with bootstrap compiler)
 4. Builds `cli-brs:fatJar` (BRS compiler, ~702 tasks — not the full `dist`)
 5. Runs `regenerateKlib` and `generateStdlibBrs` using the fat JAR
@@ -1104,7 +1104,7 @@ klib and runtime regeneration.
 
 ### How `rebuild.sh` Works (Current Architecture)
 
-All 7 steps run on every invocation. Incremental speed comes from two mechanisms:
+All 9 steps run on every invocation. Incremental speed comes from two mechanisms:
 
 1. **Build directory cleanup**: BRS compiler module `build/` dirs are deleted before
    each run, forcing only the ~42 BRS-specific Gradle tasks to re-execute. The ~660
@@ -1180,8 +1180,8 @@ This is a manual step — `./rebuild.sh` does not invoke the generator. Follow t
 ## Quick Reference
 
 **rebuild.sh now compile-checks `kotlin-test-brs` whenever the stdlib or compiler
-changes** (step 7). This catches FIR-level regressions in `kotlin.test` that golden
-file tests and the diagnostic suite don't exercise. If step 7 fails, the new diagnostic
+changes** (step 8), and `kotlin-flow-brs` likewise (step 9). This catches FIR-level regressions in `kotlin.test` that golden
+file tests and the diagnostic suite don't exercise. If step 8 or 9 fails, the new diagnostic
 or checker change is firing on real `kotlin.test` source — fix at the declaration site
 with `@Suppress("BRS_<NAME>")` (mirroring Job.Key, ContinuationInterceptor.Key, and
 the kotlin.test Test/test() suppression sites) or rework the checker.
