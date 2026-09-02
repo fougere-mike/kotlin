@@ -1,0 +1,102 @@
+DOMAIN 4 REFERENCE MAP — test infrastructure, both repos
+(Kotlin repo = `/Users/Mike.Fougere/Documents/newt/git/Kotlin`; rta = `/Users/Mike.Fougere/Documents/newt/git/roku-test-app`; kotlin-roku = `/Users/Mike.Fougere/Documents/newt/git/kotlin-roku`. Paths below are repo-relative with repo prefix.)
+
+## 1. Stdlib device suite (Kotlin: `libraries/stdlib/brs/test/kotlin/`)
+
+**Registration is two-step — a new file is NOT auto-registered:**
+1. Write `fun TestRunner.<name>Tests() { suite("Suite Name") { test("...") { ... } } }` — a top-level extension on `kotlin.test.TestRunner`. One FILE may hold several registration functions (file→suite is not 1:1: `coroutines/CoroutineTest.kt` holds 8 — `coroutineTests` at :20 through `runBlockingTests` at :499; `coroutines/ScopeFunctionsTest.kt` holds `builderHierarchyTests` :14, `scopeFunctionTests` :120, `withTimeoutTests` :214; `coroutines/AwaitAllTest.kt` holds one, `awaitAllTests` at :10).
+2. Register in `libraries/stdlib/brs/test/kotlin/TestMain.kt` — import (e.g. `import test.coroutines.awaitAllTests`, TestMain.kt:69) AND call inside `runTests { ... }` (TestMain.kt:139). A Flow suite goes in a new `test.coroutines.flow` (or `test.coroutines`) package + one import + one call.
+
+**Package convention:** `package test.coroutines` etc. Compilation sweeps the whole `kotlin/` dir (`libraries/stdlib/brs/test/build.gradle.kts`, `compileTests` task: `val testSources = file("kotlin")`, compiled by the cli-brs fat JAR with `-Xproduce=executable -Xallow-kotlin-package -libraries stdlib.klib:kotlin-test.klib`), so new files compile automatically; only TestMain registration is manual.
+
+**Runner/adapter API** (`libraries/kotlin.test/brs/src/main/kotlin/kotlin/test/TestRunner.kt`):
+```kotlin
+public fun runTests(block: TestRunner.() -> Unit)                                    // :44
+public fun suite(name: String, suiteFn: TestRunner.() -> Unit)                       // :75
+public fun test(name: String, testFn: () -> Unit)                                    // :87
+public fun xtest(name: String, reason: String = "", testFn: () -> Unit)              // :98  (ignored/red-guarded)
+public fun testAsync(name: String, timeoutMs: Int = 10_000, testFn: suspend () -> Unit)  // :114 — wraps body in runPumping(TestPort.port, timeoutMs)
+```
+**Assertion API** (`libraries/kotlin.test/brs/src/main/kotlin/kotlin/test/Assertions.kt`): `assertTrue(actual, message?=null)` :89, `assertTrue(message?){block}` :96, `assertFalse` :103/:110, `assertEquals<T>(expected, actual, message?=null)` :117, `assertNotEquals` :124, `assertSame`/`assertNotSame` :131/:138, `assertNotNull` :145/:153, `assertNull` :161, `fail(message?): Nothing` :168 (+cause :175), `assertFailsWith<reified T: Throwable>(message?){block}: Throwable` :184, `assertFails` :193.
+
+**Regimes:** stdlib tests run bodies via `test("...") { runBlocking { ... } }` (main-thread event loop; import `kotlin.coroutines.builders.runBlocking` — see AwaitAllTest.kt:14). No stdlib test uses `testAsync`/`runPumping` today (grep: zero hits). `runBlocking` root is a SupervisorJob; it returns when the BLOCK completes, not launched children. Cold-core Flow tests (design §9) belong in this runBlocking regime — no components needed.
+
+**Counting/gate (524/53):** the JSON adapter (`libraries/kotlin.test/brs/src/main/kotlin/kotlin/test/adapters/JsonTestAdapter.kt`) emits `{"type":"run_start"}`, `suite_start`, `test_pass|test_fail|test_skip`, `suite_end`, and `run_complete` with `total_suites`/`total_tests` (:97-98). The wrapper `libraries/stdlib/brs/test/run-tests.sh` (656 lines; `./run-stdlib-tests.sh` at Kotlin root is a 15-line exec into it) greps `test_pass`/`test_fail`/`test_skip` lines into `libraries/stdlib/brs/test/build/results.json` and totals them (lines 592-612); the 53-suite figure comes from `run_complete.total_suites`. A suite-level crash emits `test_error` and counts as a failure. Adding a Flow suite ratchets both numbers.
+
+**`--build-only`:** run-tests.sh line ~37: compiles via `./gradlew :kotlin-stdlib-brs-test:build` and exits 0 before any device step — the compile-check gate for new test code. Compiled BRS lands in `libraries/stdlib/brs/test/build/brs/` (source under `build/brs/source/`). Raw device log: `libraries/stdlib/brs/test/build/test-output.txt`. No sentinel in capture = hard exit 1. Module registered in `settings.gradle`:749/775 as `:kotlin-stdlib-brs-test` at that dir.
+
+## 2. E2E suites (rta: `src/brsTest/kotlin/tests/`)
+
+**Suite registration** (`src/brsTest/kotlin/tests/TestMain.kt`, 47 lines, package `com.nuvyyo.roku.tests`): `main()` creates `RoSGScreen`, one `RoMessagePort`, `screen.setMessagePort(port)`, `TestPort.use(port)`, `screen.createScene("TestScene")`, `screen.show()`, then `runTests { harnessSmokeSuite(scene); ...; sharedServiceSuite(scene) }` (lines 23-33) + a 2s linger loop. Suite 10 = new file `FlowTests.kt` with `fun TestRunner.flowSuite(scene: RoSGNode)` + one call added at TestMain.kt:32.
+
+**Driver suspend API** (`libraries/kotlin.test/brs/src/main/kotlin/kotlin/test/device/DeviceTestLoop.kt`, Kotlin repo) — exact signatures:
+```kotlin
+public fun <T> runPumping(port: RoMessagePort, timeoutMs: Int, block: suspend CoroutineScope.() -> T): T   // :275
+
+public suspend fun awaitField(node: RoSGNode, field: String, timeoutMs: Int = 5000,
+    predicate: (Dynamic?) -> Boolean = { true }): Dynamic?                                                  // :409
+
+public suspend fun awaitFieldEquals(node: RoSGNode, field: String, expected: Any?,
+    timeoutMs: Int = 5000): Dynamic?                                                                        // :425
+
+public suspend fun roundTrip(node: RoSGNode, setField: String, value: Any?, awaitFieldName: String,
+    timeoutMs: Int = 5000): Dynamic?                                                                        // :439
+```
+Mechanism notes that matter: `roundTrip` arms the await observer BEFORE writing `setField` (arming-order law, :446-449). `awaitField` predicates must return false, never throw; non-matching events leave the await armed (tolerates the initial default-value onChange every @SG field fires and the driver's own echoed writes). Per-await timeout fails only that test; `runPumping` whole-test timeout (testAsync default 10s) fails the test and purges queue/delays/awaits (`endRun`, :351). `runPumping` drains the port before the body (start-of-run containment, :290). Correlate by (field, value), never cross-field arrival order. `TestPort` object :66 (`port` getter, `use(port)` :82).
+
+**Fixture components** (rta `components/fixtures/`): plain `.kt` classes, package convention `com.nuvyyo.roku.components.fixtures.<lowercaseclassname>`, extending `GroupComponent()`/`TaskComponent()`/`SceneComponent()` — those base classes and `@SGStringField`/`@SGBooleanField`/`@BrsOnChange` need NO imports (default-available in components compilation). The whole `components/` dir is the `brsComponents` source set (kotlin-roku `RokuPlugin.kt`:75-77; `componentsDir` convention = `project/components`, `RokuExtension.kt`:43); the components compilation is serialized to a klib so brsTest driver code can IMPORT fixture classes (RokuPlugin.kt:273 comment) — e.g. TypedTaskTests.kt:3 imports `TypedTaskProbe`. Any component class in `components/` automatically gets XML + deps.json; no manual registration.
+
+**Appending to TestScene:** `components/fixtures/TestScene.kt` is an empty `class TestScene : SceneComponent()`. Probe lifecycle helper `src/brsTest/kotlin/tests/Probes.kt`:
+```kotlin
+object Probes {
+    fun create(scene: RoSGNode, subtype: String): RoSGNode   // scene.createChild(subtype); removes previous probe
+    fun adopt(scene: RoSGNode, node: RoSGNode): RoSGNode     // scene.appendChild(node); same replace-previous lifecycle
+}
+```
+
+**Two driver patterns (pick per test):**
+- *Untyped* (Suite 7, `CoroutineUtilityTests.kt`): `val probe = Probes.create(scene, "CoroutineUtilProbe"); probe.setField("mode", "awaitAll"); val result = roundTrip(probe, "start", true, "result"); assertEquals("done:AB", "$result")`. Fixture protocol (`components/fixtures/CoroutineUtilProbe.kt`): `@SGStringField var mode`, `@SGBooleanField @BrsOnChange("onStartChanged") var start`, `@SGStringField(alwaysNotify = true) var result` written LAST, optional `detail` written before result. The onChange handler branches on mode and does its work inside `launch {}`.
+- *Typed* (Suite 4, `TypedTaskTests.kt` — THE typed-access pattern, :39-123): `val probe = createComponent<TypedTaskProbe>(); val node = Probes.adopt(scene, nodeOf(probe)); probe.mode = "success"; val outcome = roundTrip(node, "start", true, "outcome")` where `nodeOf` is a local `@BrsInline("return component") private external fun nodeOf(component: ComponentBase): RoSGNode` (:17-18). Fixtures report unexpected failures as `"unexpected:<message>"` in the outcome field rather than crashing the run.
+
+Assertion of Dynamic results: always stringify — `assertEquals("expected", "$result")`.
+
+**Relevant stdlib signatures the fixtures consume:** `public inline fun <reified T : ComponentBase> createComponent(): T` (`libraries/stdlib/brs/src/kotlin/brs/ComponentFactory.kt`:27); `public fun ComponentBase.launch(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> Unit): Job` (`brs/ComponentCoroutines.kt`:83); `public fun ComponentBase.componentScope(): CoroutineScope` (:53); `public suspend inline fun <reified T : TaskComponent> runTask(noinline configure: T.() -> Unit): T` (`coroutines/task/TaskRunner.kt`:306). RoSGNode driver surface (`brs/roku/SceneGraph.kt`): `getField(fieldName: String): Dynamic?` :82, `setField(fieldName: String, value: Any?): Boolean` :152, `addField(fieldName, type, alwaysNotify): Boolean` :99, `observeFieldScoped(fieldName, functionName): Boolean` :201, `observeFieldScopedPort(fieldName, port): Boolean` :225, `unobserveFieldScoped(fieldName): Boolean` :241, `appendChild(child)` :334, `createChild(nodeType): RoSGNode` :342, `removeChild(child)` :357, `subtype(): String` :503.
+
+## 3. Wrapper scripts
+
+- **`./run-compiler-tests.sh [--update]`** (Kotlin root, 67 lines): runs `./gradlew :compiler:backend.brightscript:test --tests "*GoldenFile*" --no-configuration-cache -Dorg.gradle.dependency.verification=off`; `--update` adds `-PupdateGoldenFiles=true`. Golden harness: `compiler/ir/backend.brightscript/test/org/jetbrains/kotlin/ir/backend/brs/test/BrsGoldenFileTests.kt` — new golden = `@Test fun name() = runTest("dir/name.kt")` in the right class + testData under `compiler/testData/codegen/brs/`; `runTest(testPath: String)` and `runMultiFileTest(testDirPath: String)` (multi-file module, sorted-name order) in `AbstractBrsGoldenFileTest.kt`:49/:72. TestData IS a tracked task input (edits re-run tests).
+- **`./run-stdlib-tests.sh [--build-only]`** — see §1. Uses telnet (not nc), flood+sentinel filtering, sentinel-scoped completion monitor; no sentinel = hard exit 1; device creds from env or `../roku-test-app/local.properties`.
+- **rta `./run-device-tests.sh`** (133 lines): pre-flight nc probe of console port 8085 ("already in use" → guided abort), then `./gradlew rokuTest`, then the REPLAY GUARD — `run_start` timestamp in `build/test-results/roku/results.json` must be no older than script start minus 30s, else "results are REPLAYED" hard failure (lines 89-109). Never call `./gradlew rokuTest` directly. `rokuTest` chain (kotlin-roku `RokuPlugin.kt`:420-566): `compileTestKotlinBrs` + `compileKotlinBrs` → `stageRokuTestSource` → `validateTestComponentIncludes` → `packageRokuTests` → `installRokuTests` → `runRokuTests` (parses events into results.json/xml).
+- **validateComponentIncludes / validateTestComponentIncludes** (kotlin-roku `tasks/ValidateComponentIncludesTask.kt`; registered at RokuPlugin.kt:325 and :444): build-time gate cross-checking every packaged component XML `<script>` list against a definition scan of all staged .brs. Runs automatically inside `packageRoku`/`packageRokuTests` (both depend on it). Mode from `rokuValidation.includeMode` — rta `build.gradle.kts`:53-57 sets `"strict"` (findings fail the build; "strict-0" = strict mode with zero findings, no allowlist). Infrastructure guards: implausibly-small definition index fails in BOTH modes; zero packaged components fails in strict. Reports: `build/roku/validation/componentIncludes.txt` / `testComponentIncludes.txt`. Design §5's per-site synthesized task components must pass this gate — their XML/deps ride the compiler's Pass-3 machinery.
+- rta `build.gradle.kts`:59-80 gotcha-fix already in place: PLAIN (non-component) `.kt` files under `components/` (like `ScopeVmFixture.kt`) compile to `build/brs/brs/main/components/source/` and are fed into `PackageRokuTask.stdlibBrs` + `ValidateComponentIncludesTask.runtimeBrs` via `componentsSharedSource` fileTree — a new plain fixture file (e.g. a Flow VM fixture) needs nothing extra, the wiring is generic.
+
+## 4. TestScreen flagship (rta `components/TestScreen/`)
+
+Three files, package `com.nuvyyo.roku.components.testscreen` (+ `.fakeapitask`):
+- **`TestScreen.kt`** (68 lines): `class TestScreen : GroupComponent()`. Wiring the rewrite MUST preserve: (a) `private val layout = TestScreen_Layout(top)` :15 — generated stub (kotlin-roku `GenerateLayoutStubsTask`, output `build/generated/layout-stubs`, added to brsMain; regenerated from the `@SGLayout companion object defineLayout()` at :52-67 — layout child id `titleLabel`); (b) `@SGStringField @BrsOnChange("onScreenTitleChanged") var screenTitle: String = ""` :22-24 — the state→UI pipe, handler writes `layout.titleLabel.setField("text", screenTitle)` :49; (c) `init { shareOn(top, vm); screenTitle = renderTitle(vm.screenState); launch { screenTitle = renderTitle(vm.load()) } }` :26-38 — publish-by-reference precedes load; typed dot-assign from lambda scope is safe (case 8 routing); (d) `renderTitle(state): String` pure mapping over the sealed `State` :42-46.
+- **`TestScreenVM.kt`** (79 lines): `abstract class ViewModel : SharedService()` :15 (app-minted vocabulary — keep); `class TestScreenVM : ViewModel()` :21 (concrete VMs FINAL — dispatcher law); `var screenState: State = State.Loading` :25 — named `screenState` NOT `state` (BrightScript case-insensitive collision with a built-in component field — keep the name for any @SG mirror too); `sealed class State { data object Loading; data class Loaded(title, greeting); data class Failed(reason) }` :27-38; `suspend fun load(): State` :45 — currently `coroutineScope { async { runTask<FakeApiTask> {...} } x2; awaitAll }`, catches `TaskException` → `State.Failed`, stores then returns. §6 flagship end-state: replace with private `MutableStateFlow<State>(Loading)` + `screenState: StateFlow<State>` via `asStateFlow()`, `load()` → repository `flow { emit(fetchAA(...)) }.flowOn(Dispatchers.Task)` mapped downstream; TestScreen collects in `launch {}`. Note `stringField(json, key)` helper :74 parses task JSON render-side — the marshallable-emission idiom already in miniature.
+- **`FakeApiTask.kt`** (41 lines): `class FakeApiTask : TaskComponent()`, inputs `@SGStringField endpoint` / `@SGIntegerField latencyMs`, output `@SGStringField responseJson: String?`, `override fun run()` sleeps then answers canned JSON. Likely survives as the repository flow's task-side fetch.
+- TestScreen is instantiated declaratively: `components/MainScreen/MainScreen.kt`:22 embeds `component("TestScreen", id = "test_screen")` in MainScreen's `@SGLayout` — the main app (not the test app) shows it; `src/brsMain/kotlin/com/nuvyyo/roku/Main.kt` creates scene "MainScreen". A child fixture acquiring the VM via `sharedFrom<TestScreenVM>(screenNode)` (design §6 acceptance) has no precedent inside TestScreen yet — Suite 9's SharedConsumerProbe is the pattern.
+
+## 5. Gate table mechanics
+
+CLAUDE.md (Kotlin repo root), section `### Current Gate Numbers (as of ...)` at lines 1383-1396. Table rows: Golden 79 | FIR (checkers.brs) 227 | Stdlib 524/53 | rokuTest 86 active/9 suites (+3 red-guarded xtests) | validate tasks strict-0. Programs update it by editing the table AND the "(as of <event>, <date>)" header in a docs commit at each phase close (precedent: commit e760c30a0772 "docs: gate table 79 goldens ..."); the design doc (§9, §11) pre-declares which gates each Flow phase ratchets. Counting notes recorded there: gate = EXECUTED tests; `grep -c "@Test"` on BrsGoldenFileTests.kt reads one high (a commented-out `// @Test`); E2E xtests don't count as active. Suite counts come from the adapters' `run_complete.total_suites`.
+
+## Gotchas
+
+1. **Stdlib test registration is manual twice** (import + call in TestMain.kt); forgetting either silently omits the suite — the run still goes green with a lower total, and only the gate-number comparison catches it.
+2. **`testAsync` exists in the stdlib regime too** but is unused there and unproven off the E2E screen port; cold-core Flow tests should use `test { runBlocking { ... } }` (design §9 says runBlocking regime explicitly).
+3. **Fixture `result`/`outcome` fields need `@SGStringField(alwaysNotify = true)`** — without it a repeated identical terminal value is coalesced away and `roundTrip` times out (declared-field same-value writes skip observers).
+4. **Write `result` LAST in fixtures**; the driver awaits it, and any evidence fields (`detail`) must be written before it or the assertion reads stale data.
+5. **`import kotlin.coroutines.builders.launch` explicitly in any component fixture using `coroutineScope { launch {} }`** — otherwise `ComponentBase.launch` wins and children silently attach to the component root (CoroutineUtilProbe.kt:8-13 comment). Flow operator tests in components will hit this.
+6. **Suite 10 fixtures cannot name a field `state`** (built-in collision — TestScreenVM.kt:23 comment); BrightScript case-insensitivity also means no two fields/functions differing only by case.
+7. **The typed driver pattern needs the local `nodeOf` bridge** (`@BrsInline("return component")`) per test file — `createComponent<T>()` returns T but `Probes.adopt`/`roundTrip` want `RoSGNode` (TypedTaskTests.kt:17-18).
+8. **Assert stringified Dynamics** (`"$result"`); raw Dynamic comparisons are type-fragile.
+9. **Never run `./gradlew rokuTest` bare** — the wrapper's replay guard is the only defense against a <120s-old replayed sentinel producing a false green after a device-side compile failure.
+10. **New E2E fixtures that are task components** are auto-included by being in `components/`; but the FLOW program's *compiler-synthesized* per-site task components are new territory for `validateTestComponentIncludes` — plan a strict-0 check early in phase 2, not at the end.
+11. **Suite 4's "runTask await wakes promptly on caller cancellation" test (TypedTaskTests.kt:97-107) asserts the OLD no-stop behavior** — the design's runTask STOP rider changes what that test should pin; the plan must update it in the same phase or the gate reads as a regression (design §12 calls this out).
+12. **kotlin-test-brs klib is only rebuilt if MISSING** by run-tests.sh (line ~57 check) — changes to `libraries/kotlin.test/brs/` (e.g. new device-loop helpers for Flow) need an explicit `./gradlew :kotlin-test-brs:build` or `./rebuild.sh`; stale klib = silently testing old driver code.
+13. **Stdlib source changes require `./rebuild.sh` before either device runner** — the stdlib klib/runtime the test app packages comes from Maven Local/prebuilt, not from source directly.
+14. **Probes helper keeps ONE active probe** — a test needing two live fixture components simultaneously (e.g. owner VM + child collector for cross-component StateFlow, per §9) must manage the second node itself (`scene.appendChild`/`removeChild` manually — Suite 8/9 do this; only the primary probe rides `Probes`).
+15. **Whole-test testAsync default is 10s** and per-await default 5s; flow tests with deliberate delays (conflation bursts, watchdog-ish waits) must budget under these or pass explicit `timeoutMs` at both levels.
+16. **Multi-file goldens**: `runMultiFileTest` compiles a testData DIRECTORY as one module in sorted-name order — transform-order-sensitive tests (per-site component synthesis + include closure) should name files to force the interesting order.

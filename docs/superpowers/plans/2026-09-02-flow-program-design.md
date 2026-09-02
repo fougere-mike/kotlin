@@ -23,6 +23,7 @@ recorded spawnTask program and the M3 task-cancellation backlog item.
 | 7 | Operators | flatMap family REQUIRED in v1: `flatMapConcat` (Rx concatMap), `flatMapMerge` (Rx flatMap), `flatMapLatest` (Rx switchMap); `transformLatest`/`mapLatest`/`collectLatest` ride the same machinery |
 | 8 | Task cancellation | Inner `flowOn(Task)` flows are GENUINELY cancellable (a `flatMapLatest` switch must stop the task-side work): two-layer cancellation — cooperative compiler-inserted checks + hard `control="STOP"` — with a rider adopting STOP for `runTask` cancellation (closes the M3 "task-thread work is not stopped" backlog item) |
 | 9 | Dispose hooks | Render-side `onCompletion { cause }` + `try/finally` are guaranteed on completion, failure, AND cancellation (kotlinx/Rx doFinally parity). Task-side `try/finally` is best-effort at cooperative checkpoints; hard STOP skips it (platform refcount-release covers native handles). Probe B pins the actual STOP truth |
+| 10 | Flow home (post-spike research ruling, 2026-09-02) | Flow ships as a NEW KLIB `kotlin-flow-brs` (package `kotlin.coroutines.flow` via `-Xallow-kotlin-package`), compiled WITHOUT `-Xstdlib-compilation` so operator internals get real suspend state machines — stdlib compilation generates NONE (`BrsLoweringPhases.kt:354` gate; kotlinx-style operator bodies would miscompile silently in stdlib). Mirrors the kotlin-test-brs second-klib precedent. Stdlib gains only small public ambient-node accessors + the `Dispatchers.Task` token. Package correction: `Dispatchers` really lives at `kotlin.coroutines.dispatchers` (not `kotlin.coroutines` as §14 sketched) — `Task` joins the real object |
 
 ## 2. Context and load-bearing facts
 
@@ -322,6 +323,17 @@ the old instance until their screen dies — consistent with recreate-don't-reus
 ISE). `value` GET works anywhere (it's a plain property read). Construction works
 anywhere. No new OS floor: the doorbell rides `addField` (every OS); the hot tier
 inherits OS 15+ only where the VM itself crosses components via SharedService.
+
+**Implementation note (recorded 2026-09-02, adversarial plan review):** interface-
+receiver member/accessor calls are fn-slot dispatch on this backend — they record
+no include-closure dependency, and on a shared-VM-held flow the slot fn-ref would
+cross the SetRef graph on the disclaimed path this toolchain's laws forbid. The
+plan therefore adds a small call-site rewrite (`BrsFlowAccessLowering`,
+`BrsSharedFromCallLowering` pattern) routing `StateFlow`/`MutableStateFlow.value`
+access and interface-typed `Flow.collect(collector)` calls to static flow-klib
+functions; `StateFlowImpl` is a plain data holder and no cross-component slot
+ever fires. Companion law: cold `Flow` OBJECTS never cross a component boundary
+(their lambdas strip); only StateFlow, statically routed, is cross-component.
 
 ### `stateIn(scope, initialValue)` — eager-only v1
 

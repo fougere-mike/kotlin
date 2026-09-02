@@ -87,6 +87,16 @@ runTask STOP rider:
   shapes), not "bounded by the blocking call" — with the B5 transfer residual
   noted where the docs say so.
 
+## SDK doc cross-check (2026-09-02)
+
+`../RokuDocs/Task.html` (downloaded 2026-09-02, "updated 4 months ago"): the Task
+node reference documents `functionName` (READ_WRITE), `control` (WRITE_ONLY —
+"requests a change in the run state", options = state values, case-insensitive)
+and `state` (READ_ONLY: "init", "stop", "run", "done") — and says NOTHING about
+STOP's thread-kill semantics, promptness, blocking-call interruption, or cleanup.
+The Probe B facts above are the only authority on those; the doc neither
+supports nor contradicts them.
+
 ## Fixture provenance
 
 Both packages were authored and adversarially verified (discrimination/confound,
