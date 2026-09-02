@@ -115,6 +115,25 @@ echo "Step 3: Creating Roku channel package..."
 rm -rf "$PACKAGE_DIR"
 mkdir -p "$PACKAGE_DIR/source"
 
+# Copy one .brs file into the flat package source dir, failing LOUDLY on a name
+# collision. Generated .brs names derive from Kotlin FILE names only, so two
+# same-named source files in different modules (e.g. a flow `Builders.kt` vs the
+# stdlib's `coroutines/builders/Builders.kt`) silently clobber each other in
+# pkg:/source — the loser's functions vanish and the failure surfaces later as
+# an unrelated-looking device error. Rename one of the Kotlin source files.
+copy_into_package() {
+    local src="$1"
+    local label="$2"
+    local dest="$PACKAGE_DIR/source/$(basename "$src")"
+    if [[ -f "$dest" ]]; then
+        echo -e "${RED}Error: $label file '$(basename "$src")' collides with an already-packaged .brs file.${NC}"
+        echo "Two Kotlin source files with the same name in different modules generate the"
+        echo "same .brs file name and clobber each other in pkg:/source. Rename one."
+        exit 1
+    fi
+    cp "$src" "$dest"
+}
+
 # Copy manifest
 cp "$SCRIPT_DIR/manifest" "$PACKAGE_DIR/"
 
@@ -183,7 +202,7 @@ java -cp "$COMPILER_JAR" org.jetbrains.kotlin.cli.brs.K2BrsCompiler \
 KOTLIN_TEST_COUNT=0
 for brsfile in "$KOTLIN_TEST_BRS_DIR/source/"*.brs; do
     if [[ -f "$brsfile" ]]; then
-        cp "$brsfile" "$PACKAGE_DIR/source/"
+        copy_into_package "$brsfile" "kotlin.test"
         KOTLIN_TEST_COUNT=$((KOTLIN_TEST_COUNT + 1))
     fi
 done
@@ -209,14 +228,18 @@ java -cp "$COMPILER_JAR" org.jetbrains.kotlin.cli.brs.K2BrsCompiler \
 FLOW_COUNT=0
 for brsfile in "$FLOW_BRS_DIR/source/"*.brs; do
     if [[ -f "$brsfile" ]]; then
-        cp "$brsfile" "$PACKAGE_DIR/source/"
+        copy_into_package "$brsfile" "flow"
         FLOW_COUNT=$((FLOW_COUNT + 1))
     fi
 done
 echo "  Copied $FLOW_COUNT flow files"
 
-# Copy compiled test files (will overwrite any with same names)
-cp "$BRS_OUTPUT/source/"*.brs "$PACKAGE_DIR/source/"
+# Copy compiled test files (collision-guarded like the library sets)
+for brsfile in "$BRS_OUTPUT/source/"*.brs; do
+    if [[ -f "$brsfile" ]]; then
+        copy_into_package "$brsfile" "test"
+    fi
+done
 echo "  Copied test files"
 
 # Create ZIP package
