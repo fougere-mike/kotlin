@@ -17,11 +17,13 @@ echo ""
 echo "Steps:"
 echo "  1. cli-brs:fatJar    - BRS compiler (self-contained, no full dist needed)"
 echo "  2. regenerateKlib    - Prebuilt stdlib klib (depends on fatJar)"
-echo "  3. publishToMavenLocal (compiler)"
-echo "  4. publishToMavenLocal (KGP + BOM)"
-echo "  5. publishToMavenLocal (stdlib klib)"
-echo "  6. generateStdlibBrs + publish runtime JAR"
-echo "  7. kotlin-test-brs build + publish (klib + runtime JAR)"
+echo "  3. regenerateKlib    - Prebuilt flow klib (kotlin-flow-brs, user-mode compilation)"
+echo "  4. publishToMavenLocal (compiler)"
+echo "  5. publishToMavenLocal (KGP + BOM)"
+echo "  6. publishToMavenLocal (stdlib klib)"
+echo "  7. generateStdlibBrs + publish runtime JAR"
+echo "  8. kotlin-test-brs build + publish (klib + runtime JAR)"
+echo "  9. kotlin-flow-brs build + publish (klib + runtime JAR)"
 echo ""
 echo "See CLAUDE.md 'Bootstrap Architecture' for details."
 echo ""
@@ -56,6 +58,8 @@ if [[ "$1" == "--clean" ]]; then
     rm -rf ~/.m2/repository/com/nuvyyo/kotlin-stdlib-brs-runtime
     rm -rf ~/.m2/repository/com/nuvyyo/kotlin-test-brs
     rm -rf ~/.m2/repository/com/nuvyyo/kotlin-test-brs-runtime
+    rm -rf ~/.m2/repository/com/nuvyyo/kotlin-flow-brs
+    rm -rf ~/.m2/repository/com/nuvyyo/kotlin-flow-brs-runtime
     rm -rf ~/.m2/repository/com/nuvyyo/kotlin-gradle-plugin-brs
     rm -rf ~/.m2/repository/com/nuvyyo/kotlin-gradle-plugin-api-brs
     rm -rf ~/.m2/repository/com/nuvyyo/kotlin-gradle-plugin-idea-brs
@@ -80,6 +84,12 @@ if [[ "$1" == "--clean" ]]; then
     rm -rf libraries/stdlib/brs/test/build
     rm -rf libraries/stdlib/brs-prebuilt/build
     rm -rf libraries/stdlib/brs-prebuilt/.gradle
+
+    # Clean flow build directories
+    echo "  Cleaning flow build directories..."
+    rm -rf libraries/flow/brs/build
+    rm -rf libraries/flow/brs-prebuilt/build
+    rm -rf libraries/flow/brs-prebuilt/.gradle
 
     echo ""
     echo "Clean complete. Proceeding with full rebuild..."
@@ -146,11 +156,15 @@ echo "2. Regenerating BRS stdlib klib..."
 ./gradlew :kotlin-stdlib-brs-prebuilt:regenerateKlib $FLAGS
 
 echo ""
-echo "3. Publishing BRS compiler to Maven Local..."
+echo "3. Regenerating BRS flow klib (kotlin-flow-brs, user-mode compilation)..."
+./gradlew :kotlin-flow-brs-prebuilt:regenerateKlib $FLAGS
+
+echo ""
+echo "4. Publishing BRS compiler to Maven Local..."
 ./gradlew :compiler:cli-brs:publishToMavenLocal $FLAGS
 
 echo ""
-echo "4. Publishing Kotlin Gradle Plugin and BOM..."
+echo "5. Publishing Kotlin Gradle Plugin and BOM..."
 ./gradlew \
     :kotlin-gradle-plugin:publishToMavenLocal \
     :kotlin-gradle-plugin-api:publishToMavenLocal \
@@ -166,7 +180,7 @@ echo "4. Publishing Kotlin Gradle Plugin and BOM..."
 # ============================================================================
 
 echo ""
-echo "5. Publishing pre-built stdlib klib to Maven Local..."
+echo "6. Publishing pre-built stdlib klib to Maven Local..."
 ./gradlew :kotlin-stdlib-brs-prebuilt:publishToMavenLocal $FLAGS
 echo "  Verified: kotlin-stdlib-brs klib published to Maven Local"
 
@@ -177,7 +191,7 @@ echo "  Verified: kotlin-stdlib-brs klib published to Maven Local"
 # ============================================================================
 
 echo ""
-echo "6. Publishing stdlib BrightScript runtime JAR..."
+echo "7. Publishing stdlib BrightScript runtime JAR..."
 ./gradlew :kotlin-stdlib:generateStdlibBrs :kotlin-stdlib:publishBrsRuntimePublicationToMavenLocal $FLAGS
 echo "  Verified: com.nuvyyo:kotlin-stdlib-brs-runtime published to Maven Local"
 
@@ -190,9 +204,22 @@ echo "  Verified: com.nuvyyo:kotlin-stdlib-brs-runtime published to Maven Local"
 # ============================================================================
 
 echo ""
-echo "7. Compile-checking and publishing kotlin-test-brs (klib + runtime JAR)..."
+echo "8. Compile-checking and publishing kotlin-test-brs (klib + runtime JAR)..."
 ./gradlew :kotlin-test-brs:build :kotlin-test-brs:publishToMavenLocal $FLAGS
 echo "  Verified: kotlin-test-brs klib and runtime JAR published to Maven Local"
+
+# ============================================================================
+# PHASE 5: Compile-check and publish kotlin-flow-brs
+# The flow klib compiles WITHOUT -Xstdlib-compilation (user-mode suspend state
+# machines — flow-program spec decision 10). Like step 8, this doubles as a
+# compile gate: checker/codegen regressions that break the flow library surface
+# here instead of at the next explicit test run.
+# ============================================================================
+
+echo ""
+echo "9. Compile-checking and publishing kotlin-flow-brs (klib + runtime JAR)..."
+./gradlew :kotlin-flow-brs:build :kotlin-flow-brs:publishToMavenLocal $FLAGS
+echo "  Verified: kotlin-flow-brs klib and runtime JAR published to Maven Local"
 
 echo ""
 echo "=== All artifacts published to Maven Local ==="
@@ -205,3 +232,5 @@ echo "  - com.nuvyyo:kotlin-stdlib-brs (klib)"
 echo "  - com.nuvyyo:kotlin-stdlib-brs-runtime (JAR)"
 echo "  - com.nuvyyo:kotlin-test-brs (klib)"
 echo "  - com.nuvyyo:kotlin-test-brs-runtime (JAR)"
+echo "  - com.nuvyyo:kotlin-flow-brs (klib)"
+echo "  - com.nuvyyo:kotlin-flow-brs-runtime (JAR)"

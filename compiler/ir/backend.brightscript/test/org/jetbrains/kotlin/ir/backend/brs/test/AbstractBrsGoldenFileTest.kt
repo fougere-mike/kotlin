@@ -38,6 +38,7 @@ abstract class AbstractBrsGoldenFileTest {
         // Tests run from repo root via workingDir = rootDir in build.gradle.kts
         private val TEST_DATA_ROOT = File("compiler/testData/codegen/brs")
         private val STDLIB_KLIB = File("libraries/stdlib/brs-prebuilt/kotlin-stdlib-brs.klib")
+        private val FLOW_KLIB = File("libraries/flow/brs-prebuilt/kotlin-flow-brs.klib")
         private val UPDATE_GOLDEN_FILES = System.getProperty("kotlin.test.update.golden.files")?.toBoolean() ?: false
     }
 
@@ -136,9 +137,11 @@ abstract class AbstractBrsGoldenFileTest {
             val arguments = K2BrsCompilerArguments().apply {
                 freeArgs = inputFiles.map { it.absolutePath }
                 outputDir = tempOutputDir.absolutePath
-                // Include stdlib so coroutine symbols and other builtins are available
-                if (STDLIB_KLIB.exists()) {
-                    libraries = STDLIB_KLIB.absolutePath
+                // Include stdlib so coroutine symbols and other builtins are available,
+                // plus the flow prebuilt so flow goldens can resolve kotlin.coroutines.flow
+                val libs = listOf(STDLIB_KLIB, FLOW_KLIB).filter { it.exists() }
+                if (libs.isNotEmpty()) {
+                    libraries = libs.joinToString(File.pathSeparator) { it.absolutePath }
                 }
             }
 

@@ -57,6 +57,12 @@ if [[ ! -f "libraries/kotlin.test/brs/build/kotlin-test-brs.klib" ]]; then
     ./gradlew :kotlin-test-brs:build --no-configuration-cache -Dorg.gradle.dependency.verification=off
 fi
 
+# Build flow klib if needed
+if [[ ! -f "libraries/flow/brs/build/kotlin-flow-brs.klib" ]]; then
+    echo "Building flow klib..."
+    ./gradlew :kotlin-flow-brs:build --no-configuration-cache -Dorg.gradle.dependency.verification=off
+fi
+
 # Compile the tests
 ./gradlew :kotlin-stdlib-brs-test:build --no-configuration-cache -Dorg.gradle.dependency.verification=off
 
@@ -182,6 +188,32 @@ for brsfile in "$KOTLIN_TEST_BRS_DIR/source/"*.brs; do
     fi
 done
 echo "  Copied $KOTLIN_TEST_COUNT kotlin.test files"
+
+# Compile flow library source to .brs
+# Note: the flow library depends only on the stdlib, so we use the stdlib klib
+# for compilation (same staging pattern as kotlin.test above)
+echo "Compiling flow library to BrightScript..."
+FLOW_SRC="$KOTLIN_ROOT/libraries/flow/brs/src"
+FLOW_BRS_DIR="$BUILD_DIR/kotlin-flow-brs"
+
+rm -rf "$FLOW_BRS_DIR"
+mkdir -p "$FLOW_BRS_DIR"
+
+java -cp "$COMPILER_JAR" org.jetbrains.kotlin.cli.brs.K2BrsCompiler \
+    -Xallow-kotlin-package \
+    -libraries "$STDLIB_KLIB" \
+    -output-dir "$FLOW_BRS_DIR" \
+    "$FLOW_SRC"
+
+# Copy flow .brs files
+FLOW_COUNT=0
+for brsfile in "$FLOW_BRS_DIR/source/"*.brs; do
+    if [[ -f "$brsfile" ]]; then
+        cp "$brsfile" "$PACKAGE_DIR/source/"
+        FLOW_COUNT=$((FLOW_COUNT + 1))
+    fi
+done
+echo "  Copied $FLOW_COUNT flow files"
 
 # Copy compiled test files (will overwrite any with same names)
 cp "$BRS_OUTPUT/source/"*.brs "$PACKAGE_DIR/source/"

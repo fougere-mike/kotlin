@@ -40,6 +40,7 @@ abstract class AbstractBrsDiagnosticTest {
     companion object {
         private val TEST_DATA_ROOT = File("compiler/testData/diagnostics/testsWithBrsStdLib")
         private val STDLIB_KLIB = File("libraries/stdlib/brs-prebuilt/kotlin-stdlib-brs.klib")
+        private val FLOW_KLIB = File("libraries/flow/brs-prebuilt/kotlin-flow-brs.klib")
         private val MARKER_REGEX = Regex("""<!([A-Z_]+)!>([\s\S]*?)<!>""")
     }
 
@@ -148,7 +149,10 @@ abstract class AbstractBrsDiagnosticTest {
             val arguments = K2BrsCompilerArguments().apply {
                 freeArgs = inputFiles.map { it.absolutePath }
                 outputDir = tempOutputDir.absolutePath
-                if (STDLIB_KLIB.exists()) libraries = STDLIB_KLIB.absolutePath
+                // Stdlib plus the flow prebuilt, so flow-family diagnostic fixtures
+                // can resolve kotlin.coroutines.flow
+                val libs = listOf(STDLIB_KLIB, FLOW_KLIB).filter { it.exists() }
+                if (libs.isNotEmpty()) libraries = libs.joinToString(File.pathSeparator) { it.absolutePath }
             }
 
             val reported = mutableListOf<Reported>()

@@ -72,6 +72,9 @@ import test.coroutines.scopeFunctionTests
 import test.coroutines.withTimeoutTests
 import test.coroutines.scopeWireTests
 
+// Flow tests (kotlin-flow-brs klib)
+import test.coroutines.flow.flowKlibSmokeTests
+
 /**
  * Main entry point for stdlib runtime tests.
  */
@@ -141,5 +144,8 @@ fun main() {
         scopeFunctionTests()
         withTimeoutTests()
         scopeWireTests()
+
+        // Flow (kotlin-flow-brs klib)
+        flowKlibSmokeTests()
     }
 }

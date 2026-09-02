@@ -16,6 +16,7 @@ val cliBrsProject = rootProject.project(":compiler:cli-brs")
 val fatJarFile: Provider<RegularFile> = cliBrsProject.layout.buildDirectory.file("libs/kotlinc-brs.jar")
 val stdlibKlib = rootProject.file("libraries/stdlib/brs-prebuilt/kotlin-stdlib-brs.klib")
 val kotlinTestKlib = rootProject.file("libraries/kotlin.test/brs/build/kotlin-test-brs.klib")
+val flowKlib = rootProject.file("libraries/flow/brs/build/kotlin-flow-brs.klib")
 val outputDir = file("build/brs")
 
 /**
@@ -45,19 +46,27 @@ val compileTests by tasks.registering(JavaExec::class) {
                 "Build it with: ./gradlew :kotlin-test-brs:build"
             )
         }
+        if (!flowKlib.exists()) {
+            throw GradleException(
+                "flow klib not found: ${flowKlib.absolutePath}\n" +
+                "Build it with: ./gradlew :kotlin-flow-brs:build"
+            )
+        }
 
         outputDir.mkdirs()
         logger.lifecycle("Compiling stdlib tests...")
         logger.lifecycle("  Compiler: ${fatJarFile.get().asFile}")
         logger.lifecycle("  Stdlib: ${stdlibKlib.name}")
         logger.lifecycle("  kotlin.test: ${kotlinTestKlib.name}")
+        logger.lifecycle("  flow: ${flowKlib.name}")
         logger.lifecycle("  Output: ${outputDir.absolutePath}")
     }
 
     args(
         "-Xproduce=executable",
         "-Xallow-kotlin-package",
-        "-libraries", "${stdlibKlib.absolutePath}${File.pathSeparator}${kotlinTestKlib.absolutePath}",
+        "-libraries",
+        "${stdlibKlib.absolutePath}${File.pathSeparator}${kotlinTestKlib.absolutePath}${File.pathSeparator}${flowKlib.absolutePath}",
         "-output-dir", outputDir.absolutePath,
         testSources.absolutePath
     )
@@ -66,11 +75,13 @@ val compileTests by tasks.registering(JavaExec::class) {
     inputs.file(fatJarFile)
     inputs.file(stdlibKlib)
     inputs.file(kotlinTestKlib)
+    inputs.file(flowKlib)
     outputs.dir(outputDir)
 }
 
 compileTests {
     dependsOn(":kotlin-test-brs:build")
+    dependsOn(":kotlin-flow-brs:build")
 }
 
 tasks.named("build") {

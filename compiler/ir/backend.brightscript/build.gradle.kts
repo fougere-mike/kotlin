@@ -44,6 +44,11 @@ tasks.test {
     inputs.dir(rootDir.resolve("compiler/testData/codegen/brs"))
         .withPathSensitivity(PathSensitivity.RELATIVE)
 
+    // The flow prebuilt klib is on the golden compile classpath (see
+    // AbstractBrsGoldenFileTest) — track it so regenerating it re-runs the tests.
+    inputs.files(rootDir.resolve("libraries/flow/brs-prebuilt/kotlin-flow-brs.klib"))
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+
     // Pass the golden file update flag to tests
     systemProperty(
         "kotlin.test.update.golden.files",
