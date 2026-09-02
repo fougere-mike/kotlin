@@ -34,21 +34,22 @@ private class FirstCollector<T>(private val predicate: (suspend (T) -> Boolean)?
         if (p != null && !p(value)) return
         result = value
         found = true
-        throw AbortFlowException()
+        throw AbortFlowException(this)
     }
 }
 
 /**
  * Shared machinery of the first() family: collects until [FirstCollector] aborts,
- * swallowing exactly its own abort. An [AbortFlowException] arriving with no value
- * recorded is some other terminal's abort in flight — it keeps unwinding.
+ * swallowing exactly its own abort (owner identity). An [AbortFlowException]
+ * owned by someone else — another terminal, an operator like [take] — is in
+ * flight to ITS catch site and keeps unwinding.
  */
 private suspend fun <T> Flow<T>.collectFirst(predicate: (suspend (T) -> Boolean)?): FirstCollector<T> {
     val collector = FirstCollector<T>(predicate)
     try {
         collect(collector)
     } catch (e: AbortFlowException) {
-        if (!collector.found) throw e
+        if (e.owner !== collector) throw e
     }
     return collector
 }

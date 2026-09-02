@@ -8,10 +8,16 @@ package kotlin.coroutines.flow
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
- * Control-flow exception flow terminals ([first], [firstOrNull] — later `take`)
- * throw from their own collector to abort upstream collection once they have
- * their answer. It is caught by the same terminal's machinery and never leaks
- * to the caller.
+ * Control-flow exception flow machinery ([first], [firstOrNull], [take]) throws
+ * from its own collector to abort upstream collection once it has its answer.
+ * It is caught by the same machinery and never leaks to the caller.
+ *
+ * [owner] identifies WHOSE abort this is: each catch site swallows only aborts
+ * it threw itself (identity check) and rethrows everything else. With two abort
+ * users this is a correctness requirement, not hygiene — an inner `take` that
+ * swallowed an outer `first()`'s abort would let the enclosing flow body keep
+ * running past the point `first()` stopped caring (kotlinx pins the same
+ * ownership discipline on its AbortFlowException).
  *
  * Extends [CancellationException] so job machinery treats an in-flight abort as
  * quiet, never as a failure. Note CancellationException extends
@@ -19,4 +25,6 @@ import kotlin.coroutines.cancellation.CancellationException
  * inside a flow body would swallow an abort (and real cancellation); flow bodies
  * should catch specific exception types, or use try/finally.
  */
-internal class AbortFlowException : CancellationException("flow terminal aborted")
+internal class AbortFlowException(
+    internal val owner: FlowCollector<*>,
+) : CancellationException("flow terminal aborted")

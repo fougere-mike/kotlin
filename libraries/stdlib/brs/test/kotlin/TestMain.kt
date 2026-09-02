@@ -75,6 +75,7 @@ import test.coroutines.scopeWireTests
 // Flow tests (kotlin-flow-brs klib)
 import test.coroutines.flow.flowKlibSmokeTests
 import test.coroutines.flow.flowCoreTests
+import test.coroutines.flow.flowOperatorsTests
 
 /**
  * Main entry point for stdlib runtime tests.
@@ -149,5 +150,6 @@ fun main() {
         // Flow (kotlin-flow-brs klib)
         flowKlibSmokeTests()
         flowCoreTests()
+        flowOperatorsTests()
     }
 }
