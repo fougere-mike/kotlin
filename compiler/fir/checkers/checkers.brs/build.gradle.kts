@@ -48,6 +48,11 @@ tasks.test {
     // compiler/ir/backend.brightscript): without this, a fixture-only edit leaves the
     // task UP-TO-DATE and silently serves stale results.
     inputs.dir(rootDir.resolve("compiler/testData/diagnostics/testsWithBrsStdLib"))
+    // The fixtures compile against the prebuilt klibs (AbstractBrsDiagnosticTest's
+    // STDLIB_KLIB/FLOW_KLIB): track them too, so a klib regeneration re-runs the
+    // suite instead of serving stale UP-TO-DATE results (flow-program Task 1 minor).
+    inputs.file(rootDir.resolve("libraries/stdlib/brs-prebuilt/kotlin-stdlib-brs.klib"))
+    inputs.file(rootDir.resolve("libraries/flow/brs-prebuilt/kotlin-flow-brs.klib"))
 }
 
 generatedDiagnosticContainersAndCheckerComponents()
