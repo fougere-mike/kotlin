@@ -272,3 +272,128 @@ component's includes.
   file order in the harness, or make the golden self-checking with an
   absent-then-present style assertion so a silent order change can't turn
   the golden into a tautology.
+
+# Flow program (2026-09-03) recorded follow-ups
+
+Program of record: docs/superpowers/plans/2026-09-02-flow-program-design.md
+(Status: Implemented); ledger .superpowers/sdd/2026-09-02-flow-program/progress.md.
+
+## Deferred features (spec §13, recorded out of scope)
+
+- **SharedFlow / event streams** — needs non-conflated per-collector queueing
+  (StateFlow conflates by design; Doorbells.kt is the extension point).
+- **callbackFlow/awaitClose, channelFlow, public Channel API** — the internal
+  FlowChannel primitive (libraries/flow/brs/src/.../flow/FlowChannel.kt) stays
+  non-public until these land.
+- **buffer() sizing / backpressure configs across the task hop** — v1 has no
+  backpressure: unbounded render-side queue (TaskFlow.kt envelope queue).
+- **SharingStarted modes (WhileSubscribed, Lazily) for stateIn** — eager-only
+  v1 (StateIn.kt).
+- **debounce/sample (timer-backed operators), zip** — need DelayTracker-backed
+  operator timers (Operators.kt).
+- **Doorbell field-name reuse pool** — doorbell ints accumulate on the global
+  node per flow instance; SceneGraph has no removeField (Doorbells.kt,
+  DOORBELL_FIELD_PREFIX).
+- **Task-side delay-as-blocking-sleep** — `delay()` inside a lifted region is
+  currently BRS_TASK_SUSPEND_IN_LIFTED; a sleep() mapping is the recorded DX
+  answer (TaskFlow.kt shim).
+- **Husk re-animation** — live class instances across copying channels
+  (marshallable-set law stands until then).
+- **Multi-module lifted regions** — single-module closed world
+  (BrsFlowTaskLiftLowering.kt); promote to a FIR diagnostic when multi-module
+  becomes real (ScopeHandle/SharedService precedent).
+- **Task-thread `.value` writes (cross-thread StateFlow emit); main-thread
+  collect** — emit/collect are render-context-only v1 (StateFlow.kt guided
+  ISEs).
+
+## Program-recorded residuals (ledger minors, by area)
+
+Spike/device residuals:
+- **B5 blocked-transfer re-probe**: STOP vs a BLOCKED sync roUrlTransfer was
+  inconclusive on the spike network (fast-fail connect) — re-probe against a
+  stalling LAN listener (spikes/flow-spike/FINDINGS.md Probe B5; probe-b
+  package reusable).
+- **Node-typed @SG field @BrsOnChange observers RE-FIRE on later scene-graph
+  mutation** (Task 12 device finding; one write → four fires) — deserves a
+  FieldSemantics Suite 6 probe row; until then every node-field onChange
+  handler must be idempotent (CLAUDE.md Field Writes section; one-shot-guard
+  idiom in roku-test-app TestScreenChildLabel.kt).
+- **Cooperative checkpoints for plain typed tasks** (deviation (c)): runTask
+  cancellation is the hard STOP alone — no cooperative cancel field is written
+  on that path (TaskRunner.kt STOP-rider block); wiring flowCancel-style
+  checkpoints into hand-written TaskComponent run() bodies is open.
+
+Compiler codegen residuals:
+- **Non-suspend single-narrow-clause catch still catches everything**
+  (pre-existing; now DIVERGES from the fixed suspend side) — unification
+  declined in Task 3c as a semantic change needing its own device program
+  (non-suspend try emission, IrStatementToBrsTransformer).
+- **Wrapped Unit-typed `when` terminal** — pre-existing unreproduced corner
+  noted in the Task 3c report (BrsWhenExpressionLowering wrap sites).
+- **Boolean-terminal try arm still emits `tmp = try`** (Task 9b's
+  statement-position split was Unit-only; Suite 10a fixture works around it) —
+  golden candidate (BrsTryExpressionLowering); insert a fix task only if a
+  live program hits it.
+- **Captured mutable-var `?.cancel()` reads the box, not .value** — general
+  codegen defect, lift-independent (Task 9; FlowTests uses the proven val
+  idiom).
+- **JS visitReturn sibling not ported** — returnable blocks are BRS-specific,
+  no reproducer; spike bait (BrsStateMachineBuilder, Task 4 note).
+- **Local-function Unit-param residual** — one site bypasses
+  normalizeParametersForBrs (Task 4 note).
+- **abs(Int.MIN_VALUE) Base36 '-' edge, 2 sites** — the mangle-hash and
+  synthesized-component-name Base36 helpers (Task 9b minors,
+  BrsIrBackendContext.calculateBrsFunctionSignature family).
+- **componentDirFor basename-collision ambiguity** — mirrors the pre-existing
+  writeOutput class (Task 9b minor).
+- **isBoxInit Unit-call RHS edge** (Task 9b minor).
+- **continue-wrapper do-while duplication residual** (Task 9b minor).
+- **User class named KotlinFlowTask_* unguarded** — the synthesized-component
+  name prefix is reserved by convention only; FIR guard candidate
+  (BrsFlowTaskLiftLowering).
+- **Nested lift → runtime ISE** — a flowOn inside a lifted region is an
+  accepted-risk runtime error, not a FIR error (Task 7 note).
+
+FIR residuals:
+- **Overlapping nested-lift regions double-report captures**
+  (FirBrsFlowLiftCheckers.kt:427).
+- **FlowCollector-subtype emit override mislabels as SUSPEND_IN_LIFTED** —
+  safe direction (FirBrsFlowLiftCheckers.kt:447; KDoc candidate).
+- **map(::f) chain-hop shape unpinned by fixture** (flowLift fixture family).
+
+Flow-klib internals:
+- **combine's drain duplicates drainTo inline** (ConcurrentOperators.kt
+  ~:1251) — cosmetic dedup.
+- **MergeCoordinator.acquireSlot raw suspendCoroutine park** needs a one-line
+  cross-ref comment to the FlowChannel liveness law (ConcurrentOperators.kt
+  ~:1031).
+- **Foreign StateFlow implementations are same-component-only** — the static
+  access layer routes the klib's StateFlowImpl; a user-authored StateFlow
+  implementation falls back to fn-slot dispatch and must not cross components
+  (BrsFlowAccessLowering).
+
+Test-infrastructure residuals:
+- **kotlin.test roundTrip stale-event hardening** — stale outcome events can
+  bite other single-outcome-field suites (Suite 9 shape); Task 11's
+  snapshot-change polling fixed the rta driver layer only
+  (DeviceTestLoop.kt roundTrip).
+- **Task-8 registry-before-observe window** — runTask registers the parked
+  continuation before arming cancel cleanup; a throw in that window is not
+  practically reachable (TaskRunner.kt, noted for the record).
+- **TypedTaskProbe cancelawait verdict lacks an explicit wake-await**
+  (cosmetic robustness; roku-test-app fixtures).
+- **stateInBridgesFlow asserts the intermediate r2 delivery** — deterministic
+  with 300ms gaps, but conflation makes skipping legal; loosen the assertion
+  if it ever flakes (roku-test-app FlowTests.kt).
+- **FakeApiTask orphan build output** — the retired task's old synthesized
+  component can linger in roku-test-app build/ until a `./gradlew clean`
+  (validators strict-0 regardless; Task 12 note).
+- **FlowExtras adopted nodes linger after the suite's last test** — clear()
+  runs only on the NEXT flowInstallOwner, so the final test's scene children
+  outlive the suite (cosmetic; roku-test-app FlowTests.kt FlowExtras).
+
+Behavior notes (not defects):
+- **Flagship fetches are now sequential** (~1900ms vs the old concurrent
+  ~1200ms): the repository flow emits ONE composed AA from two back-to-back
+  task-side fetches — a deliberate demo-shape choice (TestScreenVM
+  fetchBothJson), not a regression.
