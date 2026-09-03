@@ -33,6 +33,7 @@ import test.text.stringExtensionsTests
 import test.standard.standardFunctionsTests
 import test.standard.shortCircuitTests
 import test.standard.tryExpressionTests
+import test.standard.mangleContractTests
 
 // Lazy delegate tests
 import test.lazy.lazyDelegateTests
@@ -111,6 +112,7 @@ fun main() {
         standardFunctionsTests()
         shortCircuitTests()
         tryExpressionTests()
+        mangleContractTests()
 
         // Lazy delegates
         lazyDelegateTests()

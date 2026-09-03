@@ -1,7 +1,11 @@
 package test.coroutines
 
+import kotlin.brs.roku.RoAssociativeArray
+import kotlin.brs.unsafeCast
 import kotlin.test.*
 import kotlin.coroutines.*
+import kotlin.coroutines.builders.launch
+import kotlin.coroutines.builders.runBlocking
 import kotlin.coroutines.cancellation.CancellationException
 
 fun TestRunner.jobProtocolTests() {
@@ -214,5 +218,53 @@ fun TestRunner.jobHierarchyTests() {
             b.completeExceptionally(IllegalStateException("second"))
             assertEquals("first", parentCause?.message)
         }
+
+        // Task 9b deliverable 4: reportUnhandled crashed calling toString() on
+        // a NATIVE BrightScript error cause (a plain AA with no toString slot)
+        // — the reporter itself took the app down with the failure it was
+        // reporting (Task 9 run 3 killed tests 5-10). The runBlocking harness
+        // cannot observe that crash end-to-end (join settles BEFORE the
+        // reporter runs, and the crash is swallowed up-stack — pre-fix, this
+        // path passed while the console line silently never printed), so the
+        // stringify contract is pinned directly; the launch/join leg keeps the
+        // whole unhandled path exercised with a native cause.
+        test("reportUnhandled survives a native-error cause") {
+            var native: Throwable? = null
+            try {
+                // A plain AA has no boom_k_ slot: dispatching through the
+                // erased cast raises a genuine RUNTIME "Member function not
+                // found" native error (a bare `invalid.count()` splice is a
+                // device COMPILE error — it never reaches the catch).
+                RoAssociativeArray.create().unsafeCast<UnhandledCauseProbe>().boom()
+            } catch (e: Throwable) {
+                native = e
+            }
+            assertTrue(native != null, "expected a genuine native error to be caught")
+
+            // The reporter's stringify: a native cause renders from its data
+            // keys instead of crashing on the missing toString slot...
+            val described = kotlinUnhandledCauseString(native!!)
+            assertTrue(
+                described.contains("Member function"),
+                "native cause must render its message key, got: '$described'"
+            )
+            // ...and a live Kotlin exception keeps the standard rendering.
+            val kotlinDescribed = kotlinUnhandledCauseString(IllegalStateException("still standard"))
+            assertTrue(
+                kotlinDescribed.contains("still standard"),
+                "Kotlin cause must keep toString rendering, got: '$kotlinDescribed'"
+            )
+
+            runBlocking {
+                val failing = launch { throw native!! }
+                failing.join()
+            }
+            assertTrue(true, "reached: the unhandled reporter did not crash the app")
+        }
     }
+}
+
+/** Dispatch bait for the native-cause test: no runtime object implements it. */
+private interface UnhandledCauseProbe {
+    fun boom(): Int
 }

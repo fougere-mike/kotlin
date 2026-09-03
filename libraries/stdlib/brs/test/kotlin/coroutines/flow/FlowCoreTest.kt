@@ -167,5 +167,41 @@ fun TestRunner.flowCoreTests() {
                 assertEquals(1, received)
             }
         }
+
+        // Task 9b deliverable 3: a STATEMENT-POSITION try/finally between two
+        // emit suspension points, with a Unit-returning CALL as the try arm's
+        // terminal (the statementTryInFlowLambda golden's exact shape).
+        // FinallyBlocksLowering's returnable block used to hit the do-while
+        // body-duplication emission plus a void-sub result assignment — a
+        // device-side compile error in the generated state machine; this pins
+        // the fixed shape actually executing.
+        test("statementTryFinallyBetweenEmits") {
+            runBlocking {
+                stmtTryMarks = ""
+                flow {
+                    emit("started")
+                    try {
+                        var i = 0
+                        while (i < 3) {
+                            i = i + 1
+                        }
+                        stmtTryMark("done")
+                    } finally {
+                        stmtTryMark("cleanup")
+                    }
+                    emit("finished")
+                }.collect { v -> stmtTryMark(v) }
+                assertEquals(":started:done:cleanup:finished", stmtTryMarks)
+            }
+        }
     }
+}
+
+// Top-level accumulator + Unit-returning helper: the try arm must TERMINATE in
+// a Unit CALL (not a captured-var assignment) to pin the void-sub result-temp
+// split alongside the loop shape — mirrors the golden fixture exactly.
+private var stmtTryMarks = ""
+
+private fun stmtTryMark(tag: String) {
+    stmtTryMarks = stmtTryMarks + ":" + tag
 }

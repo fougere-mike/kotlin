@@ -5,6 +5,7 @@
 
 package kotlin.coroutines
 
+import kotlin.brs.roku.RoAssociativeArray
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
 
@@ -313,12 +314,12 @@ internal open class JobImpl(
         try {
             handler(cause)
         } catch (e: Throwable) {
-            println("[kotlin.coroutines] Completion handler threw: $e")
+            println("[kotlin.coroutines] Completion handler threw: ${kotlinUnhandledCauseString(e)}")
         }
     }
 
     private fun reportUnhandled(cause: Throwable) {
-        println("[kotlin.coroutines] Unhandled exception in coroutine: $cause")
+        println("[kotlin.coroutines] Unhandled exception in coroutine: ${kotlinUnhandledCauseString(cause)}")
     }
 
     override suspend fun join() {
@@ -336,6 +337,34 @@ internal open class JobImpl(
             }
         }
     }
+}
+
+/**
+ * Stringifies a failure cause without calling any member on it unless it is a
+ * live Kotlin object. A caught cause can be a NATIVE BrightScript error AA
+ * (`message`/`number`/`backtrace` data keys, NO toString slot): the unhandled
+ * reporter's `"$cause"` crashed "Member function not found" and took the whole
+ * app down with the failure it was reporting (Task 9b deliverable 4; observed
+ * killing E2E run 3 at switchMapCancelsTask). Native-shaped causes render from
+ * their data keys (the TaskRunner.taskExceptionFrom precedent); live Kotlin
+ * exceptions — every Kotlin object stamps `__type` at construction and carries
+ * an attached toString — keep the standard rendering.
+ *
+ * Public so the device suite can pin it directly (the ScopeWire
+ * public-builders precedent): the runBlocking harness cannot observe the
+ * reporter's crash end-to-end — join settles via fireCompletionHandlers BEFORE
+ * reportUnhandled runs, and the crash is swallowed up-stack — so the string
+ * contract is the assertable surface.
+ */
+public fun kotlinUnhandledCauseString(cause: Throwable): String {
+    val aa = cause as? RoAssociativeArray ?: return "$cause"
+    if (aa.lookup("__type") != null) {
+        return "$cause"
+    }
+    val rawMessage = aa.lookup("message")
+    val message = if (rawMessage != null) "$rawMessage" else "unknown native error"
+    val rawNumber = aa.lookup("number")
+    return if (rawNumber is Int) "$message (number $rawNumber)" else message
 }
 
 /**
