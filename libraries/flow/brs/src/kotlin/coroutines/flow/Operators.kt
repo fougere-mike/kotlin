@@ -57,7 +57,7 @@ public fun <T : Any> Flow<T?>.filterNotNull(): Flow<T> {
 /**
  * Applies [block] to each upstream value with the downstream collector as
  * receiver: the block may emit zero or more values per input — the general
- * operator `map` and `filter` are special cases of.
+ * operator that `map` and `filter` are special cases of.
  */
 public fun <T, R> Flow<T>.transform(block: suspend FlowCollector<R>.(T) -> Unit): Flow<R> {
     val upstream = this
@@ -221,10 +221,11 @@ public fun <T> Flow<T>.take(count: Int): Flow<T> {
             })
         } catch (e: Throwable) {
             // Throwable + manual discrimination, NOT `catch (e: AbortFlowException)`:
-            // the suspend state machine emits every typed catch clause as a
-            // catch-all (BrsStateMachineBuilder.visitTry), so a typed clause here
-            // would run the owner check on a foreign exception — a crash instead
-            // of propagation (device-pinned: upstreamFailurePropagatesThroughTake).
+            // hardening from before the typed-catch fix (the suspend state machine
+            // used to emit every typed catch clause as a catch-all; visitTry
+            // is-dispatches correctly since Task 3b). Kept as defense-in-depth so
+            // this klib never leans on that fix
+            // (device-pinned: upstreamFailurePropagatesThroughTake).
             if (e !is AbortFlowException || e.owner !== downstream) throw e
         }
     }

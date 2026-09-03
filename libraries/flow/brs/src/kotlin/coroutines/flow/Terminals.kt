@@ -56,9 +56,10 @@ private suspend fun <T> Flow<T>.collectFirst(predicate: (suspend (T) -> Boolean)
         flowCollectDispatch(this, collector)
     } catch (e: Throwable) {
         // Throwable + manual discrimination, NOT `catch (e: AbortFlowException)`:
-        // the suspend state machine emits every typed catch clause as a catch-all
-        // (BrsStateMachineBuilder.visitTry), so a typed clause here would run the
-        // owner check on a foreign exception — a crash instead of propagation
+        // hardening from before the typed-catch fix (the suspend state machine
+        // used to emit every typed catch clause as a catch-all; visitTry
+        // is-dispatches correctly since Task 3b). Kept as defense-in-depth so
+        // this klib never leans on that fix
         // (device-pinned: upstreamFailurePropagatesThroughFirst).
         if (e !is AbortFlowException || e.owner !== collector) throw e
     }

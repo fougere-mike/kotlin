@@ -22,6 +22,8 @@ val outputKlib = file("build/kotlin-flow-brs.klib")
 // the whole point of it being a separate klib (flow-program spec decision 10): stdlib
 // compilation generates NO suspend state machines, so flow operator internals must
 // compile as USER-mode code. Mirrors the kotlin-test-brs second-klib pattern.
+// Flags must stay in sync with regenerateKlib in libraries/flow/brs-prebuilt/
+// build.gradle.kts (same sources, same module name, same flags).
 val buildKlib by tasks.registering(JavaExec::class) {
     group = "build"
     description = "Build kotlin.coroutines.flow klib for BRS target"
