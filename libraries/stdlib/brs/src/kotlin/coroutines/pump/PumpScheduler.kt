@@ -337,3 +337,24 @@ public fun kotlinPumpForceTimerBackendLocal() {
  * first wakeup resolves it, then `"rtq"` or `"timer"`.
  */
 public fun kotlinPumpBackendName(): String = PumpScheduler.backendName()
+
+/**
+ * The ambient render-thread component's `top` node, or null when there is no
+ * component context (main thread, task thread, or a component that never ran
+ * coroutine machinery) — [PumpScheduler.hostTopOrNull] published for
+ * dependency klibs (test-hook-style public; the kotlinPump* precedent).
+ *
+ * This is THE ambient-component oracle for library code with no component
+ * receiver: the flow klib's `flowOn(Dispatchers.Task)`/`spawnTask` guided
+ * render-context guards read it (the shareOn/ScopeHandle.run guard pattern,
+ * which uses the internal form directly).
+ */
+public fun kotlinAmbientTopOrNull(): RoSGNode? = PumpScheduler.hostTopOrNull()
+
+/**
+ * The ambient render-thread component's `global` node, or null when there is
+ * no component context — [PumpScheduler.hostGlobalOrNull] published for
+ * dependency klibs, mirroring [kotlinAmbientTopOrNull]. The StateFlow
+ * doorbell carrier (flow-program hot tier) reaches `m.global` through this.
+ */
+public fun kotlinAmbientGlobalOrNull(): RoSGNode? = PumpScheduler.hostGlobalOrNull()

@@ -38,9 +38,10 @@ import kotlin.coroutines.registerCallerCancel
  *   observing component's scope.
  * - a fresh unparented node is created per invocation; no pooling.
  * - one-shot tasks; no timeout. The AWAIT is cancellation-aware: caller
- *   cancellation wakes the parked coroutine with CancellationException and
- *   tears down the await protocol, but the task-thread `run()` still executes
- *   to completion on the abandoned node (stopping it is M3 backlog).
+ *   cancellation wakes the parked coroutine with CancellationException, tears
+ *   down the await protocol, and hard-stops the task thread with
+ *   `control="STOP"` (prompt kill, Probe B — see the rider comment in
+ *   [awaitCompletion]; task-side cleanup after the killed point is skipped).
  */
 
 /**
@@ -198,8 +199,10 @@ private fun taskExceptionFrom(node: RoSGNode): TaskException {
  * Cancellation-aware await: cancelling the caller's job wakes the park
  * promptly with [kotlin.coroutines.cancellation.CancellationException]; the
  * cleanup handler drops the registry entry and disarms the observer first, so
- * the task's late terminal write finds nothing to do. The task-thread `run()`
- * is NOT stopped — it executes to completion on the abandoned node.
+ * the task's late terminal write finds nothing to do, then hard-stops the
+ * task thread (`control="STOP"` — prompt kill, abandoned-node safe,
+ * idempotent; Probe B facts at the rider comment below). Task-side code after
+ * the killed point — `finally` included — does NOT run (Probe B8).
  */
 public suspend fun <T : TaskComponent> T.awaitCompletion(): T {
     val node = taskNodeOf(this)
@@ -243,11 +246,25 @@ public suspend fun <T : TaskComponent> T.awaitCompletion(): T {
         // entry and disarm the observer so a late terminal write finds
         // nothing to do. Registered BEFORE registerCallerCancel so protocol
         // state is gone by the time the park wakes with the CE.
+        //
+        // The STOP rider (flow-program spec §5, closes the M3 "task-thread
+        // work is not stopped" backlog item): after the protocol teardown,
+        // `control="STOP"` hard-kills the abandoned task thread. Device-pinned
+        // by the flow spike (spikes/flow-spike/FINDINGS.md Probe B,
+        // 2026-09-02): STOP is a PROMPT hard kill in every probed shape —
+        // sleep loop (B1), mid-blocking-call (B2), blocked wait() (B3),
+        // compute loop (B4), sub-second in all of them; safe on abandoned
+        // nodes and idempotent on repeat (B7). Caveats, also pinned: code
+        // after the killed point NEVER runs — task-side cleanup/finally is
+        // skipped on a hard kill (B8); blocked sync roUrlTransfer
+        // specifically is the one unpinned shape (B5 inconclusive on the
+        // spike network — recorded residual).
         val jobImpl = jobImplOf(continuation.context[Job])
         if (jobImpl != null) {
             parked.handles.add(jobImpl.invokeOnCancelRequest {
                 TaskRunner.remove(taskId)
                 node.unobserveFieldScoped(TASK_STATE_FIELD)
+                node.setField(TASK_CONTROL_FIELD, "STOP")
             })
         }
         registerCallerCancel(parked, continuation.context)
@@ -299,9 +316,10 @@ internal suspend fun <T : TaskComponent> runTaskImpl(task: T, configure: T.() ->
  *   node; concurrent invocations of the same task type are independent nodes
  *   correlated by `kotlinTaskId`.
  * - Cancelling the awaiting coroutine wakes it promptly (CancellationException
- *   at the suspend point) and tears down the await protocol, but does NOT
- *   stop the task thread: `run()` executes to completion on the abandoned
- *   node (stopping it is M3 backlog).
+ *   at the suspend point), tears down the await protocol, and hard-stops the
+ *   task thread (`control="STOP"` — prompt kill in every device-pinned shape,
+ *   Probe B). A mid-`run()` stop skips the rest of the body, `finally`
+ *   included; work needing task-side cleanup should be checkpoint-shaped.
  */
 public suspend inline fun <reified T : TaskComponent> runTask(noinline configure: T.() -> Unit): T =
     runTaskImpl(createComponent<T>(), configure)
