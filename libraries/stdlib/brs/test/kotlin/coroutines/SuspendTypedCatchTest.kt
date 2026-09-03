@@ -119,7 +119,7 @@ fun TestRunner.suspendTypedCatchTests() {
         // make the assignment the RHS of the temp set — BrightScript renders
         // that as a COMPARISON, silently losing the write
         // (m.__try_tmp = (m._result.value = "caught")). Fixed by the
-        // terminal-statement wrap guard (armTerminalProducesValue in
+        // terminal-statement wrap guard (terminalIsAssignment in
         // BrsTryExpressionLowering.kt, shared with BrsWhenExpressionLowering,
         // mirrored in BrsStateMachineBuilder.producesValue): such arms run
         // unwrapped and the temp reads invalid — the BRS mapping of Unit.
