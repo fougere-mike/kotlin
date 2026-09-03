@@ -520,7 +520,10 @@ internal fun driveFlowTask(node: RoSGNode, upstream: Flow<Any?>) {
     }
     val shim = FlowEmitShim(node)
     val outcome = FlowDriveOutcome()
-    val block: suspend () -> Unit = { upstream.collect(shim) }
+    // Dispatch-routed for uniformity (the internal-collect law); a lifted
+    // upstream is always a rebuilt cold chain, so this always takes the
+    // member-collect branch task-side.
+    val block: suspend () -> Unit = { flowCollectDispatch(upstream, shim) }
     block.startCoroutine(FlowDriveCompletion(outcome))
     if (!outcome.completed) {
         node.setField(FLOW_OUT_FIELD, buildFlowErrorEnvelope(shim.nextSeq(), ESCAPED_SUSPEND_LAW, 0, null))

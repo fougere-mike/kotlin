@@ -44,9 +44,13 @@ public fun interface FlowCollector<in T> {
 /**
  * Collects [flow] into this collector: every value the flow emits is re-emitted
  * downstream. The standard way for a `flow {}` body to splice in another flow.
+ *
+ * Routed through [flowCollectDispatch] (the internal-collect law, Doorbells.kt
+ * header): [flow] may be a StateFlow, and only the dispatch path serves those
+ * without a cross-component slot call.
  */
 public suspend fun <T> FlowCollector<T>.emitAll(flow: Flow<T>) {
-    flow.collect(this)
+    flowCollectDispatch(flow, this)
 }
 
 /**

@@ -161,7 +161,9 @@ public fun <T, R> Flow<T>.flatMapMerge(concurrency: Int = 16, transform: suspend
                     val inner = transform(value)
                     coordinator.acquireSlot()
                     val innerJob = scope.launch {
-                        inner.collect(sendCollector)
+                        // Dispatch-routed (the internal-collect law): an inner
+                        // flow may be a StateFlow.
+                        flowCollectDispatch(inner, sendCollector)
                     }
                     // Safe if the inner already finished inline: a terminal
                     // job fires the handler synchronously at registration.
@@ -301,11 +303,11 @@ public fun <T1, T2, R> combine(f1: Flow<T1>, f2: Flow<T2>, transform: suspend (T
         coroutineScope {
             val scope = this
             val firstJob = scope.launch {
-                f1.collect(CombineSendCollector(channel, 0))
+                flowCollectDispatch(f1, CombineSendCollector(channel, 0))
             }
             firstJob.invokeOnCompletion { cause -> coordinator.onSenderCompleted(channel, cause) }
             val secondJob = scope.launch {
-                f2.collect(CombineSendCollector(channel, 1))
+                flowCollectDispatch(f2, CombineSendCollector(channel, 1))
             }
             secondJob.invokeOnCompletion { cause -> coordinator.onSenderCompleted(channel, cause) }
             while (true) {
@@ -346,7 +348,7 @@ public fun <T> Flow<T>.conflate(): Flow<T> {
         coroutineScope {
             val scope = this
             val upstreamJob = scope.launch {
-                upstream.collect(sendCollector)
+                flowCollectDispatch(upstream, sendCollector)
             }
             upstreamJob.invokeOnCompletion { cause -> channel.close(cause) }
             drainTo(channel, downstream)

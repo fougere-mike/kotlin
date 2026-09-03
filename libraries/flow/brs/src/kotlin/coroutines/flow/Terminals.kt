@@ -15,9 +15,15 @@ private class ActionCollector<T>(private val action: suspend (T) -> Unit) : Flow
     }
 }
 
-/** Collects the flow, invoking [action] for every emitted value. */
+/**
+ * Collects the flow, invoking [action] for every emitted value.
+ *
+ * Routed through [flowCollectDispatch] (the internal-collect law, Doorbells.kt
+ * header) — so is every terminal below: the receiver may be a StateFlow, and
+ * only the dispatch path serves those without a cross-component slot call.
+ */
 public suspend fun <T> Flow<T>.collect(action: suspend (T) -> Unit) {
-    collect(ActionCollector(action))
+    flowCollectDispatch(this, ActionCollector(action))
 }
 
 /**
@@ -47,7 +53,7 @@ private class FirstCollector<T>(private val predicate: (suspend (T) -> Boolean)?
 private suspend fun <T> Flow<T>.collectFirst(predicate: (suspend (T) -> Boolean)?): FirstCollector<T> {
     val collector = FirstCollector<T>(predicate)
     try {
-        collect(collector)
+        flowCollectDispatch(this, collector)
     } catch (e: Throwable) {
         // Throwable + manual discrimination, NOT `catch (e: AbortFlowException)`:
         // the suspend state machine emits every typed catch clause as a catch-all
@@ -98,7 +104,7 @@ private class ToListCollector<T>(val destination: ArrayList<T>) : FlowCollector<
 /** Collects the flow to completion and returns everything it emitted, in order. */
 public suspend fun <T> Flow<T>.toList(): List<T> {
     val destination = ArrayList<T>()
-    collect(ToListCollector(destination))
+    flowCollectDispatch(this, ToListCollector(destination))
     return destination
 }
 
@@ -113,6 +119,9 @@ private object NopCollector : FlowCollector<Any?> {
  * [Job]. Emitted values are discarded — chain operators (e.g. a future `onEach`)
  * for per-value work. The kotlinx `events.onEach { ... }.launchIn(scope)` idiom.
  */
-public fun <T> Flow<T>.launchIn(scope: CoroutineScope): Job = scope.launch {
-    collect(NopCollector)
+public fun <T> Flow<T>.launchIn(scope: CoroutineScope): Job {
+    val upstream = this
+    return scope.launch {
+        flowCollectDispatch(upstream, NopCollector)
+    }
 }
