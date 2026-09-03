@@ -1,0 +1,405 @@
+// --- File: KotlinFlowTask_spawnTaskLift_1.deps.json ---
+{
+  "version": 1,
+  "component": "KotlinFlowTask_spawnTaskLift_1",
+  "dependencies": [
+    "AnyKt.brs",
+    "ArrayListKt.brs",
+    "ArraysBrsKt.brs",
+    "ArraysKt.brs",
+    "BuildersKt.brs",
+    "CancellationExceptionKt.brs",
+    "CharCategoryBrsKt.brs",
+    "CollectionExtensionsKt.brs",
+    "CombinedContextKt.brs",
+    "ComponentCoroutinesKt.brs",
+    "ContinuationInterceptorKt.brs",
+    "ContinuationKt.brs",
+    "CoroutineDispatcherKt.brs",
+    "CoroutineImplKt.brs",
+    "CoroutineQueueKt.brs",
+    "CoroutineScopeKt.brs",
+    "CoroutineSingletonsKt.brs",
+    "DefaultDispatcherKt.brs",
+    "DelayKt.brs",
+    "DelayTrackerKt.brs",
+    "DispatchersKt.brs",
+    "EmptyCoroutineContextKt.brs",
+    "ExceptionsKt.brs",
+    "HashMapKt.brs",
+    "HashSetKt.brs",
+    "IODispatcherKt.brs",
+    "IOWorkerRegistryKt.brs",
+    "IntrinsicsBrsKt.brs",
+    "JobKt.brs",
+    "KotlinKt.brs",
+    "MapExtensionsBrsKt.brs",
+    "PairKt.brs",
+    "ParkedContinuationKt.brs",
+    "PreconditionsKt.brs",
+    "PrimitiveIteratorsKt.brs",
+    "PumpSchedulerKt.brs",
+    "RangeOperatorsBrsKt.brs",
+    "RangesKt.brs",
+    "ResultKt.brs",
+    "SpawnTaskKt.brs",
+    "StringBuilderBrsKt.brs",
+    "TaskPoolKt.brs",
+    "ThrowableKt.brs",
+    "UByteKt.brs",
+    "UIntKt.brs",
+    "ULongKt.brs",
+    "URangesKt.brs",
+    "UShortKt.brs",
+    "UnconfinedDispatcherKt.brs",
+    "UnsignedUtilsKt.brs",
+    "charBrsKt.brs",
+    "consoleKt.brs",
+    "coreRuntimeKt.brs",
+    "primitivesKt.brs",
+    "spawnTaskLiftKt.brs",
+    "stringBrsKt.brs"
+  ]
+}
+
+
+// --- File: KotlinFlowTask_spawnTaskLift_1.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="KotlinFlowTask_spawnTaskLift_1" extends="Task">
+    <interface>
+        <field id="kotlinTaskState" type="string" alwaysNotify="true" />
+        <field id="kotlinTaskError" type="assocarray" />
+        <field id="kotlinTaskId" type="integer" />
+        <field id="flowCaptures" type="assocarray" />
+        <field id="flowOut" type="assocarray" alwaysNotify="true" />
+        <field id="flowCancel" type="boolean" />
+        <function name="__kotlinTaskMain" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/BuildersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CancellationExceptionKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineImplKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineQueueKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineScopeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineSingletonsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DefaultDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayTrackerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DispatchersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/EmptyCoroutineContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IODispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IOWorkerRegistryKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IntrinsicsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/JobKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/MapExtensionsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PairKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ParkedContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PrimitiveIteratorsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PumpSchedulerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ResultKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/SpawnTaskKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/TaskPoolKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ULongKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/URangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UShortKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnconfinedDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnsignedUtilsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/consoleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/spawnTaskLiftKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/KotlinFlowTask_spawnTaskLift_1/KotlinFlowTask_spawnTaskLift_1Kt.brs" />
+</component>
+
+
+// --- File: KotlinFlowTask_spawnTaskLift_1Kt.brs ---
+sub init()
+    m.top.functionName = "__kotlinTaskMain"
+    m.run_k_ = KotlinFlowTask_spawnTaskLift_1_run_k_
+end sub
+
+sub KotlinFlowTask_spawnTaskLift_1_run_k_()
+    driveSpawnTask_RoSGNode_Function1RoAssociativeArrayNAnyN_k_(m.top, KotlinFlowTask_spawnTaskLift_1_run_lambda_create_k_())
+end sub
+
+sub __kotlinTaskMain()
+    try
+        KotlinFlowTask_spawnTaskLift_1_run_k_()
+        m.top.kotlinTaskState = "done"
+    catch e
+        errInfo = {message: "", number: 0}
+        if Type(e) = "roAssociativeArray" then
+            if e.message <> invalid then
+                errInfo.message = e.message
+            end if
+            if e.number <> invalid then
+                errInfo.number = e.number
+            end if
+            if e.backtrace <> invalid then
+                errInfo.backtrace = e.backtrace
+            end if
+        end if
+        m.top.kotlinTaskError = errInfo
+        m.top.kotlinTaskState = "error"
+    end try
+end sub
+
+function KotlinFlowTask_spawnTaskLift_1_run_lambda_create_k_() as Object
+    this = {}
+    this.__type = "KotlinFlowTask_spawnTaskLift_1_run_lambda"
+    this.__proto = ["KotlinFlowTask_spawnTaskLift_1_run_lambda", "Function1", "Function"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.invoke_AnyN_k_ = KotlinFlowTask_spawnTaskLift_1_run_lambda_invoke_AnyN_k_
+    return this
+end function
+
+function KotlinFlowTask_spawnTaskLift_1_run_lambda_invoke_AnyN_k_(caps as Dynamic) as Dynamic
+    return __spawnBlock_spawnTaskLift_1_RoAssociativeArrayN_k_(caps)
+end function
+
+
+// --- File: SpawnTaskLift.deps.json ---
+{
+  "version": 1,
+  "component": "SpawnTaskLift",
+  "dependencies": [
+    "AnyKt.brs",
+    "ArrayListKt.brs",
+    "ArraysBrsKt.brs",
+    "ArraysKt.brs",
+    "BuildersKt.brs",
+    "CancellationExceptionKt.brs",
+    "CharCategoryBrsKt.brs",
+    "CollectionExtensionsKt.brs",
+    "CombinedContextKt.brs",
+    "ComponentCoroutinesKt.brs",
+    "ContinuationInterceptorKt.brs",
+    "ContinuationKt.brs",
+    "CoroutineDispatcherKt.brs",
+    "CoroutineImplKt.brs",
+    "CoroutineQueueKt.brs",
+    "CoroutineScopeKt.brs",
+    "CoroutineSingletonsKt.brs",
+    "DefaultDispatcherKt.brs",
+    "DelayKt.brs",
+    "DelayTrackerKt.brs",
+    "DispatchersKt.brs",
+    "EmptyCoroutineContextKt.brs",
+    "ExceptionsKt.brs",
+    "HashMapKt.brs",
+    "HashSetKt.brs",
+    "IODispatcherKt.brs",
+    "IOWorkerRegistryKt.brs",
+    "IntrinsicsBrsKt.brs",
+    "JobKt.brs",
+    "KotlinKt.brs",
+    "MapExtensionsBrsKt.brs",
+    "PairKt.brs",
+    "ParkedContinuationKt.brs",
+    "PreconditionsKt.brs",
+    "PrimitiveIteratorsKt.brs",
+    "PumpSchedulerKt.brs",
+    "RangeOperatorsBrsKt.brs",
+    "RangesKt.brs",
+    "ResultKt.brs",
+    "SpawnTaskKt.brs",
+    "StringBuilderBrsKt.brs",
+    "TaskPoolKt.brs",
+    "ThrowableKt.brs",
+    "UByteKt.brs",
+    "UIntKt.brs",
+    "ULongKt.brs",
+    "URangesKt.brs",
+    "UShortKt.brs",
+    "UnconfinedDispatcherKt.brs",
+    "UnsignedUtilsKt.brs",
+    "charBrsKt.brs",
+    "consoleKt.brs",
+    "coreRuntimeKt.brs",
+    "primitivesKt.brs",
+    "stringBrsKt.brs"
+  ]
+}
+
+
+// --- File: SpawnTaskLift.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="SpawnTaskLift" extends="Group">
+    <interface>
+        <field id="result" type="string" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/BuildersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CancellationExceptionKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineImplKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineQueueKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineScopeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineSingletonsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DefaultDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayTrackerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DispatchersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/EmptyCoroutineContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IODispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IOWorkerRegistryKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IntrinsicsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/JobKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/MapExtensionsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PairKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ParkedContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PrimitiveIteratorsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PumpSchedulerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ResultKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/SpawnTaskKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/TaskPoolKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ULongKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/URangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UShortKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnconfinedDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnsignedUtilsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/consoleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/SpawnTaskLift/SpawnTaskLiftKt.brs" />
+</component>
+
+
+// --- File: spawnTaskLiftKt.brs ---
+sub init()
+    __kotlinPumpAttach(m.top, m.global)
+    m.top.result = ""
+    m.__get_result_k_ = SpawnTaskLift___get_result_k_
+    m.__set_result_Str_k_ = SpawnTaskLift___set_result_Str_k_
+    base = "row"
+    launch_rComponentBase_CoroutineContext_SuspendFunction1CoroutineScopeV_k_(m, invalid, SpawnTaskLift_slambda_create_Str_SpawnTaskLift_ContinuationAnyNN_k_(base, m, invalid))
+end sub
+
+function onKeyEvent(key as String, press as Boolean) as Boolean
+    return false
+end function
+
+function SpawnTaskLift___get_result_k_() as String
+    return m.top.result
+end function
+
+sub SpawnTaskLift___set_result_Str_k_(value as String)
+    m.top.result = value
+end sub
+
+function __spawnBlock_spawnTaskLift_1_RoAssociativeArrayN_k_(captures as Dynamic) as String
+    base = captures.lookup("base")
+    return base + ":fetched"
+end function
+
+function SpawnTaskLift_slambda_create_Str_SpawnTaskLift_ContinuationAnyNN_k_(_base as String, this_0 as Object, resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_AnyN_Continuation_k_ = this.invoke_AnyN_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_AnyN_Continuation_k_ = this.create_AnyN_Continuation_k_
+    this.__proto = ["SpawnTaskLift_slambda", "SuspendFunction1", this.__proto]
+    this.__type = "SpawnTaskLift_slambda"
+    this.invoke_AnyN_Continuation_k_ = SpawnTaskLift_slambda_invoke_AnyN_Continuation_k_
+    this.doResume_k_ = SpawnTaskLift_slambda_doResume_k_
+    this.create_AnyN_Continuation_k_ = SpawnTaskLift_slambda_create_AnyN_Continuation_k_
+    this._base = _base
+    this.this_0 = this_0
+    return this
+end function
+
+function SpawnTaskLift_slambda_invoke_AnyN_Continuation_k_(_this_launch as Object, _completion as Object) as Object
+    tmp = m.create_AnyN_Continuation_k_(_this_launch, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function SpawnTaskLift_slambda_doResume_k_() as Dynamic
+    fetched = invalid
+    flowCaptures = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(2)
+                flowCaptures = CreateObject("roAssociativeArray")
+                flowCaptures.addReplace("base", m._base)
+                m.__set_state(1)
+                suspendResult = spawnTaskLifted_Str_RoAssociativeArrayN_Continuation_k_("KotlinFlowTask_spawnTaskLift_1", flowCaptures, m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                fetched = suspendResult
+                m.this_0.top.result = fetched
+                                return invalid
+            else if __kotlin_identityEquals(tmp, 2) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 2) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function SpawnTaskLift_slambda_create_AnyN_Continuation_k_(_this_launch as Dynamic, completion as Object) as Object
+    i = SpawnTaskLift_slambda_create_Str_SpawnTaskLift_ContinuationAnyNN_k_(m._base, m.this_0, completion)
+    i._this_launch = _this_launch
+    return i
+end function

@@ -166,6 +166,12 @@ class BrsCompiler(
         // Run lowering phases
         val loweredModule = BrsLoweringPhases.lower(irModule, context)
 
+        // Components synthesized DURING lowering (the flowOn/spawnTask task lift)
+        // were born after the pre-extraction pass above; merge their
+        // hand-constructed infos in so Pass 3 (which filters classes by name
+        // against this map) generates their XML + deps.json.
+        preExtractedComponents.putAll(context.synthesizedComponents)
+
         // Transform to BrightScript
         val transformer = IrToBrsTransformer(context)
         val outputs = mutableListOf<BrsCompilationOutput>()

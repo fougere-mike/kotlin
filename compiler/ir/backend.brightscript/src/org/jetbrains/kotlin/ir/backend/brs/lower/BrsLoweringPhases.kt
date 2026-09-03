@@ -164,6 +164,21 @@ object BrsLoweringPhases {
         // replaces another; the lifted function is an ordinary top-level suspend fun).
         phases += BrsScopeRunBlockLowering(context)
 
+        // Phase 0.058: flowOn(Dispatchers.Task) / spawnTask{} task lift
+        // Lifts each region into a top-level factory/block function, synthesizes a
+        // PER-CALL-SITE FlowTaskComponent subclass in a NEW synthetic IrFile (file
+        // name = component name — load-bearing for writeOutput routing and the
+        // hard-coded own-script XML URI), and rewrites the call site to
+        // taskFlowLifted/spawnTaskLifted. Must run BEFORE UpgradeCallableReferences
+        // (region lambdas must still be IrFunctionExpressions with implicit
+        // captures) and before any coroutine lowering (spawnTask's rewrite is one
+        // suspend call replacing another). The synthetic files join module.files
+        // between phases (see the execution loop below), so every LATER pass
+        // processes their contents; the earlier 0.05x passes never see them, which
+        // is sound by construction — the synthesized bodies contain none of the
+        // shapes those passes rewrite.
+        phases += BrsFlowTaskLiftLowering(context)
+
         // Phase 0.06: IO Worker Detection (Warning-only for now)
         // Detects withContext(Dispatchers.IO) calls and emits warnings about the
         // lambda serialization limitation. Full automatic extraction is planned
@@ -378,8 +393,19 @@ object BrsLoweringPhases {
         }
 
         for (phase in phases) {
-            for (file in module.files) {
+            // Snapshot: a phase may synthesize new files (the flow task lift);
+            // appending to module.files mid-iteration would be a concurrent
+            // modification of the list being walked.
+            for (file in module.files.toList()) {
                 phase.lower(file)
+            }
+            // Files synthesized by the phase that just ran join the module HERE,
+            // so every later phase (lambda upgrade, callable-reference lowering,
+            // local-class extraction, ...) and BrsCompiler's Passes 1-3 process
+            // them like ordinary files.
+            if (context.pendingSyntheticFiles.isNotEmpty()) {
+                module.files.addAll(context.pendingSyntheticFiles)
+                context.pendingSyntheticFiles.clear()
             }
         }
 

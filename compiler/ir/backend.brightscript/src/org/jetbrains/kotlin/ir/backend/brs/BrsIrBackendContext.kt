@@ -354,6 +354,31 @@ class BrsIrBackendContext(
      */
     val pendingScopeBindingTables = mutableListOf<BrsAALiteral>()
 
+    // ==================== Flow Task Lift Registry ====================
+
+    /**
+     * Components synthesized DURING lowering (the flowOn/spawnTask task lift,
+     * BrsFlowTaskLiftLowering): component name → hand-constructed
+     * [BrsComponentInfo]. They are born after BrsCompiler's pre-extraction
+     * pass, whose map Pass 3 filters on — BrsCompiler merges this in before
+     * the Pass-3 loop. Hand-constructed because the extractor's inherited walk
+     * (stopAtUserComponents) stops at FlowTaskComponent, an isComponent-true
+     * ancestor, and would collect ZERO of the six protocol fields.
+     */
+    val synthesizedComponents = mutableMapOf<String, BrsComponentInfo>()
+
+    /**
+     * Synthetic [IrFile]s created by the current lowering phase (one per
+     * synthesized flow task component — file name = component name, which is
+     * load-bearing for writeOutput routing AND the hard-coded own-script XML
+     * URI). BrsLoweringPhases flushes these into `module.files` BETWEEN
+     * phases: appending mid-phase would mutate the file list being iterated,
+     * and joining right after the creating phase lets every later pass
+     * (lambda upgrade, callable-reference lowering, ...) and BrsCompiler's
+     * Passes 1–3 see them as ordinary files.
+     */
+    val pendingSyntheticFiles = mutableListOf<IrFile>()
+
     // ==================== SharedService Dispatch Registry ====================
 
     /**

@@ -397,6 +397,17 @@ object BrsStandardClassIds {
         val ContentNodeComponent = "ContentNodeComponent".brsId()
 
         /**
+         * kotlin.brs.FlowTaskComponent — base of the PER-CALL-SITE task
+         * components the flowOn(Dispatchers.Task)/spawnTask lift synthesizes
+         * (BrsFlowTaskLiftLowering, flow-program spec §5). Extends
+         * TaskComponent (kotlinTask* protocol + isTaskComponent machinery) and
+         * adds the three flow protocol fields (flowCaptures/flowOut/flowCancel).
+         * Never subclassed by hand.
+         */
+        @JvmField
+        val FlowTaskComponent = "FlowTaskComponent".brsId()
+
+        /**
          * @deprecated Use [SceneComponent] instead.
          */
         @Deprecated("Use SceneComponent instead", ReplaceWith("SceneComponent"))
@@ -690,6 +701,23 @@ object BrsStandardClassIds {
          */
         @JvmField
         val flowLiftChainCallables: Set<CallableId> = flowBuilderCallables + flowOperatorCallables
+
+        /**
+         * kotlin.coroutines.flow.taskFlowLifted — the lowered entry point a
+         * `flowOn(Dispatchers.Task)` call site is rewritten to by
+         * BrsFlowTaskLiftLowering (`taskFlowLifted<T>("<componentName>",
+         * capturesAA)`; the runLowered/runTaskImpl convention).
+         */
+        @JvmField
+        val taskFlowLifted = "taskFlowLifted".callableId(BASE_COROUTINES_FLOW_PACKAGE)
+
+        /**
+         * kotlin.coroutines.task.spawnTaskLifted — the lowered entry point a
+         * `spawnTask { }` call site is rewritten to by BrsFlowTaskLiftLowering
+         * (suspend-for-suspend, before any coroutine lowering).
+         */
+        @JvmField
+        val spawnTaskLifted = "spawnTaskLifted".callableId(BASE_COROUTINES_TASK_PACKAGE)
 
         /** FlowCollector.emit — one of the two suspend calls a lifted region admits. */
         @JvmField

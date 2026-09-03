@@ -9,40 +9,26 @@ import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.compilationException
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
 import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.builders.declarations.buildVariable
-import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
-import org.jetbrains.kotlin.ir.declarations.IrValueParameter
-import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.declarations.createBlockBody
 import org.jetbrains.kotlin.ir.declarations.name
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrFunctionExpression
-import org.jetbrains.kotlin.ir.expressions.IrGetValue
-import org.jetbrains.kotlin.ir.expressions.IrReturn
-import org.jetbrains.kotlin.ir.expressions.IrSetValue
-import org.jetbrains.kotlin.ir.expressions.IrTypeOperator
 import org.jetbrains.kotlin.ir.expressions.impl.IrBlockImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrGetObjectValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrReturnImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrSetValueImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrTypeOperatorCallImpl
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
-import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.makeNullable
@@ -53,9 +39,6 @@ import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.patchDeclarationParents
 import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
-import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
-import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
-import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.BrsStandardClassIds
 import org.jetbrains.kotlin.name.Name
@@ -81,6 +64,8 @@ data class ScopeRunBlock(val requestName: String, val liftedFunction: IrSimpleFu
  * zero-capture block passes `invalid`. Captures therefore cross BY COPY over
  * the mailbox wire — writes to a captured variable inside the block never
  * reach the caller (BRS_SCOPE_CAPTURE_MUTATION_LOST is the planned guard).
+ * The capture collection/prologue/remap machinery is shared with the
+ * flowOn/spawnTask task lift — see BrsCaptureLift.kt.
  *
  * Name synthesis: `<fileFqName>#<n>` where n is the 1-based ordinal of
  * rewritten call sites within the file in transform order (deterministic
@@ -89,7 +74,7 @@ data class ScopeRunBlock(val requestName: String, val liftedFunction: IrSimpleFu
  * reserved: hand-registered request names may not contain it.
  *
  * Runs BEFORE UpgradeCallableReferences, while the block is still an
- * [IrFunctionExpression] with implicit captures (direct [IrGetValue] of
+ * [IrFunctionExpression] with implicit captures (direct IrGetValue of
  * enclosing values), and before any coroutine lowering (one suspend call
  * replaces another — BrsRunTaskCallLowering precedent). The lifted function
  * is appended to the file's declarations, so it rides ordinary top-level
@@ -160,7 +145,7 @@ class BrsScopeRunBlockLowering(
                 ordinal += 1
                 val requestName = "$fileFq#$ordinal"
 
-                val captures = collectCaptures(blockArg.function)
+                val captures = collectLiftCaptures(blockArg.function.body, blockArg.function.parameters)
                 val lifted = buildLiftedFunction(
                     "__scopeBlock_${sanitizedFileName}_$ordinal", blockArg.function, captures, capturesType, aaLookup.symbol
                 )
@@ -183,66 +168,6 @@ class BrsScopeRunBlockLowering(
     private fun IrType.isSuspendFunctionType(): Boolean =
         classFqName?.asString()?.startsWith("kotlin.coroutines.SuspendFunction") == true
 
-    /** A captured value: the out-of-scope symbol the block reads plus its AA key / lifted-local name. */
-    private class Capture(val symbol: IrValueSymbol, val name: String)
-
-    /**
-     * Free-value analysis of the literal block: every [IrGetValue]/[IrSetValue]
-     * whose target is declared OUTSIDE the lambda, in first-reference order.
-     * Names are the source names (receivers become "this"), uniquified within
-     * the block when shadowing produces duplicates.
-     */
-    private fun collectCaptures(lambda: IrSimpleFunction): List<Capture> {
-        val declared = mutableSetOf<IrValueSymbol>()
-        lambda.parameters.forEach { declared.add(it.symbol) }
-
-        val order = mutableListOf<IrValueSymbol>()
-        val seen = mutableSetOf<IrValueSymbol>()
-
-        fun record(symbol: IrValueSymbol) {
-            if (symbol in declared || !seen.add(symbol)) return
-            order += symbol
-        }
-
-        lambda.body?.acceptVoid(object : IrVisitorVoid() {
-            override fun visitElement(element: IrElement) = element.acceptChildrenVoid(this)
-
-            override fun visitVariable(declaration: IrVariable) {
-                declared.add(declaration.symbol)
-                declaration.acceptChildrenVoid(this)
-            }
-
-            override fun visitValueParameter(declaration: IrValueParameter) {
-                declared.add(declaration.symbol)
-                declaration.acceptChildrenVoid(this)
-            }
-
-            override fun visitGetValue(expression: IrGetValue) {
-                record(expression.symbol)
-            }
-
-            override fun visitSetValue(expression: IrSetValue) {
-                record(expression.symbol)
-                expression.acceptChildrenVoid(this)
-            }
-        })
-
-        val usedNames = mutableSetOf<String>()
-        return order.map { symbol ->
-            val raw = symbol.owner.name.asString()
-            val base = when {
-                raw == "<this>" || raw.startsWith("\$this") -> "this"
-                else -> raw.replace("$", "_").replace("<", "").replace(">", "")
-            }
-            var name = base
-            var suffix = 2
-            while (!usedNames.add(name)) {
-                name = "${base}_${suffix++}"
-            }
-            Capture(symbol, name)
-        }
-    }
-
     /**
      * The lifted top-level suspend function: reads each capture from the
      * `captures` AA at entry (by the same names the call site wrote), then
@@ -252,7 +177,7 @@ class BrsScopeRunBlockLowering(
     private fun buildLiftedFunction(
         functionName: String,
         lambda: IrSimpleFunction,
-        captures: List<Capture>,
+        captures: List<LiftCapture>,
         capturesType: IrType,
         aaLookup: IrSimpleFunctionSymbol,
     ): IrSimpleFunction {
@@ -272,57 +197,12 @@ class BrsScopeRunBlockLowering(
         }
 
         val statements = mutableListOf<IrStatement>()
-        val remapping = mutableMapOf<IrValueSymbol, IrVariable>()
-        for (capture in captures) {
-            val capturedType = capture.symbol.owner.type
-            val lookupCall = IrCallImpl(
-                UNDEFINED_OFFSET, UNDEFINED_OFFSET,
-                aaLookup.owner.returnType,
-                aaLookup,
-                typeArgumentsCount = 0,
-            ).apply {
-                dispatchReceiver = IrGetValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, capturesParam.type, capturesParam.symbol)
-                putValueArgument(0, stringConst(capture.name))
-            }
-            val local = buildVariable(
-                parent = lifted,
-                startOffset = UNDEFINED_OFFSET,
-                endOffset = UNDEFINED_OFFSET,
-                origin = IrDeclarationOrigin.DEFINED,
-                name = Name.identifier(capture.name),
-                type = capturedType,
-            ).apply {
-                initializer = IrTypeOperatorCallImpl(
-                    UNDEFINED_OFFSET, UNDEFINED_OFFSET,
-                    capturedType, IrTypeOperator.IMPLICIT_CAST, capturedType, lookupCall
-                )
-            }
-            remapping[capture.symbol] = local
-            statements += local
-        }
+        val (prologue, remapping) = buildCaptureLocals(context, lifted, capturesParam, captures, aaLookup)
+        statements += prologue
 
         val body = lambda.body as? IrBlockBody
             ?: error("ScopeHandle.run block lambda has no block body: ${lambda.render()}")
-        body.transformChildrenVoid(object : IrElementTransformerVoid() {
-            override fun visitGetValue(expression: IrGetValue): IrExpression {
-                val local = remapping[expression.symbol] ?: return expression
-                return IrGetValueImpl(expression.startOffset, expression.endOffset, local.type, local.symbol, expression.origin)
-            }
-
-            override fun visitSetValue(expression: IrSetValue): IrExpression {
-                expression.transformChildrenVoid(this)
-                val local = remapping[expression.symbol] ?: return expression
-                return IrSetValueImpl(
-                    expression.startOffset, expression.endOffset, expression.type, local.symbol, expression.value, expression.origin
-                )
-            }
-
-            override fun visitReturn(expression: IrReturn): IrExpression {
-                expression.transformChildrenVoid(this)
-                if (expression.returnTargetSymbol != lambda.symbol) return expression
-                return IrReturnImpl(expression.startOffset, expression.endOffset, expression.type, lifted.symbol, expression.value)
-            }
-        })
+        remapLiftedRegion(body, remapping, retargetReturnsFrom = lambda, retargetReturnsTo = lifted)
         statements += body.statements
 
         lifted.body = context.irFactory.createBlockBody(UNDEFINED_OFFSET, UNDEFINED_OFFSET, statements)
@@ -343,7 +223,7 @@ class BrsScopeRunBlockLowering(
         receiver: IrExpression,
         requestName: String,
         resultType: IrType,
-        captures: List<Capture>,
+        captures: List<LiftCapture>,
         runLowered: IrSimpleFunctionSymbol,
         capturesType: IrType,
         aaCreate: IrSimpleFunction,
@@ -359,12 +239,12 @@ class BrsScopeRunBlockLowering(
             ).apply {
                 putTypeArgument(0, resultType)
                 extensionReceiver = receiverExpression
-                putValueArgument(0, stringConst(requestName))
+                putValueArgument(0, liftStringConst(context, requestName))
                 putValueArgument(1, capturesExpression)
             }
 
         if (captures.isEmpty()) {
-            return runLoweredCall(receiver, IrConstImpl.constNull(UNDEFINED_OFFSET, UNDEFINED_OFFSET, capturesType))
+            return runLoweredCall(receiver, liftNullCaptures(capturesType))
         }
 
         val receiverVar = buildVariable(
@@ -376,41 +256,13 @@ class BrsScopeRunBlockLowering(
             type = receiver.type,
         ).apply { initializer = receiver }
 
-        val companion = aaCreate.parent as IrClass
-        val createCall = IrCallImpl(
-            UNDEFINED_OFFSET, UNDEFINED_OFFSET,
-            aaCreate.returnType,
-            aaCreate.symbol,
-            typeArgumentsCount = 0,
-        ).apply {
-            dispatchReceiver = IrGetObjectValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, companion.defaultType, companion.symbol)
-        }
-        val capturesVar = buildVariable(
-            parent = enclosing,
-            startOffset = UNDEFINED_OFFSET,
-            endOffset = UNDEFINED_OFFSET,
-            origin = IrDeclarationOrigin.IR_TEMPORARY_VARIABLE,
-            name = Name.identifier("scopeCaptures"),
-            type = aaCreate.returnType,
-        ).apply { initializer = createCall }
+        val capturesVar = buildCapturesVariable("scopeCaptures", aaCreate, enclosing)
 
         return IrBlockImpl(original.startOffset, original.endOffset, original.type).apply {
             statements += receiverVar
             statements += capturesVar
             for (capture in captures) {
-                statements += IrCallImpl(
-                    UNDEFINED_OFFSET, UNDEFINED_OFFSET,
-                    aaAddReplace.returnType,
-                    aaAddReplace.symbol,
-                    typeArgumentsCount = 0,
-                ).apply {
-                    dispatchReceiver = IrGetValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, capturesVar.type, capturesVar.symbol)
-                    putValueArgument(0, stringConst(capture.name))
-                    putValueArgument(
-                        1,
-                        IrGetValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, capture.symbol.owner.type, capture.symbol)
-                    )
-                }
+                statements += buildAddReplaceCall(context, aaAddReplace, capturesVar, capture)
             }
             statements += runLoweredCall(
                 IrGetValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, receiverVar.type, receiverVar.symbol),
@@ -418,7 +270,4 @@ class BrsScopeRunBlockLowering(
             )
         }
     }
-
-    private fun stringConst(value: String) =
-        IrConstImpl.string(UNDEFINED_OFFSET, UNDEFINED_OFFSET, context.irBuiltIns.stringType, value)
 }

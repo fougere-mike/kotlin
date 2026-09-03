@@ -355,6 +355,60 @@ class BrsSymbols(
         findOptionalClass(FqName("kotlin.brs.roku"), "IAssociativeArray")
     }
 
+    // ==================== Flow Task Lift Symbols ====================
+    // All consumed by BrsFlowTaskLiftLowering (flow-program spec §5), which
+    // OrNull-bails when any are missing (stdlib compilation, or a module
+    // compiled without the kotlin-flow-brs klib).
+
+    /**
+     * `kotlin.brs.FlowTaskComponent` — the stdlib base the lift's synthesized
+     * per-call-site task components extend.
+     */
+    val flowTaskComponentClass: IrClassSymbol? by lazy {
+        val classId = BrsStandardClassIds.Components.FlowTaskComponent
+        findOptionalClass(classId.packageFqName, classId.shortClassName.asString())
+    }
+
+    /**
+     * `kotlin.coroutines.flow.taskFlowLifted` — the rewrite target for
+     * `flowOn(Dispatchers.Task)` call sites.
+     */
+    val taskFlowLiftedOrNull: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(BrsStandardClassIds.BASE_COROUTINES_FLOW_PACKAGE, "taskFlowLifted")
+    }
+
+    /**
+     * `kotlin.coroutines.task.spawnTaskLifted` — the rewrite target for
+     * `spawnTask { }` call sites (suspend-for-suspend).
+     */
+    val spawnTaskLiftedOrNull: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(BrsStandardClassIds.BASE_COROUTINES_TASK_PACKAGE, "spawnTaskLifted")
+    }
+
+    /**
+     * `kotlin.coroutines.flow.driveFlowTask` — the task-thread driver the
+     * synthesized flowOn component's run() calls with (this.top, upstream).
+     */
+    val driveFlowTaskOrNull: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(BrsStandardClassIds.BASE_COROUTINES_FLOW_PACKAGE, "driveFlowTask")
+    }
+
+    /**
+     * `kotlin.coroutines.task.driveSpawnTask` — the task-thread driver the
+     * synthesized spawnTask component's run() calls with (this.top, block).
+     */
+    val driveSpawnTaskOrNull: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(BrsStandardClassIds.BASE_COROUTINES_TASK_PACKAGE, "driveSpawnTask")
+    }
+
+    /**
+     * `kotlin.coroutines.flow.readCapturesFrom` — task-side captures read the
+     * synthesized run() feeds the lifted upstream factory.
+     */
+    val readCapturesFromOrNull: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(BrsStandardClassIds.BASE_COROUTINES_FLOW_PACKAGE, "readCapturesFrom")
+    }
+
     // ==================== BrightScript-specific Symbols ====================
 
     /**
