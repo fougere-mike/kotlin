@@ -242,6 +242,22 @@ class BrsCoroutineGoldenFileTests : AbstractBrsGoldenFileTest() {
     // shapes, nested SAM lambda classes, lambda-scope @SG writes, pump attach).
     @Test
     fun operatorChain() = runTest("flow/operatorChain.kt")
+
+    // The task lift, flowOn form (spec §5): flow{}.map{}.flowOn(Dispatchers.Task)
+    // in launch {} with one hoisted capture used in two region lambdas — pins the
+    // call-site rewrite to taskFlowLifted, the lifted __flowUpstream factory, and
+    // the per-site synthesized component (six-field XML, extends="Task",
+    // __kotlinTaskMain export, run() passing m.top, deps.json closure).
+    @Test
+    fun flowOnLift() = runTest("flow/flowOnLift.kt")
+
+    // The task lift, spawnTask form (spec §5, decision 3): spawnTask { block }
+    // in launch {} with one hoisted capture — pins the suspend-for-suspend
+    // rewrite to spawnTaskLifted, the lifted __spawnBlock function, and the
+    // synthesized component's run() handing m.top + the block-forwarding
+    // lambda to driveSpawnTask.
+    @Test
+    fun spawnTaskLift() = runTest("flow/spawnTaskLift.kt")
 }
 
 // ==================== Inline BrightScript Tests ====================
