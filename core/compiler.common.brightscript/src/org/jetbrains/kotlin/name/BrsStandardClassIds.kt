@@ -16,6 +16,7 @@ object BrsStandardClassIds {
     val BASE_BRS_ROKU_PACKAGE = BASE_BRS_PACKAGE.child(Name.identifier("roku"))
     val BASE_BRS_COROUTINES_PACKAGE = BASE_BRS_PACKAGE.child(Name.identifier("coroutines"))
     val BASE_COROUTINES_TASK_PACKAGE = BASE_KOTLIN_PACKAGE.child(Name.identifier("coroutines")).child(Name.identifier("task"))
+    val BASE_COROUTINES_FLOW_PACKAGE = BASE_KOTLIN_PACKAGE.child(Name.identifier("coroutines")).child(Name.identifier("flow"))
 
     /**
      * Built-in BrightScript object types.
@@ -588,6 +589,19 @@ object BrsStandardClassIds {
         /** sharedFromOrNull<T>(node[, key]) — the null-on-absence variant of [sharedFrom]. */
         @JvmField
         val sharedFromOrNull = "sharedFromOrNull".callableId(BASE_BRS_PACKAGE)
+
+        // ==================== Flow Callables ====================
+
+        /**
+         * Flow<T>.flowOn(context) — the task-lift entry point
+         * (kotlin.coroutines.flow, kotlin-flow-brs klib). The lift is a
+         * compile-time lowering, so FirBrsTaskDispatcherChecker requires the
+         * argument to be the literal Dispatchers.Task token (and rejects the
+         * token everywhere else); the un-lowered stdlib body is a guided-throw
+         * runtime backstop.
+         */
+        @JvmField
+        val flowOn = "flowOn".callableId(BASE_COROUTINES_FLOW_PACKAGE)
 
         // ==================== Coroutine Callables ====================
 

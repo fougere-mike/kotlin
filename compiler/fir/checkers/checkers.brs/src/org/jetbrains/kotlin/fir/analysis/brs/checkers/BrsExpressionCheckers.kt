@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.analysis.brs.checkers
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsAddFieldTypeChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsCreateComponentTypeChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsCreateObjectTypeChecker
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsFlowOnDispatcherArgumentChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsIODispatcherChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsIOWorkerCaptureChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsIntrinsicArgChecker
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsNameCalla
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsScopeBlockChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsScopeCaptureChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsSharedCopyChannelChecker
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsTaskTokenPositionChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsTryFinallyChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.*
 
@@ -30,11 +32,13 @@ object BrsExpressionCheckers : ExpressionCheckers() {
             FirBrsScopeBlockChecker,
             FirBrsScopeCaptureChecker,
             FirBrsSharedCopyChannelChecker,
+            FirBrsFlowOnDispatcherArgumentChecker,
         )
 
     override val propertyAccessExpressionCheckers: Set<FirPropertyAccessExpressionChecker>
         get() = setOf(
             FirBrsIODispatcherChecker,
+            FirBrsTaskTokenPositionChecker,
         )
 
     override val tryExpressionCheckers: Set<FirTryExpressionChecker>

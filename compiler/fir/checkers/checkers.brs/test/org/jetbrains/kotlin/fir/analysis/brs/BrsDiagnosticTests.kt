@@ -1247,4 +1247,17 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testSharedCopyChannel() {
         runTest("sharedCopyChannel.kt")
     }
+
+    // BRS_FLOW_ON_INVALID_DISPATCHER — Dispatchers.Task is a compile-time token
+    // selecting the task lift (flow-program spec decisions 4/10): flowOn requires
+    // the LITERAL token at the call site (the lift is a compile-time lowering, so
+    // a runtime-chosen dispatcher cannot select it), and the token is legal
+    // nowhere else (it is not a runtime dispatcher). One diagnostic, two
+    // directions; suppressible escapes hit the TaskTokenDispatcher / flowOn-stub
+    // guided-throw runtime backstops.
+
+    @Test
+    fun testFlowTaskDispatcher() {
+        runTest("flowTaskDispatcher.kt")
+    }
 }

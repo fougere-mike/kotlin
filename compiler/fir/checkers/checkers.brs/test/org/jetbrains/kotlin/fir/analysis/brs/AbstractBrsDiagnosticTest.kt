@@ -208,7 +208,13 @@ abstract class AbstractBrsDiagnosticTest {
         "BRS_IO_DISPATCHER_UNSUPPORTED" to
             "Dispatchers.IO is unsupported on this platform: IO dispatch silently falls back to the " +
                 "render-thread queue, so it behaves exactly like Dispatchers.Main. " +
-                "Use runTask<T> for background work.",
+                "Use flowOn(Dispatchers.Task) for background streams, spawnTask for one-shot blocks, " +
+                "or runTask<T> for typed tasks.",
+        "BRS_FLOW_ON_INVALID_DISPATCHER" to
+            "flowOn requires the literal Dispatchers.Task token, and Dispatchers.Task is legal only as a " +
+                "flowOn argument: the task lift is a compile-time lowering, so a runtime-chosen dispatcher " +
+                "cannot select it, and the token is not a runtime dispatcher. Write flowOn(Dispatchers.Task) " +
+                "directly at the call site; for one-shot background blocks use spawnTask, for typed tasks runTask<T>.",
         "BRS_ADDFIELD_INVALID_TYPE" to "'{0}' is not a valid SceneGraph field type for addField(). Valid types: {1}.",
         "BRS_CREATE_OBJECT_INVALID_TYPE" to "'{0}' is not a valid BrightScript object type for createObject(). Valid types: {1}.",
         "BRS_STATIC_INVALID_TARGET" to

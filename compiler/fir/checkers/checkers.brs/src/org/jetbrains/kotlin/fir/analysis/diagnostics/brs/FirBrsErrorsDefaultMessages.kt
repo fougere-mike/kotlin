@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_BRSNAM
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_BRSNAME_REQUIRES_CALLABLE_REF
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_CREATE_COMPONENT_INVALID_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_CREATE_OBJECT_INVALID_TYPE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_FLOW_ON_INVALID_DISPATCHER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_INTRINSIC_LITERAL_REQUIRED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_INTRINSIC_USER_DEFINED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_IO_DISPATCHER_UNSUPPORTED
@@ -99,7 +100,15 @@ object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             BRS_IO_DISPATCHER_UNSUPPORTED,
             "Dispatchers.IO is unsupported on this platform: IO dispatch silently falls back to the " +
                 "render-thread queue, so it behaves exactly like Dispatchers.Main. " +
-                "Use runTask<T> for background work.",
+                "Use flowOn(Dispatchers.Task) for background streams, spawnTask for one-shot blocks, " +
+                "or runTask<T> for typed tasks.",
+        )
+        map.put(
+            BRS_FLOW_ON_INVALID_DISPATCHER,
+            "flowOn requires the literal Dispatchers.Task token, and Dispatchers.Task is legal only as a " +
+                "flowOn argument: the task lift is a compile-time lowering, so a runtime-chosen dispatcher " +
+                "cannot select it, and the token is not a runtime dispatcher. Write flowOn(Dispatchers.Task) " +
+                "directly at the call site; for one-shot background blocks use spawnTask, for typed tasks runTask<T>.",
         )
         map.put(
             BRS_STATIC_INVALID_TARGET,

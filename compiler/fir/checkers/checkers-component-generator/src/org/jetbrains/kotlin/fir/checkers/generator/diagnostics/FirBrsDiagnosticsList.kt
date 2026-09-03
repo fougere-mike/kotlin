@@ -169,6 +169,12 @@ object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
         }
     }
 
+    val FLOW_TASK_LIFT by object : DiagnosticGroup("Flow task lift") {
+        val BRS_FLOW_ON_INVALID_DISPATCHER by error<KtElement> {
+            isSuppressible = true
+        }
+    }
+
     val TYPED_TASKS by object : DiagnosticGroup("Typed task components") {
         val BRS_TASK_STATE_NOT_FIELD by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
             parameter<String>("propertyName")
