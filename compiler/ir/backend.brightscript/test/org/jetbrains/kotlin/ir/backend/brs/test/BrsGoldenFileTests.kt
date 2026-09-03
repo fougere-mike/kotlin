@@ -191,6 +191,21 @@ class BrsCoroutineGoldenFileTests : AbstractBrsGoldenFileTest() {
     @Test
     fun suspendInTypedCatchBody() = runTest("coroutines/suspendInTypedCatchBody.kt")
 
+    // break/continue in a NON-suspendable if, targeting a loop WITH suspension
+    // points: the suspendable-nodes collector must mark such jumps (JS
+    // visitBreakContinue rule) so the state machine rewrites them into state
+    // dispatches. Pre-fix the orphaned IrBreak crashed LivenessAnalysis:
+    // "Break from an unknown loop" (flow concurrent-operators defect).
+    @Test
+    fun suspendLoopJumpInPlainBranch() = runTest("coroutines/suspendLoopJumpInPlainBranch.kt")
+
+    // A Unit-typed value parameter (generic instantiated at Unit — the
+    // Flow<Unit>.collect { } shape) must emit "as Dynamic", never "as Void":
+    // Void is return-position-only in BrightScript — a Void parameter is a
+    // device-side compile error (flow concurrent-operators defect).
+    @Test
+    fun unitParameterType() = runTest("coroutines/unitParameterType.kt")
+
     // IR-special local names (<iterator>) lifted to state-machine fields must be
     // sanitized — the raw name is a BrightScript syntax error (flow cold core defect).
     @Test

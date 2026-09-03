@@ -508,10 +508,22 @@ fun absentArgumentPlaceholder(function: IrFunction, index: Int): BrsExpression =
  *
  * This function adds `= invalid` to any parameter without a default that follows
  * a parameter with a default.
+ *
+ * It also rewrites a Void parameter TYPE to Dynamic: "as Void" is legal in
+ * return position only — a Void parameter is a device-side compile error
+ * ("Type is Invalid", &ha7). A Unit-typed value parameter (a generic
+ * instantiated at Unit, e.g. Flow<Unit>.collect { }) maps to VOID in
+ * mapTypeToBrs and must be legalized here (pinned by the unitParameterType
+ * golden; found by collectLatest's empty collect lambda).
  */
 fun normalizeParametersForBrs(parameters: List<BrsParameter>): List<BrsParameter> {
     var sawDefault = false
-    return parameters.map { param ->
+    return parameters.map { rawParam ->
+        val param = if (rawParam.type == BrsType.VOID) {
+            BrsParameter(rawParam.name, BrsType.DYNAMIC, rawParam.defaultValue)
+        } else {
+            rawParam
+        }
         if (param.defaultValue != null) {
             sawDefault = true
             param

@@ -97,6 +97,25 @@ class BrsSuspendableNodesCollector(private val suspendableNodes: MutableSet<IrEl
             markNode(expression)
         }
     }
+
+    // A break/continue targeting a loop that CONTAINS suspension points must
+    // itself be suspendable: the loop is dissolved into states, so the jump
+    // must reach visitBreak/visitContinue and become a state dispatch. Without
+    // this (the JS SuspendableNodesCollector.visitBreakContinue rule), a jump
+    // nested in a non-suspendable branch is added to a state block as a raw
+    // statement — an orphaned IrBreak whose loop no longer exists, crashing
+    // LivenessAnalysis ("Break from an unknown loop"; pinned by the
+    // suspendLoopJumpInPlainBranch golden). The loop enters the set only after
+    // its subtree completes (post-order), so this rule is what the caller's
+    // fixed-point iteration exists to converge. NOTE: the JS original also
+    // marks returns targeting suspendable IrReturnableBlocks; NOT ported —
+    // returnable blocks follow a different, BRS-specific pipeline here
+    // (BrsReturnableBlockLowering), and that shape has no reproducer yet.
+    override fun visitBreakContinue(jump: IrBreakContinue) {
+        if (jump.loop in suspendableNodes) {
+            markNode(jump)
+        }
+    }
 }
 
 fun collectSuspendableNodes(function: IrBlock): MutableSet<IrElement> {

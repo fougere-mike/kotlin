@@ -1,0 +1,25 @@
+// --- File: unitParameterTypeKt.brs ---
+function Sink_push_AnyN_ContinuationV_k_(value as Dynamic, _completion as Object) as Object
+end function
+
+function register_SinkV_k_(sink as Object) as Object
+    return sink
+end function
+
+function setup_k_() as Object
+    return register_SinkV_k_(setup_slambda_create_ContinuationAnyNN_k_(invalid))
+end function
+
+function setup_slambda_create_ContinuationAnyNN_k_(resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.push_AnyN_ContinuationV_k_ = this.push_AnyN_ContinuationV_k_
+    this.__proto = ["setup_slambda", "Sink", this.__proto]
+    this.__type = "setup_slambda"
+    this.push_AnyN_ContinuationV_k_ = setup_slambda_push_AnyN_ContinuationV_k_
+    return this
+end function
+
+function setup_slambda_push_AnyN_ContinuationV_k_(it as Dynamic, _completion as Object) as Object
+    return invalid
+end function
