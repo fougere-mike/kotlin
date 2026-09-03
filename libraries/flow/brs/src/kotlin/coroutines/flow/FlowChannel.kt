@@ -13,6 +13,9 @@ import kotlin.coroutines.suspendCoroutine
 /** The value behind [FlowChannel.CLOSED]; a module-private object no user value can be. */
 internal object FlowChannelClosed
 
+/** The value behind [FlowChannel.EMPTY]; a module-private object no user value can be. */
+internal object FlowChannelEmpty
+
 /**
  * INTERNAL same-context queue: the concurrent operators' primitive (spec §4).
  * Sender coroutines [send] (non-suspending, unbounded) and one drain loop
@@ -40,6 +43,14 @@ internal class FlowChannel<T>(private val conflated: Boolean = false) {
     /** The cause [close] was called with; null before close and on normal completion. */
     internal var closeCause: Throwable? = null
         private set
+
+    /**
+     * Whether [close] has been called. The task-lift teardown reads this to
+     * decide whether the producing task is already terminal (its own
+     * complete/error envelope closed the channel) or must be stopped.
+     */
+    internal val isClosed: Boolean
+        get() = closed
 
     /**
      * Enqueues [value] (conflated mode: replaces the not-yet-taken tail value)
@@ -81,6 +92,23 @@ internal class FlowChannel<T>(private val conflated: Boolean = false) {
         }
     }
 
+    /**
+     * Non-suspending poll: the next buffered value, [CLOSED] once the channel
+     * is closed AND drained (buffered values stay receivable, matching
+     * [receiveOrClosed]), or [EMPTY] when nothing is buffered yet.
+     *
+     * For drains that own their OWN park (the task-lift collector parks on a
+     * cancellation-aware `Job().join()` instead of this channel's plain park,
+     * so caller cancel wakes it mid-park — see TaskFlow.kt). [receiveOrClosed]
+     * and [poll] must not be mixed on one channel: poll bypasses the parked
+     * receiver, which only send/close wake.
+     */
+    fun poll(): Any? {
+        if (buffer.isNotEmpty()) return buffer.removeAt(0)
+        if (closed) return CLOSED
+        return EMPTY
+    }
+
     private fun wakeReceiver() {
         val parked = receiver
         if (parked != null) {
@@ -92,5 +120,8 @@ internal class FlowChannel<T>(private val conflated: Boolean = false) {
     companion object {
         /** Sentinel [receiveOrClosed] returns when the channel is closed and drained. */
         val CLOSED: Any = FlowChannelClosed
+
+        /** Sentinel [poll] returns when the channel is open with nothing buffered. */
+        val EMPTY: Any = FlowChannelEmpty
     }
 }

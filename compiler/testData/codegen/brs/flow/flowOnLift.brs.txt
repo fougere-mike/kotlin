@@ -11,8 +11,10 @@
     "CancellationExceptionKt.brs",
     "CharCategoryBrsKt.brs",
     "CollectionExtensionsKt.brs",
+    "CollectionQueryKt.brs",
     "CombinedContextKt.brs",
     "ComponentCoroutinesKt.brs",
+    "ComponentFactoryKt.brs",
     "ContinuationInterceptorKt.brs",
     "ContinuationKt.brs",
     "CoroutineDispatcherKt.brs",
@@ -28,6 +30,7 @@
     "ErrorsKt.brs",
     "ExceptionsKt.brs",
     "FlowBuildersKt.brs",
+    "FlowChannelKt.brs",
     "FlowKt.brs",
     "HashMapKt.brs",
     "HashSetKt.brs",
@@ -46,9 +49,11 @@
     "RangeOperatorsBrsKt.brs",
     "RangesKt.brs",
     "ResultKt.brs",
+    "SpawnTaskKt.brs",
     "StringBuilderBrsKt.brs",
     "TaskFlowKt.brs",
     "TaskPoolKt.brs",
+    "TaskRunnerKt.brs",
     "ThrowableKt.brs",
     "UByteKt.brs",
     "UIntKt.brs",
@@ -80,8 +85,10 @@
     <script type="text/brightscript" uri="pkg:/source/CancellationExceptionKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CollectionQueryKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentFactoryKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CoroutineDispatcherKt.brs" />
@@ -97,6 +104,7 @@
     <script type="text/brightscript" uri="pkg:/source/ErrorsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/FlowBuildersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/FlowChannelKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/FlowKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
@@ -115,9 +123,11 @@
     <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ResultKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/SpawnTaskKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/TaskFlowKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/TaskPoolKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/TaskRunnerKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />
@@ -148,8 +158,10 @@
     "CancellationExceptionKt.brs",
     "CharCategoryBrsKt.brs",
     "CollectionExtensionsKt.brs",
+    "CollectionQueryKt.brs",
     "CombinedContextKt.brs",
     "ComponentCoroutinesKt.brs",
+    "ComponentFactoryKt.brs",
     "ContinuationInterceptorKt.brs",
     "ContinuationKt.brs",
     "CoroutineDispatcherKt.brs",
@@ -165,6 +177,7 @@
     "ErrorsKt.brs",
     "ExceptionsKt.brs",
     "FlowBuildersKt.brs",
+    "FlowChannelKt.brs",
     "FlowKt.brs",
     "HashMapKt.brs",
     "HashSetKt.brs",
@@ -183,9 +196,11 @@
     "RangeOperatorsBrsKt.brs",
     "RangesKt.brs",
     "ResultKt.brs",
+    "SpawnTaskKt.brs",
     "StringBuilderBrsKt.brs",
     "TaskFlowKt.brs",
     "TaskPoolKt.brs",
+    "TaskRunnerKt.brs",
     "ThrowableKt.brs",
     "UByteKt.brs",
     "UIntKt.brs",
@@ -224,8 +239,10 @@
     <script type="text/brightscript" uri="pkg:/source/CancellationExceptionKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CollectionQueryKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentFactoryKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CoroutineDispatcherKt.brs" />
@@ -241,6 +258,7 @@
     <script type="text/brightscript" uri="pkg:/source/ErrorsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/FlowBuildersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/FlowChannelKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/FlowKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
@@ -259,9 +277,11 @@
     <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ResultKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/SpawnTaskKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/TaskFlowKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/TaskPoolKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/TaskRunnerKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />

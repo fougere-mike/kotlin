@@ -78,6 +78,7 @@ import test.coroutines.flow.flowKlibSmokeTests
 import test.coroutines.flow.flowCoreTests
 import test.coroutines.flow.flowOperatorsTests
 import test.coroutines.flow.flowConcurrentTests
+import test.coroutines.flow.flowTaskLiftTests
 
 /**
  * Main entry point for stdlib runtime tests.
@@ -155,5 +156,6 @@ fun main() {
         flowCoreTests()
         flowOperatorsTests()
         flowConcurrentTests()
+        flowTaskLiftTests()
     }
 }
