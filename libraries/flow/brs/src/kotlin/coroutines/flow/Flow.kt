@@ -5,6 +5,8 @@
 
 package kotlin.coroutines.flow
 
+import kotlin.coroutines.CoroutineContext
+
 /**
  * An asynchronous cold stream of values, mirroring `kotlinx.coroutines.flow.Flow`.
  *
@@ -46,3 +48,25 @@ public fun interface FlowCollector<in T> {
 public suspend fun <T> FlowCollector<T>.emitAll(flow: Flow<T>) {
     flow.collect(this)
 }
+
+/**
+ * COMPILER-LOWERED: moves the upstream chain onto a Roku Task thread (the task
+ * lift, flow-program spec §5). At a call site whose argument is the literal
+ * `Dispatchers.Task` token, the compiler lifts the ENTIRE upstream chain into a
+ * per-call-site synthesized TaskComponent; downstream of `flowOn` collects the
+ * task's emissions as an ordinary cold flow in the collector's context.
+ *
+ * [context] must be LITERALLY `Dispatchers.Task` at the call site, and
+ * `Dispatchers.Task` is legal nowhere else — `BRS_FLOW_ON_INVALID_DISPATCHER`
+ * enforces both directions (the lift is a compile-time lowering; a
+ * runtime-chosen dispatcher cannot select it).
+ *
+ * This body is the runtime backstop for calls that escaped the lowering
+ * (suppressed diagnostics, erased dispatch): it throws a guided error rather
+ * than silently collecting upstream on the caller's thread.
+ */
+public fun <T> Flow<T>.flowOn(context: CoroutineContext): Flow<T> =
+    throw IllegalStateException(
+        "flowOn compiled without the task lift — this call must be compiler-lowered; " +
+            "check the argument is the literal Dispatchers.Task"
+    )
