@@ -11,6 +11,9 @@
 // merged-staging collision guard enforces this at packaging time.
 package kotlin.coroutines.task
 
+import kotlin.brs.roku.RoAssociativeArray
+import kotlin.brs.roku.RoSGNode
+
 /**
  * COMPILER-LOWERED: runs [block] on a Roku Task thread and suspends the caller
  * until its outcome envelope arrives (the same per-call-site lift as
@@ -30,3 +33,35 @@ public suspend fun <R> spawnTask(block: () -> R): R =
         "spawnTask compiled without the task lift — this call must be compiler-lowered; " +
             "check the argument is a literal lambda"
     )
+
+// KEEP SIGNATURES IN SYNC with the task-lift lowering
+// (compiler/ir/backend.brightscript/src/.../lower/BrsFlowTaskLiftLowering.kt):
+// [spawnTaskLifted] is its spawnTask call-site rewrite target, and
+// [driveSpawnTask] is what the synthesized component's run() calls — the
+// lowering builds those calls against these exact shapes (the runTaskImpl /
+// runLowered convention).
+
+/**
+ * COMPILER-TARGETED: what a `spawnTask { }` call site is rewritten to. Creates
+ * a fresh [componentName] task node, sets [captures] on it, arms the outcome
+ * observer, runs it, and suspends until the outcome envelope (rethrowing a
+ * task-side throw as TaskException; cancellation-aware await).
+ *
+ * Real body lands in Task 8; until then any call that somehow reaches this
+ * stub fails guided rather than silently running on the caller's thread.
+ */
+internal suspend fun <R> spawnTaskLifted(componentName: String, captures: RoAssociativeArray?): R =
+    throw IllegalStateException("not yet implemented — Task 8")
+
+/**
+ * COMPILER-TARGETED: the task-thread driver a synthesized spawnTask
+ * component's `run()` calls, handing it the REAL task node (`this.top` — the
+ * lowering emits `m.top`; `this`/`m` alone is the m-scope AA and every field
+ * access through it would silently miss the node, which is why this parameter
+ * is node-typed) and the lifted block. Reads the captures off the node, runs
+ * [block] with them, and writes the outcome envelope.
+ *
+ * Real body lands in Task 8.
+ */
+internal fun driveSpawnTask(node: RoSGNode, block: (RoAssociativeArray?) -> Any?): Unit =
+    throw IllegalStateException("not yet implemented — Task 8")
