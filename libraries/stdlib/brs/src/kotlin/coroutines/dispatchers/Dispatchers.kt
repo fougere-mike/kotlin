@@ -5,6 +5,7 @@
 
 package kotlin.coroutines.dispatchers
 
+import kotlin.concurrent.Runnable
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -93,4 +94,30 @@ public object Dispatchers {
      * `@Suppress("BRS_IO_DISPATCHER_UNSUPPORTED")`.
      */
     public val IO: CoroutineDispatcher = IODispatcher
+
+    /**
+     * Compile-time token selecting the task-thread lift for `flowOn`. NOT a
+     * runtime dispatcher: the lift is chosen at compile time, so the token's
+     * only legal position is a literal `flowOn` argument — the FIR position
+     * law (`BRS_FLOW_ON_INVALID_DISPATCHER`) enforces both directions: a
+     * `flowOn` argument that is not literally `Dispatchers.Task`, and a
+     * `Dispatchers.Task` reference anywhere other than a `flowOn` argument
+     * (flow-program spec decisions 4/10). [CoroutineDispatcher.dispatch]
+     * throws a guided error as the runtime backstop for suppressed escapes.
+     */
+    public val Task: CoroutineDispatcher = TaskTokenDispatcher
+}
+
+/**
+ * The object behind [Dispatchers.Task]. Never dispatches: the token exists so
+ * the compiler can recognize `flowOn(Dispatchers.Task)` and lift the upstream
+ * chain onto a task thread; reaching [dispatch] at runtime means the token
+ * escaped its FIR position law (see [Dispatchers.Task]).
+ */
+internal object TaskTokenDispatcher : CoroutineDispatcher() {
+    override fun dispatch(context: CoroutineContext, block: Runnable): Unit =
+        throw IllegalStateException(
+            "Dispatchers.Task is a compile-time flowOn token, not a runtime dispatcher — " +
+                "use flowOn(Dispatchers.Task), spawnTask, or runTask<T>"
+        )
 }
