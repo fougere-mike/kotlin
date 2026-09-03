@@ -68,9 +68,9 @@ public fun <T, R> Flow<T>.flatMapConcat(transform: suspend (T) -> Flow<R>): Flow
     val upstream = this
     return flow {
         val downstream = this
-        upstream.collect { value ->
+        flowCollectDispatch(upstream, FlowCollector { value ->
             downstream.emitAll(transform(value))
-        }
+        })
     }
 }
 
@@ -154,7 +154,7 @@ public fun <T, R> Flow<T>.flatMapMerge(concurrency: Int = 16, transform: suspend
         coroutineScope {
             val scope = this
             val upstreamJob = scope.launch {
-                upstream.collect { value ->
+                flowCollectDispatch(upstream, FlowCollector { value ->
                     // transform BEFORE claiming a slot: a throwing transform
                     // must not leave a claimed slot with no inner to release
                     // it (the close accounting would wedge the drain).
@@ -168,7 +168,7 @@ public fun <T, R> Flow<T>.flatMapMerge(concurrency: Int = 16, transform: suspend
                     // Safe if the inner already finished inline: a terminal
                     // job fires the handler synchronously at registration.
                     innerJob.invokeOnCompletion { cause -> coordinator.onInnerCompleted(channel, cause) }
-                }
+                })
             }
             upstreamJob.invokeOnCompletion { cause -> coordinator.onUpstreamCompleted(channel, cause) }
             drainTo(channel, downstream)
@@ -200,7 +200,7 @@ public fun <T, R> Flow<T>.transformLatest(block: suspend FlowCollector<R>.(T) ->
             val scope = this
             val state = LatestState()
             val upstreamJob = scope.launch {
-                upstream.collect { value ->
+                flowCollectDispatch(upstream, FlowCollector { value ->
                     val previous = state.current
                     if (previous != null) {
                         previous.cancel()
@@ -209,7 +209,7 @@ public fun <T, R> Flow<T>.transformLatest(block: suspend FlowCollector<R>.(T) ->
                     state.current = scope.launch {
                         sendCollector.block(value)
                     }
-                }
+                })
                 // Upstream is done: let the last block finish naturally.
                 val last = state.current
                 if (last != null) {
@@ -245,7 +245,7 @@ public fun <T, R> Flow<T>.mapLatest(transform: suspend (T) -> R): Flow<R> =
  * last value's action runs to completion before this returns.
  */
 public suspend fun <T> Flow<T>.collectLatest(action: suspend (T) -> Unit) {
-    transformLatest<T, Unit> { value -> action(value) }.collect { }
+    flowCollectDispatch(transformLatest<T, Unit> { value -> action(value) }, FlowCollector { })
 }
 
 /** One side's update crossing a [combine] channel: which flow, what value. */

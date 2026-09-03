@@ -13,15 +13,22 @@ import kotlin.coroutines.cancellation.CancellationException
 // perf tactic, not semantics). Bodies capture the builder receiver into an
 // explicit `downstream` local rather than relying on implicit-receiver capture
 // through the nested collect lambdas.
+//
+// Every upstream collection routes through flowCollectDispatch with an explicit
+// FlowCollector SAM (the internal-collect law, Doorbells.kt header): a bare
+// `upstream.collect { }` lambda SAM-converts to the MEMBER collect (the member
+// wins overload resolution), which is fn-slot dispatch — an operator applied to
+// a shared-VM StateFlow would collect it cross-component on the disclaimed
+// SetRef fn-ref path.
 
 /** Returns a flow containing the results of applying [transform] to each upstream value. */
 public fun <T, R> Flow<T>.map(transform: suspend (T) -> R): Flow<R> {
     val upstream = this
     return flow {
         val downstream = this
-        upstream.collect { value ->
+        flowCollectDispatch(upstream, FlowCollector { value ->
             downstream.emit(transform(value))
-        }
+        })
     }
 }
 
@@ -30,9 +37,9 @@ public fun <T> Flow<T>.filter(predicate: suspend (T) -> Boolean): Flow<T> {
     val upstream = this
     return flow {
         val downstream = this
-        upstream.collect { value ->
+        flowCollectDispatch(upstream, FlowCollector { value ->
             if (predicate(value)) downstream.emit(value)
-        }
+        })
     }
 }
 
@@ -41,9 +48,9 @@ public fun <T : Any> Flow<T?>.filterNotNull(): Flow<T> {
     val upstream = this
     return flow {
         val downstream = this
-        upstream.collect { value ->
+        flowCollectDispatch(upstream, FlowCollector { value ->
             if (value != null) downstream.emit(value)
-        }
+        })
     }
 }
 
@@ -56,9 +63,9 @@ public fun <T, R> Flow<T>.transform(block: suspend FlowCollector<R>.(T) -> Unit)
     val upstream = this
     return flow {
         val downstream = this
-        upstream.collect { value ->
+        flowCollectDispatch(upstream, FlowCollector { value ->
             downstream.block(value)
-        }
+        })
     }
 }
 
@@ -70,10 +77,10 @@ public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> {
     val upstream = this
     return flow {
         val downstream = this
-        upstream.collect { value ->
+        flowCollectDispatch(upstream, FlowCollector { value ->
             action(value)
             downstream.emit(value)
-        }
+        })
     }
 }
 
@@ -148,14 +155,14 @@ public fun <T> Flow<T>.catch(action: suspend FlowCollector<T>.(Throwable) -> Uni
         var fromDownstream: Throwable? = null
         var upstreamFailure: Throwable? = null
         try {
-            upstream.collect { value ->
+            flowCollectDispatch(upstream, FlowCollector { value ->
                 try {
                     downstream.emit(value)
                 } catch (e: Throwable) {
                     fromDownstream = e
                     throw e
                 }
-            }
+            })
         } catch (e: Throwable) {
             // The CE guard MUST come first: CancellationException extends
             // IllegalStateException on this platform, so any handling ahead of
@@ -181,12 +188,12 @@ public fun <T> Flow<T>.distinctUntilChanged(): Flow<T> {
     return flow {
         val downstream = this
         var previous: Any? = DistinctNoValue
-        upstream.collect { value ->
+        flowCollectDispatch(upstream, FlowCollector { value ->
             if (previous === DistinctNoValue || previous != value) {
                 previous = value
                 downstream.emit(value)
             }
-        }
+        })
     }
 }
 
@@ -207,11 +214,11 @@ public fun <T> Flow<T>.take(count: Int): Flow<T> {
         val downstream = this
         var consumed = 0
         try {
-            upstream.collect { value ->
+            flowCollectDispatch(upstream, FlowCollector { value ->
                 consumed++
                 downstream.emit(value)
                 if (consumed >= count) throw AbortFlowException(downstream)
-            }
+            })
         } catch (e: Throwable) {
             // Throwable + manual discrimination, NOT `catch (e: AbortFlowException)`:
             // the suspend state machine emits every typed catch clause as a
@@ -235,8 +242,8 @@ public fun <T> Flow<T>.drop(count: Int): Flow<T> {
     return flow {
         val downstream = this
         var skipped = 0
-        upstream.collect { value ->
+        flowCollectDispatch(upstream, FlowCollector { value ->
             if (skipped >= count) downstream.emit(value) else skipped++
-        }
+        })
     }
 }
