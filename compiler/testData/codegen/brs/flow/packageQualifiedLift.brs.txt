@@ -1,7 +1,7 @@
-// --- File: KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1.deps.json ---
+// --- File: KotlinFlowTask_packageQualifiedLift_4e0db_1.deps.json ---
 {
   "version": 1,
-  "component": "KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1",
+  "component": "KotlinFlowTask_packageQualifiedLift_4e0db_1",
   "dependencies": [
     "AnyKt.brs",
     "ArrayListKt.brs",
@@ -72,9 +72,9 @@
 }
 
 
-// --- File: KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1.xml ---
+// --- File: KotlinFlowTask_packageQualifiedLift_4e0db_1.xml ---
 <?xml version="1.0" encoding="utf-8" ?>
-<component name="KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1" extends="Task">
+<component name="KotlinFlowTask_packageQualifiedLift_4e0db_1" extends="Task">
     <interface>
         <field id="kotlinTaskState" type="string" alwaysNotify="true" />
         <field id="kotlinTaskError" type="assocarray" />
@@ -149,23 +149,23 @@
     <script type="text/brightscript" uri="pkg:/source/packageQualifiedLiftKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
-    <script type="text/brightscript" uri="pkg:/components/KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1/KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1Kt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/KotlinFlowTask_packageQualifiedLift_4e0db_1/KotlinFlowTask_packageQualifiedLift_4e0db_1Kt.brs" />
 </component>
 
 
-// --- File: KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1Kt.brs ---
+// --- File: KotlinFlowTask_packageQualifiedLift_4e0db_1Kt.brs ---
 sub init()
     m.top.functionName = "__kotlinTaskMain"
-    m.run_k_ = KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_run_k_
+    m.run_k_ = KotlinFlowTask_packageQualifiedLift_4e0db_1_run_k_
 end sub
 
-sub KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_run_k_()
-    driveFlowTask_RoSGNode_FlowAnyN_k_(m.top, __flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_i3hc7r_k_(readCapturesFrom_RoSGNode_k_(m.top)))
+sub KotlinFlowTask_packageQualifiedLift_4e0db_1_run_k_()
+    driveFlowTask_RoSGNode_FlowAnyN_k_(m.top, __flowUpstream_packageQualifiedLift_4e0db_1_RoAssociativeArrayN_k_(readCapturesFrom_RoSGNode_k_(m.top)))
 end sub
 
 sub __kotlinTaskMain()
     try
-        KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_run_k_()
+        KotlinFlowTask_packageQualifiedLift_4e0db_1_run_k_()
         m.top.kotlinTaskState = "done"
     catch e
         errInfo = {message: "", number: 0}
@@ -186,10 +186,10 @@ sub __kotlinTaskMain()
 end sub
 
 
-// --- File: KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_2.deps.json ---
+// --- File: KotlinFlowTask_packageQualifiedLift_4e0db_2.deps.json ---
 {
   "version": 1,
-  "component": "KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_2",
+  "component": "KotlinFlowTask_packageQualifiedLift_4e0db_2",
   "dependencies": [
     "AnyKt.brs",
     "ArrayListKt.brs",
@@ -260,9 +260,9 @@ end sub
 }
 
 
-// --- File: KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_2.xml ---
+// --- File: KotlinFlowTask_packageQualifiedLift_4e0db_2.xml ---
 <?xml version="1.0" encoding="utf-8" ?>
-<component name="KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_2" extends="Task">
+<component name="KotlinFlowTask_packageQualifiedLift_4e0db_2" extends="Task">
     <interface>
         <field id="kotlinTaskState" type="string" alwaysNotify="true" />
         <field id="kotlinTaskError" type="assocarray" />
@@ -337,23 +337,23 @@ end sub
     <script type="text/brightscript" uri="pkg:/source/packageQualifiedLiftKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
-    <script type="text/brightscript" uri="pkg:/components/KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_2/KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_2Kt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/KotlinFlowTask_packageQualifiedLift_4e0db_2/KotlinFlowTask_packageQualifiedLift_4e0db_2Kt.brs" />
 </component>
 
 
-// --- File: KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_2Kt.brs ---
+// --- File: KotlinFlowTask_packageQualifiedLift_4e0db_2Kt.brs ---
 sub init()
     m.top.functionName = "__kotlinTaskMain"
-    m.run_k_ = KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_2_run_k_
+    m.run_k_ = KotlinFlowTask_packageQualifiedLift_4e0db_2_run_k_
 end sub
 
-sub KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_2_run_k_()
-    driveSpawnTask_RoSGNode_Function1RoAssociativeArrayNAnyN_k_(m.top, KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_2_run_lambda_create_k_())
+sub KotlinFlowTask_packageQualifiedLift_4e0db_2_run_k_()
+    driveSpawnTask_RoSGNode_Function1RoAssociativeArrayNAnyN_k_(m.top, KotlinFlowTask_packageQualifiedLift_4e0db_2_run_lambda_create_k_())
 end sub
 
 sub __kotlinTaskMain()
     try
-        KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_2_run_k_()
+        KotlinFlowTask_packageQualifiedLift_4e0db_2_run_k_()
         m.top.kotlinTaskState = "done"
     catch e
         errInfo = {message: "", number: 0}
@@ -373,20 +373,20 @@ sub __kotlinTaskMain()
     end try
 end sub
 
-function KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_2_run_lambda_create_k_() as Object
+function KotlinFlowTask_packageQualifiedLift_4e0db_2_run_lambda_create_k_() as Object
     this = {}
-    this.__type = "KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_2_run_lambda"
-    this.__proto = ["KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_2_run_lambda", "Function1", "Function"]
+    this.__type = "KotlinFlowTask_packageQualifiedLift_4e0db_2_run_lambda"
+    this.__proto = ["KotlinFlowTask_packageQualifiedLift_4e0db_2_run_lambda", "Function1", "Function"]
     this.__id = __kotlin_nextObjectId()
     this.equals = Any_equals_AnyN_k_
     this.hashCode = Any_hashCode_k_
     this.toString = Any_toString_k_
-    this.invoke_17uo2_k_ = KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_2_run_lambda_invoke_17uo2_k_
+    this.invoke_AnyN_k_ = KotlinFlowTask_packageQualifiedLift_4e0db_2_run_lambda_invoke_AnyN_k_
     return this
 end function
 
-function KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_2_run_lambda_invoke_17uo2_k_(caps as Dynamic) as Dynamic
-    return __spawnBlock_com_example_app_screens_details_shelfgrid_packageQualifiedLift_2_RoAssociativeArrayN_k_(caps)
+function KotlinFlowTask_packageQualifiedLift_4e0db_2_run_lambda_invoke_AnyN_k_(caps as Dynamic) as Dynamic
+    return __spawnBlock_packageQualifiedLift_4e0db_2_RoAssociativeArrayN_k_(caps)
 end function
 
 
@@ -559,12 +559,12 @@ sub PackageQualifiedLift___set_status_Str_k_(value as String)
     m.top.status = value
 end sub
 
-function __flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_i3hc7r_k_(captures as Dynamic) as Object
+function __flowUpstream_packageQualifiedLift_4e0db_1_RoAssociativeArrayN_k_(captures as Dynamic) as Object
     label = captures.lookup("label")
-    return map_rFlow_SuspendFunction1_k_(flow_SuspendFunction1FlowCollectorV_k_(__flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_slambda_create_npu7fd_k_(label, invalid)), __flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_slambda_1_create_npu7fd_k_(label, invalid))
+    return map_rFlow_SuspendFunction1_k_(flow_SuspendFunction1FlowCollectorV_k_(__flowUpstream_packageQualifiedLift_4e0db_1_slambda_create_Str_ContinuationAnyNN_k_(label, invalid)), __flowUpstream_packageQualifiedLift_4e0db_1_slambda_1_create_Str_ContinuationAnyNN_k_(label, invalid))
 end function
 
-function __spawnBlock_com_example_app_screens_details_shelfgrid_packageQualifiedLift_2_RoAssociativeArrayN_k_(captures as Dynamic) as String
+function __spawnBlock_packageQualifiedLift_4e0db_2_RoAssociativeArrayN_k_(captures as Dynamic) as String
     label = captures.lookup("label")
     return label + ":fetched"
 end function
@@ -604,7 +604,7 @@ function PackageQualifiedLift_slambda_doResume_k_() as Dynamic
                 m.__set_state(1)
                 flowCaptures_1 = CreateObject("roAssociativeArray")
                 flowCaptures_1.addReplace("label", m._label)
-                suspendResult = taskFlowLifted_Str_RoAssociativeArrayN_k_("KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1", flowCaptures_1).collect_FlowCollector_ContinuationV_k_(PackageQualifiedLift_slambda_slambda_create_PackageQualifiedLift_ContinuationAnyNN_k_(m.this_0, invalid), m)
+                suspendResult = taskFlowLifted_Str_RoAssociativeArrayN_k_("KotlinFlowTask_packageQualifiedLift_4e0db_1", flowCaptures_1).collect_FlowCollector_ContinuationV_k_(PackageQualifiedLift_slambda_slambda_create_PackageQualifiedLift_ContinuationAnyNN_k_(m.this_0, invalid), m)
 
                 if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
                     return suspendResult
@@ -614,7 +614,7 @@ function PackageQualifiedLift_slambda_doResume_k_() as Dynamic
                 flowCaptures = CreateObject("roAssociativeArray")
                 flowCaptures.addReplace("label", m._label)
                 m.__set_state(2)
-                suspendResult = spawnTaskLifted_Str_RoAssociativeArrayN_Continuation_k_("KotlinFlowTask_com_example_app_screens_details_shelfgrid_packageQualifiedLift_2", flowCaptures, m)
+                suspendResult = spawnTaskLifted_Str_RoAssociativeArrayN_Continuation_k_("KotlinFlowTask_packageQualifiedLift_4e0db_2", flowCaptures, m)
                 if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
                     return suspendResult
                 end if
@@ -659,29 +659,29 @@ function PackageQualifiedLift_slambda_slambda_emit_AnyN_ContinuationV_k_(v as St
     return invalid
 end function
 
-function __flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_slambda_create_npu7fd_k_(_label as String, resultContinuation as Dynamic) as Object
+function __flowUpstream_packageQualifiedLift_4e0db_1_slambda_create_Str_ContinuationAnyNN_k_(_label as String, resultContinuation as Dynamic) as Object
     this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
     this._super = {}
-    this._super.invoke_4u1l6c_k_ = this.invoke_4u1l6c_k_
+    this._super.invoke_AnyN_Continuation_k_ = this.invoke_AnyN_Continuation_k_
     this._super.doResume_k_ = this.doResume_k_
-    this._super.create_4u1l6c_k_ = this.create_4u1l6c_k_
-    this.__proto = ["__flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_slambda", "SuspendFunction1", this.__proto]
-    this.__type = "__flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_slambda"
-    this.invoke_4u1l6c_k_ = __flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_slambda_invoke_4u1l6c_k_
-    this.doResume_k_ = __flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_slambda_doResume_k_
-    this.create_4u1l6c_k_ = __flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_slambda_create_4u1l6c_k_
+    this._super.create_AnyN_Continuation_k_ = this.create_AnyN_Continuation_k_
+    this.__proto = ["__flowUpstream_packageQualifiedLift_4e0db_1_slambda", "SuspendFunction1", this.__proto]
+    this.__type = "__flowUpstream_packageQualifiedLift_4e0db_1_slambda"
+    this.invoke_AnyN_Continuation_k_ = __flowUpstream_packageQualifiedLift_4e0db_1_slambda_invoke_AnyN_Continuation_k_
+    this.doResume_k_ = __flowUpstream_packageQualifiedLift_4e0db_1_slambda_doResume_k_
+    this.create_AnyN_Continuation_k_ = __flowUpstream_packageQualifiedLift_4e0db_1_slambda_create_AnyN_Continuation_k_
     this._label = _label
     return this
 end function
 
-function __flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_slambda_invoke_4u1l6c_k_(_this_flow as Object, _completion as Object) as Object
-    tmp = m.create_4u1l6c_k_(_this_flow, _completion)
+function __flowUpstream_packageQualifiedLift_4e0db_1_slambda_invoke_AnyN_Continuation_k_(_this_flow as Object, _completion as Object) as Object
+    tmp = m.create_AnyN_Continuation_k_(_this_flow, _completion)
     tmp.__set_result(invalid)
     tmp.__set_exception(invalid)
     return tmp.doResume_k_()
 end function
 
-function __flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_slambda_doResume_k_() as Dynamic
+function __flowUpstream_packageQualifiedLift_4e0db_1_slambda_doResume_k_() as Dynamic
     row = invalid
     suspendResult = m.__get_result()
     while true
@@ -713,35 +713,35 @@ function __flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifi
     end while
 end function
 
-function __flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_slambda_create_4u1l6c_k_(_this_flow as Dynamic, completion as Object) as Object
-    i = __flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_slambda_create_npu7fd_k_(m._label, completion)
+function __flowUpstream_packageQualifiedLift_4e0db_1_slambda_create_AnyN_Continuation_k_(_this_flow as Dynamic, completion as Object) as Object
+    i = __flowUpstream_packageQualifiedLift_4e0db_1_slambda_create_Str_ContinuationAnyNN_k_(m._label, completion)
     i._this_flow = _this_flow
     return i
 end function
 
-function __flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_slambda_1_create_npu7fd_k_(_label as String, resultContinuation as Dynamic) as Object
+function __flowUpstream_packageQualifiedLift_4e0db_1_slambda_1_create_Str_ContinuationAnyNN_k_(_label as String, resultContinuation as Dynamic) as Object
     this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
     this._super = {}
-    this._super.invoke_4u1l6c_k_ = this.invoke_4u1l6c_k_
+    this._super.invoke_AnyN_Continuation_k_ = this.invoke_AnyN_Continuation_k_
     this._super.doResume_k_ = this.doResume_k_
-    this._super.create_4u1l6c_k_ = this.create_4u1l6c_k_
-    this.__proto = ["__flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_slambda_1", "SuspendFunction1", this.__proto]
-    this.__type = "__flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_slambda_1"
-    this.invoke_4u1l6c_k_ = __flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_slambda_1_invoke_4u1l6c_k_
-    this.doResume_k_ = __flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_slambda_1_doResume_k_
-    this.create_4u1l6c_k_ = __flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_slambda_1_create_4u1l6c_k_
+    this._super.create_AnyN_Continuation_k_ = this.create_AnyN_Continuation_k_
+    this.__proto = ["__flowUpstream_packageQualifiedLift_4e0db_1_slambda_1", "SuspendFunction1", this.__proto]
+    this.__type = "__flowUpstream_packageQualifiedLift_4e0db_1_slambda_1"
+    this.invoke_AnyN_Continuation_k_ = __flowUpstream_packageQualifiedLift_4e0db_1_slambda_1_invoke_AnyN_Continuation_k_
+    this.doResume_k_ = __flowUpstream_packageQualifiedLift_4e0db_1_slambda_1_doResume_k_
+    this.create_AnyN_Continuation_k_ = __flowUpstream_packageQualifiedLift_4e0db_1_slambda_1_create_AnyN_Continuation_k_
     this._label = _label
     return this
 end function
 
-function __flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_slambda_1_invoke_4u1l6c_k_(row as Object, _completion as Object) as Object
-    tmp = m.create_4u1l6c_k_(row, _completion)
+function __flowUpstream_packageQualifiedLift_4e0db_1_slambda_1_invoke_AnyN_Continuation_k_(row as Object, _completion as Object) as Object
+    tmp = m.create_AnyN_Continuation_k_(row, _completion)
     tmp.__set_result(invalid)
     tmp.__set_exception(invalid)
     return tmp.doResume_k_()
 end function
 
-function __flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_slambda_1_doResume_k_() as Dynamic
+function __flowUpstream_packageQualifiedLift_4e0db_1_slambda_1_doResume_k_() as Dynamic
     suspendResult = m.__get_result()
     while true
                 try
@@ -760,8 +760,8 @@ function __flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifi
     end while
 end function
 
-function __flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_slambda_1_create_4u1l6c_k_(row as Dynamic, completion as Object) as Object
-    i = __flowUpstream_com_example_app_screens_details_shelfgrid_packageQualifiedLift_1_slambda_1_create_npu7fd_k_(m._label, completion)
+function __flowUpstream_packageQualifiedLift_4e0db_1_slambda_1_create_AnyN_Continuation_k_(row as Dynamic, completion as Object) as Object
+    i = __flowUpstream_packageQualifiedLift_4e0db_1_slambda_1_create_Str_ContinuationAnyNN_k_(m._label, completion)
     i.row = row
     return i
 end function

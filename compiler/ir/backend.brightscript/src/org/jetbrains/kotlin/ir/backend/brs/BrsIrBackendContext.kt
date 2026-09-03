@@ -744,7 +744,35 @@ class BrsIrBackendContext(
 
         // Check if the resulting name would be too long (keep under 100 chars for readability)
         val fullName = "${baseName}_${fullSignature}${MANGLED_NAME_SUFFIX}"
-        return if (fullName.length > 100) {
+
+        // For a class MEMBER the length decision must NOT see the class name.
+        // A member mangle is a DISPATCH CONTRACT: calls go through the
+        // class-prefix-STRIPPED slot name, and the same slot is computed from
+        // DIFFERENT IrFunctions across an override family — the interface (or
+        // base-class) declaration names the slot at the call site, the
+        // implementation names it at the attachment site, fake overrides in
+        // between. A decision that includes the class name flips the fallback
+        // on ONE side of that family and silently breaks dispatch —
+        // device-proven (Task 9b): a lift-synthesized lambda in a
+        // package-qualified file attached invoke_4u1l6c_k_ while the flow
+        // runtime dispatched the interface mangle invoke_AnyN_Continuation_k_.
+        // Measuring the SLOT name makes the decision identical for every
+        // member of the family (the mangled signature is family-identical:
+        // generic interface overrides mangle the interface method's erased
+        // parameters — see above — and non-generic overrides share parameter
+        // types by the override contract), and the hash input (fullSignature
+        // only) was already class-independent. Top-level functions and
+        // constructors keep the full-name measurement: their emitted name IS
+        // the dispatch name and both sides compute it from the same
+        // IrFunction.
+        val parentClass = (irFunction as? IrSimpleFunction)?.parent as? IrClass
+        val measuredLength = if (parentClass != null) {
+            val classPrefix = "${getBrsName(parentClass)}_"
+            if (fullName.startsWith(classPrefix)) fullName.length - classPrefix.length else fullName.length
+        } else {
+            fullName.length
+        }
+        return if (measuredLength > 100) {
             // Use hash for very long signatures
             val hash = abs(fullSignature.hashCode()).toString(Character.MAX_RADIX)
             "${baseName}_${hash}${MANGLED_NAME_SUFFIX}"

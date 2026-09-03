@@ -64,6 +64,7 @@ import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.BrsStandardClassIds
 import org.jetbrains.kotlin.name.Name
+import kotlin.math.abs
 
 /**
  * The flowOn/spawnTask task lift (flow-program spec §5): rewrites
@@ -97,10 +98,15 @@ import org.jetbrains.kotlin.name.Name
  *
  * Naming: the component/class/file name is LETTER-FIRST
  * (underscore-leading SceneGraph subtype names are device-unpinned);
- * `<san>` is the sanitized file FQ-NAME (package + file name —
- * path-collision-proof, unlike the per-file ScopeRunBlock ordinal alone) and
+ * `<san>` is the sanitized file BASENAME plus, for package-qualified files, a
+ * short stable hash of the PACKAGE (`Base36(abs(pkg.hashCode()))` — the same
+ * package-collision guarantee the old full sanitized FQ gave, since two
+ * same-named files in the same package collided under both schemes), and
  * `<n>` a 1-based per-file ordinal SHARED by both lift kinds, so component
- * names stay unique within the file.
+ * names stay unique within the file. The san is deliberately SHORT: the old
+ * full-FQ san pushed ordinary members of the synthesized classes past the
+ * mangle length cliff at realistic reverse-DNS package depths (Task 9b
+ * deliverable 1 — the packageQualifiedLift golden pins the short shape).
  *
  * Per-site synthesis is the design's answer to the ScopeHandle binding-table
  * subset trap: each component's include closure is self-contained — the
@@ -203,11 +209,16 @@ class BrsFlowTaskLiftLowering(
     override fun lower(irFile: IrFile) {
         val targets = resolveTargets() ?: return
 
-        val fileFq = irFile.packageFqName.asString().let { pkg ->
-            val fileName = irFile.name.removeSuffix(".kt")
-            if (pkg.isEmpty()) fileName else "$pkg.$fileName"
+        // Short collision-proof san: file BASENAME + a stable hash of the
+        // package (see the class KDoc's Naming section). String.hashCode is
+        // JVM-spec-fixed, so the name is deterministic across builds/machines.
+        val pkg = irFile.packageFqName.asString()
+        val baseSan = irFile.name.removeSuffix(".kt").replace(Regex("[^A-Za-z0-9_]"), "_")
+        val san = if (pkg.isEmpty()) {
+            baseSan
+        } else {
+            "${baseSan}_${abs(pkg.hashCode()).toString(Character.MAX_RADIX)}"
         }
-        val san = fileFq.replace(Regex("[^A-Za-z0-9_]"), "_")
 
         val liftedFunctions = mutableListOf<IrSimpleFunction>()
         var ordinal = 0
