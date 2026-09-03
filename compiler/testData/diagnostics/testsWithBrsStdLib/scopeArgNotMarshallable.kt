@@ -20,11 +20,11 @@ object DataArgReq : <!BRS_SCOPE_ARG_NOT_MARSHALLABLE!>ScopeRequest2<Int, ArgBox,
 // Case 3: both args bad — one ERROR per offending position
 object BothBadReq : <!BRS_SCOPE_ARG_NOT_MARSHALLABLE!><!BRS_SCOPE_ARG_NOT_MARSHALLABLE!>ScopeRequest2<List<Int>, ArgBox, Int><!><!>("BothBadReq")
 
-// Case 4: bad arg AND bad result on one declaration — the ARG error only. The checker
-// reports both, but the K2 diagnostics collector drops a WARNING on a source element
-// that already carries an ERROR (device-checked with the fat JAR, 2026-08-14) — fixing
-// the argument then surfaces the BRS_SCOPE_RESULT_NOT_DATA warning for R.
-object ArgAndResultReq : <!BRS_SCOPE_ARG_NOT_MARSHALLABLE!>ScopeRequest1<ArgBox, ArgBox><!>("ArgAndResultReq")
+// Case 4: bad arg AND bad result on one declaration — BOTH fire. (Historical note:
+// this used to pin the ARG error only, blamed on a per-element WARNING drop; the real
+// mechanism was GroupingMessageCollector dropping ALL plain warnings once a compile
+// has errors — the harness now passes reportAllWarnings, so the warning is visible.)
+object ArgAndResultReq : <!BRS_SCOPE_ARG_NOT_MARSHALLABLE!><!BRS_SCOPE_RESULT_NOT_DATA!>ScopeRequest1<ArgBox, ArgBox><!><!>("ArgAndResultReq")
 
 // Case 5: data-shaped requests — CLEAN
 object EchoReq : ScopeRequest1<String, String>("EchoReq")

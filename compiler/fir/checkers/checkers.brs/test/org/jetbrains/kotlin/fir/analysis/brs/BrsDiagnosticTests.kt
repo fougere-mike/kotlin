@@ -1260,4 +1260,44 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testFlowTaskDispatcher() {
         runTest("flowTaskDispatcher.kt")
     }
+
+    // The lifted-region family (flow-program spec §5/§7): the task lift moves the
+    // flowOn(Dispatchers.Task) upstream chain / the spawnTask block onto a Roku
+    // Task thread as a per-call-site synthesized component.
+    // BRS_FLOW_UPSTREAM_NOT_LITERAL (error) — only code literally visible at the
+    // call site can be lifted: the flowOn receiver must be a literal flow chain
+    // (whitelisted builder/operator hops, literal lambdas, flow/flowOf/asFlow
+    // bottoms), the spawnTask argument a literal lambda.
+    // BRS_TASK_CAPTURE_UNMARSHALLABLE (error) — region captures cross by copy;
+    // class instances (incl. implicit `this` from an instance-property read),
+    // function values, and other unmarshallables are rejected; the message names
+    // the hoist-to-local fix. BRS_TASK_CAPTURE_MUTATION_LOST (warning) — writes
+    // to captured vars land on the task-side copy.
+    // BRS_TASK_EMIT_NOT_MARSHALLABLE (error) — emit/emitAll argument types in the
+    // region and the spawnTask result type must be marshallable (the envelope hop
+    // copies). BRS_TASK_SUSPEND_IN_LIFTED (error) — the lifted world is
+    // synchronous; only emit/emitAll suspend (the task thread has no pump).
+    // Disclosed holes stay disclosed (Dynamic-erased values, suspend fn
+    // references into opaque callees, generic T emissions) — the fixtures pin
+    // them as CLEAN.
+
+    @Test
+    fun testFlowLiftLiteral() {
+        runTest("flowLiftLiteral.kt")
+    }
+
+    @Test
+    fun testFlowLiftCaptures() {
+        runTest("flowLiftCaptures.kt")
+    }
+
+    @Test
+    fun testFlowLiftEmitTypes() {
+        runTest("flowLiftEmitTypes.kt")
+    }
+
+    @Test
+    fun testFlowLiftSuspend() {
+        runTest("flowLiftSuspend.kt")
+    }
 }

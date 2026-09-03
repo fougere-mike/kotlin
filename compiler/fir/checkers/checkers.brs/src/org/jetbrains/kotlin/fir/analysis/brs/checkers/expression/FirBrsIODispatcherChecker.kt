@@ -13,9 +13,8 @@ import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirPropertyAccessEx
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors
 import org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression
 import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
+import org.jetbrains.kotlin.name.BrsStandardClassIds
 import org.jetbrains.kotlin.name.CallableId
-import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
 /**
@@ -37,9 +36,9 @@ import org.jetbrains.kotlin.name.Name
  */
 object FirBrsIODispatcherChecker : FirPropertyAccessExpressionChecker(MppCheckerKind.Common) {
 
-    private val DISPATCHERS_PACKAGE = FqName("kotlin.coroutines.dispatchers")
-    private val DISPATCHERS_CLASS = ClassId(DISPATCHERS_PACKAGE, Name.identifier("Dispatchers"))
-    private val IO_PROPERTY_CALLABLE = CallableId(DISPATCHERS_CLASS, Name.identifier("IO"))
+    // The Dispatchers ClassId is the shared BrsStandardClassIds.Callables.dispatchersClassId
+    // (also consumed by FirBrsTaskDispatcherChecker) — keep both checkers keyed there.
+    private val IO_PROPERTY_CALLABLE = CallableId(BrsStandardClassIds.Callables.dispatchersClassId, Name.identifier("IO"))
 
     context(context: CheckerContext, reporter: DiagnosticReporter)
     override fun check(expression: FirPropertyAccessExpression) {

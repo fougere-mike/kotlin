@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_BRSNAM
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_CREATE_COMPONENT_INVALID_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_CREATE_OBJECT_INVALID_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_FLOW_ON_INVALID_DISPATCHER
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_FLOW_UPSTREAM_NOT_LITERAL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_INTRINSIC_LITERAL_REQUIRED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_INTRINSIC_USER_DEFINED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_IO_DISPATCHER_UNSUPPORTED
@@ -38,7 +39,11 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SHARED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_SHARED_THROUGH_COPYING_CHANNEL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_STATIC_INVALID_TARGET
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_STATIC_OVERLOAD
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_TASK_CAPTURE_MUTATION_LOST
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_TASK_CAPTURE_UNMARSHALLABLE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_TASK_EMIT_NOT_MARSHALLABLE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_TASK_STATE_NOT_FIELD
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_TASK_SUSPEND_IN_LIFTED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_TRY_FINALLY_UNSUPPORTED
 
 @Suppress("unused")
@@ -109,6 +114,46 @@ object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
                 "flowOn argument: the task lift is a compile-time lowering, so a runtime-chosen dispatcher " +
                 "cannot select it, and the token is not a runtime dispatcher. Write flowOn(Dispatchers.Task) " +
                 "directly at the call site; for one-shot background blocks use spawnTask, for typed tasks runTask<T>.",
+        )
+        map.put(
+            BRS_FLOW_UPSTREAM_NOT_LITERAL,
+            // No literal braces in any parameterized message: MessageFormat treats a
+            // bare brace as a parse error that poisons the whole renderer map.
+            "{0}: the task lift is a compile-time lowering — only code literally visible " +
+                "at the call site can be lifted onto the task thread. {1}",
+            CommonRenderers.STRING, CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_TASK_CAPTURE_UNMARSHALLABLE,
+            "Captured ''{0}'' of type ''{1}'' cannot cross the task-thread boundary: lifted-region " +
+                "captures cross by copy as plain data, and this type''s behavior does not survive the " +
+                "copy (marshallable: primitives, String, Dynamic, and external interfaces like " +
+                "RoArray/RoAssociativeArray/RoSGNode). Hoist the value to a local first: val x = <expr> " +
+                "outside the region — the marshallable result of the read crosses instead of the instance.",
+            CommonRenderers.STRING, CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_TASK_EMIT_NOT_MARSHALLABLE,
+            "{0} type ''{1}'' is outside the marshallable set (primitives, String, Dynamic, and external " +
+                "interfaces like RoArray/RoAssociativeArray/RoSGNode): values cross the task boundary by " +
+                "copy as plain data — behavior does not survive. Emit or return plain data " +
+                "(roAssociativeArrays, primitives) task-side and map to domain types on the render side.",
+            CommonRenderers.STRING, CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_TASK_SUSPEND_IN_LIFTED,
+            "Suspend call ''{0}'' inside the lifted task region: the task thread has no coroutine pump, " +
+                "so a suspension can never resume there — the lifted upstream world is synchronous by " +
+                "design, and only emit and emitAll suspend (blocking calls are the point of being there). " +
+                "Move suspending work downstream of the flowOn call, onto the render side.",
+            CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_TASK_CAPTURE_MUTATION_LOST,
+            "Assignment to captured variable ''{0}'' inside the lifted task region: captures cross by " +
+                "copy; this write lands on the task-side copy and never reaches the caller — emit the " +
+                "value downstream or return it from spawnTask instead.",
+            CommonRenderers.STRING,
         )
         map.put(
             BRS_STATIC_INVALID_TARGET,

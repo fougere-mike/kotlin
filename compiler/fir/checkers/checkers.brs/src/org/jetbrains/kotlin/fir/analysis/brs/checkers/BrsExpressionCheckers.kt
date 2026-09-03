@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.analysis.brs.checkers
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsAddFieldTypeChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsCreateComponentTypeChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsCreateObjectTypeChecker
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsFlowLiftChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsFlowOnDispatcherArgumentChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsIODispatcherChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsIOWorkerCaptureChecker
@@ -33,6 +34,7 @@ object BrsExpressionCheckers : ExpressionCheckers() {
             FirBrsScopeCaptureChecker,
             FirBrsSharedCopyChannelChecker,
             FirBrsFlowOnDispatcherArgumentChecker,
+            FirBrsFlowLiftChecker,
         )
 
     override val propertyAccessExpressionCheckers: Set<FirPropertyAccessExpressionChecker>

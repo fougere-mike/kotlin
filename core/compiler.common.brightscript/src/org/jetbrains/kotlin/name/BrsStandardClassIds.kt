@@ -17,6 +17,7 @@ object BrsStandardClassIds {
     val BASE_BRS_COROUTINES_PACKAGE = BASE_BRS_PACKAGE.child(Name.identifier("coroutines"))
     val BASE_COROUTINES_TASK_PACKAGE = BASE_KOTLIN_PACKAGE.child(Name.identifier("coroutines")).child(Name.identifier("task"))
     val BASE_COROUTINES_FLOW_PACKAGE = BASE_KOTLIN_PACKAGE.child(Name.identifier("coroutines")).child(Name.identifier("flow"))
+    val BASE_COROUTINES_DISPATCHERS_PACKAGE = BASE_KOTLIN_PACKAGE.child(Name.identifier("coroutines")).child(Name.identifier("dispatchers"))
 
     /**
      * Built-in BrightScript object types.
@@ -439,6 +440,20 @@ object BrsStandardClassIds {
     }
 
     /**
+     * Flow (kotlin.coroutines.flow, kotlin-flow-brs klib) — the cold-flow surface
+     * and the task lift's boundary types.
+     */
+    object Flow {
+        /** kotlin.coroutines.flow.Flow — the cold stream interface. */
+        @JvmField
+        val flowInterface = ClassId(BASE_COROUTINES_FLOW_PACKAGE, Name.identifier("Flow"))
+
+        /** kotlin.coroutines.flow.FlowCollector — the consumer side (`emit` lives here). */
+        @JvmField
+        val flowCollectorInterface = ClassId(BASE_COROUTINES_FLOW_PACKAGE, Name.identifier("FlowCollector"))
+    }
+
+    /**
      * BrightScript-specific callable IDs.
      */
     object Callables {
@@ -602,6 +617,95 @@ object BrsStandardClassIds {
          */
         @JvmField
         val flowOn = "flowOn".callableId(BASE_COROUTINES_FLOW_PACKAGE)
+
+        /**
+         * spawnTask(block) — the one-shot task-lift entry point
+         * (kotlin.coroutines.task, kotlin-flow-brs klib). Same per-call-site
+         * lift as [flowOn]: the argument must be a literal lambda
+         * (BRS_FLOW_UPSTREAM_NOT_LITERAL, spawnTask wording), and the
+         * lifted-region rules (captures, result marshallability) apply to it.
+         */
+        @JvmField
+        val spawnTask = "spawnTask".callableId(BASE_COROUTINES_TASK_PACKAGE)
+
+        /**
+         * kotlin.coroutines.dispatchers.Dispatchers — the holder object for
+         * dispatcher tokens. Shared by FirBrsIODispatcherChecker (the
+         * Dispatchers.IO blanket rule) and FirBrsTaskDispatcherChecker (the
+         * Dispatchers.Task token rules), which build their IO/Task property
+         * CallableIds from this one id — keep both checkers keyed HERE
+         * (cross-referencing comments at both sites; mirrored-predicate
+         * convention).
+         */
+        @JvmField
+        val dispatchersClassId = ClassId(BASE_COROUTINES_DISPATCHERS_PACKAGE, Name.identifier("Dispatchers"))
+
+        /**
+         * The flow BUILDERS — the legal bottoms of a lifted chain. `flow {}`'s
+         * lambda is part of the lifted region; `flowOf`'s values and `asFlow`'s
+         * iterable receiver are DATA expressions (evaluated task-side; their
+         * free values are captures), never chain hops.
+         */
+        @JvmField
+        val flowBuilderCallables: Set<CallableId> = setOf(
+            "flow".callableId(BASE_COROUTINES_FLOW_PACKAGE),
+            "flowOf".callableId(BASE_COROUTINES_FLOW_PACKAGE),
+            "asFlow".callableId(BASE_COROUTINES_FLOW_PACKAGE),
+        )
+
+        /**
+         * combine(f1, f2, transform) — the one receiverless operator hop: the
+         * chain continues through its Flow-typed ARGUMENTS instead of a
+         * receiver (FirBrsFlowLiftChecker recurses into them).
+         */
+        @JvmField
+        val flowCombine = "combine".callableId(BASE_COROUTINES_FLOW_PACKAGE)
+
+        /**
+         * The flow OPERATORS that may appear as hops of a lifted chain — the
+         * Flow-returning operator surface of the kotlin-flow-brs klib (cold
+         * core + concurrent families). Terminals (collect, first, toList,
+         * launchIn, collectLatest) consume a flow and can never be upstream
+         * hops.
+         */
+        @JvmField
+        val flowOperatorCallables: Set<CallableId> = setOf(
+            "map", "filter", "filterNotNull", "transform", "onEach", "onStart",
+            "onCompletion", "catch", "distinctUntilChanged", "take", "drop",
+            "flatMapConcat", "flatMapMerge", "transformLatest", "flatMapLatest",
+            "mapLatest", "conflate",
+        ).map { it.callableId(BASE_COROUTINES_FLOW_PACKAGE) }.toSet() + flowCombine
+
+        /**
+         * THE lifted-chain whitelist (builders + operators): the hops
+         * FirBrsFlowLiftChecker accepts when it validates a
+         * `flowOn(Dispatchers.Task)` receiver as a literal flow chain.
+         *
+         * KEEP-IN-SYNC LAW: the task-lift LOWERING (Task 7, flow-program spec
+         * §5) must consume THIS SAME list when it decides what the lifted
+         * upstream chain may contain — a hop the checker accepts but the
+         * lowering cannot lift (or vice versa) is a silent contract break.
+         * Any addition (a new operator) lands in this one set, never in a
+         * lowering-private copy.
+         */
+        @JvmField
+        val flowLiftChainCallables: Set<CallableId> = flowBuilderCallables + flowOperatorCallables
+
+        /** FlowCollector.emit — one of the two suspend calls a lifted region admits. */
+        @JvmField
+        val flowCollectorEmit = CallableId(Flow.flowCollectorInterface, Name.identifier("emit"))
+
+        /** kotlin.coroutines.flow.emitAll — the other admitted suspend call. */
+        @JvmField
+        val flowEmitAll = "emitAll".callableId(BASE_COROUTINES_FLOW_PACKAGE)
+
+        /**
+         * The suspend calls legal INSIDE a lifted region (spec §5: the lifted
+         * upstream world is synchronous; only emissions suspend). Everything
+         * else suspend is BRS_TASK_SUSPEND_IN_LIFTED.
+         */
+        @JvmField
+        val flowLiftAllowedSuspendCallables: Set<CallableId> = setOf(flowCollectorEmit, flowEmitAll)
 
         // ==================== Coroutine Callables ====================
 

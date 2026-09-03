@@ -34,6 +34,14 @@ fun aliased(): Flow<Int> {
     return flowOf(1).flowOn(<!BRS_FLOW_ON_INVALID_DISPATCHER!>d<!>)
 }
 
+// flowOn(wrap(Dispatchers.Task)): deeper nesting is not a literal flowOn
+// argument — the position half fires on the token (its direct enclosing call is
+// wrap, not flowOn), and the argument half fires on the wrap(...) argument.
+fun wrap(d: CoroutineDispatcher): CoroutineDispatcher = d
+
+fun wrapped(): Flow<Int> =
+    flowOf(1).flowOn(<!BRS_FLOW_ON_INVALID_DISPATCHER!>wrap(<!BRS_FLOW_ON_INVALID_DISPATCHER!>Dispatchers.Task<!>)<!>)
+
 // launch(Dispatchers.Task): not a flowOn argument — the token is not a runtime
 // dispatcher and cannot be launched on.
 fun launched(scope: CoroutineScope) {

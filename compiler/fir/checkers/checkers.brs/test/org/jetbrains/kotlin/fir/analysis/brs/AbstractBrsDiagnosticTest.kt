@@ -153,6 +153,11 @@ abstract class AbstractBrsDiagnosticTest {
                 // can resolve kotlin.coroutines.flow
                 val libs = listOf(STDLIB_KLIB, FLOW_KLIB).filter { it.exists() }
                 if (libs.isNotEmpty()) libraries = libs.joinToString(File.pathSeparator) { it.absolutePath }
+                // Without this, GroupingMessageCollector drops plain WARNINGs on flush
+                // whenever the compile has errors — a fixture mixing ERROR and WARNING
+                // markers (flowLiftCaptures.kt) would silently lose its warnings and the
+                // only workaround would be warning-only fixture files.
+                reportAllWarnings = true
             }
 
             val reported = mutableListOf<Reported>()
@@ -268,6 +273,29 @@ abstract class AbstractBrsDiagnosticTest {
                 "is a husk — data survives, every method is stripped, and it is not the shared instance. Shared " +
                 "instances cross by reference only — pass the stash node and acquire with sharedFrom<T>() on the " +
                 "other side.",
+        "BRS_FLOW_UPSTREAM_NOT_LITERAL" to
+            "{0}: the task lift is a compile-time lowering — only code literally visible " +
+                "at the call site can be lifted onto the task thread. {1}",
+        "BRS_TASK_CAPTURE_UNMARSHALLABLE" to
+            "Captured '{0}' of type '{1}' cannot cross the task-thread boundary: lifted-region " +
+                "captures cross by copy as plain data, and this type's behavior does not survive the " +
+                "copy (marshallable: primitives, String, Dynamic, and external interfaces like " +
+                "RoArray/RoAssociativeArray/RoSGNode). Hoist the value to a local first: val x = <expr> " +
+                "outside the region — the marshallable result of the read crosses instead of the instance.",
+        "BRS_TASK_EMIT_NOT_MARSHALLABLE" to
+            "{0} type '{1}' is outside the marshallable set (primitives, String, Dynamic, and external " +
+                "interfaces like RoArray/RoAssociativeArray/RoSGNode): values cross the task boundary by " +
+                "copy as plain data — behavior does not survive. Emit or return plain data " +
+                "(roAssociativeArrays, primitives) task-side and map to domain types on the render side.",
+        "BRS_TASK_SUSPEND_IN_LIFTED" to
+            "Suspend call '{0}' inside the lifted task region: the task thread has no coroutine pump, " +
+                "so a suspension can never resume there — the lifted upstream world is synchronous by " +
+                "design, and only emit and emitAll suspend (blocking calls are the point of being there). " +
+                "Move suspending work downstream of the flowOn call, onto the render side.",
+        "BRS_TASK_CAPTURE_MUTATION_LOST" to
+            "Assignment to captured variable '{0}' inside the lifted task region: captures cross by " +
+                "copy; this write lands on the task-side copy and never reaches the caller — emit the " +
+                "value downstream or return it from spawnTask instead.",
         "BRS_TASK_STATE_NOT_FIELD" to
             "Property '{0}' in task component '{1}' compiles to plain m-state: run() executes against a task-thread copy, " +
                 "and writes from run() are silently lost. Annotate it with an @SG*Field annotation (or @BrsField), " +

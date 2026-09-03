@@ -76,6 +76,11 @@ object FirBrsErrors : KtDiagnosticsContainer() {
 
     // Flow task lift
     val BRS_FLOW_ON_INVALID_DISPATCHER: KtDiagnosticFactory0 = KtDiagnosticFactory0("BRS_FLOW_ON_INVALID_DISPATCHER", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
+    val BRS_FLOW_UPSTREAM_NOT_LITERAL: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_FLOW_UPSTREAM_NOT_LITERAL", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
+    val BRS_TASK_CAPTURE_UNMARSHALLABLE: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_TASK_CAPTURE_UNMARSHALLABLE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
+    val BRS_TASK_EMIT_NOT_MARSHALLABLE: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_TASK_EMIT_NOT_MARSHALLABLE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
+    val BRS_TASK_SUSPEND_IN_LIFTED: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("BRS_TASK_SUSPEND_IN_LIFTED", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
+    val BRS_TASK_CAPTURE_MUTATION_LOST: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("BRS_TASK_CAPTURE_MUTATION_LOST", WARNING, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
 
     // Typed task components
     val BRS_TASK_STATE_NOT_FIELD: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_TASK_STATE_NOT_FIELD", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())

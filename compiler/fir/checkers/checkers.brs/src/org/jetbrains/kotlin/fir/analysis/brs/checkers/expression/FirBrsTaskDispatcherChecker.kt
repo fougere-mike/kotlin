@@ -19,8 +19,6 @@ import org.jetbrains.kotlin.fir.expressions.unwrapArgument
 import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
 import org.jetbrains.kotlin.name.BrsStandardClassIds
 import org.jetbrains.kotlin.name.CallableId
-import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
 /**
@@ -46,9 +44,9 @@ import org.jetbrains.kotlin.name.Name
  * both of which throw guided errors naming this rule's law.
  */
 private object BrsTaskToken {
-    private val DISPATCHERS_PACKAGE = FqName("kotlin.coroutines.dispatchers")
-    private val DISPATCHERS_CLASS = ClassId(DISPATCHERS_PACKAGE, Name.identifier("Dispatchers"))
-    val TASK_PROPERTY_CALLABLE = CallableId(DISPATCHERS_CLASS, Name.identifier("Task"))
+    // The Dispatchers ClassId is the shared BrsStandardClassIds.Callables.dispatchersClassId
+    // (also consumed by FirBrsIODispatcherChecker) — keep both checkers keyed there.
+    val TASK_PROPERTY_CALLABLE = CallableId(BrsStandardClassIds.Callables.dispatchersClassId, Name.identifier("Task"))
 
     fun isLiteralTaskAccess(expression: FirExpression): Boolean {
         if (expression !is FirPropertyAccessExpression) return false

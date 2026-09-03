@@ -173,6 +173,28 @@ object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
         val BRS_FLOW_ON_INVALID_DISPATCHER by error<KtElement> {
             isSuppressible = true
         }
+        val BRS_FLOW_UPSTREAM_NOT_LITERAL by error<KtElement> {
+            parameter<String>("finding")
+            parameter<String>("fix")
+            isSuppressible = true
+        }
+        val BRS_TASK_CAPTURE_UNMARSHALLABLE by error<KtElement> {
+            parameter<String>("captureName")
+            parameter<String>("captureType")
+            isSuppressible = true
+        }
+        val BRS_TASK_EMIT_NOT_MARSHALLABLE by error<KtElement> {
+            parameter<String>("role")
+            parameter<String>("valueType")
+            isSuppressible = true
+        }
+        val BRS_TASK_SUSPEND_IN_LIFTED by error<KtElement> {
+            parameter<String>("functionName")
+            isSuppressible = true
+        }
+        val BRS_TASK_CAPTURE_MUTATION_LOST by warning<KtElement> {
+            parameter<String>("captureName")
+        }
     }
 
     val TYPED_TASKS by object : DiagnosticGroup("Typed task components") {
