@@ -409,6 +409,35 @@ class BrsSymbols(
         findOptionalFunction(BrsStandardClassIds.BASE_COROUTINES_FLOW_PACKAGE, "readCapturesFrom")
     }
 
+    // ==================== StateFlow Access Symbols ====================
+    // Consumed by BrsFlowAccessLowering (flow-program spec §6 implementation
+    // note), which OrNull-bails when any are missing.
+
+    /**
+     * `kotlin.coroutines.flow.stateFlowGetValue` — the rewrite target for
+     * `StateFlow.value` getter calls.
+     */
+    val stateFlowGetValueOrNull: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(BrsStandardClassIds.BASE_COROUTINES_FLOW_PACKAGE, "stateFlowGetValue")
+    }
+
+    /**
+     * `kotlin.coroutines.flow.stateFlowSetValue` — the rewrite target for
+     * `MutableStateFlow.value` setter calls (the emit protocol).
+     */
+    val stateFlowSetValueOrNull: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(BrsStandardClassIds.BASE_COROUTINES_FLOW_PACKAGE, "stateFlowSetValue")
+    }
+
+    /**
+     * `kotlin.coroutines.flow.flowCollectDispatch` — the rewrite target for
+     * member `Flow.collect(collector)` calls (StateFlow → doorbell protocol,
+     * cold flows → the member path).
+     */
+    val flowCollectDispatchOrNull: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(BrsStandardClassIds.BASE_COROUTINES_FLOW_PACKAGE, "flowCollectDispatch")
+    }
+
     // ==================== BrightScript-specific Symbols ====================
 
     /**

@@ -149,7 +149,7 @@ function ScreenVm_create_k_() as Object
 end function
 
 sub ScreenVm_push_Str_k_(next_ as String)
-    m.__get__screenState().__set_value(next_)
+    stateFlowSetValue_MutableStateFlow_AnyN_k_(m.__get__screenState(), next_)
 end sub
 
 function ScreenVm___get__screenState_k_() as Object
@@ -195,7 +195,7 @@ sub init()
     m.__get_rendered_k_ = StateFlowAccess___get_rendered_k_
     m.__set_rendered_Str_k_ = StateFlowAccess___set_rendered_Str_k_
     m.__get_vm_k_ = StateFlowAccess___get_vm_k_
-    m.top.rendered = m.vm.__get_screenState().__get_value()
+    m.top.rendered = stateFlowGetValue_StateFlow_k_(m.vm.__get_screenState())
     launch_rComponentBase_CoroutineContext_SuspendFunction1CoroutineScopeV_k_(m, invalid, StateFlowAccess_slambda_create_StateFlowAccess_ContinuationAnyNN_k_(m, invalid))
     launch_rComponentBase_CoroutineContext_SuspendFunction1CoroutineScopeV_k_(m, invalid, StateFlowAccess_slambda_1_create_StateFlowAccess_ContinuationAnyNN_k_(m, invalid))
     m.vm.push_Str_k_("ready")
@@ -247,7 +247,7 @@ function StateFlowAccess_slambda_doResume_k_() as Dynamic
             if __kotlin_identityEquals(tmp, 0) then
                 m.__set_exceptionState(2)
                 m.__set_state(1)
-                suspendResult = m.this_0.__get_vm_k_().__get_screenState().collect_FlowCollector_ContinuationV_k_(StateFlowAccess_slambda_slambda_create_StateFlowAccess_ContinuationAnyNN_k_(m.this_0, invalid), m)
+                suspendResult = flowCollectDispatch_Flow_FlowCollector_ContinuationV_k_(m.this_0.__get_vm_k_().__get_screenState(), StateFlowAccess_slambda_slambda_create_StateFlowAccess_ContinuationAnyNN_k_(m.this_0, invalid), m)
                 if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
                     return suspendResult
                 end if
@@ -320,7 +320,7 @@ function StateFlowAccess_slambda_1_doResume_k_() as Dynamic
             if __kotlin_identityEquals(tmp, 0) then
                 m.__set_exceptionState(2)
                 m.__set_state(1)
-                suspendResult = m.this_0.__get_vm_k_().__get_screenState().collect_FlowCollector_ContinuationV_k_(TitleCollector_create_k_(), m)
+                suspendResult = flowCollectDispatch_Flow_FlowCollector_ContinuationV_k_(m.this_0.__get_vm_k_().__get_screenState(), TitleCollector_create_k_(), m)
                 if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
                     return suspendResult
                 end if

@@ -462,6 +462,22 @@ object BrsStandardClassIds {
         /** kotlin.coroutines.flow.FlowCollector — the consumer side (`emit` lives here). */
         @JvmField
         val flowCollectorInterface = ClassId(BASE_COROUTINES_FLOW_PACKAGE, Name.identifier("FlowCollector"))
+
+        /**
+         * kotlin.coroutines.flow.StateFlow — the hot tier's read surface
+         * (flow-program spec §6). BrsFlowAccessLowering rewrites `value`
+         * accessor calls resolving here (or overriding this) to the
+         * stateFlowGetValue static.
+         */
+        @JvmField
+        val stateFlowInterface = ClassId(BASE_COROUTINES_FLOW_PACKAGE, Name.identifier("StateFlow"))
+
+        /**
+         * kotlin.coroutines.flow.MutableStateFlow — the hot tier's write
+         * surface; its `value` setter calls are rewritten to stateFlowSetValue.
+         */
+        @JvmField
+        val mutableStateFlowInterface = ClassId(BASE_COROUTINES_FLOW_PACKAGE, Name.identifier("MutableStateFlow"))
     }
 
     /**
@@ -718,6 +734,17 @@ object BrsStandardClassIds {
          */
         @JvmField
         val spawnTaskLifted = "spawnTaskLifted".callableId(BASE_COROUTINES_TASK_PACKAGE)
+
+        /**
+         * Flow.collect(collector) — the MEMBER. BrsFlowAccessLowering rewrites
+         * interface-typed member collect calls (incl. fake overrides — user
+         * `collect { }` lambdas SAM-convert and resolve HERE, the member wins
+         * overload resolution) to the flowCollectDispatch static, which routes
+         * StateFlows to the doorbell protocol and cold flows back to the
+         * member path.
+         */
+        @JvmField
+        val flowCollect = CallableId(Flow.flowInterface, Name.identifier("collect"))
 
         /** FlowCollector.emit — one of the two suspend calls a lifted region admits. */
         @JvmField

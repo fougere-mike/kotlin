@@ -610,7 +610,7 @@ function PackageQualifiedLift_slambda_doResume_k_() as Dynamic
                 m.__set_state(1)
                 flowCaptures_1 = CreateObject("roAssociativeArray")
                 flowCaptures_1.addReplace("label", m._label)
-                suspendResult = taskFlowLifted_Str_RoAssociativeArrayN_k_("KotlinFlowTask_packageQualifiedLift_4e0db_1", flowCaptures_1).collect_FlowCollector_ContinuationV_k_(PackageQualifiedLift_slambda_slambda_create_PackageQualifiedLift_ContinuationAnyNN_k_(m.this_0, invalid), m)
+                suspendResult = flowCollectDispatch_Flow_FlowCollector_ContinuationV_k_(taskFlowLifted_Str_RoAssociativeArrayN_k_("KotlinFlowTask_packageQualifiedLift_4e0db_1", flowCaptures_1), PackageQualifiedLift_slambda_slambda_create_PackageQualifiedLift_ContinuationAnyNN_k_(m.this_0, invalid), m)
 
                 if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
                     return suspendResult

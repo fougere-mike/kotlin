@@ -196,7 +196,7 @@ function InComponentFileLift_slambda_doResume_k_() as Dynamic
             if __kotlin_identityEquals(tmp, 0) then
                 m.__set_exceptionState(2)
                 m.__set_state(1)
-                suspendResult = taskFlowLifted_Str_RoAssociativeArrayN_k_("KotlinFlowTask_InComponentFileLift_1", invalid).collect_FlowCollector_ContinuationV_k_(InComponentFileLift_slambda_slambda_create_InComponentFileLift_ContinuationAnyNN_k_(m.this_0, invalid), m)
+                suspendResult = flowCollectDispatch_Flow_FlowCollector_ContinuationV_k_(taskFlowLifted_Str_RoAssociativeArrayN_k_("KotlinFlowTask_InComponentFileLift_1", invalid), InComponentFileLift_slambda_slambda_create_InComponentFileLift_ContinuationAnyNN_k_(m.this_0, invalid), m)
                 if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
                     return suspendResult
                 end if

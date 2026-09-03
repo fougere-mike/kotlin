@@ -179,6 +179,23 @@ object BrsLoweringPhases {
         // shapes those passes rewrite.
         phases += BrsFlowTaskLiftLowering(context)
 
+        // Phase 0.059: StateFlow/Flow access rewrite
+        // Routes StateFlow.value accessor calls (get AND set) and member
+        // Flow.collect(collector) calls to the flow klib's static access layer
+        // (stateFlowGetValue/stateFlowSetValue/flowCollectDispatch) — interface
+        // slot dispatch records no include-closure dependency and would cross a
+        // shared VM's SetRef graph on the disclaimed fn-ref path (spec §6
+        // implementation note). User modules only (OrNull-bail; the flow klib's
+        // own package is exempt — its deliberate member calls must survive).
+        // Runs AFTER the task lift so lifted call sites are already rewritten;
+        // argument expressions (SAM-converted collector lambdas) move unchanged,
+        // and the collect rewrite is one suspend call replacing another (the
+        // 0.05x convention: before UpgradeCallableReferences and coroutine
+        // lowering). The lift's synthetic files join module.files between
+        // phases and ARE visited by this pass — sound: their bodies contain
+        // none of the rewritten shapes.
+        phases += BrsFlowAccessLowering(context)
+
         // Phase 0.06: IO Worker Detection (Warning-only for now)
         // Detects withContext(Dispatchers.IO) calls and emits warnings about the
         // lambda serialization limitation. Full automatic extraction is planned

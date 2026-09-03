@@ -45,7 +45,7 @@ function main_slambda_doResume_k_() as Dynamic
             if __kotlin_identityEquals(tmp, 0) then
                 m.__set_exceptionState(2)
                 m.__set_state(1)
-                suspendResult = flow_SuspendFunction1FlowCollectorV_k_(main_slambda_slambda_create_ContinuationAnyNN_k_(invalid)).collect_FlowCollector_ContinuationV_k_(main_slambda_slambda_1_create_ContinuationAnyNN_k_(invalid), m)
+                suspendResult = flowCollectDispatch_Flow_FlowCollector_ContinuationV_k_(flow_SuspendFunction1FlowCollectorV_k_(main_slambda_slambda_create_ContinuationAnyNN_k_(invalid)), main_slambda_slambda_1_create_ContinuationAnyNN_k_(invalid), m)
                 if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
                     return suspendResult
                 end if
