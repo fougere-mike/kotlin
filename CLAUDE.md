@@ -232,7 +232,9 @@ To add a new native BrightScript type (e.g., `RoList`):
 ## Typed Tasks (`runTask`) - THE Task-Boundary Mechanism
 
 Work that must leave the render thread goes through a **typed task component**.
-This is the only sanctioned way to cross the render/task thread boundary.
+This is the sanctioned way to cross the render/task thread boundary —
+`flowOn(Dispatchers.Task)` and `spawnTask {}` (see "Flow & StateFlow") are
+compiler-synthesized typed tasks over the same mechanism.
 
 **1. Declare the task** - subclass `TaskComponent`, annotate typed input/output
 fields, put the task-thread work in `run()`:
@@ -286,10 +288,20 @@ Key facts:
   the BrightScript error object: `message`, `number`, `backtrace`).
 - v1 constraints: must be called from render-thread component context; a fresh
   unparented node per invocation (no pooling); one-shot; no timeout yet. The
-  await IS cancellation-aware: cancelling the awaiting coroutine wakes it
-  promptly (CancellationException at the suspend point, registry entry dropped,
-  observer disarmed), but the task-thread `run()` still executes to completion
-  on the abandoned node (stopping it is M3 backlog).
+  await IS cancellation-aware, and cancellation now STOPS the task thread
+  (the flow-program STOP rider, 2026-09-03 — the M3 "task-thread work is not
+  stopped" item is CLOSED): caller cancel wakes the await promptly
+  (CancellationException at the suspend point, registry entry dropped, observer
+  disarmed) and writes `control="STOP"` on the abandoned node — a PROMPT hard
+  kill (Probe B, spikes/flow-spike/FINDINGS.md: sub-second in every probed
+  shape — sleep loop, mid-blocking-call, blocked wait(), compute loop;
+  abandoned-node safe; repeated STOP idempotent; blocked sync roUrlTransfer is
+  the one unpinned shape). Task-side code after the killed point — `finally`
+  included — NEVER runs on the hard kill; see the dispose contract in "Flow &
+  StateFlow". Scope note (recorded deviation (c)): plain `runTask` cancellation
+  is the hard STOP alone — no cooperative cancel field is written on this path
+  (cooperative checkpoints for plain typed tasks are recorded backlog);
+  `flowOn`/`spawnTask` get the two-layer sequence.
 - FIR diagnostics guard the pattern: `BRS_TASK_STATE_NOT_FIELD` (task state
   must be @SG interface fields - plain properties are lost across the node
   clone) and `BRS_CREATE_COMPONENT_INVALID_TYPE` (+ an "[IR] " backstop).
@@ -303,12 +315,14 @@ Key facts:
 `withContext(Dispatchers.IO)`, `TaskPool`, and the `IOWorkerRegistry`/ioWorker
 pipeline are **QUARANTINED - do not use**. That pipeline is unverified on
 device, has zero E2E coverage, and its last consumer (ShelfView) was migrated
-to `runTask` in Phase 2. It is slated to be re-layered as sugar that
-synthesizes a typed task per block (M3 backlog); until then any new
+to `runTask` in Phase 2. `spawnTask {}` (see "Flow & StateFlow") IS the
+recorded re-layering — it supersedes the quarantined pipeline; any new
 `withContext(Dispatchers.IO)` use is a review-blocking regression.
 
-The quarantine is now COMPILER-ENFORCED: any `Dispatchers.IO` reference in
-user code is a FIR ERROR (`BRS_IO_DISPATCHER_UNSUPPORTED` — "use runTask<T>").
+The quarantine is COMPILER-ENFORCED: any `Dispatchers.IO` reference in user
+code is a FIR ERROR (`BRS_IO_DISPATCHER_UNSUPPORTED` — "Use
+flowOn(Dispatchers.Task) for background streams, spawnTask for one-shot
+blocks, or runTask<T> for typed tasks").
 Deliberate opt-ins into the quarantined pipeline must
 `@Suppress("BRS_IO_DISPATCHER_UNSUPPORTED")`, which is exactly the review
 signal the quarantine wants.
@@ -396,8 +410,9 @@ with `IllegalStateException`. Failures cross as DATA:
 `ScopeRequestException(message, number, backtrace)` — exception TYPES never
 cross a component boundary; domain failures needing typed handling belong in
 result values. Caller cancellation sends a best-effort cancel envelope and the
-owner cancels the request job (`runTask`'s task-thread non-stop law is
-unchanged underneath). A request from the owner to ITSELF dispatches locally
+owner cancels the request job (a `runTask` the request was awaiting now STOPs
+its task thread underneath — the flow-program STOP rider). A request from the
+owner to ITSELF dispatches locally
 (same-component fast path) with wire-identical semantics — including by-copy
 args (`deepCopyAA`).
 
@@ -558,6 +573,10 @@ hooks, any depth); the only structural rule is concrete descendants are final
   `BrsSharedFromCallLowering` — because klib inline functions never inline at
   user call sites); explicit `key` covers two-instances-of-one-type. Keys
   starting `__` are RESERVED — guided ISE at `shareOn`.
+  Informational: the FIRST publish on a node prints a benign platform
+  console-warning pair ("Warning occurred while calling canGetRef" / "Tried
+  to set nonexistent field") from shareOn's canGetRef probe — pre-existing,
+  harmless, expected on every first publish (don't chase it in boot logs).
 - **Live by construction:** `sharedFrom` returns the GetRef reference; no API
   path returns a copy. Acquire type-checks the entry (proto walk): a
   wrong-type entry is a guided ISE naming it ("key collision; use explicit
@@ -833,10 +852,13 @@ job (`delay`, `yield`, `join`, `await`, `awaitAll`, scope builders, `runTask`/
 (CancellationException at the suspend point) — including a coroutine parked in
 `runTask`, whose cleanup drops the registry entry and disarms the state
 observer so the task's late terminal write finds nothing to do (E2E Suite 4
-"runTask await wakes promptly on caller cancellation"); cancellation cascades
-through the hierarchy. NOT promised: task-thread work is not stopped — the
-cancelled task's `run()` keeps executing to completion on the abandoned node
-(stopping it is M3 backlog).
+"runTask await wakes promptly on caller cancellation and STOPs the task");
+cancellation cascades through the hierarchy. Task-thread work IS stopped
+(flow-program STOP rider, 2026-09-03): a cancelled `runTask` writes
+`control="STOP"` after the protocol teardown — a prompt hard kill (Probe B);
+`flowOn`/`spawnTask` additionally write the cooperative `flowCancel` field
+first. Task-side `finally` effectively never runs on the cancel path (the
+hard STOP wins the race) — see the Flow dispose contract.
 
 **Jobs are same-component-only.** GetGlobalAA — and therefore the queue, the
 DelayTracker, and the pump — is per-component-instance on the render thread.
@@ -877,6 +899,202 @@ suites (runBlocking regime) + E2E Suite 7 CoroutineUtilities (component
 pumping regime, incl. `awaitAll` over concurrent `runTask`s). The flagship
 demo (`../roku-test-app/components/ShelfView/ShelfView.kt`) fetches ip + shelf
 concurrently via `async`/`awaitAll`.
+
+## Flow & StateFlow (kotlin-flow-brs)
+
+Landed 2026-09-03 (the Flow program). kotlinx-style flows for the BRS target —
+ONE import swap from Android: `kotlinx.coroutines.flow.*` →
+`kotlin.coroutines.flow.*`; names and signatures mirror kotlinx for everything
+shipped. Design of record:
+`docs/superpowers/plans/2026-09-02-flow-program-design.md`; spike truth in
+`spikes/flow-spike/FINDINGS.md` (Probe A global-node doorbell, Probe B task
+STOP). Device coverage: the stdlib flow suites (runBlocking regime) + E2E
+Suite 10 (Flow — 10a flowOn/spawnTask, 10b StateFlow) + the TestScreen
+flagship.
+
+### The klib home: `kotlin-flow-brs` (a second klib, NOT stdlib)
+
+Flow ships as its own klib (package `kotlin.coroutines.flow` via
+`-Xallow-kotlin-package`), compiled WITHOUT `-Xstdlib-compilation` — the whole
+point (spec decision 10): stdlib compilation generates NO suspend state
+machines, so kotlinx-style operator internals would miscompile SILENTLY inside
+the stdlib; as a separate klib they compile as USER-mode code with real state
+machines (kotlin-test-brs second-klib precedent). Sources:
+`libraries/flow/brs/src`; prebuilt klib + source-hash freshness check:
+`libraries/flow/brs-prebuilt/` (verifyKlib fails the build on stale klib).
+The stdlib itself gained only the `Dispatchers.Task` token and small public
+ambient-node accessors.
+
+**Commit prefixes:** `flow:` (library source), `flow-prebuilt:` (regenerated
+klib + hash). EVERY flow source change pairs with a `flow-prebuilt:` regen
+commit — `./rebuild.sh` regenerates (step 3) and compile-gates (step 9)
+automatically; commit both.
+
+### The three tiers
+
+1. **Cold core** — `Flow<T>`/`FlowCollector<T>`, `flow {}`, `flowOf`,
+   `asFlow`; operators `map`/`mapLatest`/`filter`/`filterNotNull`/`transform`/
+   `transformLatest`/`onEach`/`onStart`/`onCompletion`/`catch`/
+   `distinctUntilChanged`/`take`/`drop`/`conflate`/`combine`/`flatMapConcat`/
+   `flatMapMerge`/`flatMapLatest`; terminals `collect`/`collectLatest`/
+   `first`/`firstOrNull`/`toList`/`launchIn`. A cold flow runs entirely inside
+   the collector's coroutine, in ANY context (component `launch {}`,
+   `runBlocking`, `runPumping`); the body re-executes per collect. Exception
+   transparency (`catch {}` sees UPSTREAM failures only); `onCompletion
+   { cause }` fires on completion (null), failure, and cancellation (the CE).
+2. **The task lift** — `flowOn(Dispatchers.Task)` + `spawnTask {}`. The
+   compiler lifts the LITERAL upstream chain (or spawnTask block) into a named
+   function and synthesizes a PER-CALL-SITE TaskComponent
+   (`BrsFlowTaskLiftLowering`): typed @SG capture fields, one output field
+   carrying kind-tagged envelope AAs (emit/complete/error — the ScopeWire
+   vocabulary), a shim collector whose `emit` writes envelopes. Collector side
+   is runTask-shaped (fresh unparented node, arm observer BEFORE
+   `control=RUN`); downstream of `flowOn` is ordinary cold collection.
+   Per-site synthesis keeps include closures correct by construction — no
+   binding table, no ScopeHandle-style mid-transform subset hole.
+3. **Hot tier** — `MutableStateFlow(initial)` / `StateFlow` / `asStateFlow()`
+   / `stateIn(scope, initialValue)`. The VALUE lives on the flow object as a
+   plain property (live cross-component when the flow rides a SharedService
+   VM); the DOORBELL is a version int on the GLOBAL node.
+
+### The law lists (task lift; FIR-guarded where statically visible)
+
+- **Literal upstream**: the `flowOn` receiver must be a literal flow chain at
+  the call site — a `Flow<T>` parameter cannot be lifted (its code isn't
+  visible). `Dispatchers.Task` is a compile-time token: literal, and legal
+  ONLY in `flowOn` argument position.
+- **Captures marshallable-only, BY COPY** — class instances banned INCLUDING
+  implicit `this`: hoist instance-property reads to locals first
+  (`val url = baseUrl`); the error message says exactly that. The hoist keeps
+  evaluation TIME visible (cold bodies are lazily evaluated).
+- **Emissions marshallable-only** + the map-downstream idiom: emit parsed AAs
+  task-side, `.map { toDomain(it) }` render-side. Same checker covers
+  `spawnTask`'s return type.
+- **Sync-only lifted region**: no suspend calls except `emit`/`emitAll` —
+  blocking I/O (sync roUrlTransfer) is the point of being there.
+  `ensureTaskActive()` = cooperative cancellation checkpoint inside long
+  non-emitting compute (no-op off-task, so shared helpers call it
+  unconditionally).
+- **Escaped-suspension backstop**: a suspension that escapes FIR (suppressed
+  or through a disclosed hole) can never resume — task threads have no pump —
+  so the driver surfaces a guided error naming `BRS_TASK_SUSPEND_IN_LIFTED`
+  at the collector instead of hanging.
+- **Exceptions cross as DATA**: an upstream throw is rethrown as
+  `TaskException` at the collector (`catch {}` sees it); original exception
+  TYPES never cross a thread boundary (runTask precedent).
+- **Render-context laws**: `flowOn` collection, `spawnTask`, StateFlow emit
+  and collect all require render-thread component context (guided ISE).
+  `value` GET is a plain property read and works anywhere; construction works
+  anywhere.
+- **Cold flows NEVER cross a component boundary** (their lambdas strip on
+  every ordinary channel); only StateFlow crosses, statically routed (below).
+
+### StateFlow: the static access layer + the doorbell protocol
+
+**Why a static access layer:** interface-receiver member calls are fn-slot
+dispatch on this backend — they record no include-closure dependency, and on a
+shared-VM-held flow the slot fn-ref would ride the disclaimed SetRef path.
+`BrsFlowAccessLowering` (phase 0.059) rewrites `StateFlow`/`MutableStateFlow`
+`.value` access and `collect` calls to static flow-klib functions;
+`StateFlowImpl` is a plain data holder — no cross-component fn slot ever
+fires. (Discovery of record, Task 10: user `collect {}` resolves to the
+MEMBER — member beats extension — so the member rewrite is the dominant path.)
+
+**Doorbell protocol:** one runtime-addField int `__kotlinFlow_<uuid>` on the
+GLOBAL node per flow instance (`alwaysNotify=true`, lazily bound), observed
+via `observeFieldScoped` — each observer fires in the COLLECTOR's own context
+(Probe A). Emit (`value = x`, non-suspending): structural-equality gate (skip
+if `== current`) → store on the flow object → ring (increment the version).
+Collect: register in the per-component doorbell registry (ComponentMailbox
+pattern, refcounted) → deliver the CURRENT value immediately (late joiners —
+kotlinx contract) → park; each ring reads the live value, dedups by `==`.
+Conflation is correct by construction (a slow collector wakes to whatever is
+newest). `collect` on a StateFlow never completes normally — it ends only by
+cancellation (which runs `onCompletion`/`finally`). Collector-component death
+WITHOUT cancellation: scoped observers auto-detach, no ghost deliveries
+(Probe A4, Suite 10b teardown test). NOTE: doorbell fields ACCUMULATE on the
+global node over an app session — one int per flow INSTANCE, SceneGraph has no
+removeField (name-reuse pool is recorded backlog).
+
+**`stateIn(scope, initialValue)` — eager-only v1** (no SharingStarted modes):
+launches the bridge collector in `scope` immediately; Jobs are
+same-component-only, so pass the OWNING component's scope
+(`componentScope()`, the ScopeHandle-injection idiom). The bridge dies with
+the screen; the StateFlow stays readable afterwards (last value frozen).
+
+### THE DISPOSE CONTRACT (device truth, Task 9)
+
+- **Render side: GUARANTEED.** `onCompletion`/`finally` in the collector run
+  on completion, failure, AND cancellation.
+- **Task side: `finally` EFFECTIVELY NEVER runs on cancel.** The cancel
+  sequence (disarm observer → drop queued envelopes → `flowCancel=true` →
+  `control="STOP"`) writes the cooperative field and the hard STOP
+  back-to-back, and the hard STOP wins the race — trailing code after the
+  killed point, `finally` included, does not run (Probe B8; Suite 10a
+  ensureTaskActiveStops pins the beat-freeze). `ensureTaskActive()`'s value is
+  the EARLY EXIT itself — stop wasting the task thread — not a cleanup
+  guarantee. The platform refcount-releases the dead thread's objects, so
+  native handles don't leak; user cleanup code is what's skipped. STOP
+  promptness is pinned in every probed shape except blocked sync roUrlTransfer
+  (B5 inconclusive — recorded spike bait). Plain `runTask` cancellation is the
+  hard STOP alone (no cooperative field on that path — see the runTask
+  section).
+
+### kotlinx divergences (documented, deliberate)
+
+- **No backpressure across the task hop**: the producer never suspends; the
+  render-side queue is unbounded (kotlinx buffers 64 and suspends).
+  `conflate()` downstream is the state-shaped answer.
+- **`TaskException` typing**: upstream exception types never cross the hop.
+- **Single-context interleaving**: children interleave only at suspension
+  points — `flatMapMerge` over non-suspending inners degenerates to concat
+  order (comparable to kotlinx on one confined dispatcher).
+- **Eager-only `stateIn`** (no `WhileSubscribed`/`Lazily`).
+- **Supervisor-rooted `runBlocking`/`runPumping`/`componentScope`** (the
+  pre-existing divergence — see "Coroutine Utilities").
+
+### The FIR family (fixture-pinned in the checkers.brs suite)
+
+| Diagnostic | Severity | Fires on |
+|---|---|---|
+| `BRS_FLOW_UPSTREAM_NOT_LITERAL` | ERROR | `flowOn` receiver isn't a literal flow chain at the call site |
+| `BRS_FLOW_ON_INVALID_DISPATCHER` | ERROR | `flowOn` argument isn't literal `Dispatchers.Task`; also fires REVERSED — `Dispatchers.Task` anywhere other than a `flowOn` argument position |
+| `BRS_TASK_CAPTURE_UNMARSHALLABLE` | ERROR | lifted region (flowOn upstream / spawnTask block) captures a class instance (incl. implicit `this`), function value, or other unmarshallable — message names the hoist-to-local fix |
+| `BRS_TASK_EMIT_NOT_MARSHALLABLE` | ERROR | emission type upstream of `flowOn`, or `spawnTask` return type, outside the marshallable set |
+| `BRS_TASK_SUSPEND_IN_LIFTED` | ERROR | suspend call other than `emit`/`emitAll` in the lifted region |
+| `BRS_TASK_CAPTURE_MUTATION_LOST` | WARNING | lifted region assigns a captured `var` (copies — the write never reaches the caller) |
+
+Plus the updated `BRS_IO_DISPATCHER_UNSUPPORTED` message (quarantine section).
+Marshallability reuses the shared ScopeHandle oracle, which REJECTS `Any`
+(stricter than the spec's original disclosed-holes line — Task-6 ruling;
+cast/hoist to a concrete marshallable type, or `@Suppress`). Remaining
+disclosed holes: unresolvable suspend function REFERENCES passed to upstream
+operators; generic `T`-typed emissions. Single-module closed world for lifted
+regions (ScopeHandle/SharedService precedent; multi-module is recorded
+backlog).
+
+### Key files
+
+| File | Purpose |
+|------|---------|
+| `libraries/flow/brs/src/kotlin/coroutines/flow/Flow.kt` + `FlowBuilders.kt` | `Flow`/`FlowCollector`/`emitAll`; `flow {}`, `flowOf`, `asFlow` |
+| `.../flow/Operators.kt`, `Terminals.kt`, `Errors.kt` | sequential operators, terminals, catch/onCompletion |
+| `.../flow/ConcurrentOperators.kt` + `FlowChannel.kt` | flatMap family/combine/conflate over the internal same-context queue primitive |
+| `.../flow/TaskFlow.kt` | flowOn collector half: driveFlowTask, envelope queue, the cancel sequence, escaped-suspension backstop |
+| `.../task/SpawnTask.kt` | `spawnTask` runtime + `ensureTaskActive` |
+| `.../flow/StateFlow.kt`, `Doorbells.kt`, `StateIn.kt` | hot tier: value holder, global-node doorbell machinery, stateIn bridge |
+| `compiler/ir/backend.brightscript/src/.../lower/BrsFlowTaskLiftLowering.kt` | the lift: per-site TaskComponent synthesis |
+| `compiler/ir/backend.brightscript/src/.../lower/BrsFlowAccessLowering.kt` | StateFlow static access rewrite (phase 0.059) |
+| `compiler/fir/checkers/checkers.brs/src/.../FirBrsFlowLiftCheckers.kt` | the FIR family above |
+| `libraries/flow/brs-prebuilt/` | prebuilt klib + source-hash check |
+
+Goldens live in `compiler/testData/codegen/brs/flow/` (lift shapes, operator
+chain, StateFlow access, in-component-file + package-qualified lifts).
+Canonical examples: the TestScreen flagship
+(`../roku-test-app/components/TestScreen/TestScreen.kt` + `TestScreenVM.kt` +
+`TestScreenChildLabel.kt` — StateFlow VM, flowOn repository flow,
+cross-component child collector) and the Suite 10 fixtures
+(`../roku-test-app/components/fixtures/Flow*.kt`).
 
 ## Cross-component channel semantics (scope-handle spike, 2026-08-12)
 
@@ -1017,6 +1235,16 @@ dot-assign, proven by Suite 4). The real observer trap is ARMING ORDER: an
 observer attached after a write never sees it — arm before triggering
 (TaskRunner.kt:250-256 arms the state observer before `control=RUN`;
 `roundTrip`/`awaitField` in DeviceTestLoop.kt arm before writing).
+
+**NODE-typed field observers RE-FIRE (device finding, 2026-09-03, flagship
+boot):** a node-typed `@SGNodeField`'s `@BrsOnChange` observer fires AGAIN on
+later scene-graph mutation — ONE parent `setField("screenRef", top)` produced
+FOUR handler fires as subsequent graph writes landed (the string/int rows
+above are unaffected; the truth table pins only those). Any node-field
+@BrsOnChange handler must therefore be IDEMPOTENT — the one-shot-guard idiom
+in `../roku-test-app/components/TestScreen/TestScreenChildLabel.kt` is the
+pattern (without it the flagship launched four duplicate collectors). A proper
+Suite 6 probe row for node-typed fields is a recorded backlog candidate.
 
 ## Component Include Closure (deps.json)
 
@@ -1180,10 +1408,11 @@ This is a manual step — `./rebuild.sh` does not invoke the generator. Follow t
 ## Quick Reference
 
 **rebuild.sh now compile-checks `kotlin-test-brs` whenever the stdlib or compiler
-changes** (step 8), and `kotlin-flow-brs` likewise (step 9). This catches FIR-level regressions in `kotlin.test` that golden
-file tests and the diagnostic suite don't exercise. If step 8 or 9 fails, the new diagnostic
-or checker change is firing on real `kotlin.test` source — fix at the declaration site
-with `@Suppress("BRS_<NAME>")` (mirroring Job.Key, ContinuationInterceptor.Key, and
+changes** (step 8), and `kotlin-flow-brs` likewise (step 9). This catches FIR-level
+regressions that golden file tests and the diagnostic suite don't exercise. If step 8
+fails, the new diagnostic or checker change is firing on real `kotlin.test` source; if
+step 9 fails, on real FLOW source (`libraries/flow/brs/src`) — fix at the declaration
+site with `@Suppress("BRS_<NAME>")` (mirroring Job.Key, ContinuationInterceptor.Key, and
 the kotlin.test Test/test() suppression sites) or rework the checker.
 
 | What Changed | Run This |
@@ -1324,7 +1553,7 @@ window. Direct `./gradlew rokuTest` BYPASSES that guard.
 the stdlib runner: replayed events from a previous run are discarded).
 Results land in `build/test-results/roku/` as JSON + JUnit XML.
 
-**The suites (9 suites, 86 active tests + 3 red-guarded `xtest` placeholders):**
+**The suites (10 suites, 104 active tests + 3 red-guarded `xtest` placeholders):**
 
 | Suite | File | Exercises |
 |-------|------|-----------|
@@ -1332,11 +1561,12 @@ Results land in `build/test-results/roku/` as JSON + JUnit XML.
 | 1 ComponentObserver | `tests/ComponentObserverTests.kt` | @SG field writes, @BrsOnChange, rapid sets |
 | 2 RenderCoroutines | `tests/RenderCoroutineTests.kt` | coroutines on the render thread, captured vars |
 | 3 TaskBoundary | `tests/TaskBoundaryTests.kt` | task-thread round trips via EchoTask fixtures |
-| 4 TypedTaskAcceptance | `tests/TypedTaskTests.kt` | `runTask` success/error/overlap/round-trip/derived/cancellation |
+| 4 TypedTaskAcceptance | `tests/TypedTaskTests.kt` | `runTask` success/error/overlap/round-trip/derived/cancellation (await wake + task-thread STOP, the flow-program rider) |
 | 6 FieldSemantics | `tests/FieldSemanticsTests.kt` | dot-assign vs setField truth table + lambda self-write routing (case 8) + lambda scope-property reads (case 9) |
 | 7 CoroutineUtilities | `tests/CoroutineUtilityTests.kt` | awaitAll/coroutineScope/supervisor/withTimeout in the component pumping regime + awaitAll over concurrent `runTask`s |
 | 8 ScopeHandle | `tests/ScopeHandleTests.kt` | cross-component scope borrowing: both surfaces, close/watchdog, cancellation both directions, dual-backend + mixed pairs, the flagship child→owner→task-thread chain |
 | 9 SharedService | `tests/SharedServiceTests.kt` | reference-shared classes over SetRef: shared-identity mutation chains, guided ISEs, explicit keys, republish + isLive generations, scene stash, static dispatch cross-component (final/base-hook/template/super/suspend), the fn-slot CANARY |
+| 10 Flow | `tests/FlowTests.kt` | the flow family on device: 10a flowOn/spawnTask (lift round trips, mid-stream cancel, flatMapLatest switch STOPs the task, spawnTask success/error/cancel, ensureTaskActive) + 10b StateFlow (same- and cross-component collect, late-join current value, equality dedup, burst conflation, collector-death teardown, onCompletion-on-cancel, stateIn bridge) |
 
 **The main-thread driver:** `tests/TestMain.kt` is a `main()` that creates the
 SceneGraph screen, installs the screen's message port as the shared `TestPort`,
@@ -1380,7 +1610,7 @@ Predicates must return false rather than throw. Probe nodes are created via
 | E2E test suites + driver | `roku-test-app/src/brsTest/kotlin/tests/` (TestMain.kt is the main-thread driver) |
 | E2E fixture components | `roku-test-app/components/fixtures/` |
 
-### Current Gate Numbers (as of Task 10 StateFlow + BrsFlowAccessLowering, 2026-09-03)
+### Current Gate Numbers (as of the Flow program close, 2026-09-03)
 
 These are the whole-branch green gates; a drop in any of them is a regression.
 (Counting note: the gate is EXECUTED tests. A raw `grep -c "@Test"` on
@@ -1392,7 +1622,7 @@ BrsGoldenFileTests.kt reads one high — it counts the commented-out
 | Golden file tests | 99 |
 | FIR diagnostic suite (checkers.brs) | 232 |
 | Stdlib device suite | 610 tests / 62 suites |
-| rokuTest E2E | 86 active tests / 9 suites (+3 red-guarded xtests) |
+| rokuTest E2E | 104 active tests / 10 suites (+3 red-guarded xtests) |
 | `validateComponentIncludes` + `validateTestComponentIncludes` | strict mode, 0 findings (no allowlist) |
 
 ### Test Output

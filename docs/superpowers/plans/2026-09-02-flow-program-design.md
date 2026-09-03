@@ -1,7 +1,7 @@
 # Flow Program: Cold Flows, the Task Lift, and StateFlow VM→View — Design
 
 **Date:** 2026-09-02
-**Status:** Approved design, pending pre-plan spikes (§8) + implementation plan
+**Status:** Implemented (2026-09-03)
 **Branch:** `feature/brightscript-backend-2.2.20`
 **Implements:** the "StateFlow / VM→View propagation" next program recorded in
 `docs/superpowers/plans/2026-08-14-shared-service-design.md` §11 and
@@ -368,9 +368,12 @@ cross-component.
 Plus: `BRS_IO_DISPATCHER_UNSUPPORTED` message update (decision 3).
 
 Under-approximation by design (BrsScopeMarshallability precedent), disclosed
-holes: values pre-erased to `Any`/`Dynamic`; suspend function REFERENCES passed
-to upstream operators where the callee isn't resolvable; generic `T`-typed
-emissions. Runtime consequence of an escaped suspend-in-lifted: the task side has
+holes: suspend function REFERENCES passed to upstream operators where the
+callee isn't resolvable; generic `T`-typed emissions. (Amended at close,
+Task-6 ruling: `Any`-typed values are FLAGGED, not a hole — the shared
+BrsScopeMarshallability oracle rejects `Any`, and consistency with the
+ScopeHandle rules beats this section's original letter; `@Suppress` or a
+cast/hoist is the escape.) Runtime consequence of an escaped suspend-in-lifted: the task side has
 no pump — a real park cannot resume; the shim raises a guided error naming the
 law rather than hanging (implementation detail for the plan).
 
