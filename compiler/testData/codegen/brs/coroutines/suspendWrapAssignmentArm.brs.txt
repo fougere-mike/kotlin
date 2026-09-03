@@ -65,7 +65,7 @@ function catchArmAssignment_slambda_doResume_k_() as Dynamic
                 m.__set_exceptionState(3)
                 if __kotlin_isInstanceOf(m.__get_exception(), "IllegalStateException") then
                     e = m.__get_exception()
-                    m.__try_tmp00 = (m._result.value = "caught")
+                    m._result.value = "caught"
 
                     m.__set_state(4)
                     continue while
@@ -136,7 +136,7 @@ function tryArmAssignment_slambda_doResume_k_() as Dynamic
             else if __kotlin_identityEquals(tmp, 1) then
                 ARGUMENT = suspendResult
                 ARGUMENT_1 = ("r:" + __kotlin_numToStr_I_k_(ARGUMENT))
-                m.__try_tmp10 = (m._result.value = ARGUMENT_1)
+                m._result.value = ARGUMENT_1
                 m.__set_exceptionState(3)
                 m.__set_state(4)
                 continue while

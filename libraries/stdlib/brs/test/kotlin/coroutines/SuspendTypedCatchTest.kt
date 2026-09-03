@@ -23,6 +23,10 @@ private suspend fun raiseAfterYield(kind: String): Int {
     return 7
 }
 
+private fun isIse(kind: String): Boolean = kind == "ise"
+
+private fun plainSeven(): Int = 7
+
 fun TestRunner.suspendTypedCatchTests() {
     suite("Suspend typed catch") {
 
@@ -108,16 +112,18 @@ fun TestRunner.suspendTypedCatchTests() {
             }
         }
 
-        // RED-GUARDED (pre-existing defect, ledgered in the task-3b report,
-        // NOT the typed-catch dispatch fix): when a generic builder like
-        // runBlocking infers the block's T as Any, the catch arm's static type
-        // is non-Unit while its terminal statement is an ASSIGNMENT — the
-        // TRY_RESULT wrap then makes the assignment the RHS of the temp set,
-        // which BrightScript renders as a COMPARISON: the write is silently
-        // lost (m.__try_tmp = (m._result.value = "caught")). Same wrap-guard
-        // family as the Unit-arm fix in BrsStateMachineBuilder.visitTry;
-        // visitWhen's branch wrapping has the same latent hole.
-        xtest("typed catch body writes a captured outer var", "state-machine TRY_RESULT wrap swallows a terminal assignment (silent write loss)") {
+        // The wrap write-loss family (task 3c; was red-guarded by 3b): when a
+        // generic builder like runBlocking infers the block's T as Any, an
+        // arm/branch whose terminal statement is an ASSIGNMENT gets a non-Unit
+        // static type from the LUB coercion, and the result-temp wrap used to
+        // make the assignment the RHS of the temp set — BrightScript renders
+        // that as a COMPARISON, silently losing the write
+        // (m.__try_tmp = (m._result.value = "caught")). Fixed by the
+        // terminal-statement wrap guard (armTerminalProducesValue in
+        // BrsTryExpressionLowering.kt, shared with BrsWhenExpressionLowering,
+        // mirrored in BrsStateMachineBuilder.producesValue): such arms run
+        // unwrapped and the temp reads invalid — the BRS mapping of Unit.
+        test("typed catch body writes a captured outer var") {
             var result = "none"
             runBlocking {
                 try {
@@ -129,6 +135,52 @@ fun TestRunner.suspendTypedCatchTests() {
             assertEquals("caught", result)
         }
 
+        // The try-arm side of the same hole: terminal assignment in the TRY
+        // arm, the catch arm carrying the genuine value.
+        test("try arm terminal assignment still writes") {
+            var result = "none"
+            runBlocking {
+                try {
+                    result = "r:" + raiseAfterYield("none")
+                } catch (e: IllegalStateException) {
+                    -1
+                }
+            }
+            assertEquals("r:7", result)
+        }
+
+        // The visitWhen sibling: a suspendable value-typed when (T = Any from
+        // the LUB of an Int branch and a Unit branch) whose taken branch ends
+        // in an assignment — the WHEN_RESULT wrap used to swallow it.
+        test("value-typed when assignment branch still writes") {
+            var result = "none"
+            runBlocking {
+                if (isIse("iae")) {
+                    raiseAfterYield("none")
+                } else {
+                    result = "else"
+                }
+            }
+            assertEquals("else", result)
+        }
+
+        // A suspension INSIDE the typed catch clause body (task 3b review
+        // rider): the clause body suspends after the is-dispatch; the catch
+        // parameter must survive into the resume state (e.message read after
+        // yield), and the else-rethrow edges stay on the catch state.
+        test("typed catch body itself suspends before writing") {
+            runBlocking {
+                var result = "none"
+                try {
+                    raiseAfterYield("ise")
+                } catch (e: IllegalStateException) {
+                    yield()
+                    result = "caught:" + (e.message ?: "")
+                }
+                assertEquals("caught:ise-boom", result)
+            }
+        }
+
         test("typed catch in value-position try") {
             runBlocking {
                 val r = try {
@@ -138,6 +190,33 @@ fun TestRunner.suspendTypedCatchTests() {
                 }
                 assertEquals(0, r + 1)
             }
+        }
+    }
+
+    // The result-temp wrap (BrsTryExpressionLowering / BrsWhenExpressionLowering)
+    // is shared by suspend and non-suspend code — the write-loss family above is
+    // NOT coroutine-specific. These pin the plain non-suspend side: an explicit
+    // Any ascription is enough to coerce a terminal-assignment arm to non-Unit.
+    suite("Result-temp wrap guard (non-suspend)") {
+
+        test("non-suspend when: assignment branch still writes") {
+            var result = "none"
+            val x: Any = if (isIse("iae")) 5 else {
+                result = "else"
+            }
+            assertEquals("else", result)
+            assertEquals(false, x is Int)
+        }
+
+        test("non-suspend try: assignment arm still writes") {
+            var result = "none"
+            val x: Any = try {
+                result = "t:" + plainSeven()
+            } catch (e: IllegalStateException) {
+                -1
+            }
+            assertEquals("t:7", result)
+            assertEquals(false, x is Int)
         }
     }
 }

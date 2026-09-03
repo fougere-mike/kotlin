@@ -347,11 +347,16 @@ class BrsWhenExpressionLowering(
                                 origin = null
                             )
                         } else {
-                            // Replace last statement with assignment of its value to temp var
+                            // Replace last statement with assignment of its value to temp
+                            // var — except a terminal ASSIGNMENT (terminalIsAssignment:
+                            // wrapping renders it as a comparison and silently loses the
+                            // write; the unwrapped branch leaves the temp at its `invalid`
+                            // initializer — the BRS mapping of Unit).
                             val lastStmt = statements.removeLast()
-                            val assignStmt = when (lastStmt) {
-                                is IrBreak, is IrContinue, is IrReturn, is IrThrow -> lastStmt
-                                is IrExpression -> IrSetValueImpl(
+                            val assignStmt = when {
+                                lastStmt is IrBreak || lastStmt is IrContinue ||
+                                        lastStmt is IrReturn || lastStmt is IrThrow -> lastStmt
+                                lastStmt is IrExpression && !terminalIsAssignment(lastStmt) -> IrSetValueImpl(
                                     startOffset = lastStmt.startOffset,
                                     endOffset = lastStmt.endOffset,
                                     type = context.irBuiltIns.unitType,
@@ -359,7 +364,7 @@ class BrsWhenExpressionLowering(
                                     value = lastStmt,
                                     origin = null
                                 )
-                                else -> lastStmt // Shouldn't happen, but preserve as-is
+                                else -> lastStmt
                             }
                             statements.add(assignStmt)
                             IrBlockImpl(
@@ -372,15 +377,20 @@ class BrsWhenExpressionLowering(
                         }
                     }
                     else -> {
-                        // Normal expressions get assigned to temp var
-                        IrSetValueImpl(
-                            startOffset = branchResult.startOffset,
-                            endOffset = branchResult.endOffset,
-                            type = context.irBuiltIns.unitType,
-                            symbol = tempVar.symbol,
-                            value = branchResult,
-                            origin = null
-                        )
+                        // Normal expressions get assigned to temp var — except a
+                        // terminal assignment (same guard as the block arm above).
+                        if (!terminalIsAssignment(branchResult)) {
+                            IrSetValueImpl(
+                                startOffset = branchResult.startOffset,
+                                endOffset = branchResult.endOffset,
+                                type = context.irBuiltIns.unitType,
+                                symbol = tempVar.symbol,
+                                value = branchResult,
+                                origin = null
+                            )
+                        } else {
+                            branchResult
+                        }
                     }
                 }
 

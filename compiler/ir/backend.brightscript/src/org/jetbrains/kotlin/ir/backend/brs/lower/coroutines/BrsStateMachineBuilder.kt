@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
 import org.jetbrains.kotlin.ir.backend.brs.ir.BrsIrBuilder
 import org.jetbrains.kotlin.ir.backend.brs.ir.BrsStatementOrigins as BrsIrStatementOrigins
 import org.jetbrains.kotlin.ir.backend.brs.lower.BrsDeclarationOrigin
+import org.jetbrains.kotlin.ir.backend.brs.lower.terminalIsAssignment
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.*
@@ -648,6 +649,12 @@ class BrsStateMachineBuilder(
             varSymbol = irVar.symbol
 
             branches = expression.branches.map {
+                // Per-branch guard, same rule as visitTry's arms: the when's
+                // non-Unit type can come from LUB/generic inference while THIS
+                // branch's terminal statement is an assignment — wrapping would
+                // swallow the write (terminalIsAssignment). The unwrapped branch
+                // leaves WHEN_RESULT unassigned = invalid, the BRS mapping of Unit.
+                if (terminalIsAssignment(it.result)) return@map it
                 val wrapped = BrsIrBuilder.buildSetVariable(varSymbol, it.result, unit)
                 if (it.result in suspendableNodes) {
                     suspendableNodes += wrapped
@@ -710,6 +717,17 @@ class BrsStateMachineBuilder(
 
     private fun hasResultingValue(expression: IrExpression) = !expression.type.run { isNothing() || isUnit() }
 
+    // TRY_RESULT/WHEN_RESULT wrap guard: an arm carries a consumable value only
+    // when its type says so AND its terminal statement is not an assignment
+    // (terminalIsAssignment, shared with the pre-state-machine expression
+    // lowerings — those own expression-position tries/whens, so the ledgered
+    // generic-inference reproducers fire there; this covers statement-position
+    // non-Unit tries/whens that reach the state machine unlowered). An unwrapped
+    // arm leaves the temp unassigned; the exposed read yields invalid — exactly
+    // the BRS mapping of Unit, the arm's true value.
+    private fun producesValue(expression: IrExpression): Boolean =
+        hasResultingValue(expression) && !terminalIsAssignment(expression)
+
     private fun implicitCast(value: IrExpression, toType: IrType): IrExpression =
         IrTypeOperatorCallImpl(
             UNDEFINED_OFFSET, UNDEFINED_OFFSET,
@@ -770,14 +788,14 @@ class BrsStateMachineBuilder(
 
         setupExceptionState(tryState.catchState)
 
-        // Wrap an arm in a TRY_RESULT assignment only when the ARM itself carries a
-        // value. A Unit-typed arm (e.g. catch { thrown = e } while the other arm makes
-        // the try's LUB type non-Unit) must run unwrapped: wrapping it makes the arm's
-        // trailing assignment the RHS of the TRY_RESULT set, and BrightScript renders
-        // an assignment in expression position as a COMPARISON — the arm's effect is
-        // silently lost (m.TRY_RESULT = (m.thrown = e)). The consumer of an unassigned
-        // TRY_RESULT reads invalid, which is exactly the BRS mapping of Unit.
-        val tryResult = if (varSymbol != null && hasResultingValue(aTry.tryResult)) {
+        // Wrap an arm in a TRY_RESULT assignment only when the ARM's TERMINAL
+        // statement genuinely produces a value (producesValue). The arm's static
+        // type is not enough: a Unit-typed arm (e.g. catch { thrown = e } while the
+        // other arm makes the try's LUB type non-Unit) fails hasResultingValue, but
+        // under generic inference (runBlocking<T>-shaped builders inferring T = Any)
+        // even an arm whose terminal statement is an ASSIGNMENT arrives typed Any —
+        // wrapping it swallows the write (see producesValue for the full rule).
+        val tryResult = if (varSymbol != null && producesValue(aTry.tryResult)) {
             BrsIrBuilder.buildSetVariable(varSymbol.symbol, aTry.tryResult, unit).also {
                 if (it.value in suspendableNodes) suspendableNodes += it
             }
@@ -807,8 +825,8 @@ class BrsStateMachineBuilder(
             val irVar = catch.catchParameter.also {
                 it.initializer = initializer
             }
-            // Same per-arm value guard as tryResult above.
-            val catchResult = if (varSymbol != null && hasResultingValue(catch.result)) {
+            // Same per-arm terminal-statement guard as tryResult above.
+            val catchResult = if (varSymbol != null && producesValue(catch.result)) {
                 BrsIrBuilder.buildSetVariable(varSymbol.symbol, catch.result, unit).also {
                     if (it.value in suspendableNodes) suspendableNodes += it
                 }
@@ -836,6 +854,9 @@ class BrsStateMachineBuilder(
 
                 val branchBlock = BrsIrBuilder.buildComposite(catchResult.type)
                 val elseBlock = BrsIrBuilder.buildComposite(catchResult.type)
+                // unit, not catchResult.type (JS uses the latter): BRS `if` is a
+                // statement — the clause's value never flows out of the if, it flows
+                // through the TRY_RESULT set inside the branch.
                 val irIf = BrsIrBuilder.buildIfElse(unit, check, branchBlock, elseBlock)
                 val ifBlock = currentBlock
                 val dispatchState = currentState

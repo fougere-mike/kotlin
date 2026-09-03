@@ -312,15 +312,49 @@ class BrsTryExpressionLowering(
                     val statements = arm.statements.toMutableList()
                     val last = statements.lastOrNull()
                     if (last is IrExpression && last !is IrReturn && last !is IrThrow &&
-                        last !is IrBreak && last !is IrContinue && !last.type.isNothing()
+                        last !is IrBreak && last !is IrContinue && !last.type.isNothing() &&
+                        !terminalIsAssignment(last)
                     ) {
                         statements[statements.lastIndex] = assign(last)
                     }
                     IrBlockImpl(arm.startOffset, arm.endOffset, context.irBuiltIns.unitType, arm.origin, statements)
                 }
                 is IrReturn, is IrThrow, is IrBreak, is IrContinue -> arm
-                else -> if (arm.type.isNothing()) arm else assign(arm)
+                else -> if (arm.type.isNothing() || terminalIsAssignment(arm)) arm else assign(arm)
             }
         }
     }
+}
+
+/**
+ * Result-temp wrap guard shared by [BrsTryExpressionLowering],
+ * [BrsWhenExpressionLowering] and BrsStateMachineBuilder (visitTry/visitWhen):
+ * true when the arm/branch's TERMINAL statement is an ASSIGNMENT (recursing
+ * through container tails and implicit casts). Such an arm must NOT be
+ * rewritten into a result-temp assignment.
+ *
+ * The arm's static TYPE cannot be trusted for this: under generic inference (a
+ * runBlocking<T>-shaped builder inferring T = Any from the LUB of an Int arm
+ * and a Unit arm) an arm whose terminal statement is an assignment arrives
+ * typed Any, yet an assignment is Unit-valued in Kotlin no matter what the
+ * coerced type says. Wrapping it makes the assignment the RHS of the temp set,
+ * and BrightScript renders an assignment in expression position as a
+ * COMPARISON — the write is silently lost
+ * (m.__try_tmp = (m._result.value = ...)). An unwrapped arm leaves the temp at
+ * its per-entry `invalid` initializer — exactly the BRS mapping of Unit, the
+ * arm's true Kotlin value.
+ *
+ * Deliberately narrow: EVERY other terminal keeps its wrap, Unit-typed values
+ * included — an unwrapped pure terminal emits as a bare value statement, which
+ * is a BrightScript SYNTAX ERROR (device-proven: the stdlib's AwaitKt.brs
+ * `if pendingCount = 0 then invalid` when a broader produces-a-value guard
+ * briefly excluded Unit terminals from wrapping).
+ */
+internal fun terminalIsAssignment(statement: IrStatement): Boolean = when (statement) {
+    is IrSetValue, is IrSetField -> true
+    is IrContainerExpression -> statement.statements.lastOrNull()?.let(::terminalIsAssignment) == true
+    // An implicit coercion doesn't change what the underlying terminal is.
+    is IrTypeOperatorCall ->
+        statement.operator == IrTypeOperator.IMPLICIT_CAST && terminalIsAssignment(statement.argument)
+    else -> false
 }

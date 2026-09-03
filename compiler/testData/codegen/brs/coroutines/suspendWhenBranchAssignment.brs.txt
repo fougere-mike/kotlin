@@ -54,7 +54,7 @@ function whenBranchAssignment_slambda_doResume_k_() as Dynamic
                     end if
                     continue while
                 else
-                    m.__when_tmp00 = (m._result.value = "else")
+                    m._result.value = "else"
 
                     m.__set_state(2)
                     continue while
