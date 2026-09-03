@@ -1862,8 +1862,8 @@ class BrsCompiler(
 
         for (componentName in componentClassNames) {
             val componentInfo = preExtractedComponents[componentName] ?: continue
-            val xml = generateComponentXmlContent(componentInfo, context, dependencies)
-            val depsJson = generateComponentDepsJson(componentInfo.name, dependencies)
+            val xml = generateComponentXmlContent(componentInfo, context, dependencies, preExtractedComponents.keys)
+            val depsJson = generateComponentDepsJson(componentInfo.name, dependencies, preExtractedComponents.keys)
             result.add(BrsComponentOutput(componentInfo.name, xml, depsJson))
         }
 
@@ -1909,14 +1909,28 @@ class BrsCompiler(
      * The KGP consumer (ProcessComponentXmlTask.parseComponentDeps) treats a missing
      * key as an empty list, so omitting it is format-compatible.
      *
+     * Dependencies on COMPONENT-ROUTED files (see [componentDirFor]) are emitted as
+     * component-dir-relative paths ("Name/NameKt.brs") — exactly the shape the KGP
+     * script-tag injector matches against its staged component files
+     * (ProcessComponentXmlTask.analyzeDependenciesFromManifest's componentFileNames
+     * set) and the shape its own-file skip (currentComponentPath) compares against.
+     * A bare "NameKt.brs" entry matched NOTHING there and was dropped with a warning.
+     *
      * @param componentName The name of the component
      * @param dependencies Pre-computed set of dependencies for this component
+     * @param allComponentNames Every component name in this compilation (for routing)
      */
     private fun generateComponentDepsJson(
         componentName: String,
-        dependencies: Set<String>
+        dependencies: Set<String>,
+        allComponentNames: Set<String>
     ): String {
-        val allDeps = dependencies.sorted()
+        val allDeps = dependencies
+            .map { dep ->
+                val dir = componentDirFor(dep, allComponentNames)
+                if (dir != null) "$dir/$dep" else dep
+            }
+            .sorted()
 
         return buildString {
             appendLine("{")
@@ -1964,16 +1978,39 @@ class BrsCompiler(
     }
 
     /**
+     * The packaging routing rule, mirrored from [Companion.writeOutput]: a dependency
+     * whose file basename IS a component name (or a component's _Layout stub) is
+     * staged in components/<Name>/, not source/. The include closure must reference
+     * it THERE — a pkg:/source/<Name>Kt.brs script tag 404s on device (Task 9b
+     * deliverable 2: a flowOn call inside a component's own file). Keep the two rules
+     * in sync: any change to writeOutput's routing lands here in the same commit.
+     *
+     * @return the component directory name the file is routed to, or null for
+     *   source/-staged files
+     */
+    private fun componentDirFor(dep: String, componentNames: Set<String>): String? {
+        val depBaseName = dep.removeSuffix("Kt.brs")
+        if (depBaseName in componentNames) return depBaseName
+        if (depBaseName.endsWith("_Layout")) {
+            val possibleComponent = depBaseName.removeSuffix("_Layout")
+            if (possibleComponent in componentNames) return possibleComponent
+        }
+        return null
+    }
+
+    /**
      * Generate the XML content for a SceneGraph component.
      *
      * @param component The component info extracted from the class
      * @param context The backend context
      * @param dependencies Set of .brs file names this component depends on (for script imports)
+     * @param allComponentNames Every component name in this compilation (for script-tag routing)
      */
     private fun generateComponentXmlContent(
         component: BrsComponentInfo,
         context: BrsIrBackendContext,
-        dependencies: Set<String> = emptySet()
+        dependencies: Set<String> = emptySet(),
+        allComponentNames: Set<String> = emptySet()
     ): String {
         val builder = StringBuilder()
 
@@ -2043,15 +2080,16 @@ class BrsCompiler(
         // Add script references AFTER interface so fields are defined before init() runs
         // Dependencies first (stdlib, etc.) so functions are available when component init() runs
         for (dep in dependencies.sorted()) {
-            // Layout files go to component directory, others to source
-            val depBaseName = dep.removeSuffix("Kt.brs")
-            val uri = if (depBaseName.endsWith("_Layout")) {
-                val possibleComponent = depBaseName.removeSuffix("_Layout")
-                if (possibleComponent == component.name) {
-                    "pkg:/components/${component.name}/$dep"
-                } else {
-                    "pkg:/source/$dep"
-                }
+            // Component-routed files (a component's own file, any component's _Layout
+            // stub) are referenced where writeOutput stages them — components/<Name>/;
+            // everything else lives in source/. The component's OWN script is appended
+            // last below, never through the dependency list.
+            if (dep == "${component.name}Kt.brs") {
+                continue
+            }
+            val componentDir = componentDirFor(dep, allComponentNames)
+            val uri = if (componentDir != null) {
+                "pkg:/components/$componentDir/$dep"
             } else {
                 "pkg:/source/$dep"
             }

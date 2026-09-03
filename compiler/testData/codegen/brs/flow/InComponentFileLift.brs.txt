@@ -274,7 +274,7 @@ end function
     "HashSetKt.brs",
     "IODispatcherKt.brs",
     "IOWorkerRegistryKt.brs",
-    "InComponentFileLiftKt.brs",
+    "InComponentFileLift/InComponentFileLiftKt.brs",
     "IntrinsicsBrsKt.brs",
     "JobKt.brs",
     "KotlinKt.brs",
@@ -352,7 +352,7 @@ end function
     <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/IODispatcherKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/IOWorkerRegistryKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/InComponentFileLiftKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/InComponentFileLift/InComponentFileLiftKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/IntrinsicsBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/JobKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
