@@ -258,6 +258,28 @@ class BrsCoroutineGoldenFileTests : AbstractBrsGoldenFileTest() {
     // lambda to driveSpawnTask.
     @Test
     fun spawnTaskLift() = runTest("flow/spawnTaskLift.kt")
+
+    // Both lift surfaces in a PACKAGE-QUALIFIED file (Task 9b deliverable 1):
+    // pins short synthesized names (file basename + stable package hash) and
+    // the interface mangles (invoke_AnyN_Continuation_k_ / invoke_AnyN_k_) on
+    // the rebuilt lambdas — an override-contract mangle never takes the
+    // length fallback, whatever the implementing class's name length.
+    @Test
+    fun packageQualifiedLift() = runTest("flow/packageQualifiedLift.kt")
+
+    // A lift site inside a component's OWN file (Task 9b deliverable 2): the
+    // synthesized component's include closure must reference the originating
+    // file where writeOutput actually routes it —
+    // pkg:/components/<Name>/<Name>Kt.brs, not pkg:/source/.
+    @Test
+    fun inComponentFileLift() = runTest("flow/InComponentFileLift.kt")
+
+    // Statement-position try/finally directly inside a suspend flow {} lambda
+    // (Task 9b deliverable 3): pins the try emitted as a STATEMENT in the
+    // state machine — pre-fix it rendered `tmp_ret_0 = try`, a device-side
+    // syntax error.
+    @Test
+    fun statementTryInFlowLambda() = runTest("flow/statementTryInFlowLambda.kt")
 }
 
 // ==================== Inline BrightScript Tests ====================

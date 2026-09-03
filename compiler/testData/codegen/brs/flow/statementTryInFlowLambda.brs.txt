@@ -1,0 +1,184 @@
+// --- File: statementTryInFlowLambdaKt.brs ---
+function __get_marks_k_() as String
+    return GetGlobalAA().marks
+end function
+
+sub __set_marks_Str_k_(value as String)
+    m.marks = value
+end sub
+
+sub mark_Str_k_(tag as String)
+    __set_marks_Str_k_((__get_marks_k_() + ":") + tag)
+end sub
+
+sub main()
+    runBlocking_CoroutineContext_SuspendFunction1CoroutineScope_k_(invalid, main_slambda_create_ContinuationAnyNN_k_(invalid))
+    println_AnyN_k_(__get_marks_k_())
+end sub
+
+function main_slambda_create_ContinuationAnyNN_k_(resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_AnyN_Continuation_k_ = this.invoke_AnyN_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_AnyN_Continuation_k_ = this.create_AnyN_Continuation_k_
+    this.__proto = ["main_slambda", "SuspendFunction1", this.__proto]
+    this.__type = "main_slambda"
+    this.invoke_AnyN_Continuation_k_ = main_slambda_invoke_AnyN_Continuation_k_
+    this.doResume_k_ = main_slambda_doResume_k_
+    this.create_AnyN_Continuation_k_ = main_slambda_create_AnyN_Continuation_k_
+    return this
+end function
+
+function main_slambda_invoke_AnyN_Continuation_k_(_this_runBlocking as Object, _completion as Object) as Object
+    tmp = m.create_AnyN_Continuation_k_(_this_runBlocking, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function main_slambda_doResume_k_() as Dynamic
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = flow_SuspendFunction1FlowCollectorV_k_(main_slambda_slambda_create_ContinuationAnyNN_k_(invalid)).collect_FlowCollector_ContinuationV_k_(main_slambda_slambda_1_create_ContinuationAnyNN_k_(invalid), m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                                return invalid
+            else if __kotlin_identityEquals(tmp, 2) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 2) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function main_slambda_create_AnyN_Continuation_k_(_this_runBlocking as Dynamic, completion as Object) as Object
+    i = main_slambda_create_ContinuationAnyNN_k_(completion)
+    i._this_runBlocking = _this_runBlocking
+    return i
+end function
+
+function main_slambda_slambda_create_ContinuationAnyNN_k_(resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_AnyN_Continuation_k_ = this.invoke_AnyN_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_AnyN_Continuation_k_ = this.create_AnyN_Continuation_k_
+    this.__proto = ["main_slambda_slambda", "SuspendFunction1", this.__proto]
+    this.__type = "main_slambda_slambda"
+    this.invoke_AnyN_Continuation_k_ = main_slambda_slambda_invoke_AnyN_Continuation_k_
+    this.doResume_k_ = main_slambda_slambda_doResume_k_
+    this.create_AnyN_Continuation_k_ = main_slambda_slambda_create_AnyN_Continuation_k_
+    return this
+end function
+
+function main_slambda_slambda_invoke_AnyN_Continuation_k_(_this_flow as Object, _completion as Object) as Object
+    tmp = m.create_AnyN_Continuation_k_(_this_flow, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function main_slambda_slambda_doResume_k_() as Dynamic
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(3)
+                m.__set_state(1)
+                suspendResult = m._this_flow.emit_AnyN_ContinuationV_k_("started", m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                tmp_ret_0 = invalid
+                                try
+                    i = 0
+                    while i < 3
+                        i = (i + 1)
+                    end while
+                    tmp_ret_0 = mark_Str_k_("done")
+
+                                        exit while
+                catch t
+                    mark_Str_k_("cleanup")
+
+                                        throw t
+                end try
+
+                while false
+                                        try
+                        i = 0
+                        while i < 3
+                            i = (i + 1)
+                        end while
+                        tmp_ret_0 = mark_Str_k_("done")
+
+                                                exit while
+                    catch t
+                        mark_Str_k_("cleanup")
+
+                                                throw t
+                    end try
+                end while
+
+                mark_Str_k_("cleanup")
+
+                m.__set_state(2)
+                suspendResult = m._this_flow.emit_AnyN_ContinuationV_k_("finished", m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+                                return invalid
+            else if __kotlin_identityEquals(tmp, 3) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 3) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function main_slambda_slambda_create_AnyN_Continuation_k_(_this_flow as Dynamic, completion as Object) as Object
+    i = main_slambda_slambda_create_ContinuationAnyNN_k_(completion)
+    i._this_flow = _this_flow
+    return i
+end function
+
+function main_slambda_slambda_1_create_ContinuationAnyNN_k_(resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.emit_AnyN_ContinuationV_k_ = this.emit_AnyN_ContinuationV_k_
+    this.__proto = ["main_slambda_slambda_1", "FlowCollector", this.__proto]
+    this.__type = "main_slambda_slambda_1"
+    this.emit_AnyN_ContinuationV_k_ = main_slambda_slambda_1_emit_AnyN_ContinuationV_k_
+    return this
+end function
+
+function main_slambda_slambda_1_emit_AnyN_ContinuationV_k_(v as String, _completion as Object) as Object
+    mark_Str_k_(v)
+    return invalid
+end function
