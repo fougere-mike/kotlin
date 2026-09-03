@@ -1,0 +1,348 @@
+// --- File: StateFlowAccess.deps.json ---
+{
+  "version": 1,
+  "component": "StateFlowAccess",
+  "dependencies": [
+    "AnyKt.brs",
+    "ArrayListKt.brs",
+    "ArraysBrsKt.brs",
+    "ArraysKt.brs",
+    "BuildersKt.brs",
+    "CancellationExceptionKt.brs",
+    "CharCategoryBrsKt.brs",
+    "CollectionExtensionsKt.brs",
+    "CollectionQueryKt.brs",
+    "CombinedContextKt.brs",
+    "ComponentCoroutinesKt.brs",
+    "ContinuationInterceptorKt.brs",
+    "ContinuationKt.brs",
+    "CoroutineDispatcherKt.brs",
+    "CoroutineImplKt.brs",
+    "CoroutineQueueKt.brs",
+    "CoroutineScopeKt.brs",
+    "CoroutineSingletonsKt.brs",
+    "DefaultDispatcherKt.brs",
+    "DelayKt.brs",
+    "DelayTrackerKt.brs",
+    "DispatchersKt.brs",
+    "DoorbellsKt.brs",
+    "EmptyCoroutineContextKt.brs",
+    "ExceptionsKt.brs",
+    "HashMapKt.brs",
+    "HashSetKt.brs",
+    "IODispatcherKt.brs",
+    "IOWorkerRegistryKt.brs",
+    "IntrinsicsBrsKt.brs",
+    "JobKt.brs",
+    "KotlinKt.brs",
+    "MapExtensionsBrsKt.brs",
+    "PairKt.brs",
+    "ParkedContinuationKt.brs",
+    "PreconditionsKt.brs",
+    "PrimitiveIteratorsKt.brs",
+    "PumpSchedulerKt.brs",
+    "RangeOperatorsBrsKt.brs",
+    "RangesKt.brs",
+    "ResultKt.brs",
+    "StateFlowKt.brs",
+    "StringBuilderBrsKt.brs",
+    "TaskPoolKt.brs",
+    "ThrowableKt.brs",
+    "UByteKt.brs",
+    "UIntKt.brs",
+    "ULongKt.brs",
+    "URangesKt.brs",
+    "UShortKt.brs",
+    "UnconfinedDispatcherKt.brs",
+    "UnsignedUtilsKt.brs",
+    "charBrsKt.brs",
+    "consoleKt.brs",
+    "coreRuntimeKt.brs",
+    "primitivesKt.brs",
+    "stringBrsKt.brs"
+  ]
+}
+
+
+// --- File: StateFlowAccess.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="StateFlowAccess" extends="Group">
+    <interface>
+        <field id="rendered" type="string" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/BuildersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CancellationExceptionKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CollectionQueryKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineImplKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineQueueKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineScopeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineSingletonsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DefaultDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayTrackerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DispatchersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DoorbellsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/EmptyCoroutineContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IODispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IOWorkerRegistryKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IntrinsicsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/JobKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/MapExtensionsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PairKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ParkedContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PrimitiveIteratorsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PumpSchedulerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ResultKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/StateFlowKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/TaskPoolKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ULongKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/URangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UShortKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnconfinedDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnsignedUtilsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/consoleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/StateFlowAccess/StateFlowAccessKt.brs" />
+</component>
+
+
+// --- File: stateFlowAccessKt.brs ---
+function ScreenVm_create_k_() as Object
+    this = {}
+    this.__type = "ScreenVm"
+    this.__proto = ["ScreenVm"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.push_Str_k_ = ScreenVm_push_Str_k_
+    this.__get__screenState = ScreenVm___get__screenState_k_
+    this.__get_screenState = ScreenVm___get_screenState_k_
+    this._screenState = MutableStateFlow_AnyN_k_("loading")
+    this.screenState = asStateFlow_rMutableStateFlow_k_(this.__get__screenState())
+    return this
+end function
+
+sub ScreenVm_push_Str_k_(next_ as String)
+    m.__get__screenState().__set_value(next_)
+end sub
+
+function ScreenVm___get__screenState_k_() as Object
+    return m._screenState
+end function
+
+function ScreenVm___get_screenState_k_() as Object
+    return m.screenState
+end function
+
+function TitleCollector_create_k_() as Object
+    this = {}
+    this.__type = "TitleCollector"
+    this.__proto = ["TitleCollector", "FlowCollector"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.emit_AnyN_ContinuationV_k_ = TitleCollector_emit_AnyN_ContinuationV_k_
+    this.__get_last = TitleCollector___get_last_k_
+    this.__set_last = TitleCollector___set_last_Str_k_
+    this.last = ""
+    return this
+end function
+
+function TitleCollector_emit_AnyN_ContinuationV_k_(value as String, _completion as Object) as Object
+    m.__set_last(value)
+    return invalid
+end function
+
+function TitleCollector___get_last_k_() as String
+    return m.last
+end function
+
+sub TitleCollector___set_last_Str_k_(value as String)
+    m.last = value
+end sub
+
+sub init()
+    __kotlinPumpAttach(m.top, m.global)
+    m.top.rendered = ""
+    m.vm = ScreenVm_create_k_()
+    m.__get_rendered_k_ = StateFlowAccess___get_rendered_k_
+    m.__set_rendered_Str_k_ = StateFlowAccess___set_rendered_Str_k_
+    m.__get_vm_k_ = StateFlowAccess___get_vm_k_
+    m.top.rendered = m.vm.__get_screenState().__get_value()
+    launch_rComponentBase_CoroutineContext_SuspendFunction1CoroutineScopeV_k_(m, invalid, StateFlowAccess_slambda_create_StateFlowAccess_ContinuationAnyNN_k_(m, invalid))
+    launch_rComponentBase_CoroutineContext_SuspendFunction1CoroutineScopeV_k_(m, invalid, StateFlowAccess_slambda_1_create_StateFlowAccess_ContinuationAnyNN_k_(m, invalid))
+    m.vm.push_Str_k_("ready")
+end sub
+
+function onKeyEvent(key as String, press as Boolean) as Boolean
+    return false
+end function
+
+function StateFlowAccess___get_rendered_k_() as String
+    return m.top.rendered
+end function
+
+sub StateFlowAccess___set_rendered_Str_k_(value as String)
+    m.top.rendered = value
+end sub
+
+function StateFlowAccess___get_vm_k_() as Object
+    return m.vm
+end function
+
+function StateFlowAccess_slambda_create_StateFlowAccess_ContinuationAnyNN_k_(this_0 as Object, resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_AnyN_Continuation_k_ = this.invoke_AnyN_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_AnyN_Continuation_k_ = this.create_AnyN_Continuation_k_
+    this.__proto = ["StateFlowAccess_slambda", "SuspendFunction1", this.__proto]
+    this.__type = "StateFlowAccess_slambda"
+    this.invoke_AnyN_Continuation_k_ = StateFlowAccess_slambda_invoke_AnyN_Continuation_k_
+    this.doResume_k_ = StateFlowAccess_slambda_doResume_k_
+    this.create_AnyN_Continuation_k_ = StateFlowAccess_slambda_create_AnyN_Continuation_k_
+    this.this_0 = this_0
+    return this
+end function
+
+function StateFlowAccess_slambda_invoke_AnyN_Continuation_k_(_this_launch as Object, _completion as Object) as Object
+    tmp = m.create_AnyN_Continuation_k_(_this_launch, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function StateFlowAccess_slambda_doResume_k_() as Dynamic
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = m.this_0.__get_vm_k_().__get_screenState().collect_FlowCollector_ContinuationV_k_(StateFlowAccess_slambda_slambda_create_StateFlowAccess_ContinuationAnyNN_k_(m.this_0, invalid), m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                                return invalid
+            else if __kotlin_identityEquals(tmp, 2) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 2) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function StateFlowAccess_slambda_create_AnyN_Continuation_k_(_this_launch as Dynamic, completion as Object) as Object
+    i = StateFlowAccess_slambda_create_StateFlowAccess_ContinuationAnyNN_k_(m.this_0, completion)
+    i._this_launch = _this_launch
+    return i
+end function
+
+function StateFlowAccess_slambda_slambda_create_StateFlowAccess_ContinuationAnyNN_k_(this_0 as Object, resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.emit_AnyN_ContinuationV_k_ = this.emit_AnyN_ContinuationV_k_
+    this.__proto = ["StateFlowAccess_slambda_slambda", "FlowCollector", this.__proto]
+    this.__type = "StateFlowAccess_slambda_slambda"
+    this.emit_AnyN_ContinuationV_k_ = StateFlowAccess_slambda_slambda_emit_AnyN_ContinuationV_k_
+    this.this_0 = this_0
+    return this
+end function
+
+function StateFlowAccess_slambda_slambda_emit_AnyN_ContinuationV_k_(v as String, _completion as Object) as Object
+    m.this_0.top.rendered = v
+    return invalid
+end function
+
+function StateFlowAccess_slambda_1_create_StateFlowAccess_ContinuationAnyNN_k_(this_0 as Object, resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_AnyN_Continuation_k_ = this.invoke_AnyN_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_AnyN_Continuation_k_ = this.create_AnyN_Continuation_k_
+    this.__proto = ["StateFlowAccess_slambda_1", "SuspendFunction1", this.__proto]
+    this.__type = "StateFlowAccess_slambda_1"
+    this.invoke_AnyN_Continuation_k_ = StateFlowAccess_slambda_1_invoke_AnyN_Continuation_k_
+    this.doResume_k_ = StateFlowAccess_slambda_1_doResume_k_
+    this.create_AnyN_Continuation_k_ = StateFlowAccess_slambda_1_create_AnyN_Continuation_k_
+    this.this_0 = this_0
+    return this
+end function
+
+function StateFlowAccess_slambda_1_invoke_AnyN_Continuation_k_(_this_launch as Object, _completion as Object) as Object
+    tmp = m.create_AnyN_Continuation_k_(_this_launch, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function StateFlowAccess_slambda_1_doResume_k_() as Dynamic
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = m.this_0.__get_vm_k_().__get_screenState().collect_FlowCollector_ContinuationV_k_(TitleCollector_create_k_(), m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                                return invalid
+            else if __kotlin_identityEquals(tmp, 2) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 2) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function StateFlowAccess_slambda_1_create_AnyN_Continuation_k_(_this_launch as Dynamic, completion as Object) as Object
+    i = StateFlowAccess_slambda_1_create_StateFlowAccess_ContinuationAnyNN_k_(m.this_0, completion)
+    i._this_launch = _this_launch
+    return i
+end function

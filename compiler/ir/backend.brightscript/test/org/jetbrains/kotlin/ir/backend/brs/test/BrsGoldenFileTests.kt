@@ -280,6 +280,15 @@ class BrsCoroutineGoldenFileTests : AbstractBrsGoldenFileTest() {
     // syntax error.
     @Test
     fun statementTryInFlowLambda() = runTest("flow/statementTryInFlowLambda.kt")
+
+    // The spec-§9 StateFlow access golden (Task 10): a component + VM pair
+    // pinning the three BrsFlowAccessLowering rewrites — value GET →
+    // stateFlowGetValue, value SET → stateFlowSetValue, member collect →
+    // flowCollectDispatch — and the deps.json DoorbellsKt edge those statics
+    // record (the include-closure rationale for the lowering, spec §6
+    // implementation note).
+    @Test
+    fun stateFlowAccess() = runTest("flow/stateFlowAccess.kt")
 }
 
 // ==================== Inline BrightScript Tests ====================

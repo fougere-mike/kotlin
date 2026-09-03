@@ -26,6 +26,7 @@
     "DelayKt.brs",
     "DelayTrackerKt.brs",
     "DispatchersKt.brs",
+    "DoorbellsKt.brs",
     "EmptyCoroutineContextKt.brs",
     "ErrorsKt.brs",
     "ExceptionsKt.brs",
@@ -107,6 +108,7 @@
     <script type="text/brightscript" uri="pkg:/source/DelayKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/DelayTrackerKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/DispatchersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DoorbellsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/EmptyCoroutineContextKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ErrorsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
@@ -214,6 +216,7 @@ end sub
     "DelayKt.brs",
     "DelayTrackerKt.brs",
     "DispatchersKt.brs",
+    "DoorbellsKt.brs",
     "EmptyCoroutineContextKt.brs",
     "ErrorsKt.brs",
     "ExceptionsKt.brs",
@@ -295,6 +298,7 @@ end sub
     <script type="text/brightscript" uri="pkg:/source/DelayKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/DelayTrackerKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/DispatchersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DoorbellsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/EmptyCoroutineContextKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ErrorsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
@@ -418,6 +422,7 @@ end function
     "DelayKt.brs",
     "DelayTrackerKt.brs",
     "DispatchersKt.brs",
+    "DoorbellsKt.brs",
     "EmptyCoroutineContextKt.brs",
     "ErrorsKt.brs",
     "ExceptionsKt.brs",
@@ -492,6 +497,7 @@ end function
     <script type="text/brightscript" uri="pkg:/source/DelayKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/DelayTrackerKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/DispatchersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DoorbellsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/EmptyCoroutineContextKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ErrorsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
