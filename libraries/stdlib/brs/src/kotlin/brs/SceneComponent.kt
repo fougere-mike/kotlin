@@ -243,6 +243,45 @@ public abstract class TaskComponent : ComponentBase() {
     protected abstract fun run()
 }
 
+// The DIRECT @BrsSceneGraphComponent annotation below is LOAD-BEARING twice:
+// (1) isComponentBaseDeclaration (BrsIntrinsics — abstract + DIRECTLY
+//     annotated) is the only thing that makes transformSceneGraphComponent
+//     skip base codegen; unannotated, stdlib compilation would emit a
+//     sub init() for this class into the SHARED SceneComponentKt.brs — a
+//     device-wide duplicate-init collision.
+// (2) getExtendsComponent (BrsComponentExtractor) resolves the synthesized
+//     leaf's XML extends= from the direct superclass's annotation; unannotated
+//     it would emit extends="FlowTaskComponent", a subtype no package defines —
+//     node creation fails.
+/**
+ * Base of compiler-synthesized flowOn/spawnTask task components (flow-program
+ * spec §5). Captures cross as ONE deep-copied AA; envelopes stream over
+ * [flowOut] (alwaysNotify — every write must deliver); [flowCancel] is the
+ * cooperative cancellation signal (FINDINGS Probe B6). Never subclass by hand.
+ *
+ * Extends [TaskComponent] DELIBERATELY: the leaves inherit the kotlinTask*
+ * protocol fields AND all isTaskComponent machinery (the `__kotlinTaskMain`
+ * wrapper, `functionName` init wiring, pump-attach exclusion).
+ */
+@BrsSceneGraphComponent(extends = "Task")
+public abstract class FlowTaskComponent : TaskComponent() {
+    /** The lifted region's captures, ONE deep-copied AA (render → task, set before RUN). */
+    @SGAssocArrayField
+    public var flowCaptures: RoAssociativeArray? = null
+
+    /**
+     * Kind-tagged envelope stream (task → render): emit/complete/error/outcome.
+     * alwaysNotify is load-bearing — consecutive equal envelopes must each fire
+     * the collector-side observer.
+     */
+    @SGAssocArrayField(alwaysNotify = true)
+    public var flowOut: RoAssociativeArray? = null
+
+    /** Cooperative cancellation signal (render → task); the shim checks it per emission. */
+    @SGBooleanField
+    public var flowCancel: Boolean = false
+}
+
 /**
  * Base class for SceneGraph ContentNode components.
  *

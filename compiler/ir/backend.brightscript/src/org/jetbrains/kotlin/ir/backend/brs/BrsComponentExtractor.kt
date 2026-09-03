@@ -52,6 +52,15 @@ class BrsComponentExtractor(
     fun extractComponent(irClass: IrClass): BrsComponentInfo? {
         if (!isComponent(irClass)) return null
 
+        // Abstract, DIRECTLY-annotated component bases (stdlib FlowTaskComponent —
+        // the one base that itself extends an annotated base, so the
+        // hierarchy-only check above doesn't exclude it) emit no XML of their
+        // own, mirroring transformSceneGraphComponent's base-declaration skip:
+        // their contract reaches the leaves through inheritance, and a stray
+        // components/FlowTaskComponent/ XML would point at the shared
+        // SceneComponentKt.brs script.
+        if (context.intrinsics.isComponentBaseDeclaration(irClass)) return null
+
         val componentAnnotation = findAnnotation(irClass, "BrsComponent")
         val name = context.getBrsName(irClass)
         currentComponentName = name
