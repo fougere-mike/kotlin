@@ -235,6 +235,13 @@ class BrsCoroutineGoldenFileTests : AbstractBrsGoldenFileTest() {
     // found" on device (flow simple-operators defect: take/drop counters).
     @Test
     fun sharedBoxPrimitiveComparison() = runTest("flow/sharedBoxPrimitiveComparison.kt")
+
+    // The spec-§9 operator-chain golden: a component collecting
+    // flowOf().map{}.filter{}.flatMapLatest{}.onCompletion{} in launch {} —
+    // user-side suspend-chain codegen against the flow prebuilt (operator call
+    // shapes, nested SAM lambda classes, lambda-scope @SG writes, pump attach).
+    @Test
+    fun operatorChain() = runTest("flow/operatorChain.kt")
 }
 
 // ==================== Inline BrightScript Tests ====================
