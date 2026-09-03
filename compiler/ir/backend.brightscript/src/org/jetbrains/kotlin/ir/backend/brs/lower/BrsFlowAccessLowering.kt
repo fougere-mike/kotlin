@@ -78,6 +78,13 @@ class BrsFlowAccessLowering(
                 val callee = expression.symbol.owner
                 val receiver = expression.dispatchReceiver ?: return expression
 
+                // A super-qualified call names a SPECIFIC implementation; the
+                // statics dispatch dynamically, so rewriting would change
+                // semantics. No concrete shape exists today (Flow.collect and
+                // the value accessors are abstract), but fail toward not
+                // rewriting (the task-brief law).
+                if (expression.superQualifierSymbol != null) return expression
+
                 if (callee.overridesFlowCollect()) {
                     val collector = expression.getValueArgument(0) ?: return expression
                     return IrCallImpl(
