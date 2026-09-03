@@ -2,14 +2,13 @@
 function doWhileConditionScope_I_k_(seed as Integer) as Integer
     x = seed + 10
     total = x
-    x_1 = total - seed
-    total = (total + 1)
-
-    while x_1 < 0
+    while true
         x_1 = total - seed
         total = (total + 1)
+        if not (x_1 < 0) then
+            exit while
+        end if
     end while
-
 
     return total
 end function

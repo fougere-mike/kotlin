@@ -906,10 +906,41 @@ class IrStatementToBrsTransformer(
                 )
             }
 
-            return BrsBlock(mutableListOf(
-                body,
-                BrsWhile(condition, body.deepCopy())
-            ))
+            // No continue targeting this loop: emit the run-once-then-check
+            // shape WITHOUT body duplication —
+            //     while true : <body> : if not (cond) exit while : end while
+            // The legacy duplicated emission (`body; while (cond) body`)
+            // re-emitted the first execution OUTSIDE the loop, where a break's
+            // `exit while` bound to whatever loop ENCLOSES the do-while —
+            // device-proven inside suspend state machines (Task 9b deliverable
+            // 3): FinallyBlocksLowering's returnable-block loop (do/while(false)
+            // + break@loop) put the first copy's `exit while` straight into the
+            // dispatch `while true`, and the dead `while false` re-ran the whole
+            // try arm (statementTryInFlowLambda golden).
+            val bodyStatements = when (body) {
+                is BrsBlock -> body.statements.toMutableList()
+                else -> mutableListOf<BrsStatement>(body)
+            }
+            if (bodyStatements.isEmpty() || !isTerminating(bodyStatements.last())) {
+                val conditionLiteral = (condition as? BrsBooleanLiteral)?.value
+                when (conditionLiteral) {
+                    // do-while(false): runs exactly once — plain exit.
+                    false -> bodyStatements.add(BrsExit(BrsExitKind.WHILE))
+                    // do-while(true): loops forever — no guard needed.
+                    true -> {}
+                    else -> bodyStatements.add(
+                        BrsIf(
+                            condition = BrsUnaryOp(BrsUnaryOperator.NOT, condition),
+                            thenBranch = BrsExit(BrsExitKind.WHILE),
+                            elseBranch = null
+                        )
+                    )
+                }
+            }
+            return BrsWhile(
+                condition = BrsBooleanLiteral(true),
+                body = BrsBlock(bodyStatements)
+            )
         }
     }
 
@@ -2201,6 +2232,39 @@ class IrStatementToBrsTransformer(
         val transformedValue = parent.transformExpression(expression.value)
         // Take any hoisted statements from nested when-lowered blocks
         val hoisted = genCtx.takeHoistedStatements()
+
+        // A Unit-returning callee emits as a SUB (visitFunction's effectiveReturnType
+        // rule), and BrightScript rejects assigning a sub call's (void) result. Such
+        // an IrSetValue reaches emission via result-temp machinery that assigns an
+        // arm's terminal expression regardless of its type — device-proven (Task 9b
+        // deliverable 3): FinallyBlocksLowering's returnable block assigned
+        // `tmp$ret$0 = <block ending in mark("done")>` inside a suspend flow lambda,
+        // a device compile error. The terminal hides behind container tails and
+        // implicit casts (the terminalIsAssignment recursion, same reason), and
+        // transformExpression on such a value hoists the leading statements and
+        // returns exactly that terminal call. Split it: run the call for its effect,
+        // then assign `invalid` — the BRS mapping of Unit, the expression's true
+        // Kotlin value.
+        var unwrappedValue: IrExpression = expression.value
+        while (true) {
+            unwrappedValue = when (val u = unwrappedValue) {
+                is IrTypeOperatorCall -> u.argument
+                is IrContainerExpression -> (u.statements.lastOrNull() as? IrExpression) ?: break
+                else -> break
+            }
+        }
+        // Unit only — NOT Nothing: Nothing-returning callees render as
+        // `function ... as Dynamic` (their body throws; PrimitivesKt's
+        // error_Any_k_ is the device-green witness), so assigning them is
+        // legal and the pinned layout-stub goldens keep that shape.
+        val rhsIsVoidCall = unwrappedValue is IrCall &&
+            unwrappedValue.symbol.owner.returnType.isUnit()
+        if (rhsIsVoidCall && !isBoxInit) {
+            val statements = hoisted.toMutableList()
+            statements.add(BrsExpressionStatement(transformedValue))
+            statements.add(BrsExpressionStatement(BrsBinaryOp(target, BrsBinaryOperator.EQ, BrsInvalidLiteral())))
+            return BrsBlock(statements)
+        }
 
         val finalValue = if (isBoxInit) {
             BrsAALiteral(mutableListOf(BrsAAEntry("value", transformedValue)))

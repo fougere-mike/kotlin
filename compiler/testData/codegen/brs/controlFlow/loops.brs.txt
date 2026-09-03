@@ -3,20 +3,16 @@ function forLoopSum_k_() as Integer
     sum = 0
     inductionVariable = 1
     if inductionVariable <= 10 then
-                i = inductionVariable
-        inductionVariable = (inductionVariable + 1)
-
-        sum = (sum + i)
-
-
-        while inductionVariable <= 10
+                while true
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
             sum = (sum + i)
 
+            if not (inductionVariable <= 10) then
+                exit while
+            end if
         end while
-
     end if
 
     return sum

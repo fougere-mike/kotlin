@@ -95,20 +95,16 @@ function sumRange_k_() as Integer
     total = 0
     inductionVariable = 1
     if inductionVariable <= 5 then
-                i = inductionVariable
-        inductionVariable = (inductionVariable + 1)
-
-        total = (total + i)
-
-
-        while inductionVariable <= 5
+                while true
             i = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
             total = (total + i)
 
+            if not (inductionVariable <= 5) then
+                exit while
+            end if
         end while
-
     end if
 
     return total
@@ -139,20 +135,16 @@ function DeepDepsProbe_compute_k_() as String
     sb = StringBuilder_create_k_()
     inductionVariable = "a"
     if inductionVariable <= "c" then
-                c = inductionVariable
-        inductionVariable = (inductionVariable + 1)
-
-        sb.append_StrN_k_(describeChar_C_k_(c))
-
-
-        while inductionVariable <= "c"
+                while true
             c = inductionVariable
             inductionVariable = (inductionVariable + 1)
 
             sb.append_StrN_k_(describeChar_C_k_(c))
 
+            if not (inductionVariable <= "c") then
+                exit while
+            end if
         end while
-
     end if
 
     sb.append_I_k_(counts.__get_size())

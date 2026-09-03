@@ -108,27 +108,14 @@ function main_slambda_slambda_doResume_k_() as Dynamic
                 continue while
             else if __kotlin_identityEquals(tmp, 1) then
                 tmp_ret_0 = invalid
-                                try
-                    i = 0
-                    while i < 3
-                        i = (i + 1)
-                    end while
-                    tmp_ret_0 = mark_Str_k_("done")
-
-                                        exit while
-                catch t
-                    mark_Str_k_("cleanup")
-
-                                        throw t
-                end try
-
-                while false
+                while true
                                         try
                         i = 0
                         while i < 3
                             i = (i + 1)
                         end while
-                        tmp_ret_0 = mark_Str_k_("done")
+                        mark_Str_k_("done")
+                        tmp_ret_0 = invalid
 
                                                 exit while
                     catch t
@@ -136,8 +123,8 @@ function main_slambda_slambda_doResume_k_() as Dynamic
 
                                                 throw t
                     end try
+                    exit while
                 end while
-
                 mark_Str_k_("cleanup")
 
                 m.__set_state(2)
