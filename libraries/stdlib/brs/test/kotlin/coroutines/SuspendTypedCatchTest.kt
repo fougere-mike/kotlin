@@ -108,6 +108,27 @@ fun TestRunner.suspendTypedCatchTests() {
             }
         }
 
+        // RED-GUARDED (pre-existing defect, ledgered in the task-3b report,
+        // NOT the typed-catch dispatch fix): when a generic builder like
+        // runBlocking infers the block's T as Any, the catch arm's static type
+        // is non-Unit while its terminal statement is an ASSIGNMENT — the
+        // TRY_RESULT wrap then makes the assignment the RHS of the temp set,
+        // which BrightScript renders as a COMPARISON: the write is silently
+        // lost (m.__try_tmp = (m._result.value = "caught")). Same wrap-guard
+        // family as the Unit-arm fix in BrsStateMachineBuilder.visitTry;
+        // visitWhen's branch wrapping has the same latent hole.
+        xtest("typed catch body writes a captured outer var", "state-machine TRY_RESULT wrap swallows a terminal assignment (silent write loss)") {
+            var result = "none"
+            runBlocking {
+                try {
+                    raiseAfterYield("ise")
+                } catch (e: IllegalStateException) {
+                    result = "caught"
+                }
+            }
+            assertEquals("caught", result)
+        }
+
         test("typed catch in value-position try") {
             runBlocking {
                 val r = try {
