@@ -324,6 +324,10 @@ Spike/device residuals:
   checkpoints into hand-written TaskComponent run() bodies is open.
 
 Compiler codegen residuals:
+- **Captured mutable-var `?.cancel()` reads the box, not .value** — P1
+  silent-miscompile family: loud runtime crash on the common kotlinx
+  cancel-previous idiom; lift-independent, pre-existing — general codegen
+  defect (Task 9; FlowTests uses the proven val idiom).
 - **Non-suspend single-narrow-clause catch still catches everything**
   (pre-existing; now DIVERGES from the fixed suspend side) — unification
   declined in Task 3c as a semantic change needing its own device program
@@ -332,11 +336,9 @@ Compiler codegen residuals:
   noted in the Task 3c report (BrsWhenExpressionLowering wrap sites).
 - **Boolean-terminal try arm still emits `tmp = try`** (Task 9b's
   statement-position split was Unit-only; Suite 10a fixture works around it) —
-  golden candidate (BrsTryExpressionLowering); insert a fix task only if a
-  live program hits it.
-- **Captured mutable-var `?.cancel()` reads the box, not .value** — general
-  codegen defect, lift-independent (Task 9; FlowTests uses the proven val
-  idiom).
+  golden candidate (BrsTryExpressionLowering). The insert-a-fix-task trigger
+  has effectively FIRED (this program's own Suite 10a fixture needed the
+  workaround) — schedule the golden+fix as the NEXT compiler touch.
 - **JS visitReturn sibling not ported** — returnable blocks are BRS-specific,
   no reproducer; spike bait (BrsStateMachineBuilder, Task 4 note).
 - **Local-function Unit-param residual** — one site bypasses
@@ -362,6 +364,12 @@ FIR residuals:
 - **map(::f) chain-hop shape unpinned by fixture** (flowLift fixture family).
 
 Flow-klib internals:
+- **`__` prefix adoption for the flow-klib public helpers** — the envelope
+  helpers in TaskFlow.kt (buildFlow*Envelope, flowErrorEnvelopeFrom,
+  flowTaskExceptionFrom) and `__smokeTwoSuspends` (FlowSmoke.kt) are public
+  solely because the stdlib test module has no friend wiring (plan Task 1
+  visibility law); they are protocol/test machinery, not API — rename to a
+  `__` prefix (design §14 footnote records the same).
 - **combine's drain duplicates drainTo inline** (ConcurrentOperators.kt
   ~:1251) — cosmetic dedup.
 - **MergeCoordinator.acquireSlot raw suspendCoroutine park** needs a one-line

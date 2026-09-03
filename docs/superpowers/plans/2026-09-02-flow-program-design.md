@@ -538,3 +538,12 @@ public fun ensureTaskActive()
 // package kotlin.coroutines
 public object Dispatchers { /* existing Main; new: */ public val Task: CoroutineDispatcher }
 ```
+
+> **Footnote (recorded post-ship):** the shipped flow klib exposes a handful of
+> public helpers beyond this list — the envelope helpers in `TaskFlow.kt`
+> (`buildFlowEmitEnvelope`/`buildFlowCompleteEnvelope`/`buildFlowErrorEnvelope`,
+> `flowErrorEnvelopeFrom`, `flowTaskExceptionFrom`) and `__smokeTwoSuspends`
+> (`FlowSmoke.kt`). They are public solely because the stdlib test module has
+> no friend wiring (plan Task 1 visibility law); they are protocol/test
+> machinery, not API. Adopting a `__` prefix for the flow-klib public helpers
+> is recorded backlog.

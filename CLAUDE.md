@@ -945,7 +945,9 @@ automatically; commit both.
 2. **The task lift** — `flowOn(Dispatchers.Task)` + `spawnTask {}`. The
    compiler lifts the LITERAL upstream chain (or spawnTask block) into a named
    function and synthesizes a PER-CALL-SITE TaskComponent
-   (`BrsFlowTaskLiftLowering`): typed @SG capture fields, one output field
+   (`BrsFlowTaskLiftLowering`): captures cross as ONE `flowCaptures` AA field
+   on the stdlib `FlowTaskComponent` base (deep copy — recorded deviation (a);
+   not per-capture typed fields), plus one output field
    carrying kind-tagged envelope AAs (emit/complete/error — the ScopeWire
    vocabulary), a shim collector whose `emit` writes envelopes. Collector side
    is runTask-shaped (fresh unparented node, arm observer BEFORE
