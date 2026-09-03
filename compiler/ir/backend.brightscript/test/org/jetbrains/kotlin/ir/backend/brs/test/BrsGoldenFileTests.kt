@@ -173,6 +173,24 @@ class BrsCoroutineGoldenFileTests : AbstractBrsGoldenFileTest() {
     @Test
     fun suspendMemberStateMachine() = runTest("coroutines/suspendMemberStateMachine.kt")
 
+    // TRY_RESULT wrapping vs terminal-assignment arms: an arm typed non-Unit
+    // only via generic LUB inference (T = Any) whose terminal statement is an
+    // assignment must NOT be wrapped — the wrap swallows the write
+    // (m.TRY_RESULT = (m._result.value = ...) renders as a comparison; task 3c).
+    @Test
+    fun suspendWrapAssignmentArm() = runTest("coroutines/suspendWrapAssignmentArm.kt")
+
+    // The visitWhen sibling of the same hole: per-branch WHEN_RESULT wrapping
+    // must skip a branch whose terminal statement is an assignment (task 3c).
+    @Test
+    fun suspendWhenBranchAssignment() = runTest("coroutines/suspendWhenBranchAssignment.kt")
+
+    // Suspension INSIDE a typed catch clause body: the dispatch-state
+    // save/restore around the clause body keeps the else-rethrow's edges on
+    // the catch state (task 3b review rider).
+    @Test
+    fun suspendInTypedCatchBody() = runTest("coroutines/suspendInTypedCatchBody.kt")
+
     // IR-special local names (<iterator>) lifted to state-machine fields must be
     // sanitized — the raw name is a BrightScript syntax error (flow cold core defect).
     @Test

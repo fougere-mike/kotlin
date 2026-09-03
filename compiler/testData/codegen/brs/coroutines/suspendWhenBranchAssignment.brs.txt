@@ -1,0 +1,85 @@
+// --- File: suspendWhenBranchAssignmentKt.brs ---
+sub runIt_SuspendFunction0_k_(block as Object)
+end sub
+
+function step_ContinuationI_k_(_completion as Object) as Object
+    return 1
+end function
+
+function kindIsIse_Str_k_(kind as String) as Boolean
+    return kind = "ise"
+end function
+
+sub whenBranchAssignment_Str_k_(kind as String)
+    result = {value: "none"}
+    runIt_SuspendFunction0_k_(whenBranchAssignment_slambda_create_AnyN_Str_ContinuationAnyNN_k_(result, kind, invalid))
+end sub
+
+function whenBranchAssignment_slambda_create_AnyN_Str_ContinuationAnyNN_k_(_result as Dynamic, _kind as String, resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_Continuation_k_ = this.invoke_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_Continuation_k_ = this.create_Continuation_k_
+    this.__proto = ["whenBranchAssignment_slambda", "SuspendFunction0", this.__proto]
+    this.__type = "whenBranchAssignment_slambda"
+    this.invoke_Continuation_k_ = whenBranchAssignment_slambda_invoke_Continuation_k_
+    this.doResume_k_ = whenBranchAssignment_slambda_doResume_k_
+    this.create_Continuation_k_ = whenBranchAssignment_slambda_create_Continuation_k_
+    this._result = _result
+    this._kind = _kind
+    return this
+end function
+
+function whenBranchAssignment_slambda_invoke_Continuation_k_(_completion as Object) as Object
+    tmp = m.create_Continuation_k_(_completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function whenBranchAssignment_slambda_doResume_k_() as Dynamic
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(3)
+                m.__when_tmp00 = invalid
+                if kindIsIse_Str_k_(m._kind) then
+                    m.__set_state(1)
+                    suspendResult = step_ContinuationI_k_(m)
+                    if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                        return suspendResult
+                    end if
+                    continue while
+                else
+                    m.__when_tmp00 = (m._result.value = "else")
+
+                    m.__set_state(2)
+                    continue while
+                end if
+            else if __kotlin_identityEquals(tmp, 1) then
+                m.__when_tmp00 = suspendResult
+                m.__set_state(2)
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+                                return m.__when_tmp00
+            else if __kotlin_identityEquals(tmp, 3) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 3) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function whenBranchAssignment_slambda_create_Continuation_k_(completion as Object) as Object
+    i = whenBranchAssignment_slambda_create_AnyN_Str_ContinuationAnyNN_k_(m._result, m._kind, completion)
+    return i
+end function

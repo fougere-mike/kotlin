@@ -1,0 +1,174 @@
+// --- File: suspendWrapAssignmentArmKt.brs ---
+sub runIt_SuspendFunction0_k_(block as Object)
+end sub
+
+function raise_Str_ContinuationI_k_(kind as String, _completion as Object) as Object
+    if kind = "ise" then
+        throw IllegalStateException_create_StrN_k_("ise")
+    end if
+    return 0
+end function
+
+sub catchArmAssignment_k_()
+    result = {value: "none"}
+    runIt_SuspendFunction0_k_(catchArmAssignment_slambda_create_AnyN_ContinuationAnyNN_k_(result, invalid))
+end sub
+
+sub tryArmAssignment_k_()
+    result = {value: "none"}
+    runIt_SuspendFunction0_k_(tryArmAssignment_slambda_create_AnyN_ContinuationAnyNN_k_(result, invalid))
+end sub
+
+function catchArmAssignment_slambda_create_AnyN_ContinuationAnyNN_k_(_result as Dynamic, resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_Continuation_k_ = this.invoke_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_Continuation_k_ = this.create_Continuation_k_
+    this.__proto = ["catchArmAssignment_slambda", "SuspendFunction0", this.__proto]
+    this.__type = "catchArmAssignment_slambda"
+    this.invoke_Continuation_k_ = catchArmAssignment_slambda_invoke_Continuation_k_
+    this.doResume_k_ = catchArmAssignment_slambda_doResume_k_
+    this.create_Continuation_k_ = catchArmAssignment_slambda_create_Continuation_k_
+    this._result = _result
+    return this
+end function
+
+function catchArmAssignment_slambda_invoke_Continuation_k_(_completion as Object) as Object
+    tmp = m.create_Continuation_k_(_completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function catchArmAssignment_slambda_doResume_k_() as Dynamic
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(3)
+                m.__try_tmp00 = invalid
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = raise_Str_ContinuationI_k_("ise", m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                m.__try_tmp00 = suspendResult
+                m.__set_exceptionState(3)
+                m.__set_state(4)
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+                m.__set_exceptionState(3)
+                if __kotlin_isInstanceOf(m.__get_exception(), "IllegalStateException") then
+                    e = m.__get_exception()
+                    m.__try_tmp00 = (m._result.value = "caught")
+
+                    m.__set_state(4)
+                    continue while
+                else
+                    throw m.__get_exception()
+                end if
+            else if __kotlin_identityEquals(tmp, 3) then
+                throw m.__get_exception()
+            else if __kotlin_identityEquals(tmp, 4) then
+                m.__set_exceptionState(3)
+                                return m.__try_tmp00
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 3) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function catchArmAssignment_slambda_create_Continuation_k_(completion as Object) as Object
+    i = catchArmAssignment_slambda_create_AnyN_ContinuationAnyNN_k_(m._result, completion)
+    return i
+end function
+
+function tryArmAssignment_slambda_create_AnyN_ContinuationAnyNN_k_(_result as Dynamic, resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_Continuation_k_ = this.invoke_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_Continuation_k_ = this.create_Continuation_k_
+    this.__proto = ["tryArmAssignment_slambda", "SuspendFunction0", this.__proto]
+    this.__type = "tryArmAssignment_slambda"
+    this.invoke_Continuation_k_ = tryArmAssignment_slambda_invoke_Continuation_k_
+    this.doResume_k_ = tryArmAssignment_slambda_doResume_k_
+    this.create_Continuation_k_ = tryArmAssignment_slambda_create_Continuation_k_
+    this._result = _result
+    return this
+end function
+
+function tryArmAssignment_slambda_invoke_Continuation_k_(_completion as Object) as Object
+    tmp = m.create_Continuation_k_(_completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function tryArmAssignment_slambda_doResume_k_() as Dynamic
+    ARGUMENT = invalid
+    ARGUMENT_1 = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(3)
+                m.__try_tmp10 = invalid
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = raise_Str_ContinuationI_k_("ok", m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                ARGUMENT = suspendResult
+                ARGUMENT_1 = ("r:" + __kotlin_numToStr_I_k_(ARGUMENT))
+                m.__try_tmp10 = (m._result.value = ARGUMENT_1)
+                m.__set_exceptionState(3)
+                m.__set_state(4)
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+                m.__set_exceptionState(3)
+                if __kotlin_isInstanceOf(m.__get_exception(), "IllegalStateException") then
+                    e = m.__get_exception()
+                    m.__try_tmp10 = -1
+
+                    m.__set_state(4)
+                    continue while
+                else
+                    throw m.__get_exception()
+                end if
+            else if __kotlin_identityEquals(tmp, 3) then
+                throw m.__get_exception()
+            else if __kotlin_identityEquals(tmp, 4) then
+                m.__set_exceptionState(3)
+                                return m.__try_tmp10
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 3) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function tryArmAssignment_slambda_create_Continuation_k_(completion as Object) as Object
+    i = tryArmAssignment_slambda_create_AnyN_ContinuationAnyNN_k_(m._result, completion)
+    return i
+end function

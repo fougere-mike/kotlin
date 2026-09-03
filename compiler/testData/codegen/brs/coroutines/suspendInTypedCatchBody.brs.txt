@@ -1,0 +1,98 @@
+// --- File: suspendInTypedCatchBodyKt.brs ---
+function tick_ContinuationI_k_(_completion as Object) as Object
+    return 1
+end function
+
+function raise_Str_ContinuationI_k_(kind as String, _completion as Object) as Object
+    if kind = "ise" then
+        throw IllegalStateException_create_StrN_k_("ise")
+    end if
+    return 0
+end function
+
+function typedCatchBodySuspends_ContinuationStr_k_(_completion as Object) as Object
+    tmp = _typedCatchBodySuspendsCOROUTINE__create_ContinuationStr_k_(_completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function _typedCatchBodySuspendsCOROUTINE__create_ContinuationStr_k_(resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["_typedCatchBodySuspendsCOROUTINE_", this.__proto]
+    this.__type = "_typedCatchBodySuspendsCOROUTINE_"
+    this.doResume_k_ = _typedCatchBodySuspendsCOROUTINE__doResume_k_
+    return this
+end function
+
+function _typedCatchBodySuspendsCOROUTINE__doResume_k_() as Dynamic
+    ARGUMENT = invalid
+    ARGUMENT_1 = invalid
+    ARGUMENT_2 = invalid
+    ARGUMENT_3 = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(5)
+                m.r0 = "none"
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = raise_Str_ContinuationI_k_("ise", m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                ARGUMENT = suspendResult
+                m.r0 = ("t:" + __kotlin_numToStr_I_k_(ARGUMENT))
+                m.__set_exceptionState(5)
+                m.__set_state(4)
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+                m.__set_exceptionState(5)
+                if __kotlin_isInstanceOf(m.__get_exception(), "IllegalStateException") then
+                    m.e1 = m.__get_exception()
+                    m.__set_state(3)
+                    suspendResult = tick_ContinuationI_k_(m)
+                    if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                        return suspendResult
+                    end if
+                    continue while
+                else
+                    throw m.__get_exception()
+                end if
+            else if __kotlin_identityEquals(tmp, 3) then
+                ARGUMENT_1 = suspendResult
+                ARGUMENT_2 = ("c:" + __kotlin_numToStr_I_k_(ARGUMENT_1))
+                ARGUMENT_3 = (ARGUMENT_2 + ":")
+                tmp0_elvis_lhs = m.e1.__get_message()
+                __when_tmp0 = invalid
+                if tmp0_elvis_lhs = invalid then
+                    __when_tmp0 = ""
+                else
+                    __when_tmp0 = tmp0_elvis_lhs
+                end if
+                m.r0 = (ARGUMENT_3 + __when_tmp0)
+
+                m.__set_state(4)
+                continue while
+            else if __kotlin_identityEquals(tmp, 4) then
+                m.__set_exceptionState(5)
+                                return m.r0
+            else if __kotlin_identityEquals(tmp, 5) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 5) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
