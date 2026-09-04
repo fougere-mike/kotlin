@@ -291,15 +291,9 @@ class IrExpressionToBrsTransformer(
             expression.receiver?.let { it.accept(this, data) } ?: BrsMRef()
         }
 
-        // Sanitize field name - LocalDeclarationsLowering uses $ prefix for captured vars.
-        // Also handle special names like <this> which occur for extension receiver parameters.
-        val rawFieldName = field.name.asString()
-        val fieldName = when {
-            rawFieldName == "<this>" -> "__this"
-            rawFieldName.startsWith("<") && rawFieldName.endsWith(">") ->
-                rawFieldName.removePrefix("<").removeSuffix(">").replace("-", "_").replace(" ", "_")
-            else -> rawFieldName.replace("$", "_")
-        }
+        // The emitted key (shared rule — see sanitizeFieldName): LocalDeclarationsLowering's
+        // `$` capture prefix becomes `_`; special names like <this> are de-bracketed.
+        val fieldName = sanitizeFieldName(field.name.asString())
 
         // Check if accessing outer class field from inner class
         // The receiver will be the outer class reference
@@ -353,15 +347,9 @@ class IrExpressionToBrsTransformer(
             expression.receiver?.let { it.accept(this, data) } ?: BrsMRef()
         }
 
-        // Sanitize field name - LocalDeclarationsLowering uses $ prefix for captured vars.
-        // Also handle special names like <this> which occur for extension receiver parameters.
-        val rawFieldName = field.name.asString()
-        val fieldName = when {
-            rawFieldName == "<this>" -> "__this"
-            rawFieldName.startsWith("<") && rawFieldName.endsWith(">") ->
-                rawFieldName.removePrefix("<").removeSuffix(">").replace("-", "_").replace(" ", "_")
-            else -> rawFieldName.replace("$", "_")
-        }
+        // The emitted key (shared rule — see sanitizeFieldName): LocalDeclarationsLowering's
+        // `$` capture prefix becomes `_`; special names like <this> are de-bracketed.
+        val fieldName = sanitizeFieldName(field.name.asString())
 
         // @SG*Field-annotated component fields live on the NODE, not the component
         // m-scope object: backing-field writes (setter bodies) must write m.top.field.

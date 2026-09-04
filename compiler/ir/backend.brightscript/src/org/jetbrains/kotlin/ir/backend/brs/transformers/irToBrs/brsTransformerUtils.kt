@@ -103,6 +103,24 @@ fun sanitizeParameterName(name: String): String {
 }
 
 /**
+ * The BrightScript key an [org.jetbrains.kotlin.ir.declarations.IrField] is
+ * emitted under (visitGetField/visitSetField, class-initializer emission):
+ * IR-special names (`<this>`, `<iterator>`, …) are de-bracketed, and the `$`
+ * LocalDeclarationsLowering puts on capture fields becomes `_`.
+ *
+ * ONE rule, shared: BrsSuspendFunctionsLowering checks coroutine-class field
+ * names against the CoroutineImpl base's fields with this same function
+ * (renameFieldsShadowingCoroutineBase) — a copy of the rule that drifted
+ * would silently reopen the `i.state = state` clobber.
+ */
+fun sanitizeFieldName(rawName: String): String = when {
+    rawName == "<this>" -> "__this"
+    rawName.startsWith("<") && rawName.endsWith(">") ->
+        rawName.removePrefix("<").removeSuffix(">").replace("-", "_").replace(" ", "_")
+    else -> rawName.replace("$", "_")
+}
+
+/**
  * Sanitize property accessor names for BrightScript.
  * Kotlin IR uses names like <get-foo> and <set-foo> for property accessors.
  * We use "__get_" and "__set_" prefixes (double underscore) to clearly distinguish

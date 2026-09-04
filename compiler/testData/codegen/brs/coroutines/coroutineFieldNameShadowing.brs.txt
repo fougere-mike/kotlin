@@ -1,0 +1,411 @@
+// --- File: coroutineFieldNameShadowingKt.brs ---
+function pause_ContinuationI_k_(_completion as Object) as Object
+    return 1
+end function
+
+function applyTwice_I_SuspendFunction1II_ContinuationI_k_(value as Integer, block as Object, _completion as Object) as Object
+    tmp = _applyTwiceCOROUTINE__create_I_SuspendFunction1II_ContinuationI_k_(value, block, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function lambdaParams_ContinuationI_k_(_completion as Object) as Object
+    tmp = _lambdaParamsCOROUTINE__create_ContinuationI_k_(_completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function namedParams_I_I_ContinuationI_k_(state as Integer, exceptionState as Integer, _completion as Object) as Object
+    tmp = _namedParamsCOROUTINE__create_I_I_ContinuationI_k_(state, exceptionState, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function capturedContext_Str_k_(context as String) as Object
+    return capturedContext_slambda_create_Str_ContinuationAnyNN_k_(context, invalid)
+end function
+
+function lambdaParams_slambda_create_ContinuationAnyNN_k_(resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_AnyN_Continuation_k_ = this.invoke_AnyN_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_AnyN_Continuation_k_ = this.create_AnyN_Continuation_k_
+    this.__proto = ["lambdaParams_slambda", "SuspendFunction1", this.__proto]
+    this.__type = "lambdaParams_slambda"
+    this.invoke_AnyN_Continuation_k_ = lambdaParams_slambda_invoke_AnyN_Continuation_k_
+    this.doResume_k_ = lambdaParams_slambda_doResume_k_
+    this.create_AnyN_Continuation_k_ = lambdaParams_slambda_create_AnyN_Continuation_k_
+    return this
+end function
+
+function lambdaParams_slambda_invoke_AnyN_Continuation_k_(state as Integer, _completion as Object) as Object
+    tmp = m.create_AnyN_Continuation_k_(state, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function lambdaParams_slambda_doResume_k_() as Dynamic
+    ARGUMENT = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = pause_ContinuationI_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                ARGUMENT = suspendResult
+                                return ARGUMENT + m.state_
+            else if __kotlin_identityEquals(tmp, 2) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 2) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function lambdaParams_slambda_create_AnyN_Continuation_k_(state as Dynamic, completion as Object) as Object
+    i = lambdaParams_slambda_create_ContinuationAnyNN_k_(completion)
+    i.state_ = state
+    return i
+end function
+
+function lambdaParams_slambda_1_create_ContinuationAnyNN_k_(resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_AnyN_Continuation_k_ = this.invoke_AnyN_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_AnyN_Continuation_k_ = this.create_AnyN_Continuation_k_
+    this.__proto = ["lambdaParams_slambda_1", "SuspendFunction1", this.__proto]
+    this.__type = "lambdaParams_slambda_1"
+    this.invoke_AnyN_Continuation_k_ = lambdaParams_slambda_1_invoke_AnyN_Continuation_k_
+    this.doResume_k_ = lambdaParams_slambda_1_doResume_k_
+    this.create_AnyN_Continuation_k_ = lambdaParams_slambda_1_create_AnyN_Continuation_k_
+    return this
+end function
+
+function lambdaParams_slambda_1_invoke_AnyN_Continuation_k_(Result as Integer, _completion as Object) as Object
+    tmp = m.create_AnyN_Continuation_k_(Result, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function lambdaParams_slambda_1_doResume_k_() as Dynamic
+    ARGUMENT = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = pause_ContinuationI_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                ARGUMENT = suspendResult
+                                return ARGUMENT + m.Result_
+            else if __kotlin_identityEquals(tmp, 2) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 2) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function lambdaParams_slambda_1_create_AnyN_Continuation_k_(Result as Dynamic, completion as Object) as Object
+    i = lambdaParams_slambda_1_create_ContinuationAnyNN_k_(completion)
+    i.Result_ = Result
+    return i
+end function
+
+function lambdaParams_slambda_2_create_ContinuationAnyNN_k_(resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_AnyN_Continuation_k_ = this.invoke_AnyN_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_AnyN_Continuation_k_ = this.create_AnyN_Continuation_k_
+    this.__proto = ["lambdaParams_slambda_2", "SuspendFunction1", this.__proto]
+    this.__type = "lambdaParams_slambda_2"
+    this.invoke_AnyN_Continuation_k_ = lambdaParams_slambda_2_invoke_AnyN_Continuation_k_
+    this.doResume_k_ = lambdaParams_slambda_2_doResume_k_
+    this.create_AnyN_Continuation_k_ = lambdaParams_slambda_2_create_AnyN_Continuation_k_
+    return this
+end function
+
+function lambdaParams_slambda_2_invoke_AnyN_Continuation_k_(exception as Integer, _completion as Object) as Object
+    tmp = m.create_AnyN_Continuation_k_(exception, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function lambdaParams_slambda_2_doResume_k_() as Dynamic
+    ARGUMENT = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = pause_ContinuationI_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                ARGUMENT = suspendResult
+                                return ARGUMENT + m.exception_
+            else if __kotlin_identityEquals(tmp, 2) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 2) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function lambdaParams_slambda_2_create_AnyN_Continuation_k_(exception as Dynamic, completion as Object) as Object
+    i = lambdaParams_slambda_2_create_ContinuationAnyNN_k_(completion)
+    i.exception_ = exception
+    return i
+end function
+
+function capturedContext_slambda_create_Str_ContinuationAnyNN_k_(_context as String, resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_Continuation_k_ = this.invoke_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_Continuation_k_ = this.create_Continuation_k_
+    this.__proto = ["capturedContext_slambda", "SuspendFunction0", this.__proto]
+    this.__type = "capturedContext_slambda"
+    this.invoke_Continuation_k_ = capturedContext_slambda_invoke_Continuation_k_
+    this.doResume_k_ = capturedContext_slambda_doResume_k_
+    this.create_Continuation_k_ = capturedContext_slambda_create_Continuation_k_
+    this._context_ = _context
+    return this
+end function
+
+function capturedContext_slambda_invoke_Continuation_k_(_completion as Object) as Object
+    tmp = m.create_Continuation_k_(_completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function capturedContext_slambda_doResume_k_() as Dynamic
+    n = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = pause_ContinuationI_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                n = suspendResult
+                                return m._context_ + __kotlin_numToStr_I_k_(n)
+            else if __kotlin_identityEquals(tmp, 2) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 2) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function capturedContext_slambda_create_Continuation_k_(completion as Object) as Object
+    i = capturedContext_slambda_create_Str_ContinuationAnyNN_k_(m._context_, completion)
+    return i
+end function
+
+function _applyTwiceCOROUTINE__create_I_SuspendFunction1II_ContinuationI_k_(value as Integer, block as Object, resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["_applyTwiceCOROUTINE_", this.__proto]
+    this.__type = "_applyTwiceCOROUTINE_"
+    this.doResume_k_ = _applyTwiceCOROUTINE__doResume_k_
+    this.value = value
+    this.block = block
+    return this
+end function
+
+function _applyTwiceCOROUTINE__doResume_k_() as Dynamic
+    once = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(3)
+                m.__set_state(1)
+                suspendResult = m.block.invoke_AnyN_Continuation_k_(m.value, m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                once = suspendResult
+                m.__set_state(2)
+                suspendResult = m.block.invoke_AnyN_Continuation_k_(once, m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+                                return suspendResult
+            else if __kotlin_identityEquals(tmp, 3) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 3) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function _lambdaParamsCOROUTINE__create_ContinuationI_k_(resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["_lambdaParamsCOROUTINE_", this.__proto]
+    this.__type = "_lambdaParamsCOROUTINE_"
+    this.doResume_k_ = _lambdaParamsCOROUTINE__doResume_k_
+    return this
+end function
+
+function _lambdaParamsCOROUTINE__doResume_k_() as Dynamic
+    c = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(4)
+                m.__set_state(1)
+                suspendResult = applyTwice_I_SuspendFunction1II_ContinuationI_k_(1, lambdaParams_slambda_create_ContinuationAnyNN_k_(invalid), m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                m.a1 = suspendResult
+                m.__set_state(2)
+                suspendResult = applyTwice_I_SuspendFunction1II_ContinuationI_k_(2, lambdaParams_slambda_1_create_ContinuationAnyNN_k_(invalid), m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+                m.b0 = suspendResult
+                m.__set_state(3)
+                suspendResult = applyTwice_I_SuspendFunction1II_ContinuationI_k_(3, lambdaParams_slambda_2_create_ContinuationAnyNN_k_(invalid), m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 3) then
+                c = suspendResult
+                                return (m.a1 + m.b0) + c
+            else if __kotlin_identityEquals(tmp, 4) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 4) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function _namedParamsCOROUTINE__create_I_I_ContinuationI_k_(state as Integer, exceptionState as Integer, resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["_namedParamsCOROUTINE_", this.__proto]
+    this.__type = "_namedParamsCOROUTINE_"
+    this.doResume_k_ = _namedParamsCOROUTINE__doResume_k_
+    this.state_ = state
+    this.exceptionState_ = exceptionState
+    return this
+end function
+
+function _namedParamsCOROUTINE__doResume_k_() as Dynamic
+    first = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = pause_ContinuationI_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                first = suspendResult
+                                return (first + m.state_) + m.exceptionState_
+            else if __kotlin_identityEquals(tmp, 2) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 2) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function

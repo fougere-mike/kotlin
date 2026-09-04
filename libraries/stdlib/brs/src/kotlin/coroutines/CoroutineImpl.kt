@@ -44,6 +44,16 @@ internal abstract class InterceptedCoroutine : Continuation<Any?> {
  * Generated coroutine classes extend this class and implement [doResume]
  * to handle their specific state machine logic.
  *
+ * FIELD NAMESPACE LAW: a generated coroutine class is flattened onto ONE
+ * BrightScript AA with this base, so the data fields declared here (and in
+ * [InterceptedCoroutine]) share their keys with every parameter, capture and
+ * spilled local the suspend lowering stores on the subclass. The lowering
+ * renames shadowing subclass fields against a hand-mirrored list —
+ * `COROUTINE_BASE_FIELD_KEYS` in BrsSuspendFunctionsLowering (the lazy IR it
+ * sees hides private members, so it cannot read the private fields from here).
+ * Divergence law: add or rename a field in either class → update that list in
+ * the same commit.
+ *
  * @property resultContinuation The continuation to call when this coroutine completes.
  */
 @SinceKotlin("1.3")

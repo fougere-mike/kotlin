@@ -73,6 +73,7 @@ import test.coroutines.scopeFunctionTests
 import test.coroutines.withTimeoutTests
 import test.coroutines.scopeWireTests
 import test.coroutines.suspendTypedCatchTests
+import test.coroutines.coroutineFieldShadowingTests
 
 // Flow tests (kotlin-flow-brs klib)
 import test.coroutines.flow.flowKlibSmokeTests
@@ -153,6 +154,7 @@ fun main() {
         withTimeoutTests()
         scopeWireTests()
         suspendTypedCatchTests()
+        coroutineFieldShadowingTests()
 
         // Flow (kotlin-flow-brs klib)
         flowKlibSmokeTests()

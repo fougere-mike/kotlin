@@ -2722,15 +2722,9 @@ class IrToBrsTransformer(
         // properties observes the first initialized and the second not yet.
         val initializedFields = mutableSetOf<String>()
 
-        // Sanitize field name for special names like <this>. For delegated properties,
-        // the backing field is named <propertyName>$delegate (e.g., lazyValue$delegate).
-        fun sanitizeFieldName(rawName: String): String = when {
-            rawName == "<this>" -> "__this"
-            rawName.startsWith("<") && rawName.endsWith(">") ->
-                rawName.removePrefix("<").removeSuffix(">").replace("-", "_").replace(" ", "_")
-            else -> rawName.replace("$", "_")
-        }
-
+        // Field keys use the shared sanitizeFieldName rule (brsTransformerUtils): special
+        // names like <this> de-bracket; a delegated property's backing field
+        // <propertyName>$delegate (e.g., lazyValue$delegate) gets its `$` replaced.
         fun emitFieldInitializer(field: IrField) {
             val fieldName = sanitizeFieldName(field.name.asString())
             if (fieldName in initializedFields) return

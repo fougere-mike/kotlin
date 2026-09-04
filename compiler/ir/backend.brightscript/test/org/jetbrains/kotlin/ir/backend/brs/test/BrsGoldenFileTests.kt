@@ -206,6 +206,14 @@ class BrsCoroutineGoldenFileTests : AbstractBrsGoldenFileTest() {
     @Test
     fun unitParameterType() = runTest("coroutines/unitParameterType.kt")
 
+    // Coroutine-class fields share ONE AA with the CoroutineImpl base: a suspend
+    // lambda parameter named `state` (or `Result`, `exception`, a captured
+    // `context` …) was stored on the base's own slot and clobbered the state
+    // machine — "Type Mismatch. Unable to cast roAssociativeArray to Integer"
+    // (TestScreen flagship, 2026-09-04). Shadowing subclass fields get `_` appended.
+    @Test
+    fun coroutineFieldNameShadowing() = runTest("coroutines/coroutineFieldNameShadowing.kt")
+
     // IR-special local names (<iterator>) lifted to state-machine fields must be
     // sanitized — the raw name is a BrightScript syntax error (flow cold core defect).
     @Test

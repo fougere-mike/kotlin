@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
 import org.jetbrains.kotlin.ir.backend.brs.lower.BrsDeclarationOrigin
+import org.jetbrains.kotlin.ir.backend.brs.transformers.irToBrs.sanitizeFieldName
 import org.jetbrains.kotlin.ir.backend.brs.transformers.irToBrs.sanitizeParameterName
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.declarations.*
@@ -42,6 +43,27 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.utils.DFS
 import org.jetbrains.kotlin.backend.common.lower.WebCallableReferenceLowering
 import org.jetbrains.kotlin.util.OperatorNameConventions
+
+/**
+ * Object keys the emitter writes on EVERY class instance (see the create-function
+ * emission in IrToBrsTransformer): part of a coroutine object's namespace before
+ * any user-named field lands on it.
+ */
+private val EMITTER_OBJECT_KEYS: Set<String> = setOf("__type", "__proto", "__id", "_super")
+
+/**
+ * Emitted keys (lower-cased) of the data fields every coroutine object inherits
+ * from `kotlin.coroutines.CoroutineImpl` and `InterceptedCoroutine`
+ * (libraries/stdlib/brs/src/kotlin/coroutines/CoroutineImpl.kt). MIRRORED by
+ * hand because the lazy IR the base class arrives as hides its private fields
+ * (see [BrsSuspendFunctionsLowering.coroutineBaseFieldKeys]). Divergence law:
+ * a field added to either class lands here in the same commit — CoroutineImpl.kt
+ * carries the cross-reference.
+ */
+private val COROUTINE_BASE_FIELD_KEYS: Set<String> = setOf(
+    "resultcontinuation", "state", "exceptionstate", "result", "exception", "finallypath", "_context",
+    "_intercepted",
+)
 
 /**
  * Transforms suspend functions into CoroutineImpl instances with state machines.
@@ -92,6 +114,7 @@ class BrsSuspendFunctionsLowering(
                     prepareFunctionReferenceCapturedFields(function)
                 }
                 val coroutine = buildCoroutine(function, isLoweredSuspendLambda)
+                renameFieldsShadowingCoroutineBase(coroutine)
                 if (isLoweredSuspendLambda) {
                     // Suspend function values (lambdas and ::refs) are called through factory method <create>
                     null
@@ -99,6 +122,88 @@ class BrsSuspendFunctionsLowering(
                     coroutine
                 }
             }
+        }
+    }
+
+    /**
+     * Emitted (lower-cased — BrightScript is case-insensitive) keys every
+     * coroutine object already carries before the lowering adds its own fields.
+     *
+     * Two sources, unioned. [COROUTINE_BASE_FIELD_KEYS] mirrors the data fields
+     * of `kotlin.coroutines.CoroutineImpl` and `InterceptedCoroutine` by hand,
+     * because the base class reaches this lowering as LAZY FIR-backed IR that
+     * exposes only its non-private members — the private `_context`,
+     * `_intercepted` and `resultContinuation` fields, exactly the `_`-prefixed
+     * ones a LocalDeclarationsLowering capture (`$name` → `_name`) can shadow,
+     * are invisible to an IR walk. The IR walk over the base chain is kept on
+     * top so a non-private field added to CoroutineImpl later is covered
+     * without touching this file. Empty when CoroutineImpl is unresolvable
+     * (stdlib compilation, where no state machines are generated anyway).
+     */
+    private val coroutineBaseFieldKeys: Set<String> by lazy {
+        val keys = HashSet<String>()
+        var klass: IrClass? = coroutineSymbols.coroutineImpl?.owner
+        while (klass != null) {
+            for (declaration in klass.declarations) {
+                val field = when (declaration) {
+                    is IrField -> declaration
+                    is IrProperty -> declaration.backingField
+                    else -> null
+                } ?: continue
+                keys.add(sanitizeFieldName(field.name.asString()).lowercase())
+            }
+            klass = klass.superClass
+        }
+        if (keys.isNotEmpty()) {
+            keys.addAll(COROUTINE_BASE_FIELD_KEYS)
+            keys.addAll(EMITTER_OBJECT_KEYS)
+        }
+        keys
+    }
+
+    /**
+     * A coroutine class is flattened onto ONE BrightScript AA together with its
+     * CoroutineImpl base, so every field this lowering adds — the suspend
+     * function's parameters (stored under their raw names by the common
+     * lowering's create method), its LocalDeclarationsLowering captures
+     * (`$name`, emitted `_name`) and its spilled locals (`name<n>`) — shares a
+     * namespace with the base's own slots. A lambda parameter named `state`
+     * therefore landed on the state machine's dispatch index: `i.state = <value>`
+     * in create, and the next `__get_state()` threw "Type Mismatch. Unable to
+     * cast roAssociativeArray to Integer" (device finding 2026-09-04, TestScreen
+     * flagship: `collectLatest { state -> ... }`). `Result`, `exception`, and a
+     * captured local `context` (→ `_context`, the coroutine-context slot) fail
+     * the same way.
+     *
+     * Renames the SUBCLASS field, never the base: any field whose emitted key
+     * ([sanitizeFieldName] — the emitter's rule, one shared function) is
+     * already taken by the base chain, the emitter's object keys, or an earlier
+     * field of this class gets `_` appended until unique (the
+     * sanitizeParameterName reserved-keyword convention). Field accesses are
+     * symbol-based (IrGetField/IrSetField in the state machine and the create
+     * method's stores), so renaming the IrField reaches every emission site;
+     * the one NAME-keyed consumer, [BrsIrBackendContext.sharedVariableClassBoxFields],
+     * is re-keyed here. Method slots (`doResume_k_`, `equals`, …) are outside
+     * this defence — no plausible parameter name reaches them.
+     * Golden: coroutines/coroutineFieldNameShadowing.
+     */
+    private fun renameFieldsShadowingCoroutineBase(coroutineClass: IrClass) {
+        val reserved = coroutineBaseFieldKeys
+        if (reserved.isEmpty()) return
+        val taken = HashSet(reserved)
+        for (field in coroutineClass.declarations.filterIsInstance<IrField>()) {
+            val emitted = sanitizeFieldName(field.name.asString())
+            if (taken.add(emitted.lowercase())) continue
+            // Special names (<unused var>, …) cannot round-trip through Name.identifier;
+            // rename from their emitted form instead (same key, no angle brackets).
+            var candidate = if (field.name.isSpecial) emitted else field.name.asString()
+            do {
+                candidate += "_"
+            } while (!taken.add(sanitizeFieldName(candidate).lowercase()))
+            if (brsContext.sharedVariableClassBoxFields.remove(coroutineClass to emitted)) {
+                brsContext.sharedVariableClassBoxFields.add(coroutineClass to sanitizeFieldName(candidate))
+            }
+            field.name = Name.identifier(candidate)
         }
     }
 
