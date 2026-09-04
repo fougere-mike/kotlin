@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Same build, device, prefix, and gate rules as plan A (`./rebuild.sh` only; `e2e:`/`plugin:` prefixes; Co-Authored-By trailer; gates never drop). Plan A's final gates are the baseline: goldens 104, FIR 232, stdlib 614/63, E2E 115/11.
+- Same build, device, prefix, and gate rules as plan A (`./rebuild.sh` only; `e2e:`/`plugin:` prefixes; a SEPARATE `brs-prebuilt:` commit for every stdlib source change; Co-Authored-By trailer; gates never drop; push only on Mike's word). Plan A's final gates are the baseline: goldens 104, FIR 232, stdlib 614/63, E2E 115/11.
 - FIR diagnostics require the manual generator step after editing `FirBrsDiagnosticsList.kt`: `./gradlew :compiler:fir:checkers:checkers.brs:generateCheckersComponents --no-configuration-cache` then `./gradlew :compiler:fir:checkers:generateCheckersComponents --no-configuration-cache`; commit both generated files; add default messages AND the harness inverse-template entries (rendered form, single `'`).
 - Mirror law: the FIR component predicate (`BrsComponentTypes`) and the backend predicates (`BrsIntrinsics.isSceneGraphComponent`, `BrsComponentExtractor.isComponent`) carry cross-referencing comments; a change lands in all in one commit.
 - Task components take NO constructor inputs (FIR error); the zero-argument constructor call is lowered for every concrete component kind.
@@ -106,8 +106,12 @@ In `BrsStandardClassIds.Annotations`, next to the `SG*Field` ids:
 
 Run: `./rebuild.sh` — success.
 ```bash
-git add libraries/stdlib/brs/src core/compiler.common.brightscript libraries/stdlib/brs-prebuilt
+git add libraries/stdlib/brs/src core/compiler.common.brightscript
 git commit -m "stdlib: @SGComponentBuilder annotation + kotlinLifecycleMarkInputsReady
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
+git add libraries/stdlib/brs-prebuilt
+git commit -m "brs-prebuilt: regenerate stdlib klib (SGComponentBuilder, marker writer)
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```

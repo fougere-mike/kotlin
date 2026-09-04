@@ -19,7 +19,7 @@
 - Include-closure law: a name-registered observer handler lives in the SAME FILE as its registration; new stdlib entry points reached from generated code are bare-named `@BrsStatic`; every emitted call goes through `createFunctionCall` (records the dependency) EXCEPT super calls into a user base component (see Task 3 — recording would pull the base's script into the leaf's XML and collide two `sub init()`s).
 - Hooks are `onStart` (suspend) and `onStop` (plain); parent-side calls are `retire(node)`/`revive(node)`. `onReady`/`onDestroy` are rejected names (spec §1 decision 7).
 - Gates never drop: golden tests 100 → 100 + new; FIR diagnostics 232 (untouched here); stdlib device suite 610/62 + new; E2E 104/10 + Suite 11 + 2 Suite 8 tests; `validateComponentIncludes` strict, 0 findings.
-- Commit prefixes: `spike:`/`spikes:` (spike package / executed findings), `stdlib:`, `brs:` (compiler), `docs:`; roku-test-app commits use `e2e:`; kotlin-roku commits use `plugin:`. Every commit ends with the `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>` trailer.
+- Commit prefixes: `spike:`/`spikes:` (spike package / executed findings), `stdlib:`, `brs:` (compiler), `docs:`; EVERY stdlib source change pairs with a SEPARATE `brs-prebuilt: regenerate stdlib klib (<reason>)` commit (the regenerated klib under `libraries/stdlib/brs-prebuilt` — check `git status` shows it changed); roku-test-app commits use `e2e:`; kotlin-roku commits use `plugin:`. Every commit ends with the `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>` trailer. Push ONLY when Mike says so.
 
 ---
 
@@ -840,8 +840,16 @@ Expected: every component golden's init gains/renames to `__kotlinComponentAttac
 - [ ] **Step 6: Commit**
 
 ```bash
-git add libraries/stdlib/brs/src/kotlin/brs/lifecycle compiler/ir/backend.brightscript compiler/testData/codegen/brs libraries/stdlib/brs-prebuilt
-git commit -m "stdlib+brs: unconditional __kotlinComponentAttach in every render component init (absorbs pump attach)
+git add libraries/stdlib/brs/src/kotlin/brs/lifecycle
+git commit -m "stdlib: __kotlinComponentAttach — the unconditional lifecycle attach (absorbs pump attach)
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
+git add libraries/stdlib/brs-prebuilt
+git commit -m "brs-prebuilt: regenerate stdlib klib (__kotlinComponentAttach)
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
+git add compiler/ir/backend.brightscript compiler/testData/codegen/brs
+git commit -m "brs: inject __kotlinComponentAttach unconditionally in every render component init
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
@@ -1257,8 +1265,12 @@ Expected: the new suite reports 4 passed; total 614 tests / 63 suites; sentinel 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add libraries/stdlib/brs/src libraries/stdlib/brs/test/kotlin libraries/stdlib/brs-prebuilt
+git add libraries/stdlib/brs/src libraries/stdlib/brs/test/kotlin
 git commit -m "stdlib: ComponentBase.onStart/onStop, lifecycle registry, awaitReady gate, hasFunc binding
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
+git add libraries/stdlib/brs-prebuilt
+git commit -m "brs-prebuilt: regenerate stdlib klib (lifecycle hooks + awaitReady)
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
@@ -1428,8 +1440,12 @@ Expected: 614/63 green (the retire/revive ISE tests now exercise `hasFunc` on a 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add libraries/stdlib/brs/src libraries/stdlib/brs-prebuilt
+git add libraries/stdlib/brs/src
 git commit -m "stdlib: retire/revive impls over callFunc + hasFunc guard, component scope reset, exposeScope re-callable after retire
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
+git add libraries/stdlib/brs-prebuilt
+git commit -m "brs-prebuilt: regenerate stdlib klib (retire/revive)
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
