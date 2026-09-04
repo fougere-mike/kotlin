@@ -135,8 +135,31 @@ timing). `reparent(newParent, adjustTransform)` moves a node in ONE call (§8 Q7
 `createChild(nodeType)` creates AND appends. Scene `<children>` are "hidden elements used
 by the SceneGraph framework" that `getChild()` on the Scene does not return — what
 `getParent()` answers for a scene's direct child is therefore an open question for
-spec 2's walk (§8 Q5b). The `change` field is NOT on these pages: it lives on the
-SceneGraph **Node** class page (not yet downloaded — §10).
+spec 2's walk (§8 Q5b).
+
+**Roku docs of record, second batch (`Node.html`, `ifSGNodeDict.html`, `ifSGNodeField.html`,
+added 2026-09-04):**
+
+- **`change` field (Node):** an AA `{Index1, Index2, Operation}` on the PARENT node,
+  READ_ONLY, "recorded in this field if, and only if, this field has been observed".
+  Operations: `none`, `insert`, `add`, `remove` (index1..index2), `set` (replace at
+  index1), `clear`, `move`, `setall`, `modify` (ContentNode metadata only). The detach
+  probe (§8 Q7) observes the parent's field and reacts to `remove`/`set`/`clear`/
+  `setall`; `move` and `insert`/`add` are not removals.
+- **`callFunc` (ifSGNodeDict):** "a synchronized interface … always executes in the
+  component's owning ScriptEngine and thread (by rendezvous if necessary), and it will
+  always use the m and m.top of the owning component"; multiple parameters of any type;
+  arbitrary return. Same-thread calls execute directly, so render→render and a component
+  calling its OWN node are covered by the docs (§8 Q6a/c reduce to device pins).
+  **`hasFunc(name)`** "checks whether the specified callable function exists" — the
+  guard `retire`/`revive` use before `callFunc` (§4). No OS-version note on the page;
+  §8 Q6b pins it on the device and the guide records it against the 9.4 compile floor.
+- **Observers (ifSGNodeField):** function-form `observeFieldScoped` callbacks run "on the
+  thread that owns the observed node"; `unobserveFieldScoped` "removes the implicit
+  connection state stored in the OBSERVING object" — the documented basis for Probe A4's
+  immediate detach on observer-component death. `removeField` is documented (bound in
+  SceneGraph.kt, still unpinned). `threadinfo()` reports
+  `willRendezvousFromCurrentThread` — a spike-side diagnostic for the callFunc probes.
 
 **FIR:** the component-class predicate is PRIVATE to `FirBrsCreateComponentTypeChecker`
 (`:85-92`); `FirBrsTaskStateNotFieldChecker.kt:61` skips fake-source (constructor-
@@ -299,11 +322,11 @@ child, the generated `__kotlinRetire` (§5) runs:
 6. `retired = true; activation++`.
 
 Retire does NOT remove the node; the caller owns the tree. Its contract is Kotlin render
-components only. What `callFunc` does against a node with no `__kotlinRetire` is §8 Q6b:
-if the platform no-ops, nothing more is needed; if it errors, `retire` wraps the call in
-`try/catch` and rethrows a guided ISE naming the contract. Self-retire (a component
-retiring its own node) is §8 Q6c; if unsupported it is a guided ISE, and the app's
-screen stack owns the call anyway.
+components only, enforced with the documented `hasFunc`: `retire`/`revive` check
+`node.hasFunc("__kotlinRetire")` first and throw a guided ISE ("… is not a Kotlin render
+component — retire/revive target components compiled from ComponentBase subclasses") when
+it is absent (§8 Q6b pins `hasFunc` on the device). Self-retire (a component retiring its
+own node) is documented as a direct same-thread `callFunc` and is pinned by §8 Q6c.
 
 **Revive** — `revive(node)`: `node.callFunc("__kotlinRevive")`. Inside the child:
 
@@ -464,14 +487,19 @@ FINDINGS; design consequences here.
    5b. **`getParent()` of a Scene's direct `<children>` child**: the Scene node itself, or
    one of the hidden framework elements ifSGNodeChildren describes? Compare with
    `getScene()` via `isSameNode`. Decides spec 2's walk-termination rule.
-6. **callFunc render→render**: (a) parent calls a bare function in a child component;
-   (b) against a node whose component has no such function (retire on a non-Kotlin
-   node) — error, invalid, or no-op?; (c) a component calling `callFunc` on ITS OWN
-   node (self-retire viability).
-7. **Detach variants** (expected negative per A4): after `removeChild`, does a
-   child-armed observer on the PARENT's `change` field fire while the parent KEEPS its
-   reference? with an unscoped `observeField`? on a one-call `reparent()`? Result decides
-   only whether a backstop is offered; the design does not depend on it.
+6. **callFunc render→render** (docs say synchronized, owner's thread and `m`): (a)
+   parent calls a bare function in a child component — pin the direct same-thread
+   execution and that `m` is the CHILD's; (b) `hasFunc("__kotlinRetire")` answers true
+   on a Kotlin component and false on a plain node (the retire guard; also record the
+   OS floor behaviour if the device offers a way to tell); (c) a component calling
+   `callFunc` on ITS OWN node (self-retire) executes directly. `threadinfo()` lines as
+   supporting evidence.
+7. **Detach variants** (expected negative per A4): a child arms an observer on the
+   PARENT's `change` field (documented operations `remove`/`set`/`clear`/`setall` are the
+   removal shapes); after `removeChild`, does it fire while the parent KEEPS its
+   reference? with an unscoped `observeField`? on a one-call `reparent()` (which
+   operation, if any, is recorded)? Result decides only whether a backstop is offered;
+   the design does not depend on it.
 
 "A coroutine launched in a child's init runs after the parent's synchronous init" needs
 the stdlib pump and is pinned in Suite 11, not the spike.
@@ -551,10 +579,15 @@ outliving blackboard node — init-time facts cannot go through @SG fields):
 - Amend the SharedService design doc's decision 10 row with a "SUPERSEDED by
   2026-09-04-component-lifecycle-design.md" note (do not rewrite history; annotate).
 - Gate table + suite table updates; `SceneComponent.kt` KDoc for `VideoItem()` becomes true.
-- Roku pages in `../RokuDocs/`: `ifSGNodeChildren.html` and `roSGNode.html` (added
-  2026-09-04, facts folded into §2). Still wanted (Mike downloads): the SceneGraph
-  **Node** class page (`references/scenegraph/node.md` — the `change` field) and
-  "Component initialization order" (core-concepts; doc-backs §8 Q1 ahead of the spike).
+- Roku pages in `../RokuDocs/` (added 2026-09-04, facts folded into §2): `Node.html`,
+  `roSGNode.html`, `ifSGNodeChildren.html`, `ifSGNodeDict.html`, `ifSGNodeField.html`,
+  `ifSGNodeFocus.html`, `ifSGNodeBoundingRect.html`, `ifSGNodeHttpAgentAccess.html`,
+  `roSGNodeEvent.html`, `roSGScreenEvent.html`, `roHttpAgent.html`, `ifHttpAgent.html`.
+  Still wanted (Mike downloads): "Component initialization order"
+  (`https://developer.roku.com/dev/docs/component-initialization-order`) — doc-backs §8
+  Q1 ahead of the spike. The pages note that appending `.md` to a docs URL yields
+  Markdown and `https://developer.roku.com/dev/llms.txt` is an index — untested against
+  the bot block CLAUDE.md records.
 
 ## 11. Phasing
 
@@ -582,10 +615,10 @@ branch; gates never drop.
 - **IR synthesis of a suspend lambda before the suspend lowering** is a new shape (the
   flow lift synthesizes whole classes, but post-FIR). Mitigation: golden-pinned; the
   driver body is three calls.
-- **callFunc render→render from Kotlin is unpinned** (§8 Q6). If it misbehaves, the
-  fallback hop is a dedicated `__kotlinLifecycle` string field with a scoped observer —
-  ASYNCHRONOUS, which forces the recycling law to insert a pump tick between `retire`
-  and `removeChild` (A4). Spike first.
+- **callFunc render→render from Kotlin is documented (synchronized, owner's thread and
+  `m`) but unpinned** (§8 Q6). If the device disagrees, the fallback hop is a dedicated
+  `__kotlinLifecycle` string field with a scoped observer — ASYNCHRONOUS, which forces the
+  recycling law to insert a pump tick between `retire` and `removeChild` (A4). Spike first.
 - **XML attribute timing** (§8 Q4) may reveal that init step 4 clobbers layout-declared
   values for body properties — a pre-existing bug this program would then record and fix
   (skip the init write when an XML attribute is present, or emit the attribute as the
