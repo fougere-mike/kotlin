@@ -204,7 +204,7 @@ so the frontend rejects the loop before the backend's strategy choice matters.
 Indexing is also broken for native arrays: `RoArray` operator `get` emits a
 `.get(i)` method call that native roArray does not have. Until both are fixed,
 drain native arrays with `count()`/`shift()` or render them via `join()` —
-see `roku-test-app/components/ShelfView/ShelfView.kt` (onShelfItemsChanged)
+see `roku-test-app/src/brsMain/kotlin/com/nuvyyo/roku/components/ShelfView.kt` (onShelfItemsChanged)
 for the working pattern.
 
 ### Adding New Native Types
@@ -305,7 +305,7 @@ Key facts:
 - FIR diagnostics guard the pattern: `BRS_TASK_STATE_NOT_FIELD` (task state
   must be @SG interface fields - plain properties are lost across the node
   clone) and `BRS_CREATE_COMPONENT_INVALID_TYPE` (+ an "[IR] " backstop).
-- Canonical example: `../roku-test-app/components/ShelfView/ShelfView.kt` +
+- Canonical example: `../roku-test-app/src/brsMain/kotlin/com/nuvyyo/roku/components/ShelfView.kt` +
   `FetchShelfTask.kt` (the flagship demo). Acceptance coverage: E2E Suite 4
   (TypedTaskAcceptance).
 - Stdlib implementation: `libraries/stdlib/brs/src/kotlin/coroutines/task/TaskRunner.kt`.
@@ -521,7 +521,7 @@ then "rtq"/"field"), plus the watchdog pair above.
 | `compiler/ir/backend.brightscript/src/.../lower/BrsScopeRunBlockLowering.kt` | `run {}` block lifting + binding-table synthesis |
 | `compiler/fir/checkers/checkers.brs/src/.../BrsScopeMarshallability.kt` + Scope checkers | The FIR family above |
 
-Canonical example: `../roku-test-app/components/fixtures/ScopeOwnerProbe.kt` +
+Canonical example: `../roku-test-app/src/brsMain/kotlin/com/nuvyyo/roku/components/fixtures/ScopeOwnerProbe.kt` +
 `ScopeChildProbe.kt` + `ScopeVmFixture.kt` (owner, child, and the VM-facade
 layering the design ships for).
 
@@ -748,7 +748,7 @@ the gate for apps that degrade features on older devices.
 | `compiler/ir/backend.brightscript/src/.../lower/BrsSharedDispatchLowering.kt` | Dispatch registry + call-site classification + `__proto`-name dispatchers |
 | `compiler/fir/checkers/checkers.brs/src/.../BrsSharedServiceTypes.kt` + Shared checkers | The FIR family above (mirrored predicate) |
 
-Canonical example: `../roku-test-app/components/fixtures/SharedOwnerProbe.kt`
+Canonical example: `../roku-test-app/src/brsMain/kotlin/com/nuvyyo/roku/components/fixtures/SharedOwnerProbe.kt`
 + `SharedConsumerProbe.kt` + `SharedFixtures.kt` (owner, consumer, and the
 base-with-hook + final-subclass hierarchy Suite 9 exercises on device).
 
@@ -897,7 +897,7 @@ must TAIL-DELEGATE (return the inner call directly), not park around it.
 Device coverage: stdlib "join/await suspension", awaitAll, scopes, timeout
 suites (runBlocking regime) + E2E Suite 7 CoroutineUtilities (component
 pumping regime, incl. `awaitAll` over concurrent `runTask`s). The flagship
-demo (`../roku-test-app/components/ShelfView/ShelfView.kt`) fetches ip + shelf
+demo (`../roku-test-app/src/brsMain/kotlin/com/nuvyyo/roku/components/ShelfView.kt`) fetches ip + shelf
 concurrently via `async`/`awaitAll`.
 
 ## Flow & StateFlow (kotlin-flow-brs)
@@ -1093,10 +1093,10 @@ backlog).
 Goldens live in `compiler/testData/codegen/brs/flow/` (lift shapes, operator
 chain, StateFlow access, in-component-file + package-qualified lifts).
 Canonical examples: the TestScreen flagship
-(`../roku-test-app/components/TestScreen/TestScreen.kt` + `TestScreenVM.kt` +
+(`../roku-test-app/src/brsMain/kotlin/com/nuvyyo/roku/components/TestScreen.kt` + `TestScreenVM.kt` +
 `TestScreenChildLabel.kt` — StateFlow VM, flowOn repository flow,
 cross-component child collector) and the Suite 10 fixtures
-(`../roku-test-app/components/fixtures/Flow*.kt`).
+(`../roku-test-app/src/brsMain/kotlin/com/nuvyyo/roku/components/fixtures/Flow*.kt`).
 
 ## Cross-component channel semantics (scope-handle spike, 2026-08-12)
 
@@ -1155,7 +1155,7 @@ ScopeHandle design decision is recorded separately in that file.
 The layout story: declare the component's children ONCE in the `sceneLayout {}`
 DSL; access them through the generated `<ClassName>_Layout` accessor class.
 The living end-to-end example is
-`../roku-test-app/components/TestLayout/TestLayout.kt`.
+`../roku-test-app/src/brsMain/kotlin/com/nuvyyo/roku/components/TestLayout.kt`.
 
 ```kotlin
 class MainScreen : SceneComponent() {
@@ -1244,7 +1244,7 @@ later scene-graph mutation — ONE parent `setField("screenRef", top)` produced
 FOUR handler fires as subsequent graph writes landed (the string/int rows
 above are unaffected; the truth table pins only those). Any node-field
 @BrsOnChange handler must therefore be IDEMPOTENT — the one-shot-guard idiom
-in `../roku-test-app/components/TestScreen/TestScreenChildLabel.kt` is the
+in `../roku-test-app/src/brsMain/kotlin/com/nuvyyo/roku/components/TestScreenChildLabel.kt` is the
 pattern (without it the flagship launched four duplicate collectors). A proper
 Suite 6 probe row for node-typed fields is a recorded backlog candidate.
 
@@ -1266,6 +1266,17 @@ golden `components/projectHelperTransitiveDeps` (harness support:
 `runMultiFileTest`, which compiles a testData directory as one module in
 sorted-name order) and by `validateComponentIncludes` /
 `validateTestComponentIncludes` in roku-test-app.
+
+**One compilation per source set (2026-09-04).** kotlin-roku no longer creates a
+separate `components` compilation: SceneGraph components are ordinary `brsMain`
+classes (the compiler routes each detected component's output to
+`components/<Name>/`, everything else to `source/`). The old split made brsMain
+declarations unresolvable from component code — its `associateWith`/`libraries`
+wiring handed the compiler `.brs` output DIRECTORIES, which `-libraries` silently
+ignores (only klibs load) — and marked `components/` as a TEST source set in the
+IDE (`associateWith` ⇒ `isTestCompilation`). brsTest sees brsMain (components
+included) through `build/brs/klib/main.klib` (`compileMainKlibBrs`).
+`roku.componentsDir` is now only the OPTIONAL hand-written-XML directory.
 
 ## Key Directories
 
@@ -1550,7 +1561,8 @@ window. Direct `./gradlew rokuTest` BYPASSES that guard.
 
 **What actually runs:** `rokuTest` (KGP task) packages the test app from
 `roku-test-app/src/brsTest/kotlin/tests/` + the fixture components in
-`roku-test-app/components/fixtures/`, sideloads it, and parses structured
+`roku-test-app/src/brsMain/kotlin/com/nuvyyo/roku/components/fixtures/` (ordinary brsMain
+classes — there is no separate components compilation), sideloads it, and parses structured
 `[KOTLINTEST_EVENT]` JSON events off the telnet console (sentinel-armed like
 the stdlib runner: replayed events from a previous run are discarded).
 Results land in `build/test-results/roku/` as JSON + JUnit XML.
@@ -1583,7 +1595,7 @@ device-test API from `kotlin.test.device` (`libraries/kotlin.test/brs/src/main/k
   conveniences over `awaitField`.
 
 Predicates must return false rather than throw. Probe nodes are created via
-`components/fixtures/` components appended to the TestScene.
+`src/brsMain/kotlin/com/nuvyyo/roku/components/fixtures/` components appended to the TestScene.
 
 ### Run All Tests
 
@@ -1610,7 +1622,7 @@ Predicates must return false rather than throw. Probe nodes are created via
 | Stdlib tests (generated) | `libraries/stdlib/brs/test/build/brs/source/` |
 | Device-test API (kotlin.test) | `libraries/kotlin.test/brs/src/main/kotlin/kotlin/test/device/DeviceTestLoop.kt` |
 | E2E test suites + driver | `roku-test-app/src/brsTest/kotlin/tests/` (TestMain.kt is the main-thread driver) |
-| E2E fixture components | `roku-test-app/components/fixtures/` |
+| E2E fixture components | `roku-test-app/src/brsMain/kotlin/com/nuvyyo/roku/components/fixtures/` |
 
 ### Current Gate Numbers (as of the Flow program close, 2026-09-03)
 
