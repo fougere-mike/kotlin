@@ -1621,9 +1621,9 @@ BrsGoldenFileTests.kt reads one high — it counts the commented-out
 
 | Gate | Count |
 |------|-------|
-| Golden file tests | 99 |
+| Golden file tests | 100 (coroutineFieldNameShadowing added 2026-09-04) |
 | FIR diagnostic suite (checkers.brs) | 232 |
-| Stdlib device suite | 610 tests / 62 suites |
+| Stdlib device suite | 610 tests / 62 suites (+4 tests / 1 suite added 2026-09-04, `coroutineFieldShadowingTests` — device run pending) |
 | rokuTest E2E | 104 active tests / 10 suites (+3 red-guarded xtests) |
 | `validateComponentIncludes` + `validateTestComponentIncludes` | strict mode, 0 findings (no allowlist) |
 
