@@ -19,7 +19,7 @@
 - Include-closure law: a name-registered observer handler lives in the SAME FILE as its registration; new stdlib entry points reached from generated code are bare-named `@BrsStatic`; every emitted call goes through `createFunctionCall` (records the dependency) EXCEPT super calls into a user base component (see Task 3 — recording would pull the base's script into the leaf's XML and collide two `sub init()`s).
 - Hooks are `onStart` (suspend) and `onStop` (plain); parent-side calls are `retire(node)`/`revive(node)`. `onReady`/`onDestroy` are rejected names (spec §1 decision 7).
 - Gates never drop: golden tests 100 → 100 + new; FIR diagnostics 232 (untouched here); stdlib device suite 610/62 + new; E2E 104/10 + Suite 11 + 2 Suite 8 tests; `validateComponentIncludes` strict, 0 findings.
-- Commit prefixes: `spike:`/`spikes:` (spike package / executed findings), `stdlib:`, `brs:` (compiler), `docs:`; EVERY stdlib source change pairs with a SEPARATE `brs-prebuilt: regenerate stdlib klib (<reason>)` commit (the regenerated klib under `libraries/stdlib/brs-prebuilt` — check `git status` shows it changed); roku-test-app commits use `e2e:`; kotlin-roku commits use `plugin:`. Every commit ends with the `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>` trailer. Push ONLY when Mike says so.
+- Commit prefixes: `spike:`/`spikes:` (spike package / executed findings), `stdlib:`, `brs:` (compiler), `docs:`; EVERY stdlib source change pairs with a SEPARATE `brs-prebuilt: regenerate stdlib klib (<reason>)` commit (the regenerated klib under `libraries/stdlib/brs-prebuilt` — check `git status` shows it changed); roku-test-app commits use `test-infra:` (suites + fixtures; `app:` is for demo/app code); kotlin-roku commits use `plugin:`. Every commit ends with the `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>` trailer. Push ONLY when Mike says so.
 
 ---
 
@@ -2393,7 +2393,7 @@ Expected: 11 suites; Suite 11 reports 9 passed; Suite 8 reports 32 passed; every
 - [ ] **Step 6: Commit (roku-test-app)**
 
 ```bash
-cd ../roku-test-app && git add src && git commit -m "e2e: Suite 11 ComponentLifecycle (9 tests) + Suite 8 retire/re-expose tests; 1000-instance attach timing: <ms>ms
+cd ../roku-test-app && git add src && git commit -m "test-infra: Suite 11 ComponentLifecycle (9 tests) + Suite 8 retire/re-expose tests; 1000-instance attach timing: <ms>ms
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
