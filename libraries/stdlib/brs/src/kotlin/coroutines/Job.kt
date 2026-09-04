@@ -6,6 +6,7 @@
 package kotlin.coroutines
 
 import kotlin.brs.roku.RoAssociativeArray
+import kotlin.brs.roku.formatJson
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
 
@@ -364,7 +365,15 @@ public fun kotlinUnhandledCauseString(cause: Throwable): String {
     val rawMessage = aa.lookup("message")
     val message = if (rawMessage != null) "$rawMessage" else "unknown native error"
     val rawNumber = aa.lookup("number")
-    return if (rawNumber is Int) "$message (number $rawNumber)" else message
+    val described = if (rawNumber is Int) "$message (number $rawNumber)" else message
+    // A native error's `backtrace` (array of {filename, function, line_number})
+    // is the ONLY location signal the failure carries — without it a
+    // "Type Mismatch" in a coroutine is undiagnosable from the console (the
+    // 2026-09-04 TestScreen collectLatest finding took a full static hunt).
+    // FormatJson keeps it to one greppable line and never mutates the array.
+    val backtrace = aa.lookup("backtrace")
+    if (backtrace == null) return described
+    return described + " backtrace=" + formatJson(backtrace)
 }
 
 /**
