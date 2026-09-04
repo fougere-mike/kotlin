@@ -186,6 +186,28 @@ discover):**
   child's OWN init is not listed as an override source, which implies markup values land
   after the child's creation; §8 Q4 pins the order rather than relying on the implication.
 
+**Roku docs of record, fourth batch (`Creating custom components.html`, added 2026-09-04)
+— the extends-chain facts, DOCUMENTED:**
+
+- "First, the component being extended is completely constructed, then the component or
+  components extended from it are constructed" — each running the same three steps
+  (children, interface fields, init). Base `init()` before derived `init()` is therefore
+  documented, which is what the driver's once-flag claim (§4: the base's driver launches,
+  the leaf's claim fails) and slot layering (base attaches its override, the leaf
+  overwrites) rest on.
+- "Calling a function in an extended component with the same name as in the custom
+  component from which it is extended will call the function in the extended component"
+  — the documented rule behind BOTH the `onKeyEvent` leaf-wrapper shadowing defect (§5.5)
+  and the `__kotlinRetire`/`__kotlinRevive` design (§5.6): the LEAF's same-named entry is
+  the one `callFunc` reaches, and the leaf knows the full hierarchy at generation time.
+- "All functions defined in a component that is extended can be called" from the
+  derived component — the base's mangled member globals are callable from the leaf's
+  scope, which is what the `super.f()` static-call fix (§5.4) emits.
+- `m` is shared across the chain ("can be accessed in either the component that is
+  extended or any components extended from it"); `<interface>` fields accumulate and a
+  same-named field in the derived component wins — one `__kotlinInputsReady` field per
+  node even when several classes in the chain declare inputs.
+
 **FIR:** the component-class predicate is PRIVATE to `FirBrsCreateComponentTypeChecker`
 (`:85-92`); `FirBrsTaskStateNotFieldChecker.kt:61` skips fake-source (constructor-
 parameter) properties on the recorded grounds that "components cannot take constructor
