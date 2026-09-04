@@ -1624,7 +1624,7 @@ Predicates must return false rather than throw. Probe nodes are created via
 | E2E test suites + driver | `roku-test-app/src/brsTest/kotlin/tests/` (TestMain.kt is the main-thread driver) |
 | E2E fixture components | `roku-test-app/src/brsMain/kotlin/com/nuvyyo/roku/components/fixtures/` |
 
-### Current Gate Numbers (as of the Flow program close, 2026-09-03)
+### Current Gate Numbers (as of the single-BRS-compilation program close, 2026-09-04)
 
 These are the whole-branch green gates; a drop in any of them is a regression.
 (Counting note: the gate is EXECUTED tests. A raw `grep -c "@Test"` on
@@ -1638,6 +1638,10 @@ BrsGoldenFileTests.kt reads one high — it counts the commented-out
 | Stdlib device suite | 610 tests / 62 suites (+4 tests / 1 suite added 2026-09-04, `coroutineFieldShadowingTests` — device run pending) |
 | rokuTest E2E | 104 active tests / 10 suites (+3 red-guarded xtests) |
 | `validateComponentIncludes` + `validateTestComponentIncludes` | strict mode, 0 findings (no allowlist) |
+
+Verified 2026-09-04 on the single-compilation layout (no `components` compilation;
+app scripts are `plugins {}` + `roku { test { } validation { } }`; no dependency
+substitution anywhere — the fork publishes correct coordinates).
 
 ### Test Output
 
