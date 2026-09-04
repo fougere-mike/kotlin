@@ -161,6 +161,31 @@ added 2026-09-04):**
   SceneGraph.kt, still unpinned). `threadinfo()` reports
   `willRendezvousFromCurrentThread` — a spike-side diagnostic for the callFunc probes.
 
+**Roku docs of record, third batch (`Component initialization order.html`, added
+2026-09-04) — the init-order facts, now DOCUMENTED (device pins in §8 confirm, not
+discover):**
+
+- Order for a component instance: (1) its `<children>` nodes are created "and their
+  fields are set to their initial values, either to a default value, or to the value
+  specified in the XML markup"; (2) its own `<interface>` fields are created and
+  initialized (default or `value=`); (3) its `init()` runs. Children are therefore fully
+  created BEFORE the parent's init (§8 Q1).
+- "For nodes that are defined in the `<children>` XML markup of the component file, the
+  parent node is set AFTER the node is created, and init() is called." `getParent()` is
+  therefore invalid inside init for XML-declared children as well as dynamic ones — the
+  gate can never be satisfied from init for ANY creation path (§8 Q2/Q3).
+- "Observer functions of fields that are set up in the init() function do not get called
+  when those fields are initialized" — initial values never fire observers armed in init;
+  the gate's read-value-first-then-observe rule (§4) is the documented idiom.
+- "Field observer callback functions set up in init() cannot be guaranteed to have
+  returned when the component is created using createObject() or createChild()" — the
+  platform itself describes post-creation work as asynchronous; `onStart` is the
+  sanctioned place for it.
+- Markup values on `<children>` nodes "may be overridden as many as two times" — by the
+  owner's `<interface>` field initialization (aliases) and by the owner's init(). The
+  child's OWN init is not listed as an override source, which implies markup values land
+  after the child's creation; §8 Q4 pins the order rather than relying on the implication.
+
 **FIR:** the component-class predicate is PRIVATE to `FirBrsCreateComponentTypeChecker`
 (`:85-92`); `FirBrsTaskStateNotFieldChecker.kt:61` skips fake-source (constructor-
 parameter) properties on the recorded grounds that "components cannot take constructor
@@ -473,13 +498,15 @@ One package `spikes/lifecycle-spike/probe-init/` (`manifest`, `source/main.brs`,
 API is fixed; stamp this section EXECUTED with the FINDINGS pointer. Facts only in
 FINDINGS; design consequences here.
 
-1. **Child-before-parent init** (XML-declared child): a global-node log string written
-   from both inits records order.
-2. **`getParent()` inside the XML-declared child's init**: valid or invalid?
+1. **Child-before-parent init** (XML-declared child) — DOCUMENTED (§2 third batch);
+   a global-node log string written from both inits confirms on device.
+2. **`getParent()` inside the XML-declared child's init** — DOCUMENTED invalid ("the
+   parent node is set after the node is created, and init() is called"); confirm.
 3. **`getParent()` inside a `CreateObject`-created child's init** (expected invalid),
    plus the `scene.createChild(subtype)` create-and-append variant.
 4. **XML `<children>` attribute timing**: is a child's attribute value visible inside
-   its own init (applied before) or only after? Decides whether a body property's
+   its own init (applied before) or only after? The docs imply "after" (the child's own
+   init is not listed as an override source); pin it. Decides whether a body property's
    Kotlin initializer (init step 4) can clobber a layout-declared value — a separate
    pre-existing hazard to record either way.
 5. **`getScene()` inside the init of a not-yet-attached node** (spec 2's terminal walk
@@ -583,9 +610,9 @@ outliving blackboard node — init-time facts cannot go through @SG fields):
   `roSGNode.html`, `ifSGNodeChildren.html`, `ifSGNodeDict.html`, `ifSGNodeField.html`,
   `ifSGNodeFocus.html`, `ifSGNodeBoundingRect.html`, `ifSGNodeHttpAgentAccess.html`,
   `roSGNodeEvent.html`, `roSGScreenEvent.html`, `roHttpAgent.html`, `ifHttpAgent.html`.
-  Still wanted (Mike downloads): "Component initialization order"
-  (`https://developer.roku.com/dev/docs/component-initialization-order`) — doc-backs §8
-  Q1 ahead of the spike. The pages note that appending `.md` to a docs URL yields
+  Also present: `Component initialization order.html`, `Creating custom components.html`,
+  `SceneGraph compilation.html` (facts folded into §2). Nothing further is outstanding.
+  The pages note that appending `.md` to a docs URL yields
   Markdown and `https://developer.roku.com/dev/llms.txt` is an index — untested against
   the bot block CLAUDE.md records.
 
