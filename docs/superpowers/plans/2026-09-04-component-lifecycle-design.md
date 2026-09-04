@@ -125,6 +125,19 @@ in any spike or plan; the platform is repeatedly recorded as unable to signal
 unsignaled death (ScopeHandle watchdog rationale). The `change` field has zero prior use
 in stdlib, flow, kotlin.test or roku-test-app.
 
+**Roku docs of record (`../RokuDocs/ifSGNodeChildren.html`, `roSGNode.html`, added
+2026-09-04):** "Removing or replacing a node in a SceneGraph node tree can cause that
+node to be destroyed entirely if there are no more references to it" — the refcount-death
+rule is documented, and no callback is mentioned anywhere on the page. `getParent()`
+"returns the parent node of a node [that] has been added to a list of children;
+otherwise invalid" — unattached ⇒ invalid is documented (§8 Q3 still pins the init-time
+timing). `reparent(newParent, adjustTransform)` moves a node in ONE call (§8 Q7 uses it).
+`createChild(nodeType)` creates AND appends. Scene `<children>` are "hidden elements used
+by the SceneGraph framework" that `getChild()` on the Scene does not return — what
+`getParent()` answers for a scene's direct child is therefore an open question for
+spec 2's walk (§8 Q5b). The `change` field is NOT on these pages: it lives on the
+SceneGraph **Node** class page (not yet downloaded — §10).
+
 **FIR:** the component-class predicate is PRIVATE to `FirBrsCreateComponentTypeChecker`
 (`:85-92`); `FirBrsTaskStateNotFieldChecker.kt:61` skips fake-source (constructor-
 parameter) properties on the recorded grounds that "components cannot take constructor
@@ -448,13 +461,16 @@ FINDINGS; design consequences here.
    pre-existing hazard to record either way.
 5. **`getScene()` inside the init of a not-yet-attached node** (spec 2's terminal walk
    hop; also `top.getScene()` in handlers post-attach is already pinned).
+   5b. **`getParent()` of a Scene's direct `<children>` child**: the Scene node itself, or
+   one of the hidden framework elements ifSGNodeChildren describes? Compare with
+   `getScene()` via `isSameNode`. Decides spec 2's walk-termination rule.
 6. **callFunc render→render**: (a) parent calls a bare function in a child component;
    (b) against a node whose component has no such function (retire on a non-Kotlin
    node) — error, invalid, or no-op?; (c) a component calling `callFunc` on ITS OWN
    node (self-retire viability).
 7. **Detach variants** (expected negative per A4): after `removeChild`, does a
    child-armed observer on the PARENT's `change` field fire while the parent KEEPS its
-   reference? with an unscoped `observeField`? on a same-turn reparent? Result decides
+   reference? with an unscoped `observeField`? on a one-call `reparent()`? Result decides
    only whether a backstop is offered; the design does not depend on it.
 
 "A coroutine launched in a child's init runs after the parent's synchronous init" needs
@@ -535,8 +551,10 @@ outliving blackboard node — init-time facts cannot go through @SG fields):
 - Amend the SharedService design doc's decision 10 row with a "SUPERSEDED by
   2026-09-04-component-lifecycle-design.md" note (do not rewrite history; annotate).
 - Gate table + suite table updates; `SceneComponent.kt` KDoc for `VideoItem()` becomes true.
-- Roku pages to add to `../RokuDocs/` (Mike downloads): `scenegraph/node.md`,
-  `brightscript/interfaces/ifsgnodechildren.md`.
+- Roku pages in `../RokuDocs/`: `ifSGNodeChildren.html` and `roSGNode.html` (added
+  2026-09-04, facts folded into §2). Still wanted (Mike downloads): the SceneGraph
+  **Node** class page (`references/scenegraph/node.md` — the `change` field) and
+  "Component initialization order" (core-concepts; doc-backs §8 Q1 ahead of the spike).
 
 ## 11. Phasing
 
