@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="LcParent" extends="Group">
+    <children>
+        <LcChild id="xmlChild" tag="fromXml" />
+    </children>
+    <script type="text/brightscript" uri="pkg:/components/lcCommon.brs" />
+    <script type="text/brightscript" uri="pkg:/components/LcParent.brs" />
+</component>

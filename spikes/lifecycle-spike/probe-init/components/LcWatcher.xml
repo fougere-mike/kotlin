@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="LcWatcher" extends="Group">
+    <interface>
+        <field id="armScoped" type="boolean" value="false" />
+        <field id="armPlain" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/lcCommon.brs" />
+    <script type="text/brightscript" uri="pkg:/components/LcWatcher.brs" />
+</component>
