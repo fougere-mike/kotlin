@@ -118,9 +118,16 @@ marked; the unpinned platform facts are §8's spike questions.
   boot) → gates keyed on node fields must be idempotent. Events can outlive nodes
   (`getRoSGNode()` invalid, `DeviceTestLoop.kt:281-289`).
 
-**Device facts bearing on teardown (spikes/flow-spike/FINDINGS.md Probe A4):** a
-removed component's scoped observer is DEAD within the SAME synchronous stack as
-`removeChild` (`a.a4.ghostFires.immediate … ghosts=none`). No destroy callback exists
+**Device facts bearing on teardown (spikes/flow-spike/FINDINGS.md Probe A4; refined by
+spikes/lifecycle-spike/FINDINGS.md Q7, 2026-09-05):** a removed component's scoped observer
+is DEAD within the SAME synchronous stack as `removeChild` WHEN every reference to it is
+released (`a.a4.ghostFires.immediate … ghosts=none`) — observer death follows node
+DESTRUCTION, not tree removal: a removed component whose node is still REFERENCED keeps
+its observers alive and firing on later mutations of the ex-parent, in both the
+`observeFieldScoped` and plain `observeField` forms (Q7 F7.3). The parent's `change` field
+DOES fire synchronously on the observer's own removal (Operation `remove`, `getParent()`
+already invalid inside the handler — Q7 F7.1/F7.2), and `reparent()` is recorded on the
+old parent as `remove`, not `move` (F7.4). No destroy callback exists
 in any spike or plan; the platform is repeatedly recorded as unable to signal
 unsignaled death (ScopeHandle watchdog rationale). The `change` field has zero prior use
 in stdlib, flow, kotlin.test or roku-test-app.
@@ -513,6 +520,14 @@ All in `compiler/ir/backend.brightscript/` unless noted.
   inverse templates to the harness map.
 
 ## 8. Pre-plan device spikes (raw BrightScript, flow-spike template)
+
+**EXECUTED 2026-09-05** — findings in spikes/lifecycle-spike/FINDINGS.md; 10 PASS / 0 FAIL;
+falsified: none of §2's load-bearing facts. The Q7 "expected negative" below did NOT hold:
+both detach observer forms fire synchronously on the observer's own removal (Operation
+`remove`), and a removed component whose node is still referenced keeps observing (§2
+teardown paragraph refined; the §14 "unless §8 Q7 is positive" condition is met — decision
+pending). Q5b was pinned for an `appendChild`ed scene child; the Scene-`<children>`-markup
+variant was not exercised.
 
 One package `spikes/lifecycle-spike/probe-init/` (`manifest`, `source/main.brs`,
 `components/*.xml|.brs`, `README.md` verdict contract, `deploy.sh`), verdict grammar

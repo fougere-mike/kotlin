@@ -1,0 +1,20 @@
+===SPIKE_SENTINEL_1788648590===
+[SPIKE] BEGIN probe-init model=4800X os=15.3.4 build=2402
+[SPIKE] init.q1.childInitBeforeParentInit PASS log=child-init tag=default parent=invalid scene=valid;parent-init childFound=valid childTag=fromXml;
+[SPIKE] init.q2.xmlChildParentInvalidInInit PASS log=child-init tag=default parent=invalid scene=valid;parent-init childFound=valid childTag=fromXml;
+[SPIKE] init.q4.xmlAttrNotYetAppliedInChildInit PASS log=child-init tag=default parent=invalid scene=valid;parent-init childFound=valid childTag=fromXml;
+[SPIKE] init.q4.evidence INFORMATIVE tagAfterCreate=fromXml
+[SPIKE] init.q5b.sceneChildParent INFORMATIVE parentIsScene=true parentSubtype=InitScene
+[SPIKE] init.q3.createObjectParentInvalidInInit PASS log=child-init tag=default parent=invalid scene=valid;
+[SPIKE] init.q5.getSceneInUnattachedInit INFORMATIVE log=child-init tag=default parent=invalid scene=valid;
+[SPIKE] init.q3b.createChildParentAtInit INFORMATIVE log=child-init tag=default parent=invalid scene=valid;
+[SPIKE] init.q6a.callFuncRenderToRender PASS result=pong:LcChild
+[SPIKE] init.q6b.hasFuncTrueOnComponent PASS 
+[SPIKE] init.q6b.hasFuncFalseOnPlainNode PASS 
+[SPIKE] init.q6c.selfCallFunc PASS result=self:pong:LcChild
+[SPIKE] init.q6.evidence INFORMATIVE threadinfo={"currentThread":{"id":"A2E878","name":"InitScene","type":"Render"},"node":{"address":"9FF6AD","id":"","owningThread":{"id":"A2E878","name":"InitScene","type":"Render"},"type":"LcChild","willRendezvousFromCurrentThread":"No"},"renderThread":{"id":"A2E878","name":"InitScene","type":"Render"}}
+[SPIKE] init.q7.evidence INFORMATIVE armed=armScoped:armed;scoped:add:valid;armPlain:armed;scoped:add:valid;plain:add:valid;armScoped:armed;
+[SPIKE] init.q7a.scopedChangeFiresOnOwnRemoval PASS watch=scoped:remove:invalid;plain:remove:valid;scoped:remove:valid;scoped:remove:invalid;plain:remove:invalid;scoped:remove:valid;scoped:remove:invalid;plain:remove:invalid;scoped:remove:invalid;
+[SPIKE] init.q7b.plainChangeFiresOnOwnRemoval PASS watch=scoped:remove:invalid;plain:remove:valid;scoped:remove:valid;scoped:remove:invalid;plain:remove:invalid;scoped:remove:valid;scoped:remove:invalid;plain:remove:invalid;scoped:remove:invalid;
+[SPIKE] init.q7c.reparentRecorded INFORMATIVE watch=scoped:remove:invalid;plain:remove:valid;scoped:remove:valid;scoped:remove:invalid;plain:remove:invalid;scoped:remove:valid;scoped:remove:invalid;plain:remove:invalid;scoped:remove:invalid;
+[SPIKE] END
