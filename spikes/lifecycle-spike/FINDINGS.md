@@ -10,7 +10,8 @@ later run lands as `capture-probe-init-runN.txt`). Verdict contract and per-ques
 mapping: `probe-init/README.md`. Package: `probe-init/` (raw BrightScript, flow-spike
 harness lineage; `deploy.sh`).
 
-**Outcome: 10 PASS / 0 FAIL; no load-bearing §2 fact was falsified.** Q1–Q4 and Q6
+**Outcome: 10 PASS / 0 FAIL; falsified: the §2 A4 summary in its unconditional form
+(refined in §2) and the §8 Q7 expected-negative; no other §2 fact.** Q1–Q4 and Q6
 confirm the documented init-order and callFunc facts on device. Q7 — the detach probe the
 design expected to come back NEGATIVE (§8 "expected negative per A4") — came back
 POSITIVE on both observer forms, and exposed a second fact the A4 summary in §2 did not
@@ -88,12 +89,13 @@ creation path" for all three creation paths (markup, `CreateObject`, `createChil
   applied → parent `init()`.
 
 **Design consequence:** confirms the §2 third-batch implication that markup values land
-after the child's creation. The §12 risk "init step 4 clobbers layout-declared values" is
-NOT realised by this ordering: a child's init-time write to a field is overwritten by the
-markup attribute that lands afterwards, so the layout-declared value wins. (Any init-time
-READ of such a field sees the default — the premise of §7's
-`BRS_COMPONENT_INPUT_READ_IN_INIT` holds for markup-supplied inputs too.) Nothing to fold
-into §2.
+after the child's creation. On the §12 risk "init step 4 clobbers layout-declared values":
+INFERENCE from the pinned ordering, not a probed fact — the probe only READ `tag`; no
+init-time WRITE was exercised. If the ordering holds for writes, an init-time write to the
+field would be overwritten by the markup attribute that lands afterwards and the
+layout-declared value would win; a write-then-read probe would pin it. (Any init-time READ
+of such a field sees the default — the premise of §7's `BRS_COMPONENT_INPUT_READ_IN_INIT`
+holds for markup-supplied inputs too.) Nothing to fold into §2.
 
 ### Q5 — `getScene()` inside init of a not-yet-attached node
 
@@ -116,8 +118,7 @@ into §2.
   direct child was NOT exercised.
 
 **Design consequence:** for an appended child, the §2 open question ("what `getParent()`
-answers for a scene's direct child") is answered: the Scene node; a parent walk
-terminates when `getParent().isSameNode(getScene())`.
+answers for a scene's direct child") is answered: the Scene node itself.
 
 ### Q6 — `callFunc` render→render, `hasFunc`, self-`callFunc`
 
@@ -145,8 +146,15 @@ risk "callFunc render→render from Kotlin is … unpinned" is retired on this d
 Decoding the watch log. Three watchers under `LcParent`: w1 (`observeFieldScoped`), w2
 (plain `observeField`), w3 (`observeFieldScoped`, later `reparent()`ed). The scene KEPT
 `m.w1`/`m.w2`/`m.w3` references throughout. Each entry is `<form>:<Operation>:<whether
-the OBSERVING watcher's own getParent() was valid at fire time>`. Observers fired in
-registration order (w1, w2, w3) on every mutation.
+the OBSERVING watcher's own getParent() was valid at fire time>`. The log carries NO
+watcher identity: the table below is a DECODE, not a transcript. Its attribution rests on
+two observed regularities — exactly one fire per live observer per mutation (the arm
+stage shows one `add` entry per armed watcher per `createChild`) and entries appended in
+fire order — which split the nine entries 3/3/3 across the three mutations; within each
+group the `plain` entry is w2 (the only plain observer) and the two `scoped` entries are
+told apart by their attached reading where it differs. The within-group order is
+consistent with registration order (w1, w2, w3) but is inferred, not observed; in
+mutation 3 the two `scoped:remove:invalid` entries are indistinguishable.
 
 Arm stage (`init.q7.evidence`): `armScoped:armed;` (w1 armed) → `scoped:add:valid;` (w1
 fired on w2's `createChild`) → `armPlain:armed;` (w2 armed) → `scoped:add:valid;
@@ -160,10 +168,27 @@ Remove stage (log cleared first; three mutations; read 0.6s later):
 | `parent.removeChild(w2)` | `scoped:remove:invalid` | `plain:remove:invalid` | `scoped:remove:valid` |
 | `w3.reparent(other, false)` | `scoped:remove:invalid` | `plain:remove:invalid` | `scoped:remove:invalid` |
 
-- **F7.1 — the removed watcher's own observer FIRES on its own removal, both forms**
-  (`init.q7a PASS`, `init.q7b PASS`): Operation `remove`; inside the handler the
+- **F7.1 — the removed watcher's own observer FIRES on its own removal, both forms.**
+  EVIDENCE: the full-log decode, NOT the verdict lines. The `init.q7a`/`init.q7b` PASS
+  predicates (`Instr(w, "scoped:remove") > 0` / `Instr(w, "plain:remove") > 0`,
+  `InitScene.brs` `stageDetachVerdict`) are a necessary-not-sufficient SCREEN: the
+  still-attached w3 (`scoped:remove:valid`) and w2 (`plain:remove:valid`) fires on w1's
+  removal satisfy both predicates by themselves, so both would have read PASS even under
+  the A4-predicted silence of the removed watcher. What establishes F7.1: (i) PLAIN form —
+  there is exactly ONE plain observer (w2) and THREE `plain:` entries landed across three
+  mutations, so w2 fired on every mutation including mutation 2, its own removal (its
+  readings `valid`, `invalid`, `invalid` match attached-then-removed); (ii) SCOPED form —
+  six `scoped:` entries from two scoped observers means each fired on every mutation,
+  including w1 on mutation 1; the FIRST entry of the run is `scoped:remove:invalid`, and
+  during mutation 1 the only other scoped observer (w3) was still attached and reads
+  `valid`, so that entry can only be w1 firing on its own removal; (iii) COUNT — the
+  removed-watcher-silent hypothesis predicts at most 6 entries (3 if the removed watcher's
+  observer also dies as in A4); 9 landed. Operation `remove`; inside the handler the
   removed node's `getParent()` is already `invalid`; `m.top` on the just-removed node did
   not crash (no `handler-crash` entries anywhere in the run).
+  FOLLOW-UP PROBE (not run): tighten the verdict predicates to `…:remove:invalid` and log
+  a per-watcher identity (`m.who` + creation index) in each entry so q7a/q7b are
+  self-evidencing rather than screens.
 - **F7.2 — delivery is synchronous, inside the mutating call.** w2's reading is `valid`
   for mutation 1 but `invalid` for mutation 2, so mutation 1's callbacks ran before the
   scene's next statement (`removeChild(w2)`); w3's reading is `invalid` for the reparent
@@ -172,10 +197,13 @@ Remove stage (log cleared first; three mutations; read 0.6s later):
   respectively.
 - **F7.3 — a removed component whose node is still REFERENCED keeps observing.** w1,
   removed in mutation 1, fired again on mutations 2 and 3; w2, removed in mutation 2,
-  fired again on mutation 3 — both `observeFieldScoped` and plain `observeField`.
-  Observer liveness followed node LIFE (the scene's `m.w1`/`m.w2` references), not tree
-  membership. Nine fires from three mutations × three live observers: exactly one fire
-  per observer per mutation, no duplicates, no drops.
+  fired again on mutation 3 — both `observeFieldScoped` and plain `observeField`. Within
+  this run, removal from the tree did not stop a referenced watcher's observers (the scene
+  held `m.w1`/`m.w2`). This run had NO released-reference control arm; the reading
+  "liveness follows node life, not tree membership" comes from setting this run beside
+  Probe A4 (references released ⇒ no ghost fires) — a cross-run comparison, not a
+  within-run one. Nine fires from three mutations × three live observers: exactly one
+  fire per observer per mutation, no duplicates, no drops.
 - **F7.4 — `reparent(newParent, false)` is recorded on the OLD parent's `change` field
   as Operation `remove`** — no `move` operation was recorded (`init.q7c`). The new
   parent's `change` field was unobserved, so whether an `add` is recorded there was not

@@ -522,7 +522,8 @@ All in `compiler/ir/backend.brightscript/` unless noted.
 ## 8. Pre-plan device spikes (raw BrightScript, flow-spike template)
 
 **EXECUTED 2026-09-05** — findings in spikes/lifecycle-spike/FINDINGS.md; 10 PASS / 0 FAIL;
-falsified: none of §2's load-bearing facts. The Q7 "expected negative" below did NOT hold:
+falsified: §2 A4 summary (unconditional form — refined); §8 Q7 expected-negative. The Q7
+"expected negative" below did NOT hold:
 both detach observer forms fire synchronously on the observer's own removal (Operation
 `remove`), and a removed component whose node is still referenced keeps observing (§2
 teardown paragraph refined; the §14 "unless §8 Q7 is positive" condition is met — decision
