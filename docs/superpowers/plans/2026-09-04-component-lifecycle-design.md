@@ -412,7 +412,9 @@ All in `compiler/ir/backend.brightscript/` unless noted.
    extends chain and the attach is idempotent — starts with
    `__kotlinComponentAttach(m.top, m.global)`; the `fileUsesCoroutines` gate is retired
    for this injection (delete the predicate if nothing else uses it). Task components
-   excluded as today.
+   excluded as today — the WHOLE task hierarchy, abstract intermediates included
+   (ruling 2026-09-05: their init() runs only inside a Task node's extends chain; task
+   threads have no pump).
 2. **Hierarchy override scan** (new helper in `BrsIntrinsics`): `hierarchyOverrides(
    irClass, hookName)` — walks user component supertypes up to (excluding) the stdlib
    bases, true if any declares a real (non-fake) override. Serves the `onStart` driver,
