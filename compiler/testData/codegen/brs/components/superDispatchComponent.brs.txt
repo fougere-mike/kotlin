@@ -1,0 +1,302 @@
+// --- File: SuperBase.deps.json ---
+{
+  "version": 1,
+  "component": "SuperBase",
+  "dependencies": [
+    "AnyKt.brs",
+    "ArrayListKt.brs",
+    "ArraysBrsKt.brs",
+    "ArraysKt.brs",
+    "CancellationExceptionKt.brs",
+    "CharCategoryBrsKt.brs",
+    "CollectionExtensionsKt.brs",
+    "CombinedContextKt.brs",
+    "ContinuationInterceptorKt.brs",
+    "ContinuationKt.brs",
+    "CoroutineImplKt.brs",
+    "CoroutineQueueKt.brs",
+    "CoroutineSingletonsKt.brs",
+    "DelayKt.brs",
+    "DelayTrackerKt.brs",
+    "EmptyCoroutineContextKt.brs",
+    "ExceptionsKt.brs",
+    "HashMapKt.brs",
+    "HashSetKt.brs",
+    "IntrinsicsBrsKt.brs",
+    "JobKt.brs",
+    "KotlinKt.brs",
+    "PairKt.brs",
+    "ParkedContinuationKt.brs",
+    "PreconditionsKt.brs",
+    "PrimitiveIteratorsKt.brs",
+    "PumpSchedulerKt.brs",
+    "RangeOperatorsBrsKt.brs",
+    "RangesKt.brs",
+    "ResultKt.brs",
+    "StringBuilderBrsKt.brs",
+    "ThrowableKt.brs",
+    "UByteKt.brs",
+    "UIntKt.brs",
+    "ULongKt.brs",
+    "URangesKt.brs",
+    "UShortKt.brs",
+    "UnsignedUtilsKt.brs",
+    "charBrsKt.brs",
+    "consoleKt.brs",
+    "coreRuntimeKt.brs",
+    "primitivesKt.brs",
+    "stringBrsKt.brs"
+  ]
+}
+
+
+// --- File: SuperBase.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="SuperBase" extends="Group">
+    <interface>
+    </interface>
+    <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CancellationExceptionKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineImplKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineQueueKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineSingletonsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayTrackerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/EmptyCoroutineContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IntrinsicsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/JobKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PairKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ParkedContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PrimitiveIteratorsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PumpSchedulerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ResultKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ULongKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/URangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UShortKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnsignedUtilsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/consoleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/SuperBase/SuperBaseKt.brs" />
+</component>
+
+
+// --- File: SuperLeaf.deps.json ---
+{
+  "version": 1,
+  "component": "SuperLeaf",
+  "dependencies": [
+    "AnyKt.brs",
+    "ArrayListKt.brs",
+    "ArraysBrsKt.brs",
+    "ArraysKt.brs",
+    "CancellationExceptionKt.brs",
+    "CharCategoryBrsKt.brs",
+    "CollectionExtensionsKt.brs",
+    "CombinedContextKt.brs",
+    "ContinuationInterceptorKt.brs",
+    "ContinuationKt.brs",
+    "CoroutineImplKt.brs",
+    "CoroutineQueueKt.brs",
+    "CoroutineSingletonsKt.brs",
+    "DelayKt.brs",
+    "DelayTrackerKt.brs",
+    "EmptyCoroutineContextKt.brs",
+    "ExceptionsKt.brs",
+    "HashMapKt.brs",
+    "HashSetKt.brs",
+    "IntrinsicsBrsKt.brs",
+    "JobKt.brs",
+    "KotlinKt.brs",
+    "PairKt.brs",
+    "ParkedContinuationKt.brs",
+    "PreconditionsKt.brs",
+    "PrimitiveIteratorsKt.brs",
+    "PumpSchedulerKt.brs",
+    "RangeOperatorsBrsKt.brs",
+    "RangesKt.brs",
+    "ResultKt.brs",
+    "StringBuilderBrsKt.brs",
+    "ThrowableKt.brs",
+    "UByteKt.brs",
+    "UIntKt.brs",
+    "ULongKt.brs",
+    "URangesKt.brs",
+    "UShortKt.brs",
+    "UnsignedUtilsKt.brs",
+    "charBrsKt.brs",
+    "consoleKt.brs",
+    "coreRuntimeKt.brs",
+    "primitivesKt.brs",
+    "stringBrsKt.brs"
+  ]
+}
+
+
+// --- File: SuperLeaf.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="SuperLeaf" extends="SuperBase">
+    <interface>
+    </interface>
+    <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CancellationExceptionKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineImplKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineQueueKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineSingletonsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayTrackerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/EmptyCoroutineContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IntrinsicsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/JobKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PairKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ParkedContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PrimitiveIteratorsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PumpSchedulerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ResultKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ULongKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/URangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UShortKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnsignedUtilsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/consoleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/SuperLeaf/SuperLeafKt.brs" />
+</component>
+
+
+// --- File: superDispatchComponentKt.brs ---
+sub init()
+    __kotlinPumpAttach(m.top, m.global)
+    m.onKeyEvent_Str_Z_k_ = SuperBase_onKeyEvent_Str_Z_k_
+    m.describe_k_ = SuperBase_describe_k_
+    m.load_ContinuationStr_k_ = SuperBase_load_ContinuationStr_k_
+end sub
+
+function SuperBase_onKeyEvent_Str_Z_k_(key as String, press as Boolean) as Boolean
+    return key = "back"
+end function
+
+function SuperBase_describe_k_() as String
+    return "base"
+end function
+
+function SuperBase_load_ContinuationStr_k_(_completion as Object) as Object
+    return "base"
+end function
+
+function onKeyEvent(key as String, press as Boolean) as Boolean
+    return m.onKeyEvent_Str_Z_k_(key, press)
+end function
+
+sub init()
+    __kotlinPumpAttach(m.top, m.global)
+    m.onKeyEvent_Str_Z_k_ = SuperLeaf_onKeyEvent_Str_Z_k_
+    m.describe_k_ = SuperLeaf_describe_k_
+    m.load_ContinuationStr_k_ = SuperLeaf_load_ContinuationStr_k_
+end sub
+
+function SuperLeaf_onKeyEvent_Str_Z_k_(key as String, press as Boolean) as Boolean
+    if press and (key = "OK") then
+        return true
+    end if
+    return SuperBase_onKeyEvent_Str_Z_k_(key, press)
+end function
+
+function SuperLeaf_describe_k_() as String
+    return SuperBase_describe_k_() + "+leaf"
+end function
+
+function SuperLeaf_load_ContinuationStr_k_(_completion as Object) as Object
+    tmp = SuperLeaf__loadCOROUTINE__create_SuperLeaf_ContinuationStr_k_(m, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function onKeyEvent(key as String, press as Boolean) as Boolean
+    return m.onKeyEvent_Str_Z_k_(key, press)
+end function
+
+function SuperLeaf__loadCOROUTINE__create_SuperLeaf_ContinuationStr_k_(__this as Object, resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["SuperLeaf__loadCOROUTINE_", this.__proto]
+    this.__type = "SuperLeaf__loadCOROUTINE_"
+    this.doResume_k_ = SuperLeaf__loadCOROUTINE__doResume_k_
+    this.__this = __this
+    return this
+end function
+
+function SuperLeaf__loadCOROUTINE__doResume_k_() as Dynamic
+    ARGUMENT = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = SuperBase_load_ContinuationStr_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                ARGUMENT = suspendResult
+                                return ARGUMENT + "+leaf"
+            else if __kotlin_identityEquals(tmp, 2) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 2) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function

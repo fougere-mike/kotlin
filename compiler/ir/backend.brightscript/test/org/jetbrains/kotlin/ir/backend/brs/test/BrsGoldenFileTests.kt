@@ -388,6 +388,9 @@ class BrsComponentGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun onKeyEventInheritedWrapper() = runTest("components/onKeyEventInheritedWrapper.kt")
+
+    @Test
+    fun superDispatchComponent() = runTest("components/superDispatchComponent.kt")
 }
 
 // ==================== Intrinsics Tests ====================

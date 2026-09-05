@@ -169,9 +169,11 @@ class BrsIntrinsics(
     // =============================================================================
 
     /**
-     * FqName for the @BrsSceneGraphComponent annotation.
+     * FqName for the @BrsSceneGraphComponent annotation. Internal so the
+     * expression transformer's super-call redirect can tell a STDLIB component
+     * base (annotated abstract base such as GroupComponent) from a user base.
      */
-    private val brsSceneGraphComponentFqn = FqName("kotlin.brs.BrsSceneGraphComponent")
+    internal val brsSceneGraphComponentFqn = FqName("kotlin.brs.BrsSceneGraphComponent")
 
     /**
      * The ComponentBase abstract class symbol.

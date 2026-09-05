@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.ir.util.fileOrNull
 import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.util.getAnnotation
 import org.jetbrains.kotlin.ir.util.getPackageFragment
+import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.isFunction
 import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.ir.util.isNullable
@@ -1633,6 +1634,39 @@ class IrExpressionToBrsTransformer(
                         val isComponentProperty = parentClass != null && context.intrinsics.isSceneGraphComponent(parentClass)
                         val setterName = if (isComponentProperty) componentAccessorShortName(function) else "__set_$fieldName"
                         BrsMethodCall(receiverExpr, setterName, mutableListOf(value))
+                    }
+                }
+
+                // super.f(...) inside a SceneGraph component: call the base's
+                // implementation as a GLOBAL. The slot form would resolve to the
+                // override's own slot on the shared m and recurse. Dependency
+                // recording is deliberate and split: a USER base component's
+                // function is already in scope through the SceneGraph extends
+                // chain, and recording it would pull the base's script into the
+                // leaf's <script> list where two `sub init()`s collide (the
+                // __kotlinTaskMain rationale); a STDLIB base default
+                // (ComponentBase_onKeyEvent_Str_Z_k_) lives in a stdlib file and
+                // must be recorded so the closure includes it.
+                if (expression.superQualifierSymbol != null && parentClass != null &&
+                    context.intrinsics.isSceneGraphComponent(parentClass)
+                ) {
+                    val target = function.resolveFakeOverride() ?: function
+                    val targetClass = target.parent as? IrClass
+                    val superArgs = mutableListOf<BrsExpression>()
+                    for (i in 0 until expression.valueArgumentsCount) {
+                        val arg = expression.getValueArgument(i)
+                        superArgs.add(
+                            if (arg != null) arg.accept(this, data) else absentArgumentPlaceholder(function, i)
+                        )
+                    }
+                    val targetName = context.getBrsName(target)
+                    val targetIsStdlibBase = targetClass != null &&
+                        (targetClass.hasAnnotation(context.intrinsics.brsSceneGraphComponentFqn) ||
+                            targetClass.fqNameWhenAvailable?.asString() == "kotlin.brs.ComponentBase")
+                    return if (targetIsStdlibBase) {
+                        createFunctionCall(targetName, superArgs, context)
+                    } else {
+                        BrsFunctionCall(BrsIdentifier(targetName), superArgs)
                     }
                 }
 
