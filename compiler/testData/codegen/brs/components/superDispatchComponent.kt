@@ -21,3 +21,10 @@ class SuperLeaf : SuperBase() {
     override fun describe(): String = super.describe() + "+leaf"
     override suspend fun load(): String = super.load() + "+leaf"
 }
+
+// A leaf extending a STDLIB base directly: super.onKeyEvent targets the ComponentBase
+// default, which lives in a stdlib file — the static call is dependency-RECORDED so
+// SceneComponentKt.brs enters this component's include closure.
+class DirectLeaf : GroupComponent() {
+    override fun onKeyEvent(key: String, press: Boolean): Boolean = super.onKeyEvent(key, press)
+}

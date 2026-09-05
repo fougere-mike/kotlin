@@ -1647,26 +1647,47 @@ class IrExpressionToBrsTransformer(
                 // __kotlinTaskMain rationale); a STDLIB base default
                 // (ComponentBase_onKeyEvent_Str_Z_k_) lives in a stdlib file and
                 // must be recorded so the closure includes it.
-                if (expression.superQualifierSymbol != null && parentClass != null &&
-                    context.intrinsics.isSceneGraphComponent(parentClass)
-                ) {
+                //
+                // Runtime assumption: a SUSPEND super call is emitted inside the
+                // coroutine object's doResume, where `m` is the COROUTINE object;
+                // the static call reaches the component's state only because
+                // BrightScript binds `m` to the COMPONENT scope for a plain
+                // (non-method) call — the same binding `init()` and the
+                // SceneGraph-facing `onKeyEvent` wrapper rely on. Suite 11's
+                // `super.onStart()` is its first device pin. Contingency if it
+                // ever fails: a method call through the captured component
+                // (`m.__this.<superSlot>(...)`) with base slots attached in init.
+                //
+                // Branch entry accepts the call SYMBOL's class or the RESOLVED
+                // target's class. FIR2IR points a super call at the fake override
+                // in the (annotated) super class — golden-observed for DirectLeaf
+                // in superDispatchComponent, so the symbol check alone fires —
+                // but the unannotated ComponentBase default is accepted directly
+                // too, belt-and-braces.
+                if (expression.superQualifierSymbol != null) {
                     val target = function.resolveFakeOverride() ?: function
                     val targetClass = target.parent as? IrClass
-                    val superArgs = mutableListOf<BrsExpression>()
-                    for (i in 0 until expression.valueArgumentsCount) {
-                        val arg = expression.getValueArgument(i)
-                        superArgs.add(
-                            if (arg != null) arg.accept(this, data) else absentArgumentPlaceholder(function, i)
-                        )
-                    }
-                    val targetName = context.getBrsName(target)
                     val targetIsStdlibBase = targetClass != null &&
                         (targetClass.hasAnnotation(context.intrinsics.brsSceneGraphComponentFqn) ||
                             targetClass.fqNameWhenAvailable?.asString() == "kotlin.brs.ComponentBase")
-                    return if (targetIsStdlibBase) {
-                        createFunctionCall(targetName, superArgs, context)
-                    } else {
-                        BrsFunctionCall(BrsIdentifier(targetName), superArgs)
+                    val isComponentSuperCall =
+                        (parentClass != null && context.intrinsics.isSceneGraphComponent(parentClass)) ||
+                            targetIsStdlibBase ||
+                            (targetClass != null && context.intrinsics.isSceneGraphComponent(targetClass))
+                    if (isComponentSuperCall) {
+                        val superArgs = mutableListOf<BrsExpression>()
+                        for (i in 0 until expression.valueArgumentsCount) {
+                            val arg = expression.getValueArgument(i)
+                            superArgs.add(
+                                if (arg != null) arg.accept(this, data) else absentArgumentPlaceholder(function, i)
+                            )
+                        }
+                        val targetName = context.getBrsName(target)
+                        return if (targetIsStdlibBase) {
+                            createFunctionCall(targetName, superArgs, context)
+                        } else {
+                            BrsFunctionCall(BrsIdentifier(targetName), superArgs)
+                        }
                     }
                 }
 
