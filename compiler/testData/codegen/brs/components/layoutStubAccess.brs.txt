@@ -7,22 +7,37 @@
     "ArrayListKt.brs",
     "ArraysBrsKt.brs",
     "ArraysKt.brs",
+    "CancellationExceptionKt.brs",
     "CharCategoryBrsKt.brs",
     "CollectionExtensionsKt.brs",
+    "CombinedContextKt.brs",
+    "ComponentLifecycleKt.brs",
     "ContainerNodesKt.brs",
+    "ContinuationInterceptorKt.brs",
+    "ContinuationKt.brs",
+    "CoroutineQueueKt.brs",
+    "CoroutineSingletonsKt.brs",
+    "DelayKt.brs",
+    "DelayTrackerKt.brs",
+    "EmptyCoroutineContextKt.brs",
     "ExceptionsKt.brs",
     "HashMapKt.brs",
     "HashSetKt.brs",
+    "IntrinsicsBrsKt.brs",
+    "JobKt.brs",
     "KotlinKt.brs",
     "LayoutBuilderKt.brs",
     "MapExtensionsBrsKt.brs",
     "NodeEntryKt.brs",
     "PairKt.brs",
+    "ParkedContinuationKt.brs",
     "PreconditionsKt.brs",
     "PrimitiveIteratorsKt.brs",
+    "PumpSchedulerKt.brs",
     "RangeOperatorsBrsKt.brs",
     "RangesKt.brs",
     "RenderableNodesKt.brs",
+    "ResultKt.brs",
     "SceneLayoutKt.brs",
     "StringBuilderBrsKt.brs",
     "ThrowableKt.brs",
@@ -51,22 +66,37 @@
     <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CancellationExceptionKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContainerNodesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineQueueKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineSingletonsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayTrackerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/EmptyCoroutineContextKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IntrinsicsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/JobKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/LayoutBuilderKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/MapExtensionsBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/NodeEntryKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/PairKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ParkedContinuationKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/PrimitiveIteratorsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PumpSchedulerKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/RenderableNodesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ResultKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/SceneLayoutKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
@@ -134,6 +164,7 @@ function StubbedScreen_Layout___get_shelfNode_k_() as Object
 end function
 
 sub init()
+    __kotlinComponentAttach(m.top, m.global)
     m.layout = StubbedScreen_Layout_create_RoSGNode_k_(m.top)
     m.__get_layout_k_ = StubbedScreen___get_layout_k_
     m.layout.__get_shelfNode().setFocus(true)

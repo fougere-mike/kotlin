@@ -15,6 +15,7 @@
     "CombinedContextKt.brs",
     "ComponentCoroutinesKt.brs",
     "ComponentFactoryKt.brs",
+    "ComponentLifecycleKt.brs",
     "ContinuationInterceptorKt.brs",
     "ContinuationKt.brs",
     "CoroutineDispatcherKt.brs",
@@ -94,6 +95,7 @@
     <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ComponentFactoryKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CoroutineDispatcherKt.brs" />
@@ -215,6 +217,7 @@ end function
     "CombinedContextKt.brs",
     "ComponentCoroutinesKt.brs",
     "ComponentFactoryKt.brs",
+    "ComponentLifecycleKt.brs",
     "ContinuationInterceptorKt.brs",
     "ContinuationKt.brs",
     "CoroutineDispatcherKt.brs",
@@ -287,6 +290,7 @@ end function
     <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ComponentFactoryKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CoroutineDispatcherKt.brs" />
@@ -343,7 +347,7 @@ end function
 
 // --- File: spawnTaskLiftKt.brs ---
 sub init()
-    __kotlinPumpAttach(m.top, m.global)
+    __kotlinComponentAttach(m.top, m.global)
     m.top.result = ""
     m.__get_result_k_ = SpawnTaskLift___get_result_k_
     m.__set_result_Str_k_ = SpawnTaskLift___set_result_Str_k_

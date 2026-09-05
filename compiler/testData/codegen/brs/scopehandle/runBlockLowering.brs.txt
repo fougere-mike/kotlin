@@ -13,6 +13,7 @@
     "CollectionExtensionsKt.brs",
     "CombinedContextKt.brs",
     "ComponentCoroutinesKt.brs",
+    "ComponentLifecycleKt.brs",
     "ComponentMailboxKt.brs",
     "ContinuationInterceptorKt.brs",
     "ContinuationKt.brs",
@@ -83,6 +84,7 @@
     <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ComponentMailboxKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
@@ -158,7 +160,7 @@ function loadShelf_I_RoSGNode_k_(shelfId as Integer, node as Object) as Integer
 end function
 
 sub init()
-    __kotlinPumpAttach(m.top, m.global)
+    __kotlinComponentAttach(m.top, m.global)
     m.top.status = ""
     m.__get_status_k_ = RunBlockLowering___get_status_k_
     m.__set_status_Str_k_ = RunBlockLowering___set_status_Str_k_

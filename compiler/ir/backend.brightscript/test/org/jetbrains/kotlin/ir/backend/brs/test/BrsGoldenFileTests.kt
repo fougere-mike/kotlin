@@ -384,7 +384,7 @@ class BrsComponentGoldenFileTests : AbstractBrsGoldenFileTest() {
     fun componentPumpAttachMethodUse() = runTest("components/componentPumpAttachMethodUse.kt")
 
     @Test
-    fun componentNoCoroutinesNoPumpAttach() = runTest("components/componentNoCoroutinesNoPumpAttach.kt")
+    fun componentAttachUnconditional() = runTest("components/componentAttachUnconditional.kt")
 
     @Test
     fun onKeyEventInheritedWrapper() = runTest("components/onKeyEventInheritedWrapper.kt")

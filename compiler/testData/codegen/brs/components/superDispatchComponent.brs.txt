@@ -11,6 +11,7 @@
     "CharCategoryBrsKt.brs",
     "CollectionExtensionsKt.brs",
     "CombinedContextKt.brs",
+    "ComponentLifecycleKt.brs",
     "ContinuationInterceptorKt.brs",
     "ContinuationKt.brs",
     "CoroutineImplKt.brs",
@@ -63,6 +64,7 @@
     <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CoroutineImplKt.brs" />
@@ -115,6 +117,7 @@
     "CharCategoryBrsKt.brs",
     "CollectionExtensionsKt.brs",
     "CombinedContextKt.brs",
+    "ComponentLifecycleKt.brs",
     "ContinuationInterceptorKt.brs",
     "ContinuationKt.brs",
     "CoroutineImplKt.brs",
@@ -167,6 +170,7 @@
     <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CoroutineImplKt.brs" />
@@ -208,7 +212,7 @@
 
 // --- File: superDispatchComponentKt.brs ---
 sub init()
-    __kotlinPumpAttach(m.top, m.global)
+    __kotlinComponentAttach(m.top, m.global)
     m.onKeyEvent_Str_Z_k_ = SuperBase_onKeyEvent_Str_Z_k_
     m.describe_k_ = SuperBase_describe_k_
     m.load_ContinuationStr_k_ = SuperBase_load_ContinuationStr_k_
@@ -231,7 +235,7 @@ function onKeyEvent(key as String, press as Boolean) as Boolean
 end function
 
 sub init()
-    __kotlinPumpAttach(m.top, m.global)
+    __kotlinComponentAttach(m.top, m.global)
     m.onKeyEvent_Str_Z_k_ = SuperLeaf_onKeyEvent_Str_Z_k_
     m.describe_k_ = SuperLeaf_describe_k_
     m.load_ContinuationStr_k_ = SuperLeaf_load_ContinuationStr_k_

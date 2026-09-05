@@ -15,6 +15,7 @@
     "CombinedContextKt.brs",
     "ComponentCoroutinesKt.brs",
     "ComponentFactoryKt.brs",
+    "ComponentLifecycleKt.brs",
     "ContinuationInterceptorKt.brs",
     "ContinuationKt.brs",
     "CoroutineDispatcherKt.brs",
@@ -90,6 +91,7 @@
     <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ComponentFactoryKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CoroutineDispatcherKt.brs" />
@@ -164,6 +166,7 @@
     "CombinedContextKt.brs",
     "ComponentCoroutinesKt.brs",
     "ComponentFactoryKt.brs",
+    "ComponentLifecycleKt.brs",
     "ContinuationInterceptorKt.brs",
     "ContinuationKt.brs",
     "CoroutineDispatcherKt.brs",
@@ -246,6 +249,7 @@
     <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ComponentFactoryKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CoroutineDispatcherKt.brs" />
@@ -339,7 +343,7 @@ end sub
 
 // --- File: flowOnLiftKt.brs ---
 sub init()
-    __kotlinPumpAttach(m.top, m.global)
+    __kotlinComponentAttach(m.top, m.global)
     m.top.status = ""
     m.__get_status_k_ = FlowOnLift___get_status_k_
     m.__set_status_Str_k_ = FlowOnLift___set_status_Str_k_

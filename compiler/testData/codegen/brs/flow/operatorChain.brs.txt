@@ -14,6 +14,7 @@
     "CollectionQueryKt.brs",
     "CombinedContextKt.brs",
     "ComponentCoroutinesKt.brs",
+    "ComponentLifecycleKt.brs",
     "ConcurrentOperatorsKt.brs",
     "ContinuationInterceptorKt.brs",
     "ContinuationKt.brs",
@@ -87,6 +88,7 @@
     <script type="text/brightscript" uri="pkg:/source/CollectionQueryKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ConcurrentOperatorsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
@@ -145,7 +147,7 @@
 
 // --- File: operatorChainKt.brs ---
 sub init()
-    __kotlinPumpAttach(m.top, m.global)
+    __kotlinComponentAttach(m.top, m.global)
     m.top.result = ""
     m.__get_result_k_ = OperatorChain___get_result_k_
     m.__set_result_Str_k_ = OperatorChain___set_result_Str_k_

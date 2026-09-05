@@ -13,6 +13,7 @@
     "CollectionExtensionsKt.brs",
     "CombinedContextKt.brs",
     "ComponentCoroutinesKt.brs",
+    "ComponentLifecycleKt.brs",
     "ContainerNodesKt.brs",
     "ContinuationInterceptorKt.brs",
     "ContinuationKt.brs",
@@ -83,6 +84,7 @@
     <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContainerNodesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
@@ -185,7 +187,7 @@ function LambdaScopeRead_Layout___get_shelfNode_k_() as Object
 end function
 
 sub init()
-    __kotlinPumpAttach(m.top, m.global)
+    __kotlinComponentAttach(m.top, m.global)
     m.top.status = ""
     m.layout = LambdaScopeRead_Layout_create_RoSGNode_k_(m.top)
     m.__get_status_k_ = LambdaScopeRead___get_status_k_

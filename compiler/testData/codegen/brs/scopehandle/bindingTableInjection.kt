@@ -7,7 +7,7 @@
 // include closure (here: the component's own file — blocks #1 and #2).
 // Request-name keys contain '#', so they must render as QUOTED AA-literal
 // keys. The install call hands the table to the stdlib's per-component
-// holder (GetGlobalAA domain — the __kotlinPumpAttach idiom); owner dispatch
+// holder (GetGlobalAA domain — the __kotlinComponentAttach idiom); owner dispatch
 // consults it after the hand-registered map, on both the wire and the
 // same-component fast path.
 import kotlin.brs.GroupComponent

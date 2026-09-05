@@ -14,6 +14,7 @@
     "CollectionQueryKt.brs",
     "CombinedContextKt.brs",
     "ComponentCoroutinesKt.brs",
+    "ComponentLifecycleKt.brs",
     "ContinuationInterceptorKt.brs",
     "ContinuationKt.brs",
     "CoroutineDispatcherKt.brs",
@@ -81,6 +82,7 @@
     <script type="text/brightscript" uri="pkg:/source/CollectionQueryKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CoroutineDispatcherKt.brs" />
@@ -189,7 +191,7 @@ sub TitleCollector___set_last_Str_k_(value as String)
 end sub
 
 sub init()
-    __kotlinPumpAttach(m.top, m.global)
+    __kotlinComponentAttach(m.top, m.global)
     m.top.rendered = ""
     m.vm = ScreenVm_create_k_()
     m.__get_rendered_k_ = StateFlowAccess___get_rendered_k_

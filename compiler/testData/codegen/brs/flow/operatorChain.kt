@@ -4,7 +4,7 @@
 // operator extension call shapes (receiver-first _k_ globals), the nested
 // suspend-lambda SAM classes with sanitized create/mangle names, the
 // captured-self routing for @SG field writes in lambda scope (m.this_0.top),
-// and the injected __kotlinPumpAttach from the file-level coroutine scan.
+// and the unconditionally injected __kotlinComponentAttach lifecycle attach.
 import kotlin.brs.GroupComponent
 import kotlin.brs.SGStringField
 import kotlin.coroutines.flow.*

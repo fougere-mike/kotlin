@@ -1,40 +1,30 @@
-// --- File: LaunchExtension.deps.json ---
+// --- File: PlainComponent.deps.json ---
 {
   "version": 1,
-  "component": "LaunchExtension",
+  "component": "PlainComponent",
   "dependencies": [
     "AnyKt.brs",
     "ArrayListKt.brs",
     "ArraysBrsKt.brs",
     "ArraysKt.brs",
-    "BuildersKt.brs",
     "CancellationExceptionKt.brs",
     "CharCategoryBrsKt.brs",
     "CollectionExtensionsKt.brs",
     "CombinedContextKt.brs",
-    "ComponentCoroutinesKt.brs",
     "ComponentLifecycleKt.brs",
     "ContinuationInterceptorKt.brs",
     "ContinuationKt.brs",
-    "CoroutineDispatcherKt.brs",
-    "CoroutineImplKt.brs",
     "CoroutineQueueKt.brs",
-    "CoroutineScopeKt.brs",
     "CoroutineSingletonsKt.brs",
-    "DefaultDispatcherKt.brs",
     "DelayKt.brs",
     "DelayTrackerKt.brs",
-    "DispatchersKt.brs",
     "EmptyCoroutineContextKt.brs",
     "ExceptionsKt.brs",
     "HashMapKt.brs",
     "HashSetKt.brs",
-    "IODispatcherKt.brs",
-    "IOWorkerRegistryKt.brs",
     "IntrinsicsBrsKt.brs",
     "JobKt.brs",
     "KotlinKt.brs",
-    "MapExtensionsBrsKt.brs",
     "PairKt.brs",
     "ParkedContinuationKt.brs",
     "PreconditionsKt.brs",
@@ -44,14 +34,12 @@
     "RangesKt.brs",
     "ResultKt.brs",
     "StringBuilderBrsKt.brs",
-    "TaskPoolKt.brs",
     "ThrowableKt.brs",
     "UByteKt.brs",
     "UIntKt.brs",
     "ULongKt.brs",
     "URangesKt.brs",
     "UShortKt.brs",
-    "UnconfinedDispatcherKt.brs",
     "UnsignedUtilsKt.brs",
     "charBrsKt.brs",
     "consoleKt.brs",
@@ -62,44 +50,34 @@
 }
 
 
-// --- File: LaunchExtension.xml ---
+// --- File: PlainComponent.xml ---
 <?xml version="1.0" encoding="utf-8" ?>
-<component name="LaunchExtension" extends="Group">
+<component name="PlainComponent" extends="Group">
     <interface>
-        <field id="status" type="string" />
+        <field id="label" type="string" />
     </interface>
     <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/BuildersKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CancellationExceptionKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/CoroutineDispatcherKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/CoroutineImplKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CoroutineQueueKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/CoroutineScopeKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CoroutineSingletonsKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/DefaultDispatcherKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/DelayKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/DelayTrackerKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/DispatchersKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/EmptyCoroutineContextKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/IODispatcherKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/IOWorkerRegistryKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/IntrinsicsBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/JobKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/MapExtensionsBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/PairKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ParkedContinuationKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
@@ -109,88 +87,39 @@
     <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ResultKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/TaskPoolKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ULongKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/URangesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/UShortKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/UnconfinedDispatcherKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/UnsignedUtilsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/consoleKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
-    <script type="text/brightscript" uri="pkg:/components/LaunchExtension/LaunchExtensionKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/PlainComponent/PlainComponentKt.brs" />
 </component>
 
 
-// --- File: componentLaunchExtensionKt.brs ---
+// --- File: componentAttachUnconditionalKt.brs ---
 sub init()
     __kotlinComponentAttach(m.top, m.global)
-    m.top.status = ""
-    m.__get_status_k_ = LaunchExtension___get_status_k_
-    m.__set_status_Str_k_ = LaunchExtension___set_status_Str_k_
-    launch_rComponentBase_CoroutineContext_SuspendFunction1CoroutineScopeV_k_(m, invalid, LaunchExtension_slambda_create_LaunchExtension_ContinuationAnyNN_k_(m, invalid))
+    m.top.label = ""
+    m.__get_label_k_ = PlainComponent___get_label_k_
+    m.__set_label_Str_k_ = PlainComponent___set_label_Str_k_
+    m.top.label = "plain"
 end sub
 
 function onKeyEvent(key as String, press as Boolean) as Boolean
     return false
 end function
 
-function LaunchExtension___get_status_k_() as String
-    return m.top.status
+function PlainComponent___get_label_k_() as String
+    return m.top.label
 end function
 
-sub LaunchExtension___set_status_Str_k_(value as String)
-    m.top.status = value
+sub PlainComponent___set_label_Str_k_(value as String)
+    m.top.label = value
 end sub
-
-function LaunchExtension_slambda_create_LaunchExtension_ContinuationAnyNN_k_(this_0 as Object, resultContinuation as Dynamic) as Object
-    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
-    this._super = {}
-    this._super.invoke_AnyN_Continuation_k_ = this.invoke_AnyN_Continuation_k_
-    this._super.doResume_k_ = this.doResume_k_
-    this._super.create_AnyN_Continuation_k_ = this.create_AnyN_Continuation_k_
-    this.__proto = ["LaunchExtension_slambda", "SuspendFunction1", this.__proto]
-    this.__type = "LaunchExtension_slambda"
-    this.invoke_AnyN_Continuation_k_ = LaunchExtension_slambda_invoke_AnyN_Continuation_k_
-    this.doResume_k_ = LaunchExtension_slambda_doResume_k_
-    this.create_AnyN_Continuation_k_ = LaunchExtension_slambda_create_AnyN_Continuation_k_
-    this.this_0 = this_0
-    return this
-end function
-
-function LaunchExtension_slambda_invoke_AnyN_Continuation_k_(_this_launch as Object, _completion as Object) as Object
-    tmp = m.create_AnyN_Continuation_k_(_this_launch, _completion)
-    tmp.__set_result(invalid)
-    tmp.__set_exception(invalid)
-    return tmp.doResume_k_()
-end function
-
-function LaunchExtension_slambda_doResume_k_() as Dynamic
-    suspendResult = m.__get_result()
-    while true
-                try
-            tmp = m.__get_state()
-            if __kotlin_identityEquals(tmp, 0) then
-                m.__set_exceptionState(1)
-                m.this_0.top.status = "done"
-
-                                return invalid
-            else if __kotlin_identityEquals(tmp, 1) then
-                throw m.__get_exception()
-            end if
-        catch e
-                        throw e
-        end try
-    end while
-end function
-
-function LaunchExtension_slambda_create_AnyN_Continuation_k_(_this_launch as Dynamic, completion as Object) as Object
-    i = LaunchExtension_slambda_create_LaunchExtension_ContinuationAnyNN_k_(m.this_0, completion)
-    i._this_launch = _this_launch
-    return i
-end function

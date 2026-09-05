@@ -107,10 +107,6 @@ class IrToBrsTransformer(
         // so a per-file scan sees every creation site)
         collectCapturedComponentSelfFields(irFile)
 
-        // Decide whether components in this file get the pump-scheduler attach
-        // injected into their generated init()
-        genCtx.currentFileUsesCoroutines = fileUsesCoroutines(irFile)
-
         // Decide whether components in this file get the lowered run{}-block
         // binding table injected into their generated init() (scope owners)
         genCtx.currentFileCallsExposeScope = fileCallsExposeScope(irFile)
@@ -228,75 +224,15 @@ class IrToBrsTransformer(
     }
 
     /**
-     * True when [irFile] contains any reference into the coroutine machinery —
-     * gates the `__kotlinPumpAttach(m.top, m.global)` injection in the generated
-     * init() of components declared in this file. File granularity matches
-     * script-include granularity (dependencies are computed per file), so a
-     * positive match adds no include bloat beyond what the file already pulls.
-     *
-     * KNOWN HOLE: coroutine use hidden entirely inside ANOTHER file's helper
-     * (the component's own file never naming a coroutine symbol) escapes this
-     * scan; the lazy attach in kotlin.brs componentScope()/launch() covers
-     * those components at runtime.
-     */
-    private fun fileUsesCoroutines(irFile: IrFile): Boolean {
-        var found = false
-        irFile.acceptVoid(object : IrVisitorVoid() {
-            override fun visitElement(element: IrElement) {
-                if (!found) element.acceptChildrenVoid(this)
-            }
-
-            override fun visitClass(declaration: IrClass) {
-                if (found) return
-                // Lowered suspend lambdas/state machines extend CoroutineImpl —
-                // catches kotlin.brs.launch{} blocks whose call symbol lives
-                // outside kotlin.coroutines.
-                for (superType in declaration.superTypes) {
-                    val fq = superType.classFqName?.asString() ?: continue
-                    if (isCoroutineMachineryFqName(fq)) {
-                        found = true
-                        return
-                    }
-                }
-                declaration.acceptChildrenVoid(this)
-            }
-
-            override fun visitCall(expression: IrCall) {
-                if (found) return
-                val fq = expression.symbol.owner.fqNameWhenAvailable?.asString()
-                if (fq != null && isCoroutineMachineryFqName(fq)) {
-                    found = true
-                    return
-                }
-                expression.acceptChildrenVoid(this)
-            }
-
-            override fun visitConstructorCall(expression: IrConstructorCall) {
-                if (found) return
-                val fq = expression.symbol.owner.fqNameWhenAvailable?.asString()
-                if (fq != null && isCoroutineMachineryFqName(fq)) {
-                    found = true
-                    return
-                }
-                expression.acceptChildrenVoid(this)
-            }
-        })
-        return found
-    }
-
-    private fun isCoroutineMachineryFqName(fq: String): Boolean =
-        fq.startsWith("kotlin.coroutines.") ||
-            fq == "kotlin.brs.launch" || fq == "kotlin.brs.componentScope"
-
-    /**
      * True when [irFile] contains a call to `kotlin.brs.exposeScope` — gates
      * the `m.__kotlinScopeBindings` + `__kotlinScopeBindingsInstall` injection
      * in the generated init() of components declared in this file (the owner
-     * half of the compiler-lowered `ScopeHandle.run { }` surface). Same file
-     * granularity — and the same helper-file hole — as [fileUsesCoroutines]:
-     * an exposeScope call hidden entirely inside another file's helper escapes
-     * the scan, and such an owner serves hand-registered requests only (run{}
-     * blocks dispatch to the guided-miss outcome, which names the fix).
+     * half of the compiler-lowered `ScopeHandle.run { }` surface). File
+     * granularity matches script-include granularity (dependencies are computed
+     * per file). KNOWN HOLE: an exposeScope call hidden entirely inside another
+     * file's helper escapes the scan, and such an owner serves hand-registered
+     * requests only (run{} blocks dispatch to the guided-miss outcome, which
+     * names the fix).
      */
     private fun fileCallsExposeScope(irFile: IrFile): Boolean {
         var found = false
@@ -993,18 +929,18 @@ class IrToBrsTransformer(
             )
         }
 
-        // Self-scheduling coroutine pump: components in coroutine-using files
-        // get the scheduler attached at init, so every dispatch path (launch{},
-        // legacy CoroutineScope(Dispatchers.Main), runTask resumptions, delay
-        // deadlines) wakes the render thread without user-wired pump timers.
-        // Runs BEFORE property initializers, which may already launch work.
-        // Task components are excluded: their init runs on the render thread
-        // but their work runs on the task thread, where the run loop pumps.
-        if (genCtx.currentFileUsesCoroutines && !isConcreteTaskComponent(irClass)) {
+        // Lifecycle attach (spec §5.1): UNCONDITIONAL for every render component
+        // that emits an init() — abstract user intermediates included (they sit
+        // in the SceneGraph extends chain; the attach is idempotent). Performs
+        // the pump attach internally, so the per-file coroutine scan no longer
+        // gates anything here (its helper-file hole is closed by construction).
+        // Task components are excluded as before: their work runs on the task
+        // thread, where the run loop pumps.
+        if (!isConcreteTaskComponent(irClass)) {
             bodyStatements.add(
                 BrsExpressionStatement(
                     createFunctionCall(
-                        "__kotlinPumpAttach",
+                        "__kotlinComponentAttach",
                         mutableListOf(
                             BrsDotAccess(BrsMRef(), "top"),
                             BrsDotAccess(BrsMRef(), "global")
@@ -1023,7 +959,7 @@ class IrToBrsTransformer(
         // populates the registered literal before rendering. The m-scope
         // assignment is the inspectable artifact; the install call hands the
         // same table to the stdlib's per-component holder (GetGlobalAA domain
-        // — the __kotlinPumpAttach idiom), which is what dispatch reads.
+        // — the __kotlinComponentAttach idiom), which is what dispatch reads.
         if (genCtx.currentFileCallsExposeScope && !isConcreteTaskComponent(irClass)) {
             val bindingTable = BrsAALiteral()
             context.pendingScopeBindingTables.add(bindingTable)

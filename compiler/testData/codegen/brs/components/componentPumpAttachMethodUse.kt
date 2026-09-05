@@ -1,6 +1,8 @@
-// The pump-attach injection predicate is FILE-level: coroutine use only inside
-// a method (not init) must still inject __kotlinPumpAttach into init(), because
-// the scheduler has to be attached before the method's launch ever runs.
+// Coroutine use only inside a method (not init) still has the scheduler
+// attached before the method's launch ever runs: the lifecycle attach
+// (__kotlinComponentAttach, which performs the pump attach) is injected
+// UNCONDITIONALLY as init()'s first statement, and the coroutine scripts land
+// in the component's includes via the method's dependency recording.
 import kotlin.brs.BrsOnChange
 import kotlin.brs.GroupComponent
 import kotlin.brs.SGStringField

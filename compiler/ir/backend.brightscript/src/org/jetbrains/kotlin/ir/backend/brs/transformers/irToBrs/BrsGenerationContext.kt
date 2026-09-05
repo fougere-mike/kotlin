@@ -354,15 +354,8 @@ class BrsGenerationContext(
     internal var currentFilePath: String? = null
 
     /**
-     * True while transforming a file that references coroutine machinery
-     * (per-file pre-scan in transformFile). Gates the `__kotlinPumpAttach`
-     * injection in generated component init().
-     */
-    internal var currentFileUsesCoroutines: Boolean = false
-
-    /**
      * True while transforming a file that calls `kotlin.brs.exposeScope`
-     * (per-file pre-scan in transformFile, pump-attach granularity). Gates the
+     * (per-file pre-scan in transformFile, file granularity). Gates the
      * `m.__kotlinScopeBindings` table + `__kotlinScopeBindingsInstall`
      * injection in generated component init(): owner components need the
      * lowered run{}-block binding table for dispatch; a same-file non-owner

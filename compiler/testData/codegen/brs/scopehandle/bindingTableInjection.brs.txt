@@ -13,6 +13,7 @@
     "CollectionExtensionsKt.brs",
     "CombinedContextKt.brs",
     "ComponentCoroutinesKt.brs",
+    "ComponentLifecycleKt.brs",
     "ComponentMailboxKt.brs",
     "ContinuationInterceptorKt.brs",
     "ContinuationKt.brs",
@@ -83,6 +84,7 @@
     <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ComponentMailboxKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
@@ -143,7 +145,7 @@ function describe_RoSGNode_k_(node as Object) as String
 end function
 
 sub init()
-    __kotlinPumpAttach(m.top, m.global)
+    __kotlinComponentAttach(m.top, m.global)
     m.__kotlinScopeBindings = {"bindingTableInjection#1": __scopeBlock_bindingTableInjection_1_RoAssociativeArrayN_ContinuationI_k_, "bindingTableInjection#2": __scopeBlock_bindingTableInjection_2_RoAssociativeArrayN_ContinuationStr_k_}
     __kotlinScopeBindingsInstall(m.__kotlinScopeBindings)
     m.top.status = ""
