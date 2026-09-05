@@ -385,6 +385,9 @@ class BrsComponentGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun componentNoCoroutinesNoPumpAttach() = runTest("components/componentNoCoroutinesNoPumpAttach.kt")
+
+    @Test
+    fun onKeyEventInheritedWrapper() = runTest("components/onKeyEventInheritedWrapper.kt")
 }
 
 // ==================== Intrinsics Tests ====================

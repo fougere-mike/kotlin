@@ -1,0 +1,52 @@
+// --- File: KeyBase.deps.json ---
+{
+  "version": 1,
+  "component": "KeyBase",
+  "dependencies": [
+  ]
+}
+
+
+// --- File: KeyBase.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="KeyBase" extends="Group">
+    <interface>
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/KeyBase/KeyBaseKt.brs" />
+</component>
+
+
+// --- File: KeyLeaf.deps.json ---
+{
+  "version": 1,
+  "component": "KeyLeaf",
+  "dependencies": [
+  ]
+}
+
+
+// --- File: KeyLeaf.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="KeyLeaf" extends="KeyBase">
+    <interface>
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/KeyLeaf/KeyLeafKt.brs" />
+</component>
+
+
+// --- File: onKeyEventInheritedWrapperKt.brs ---
+sub init()
+    m.onKeyEvent_Str_Z_k_ = KeyBase_onKeyEvent_Str_Z_k_
+end sub
+
+function KeyBase_onKeyEvent_Str_Z_k_(key as String, press as Boolean) as Boolean
+    return press and (key = "OK")
+end function
+
+function onKeyEvent(key as String, press as Boolean) as Boolean
+    return m.onKeyEvent_Str_Z_k_(key, press)
+end function
+
+function onKeyEvent(key as String, press as Boolean) as Boolean
+    return m.onKeyEvent_Str_Z_k_(key, press)
+end function

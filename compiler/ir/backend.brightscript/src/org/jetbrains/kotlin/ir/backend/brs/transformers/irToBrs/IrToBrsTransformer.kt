@@ -792,14 +792,22 @@ class IrToBrsTransformer(
             BrsParameter("press", BrsType.BOOLEAN)
         )
 
-        // Check if the user has overridden onKeyEvent
-        val override = context.intrinsics.findOnKeyEventOverride(irClass)
+        // Walk the USER hierarchy: an override declared in a concrete base is
+        // attached by the BASE's init over the shared m (base init runs first);
+        // the slot short name is derived against the DECLARING class, not this
+        // leaf. Only when nothing in the chain overrides does the wrapper
+        // return false.
+        val override = context.intrinsics.hierarchyOverrides(irClass, "onKeyEvent") { fn ->
+            fn.valueParameters.size == 2 &&
+                fn.valueParameters[0].type.isString() &&
+                fn.valueParameters[1].type.isBoolean() &&
+                fn.returnType.isBoolean()
+        }
 
         val body = if (override != null) {
-            // Call the user's override: return m.onKeyEvent_String_Boolean_k_(key, press)
-            val mangledName = context.getBrsName(override)
-            val className = context.getBrsName(irClass)
-            val shortName = mangledName.removePrefix("${className}_")
+            val declaringClass = override.parent as IrClass
+            val shortName = context.getBrsName(override)
+                .removePrefix("${context.getBrsName(declaringClass)}_")
 
             BrsBlock(mutableListOf(
                 BrsReturn(
@@ -810,7 +818,6 @@ class IrToBrsTransformer(
                 )
             ))
         } else {
-            // Default: return false (allow event to propagate to children)
             BrsBlock(mutableListOf(BrsReturn(BrsBooleanLiteral(false))))
         }
 

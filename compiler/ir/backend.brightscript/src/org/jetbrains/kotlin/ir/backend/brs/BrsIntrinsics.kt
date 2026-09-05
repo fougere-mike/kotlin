@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.ir.expressions.IrConst
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.*
+import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.util.getAnnotation
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.isInterface
@@ -310,21 +311,40 @@ class BrsIntrinsics(
     }
 
     /**
-     * Checks if a class has overridden the onKeyEvent method.
+     * The nearest REAL (non-fake, non-abstract) override of member [name] that
+     * also satisfies [signature], walking [irClass] and its USER component
+     * supertypes. Stops — answering null — at the first stdlib base: a class
+     * directly annotated @BrsSceneGraphComponent, or kotlin.brs.ComponentBase.
+     * Null means nothing in the user hierarchy overrides the member and the
+     * stdlib default applies.
      *
-     * @return The overriding function if found, null otherwise.
+     * Why a hierarchy walk: SceneGraph runs base init() before derived init()
+     * over a shared m, so an override declared in a concrete user BASE is
+     * attached as a slot the leaf inherits — the leaf's generated wrappers and
+     * lifecycle entries must consult the whole chain, not just the leaf
+     * (the onKeyEvent leaf-wrapper shadowing defect, spec §5.5).
      */
-    fun findOnKeyEventOverride(irClass: IrClass): IrSimpleFunction? {
-        return irClass.declarations
-            .filterIsInstance<IrSimpleFunction>()
-            .find { function ->
-                function.name.asString() == "onKeyEvent" &&
-                !function.isFakeOverride &&
-                function.valueParameters.size == 2 &&
-                function.valueParameters[0].type.isString() &&
-                function.valueParameters[1].type.isBoolean() &&
-                function.returnType.isBoolean()
+    fun hierarchyOverrides(
+        irClass: IrClass,
+        name: String,
+        signature: (IrSimpleFunction) -> Boolean = { true },
+    ): IrSimpleFunction? {
+        var current: IrClass? = irClass
+        while (current != null) {
+            if (current.hasAnnotation(brsSceneGraphComponentFqn)) return null
+            if (current.fqNameWhenAvailable?.asString() == "kotlin.brs.ComponentBase") return null
+            val found = current.declarations.filterIsInstance<IrSimpleFunction>().find {
+                it.name.asString() == name &&
+                    !it.isFakeOverride &&
+                    it.modality != Modality.ABSTRACT &&
+                    signature(it)
             }
+            if (found != null) return found
+            current = current.superTypes
+                .mapNotNull { it.classOrNull?.owner }
+                .firstOrNull { !it.isInterface }
+        }
+        return null
     }
 
     /**
