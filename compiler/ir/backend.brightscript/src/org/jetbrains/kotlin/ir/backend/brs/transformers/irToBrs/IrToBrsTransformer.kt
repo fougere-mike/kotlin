@@ -934,9 +934,14 @@ class IrToBrsTransformer(
         // in the SceneGraph extends chain; the attach is idempotent). Performs
         // the pump attach internally, so the per-file coroutine scan no longer
         // gates anything here (its helper-file hole is closed by construction).
-        // Task components are excluded as before: their work runs on the task
-        // thread, where the run loop pumps.
-        if (!isConcreteTaskComponent(irClass)) {
+        // Task components are excluded — the WHOLE hierarchy, abstract
+        // intermediates included (ruling 2026-09-05): their init() only ever
+        // runs inside a Task node's extends chain, the task thread has no pump
+        // (attaching there would copy a hostTop-armed PumpScheduler into every
+        // derived task's task-thread m), and the lifecycle include closure is
+        // unwanted bloat in task XML. The old concrete-only exclusion was an
+        // accident of the retired per-file scan.
+        if (!context.intrinsics.isTaskComponent(irClass)) {
             bodyStatements.add(
                 BrsExpressionStatement(
                     createFunctionCall(
