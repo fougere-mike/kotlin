@@ -391,6 +391,9 @@ class BrsComponentGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun superDispatchComponent() = runTest("components/superDispatchComponent.kt")
+
+    @Test
+    fun onStartDriver() = runTest("components/onStartDriver.kt")
 }
 
 // ==================== Intrinsics Tests ====================

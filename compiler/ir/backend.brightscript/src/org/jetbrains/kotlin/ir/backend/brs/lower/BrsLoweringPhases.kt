@@ -137,6 +137,15 @@ object BrsLoweringPhases {
         // correctly (BrsTry carries a single catch).
         phases += BrsMultiCatchLowering(context)
 
+        // Phase 0.054: component lifecycle driver synthesis
+        // Adds `__kotlinStartDriver()` + an init-tail call to every concrete render
+        // component whose hierarchy overrides onStart (spec 2026-09-04-component-
+        // lifecycle §5.3). Must run BEFORE UpgradeCallableReferences and every
+        // coroutine lowering: the synthesized `launch { awaitReady(); onStart() }`
+        // block is an IrFunctionExpression that those passes turn into a real state
+        // machine — the stdlib cannot host this driver (no stdlib state machines).
+        phases += BrsComponentLifecycleLowering(context)
+
         // Phase 0.055: runTask call-site rewrite
         // runTask<T>{} is a klib inline function, which this backend never inlines at
         // user call sites; the reified type argument only exists on the un-inlined

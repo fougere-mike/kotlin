@@ -337,6 +337,30 @@ class BrsSymbols(
         findOptionalFunction(BrsStandardClassIds.BASE_BRS_PACKAGE, "sharedAcquire")
     }
 
+    // ==================== Component Lifecycle Symbols ====================
+    // All consumed by BrsComponentLifecycleLowering (spec 2026-09-04-component-
+    // lifecycle §5.3), which OrNull-bails when any are missing (stdlib compilation).
+
+    /** kotlin.brs.launch — ComponentBase.launch(context, block) (lifecycle driver synthesis). */
+    val componentLaunchOrNull: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(BrsStandardClassIds.BASE_BRS_PACKAGE, "launch")
+    }
+
+    /** kotlin.brs.awaitReady — the lifecycle gate (lifecycle driver synthesis). */
+    val awaitReadyOrNull: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(BrsStandardClassIds.BASE_BRS_PACKAGE, "awaitReady")
+    }
+
+    /** kotlin.brs.kotlinLifecycleClaimDriver — once-per-activation claim (lifecycle driver synthesis). */
+    val kotlinLifecycleClaimDriverOrNull: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(BrsStandardClassIds.BASE_BRS_PACKAGE, "kotlinLifecycleClaimDriver")
+    }
+
+    /** kotlin.coroutines.CoroutineScope — the launch block's receiver type. */
+    val coroutineScopeClassOrNull: IrClassSymbol? by lazy {
+        findOptionalClass(FqName("kotlin.coroutines"), "CoroutineScope")
+    }
+
     // ==================== ScopeHandle Symbols ====================
 
     /**

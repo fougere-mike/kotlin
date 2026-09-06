@@ -1,0 +1,847 @@
+// --- File: NoStart.deps.json ---
+{
+  "version": 1,
+  "component": "NoStart",
+  "dependencies": [
+    "AnyKt.brs",
+    "ArrayListKt.brs",
+    "ArraysBrsKt.brs",
+    "ArraysKt.brs",
+    "BuildersKt.brs",
+    "CancellationExceptionKt.brs",
+    "CharCategoryBrsKt.brs",
+    "CollectionExtensionsKt.brs",
+    "CombinedContextKt.brs",
+    "ComponentCoroutinesKt.brs",
+    "ComponentLifecycleKt.brs",
+    "ComponentMailboxKt.brs",
+    "ContinuationInterceptorKt.brs",
+    "ContinuationKt.brs",
+    "CoroutineDispatcherKt.brs",
+    "CoroutineImplKt.brs",
+    "CoroutineQueueKt.brs",
+    "CoroutineScopeKt.brs",
+    "CoroutineSingletonsKt.brs",
+    "DefaultDispatcherKt.brs",
+    "DelayKt.brs",
+    "DelayTrackerKt.brs",
+    "DispatchersKt.brs",
+    "EmptyCoroutineContextKt.brs",
+    "ExceptionsKt.brs",
+    "HashMapKt.brs",
+    "HashSetKt.brs",
+    "IODispatcherKt.brs",
+    "IOWorkerRegistryKt.brs",
+    "IntrinsicsBrsKt.brs",
+    "JobKt.brs",
+    "KotlinKt.brs",
+    "MapExtensionsBrsKt.brs",
+    "PairKt.brs",
+    "ParkedContinuationKt.brs",
+    "PreconditionsKt.brs",
+    "PrimitiveIteratorsKt.brs",
+    "PumpSchedulerKt.brs",
+    "RangeOperatorsBrsKt.brs",
+    "RangesKt.brs",
+    "ResultKt.brs",
+    "ScopeApiKt.brs",
+    "ScopeHostImplKt.brs",
+    "ScopeRtqBackendKt.brs",
+    "ScopeWireKt.brs",
+    "ScopesKt.brs",
+    "StringBuilderBrsKt.brs",
+    "TaskPoolKt.brs",
+    "ThrowableKt.brs",
+    "UByteKt.brs",
+    "UIntKt.brs",
+    "ULongKt.brs",
+    "URangesKt.brs",
+    "UShortKt.brs",
+    "UnconfinedDispatcherKt.brs",
+    "UnsignedUtilsKt.brs",
+    "charBrsKt.brs",
+    "consoleKt.brs",
+    "coreRuntimeKt.brs",
+    "primitivesKt.brs",
+    "stringBrsKt.brs"
+  ]
+}
+
+
+// --- File: NoStart.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="NoStart" extends="Group">
+    <interface>
+        <field id="label" type="string" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/BuildersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CancellationExceptionKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentMailboxKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineImplKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineQueueKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineScopeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineSingletonsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DefaultDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayTrackerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DispatchersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/EmptyCoroutineContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IODispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IOWorkerRegistryKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IntrinsicsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/JobKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/MapExtensionsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PairKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ParkedContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PrimitiveIteratorsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PumpSchedulerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ResultKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopeApiKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopeHostImplKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopeRtqBackendKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopeWireKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/TaskPoolKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ULongKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/URangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UShortKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnconfinedDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnsignedUtilsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/consoleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/NoStart/NoStartKt.brs" />
+</component>
+
+
+// --- File: StartBase.deps.json ---
+{
+  "version": 1,
+  "component": "StartBase",
+  "dependencies": [
+    "AnyKt.brs",
+    "ArrayListKt.brs",
+    "ArraysBrsKt.brs",
+    "ArraysKt.brs",
+    "BuildersKt.brs",
+    "CancellationExceptionKt.brs",
+    "CharCategoryBrsKt.brs",
+    "CollectionExtensionsKt.brs",
+    "CombinedContextKt.brs",
+    "ComponentCoroutinesKt.brs",
+    "ComponentLifecycleKt.brs",
+    "ComponentMailboxKt.brs",
+    "ContinuationInterceptorKt.brs",
+    "ContinuationKt.brs",
+    "CoroutineDispatcherKt.brs",
+    "CoroutineImplKt.brs",
+    "CoroutineQueueKt.brs",
+    "CoroutineScopeKt.brs",
+    "CoroutineSingletonsKt.brs",
+    "DefaultDispatcherKt.brs",
+    "DelayKt.brs",
+    "DelayTrackerKt.brs",
+    "DispatchersKt.brs",
+    "EmptyCoroutineContextKt.brs",
+    "ExceptionsKt.brs",
+    "HashMapKt.brs",
+    "HashSetKt.brs",
+    "IODispatcherKt.brs",
+    "IOWorkerRegistryKt.brs",
+    "IntrinsicsBrsKt.brs",
+    "JobKt.brs",
+    "KotlinKt.brs",
+    "MapExtensionsBrsKt.brs",
+    "PairKt.brs",
+    "ParkedContinuationKt.brs",
+    "PreconditionsKt.brs",
+    "PrimitiveIteratorsKt.brs",
+    "PumpSchedulerKt.brs",
+    "RangeOperatorsBrsKt.brs",
+    "RangesKt.brs",
+    "ResultKt.brs",
+    "ScopeApiKt.brs",
+    "ScopeHostImplKt.brs",
+    "ScopeRtqBackendKt.brs",
+    "ScopeWireKt.brs",
+    "ScopesKt.brs",
+    "StringBuilderBrsKt.brs",
+    "TaskPoolKt.brs",
+    "ThrowableKt.brs",
+    "UByteKt.brs",
+    "UIntKt.brs",
+    "ULongKt.brs",
+    "URangesKt.brs",
+    "UShortKt.brs",
+    "UnconfinedDispatcherKt.brs",
+    "UnsignedUtilsKt.brs",
+    "charBrsKt.brs",
+    "consoleKt.brs",
+    "coreRuntimeKt.brs",
+    "primitivesKt.brs",
+    "stringBrsKt.brs"
+  ]
+}
+
+
+// --- File: StartBase.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="StartBase" extends="Group">
+    <interface>
+        <field id="seen" type="string" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/BuildersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CancellationExceptionKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentMailboxKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineImplKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineQueueKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineScopeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineSingletonsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DefaultDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayTrackerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DispatchersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/EmptyCoroutineContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IODispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IOWorkerRegistryKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IntrinsicsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/JobKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/MapExtensionsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PairKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ParkedContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PrimitiveIteratorsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PumpSchedulerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ResultKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopeApiKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopeHostImplKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopeRtqBackendKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopeWireKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/TaskPoolKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ULongKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/URangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UShortKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnconfinedDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnsignedUtilsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/consoleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/StartBase/StartBaseKt.brs" />
+</component>
+
+
+// --- File: StartInherits.deps.json ---
+{
+  "version": 1,
+  "component": "StartInherits",
+  "dependencies": [
+    "AnyKt.brs",
+    "ArrayListKt.brs",
+    "ArraysBrsKt.brs",
+    "ArraysKt.brs",
+    "BuildersKt.brs",
+    "CancellationExceptionKt.brs",
+    "CharCategoryBrsKt.brs",
+    "CollectionExtensionsKt.brs",
+    "CombinedContextKt.brs",
+    "ComponentCoroutinesKt.brs",
+    "ComponentLifecycleKt.brs",
+    "ComponentMailboxKt.brs",
+    "ContinuationInterceptorKt.brs",
+    "ContinuationKt.brs",
+    "CoroutineDispatcherKt.brs",
+    "CoroutineImplKt.brs",
+    "CoroutineQueueKt.brs",
+    "CoroutineScopeKt.brs",
+    "CoroutineSingletonsKt.brs",
+    "DefaultDispatcherKt.brs",
+    "DelayKt.brs",
+    "DelayTrackerKt.brs",
+    "DispatchersKt.brs",
+    "EmptyCoroutineContextKt.brs",
+    "ExceptionsKt.brs",
+    "HashMapKt.brs",
+    "HashSetKt.brs",
+    "IODispatcherKt.brs",
+    "IOWorkerRegistryKt.brs",
+    "IntrinsicsBrsKt.brs",
+    "JobKt.brs",
+    "KotlinKt.brs",
+    "MapExtensionsBrsKt.brs",
+    "PairKt.brs",
+    "ParkedContinuationKt.brs",
+    "PreconditionsKt.brs",
+    "PrimitiveIteratorsKt.brs",
+    "PumpSchedulerKt.brs",
+    "RangeOperatorsBrsKt.brs",
+    "RangesKt.brs",
+    "ResultKt.brs",
+    "ScopeApiKt.brs",
+    "ScopeHostImplKt.brs",
+    "ScopeRtqBackendKt.brs",
+    "ScopeWireKt.brs",
+    "ScopesKt.brs",
+    "StringBuilderBrsKt.brs",
+    "TaskPoolKt.brs",
+    "ThrowableKt.brs",
+    "UByteKt.brs",
+    "UIntKt.brs",
+    "ULongKt.brs",
+    "URangesKt.brs",
+    "UShortKt.brs",
+    "UnconfinedDispatcherKt.brs",
+    "UnsignedUtilsKt.brs",
+    "charBrsKt.brs",
+    "consoleKt.brs",
+    "coreRuntimeKt.brs",
+    "primitivesKt.brs",
+    "stringBrsKt.brs"
+  ]
+}
+
+
+// --- File: StartInherits.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="StartInherits" extends="StartBase">
+    <interface>
+    </interface>
+    <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/BuildersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CancellationExceptionKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentMailboxKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineImplKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineQueueKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineScopeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineSingletonsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DefaultDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayTrackerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DispatchersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/EmptyCoroutineContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IODispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IOWorkerRegistryKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IntrinsicsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/JobKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/MapExtensionsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PairKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ParkedContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PrimitiveIteratorsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PumpSchedulerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ResultKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopeApiKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopeHostImplKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopeRtqBackendKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopeWireKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/TaskPoolKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ULongKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/URangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UShortKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnconfinedDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnsignedUtilsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/consoleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/StartInherits/StartInheritsKt.brs" />
+</component>
+
+
+// --- File: StartLeaf.deps.json ---
+{
+  "version": 1,
+  "component": "StartLeaf",
+  "dependencies": [
+    "AnyKt.brs",
+    "ArrayListKt.brs",
+    "ArraysBrsKt.brs",
+    "ArraysKt.brs",
+    "BuildersKt.brs",
+    "CancellationExceptionKt.brs",
+    "CharCategoryBrsKt.brs",
+    "CollectionExtensionsKt.brs",
+    "CombinedContextKt.brs",
+    "ComponentCoroutinesKt.brs",
+    "ComponentLifecycleKt.brs",
+    "ComponentMailboxKt.brs",
+    "ContinuationInterceptorKt.brs",
+    "ContinuationKt.brs",
+    "CoroutineDispatcherKt.brs",
+    "CoroutineImplKt.brs",
+    "CoroutineQueueKt.brs",
+    "CoroutineScopeKt.brs",
+    "CoroutineSingletonsKt.brs",
+    "DefaultDispatcherKt.brs",
+    "DelayKt.brs",
+    "DelayTrackerKt.brs",
+    "DispatchersKt.brs",
+    "EmptyCoroutineContextKt.brs",
+    "ExceptionsKt.brs",
+    "HashMapKt.brs",
+    "HashSetKt.brs",
+    "IODispatcherKt.brs",
+    "IOWorkerRegistryKt.brs",
+    "IntrinsicsBrsKt.brs",
+    "JobKt.brs",
+    "KotlinKt.brs",
+    "MapExtensionsBrsKt.brs",
+    "PairKt.brs",
+    "ParkedContinuationKt.brs",
+    "PreconditionsKt.brs",
+    "PrimitiveIteratorsKt.brs",
+    "PumpSchedulerKt.brs",
+    "RangeOperatorsBrsKt.brs",
+    "RangesKt.brs",
+    "ResultKt.brs",
+    "ScopeApiKt.brs",
+    "ScopeHostImplKt.brs",
+    "ScopeRtqBackendKt.brs",
+    "ScopeWireKt.brs",
+    "ScopesKt.brs",
+    "StringBuilderBrsKt.brs",
+    "TaskPoolKt.brs",
+    "ThrowableKt.brs",
+    "UByteKt.brs",
+    "UIntKt.brs",
+    "ULongKt.brs",
+    "URangesKt.brs",
+    "UShortKt.brs",
+    "UnconfinedDispatcherKt.brs",
+    "UnsignedUtilsKt.brs",
+    "charBrsKt.brs",
+    "consoleKt.brs",
+    "coreRuntimeKt.brs",
+    "primitivesKt.brs",
+    "stringBrsKt.brs"
+  ]
+}
+
+
+// --- File: StartLeaf.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="StartLeaf" extends="StartBase">
+    <interface>
+    </interface>
+    <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/BuildersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CancellationExceptionKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentMailboxKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineImplKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineQueueKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineScopeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineSingletonsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DefaultDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayTrackerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DispatchersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/EmptyCoroutineContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IODispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IOWorkerRegistryKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IntrinsicsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/JobKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/MapExtensionsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PairKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ParkedContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PrimitiveIteratorsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PumpSchedulerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ResultKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopeApiKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopeHostImplKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopeRtqBackendKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopeWireKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/TaskPoolKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ULongKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/URangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UShortKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnconfinedDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnsignedUtilsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/consoleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/StartLeaf/StartLeafKt.brs" />
+</component>
+
+
+// --- File: onStartDriverKt.brs ---
+sub init()
+    __kotlinComponentAttach(m.top, m.global)
+    m.top.seen = ""
+    m.onStart_ContinuationV_k_ = StartBase_onStart_ContinuationV_k_
+    m.__kotlinStartDriver_k_ = StartBase___kotlinStartDriver_k_
+    m.__get_seen_k_ = StartBase___get_seen_k_
+    m.__set_seen_Str_k_ = StartBase___set_seen_Str_k_
+    m.__kotlinStartDriver_k_()
+end sub
+
+function StartBase_onStart_ContinuationV_k_(_completion as Object) as Object
+    m.top.seen = "base"
+    return invalid
+end function
+
+sub StartBase___kotlinStartDriver_k_()
+    if not kotlinLifecycleClaimDriver_k_() then
+        return
+    end if
+    launch_rComponentBase_CoroutineContext_SuspendFunction1CoroutineScopeV_k_(m, invalid, StartBase___kotlinStartDriver_slambda_create_StartBase_ContinuationAnyNN_k_(m, invalid))
+end sub
+
+function onKeyEvent(key as String, press as Boolean) as Boolean
+    return false
+end function
+
+function StartBase___get_seen_k_() as String
+    return m.top.seen
+end function
+
+sub StartBase___set_seen_Str_k_(value as String)
+    m.top.seen = value
+end sub
+
+sub init()
+    __kotlinComponentAttach(m.top, m.global)
+    m.onStart_ContinuationV_k_ = StartLeaf_onStart_ContinuationV_k_
+    m.__kotlinStartDriver_k_ = StartLeaf___kotlinStartDriver_k_
+    m.__kotlinStartDriver_k_()
+end sub
+
+function StartLeaf_onStart_ContinuationV_k_(_completion as Object) as Object
+    m.top.seen = "leaf"
+    return invalid
+end function
+
+sub StartLeaf___kotlinStartDriver_k_()
+    if not kotlinLifecycleClaimDriver_k_() then
+        return
+    end if
+    launch_rComponentBase_CoroutineContext_SuspendFunction1CoroutineScopeV_k_(m, invalid, StartLeaf___kotlinStartDriver_slambda_create_StartLeaf_ContinuationAnyNN_k_(m, invalid))
+end sub
+
+function onKeyEvent(key as String, press as Boolean) as Boolean
+    return false
+end function
+
+sub init()
+    __kotlinComponentAttach(m.top, m.global)
+    m.__kotlinStartDriver_k_ = StartInherits___kotlinStartDriver_k_
+    m.__kotlinStartDriver_k_()
+end sub
+
+sub StartInherits___kotlinStartDriver_k_()
+    if not kotlinLifecycleClaimDriver_k_() then
+        return
+    end if
+    launch_rComponentBase_CoroutineContext_SuspendFunction1CoroutineScopeV_k_(m, invalid, StartInherits___kotlinStartDriver_slambda_create_StartInherits_ContinuationAnyNN_k_(m, invalid))
+end sub
+
+function onKeyEvent(key as String, press as Boolean) as Boolean
+    return false
+end function
+
+sub init()
+    __kotlinComponentAttach(m.top, m.global)
+    m.top.label = ""
+    m.__get_label_k_ = NoStart___get_label_k_
+    m.__set_label_Str_k_ = NoStart___set_label_Str_k_
+end sub
+
+function onKeyEvent(key as String, press as Boolean) as Boolean
+    return false
+end function
+
+function NoStart___get_label_k_() as String
+    return m.top.label
+end function
+
+sub NoStart___set_label_Str_k_(value as String)
+    m.top.label = value
+end sub
+
+function StartBase___kotlinStartDriver_slambda_create_StartBase_ContinuationAnyNN_k_(this_0 as Object, resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_AnyN_Continuation_k_ = this.invoke_AnyN_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_AnyN_Continuation_k_ = this.create_AnyN_Continuation_k_
+    this.__proto = ["StartBase___kotlinStartDriver_slambda", "SuspendFunction1", this.__proto]
+    this.__type = "StartBase___kotlinStartDriver_slambda"
+    this.invoke_AnyN_Continuation_k_ = StartBase___kotlinStartDriver_slambda_invoke_AnyN_Continuation_k_
+    this.doResume_k_ = StartBase___kotlinStartDriver_slambda_doResume_k_
+    this.create_AnyN_Continuation_k_ = StartBase___kotlinStartDriver_slambda_create_AnyN_Continuation_k_
+    this.this_0 = this_0
+    return this
+end function
+
+function StartBase___kotlinStartDriver_slambda_invoke_AnyN_Continuation_k_(_receiver as Object, _completion as Object) as Object
+    tmp = m.create_AnyN_Continuation_k_(_receiver, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function StartBase___kotlinStartDriver_slambda_doResume_k_() as Dynamic
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(3)
+                m.__set_state(1)
+                suspendResult = awaitReady_rComponentBase_ContinuationV_k_(m.this_0, m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                m.__set_state(2)
+                suspendResult = m.this_0.onStart_ContinuationV_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+                                return invalid
+            else if __kotlin_identityEquals(tmp, 3) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 3) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function StartBase___kotlinStartDriver_slambda_create_AnyN_Continuation_k_(_receiver as Dynamic, completion as Object) as Object
+    i = StartBase___kotlinStartDriver_slambda_create_StartBase_ContinuationAnyNN_k_(m.this_0, completion)
+    i._receiver = _receiver
+    return i
+end function
+
+function StartLeaf___kotlinStartDriver_slambda_create_StartLeaf_ContinuationAnyNN_k_(this_0 as Object, resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_AnyN_Continuation_k_ = this.invoke_AnyN_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_AnyN_Continuation_k_ = this.create_AnyN_Continuation_k_
+    this.__proto = ["StartLeaf___kotlinStartDriver_slambda", "SuspendFunction1", this.__proto]
+    this.__type = "StartLeaf___kotlinStartDriver_slambda"
+    this.invoke_AnyN_Continuation_k_ = StartLeaf___kotlinStartDriver_slambda_invoke_AnyN_Continuation_k_
+    this.doResume_k_ = StartLeaf___kotlinStartDriver_slambda_doResume_k_
+    this.create_AnyN_Continuation_k_ = StartLeaf___kotlinStartDriver_slambda_create_AnyN_Continuation_k_
+    this.this_0 = this_0
+    return this
+end function
+
+function StartLeaf___kotlinStartDriver_slambda_invoke_AnyN_Continuation_k_(_receiver as Object, _completion as Object) as Object
+    tmp = m.create_AnyN_Continuation_k_(_receiver, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function StartLeaf___kotlinStartDriver_slambda_doResume_k_() as Dynamic
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(3)
+                m.__set_state(1)
+                suspendResult = awaitReady_rComponentBase_ContinuationV_k_(m.this_0, m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                m.__set_state(2)
+                suspendResult = m.this_0.onStart_ContinuationV_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+                                return invalid
+            else if __kotlin_identityEquals(tmp, 3) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 3) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function StartLeaf___kotlinStartDriver_slambda_create_AnyN_Continuation_k_(_receiver as Dynamic, completion as Object) as Object
+    i = StartLeaf___kotlinStartDriver_slambda_create_StartLeaf_ContinuationAnyNN_k_(m.this_0, completion)
+    i._receiver = _receiver
+    return i
+end function
+
+function StartInherits___kotlinStartDriver_slambda_create_StartInherits_ContinuationAnyNN_k_(this_0 as Object, resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_AnyN_Continuation_k_ = this.invoke_AnyN_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_AnyN_Continuation_k_ = this.create_AnyN_Continuation_k_
+    this.__proto = ["StartInherits___kotlinStartDriver_slambda", "SuspendFunction1", this.__proto]
+    this.__type = "StartInherits___kotlinStartDriver_slambda"
+    this.invoke_AnyN_Continuation_k_ = StartInherits___kotlinStartDriver_slambda_invoke_AnyN_Continuation_k_
+    this.doResume_k_ = StartInherits___kotlinStartDriver_slambda_doResume_k_
+    this.create_AnyN_Continuation_k_ = StartInherits___kotlinStartDriver_slambda_create_AnyN_Continuation_k_
+    this.this_0 = this_0
+    return this
+end function
+
+function StartInherits___kotlinStartDriver_slambda_invoke_AnyN_Continuation_k_(_receiver as Object, _completion as Object) as Object
+    tmp = m.create_AnyN_Continuation_k_(_receiver, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function StartInherits___kotlinStartDriver_slambda_doResume_k_() as Dynamic
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(3)
+                m.__set_state(1)
+                suspendResult = awaitReady_rComponentBase_ContinuationV_k_(m.this_0, m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                m.__set_state(2)
+                suspendResult = m.this_0.onStart_ContinuationV_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+                                return invalid
+            else if __kotlin_identityEquals(tmp, 3) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 3) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function StartInherits___kotlinStartDriver_slambda_create_AnyN_Continuation_k_(_receiver as Dynamic, completion as Object) as Object
+    i = StartInherits___kotlinStartDriver_slambda_create_StartInherits_ContinuationAnyNN_k_(m.this_0, completion)
+    i._receiver = _receiver
+    return i
+end function
