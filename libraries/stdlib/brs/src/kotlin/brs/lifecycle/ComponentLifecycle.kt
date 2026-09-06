@@ -318,7 +318,14 @@ public fun __kotlinRetireImpl() {
  * onStart driver AFTER this returns, when the hierarchy overrides onStart).
  * No-op on a live component. Tickets are marked unresolved and re-armed
  * (synchronous resolutions count immediately); inputs are unchanged across
- * the cycle, so the marker still holds.
+ * the cycle, so the marker still holds. Two-phase on purpose: EVERY ticket is
+ * reset before the FIRST rearm runs — resolve() wakes eagerly, so a
+ * synchronous resolve inside an early rearm must not see stale `resolved`
+ * on later tickets and open the gate prematurely. Ends by re-checking the
+ * gate (spec §4 "re-checks on revive"): a coroutine that called awaitReady
+ * during the retired window is parked with the gate closed by `retired`, and
+ * with zero tickets nothing else would ever wake it (the marker observer
+ * never re-fires).
  */
 @BrsStatic
 public fun __kotlinReviveImpl() {
@@ -335,6 +342,7 @@ public fun __kotlinReviveImpl() {
     for (ticket in tickets) {
         ticket.rearm()
     }
+    lifecycleWakeIfReady()
 }
 
 private fun lifecycleRequireComponent(node: RoSGNode, verb: String) {
