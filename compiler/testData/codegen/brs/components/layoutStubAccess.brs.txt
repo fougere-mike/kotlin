@@ -7,22 +7,31 @@
     "ArrayListKt.brs",
     "ArraysBrsKt.brs",
     "ArraysKt.brs",
+    "BuildersKt.brs",
     "CancellationExceptionKt.brs",
     "CharCategoryBrsKt.brs",
     "CollectionExtensionsKt.brs",
     "CombinedContextKt.brs",
+    "ComponentCoroutinesKt.brs",
     "ComponentLifecycleKt.brs",
+    "ComponentMailboxKt.brs",
     "ContainerNodesKt.brs",
     "ContinuationInterceptorKt.brs",
     "ContinuationKt.brs",
+    "CoroutineDispatcherKt.brs",
     "CoroutineQueueKt.brs",
+    "CoroutineScopeKt.brs",
     "CoroutineSingletonsKt.brs",
+    "DefaultDispatcherKt.brs",
     "DelayKt.brs",
     "DelayTrackerKt.brs",
+    "DispatchersKt.brs",
     "EmptyCoroutineContextKt.brs",
     "ExceptionsKt.brs",
     "HashMapKt.brs",
     "HashSetKt.brs",
+    "IODispatcherKt.brs",
+    "IOWorkerRegistryKt.brs",
     "IntrinsicsBrsKt.brs",
     "JobKt.brs",
     "KotlinKt.brs",
@@ -39,13 +48,20 @@
     "RenderableNodesKt.brs",
     "ResultKt.brs",
     "SceneLayoutKt.brs",
+    "ScopeApiKt.brs",
+    "ScopeHostImplKt.brs",
+    "ScopeRtqBackendKt.brs",
+    "ScopeWireKt.brs",
+    "ScopesKt.brs",
     "StringBuilderBrsKt.brs",
+    "TaskPoolKt.brs",
     "ThrowableKt.brs",
     "UByteKt.brs",
     "UIntKt.brs",
     "ULongKt.brs",
     "URangesKt.brs",
     "UShortKt.brs",
+    "UnconfinedDispatcherKt.brs",
     "UnsignedUtilsKt.brs",
     "WidgetNodesKt.brs",
     "charBrsKt.brs",
@@ -66,22 +82,31 @@
     <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/BuildersKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CancellationExceptionKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentMailboxKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContainerNodesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineDispatcherKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CoroutineQueueKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineScopeKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/CoroutineSingletonsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DefaultDispatcherKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/DelayKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/DelayTrackerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DispatchersKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/EmptyCoroutineContextKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IODispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IOWorkerRegistryKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/IntrinsicsBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/JobKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
@@ -98,13 +123,20 @@
     <script type="text/brightscript" uri="pkg:/source/RenderableNodesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ResultKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/SceneLayoutKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopeApiKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopeHostImplKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopeRtqBackendKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopeWireKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ScopesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/TaskPoolKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ULongKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/URangesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/UShortKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnconfinedDispatcherKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/UnsignedUtilsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/WidgetNodesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
