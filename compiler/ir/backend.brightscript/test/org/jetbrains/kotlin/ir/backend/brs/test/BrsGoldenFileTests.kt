@@ -394,6 +394,9 @@ class BrsComponentGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun onStartDriver() = runTest("components/onStartDriver.kt")
+
+    @Test
+    fun retireReviveEntries() = runTest("components/retireReviveEntries.kt")
 }
 
 // ==================== Intrinsics Tests ====================

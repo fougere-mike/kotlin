@@ -2075,6 +2075,15 @@ class BrsCompiler(
             builder.appendLine("        <function name=\"$KOTLIN_TASK_MAIN_FUNCTION_NAME\" />")
         }
 
+        // Concrete render components expose the lifecycle entries retire/revive callFunc
+        // into — gated on the SAME predicate as the script emission (see
+        // BrsIntrinsics.emitsLifecycleEntries for why a task/ContentNode/abstract test
+        // alone over-advertises on legacy @BrsComponent plain classes)
+        if (context.intrinsics.emitsLifecycleEntries(component.irClass)) {
+            builder.appendLine("        <function name=\"$KOTLIN_RETIRE_FUNCTION_NAME\" />")
+            builder.appendLine("        <function name=\"$KOTLIN_REVIVE_FUNCTION_NAME\" />")
+        }
+
         builder.appendLine("    </interface>")
 
         // Add script references AFTER interface so fields are defined before init() runs

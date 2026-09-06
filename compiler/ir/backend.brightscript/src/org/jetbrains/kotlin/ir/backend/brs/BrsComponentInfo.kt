@@ -17,6 +17,13 @@ import org.jetbrains.kotlin.ir.declarations.IrProperty
  */
 const val KOTLIN_TASK_MAIN_FUNCTION_NAME = "__kotlinTaskMain"
 
+/** Bare-named lifecycle entries emitted for every concrete render component (callFunc targets of retire/revive). */
+const val KOTLIN_RETIRE_FUNCTION_NAME = "__kotlinRetire"
+const val KOTLIN_REVIVE_FUNCTION_NAME = "__kotlinRevive"
+
+/** The compiler-synthesized onStart driver member (BrsComponentLifecycleLowering). */
+const val KOTLIN_START_DRIVER_NAME = "__kotlinStartDriver"
+
 /**
  * TaskComponent completion-protocol interface fields (declared in the stdlib
  * kotlin.brs.TaskComponent and inherited into every user task's XML).

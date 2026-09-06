@@ -67,6 +67,8 @@
 <component name="NoStart" extends="Group">
     <interface>
         <field id="label" type="string" />
+        <function name="__kotlinRetire" />
+        <function name="__kotlinRevive" />
     </interface>
     <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
@@ -196,6 +198,8 @@
 <component name="StartBase" extends="Group">
     <interface>
         <field id="seen" type="string" />
+        <function name="__kotlinRetire" />
+        <function name="__kotlinRevive" />
     </interface>
     <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
@@ -324,6 +328,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <component name="StartInherits" extends="StartBase">
     <interface>
+        <function name="__kotlinRetire" />
+        <function name="__kotlinRevive" />
     </interface>
     <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
@@ -452,6 +458,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <component name="StartLeaf" extends="StartBase">
     <interface>
+        <function name="__kotlinRetire" />
+        <function name="__kotlinRevive" />
     </interface>
     <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
@@ -539,6 +547,18 @@ function onKeyEvent(key as String, press as Boolean) as Boolean
     return false
 end function
 
+sub __kotlinRetire()
+    if __kotlinIsRetired() then
+        return
+    end if
+    __kotlinRetireImpl()
+end sub
+
+sub __kotlinRevive()
+    __kotlinReviveImpl()
+    StartBase___kotlinStartDriver_k_()
+end sub
+
 function StartBase___get_seen_k_() as String
     return m.top.seen
 end function
@@ -570,6 +590,18 @@ function onKeyEvent(key as String, press as Boolean) as Boolean
     return false
 end function
 
+sub __kotlinRetire()
+    if __kotlinIsRetired() then
+        return
+    end if
+    __kotlinRetireImpl()
+end sub
+
+sub __kotlinRevive()
+    __kotlinReviveImpl()
+    StartLeaf___kotlinStartDriver_k_()
+end sub
+
 sub init()
     __kotlinComponentAttach(m.top, m.global)
     m.__kotlinStartDriver_k_ = StartInherits___kotlinStartDriver_k_
@@ -587,6 +619,18 @@ function onKeyEvent(key as String, press as Boolean) as Boolean
     return false
 end function
 
+sub __kotlinRetire()
+    if __kotlinIsRetired() then
+        return
+    end if
+    __kotlinRetireImpl()
+end sub
+
+sub __kotlinRevive()
+    __kotlinReviveImpl()
+    StartInherits___kotlinStartDriver_k_()
+end sub
+
 sub init()
     __kotlinComponentAttach(m.top, m.global)
     m.top.label = ""
@@ -597,6 +641,17 @@ end sub
 function onKeyEvent(key as String, press as Boolean) as Boolean
     return false
 end function
+
+sub __kotlinRetire()
+    if __kotlinIsRetired() then
+        return
+    end if
+    __kotlinRetireImpl()
+end sub
+
+sub __kotlinRevive()
+    __kotlinReviveImpl()
+end sub
 
 function NoStart___get_label_k_() as String
     return m.top.label

@@ -67,6 +67,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <component name="DirectLeaf" extends="Group">
     <interface>
+        <function name="__kotlinRetire" />
+        <function name="__kotlinRevive" />
     </interface>
     <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
@@ -197,6 +199,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <component name="SuperBase" extends="Group">
     <interface>
+        <function name="__kotlinRetire" />
+        <function name="__kotlinRevive" />
     </interface>
     <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
@@ -327,6 +331,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <component name="SuperLeaf" extends="SuperBase">
     <interface>
+        <function name="__kotlinRetire" />
+        <function name="__kotlinRevive" />
     </interface>
     <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
@@ -412,6 +418,17 @@ function onKeyEvent(key as String, press as Boolean) as Boolean
     return m.onKeyEvent_Str_Z_k_(key, press)
 end function
 
+sub __kotlinRetire()
+    if __kotlinIsRetired() then
+        return
+    end if
+    __kotlinRetireImpl()
+end sub
+
+sub __kotlinRevive()
+    __kotlinReviveImpl()
+end sub
+
 sub init()
     __kotlinComponentAttach(m.top, m.global)
     m.onKeyEvent_Str_Z_k_ = SuperLeaf_onKeyEvent_Str_Z_k_
@@ -440,6 +457,17 @@ end function
 function onKeyEvent(key as String, press as Boolean) as Boolean
     return m.onKeyEvent_Str_Z_k_(key, press)
 end function
+
+sub __kotlinRetire()
+    if __kotlinIsRetired() then
+        return
+    end if
+    __kotlinRetireImpl()
+end sub
+
+sub __kotlinRevive()
+    __kotlinReviveImpl()
+end sub
 
 function SuperLeaf__loadCOROUTINE__create_SuperLeaf_ContinuationStr_k_(__this as Object, resultContinuation as Object) as Object
     this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
@@ -495,3 +523,14 @@ end function
 function onKeyEvent(key as String, press as Boolean) as Boolean
     return m.onKeyEvent_Str_Z_k_(key, press)
 end function
+
+sub __kotlinRetire()
+    if __kotlinIsRetired() then
+        return
+    end if
+    __kotlinRetireImpl()
+end sub
+
+sub __kotlinRevive()
+    __kotlinReviveImpl()
+end sub

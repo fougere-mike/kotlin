@@ -71,6 +71,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <component name="StubbedScreen" extends="Group">
     <interface>
+        <function name="__kotlinRetire" />
+        <function name="__kotlinRevive" />
     </interface>
     <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
@@ -193,6 +195,17 @@ end sub
 function onKeyEvent(key as String, press as Boolean) as Boolean
     return false
 end function
+
+sub __kotlinRetire()
+    if __kotlinIsRetired() then
+        return
+    end if
+    __kotlinRetireImpl()
+end sub
+
+sub __kotlinRevive()
+    __kotlinReviveImpl()
+end sub
 
 function StubbedScreen___get_layout_k_() as Object
     return m.layout

@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
+import org.jetbrains.kotlin.ir.backend.brs.KOTLIN_START_DRIVER_NAME
 import org.jetbrains.kotlin.ir.builders.declarations.addFunction
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.declarations.IrClass
@@ -176,6 +177,6 @@ class BrsComponentLifecycleLowering(private val context: BrsIrBackendContext) : 
     }
 
     companion object {
-        const val DRIVER_NAME = "__kotlinStartDriver"
+        const val DRIVER_NAME = KOTLIN_START_DRIVER_NAME
     }
 }

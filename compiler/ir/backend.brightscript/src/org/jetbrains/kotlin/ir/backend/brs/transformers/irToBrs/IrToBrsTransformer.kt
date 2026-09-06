@@ -27,7 +27,10 @@ import org.jetbrains.kotlin.ir.backend.brs.lower.coroutines.BrsStatementOrigins
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
+import org.jetbrains.kotlin.ir.backend.brs.KOTLIN_RETIRE_FUNCTION_NAME
+import org.jetbrains.kotlin.ir.backend.brs.KOTLIN_REVIVE_FUNCTION_NAME
 import org.jetbrains.kotlin.ir.backend.brs.KOTLIN_SCOPE_BINDINGS_FIELD
+import org.jetbrains.kotlin.ir.backend.brs.KOTLIN_START_DRIVER_NAME
 import org.jetbrains.kotlin.ir.backend.brs.KOTLIN_TASK_ERROR_FIELD
 import org.jetbrains.kotlin.ir.backend.brs.KOTLIN_TASK_MAIN_FUNCTION_NAME
 import org.jetbrains.kotlin.ir.backend.brs.KOTLIN_TASK_STATE_FIELD
@@ -658,6 +661,10 @@ class IrToBrsTransformer(
                 declarations.add(taskMainFunction)
             }
 
+            // Generate the bare-named lifecycle entries (retire/revive callFunc targets)
+            // for concrete render components
+            declarations.addAll(generateLifecycleEntryFunctions(irClass))
+
             // Generate property accessor functions (for delegated properties, custom getters/setters, etc.)
             for (property in irClass.declarations.filterIsInstance<IrProperty>()) {
                 if (context.intrinsics.isComponentScopeProperty(property.name.asString())) continue
@@ -895,6 +902,92 @@ class IrToBrsTransformer(
             name = KOTLIN_TASK_MAIN_FUNCTION_NAME,
             parameters = mutableListOf(),
             body = BrsBlock(mutableListOf(BrsTry(tryBlock, errorVar, catchBlock)))
+        )
+    }
+
+    /**
+     * Lifecycle entries for concrete RENDER components (spec §5.6): bare-named,
+     * so the parent's retire(node)/revive(node) reach them through callFunc
+     * (documented: runs in the owning component's thread with ITS m). Each
+     * concrete class emits its own pair — the derived's same-named function
+     * wins in the SceneGraph namespace (documented), and the leaf knows the
+     * full hierarchy at generation time.
+     *
+     * Retire is idempotent at the ENTRY (spec §4 step 1: `if (retired) return`
+     * BEFORE onStop): the guard runs first, so a second retire never re-runs
+     * onStop — `__kotlinRetireImpl`'s own guard sits after the hook call and
+     * would be too late to prevent that (coordinator ruling R1).
+     *
+     * ```brightscript
+     * sub __kotlinRetire()
+     *     if __kotlinIsRetired() then return
+     *     try
+     *         m.onStop_k_()                     ' only when the hierarchy overrides onStop
+     *     catch e
+     *         print "[kotlin.lifecycle] onStop threw: " + e.message
+     *     end try
+     *     __kotlinRetireImpl()
+     * end sub
+     * sub __kotlinRevive()
+     *     __kotlinReviveImpl()
+     *     <Class>___kotlinStartDriver_k_()       ' only when a driver was synthesized
+     * end sub
+     * ```
+     */
+    private fun generateLifecycleEntryFunctions(irClass: IrClass): List<BrsSub> {
+        // Concrete render components only — the same predicate the XML side uses
+        if (!context.intrinsics.emitsLifecycleEntries(irClass)) return emptyList()
+
+        val retireBody = mutableListOf<BrsStatement>()
+        // Guard FIRST (R1): a retired node's second retire is a complete no-op.
+        retireBody.add(
+            BrsIf(
+                condition = createFunctionCall("__kotlinIsRetired", mutableListOf(), context),
+                thenBranch = BrsReturn(null),
+                elseBranch = null
+            )
+        )
+        // Same hierarchy walk as the onKeyEvent wrapper: an onStop declared in a
+        // concrete user BASE is attached over the shared m by the base's init, and
+        // the slot short name derives from the DECLARING class, not this leaf.
+        val onStop = context.intrinsics.hierarchyOverrides(irClass, "onStop") { it.valueParameters.isEmpty() && !it.isSuspend }
+        if (onStop != null) {
+            val declaringClass = onStop.parent as IrClass
+            val shortName = context.getBrsName(onStop).removePrefix("${context.getBrsName(declaringClass)}_")
+            retireBody.add(
+                BrsTry(
+                    tryBlock = BrsBlock(mutableListOf(
+                        BrsExpressionStatement(BrsFunctionCall(BrsDotAccess(BrsMRef(), shortName), mutableListOf()))
+                    )),
+                    catchVariable = "e",
+                    catchBlock = BrsBlock(mutableListOf(
+                        BrsPrint(mutableListOf(
+                            BrsBinaryOp(
+                                BrsStringLiteral("[kotlin.lifecycle] onStop threw: "),
+                                BrsBinaryOperator.CONCAT,
+                                BrsDotAccess(BrsIdentifier("e"), "message")
+                            )
+                        ))
+                    ))
+                )
+            )
+        }
+        retireBody.add(BrsExpressionStatement(createFunctionCall("__kotlinRetireImpl", mutableListOf(), context)))
+
+        val reviveBody = mutableListOf<BrsStatement>()
+        reviveBody.add(BrsExpressionStatement(createFunctionCall("__kotlinReviveImpl", mutableListOf(), context)))
+        // The synthesized driver is a member of THIS class (BrsComponentLifecycleLowering
+        // adds one to every class whose hierarchy overrides onStart), so its global is
+        // in this component's own script — no cross-file dependency to record.
+        val driver = irClass.declarations.filterIsInstance<IrSimpleFunction>()
+            .find { it.name.asString() == KOTLIN_START_DRIVER_NAME }
+        if (driver != null) {
+            reviveBody.add(BrsExpressionStatement(BrsFunctionCall(BrsIdentifier(context.getBrsName(driver)), mutableListOf())))
+        }
+
+        return listOf(
+            BrsSub(name = KOTLIN_RETIRE_FUNCTION_NAME, parameters = mutableListOf(), body = BrsBlock(retireBody)),
+            BrsSub(name = KOTLIN_REVIVE_FUNCTION_NAME, parameters = mutableListOf(), body = BrsBlock(reviveBody)),
         )
     }
 

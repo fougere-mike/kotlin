@@ -313,6 +313,22 @@ class BrsIntrinsics(
     }
 
     /**
+     * Whether [irClass] gets the bare-named lifecycle entries
+     * `__kotlinRetire`/`__kotlinRevive` (spec §5.6): a CONCRETE render
+     * component. The ONE predicate behind both the script emission
+     * (IrToBrsTransformer.generateLifecycleEntryFunctions) and the XML
+     * `<function>` lines (BrsCompiler.generateComponentXmlContent), so the
+     * two can never disagree. A "not task, not ContentNode, not abstract"
+     * test alone is NOT enough on the XML side: a legacy `@BrsComponent`
+     * plain class is extracted for XML but never reaches the component
+     * transformer (transformClass gates it on isSceneGraphComponent), and
+     * would advertise functions its script does not define.
+     */
+    fun emitsLifecycleEntries(irClass: IrClass): Boolean {
+        return componentNeedsOnKeyEvent(irClass) && irClass.modality != Modality.ABSTRACT
+    }
+
+    /**
      * The nearest REAL (non-fake, non-abstract) override of member [name] that
      * also satisfies [signature], walking [irClass] and its USER component
      * supertypes. Stops — answering null — at the first stdlib base: a class
