@@ -14,7 +14,6 @@
     "CombinedContextKt.brs",
     "ComponentCoroutinesKt.brs",
     "ComponentLifecycleKt.brs",
-    "ComponentMailboxKt.brs",
     "ContainerNodesKt.brs",
     "ContinuationInterceptorKt.brs",
     "ContinuationKt.brs",
@@ -48,11 +47,6 @@
     "RenderableNodesKt.brs",
     "ResultKt.brs",
     "SceneLayoutKt.brs",
-    "ScopeApiKt.brs",
-    "ScopeHostImplKt.brs",
-    "ScopeRtqBackendKt.brs",
-    "ScopeWireKt.brs",
-    "ScopesKt.brs",
     "StringBuilderBrsKt.brs",
     "TaskPoolKt.brs",
     "ThrowableKt.brs",
@@ -89,7 +83,6 @@
     <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/ComponentMailboxKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContainerNodesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
@@ -123,11 +116,6 @@
     <script type="text/brightscript" uri="pkg:/source/RenderableNodesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ResultKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/SceneLayoutKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/ScopeApiKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/ScopeHostImplKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/ScopeRtqBackendKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/ScopeWireKt.brs" />
-    <script type="text/brightscript" uri="pkg:/source/ScopesKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/TaskPoolKt.brs" />
     <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
