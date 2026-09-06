@@ -46,9 +46,10 @@ import kotlin.coroutines.processCoroutineDelays
  * `runBlocking`/`runPumping` own their loops exactly as before.
  *
  * Attachment happens automatically: the compiler injects
- * `__kotlinPumpAttach(m.top, m.global)` into the generated `init()` of every
- * component whose file uses coroutines, and
- * [kotlin.brs.componentScope]/[kotlin.brs.launch] attach lazily as a fallback.
+ * `__kotlinComponentAttach(m.top, m.global)` (kotlin.brs, ComponentLifecycle.kt)
+ * as the first statement of every render component's generated `init()` — it
+ * calls [attach] internally — and [kotlin.brs.componentScope]/
+ * [kotlin.brs.launch] attach lazily as a fallback.
  */
 internal object PumpScheduler {
     private var hostTop: RoSGNode? = null
@@ -300,9 +301,14 @@ internal fun onKotlinPumpTimerFire(event: RoSGNodeEvent) {
 }
 
 /**
- * Component-init entry point. The compiler injects
- * `__kotlinPumpAttach(m.top, m.global)` into the generated `init()` of every
- * SceneGraph component whose file uses coroutines.
+ * Former component-init entry point. The compiler NO LONGER injects this call:
+ * since the lifecycle program (2026-09-05) every render component's generated
+ * `init()` starts with `__kotlinComponentAttach(m.top, m.global)`
+ * (kotlin.brs, ComponentLifecycle.kt), which performs the pump attach
+ * internally and is injected unconditionally — the per-file coroutine scan
+ * that gated this entry point, and its helper-file hole, are gone. Kept as a
+ * plain attach shim for any hand-written caller; not part of the generated
+ * init sequence.
  */
 @BrsStatic
 public fun __kotlinPumpAttach(node: RoSGNode, global: RoSGNode) {

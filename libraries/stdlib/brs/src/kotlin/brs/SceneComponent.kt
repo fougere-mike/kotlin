@@ -102,6 +102,29 @@ public abstract class ComponentBase {
      * @return True if the key event was handled, false to let it propagate
      */
     protected open fun onKeyEvent(key: String, press: Boolean): Boolean = false
+
+    /**
+     * Lifecycle: fires once per ACTIVATION, on the render thread, as a child
+     * coroutine of [componentScope], after init() has returned, every required
+     * input is set, and every dependency registered during init has resolved.
+     * Earliest: the first pump tick after init. Fires again after every
+     * [revive]. The compiler launches it only for classes whose hierarchy
+     * overrides it — a component that does not override pays no coroutine.
+     * An uncaught failure prints the standard
+     * `[kotlin.coroutines] Unhandled exception in coroutine` line; the
+     * component stays alive (supervisor root). [retire] cancels an onStart
+     * still running.
+     *
+     * Per-activation work belongs here; init {} is one-time structural setup.
+     */
+    protected open suspend fun onStart() {}
+
+    /**
+     * Lifecycle: runs synchronously inside [retire], BEFORE the component
+     * scope is cancelled, so live state is still readable. Do not launch here —
+     * the scope dies immediately after. Runs again on every later retire.
+     */
+    protected open fun onStop() {}
 }
 
 /**

@@ -553,6 +553,13 @@ public external interface ISGNodeDict {
      * @return The function's return value, or null.
      */
     public fun callFunc(functionName: String, arg: Dynamic?): Dynamic?
+
+    /**
+     * Whether [functionName] is a callable interface function of this node's
+     * component (ifSGNodeDict.hasFunc). False on plain nodes and on components
+     * that do not declare it — the guard [retire]/[revive] use before callFunc.
+     */
+    public fun hasFunc(functionName: String): Boolean
 }
 
 /**
@@ -743,6 +750,7 @@ public external interface RoSGNode : ISGNodeField, ISGNodeChildren, ISGNodeDict,
     override fun clone(deepCopy: Boolean): RoSGNode
     override fun callFunc(functionName: String): Dynamic?
     override fun callFunc(functionName: String, arg: Dynamic?): Dynamic?
+    override fun hasFunc(functionName: String): Boolean
 
     // ISGNodeFocus overrides
     override fun setFocus(on: Boolean): Boolean
