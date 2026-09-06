@@ -84,7 +84,7 @@ internal object ScopeBindingsHolder {
 /**
  * Called by compiler-generated component init() (components whose FILE calls
  * exposeScope): installs the lowered run{}-block binding table for this
- * component instance. The `__kotlinPumpAttach` idiom — injected init code
+ * component instance. The `__kotlinComponentAttach` idiom — injected init code
  * hands m-scope values to per-instance stdlib holders; dispatch reads the
  * holder, never ambient `m`.
  */

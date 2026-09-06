@@ -7,6 +7,9 @@ package kotlin.brs
 
 import kotlin.brs.roku.RoSGNode
 import kotlin.brs.roku.RoSGNodeEvent
+import kotlin.brs.scope.SCOPE_INBOX_FIELD
+import kotlin.brs.scope.ScopeHostHolder
+import kotlin.brs.scope.ScopeHostImpl
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.DisposableHandle
 import kotlin.coroutines.ParkedContinuation
@@ -78,8 +81,8 @@ internal object LifecycleRegistry {
 /**
  * Component-init entry point, injected UNCONDITIONALLY as the first statement
  * of every render component's generated init() (task components excluded).
- * Performs the pump attach internally — this supersedes the coroutine-scan-
- * gated `__kotlinPumpAttach` injection and closes its helper-file hole. Cost:
+ * Performs the pump attach internally — this supersedes the former coroutine-
+ * scan-gated pump-attach injection and closes its helper-file hole. Cost:
  * one call, two ref stores; backend resolution and timers stay deferred to
  * the first real wakeup.
  */
@@ -263,10 +266,141 @@ public fun kotlinLifecycleWatchdogMillis(ms: Int) {
     LifecycleRegistry.watchdogMs = ms
 }
 
-// Task 6 replaces these two with the real hop.
-public fun retire(node: RoSGNode) {
-    throw IllegalStateException("retire: node '${node.getField("id")}' (${node.subtype()}) is not a Kotlin render component — retire/revive target components compiled from ComponentBase subclasses")
+// ---------------------------------------------------------------------------
+// Retire / revive — the child-side impls run INSIDE the child's context via the
+// compiler-generated bare entries `__kotlinRetire`/`__kotlinRevive`, which call
+// these after (retire) / before (revive) the user hook + driver.
+// ---------------------------------------------------------------------------
+
+/**
+ * First-line guard of the generated `__kotlinRetire` entry (spec §4 step 1:
+ * `if (retired) return` precedes the user's `onStop`, so a repeated retire
+ * never re-runs the hook). [__kotlinRetireImpl] keeps its own retired check
+ * as a defensive second layer.
+ */
+@BrsStatic
+public fun __kotlinIsRetired(): Boolean = LifecycleRegistry.retired
+
+/**
+ * Child-side retire body (the generated `__kotlinRetire` already ran the
+ * user's onStop, try/caught). Order: retire hooks (spec 2 disarms doorbell
+ * observers) → close + clear the exposed ScopeHost (children settle
+ * ScopeClosedException; the inbox observer is unarmed so a later exposeScope
+ * can re-arm it) → cancel + reset the component scope (STOPs task threads,
+ * deregisters StateFlow collectors, wakes parked awaitReady calls with CE)
+ * → retired flag + activation bump. Idempotent.
+ */
+@BrsStatic
+public fun __kotlinRetireImpl() {
+    val reg = LifecycleRegistry
+    if (reg.retired) return
+    val hooks = ArrayList<() -> Unit>()
+    hooks.addAll(reg.retireHooks)
+    for (hook in hooks) {
+        hook()
+    }
+    val hostState = ScopeHostHolder.state
+    if (hostState != null) {
+        ScopeHostImpl(hostState).close()
+        ScopeHostHolder.state = null
+        val top = PumpScheduler.hostTopOrNull()
+        if (top != null && top.hasField(SCOPE_INBOX_FIELD)) {
+            top.unobserveFieldScoped(SCOPE_INBOX_FIELD)
+        }
+    }
+    cancelAndResetComponentScope()
+    reg.retired = true
+    reg.activation = reg.activation + 1
 }
+
+/**
+ * Child-side revive body (the generated `__kotlinRevive` relaunches the
+ * onStart driver AFTER this returns, when the hierarchy overrides onStart).
+ * No-op on a live component. Tickets are marked unresolved and re-armed
+ * (synchronous resolutions count immediately); inputs are unchanged across
+ * the cycle, so the marker still holds.
+ */
+@BrsStatic
+public fun __kotlinReviveImpl() {
+    val reg = LifecycleRegistry
+    if (!reg.retired) return
+    reg.retired = false
+    reg.driverClaimed = false
+    reg.watchdogArmedFor = -1
+    for (ticket in reg.tickets) {
+        ticket.resolved = false
+    }
+    val tickets = ArrayList<DependencyTicket>()
+    tickets.addAll(reg.tickets)
+    for (ticket in tickets) {
+        ticket.rearm()
+    }
+}
+
+private fun lifecycleRequireComponent(node: RoSGNode, verb: String) {
+    if (!node.hasFunc(LIFECYCLE_RETIRE_FUNCTION)) {
+        throw IllegalStateException(
+            "$verb: node '${node.getField("id")}' (${node.subtype()}) is not a Kotlin render component — " +
+                "retire/revive target components compiled from ComponentBase subclasses"
+        )
+    }
+}
+
+/**
+ * Parent-side (any thread — callFunc rendezvouses into the child's owning
+ * thread and runs with the CHILD's m): onStop → retire hooks → close exposed
+ * scope → cancel + reset the component scope → retired. Does NOT remove the
+ * node; the caller keeps ownership of the tree. Idempotent. Recycling law:
+ * `retire → removeChild → reconfigure var fields → appendChild → revive`.
+ * Guided ISE on a node that is not a Kotlin render component (hasFunc).
+ */
+public fun retire(node: RoSGNode) {
+    lifecycleRequireComponent(node, "retire")
+    node.callFunc(LIFECYCLE_RETIRE_FUNCTION)
+}
+
+/** Typed-handle form: a createComponent/constructor handle IS the node; a component `this` is its m (see [componentNodeOf]). */
+public fun retire(component: ComponentBase) {
+    retire(componentNodeOf(component))
+}
+
+/**
+ * Parent-side counterpart of [retire], called after re-adding a retired node:
+ * clears retired + the driver once-flag, re-arms every dependency, relaunches
+ * the onStart driver. No-op on a live component. Guided ISE on a non-component.
+ */
 public fun revive(node: RoSGNode) {
-    throw IllegalStateException("revive: node '${node.getField("id")}' (${node.subtype()}) is not a Kotlin render component — retire/revive target components compiled from ComponentBase subclasses")
+    lifecycleRequireComponent(node, "revive")
+    node.callFunc(LIFECYCLE_REVIVE_FUNCTION)
+}
+
+public fun revive(component: ComponentBase) {
+    revive(componentNodeOf(component))
+}
+
+// The runtime-face discrimination below is written in Kotlin over three
+// single-`return` splices: a @BrsInline template containing `if/then/else`
+// is NOT spliceable — the call-site splice extracts one `return <expr>` and
+// yields a literal `invalid` for a one-line BrsIf (the backlogged BrsInline
+// if/else splice defect, IrExpressionToBrsTransformer).
+@BrsInline("return type(component)")
+private external fun lifecycleBrsTypeOf(component: ComponentBase): String
+
+@BrsInline("return component")
+private external fun lifecycleAsNode(component: ComponentBase): RoSGNode
+
+@BrsInline("return component.top")
+private external fun lifecycleTopOf(component: ComponentBase): RoSGNode
+
+/**
+ * A ComponentBase-typed value has two runtime faces: a creation handle
+ * (createComponent<T>() / a constructor call) IS the roSGNode; a component
+ * `this` is the m-scope AA whose `.top` is the node. Discriminate at runtime
+ * so both `retire(screen)` and `retire(this)` do the right thing.
+ */
+private fun componentNodeOf(component: ComponentBase): RoSGNode {
+    if (lifecycleBrsTypeOf(component) == "roSGNode") {
+        return lifecycleAsNode(component)
+    }
+    return lifecycleTopOf(component)
 }

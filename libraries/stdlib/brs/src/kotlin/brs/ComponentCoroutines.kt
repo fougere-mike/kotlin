@@ -27,7 +27,7 @@ private external fun componentGlobalOf(component: ComponentBase): RoSGNode
 // Per-component-instance holder: object singletons live on GetGlobalAA, which
 // is per-component-instance on the render thread (render-thread-queue spike),
 // so each component gets exactly one scope with no m-key bookkeeping.
-private object ComponentScopeHolder {
+internal object ComponentScopeHolder {
     var scope: CoroutineScope? = null
 }
 
@@ -53,13 +53,29 @@ private object ComponentScopeHolder {
 public fun ComponentBase.componentScope(): CoroutineScope {
     val existing = ComponentScopeHolder.scope
     if (existing != null) return existing
-    // Belt-and-braces with the compiler-injected __kotlinPumpAttach: covers
-    // components whose files escape the injection predicate (e.g. coroutine
-    // use hidden entirely inside another file's helper).
+    // Belt-and-braces with the compiler-injected __kotlinComponentAttach:
+    // covers components whose files escape the injection predicate (e.g.
+    // coroutine use hidden entirely inside another file's helper).
     PumpScheduler.attach(componentTopOf(this), componentGlobalOf(this))
     val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     ComponentScopeHolder.scope = scope
     return scope
+}
+
+/**
+ * Retire support: cancels the component scope (the cancel cascades into every
+ * parked runTask/flowOn/StateFlow/ScopeHost request) and CLEARS the holder,
+ * so the next launch {} on this component creates a fresh supervisor scope.
+ * A retired-then-revived component therefore gets working coroutines again
+ * (spec §4: the scope self-heals). No-op when no scope was ever created.
+ */
+internal fun cancelAndResetComponentScope() {
+    val existing = ComponentScopeHolder.scope ?: return
+    ComponentScopeHolder.scope = null
+    val job = existing.coroutineContext[Job]
+    if (job != null) {
+        job.cancel()
+    }
 }
 
 /**

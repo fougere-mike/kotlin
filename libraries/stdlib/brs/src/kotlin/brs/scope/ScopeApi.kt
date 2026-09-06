@@ -179,7 +179,11 @@ private fun ComponentBase.defaultExposedScope(): CoroutineScope {
  * unrelated coroutines. An explicitly-passed [scope] is cancelled as-given by
  * close() — the caller owns its blast radius.
  *
- * One host per component: a second call throws [IllegalStateException].
+ * One OPEN host per component: a second call while a host is open throws
+ * [IllegalStateException]; after [retire] closed and cleared the host,
+ * exposeScope may be called again (the recyclable-owner idiom: expose in
+ * onStart). Retire also unarms the field-carrier inbox observer so the re-arm
+ * below does not double-register.
  */
 public fun ComponentBase.exposeScope(
     scope: CoroutineScope = defaultExposedScope(),
@@ -187,8 +191,9 @@ public fun ComponentBase.exposeScope(
 ): ScopeHost {
     if (ScopeHostHolder.state != null) {
         throw IllegalStateException(
-            "ScopeHandle: exposeScope() called twice on this component — one scope host per " +
-                "component; reuse the ScopeHost returned by the first call"
+            "ScopeHandle: exposeScope() called twice on this component — one OPEN scope host per " +
+                "component; reuse the ScopeHost returned by the first call, or retire() the component " +
+                "before exposing again"
         )
     }
     val top = scopeHostTopOf(this)

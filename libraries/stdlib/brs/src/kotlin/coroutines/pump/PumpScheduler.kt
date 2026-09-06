@@ -6,7 +6,6 @@
 package kotlin.coroutines.pump
 
 import kotlin.brs.BrsInline
-import kotlin.brs.BrsStatic
 import kotlin.brs.brsName
 import kotlin.brs.roku.RoSGNode
 import kotlin.brs.roku.RoSGNodeEvent
@@ -298,21 +297,6 @@ internal fun onKotlinPumpMessage(data: Any?, msgInfo: Any?) {
 /** One-shot pump-timer fire handler (immediate wakeups and delay deadlines). */
 internal fun onKotlinPumpTimerFire(event: RoSGNodeEvent) {
     PumpScheduler.drain()
-}
-
-/**
- * Former component-init entry point. The compiler NO LONGER injects this call:
- * since the lifecycle program (2026-09-05) every render component's generated
- * `init()` starts with `__kotlinComponentAttach(m.top, m.global)`
- * (kotlin.brs, ComponentLifecycle.kt), which performs the pump attach
- * internally and is injected unconditionally — the per-file coroutine scan
- * that gated this entry point, and its helper-file hole, are gone. Kept as a
- * plain attach shim for any hand-written caller; not part of the generated
- * init sequence.
- */
-@BrsStatic
-public fun __kotlinPumpAttach(node: RoSGNode, global: RoSGNode) {
-    PumpScheduler.attach(node, global)
 }
 
 /**

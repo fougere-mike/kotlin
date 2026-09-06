@@ -64,7 +64,7 @@ private external fun scopeRandomUuid(): String
 /**
  * The AMBIENT component's `top` node, or null off-component. Sourced from the
  * pump scheduler's attach state, which received the literal `m.top` at
- * component init (compiler-injected `__kotlinPumpAttach`) or lazily via
+ * component init (compiler-injected `__kotlinComponentAttach`) or lazily via
  * `componentScope()`/`launch {}` — the only ways a coroutine (and therefore a
  * `ScopeHandle.run` call) can exist in a component. On the main thread the
  * scheduler is never attached, so this is null there — which is exactly the
