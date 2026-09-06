@@ -14,6 +14,7 @@ import kotlin.brs.scope.SCOPE_AD_FIELD_BACKEND
 import kotlin.brs.scope.SCOPE_AD_RTQ_PREFIX
 import kotlin.brs.scope.SCOPE_BACKEND_RTQ
 import kotlin.brs.scope.SCOPE_INBOX_FIELD
+import kotlin.brs.scope.ScopeCarrier
 import kotlin.brs.scope.ScopeHandlerEntry
 import kotlin.brs.scope.ScopeHostHolder
 import kotlin.brs.scope.ScopeHostImpl
@@ -25,6 +26,7 @@ import kotlin.brs.scope.onKotlinScopeInbox
 import kotlin.brs.scope.postScopeRequestAndAwait
 import kotlin.brs.scope.resolveScopeBackend
 import kotlin.brs.scope.scopeBackendNameOrNone
+import kotlin.brs.scope.scopeHostClosed
 import kotlin.coroutines.CoroutineScope
 import kotlin.coroutines.Job
 import kotlin.coroutines.SupervisorJob
@@ -180,16 +182,24 @@ private fun ComponentBase.defaultExposedScope(): CoroutineScope {
  * close() — the caller owns its blast radius.
  *
  * One OPEN host per component: a second call while a host is open throws
- * [IllegalStateException]; after [retire] closed and cleared the host,
- * exposeScope may be called again (the recyclable-owner idiom: expose in
- * onStart). Retire also unarms the field-carrier inbox observer so the re-arm
- * below does not double-register.
+ * [IllegalStateException]. [retire] CLOSES the installed host (through the
+ * retire hook this function registers, once per component) and leaves it
+ * installed, so late requests keep getting an immediate "closed" for as long
+ * as the node lives; a later exposeScope REPLACES the closed host (the
+ * recyclable-owner idiom: expose in onStart). The carriers are NOT re-armed
+ * on a replace — the field inbox observer and the rtq channel handler are
+ * armed once per component behind explicit flags ([ScopeCarrier]), so
+ * first-expose and re-expose are ONE code path. Residual, by design: the
+ * `__kotlinScope` advertisement stays on a retired-never-revived node
+ * forever — that is the teardown law's intent (children get
+ * ScopeClosedException, never a silent drop).
  */
 public fun ComponentBase.exposeScope(
     scope: CoroutineScope = defaultExposedScope(),
     register: ScopeHandlerRegistry.() -> Unit = {},
 ): ScopeHost {
-    if (ScopeHostHolder.state != null) {
+    val existing = ScopeHostHolder.state
+    if (existing != null && !scopeHostClosed(existing)) {
         throw IllegalStateException(
             "ScopeHandle: exposeScope() called twice on this component — one OPEN scope host per " +
                 "component; reuse the ScopeHost returned by the first call, or retire() the component " +
@@ -216,9 +226,24 @@ public fun ComponentBase.exposeScope(
             ad = SCOPE_AD_RTQ_PREFIX + channel
         }
     }
-    if (ad == SCOPE_AD_FIELD_BACKEND) {
+    if (ad == SCOPE_AD_FIELD_BACKEND && !ScopeCarrier.ownerInboxArmed) {
         top.addField(SCOPE_INBOX_FIELD, "assocarray", true)
         top.observeFieldScoped(SCOPE_INBOX_FIELD, brsName(::onKotlinScopeInbox))
+        ScopeCarrier.ownerInboxArmed = true
+    }
+    // Spec §4 step 4 (close the exposed host) lives HERE as a lifecycle
+    // retire hook, so the lifecycle file needs no scope import (and render
+    // components that never expose a scope carry no scope closure). Hooks run
+    // BEFORE the component-scope cancel, so children settle
+    // ScopeClosedException; the state is read at fire time.
+    if (!ScopeCarrier.retireHookInstalled) {
+        ScopeCarrier.retireHookInstalled = true
+        kotlinLifecycleOnRetire {
+            val installed = ScopeHostHolder.state
+            if (installed != null) {
+                ScopeHostImpl(installed).close()
+            }
+        }
     }
     val registry = ScopeHandlerRegistry(state.handlers)
     registry.register()

@@ -66,7 +66,12 @@ internal class ScopeOwnerState(
     internal var closed: Boolean = false
 }
 
-/** The component's installed host state (one host per component). */
+/**
+ * The component's installed host state (one OPEN host per component). A
+ * CLOSED state stays installed after retire — dispatch keeps answering
+ * "closed" to late requests for as long as the node lives (the teardown law)
+ * — and is REPLACED by the next exposeScope.
+ */
 internal object ScopeHostHolder {
     internal var state: ScopeOwnerState? = null
 }

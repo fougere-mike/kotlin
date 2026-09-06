@@ -56,6 +56,24 @@ internal object ScopeCarrier {
 
     /** The channel handler is registered (registration precedes every use). */
     internal var registered: Boolean = false
+
+    /**
+     * OWNER role: the field-carrier request-inbox observer for THIS component
+     * is armed — the owner counterpart of [ComponentMailbox.inboxInstalled].
+     * exposeScope arms iff not armed on EVERY call, so a first expose and a
+     * post-retire re-expose share one code path, and a carrier switch between
+     * exposes (rtq first, field after `kotlinScopeForceFieldBackendLocal()`)
+     * still arms the field observer exactly once.
+     */
+    internal var ownerInboxArmed: Boolean = false
+
+    /**
+     * The scope package's lifecycle retire hook (closes the installed host at
+     * retire) is registered on this component — once per component; the hook
+     * reads [ScopeHostHolder.state] at FIRE time, so it closes whichever host
+     * a later re-expose installed.
+     */
+    internal var retireHookInstalled: Boolean = false
 }
 
 // File-private splices (BrsInline helpers stay private to the file that uses

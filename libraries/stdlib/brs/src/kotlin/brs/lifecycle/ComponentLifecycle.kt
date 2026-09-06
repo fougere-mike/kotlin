@@ -7,9 +7,6 @@ package kotlin.brs
 
 import kotlin.brs.roku.RoSGNode
 import kotlin.brs.roku.RoSGNodeEvent
-import kotlin.brs.scope.SCOPE_INBOX_FIELD
-import kotlin.brs.scope.ScopeHostHolder
-import kotlin.brs.scope.ScopeHostImpl
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.DisposableHandle
 import kotlin.coroutines.ParkedContinuation
@@ -247,7 +244,11 @@ internal fun kotlinLifecycleRegisterDependency(label: String, rearm: () -> Unit)
     return ticket
 }
 
-/** Runs inside retire after onStop and before scope cancellation (spec 2 disarms doorbell observers here). */
+/**
+ * Runs inside retire after onStop and before scope cancellation (spec 2
+ * disarms doorbell observers here; the scope package closes the exposed
+ * ScopeHost here — spec §4 step 4 — so this file imports no scope class).
+ */
 internal fun kotlinLifecycleOnRetire(hook: () -> Unit) {
     LifecycleRegistry.retireHooks.add(hook)
 }
@@ -279,16 +280,17 @@ public fun kotlinLifecycleWatchdogMillis(ms: Int) {
  * as a defensive second layer.
  */
 @BrsStatic
-public fun __kotlinIsRetired(): Boolean = LifecycleRegistry.retired
+public fun __kotlinIsRetired(): Boolean = kotlinLifecycleIsRetired()
 
 /**
  * Child-side retire body (the generated `__kotlinRetire` already ran the
- * user's onStop, try/caught). Order: retire hooks (spec 2 disarms doorbell
- * observers) → close + clear the exposed ScopeHost (children settle
- * ScopeClosedException; the inbox observer is unarmed so a later exposeScope
- * can re-arm it) → cancel + reset the component scope (STOPs task threads,
- * deregisters StateFlow collectors, wakes parked awaitReady calls with CE)
- * → retired flag + activation bump. Idempotent.
+ * user's onStop, try/caught). Order: retire hooks — the scope package's
+ * close-the-exposed-host hook among them (children settle
+ * ScopeClosedException because hooks run BEFORE the scope cancel; the closed
+ * host STAYS installed so late requests keep answering "closed"), spec 2's
+ * doorbell disarm — → cancel + reset the component scope (STOPs task
+ * threads, deregisters StateFlow collectors, wakes parked awaitReady calls
+ * with CE) → retired flag + activation bump. Idempotent.
  */
 @BrsStatic
 public fun __kotlinRetireImpl() {
@@ -298,15 +300,6 @@ public fun __kotlinRetireImpl() {
     hooks.addAll(reg.retireHooks)
     for (hook in hooks) {
         hook()
-    }
-    val hostState = ScopeHostHolder.state
-    if (hostState != null) {
-        ScopeHostImpl(hostState).close()
-        ScopeHostHolder.state = null
-        val top = PumpScheduler.hostTopOrNull()
-        if (top != null && top.hasField(SCOPE_INBOX_FIELD)) {
-            top.unobserveFieldScoped(SCOPE_INBOX_FIELD)
-        }
     }
     cancelAndResetComponentScope()
     reg.retired = true
@@ -356,9 +349,10 @@ private fun lifecycleRequireComponent(node: RoSGNode, verb: String) {
 
 /**
  * Parent-side (any thread — callFunc rendezvouses into the child's owning
- * thread and runs with the CHILD's m): onStop → retire hooks → close exposed
- * scope → cancel + reset the component scope → retired. Does NOT remove the
- * node; the caller keeps ownership of the tree. Idempotent. Recycling law:
+ * thread and runs with the CHILD's m): onStop → retire hooks (the exposed
+ * ScopeHost closes here) → cancel + reset the component scope → retired.
+ * Does NOT remove the node; the caller keeps ownership of the tree.
+ * Idempotent. Recycling law:
  * `retire → removeChild → reconfigure var fields → appendChild → revive`.
  * Guided ISE on a node that is not a Kotlin render component (hasFunc).
  */
@@ -382,6 +376,7 @@ public fun revive(node: RoSGNode) {
     node.callFunc(LIFECYCLE_REVIVE_FUNCTION)
 }
 
+/** Typed-handle form of [revive]: a createComponent/constructor handle IS the node; a component `this` is its m (see [componentNodeOf]). */
 public fun revive(component: ComponentBase) {
     revive(componentNodeOf(component))
 }
