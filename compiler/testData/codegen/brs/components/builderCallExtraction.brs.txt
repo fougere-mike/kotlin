@@ -1,0 +1,412 @@
+// --- File: Badge.deps.json ---
+{
+  "version": 1,
+  "component": "Badge",
+  "dependencies": [
+    "AnyKt.brs",
+    "ArrayListKt.brs",
+    "ArraysBrsKt.brs",
+    "ArraysKt.brs",
+    "BuildersKt.brs",
+    "CancellationExceptionKt.brs",
+    "CharCategoryBrsKt.brs",
+    "CollectionExtensionsKt.brs",
+    "CombinedContextKt.brs",
+    "ComponentCoroutinesKt.brs",
+    "ComponentLifecycleKt.brs",
+    "ContainerNodesKt.brs",
+    "ContinuationInterceptorKt.brs",
+    "ContinuationKt.brs",
+    "CoroutineDispatcherKt.brs",
+    "CoroutineQueueKt.brs",
+    "CoroutineScopeKt.brs",
+    "CoroutineSingletonsKt.brs",
+    "DefaultDispatcherKt.brs",
+    "DelayKt.brs",
+    "DelayTrackerKt.brs",
+    "DispatchersKt.brs",
+    "EmptyCoroutineContextKt.brs",
+    "ExceptionsKt.brs",
+    "HashMapKt.brs",
+    "HashSetKt.brs",
+    "IODispatcherKt.brs",
+    "IOWorkerRegistryKt.brs",
+    "IntrinsicsBrsKt.brs",
+    "JobKt.brs",
+    "KotlinKt.brs",
+    "LayoutBuilderKt.brs",
+    "MapExtensionsBrsKt.brs",
+    "NodeEntryKt.brs",
+    "PairKt.brs",
+    "ParkedContinuationKt.brs",
+    "PreconditionsKt.brs",
+    "PrimitiveIteratorsKt.brs",
+    "PumpSchedulerKt.brs",
+    "RangeOperatorsBrsKt.brs",
+    "RangesKt.brs",
+    "RenderableNodesKt.brs",
+    "ResultKt.brs",
+    "SceneLayoutKt.brs",
+    "StringBuilderBrsKt.brs",
+    "TaskPoolKt.brs",
+    "ThrowableKt.brs",
+    "UByteKt.brs",
+    "UIntKt.brs",
+    "ULongKt.brs",
+    "URangesKt.brs",
+    "UShortKt.brs",
+    "UnconfinedDispatcherKt.brs",
+    "UnsignedUtilsKt.brs",
+    "WidgetNodesKt.brs",
+    "charBrsKt.brs",
+    "consoleKt.brs",
+    "coreRuntimeKt.brs",
+    "primitivesKt.brs",
+    "stringBrsKt.brs"
+  ]
+}
+
+
+// --- File: Badge.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="Badge" extends="Group">
+    <interface>
+        <field id="label" type="string" />
+        <field id="__kotlinInputsReady" type="boolean" value="false" />
+        <function name="__kotlinRetire" />
+        <function name="__kotlinRevive" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/BuildersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CancellationExceptionKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContainerNodesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineQueueKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineScopeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineSingletonsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DefaultDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayTrackerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DispatchersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/EmptyCoroutineContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IODispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IOWorkerRegistryKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IntrinsicsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/JobKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/LayoutBuilderKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/MapExtensionsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/NodeEntryKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PairKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ParkedContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PrimitiveIteratorsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PumpSchedulerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RenderableNodesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ResultKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/SceneLayoutKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/TaskPoolKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ULongKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/URangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UShortKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnconfinedDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnsignedUtilsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/WidgetNodesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/consoleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/Badge/BadgeKt.brs" />
+</component>
+
+
+// --- File: BadgeHost.deps.json ---
+{
+  "version": 1,
+  "component": "BadgeHost",
+  "dependencies": [
+    "AnyKt.brs",
+    "ArrayListKt.brs",
+    "ArraysBrsKt.brs",
+    "ArraysKt.brs",
+    "BuildersKt.brs",
+    "CancellationExceptionKt.brs",
+    "CharCategoryBrsKt.brs",
+    "CollectionExtensionsKt.brs",
+    "CombinedContextKt.brs",
+    "ComponentCoroutinesKt.brs",
+    "ComponentLifecycleKt.brs",
+    "ContainerNodesKt.brs",
+    "ContinuationInterceptorKt.brs",
+    "ContinuationKt.brs",
+    "CoroutineDispatcherKt.brs",
+    "CoroutineQueueKt.brs",
+    "CoroutineScopeKt.brs",
+    "CoroutineSingletonsKt.brs",
+    "DefaultDispatcherKt.brs",
+    "DelayKt.brs",
+    "DelayTrackerKt.brs",
+    "DispatchersKt.brs",
+    "EmptyCoroutineContextKt.brs",
+    "ExceptionsKt.brs",
+    "HashMapKt.brs",
+    "HashSetKt.brs",
+    "IODispatcherKt.brs",
+    "IOWorkerRegistryKt.brs",
+    "IntrinsicsBrsKt.brs",
+    "JobKt.brs",
+    "KotlinKt.brs",
+    "LayoutBuilderKt.brs",
+    "MapExtensionsBrsKt.brs",
+    "NodeEntryKt.brs",
+    "PairKt.brs",
+    "ParkedContinuationKt.brs",
+    "PreconditionsKt.brs",
+    "PrimitiveIteratorsKt.brs",
+    "PumpSchedulerKt.brs",
+    "RangeOperatorsBrsKt.brs",
+    "RangesKt.brs",
+    "RenderableNodesKt.brs",
+    "ResultKt.brs",
+    "SceneLayoutKt.brs",
+    "StringBuilderBrsKt.brs",
+    "TaskPoolKt.brs",
+    "ThrowableKt.brs",
+    "UByteKt.brs",
+    "UIntKt.brs",
+    "ULongKt.brs",
+    "URangesKt.brs",
+    "UShortKt.brs",
+    "UnconfinedDispatcherKt.brs",
+    "UnsignedUtilsKt.brs",
+    "WidgetNodesKt.brs",
+    "charBrsKt.brs",
+    "consoleKt.brs",
+    "coreRuntimeKt.brs",
+    "primitivesKt.brs",
+    "stringBrsKt.brs"
+  ]
+}
+
+
+// --- File: BadgeHost.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="BadgeHost" extends="Group">
+    <interface>
+        <function name="__kotlinRetire" />
+        <function name="__kotlinRevive" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/BuildersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CancellationExceptionKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContainerNodesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineQueueKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineScopeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineSingletonsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DefaultDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayTrackerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DispatchersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/EmptyCoroutineContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IODispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IOWorkerRegistryKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IntrinsicsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/JobKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/LayoutBuilderKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/MapExtensionsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/NodeEntryKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PairKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ParkedContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PrimitiveIteratorsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PumpSchedulerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RenderableNodesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ResultKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/SceneLayoutKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/TaskPoolKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ULongKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/URangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UShortKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnconfinedDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnsignedUtilsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/WidgetNodesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/consoleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/BadgeHost/BadgeHostKt.brs" />
+    <children>
+        <Badge id="hostBadge" label="NEW" visible="true" __kotlinInputsReady="true"/>
+    </children>
+</component>
+
+
+// --- File: builderCallExtractionKt.brs ---
+sub init()
+    __kotlinComponentAttach(m.top, m.global)
+    m.__get_label_k_ = Badge___get_label_k_
+end sub
+
+function onKeyEvent(key as String, press as Boolean) as Boolean
+    return false
+end function
+
+sub __kotlinRetire()
+    if __kotlinIsRetired() then
+        return
+    end if
+    __kotlinRetireImpl()
+end sub
+
+sub __kotlinRevive()
+    __kotlinReviveImpl()
+end sub
+
+function Badge___get_label_k_() as String
+    return m.top.label
+end function
+
+sub badgeComponent_rLayoutBuilder_Str_Str_ZN_Function1ComponentBuilderV_k_(m as Object, id as String, label as String, visible = invalid, init = badgeComponent_lambda_create_k_())
+    if visible = invalid then
+        visible = invalid
+    end if
+    if init = invalid then
+        init = badgeComponent_lambda_create_k_()
+    end if
+    m.component("Badge", id, invalid, invalid, invalid, invalid, invalid, visible, invalid, invalid, invalid, invalid, invalid, invalid, badgeComponent_lambda_1_create_Str_Function1ComponentBuilderV_k_(label, init))
+end sub
+
+sub init()
+    __kotlinComponentAttach(m.top, m.global)
+end sub
+
+function onKeyEvent(key as String, press as Boolean) as Boolean
+    return false
+end function
+
+sub __kotlinRetire()
+    if __kotlinIsRetired() then
+        return
+    end if
+    __kotlinRetireImpl()
+end sub
+
+sub __kotlinRevive()
+    __kotlinReviveImpl()
+end sub
+
+function BadgeHost_Companion_create_k_() as Object
+    this = {}
+    this.__type = "BadgeHost_Companion"
+    this.__proto = ["BadgeHost_Companion"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.defineLayout_k_ = BadgeHost_Companion_defineLayout_k_
+    return this
+end function
+
+function BadgeHost_Companion_getInstance() as Object
+    if GetGlobalAA().BadgeHost_Companion_instance = invalid then
+        GetGlobalAA().BadgeHost_Companion_instance = BadgeHost_Companion_create_k_()
+    end if
+    return GetGlobalAA().BadgeHost_Companion_instance
+end function
+
+function BadgeHost_Companion_defineLayout_k_() as Object
+    return sceneLayout_Function1LayoutBuilderV_k_(BadgeHost_Companion_defineLayout_lambda_create_k_())
+end function
+
+function badgeComponent_lambda_create_k_() as Object
+    this = {}
+    this.__type = "badgeComponent_lambda"
+    this.__proto = ["badgeComponent_lambda", "Function1", "Function"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.invoke_AnyN_k_ = badgeComponent_lambda_invoke_AnyN_k_
+    return this
+end function
+
+sub badgeComponent_lambda_invoke_AnyN_k_(p1 as Object)
+    return
+end sub
+
+function badgeComponent_lambda_1_create_Str_Function1ComponentBuilderV_k_(_label as String, _init as Object) as Object
+    this = {}
+    this.__type = "badgeComponent_lambda_1"
+    this.__proto = ["badgeComponent_lambda_1", "Function1", "Function"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.invoke_AnyN_k_ = badgeComponent_lambda_1_invoke_AnyN_k_
+    this._label = _label
+    this._init = _init
+    return this
+end function
+
+sub badgeComponent_lambda_1_invoke_AnyN_k_(_this_component as Object)
+    _this_component.attr_Str_Str_k_("label", m._label)
+    m._init.invoke_AnyN_k_(_this_component)
+end sub
+
+function BadgeHost_Companion_defineLayout_lambda_create_k_() as Object
+    this = {}
+    this.__type = "BadgeHost_Companion_defineLayout_lambda"
+    this.__proto = ["BadgeHost_Companion_defineLayout_lambda", "Function1", "Function"]
+    this.__id = __kotlin_nextObjectId()
+    this.equals = Any_equals_AnyN_k_
+    this.hashCode = Any_hashCode_k_
+    this.toString = Any_toString_k_
+    this.invoke_AnyN_k_ = BadgeHost_Companion_defineLayout_lambda_invoke_AnyN_k_
+    return this
+end function
+
+sub BadgeHost_Companion_defineLayout_lambda_invoke_AnyN_k_(_this_sceneLayout as Object)
+    badgeComponent_rLayoutBuilder_Str_Str_ZN_Function1ComponentBuilderV_k_(_this_sceneLayout, "hostBadge", "NEW", true, invalid)
+end sub

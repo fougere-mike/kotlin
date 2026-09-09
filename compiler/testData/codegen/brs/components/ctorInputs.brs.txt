@@ -69,6 +69,7 @@
         <field id="airingId" type="string" />
         <field id="row" type="integer" />
         <field id="status" type="string" />
+        <field id="__kotlinInputsReady" type="boolean" value="false" />
         <function name="__kotlinRetire" />
         <function name="__kotlinRevive" />
     </interface>

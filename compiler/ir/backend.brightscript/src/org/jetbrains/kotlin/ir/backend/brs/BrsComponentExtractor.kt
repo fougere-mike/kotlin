@@ -9,10 +9,12 @@ import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.types.*
+import org.jetbrains.kotlin.ir.util.getAnnotation
 import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.ir.util.kotlinFqName
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.name.BrsStandardClassIds
 
 /**
  * Extracts SceneGraph component metadata from Kotlin IR classes.
@@ -66,11 +68,26 @@ class BrsComponentExtractor(
         currentComponentName = name
         val extendsComponent = getExtendsComponent(irClass, componentAnnotation)
         val fields = extractFields(irClass)
+
+        // Constructor-parameter @SG properties are REQUIRED INPUTS (spec §3): the type
+        // also gains the boolean ready-marker field the lifecycle gate reads (§4) —
+        // default false; a static layout sets it "true" as an attribute on a child
+        // whose inputs are all constants (LayoutInputValidation.withInputMarkers),
+        // and code-constructed children get it from kotlinLifecycleMarkInputsReady.
+        val requiredInputs = irClass.declarations.filterIsInstance<IrProperty>()
+            .filter { !it.isFakeOverride && context.intrinsics.isConstructorParameterProperty(it) && extractTypeSafeField(it) != null }
+            .map { it.name.asString() }
+        val fieldsWithMarker = if (requiredInputs.isEmpty()) fields else fields + BrsFieldInfo(
+            name = LayoutInputValidation.READY_MARKER_ATTRIBUTE,
+            type = BrsFieldTypes.BOOLEAN,
+            defaultValue = "false",
+        )
+
         val exports = extractExports(irClass)
         val layout = extractLayout(irClass)
 
         // Merge interface fields from layout into the fields list
-        val allFields = mergeInterfaceFields(fields, layout)
+        val allFields = mergeInterfaceFields(fieldsWithMarker, layout)
 
         return BrsComponentInfo(
             irClass = irClass,
@@ -78,7 +95,8 @@ class BrsComponentExtractor(
             extendsComponent = extendsComponent,
             fields = allFields,
             exports = exports,
-            layout = layout
+            layout = layout,
+            requiredInputs = requiredInputs
         )
     }
 
@@ -904,6 +922,15 @@ class BrsComponentExtractor(
         val call = statement as? IrCall ?: return null
         val functionName = call.symbol.owner.name.asString()
 
+        // Generated typed builder (kotlin-roku): @SGComponentBuilder("Type") on the
+        // callee. Extraction runs pre-lowering, so the builder BODY is never
+        // inlined into view — read the CALL SITE by parameter name.
+        val builderAnnotation = call.symbol.owner.getAnnotation(BrsStandardClassIds.Annotations.SGComponentBuilder.asSingleFqName())
+        if (builderAnnotation != null) {
+            val componentType = getAnnotationStringArg(builderAnnotation, "componentType")
+            if (componentType != null) return extractBuilderComponentNode(call, componentType)
+        }
+
         // Handle custom component() calls specially
         if (functionName == "component") {
             return extractCustomComponentNode(call)
@@ -927,6 +954,47 @@ class BrsComponentExtractor(
             attributes = attributes,
             children = children
         )
+    }
+
+    /**
+     * A typed-builder call: `id` → id; every other non-`init` parameter → an attribute
+     * named after the parameter (a constructor input or a standard attribute — the
+     * standard names go through mapParamToXmlAttribute, inputs pass verbatim).
+     * Non-constant values are dropped with the existing warning; the post-extraction
+     * validation (BrsCompiler → LayoutInputValidation) upgrades a dropped REQUIRED
+     * input to an error. A non-constant `id` drops the whole node (as component() does).
+     */
+    private fun extractBuilderComponentNode(call: IrCall, componentType: String): NodeEntryInfo? {
+        val function = call.symbol.owner
+        var id: String? = null
+        val attributes = mutableMapOf<String, String>()
+        var children = emptyList<NodeEntryInfo>()
+        for (i in 0 until call.valueArgumentsCount) {
+            val param = function.valueParameters.getOrNull(i) ?: continue
+            val paramName = param.name.asString()
+            val arg = call.getValueArgument(i) ?: continue
+            if (paramName == "init") {
+                val lambdaBody = extractLambdaBody(arg)
+                if (lambdaBody != null) {
+                    val (attrs, childNodes) = extractComponentBuilderCalls(lambdaBody)
+                    attributes.putAll(attrs)
+                    children = childNodes
+                }
+                continue
+            }
+            val value = extractAttributeValue(arg, paramName)
+            if (paramName == "id") {
+                id = value
+                continue
+            }
+            if (value != null) {
+                attributes[mapParamToXmlAttribute(paramName)] = value
+            } else if (resolvesToConst(arg) == null) {
+                warnDroppedAttribute(paramName)
+            }
+        }
+        val resolvedId = id ?: return null
+        return NodeEntryInfo(nodeType = componentType, id = resolvedId, attributes = attributes, children = children)
     }
 
     /**

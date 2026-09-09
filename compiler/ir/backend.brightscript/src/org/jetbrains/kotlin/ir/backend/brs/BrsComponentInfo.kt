@@ -176,8 +176,67 @@ data class BrsComponentInfo(
      * Layout information extracted from @SGLayout property, if present.
      * Contains the DSL-declared node hierarchy for XML <children> generation.
      */
-    val layout: BrsLayoutInfo? = null
+    val layout: BrsLayoutInfo? = null,
+
+    /**
+     * Constructor-parameter @SG properties — the component's REQUIRED INPUTS
+     * (spec 2026-09-04-component-lifecycle §3), in declaration order. Non-empty
+     * iff the type also declares the boolean ready-marker field
+     * [LayoutInputValidation.READY_MARKER_ATTRIBUTE]; consumed by the
+     * post-extraction static-layout validation in BrsCompiler (§5.9c).
+     */
+    val requiredInputs: List<String> = emptyList()
 )
+
+/** One static-layout finding: [ownerComponent]'s layout declares [childType] at [childId] without constant [missingInput]. */
+data class LayoutInputFinding(val ownerComponent: String, val childId: String, val childType: String, val missingInput: String) {
+    fun message(): String =
+        "[BRS layout] component '$childType' (id=\"$childId\") declared in $ownerComponent's layout requires input " +
+            "'$missingInput' as a compile-time constant — supply it in the builder call (or attr(\"$missingInput\", …)), " +
+            "or construct $childType in code"
+}
+
+/**
+ * Static-layout input validation (spec §5.9c). Pure over the extracted model so
+ * it is unit-testable without IR: [requiredByType] maps a module component's
+ * name to its constructor-input names; a child whose type is not in the map
+ * (a SceneGraph built-in or a dependency-klib component) is never checked.
+ */
+object LayoutInputValidation {
+    /**
+     * The boolean interface field every input-bearing component type declares
+     * (default false), AND the XML attribute a static layout sets to "true" on a
+     * child whose required inputs are all present as constants — so the lifecycle
+     * gate opens at creation for statically-declared children.
+     */
+    const val READY_MARKER_ATTRIBUTE = "__kotlinInputsReady"
+
+    /** Every (child, required input) pair the layout under [owner] leaves without a constant value — one finding each. */
+    fun validate(owner: String, nodes: List<NodeEntryInfo>, requiredByType: Map<String, List<String>>): List<LayoutInputFinding> {
+        val findings = mutableListOf<LayoutInputFinding>()
+        for (node in nodes) {
+            val required = requiredByType[node.nodeType]
+            if (required != null) {
+                for (input in required) {
+                    if (!node.attributes.containsKey(input)) {
+                        findings.add(LayoutInputFinding(owner, node.id, node.nodeType, input))
+                    }
+                }
+            }
+            findings.addAll(validate(owner, node.children, requiredByType))
+        }
+        return findings
+    }
+
+    /** Adds `__kotlinInputsReady="true"` to every input-bearing child whose required inputs are all present. */
+    fun withInputMarkers(nodes: List<NodeEntryInfo>, requiredByType: Map<String, List<String>>): List<NodeEntryInfo> =
+        nodes.map { node ->
+            val required = requiredByType[node.nodeType]
+            val satisfied = required != null && required.isNotEmpty() && required.all { node.attributes.containsKey(it) }
+            val attributes = if (satisfied) node.attributes + (READY_MARKER_ATTRIBUTE to "true") else node.attributes
+            node.copy(attributes = attributes, children = withInputMarkers(node.children, requiredByType))
+        }
+}
 
 /**
  * Metadata about a field exposed in a SceneGraph component interface.

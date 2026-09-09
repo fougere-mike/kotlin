@@ -403,6 +403,12 @@ class BrsComponentGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun ctorInputs() = runTest("components/ctorInputs.kt")
+
+    // Pins the typed-builder call extraction (spec §5.9b): the child XML carries the
+    // constructor input as an attribute plus the __kotlinInputsReady="true" marker,
+    // and the input-bearing type declares the boolean marker field.
+    @Test
+    fun builderCallExtraction() = runTest("components/builderCallExtraction.kt")
 }
 
 // ==================== Intrinsics Tests ====================

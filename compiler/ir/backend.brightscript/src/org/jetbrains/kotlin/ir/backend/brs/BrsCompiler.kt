@@ -163,6 +163,29 @@ class BrsCompiler(
             }
         }
 
+        // Static-layout inputs (spec §5.9c): every module component's required inputs
+        // are known by name now; each owner's layout children of those types must carry
+        // them as constants — ERROR otherwise — and satisfied children get the ready
+        // marker attribute so the lifecycle gate opens at creation. Single-module
+        // closed world: a child type absent from the map (SceneGraph built-in or a
+        // dependency-klib component) is never checked.
+        val requiredByType = preExtractedComponents.mapValues { it.value.requiredInputs }.filterValues { it.isNotEmpty() }
+        if (requiredByType.isNotEmpty()) {
+            for ((name, info) in preExtractedComponents.toList()) {
+                val layout = info.layout ?: continue
+                for (finding in LayoutInputValidation.validate(name, layout.nodes, requiredByType)) {
+                    // Reported on the OWNER class (a top-level declaration, so the
+                    // location resolves); the message names the child and the input.
+                    context.reportError(info.irClass, finding.message())
+                }
+                val markedNodes = LayoutInputValidation.withInputMarkers(layout.nodes, requiredByType)
+                // allNodeIds is a SEPARATE flattened list alongside nodes — recompute it
+                // from the rewritten tree so the two can never drift.
+                val marked = layout.copy(nodes = markedNodes, allNodeIds = markedNodes.flatMap { it.allNodeIds() })
+                preExtractedComponents[name] = info.copy(layout = marked)
+            }
+        }
+
         // Run lowering phases
         val loweredModule = BrsLoweringPhases.lower(irModule, context)
 
