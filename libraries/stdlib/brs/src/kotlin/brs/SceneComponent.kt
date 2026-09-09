@@ -336,6 +336,18 @@ public abstract class FlowTaskComponent : TaskComponent() {
  * item.thumbnailUrl = "pkg:/images/thumb.png"
  * rowList.content.appendChild(item)
  * ```
+ *
+ * `VideoItem()` is a REAL constructor call, not illustrative shorthand (constructor
+ * inputs program, 2026-09-09): the compiler lowers a component constructor call to
+ * `CreateObject("roSGNode", "VideoItem")` — an input-less class like the one above is
+ * exactly that bare create (the `ctorCallLowering` golden pins it). A ContentNode
+ * component may also declare `@SG*Field` PRIMARY-constructor inputs
+ * (`class VideoItem(@SGStringField val title: String) : ContentNodeComponent()`);
+ * the same lowering then writes each input onto the node right after creation
+ * (`item.title = "My Video"` as a node-field write), and `createComponent<VideoItem>()`
+ * becomes a FIR error for that class (BRS_CREATE_COMPONENT_HAS_INPUTS). ContentNode
+ * components are excluded from the lifecycle attach, so `onStart`/`awaitReady` do not
+ * apply to them — see CLAUDE.md "Constructor Inputs and Typed Layout Builders".
  */
 @BrsSceneGraphComponent(extends = "ContentNode")
 public abstract class ContentNodeComponent : ComponentBase()

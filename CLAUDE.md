@@ -616,7 +616,7 @@ hooks, any depth); the only structural rule is concrete descendants are final
 so a parent that publishes in `init` is visible there. Never acquire in `init`
 (SG sets fields after creation). Design decision 10's `createComponent<T> { }`
 + `@SGRequired`/`onInputsReady()` pair is SUPERSEDED: constructor `@SG` inputs
-land in plan B of the lifecycle design (see "Component Lifecycle"). Scene-stash
+LANDED 2026-09-09 (see "Constructor Inputs and Typed Layout Builders"). Scene-stash
 idiom for app-wide services: publish on
 the SCENE at bootstrap, acquire anywhere via `sharedFrom<T>(top.getScene())`.
 
@@ -879,7 +879,7 @@ revive(node)   // after re-adding: reset tickets → re-arm → re-check gate �
   the most-derived override by construction (Suite 11 test 2).
 - **Per-instance cost is statically gated** (spec decision 10): no hook
   override → the attach only (one call, two ref stores); input-bearing types
-  will pay one boolean marker field (plan B); only hook-overriding types pay a
+  pay one boolean marker field (`__kotlinInputsReady`); only hook-overriding types pay a
   coroutine per instance. Informational pin: 1000 `LifecycleDumbProbe`
   instances with attach = 598 ms (Roku Ultra 4800X; Suite 11
   `timingThousandDumbInstancesInformational`, `[LIFECYCLE-INFO]` console line).
@@ -892,16 +892,19 @@ dependency ticket resolved. Re-entrant (returns immediately once open);
 render-thread component context only (guided ISE "awaitReady must be called
 from a render-thread component context (like runTask)"). Public so a coroutine
 launched from an observer handler can await it too. Inputs readiness reads the
-`__kotlinInputsReady` marker field, which no class emits until plan B lands,
-and tickets are spec 2's interface (design §13) — so TODAY the gate has NO
-closing condition other than `retired`: every driver takes the fast path and
-NOTHING ever parks. The park/wake/watchdog path (marker observer, ticket
-resolution, revive wake, cancellation wake with CancellationException) ships
-inspection-verified against the ParkedContinuation idiom but is NOT yet
-device-exercised; the stdlib `ComponentLifecycle` unit suite covers only the
-main-thread-legal subset (off-context ISE, the `hasFunc` guard, watchdog-hook
-plumbing). The pins are plan B's Suite 11 rows: retire cancels a parked
-`onStart`; the watchdog fires for a raw-subtype node.
+`__kotlinInputsReady` marker field, which every INPUT-BEARING type declares
+since plan B (2026-09-09; a type without the field is inputs-ready by
+definition — see "Constructor Inputs and Typed Layout Builders"); tickets are
+spec 2's interface (design §13), not yet registered by anything. So today the
+gate parks for exactly one reason: an input-bearing node whose marker nobody
+wrote (created outside its Kotlin constructor / static layout). That park/wake/
+watchdog path (marker observer wake, retire cancels a parked driver with
+CancellationException, one watchdog line per activation) is DEVICE-PINNED by
+Suite 11 `rawCreatedInputComponentStaysClosedUntilMarkerAndWatchdogFires` +
+`retireCancelsOnStartParkedInAwaitReady`; ticket resolution and the revive wake
+remain inspection-verified against the ParkedContinuation idiom. The stdlib
+`ComponentLifecycle` unit suite covers only the main-thread-legal subset
+(off-context ISE, the `hasFunc` guard, watchdog-hook plumbing).
 
 **The watchdog:** a gate still closed after 30s (default) prints ONE console
 line per activation, exact format:
@@ -950,10 +953,11 @@ again.
 **THE RECYCLING LAW:** `retire(node) → removeChild → reconfigure var fields →
 appendChild → revive(node)`. `init {}` is ONE-TIME structural setup;
 per-activation work is `onStart`. Recyclable content is `@SG var` fields (Roku
-`itemContent` parity); constructor `val` inputs (plan B) are identity and
+`itemContent` parity); constructor `val` inputs are identity and
 survive the cycle. Device-pinned end to end by Suite 11
 `recycleCycleFiresOnStartAgainAndCoroutinesWork` (child-stop →
-child-start:second → a `launch` in the revived scope runs).
+child-start:second → a `launch` in the revived scope runs) and
+`constructorInputsSurviveRetireRevive` (the input reads the same after revive).
 
 **What retire cannot promise:**
 
@@ -1013,10 +1017,11 @@ child-start:second → a `launch` in the revived scope runs).
    `onStart` with NO suspension point compiles to a plain function and was
    never affected.
 
-**Constructor inputs and typed layout builders: plan B (not yet landed)** —
+**Constructor inputs and typed layout builders: plan B — LANDED 2026-09-09.**
 `class Screen(@SGStringField val airingId: String)`, the `Screen("123")`
-creation lowering, the `__kotlinInputsReady` marker, plugin-generated builders,
-the FIR family (`docs/superpowers/plans/2026-09-04-component-constructor-inputs.md`).
+creation lowering, the `__kotlinInputsReady` marker, plugin-generated builders
+and the FIR family have their own section, "Constructor Inputs and Typed
+Layout Builders", directly below this one.
 
 ### Backlog (lifecycle program, recorded 2026-09-09)
 
@@ -1040,8 +1045,10 @@ the FIR family (`docs/superpowers/plans/2026-09-04-component-constructor-inputs.
    observer — the `runPumping` comment in DeviceTestLoop.kt); Suite 11 tests
    4/5 leave a 300 ms gap so the duplicate drains before the report read.
    Want a predicate `roundTrip` overload and/or a real port unobserve.
-5. Plan B (constructor inputs + typed builders) NEXT, then spec 2 (scoped
-   SharedService lookup / `by sharedService`).
+5. Plan B (constructor inputs + typed builders) SHIPPED 2026-09-09 — its own
+   backlog is in the "Constructor Inputs and Typed Layout Builders" section.
+   Spec 2 (scoped SharedService lookup / `by sharedService`, consuming design
+   §13's ticket interface) is NEXT.
 
 ### Key files
 
@@ -1057,6 +1064,293 @@ the FIR family (`docs/superpowers/plans/2026-09-04-component-constructor-inputs.
 Goldens: `compiler/testData/codegen/brs/components/{componentAttachUnconditional,
 onKeyEventInheritedWrapper, superDispatchComponent, onStartDriver,
 retireReviveEntries, suspendMemberComponentScope}`.
+
+## Constructor Inputs and Typed Layout Builders
+
+Landed 2026-09-09 (plan B of the component-lifecycle program). A component
+declares its REQUIRED INPUTS as annotated primary-constructor properties; the
+constructor call is the creation API, and static layouts get a plugin-generated
+typed builder per component. Design of record:
+`docs/superpowers/plans/2026-09-04-component-lifecycle-design.md` (§3 inputs +
+builders, §4 inputs readiness, §5.7–5.10 compiler, §6 plugin, §7 FIR); plan
+`docs/superpowers/plans/2026-09-04-component-constructor-inputs.md`; execution
+record `.superpowers/sdd/2026-09-04-component-constructor-inputs/`. Device
+coverage: E2E Suite 11 tests 10–14 (the five constructor-input tests, named in
+the suite row) + goldens `components/{ctorInputs, ctorCallLowering,
+builderCallExtraction}` + the `LayoutInputValidationTest` unit test + the
+`componentInputs/` FIR fixtures.
+
+```kotlin
+class AiringDetailsScreen(
+    @SGStringField val airingId: String,      // REQUIRED INPUT (non-null is fine)
+    @SGIntegerField val row: Int,
+) : GroupComponent() {
+    @SGStringField var status: String = "idle" // recyclable CONTENT: var
+    override suspend fun onStart() {           // inputs are SET here
+        status = "$airingId:$row"
+    }
+}
+// Creation — the constructor call IS the API (render-thread component code):
+val screen = AiringDetailsScreen("123", 2)
+top.appendChild(screen)
+// Static layout — the generated builder; required inputs = required parameters:
+companion object {
+    @SGLayout
+    fun defineLayout() = sceneLayout {
+        airingDetailsScreen(id = "details", airingId = "123", row = 2)
+    }
+}
+```
+
+### Syntax and meaning
+
+- A **constructor input** is a PRIMARY-constructor `val`/`var` parameter that
+  carries `@SG*Field` (or legacy `@BrsField`). It is an ordinary XML `<field>`
+  like every other `@SG` property AND a required input. ONE predicate defines
+  the set: `BrsIntrinsics.constructorInputs` (backend — `isConstructorParameterProperty`
+  + `hasInterfaceFieldAnnotation`, the class's OWN declarations, declaration
+  order), mirrored by checkers.brs `BrsComponentTypes.constructorInputs`
+  (module boundary — divergence law: a change lands in both in one commit). A
+  plain un-annotated `val` parameter has no node field and is NOT an input
+  (its write would be a silent drop on device).
+- **`val` is a Kotlin-side promise**: no Kotlin code can reassign it, but the
+  node field is a normal SceneGraph field — a parent's `setField`, XML, or raw
+  BrightScript can still write it. Non-null types are fine: the value is
+  written BEFORE `onStart`; what `init` would see is the SG type default
+  (`""`/`0`/`false`), which is exactly why reading it there is an error (below).
+- **Inputs are IDENTITY, content is `var`** (the recycling law): a constructor
+  input survives `retire → removeChild → appendChild → revive` unchanged
+  (Suite 11 `constructorInputsSurviveRetireRevive`); per-activation
+  reconfiguration goes through `@SG var` fields.
+- Constructor-parameter `@SG` properties emit NO `m.top.x = x` initializer line
+  in the generated `init()` (there is no local to read inside `sub init()`;
+  `ctorInputs` golden) — the XML `<field>` is still declared.
+
+### Construction: the constructor call and what it lowers to
+
+`AiringDetailsScreen("123", 2)` is lowered by
+`BrsComponentConstructorCallLowering` (phase 0.0555, between the runTask and
+sharedFrom lowerings) into:
+
+```
+__kotlinNewComponent_1 = CreateObject("roSGNode", "AiringDetailsScreen")
+__kotlinNewComponent_1.airingId = "123"     ' one plain node-field dot-assign per input, parameter order
+__kotlinNewComponent_1.row = 2
+kotlinLifecycleMarkInputsReady_RoSGNode_k_(__kotlinNewComponent_1)   ' the ready marker — LAST
+screen = __kotlinNewComponent_1
+```
+
+- Parameter → property by IR LINK (the property whose backing-field initializer
+  reads that parameter), never by name; only `constructorInputs` properties
+  get a write; the marker call is emitted only when at least one input was
+  written — an input-less component (`VideoItem()`) is a bare `CreateObject`
+  with no marker.
+- The writes are tagged `COMPONENT_INPUT_WRITE` so the emitter's
+  `componentFieldWriteRoute` (ONE decision for both `visitSetField` sites)
+  emits `handle.field = v`, NOT the component-class `.top` routing (the handle
+  is a bare roSGNode; `n.top` is invalid there).
+- Per-call-site temp names (`_1`, `_2`, …): nested `Outer(Inner(…))`,
+  argument position, property-write position, discarded-statement position
+  and locals hoisted into coroutine state machines are all pinned by the
+  `ctorCallLowering` golden.
+- Evaluation-order deviation: the node is CREATED before the arguments are
+  evaluated (Kotlin evaluates arguments first); a throwing argument leaves an
+  orphan unparented node, which is GC'd.
+- `createComponent<T>()` / `brsCreateComponent<T>()` on an input-bearing class
+  is a FIR ERROR (`BRS_CREATE_COMPONENT_HAS_INPUTS` — "'T' declares required
+  inputs (a, b); construct it with T(…) so every input is written before
+  onStart(), instead of createComponent<T>()"). It wins over
+  `BRS_CREATE_COMPONENT_INVALID_TYPE` for an input-bearing abstract class;
+  `runTask<T>` is untouched.
+- **Task components take NO constructor inputs**: an `@SG`/`@BrsField`
+  constructor-parameter property on a `TaskComponent` descendant is
+  `BRS_TASK_CONSTRUCTOR_INPUT` ("Task components take inputs through
+  runTask<T> { field = value }; declare 'x' as a var field instead of a
+  constructor parameter"); a PLAIN constructor `val` on a task now fires
+  `BRS_TASK_STATE_NOT_FIELD` (the fake-source skip in that checker is gone).
+- Single-module closed world (SharedService/ScopeHandle/Flow precedent): the
+  lowering needs the IR backing-field link, which a DEPENDENCY-klib class does
+  not carry — see backlog (a). This is why roku-test-app's brsTest constructs
+  its input probes through a brsMain driver fixture (`LifecycleInputDriverProbe`),
+  never directly from the test body.
+
+### Static layouts: the generated typed builders
+
+The kotlin-roku plugin (`GenerateLayoutStubsTask`, pass 1) scans every source
+file with a CONSTRAINED grammar and writes one `ComponentBuilders_<package>.kt`
+per package into the layout-stubs srcDir (brsMain — the builders reach the
+main compile and the test klib), one builder per eligible component:
+
+```kotlin
+@SGComponentBuilder("Badge")
+fun LayoutBuilder.badge(id: String, label: String, translation: Vector2D? = null, …, init: ComponentBuilder.() -> Unit = {}) {
+    component("Badge", id = id, translation = translation, …) { attr("label", label); init() }
+}
+```
+
+- **Required inputs are required parameters**; the standard attributes stay
+  optional; `init` nests children. The compiler keys extraction on the
+  `@SGComponentBuilder` ANNOTATION (never the name or the body): the CALL
+  site's arguments become XML attributes by parameter name —
+  `<Badge id="hostBadge" label="NEW" __kotlinInputsReady="true"/>`.
+- **Constants only.** Attribute values must be compile-time constants (the
+  existing `@SGLayout` rule). For a REQUIRED input, a missing or non-constant
+  value is a compile ERROR (not the usual dropped-with-warning), reported on
+  the OWNER component, exact shape:
+  `[BRS layout] component 'Badge' (id="hostBadge") declared in BadgeHost's layout requires input 'label' as a compile-time constant — supply it in the builder call (or attr("label", …)), or construct Badge in code`.
+  Validation runs in `BrsCompiler` after every file is extracted and before
+  lowering (`LayoutInputValidation.validate`), then `withInputMarkers` stamps
+  the marker attribute on every child whose required inputs are all present.
+  A non-constant `id` still silently drops the node (`component()` parity —
+  backlog).
+- The raw `component("Badge", id = "x") { attr("label", "NEW") }` form still
+  works and is validated identically (children are checked recursively; a
+  child whose type is a SceneGraph built-in or a dependency-klib component is
+  never checked).
+- The lowerCamel builder BESIDE its PascalCase class is legal:
+  `@SGComponentBuilder` functions are exempt from `BRS_NAME_CASE_CLASH` (R33 —
+  the builder's mangled BRS global never collides with the class's globals; the
+  exemption is annotation-keyed and pinned by a negative-control fixture,
+  `nameCaseClash/sgComponentBuilderBesideComponentClassOk`).
+- **Which classes get NO builder** (the plugin logs each skip — WARN when it
+  could not parse, INFO for designed-in ineligibility): an input typed
+  node/AA/nullable — only `String`/`Int`/`Float`/`Double`/`Boolean` can be XML
+  constants (construct those in code; INFO); an input named `id`/`init`/a
+  standard attribute (WARN); abstract/sealed/data/enum/inner/value/private
+  classes (INFO for abstract); a builder name colliding with a built-in DSL
+  method or a Kotlin hard keyword (WARN); a header the grammar cannot parse
+  (WARN). Kotlin default values on constructor inputs are parsed and IGNORED —
+  the builder parameter stays required because the marker needs EVERY input.
+- **The grammar** is `[modifiers] class X(<@SG…Field val a: T, …>) : Base(`
+  with `Base` a stdlib render base or another component of the module
+  (cross-file base chains resolved module-wide; comments stripped
+  string-aware). It rejects rather than guesses; the compiler extractor is the
+  source of truth — a wrong builder is a compile error at its call site, never
+  a silent XML. roku-test-app currently generates 31 builders.
+
+### The ready marker and the gate
+
+- Every input-bearing TYPE declares one extra boolean XML field
+  `__kotlinInputsReady` (default `false`); input-less types have none — that
+  absence is how the stdlib learns a class has no inputs (`awaitReady` treats
+  a missing marker field as inputs-ready). Two writers open it: the
+  constructor-call lowering (`kotlinLifecycleMarkInputsReady`, after the input
+  writes) and the static-layout extractor (`__kotlinInputsReady="true"` on a
+  satisfied child — open at creation). A node created ANY other way (raw
+  `CreateObject`, hand-written XML, a dependency-klib constructor call) has
+  nobody writing it: the gate stays CLOSED, `onStart` never fires, and after
+  30s (default) the watchdog prints its UNSET clause, exact format:
+
+  ```
+  [kotlin.lifecycle] AiringDetailsScreen(id=) not ready after 30s — inputs UNSET (created outside its Kotlin constructor?), unresolved:
+  ```
+
+  A manual `setField("__kotlinInputsReady", true)` opens it (Suite 11
+  `rawCreatedInputComponentStaysClosedUntilMarkerAndWatchdogFires` — the first
+  device exercise of the awaitReady park/wake/watchdog path; the watchdog fires
+  exactly ONCE per activation, `kotlinLifecycleWatchdogFires()` is the durable
+  assertion). `retireCancelsOnStartParkedInAwaitReady` pins retire while parked:
+  no `onStart` after a late marker.
+- **Mirror law:** the literal lives in BOTH `LIFECYCLE_INPUTS_READY_FIELD`
+  (stdlib `ComponentLifecycle.kt`) and `LayoutInputValidation.READY_MARKER_ATTRIBUTE`
+  (compiler `BrsComponentInfo.kt`), cross-referenced in KDoc — the module
+  boundary forbids sharing the constant; a change lands in both in one commit.
+
+### The init-read rule (`BRS_COMPONENT_INPUT_READ_IN_INIT`)
+
+SceneGraph runs `init()` INSIDE `CreateObject`, before any field write, so a
+constructor input read in `init {}` or in a sibling property initializer sees
+the declared default. FIR ERROR: "Input 'airingId' of component 'X' is read
+during init: SceneGraph runs init() inside CreateObject, before any field is
+written, so this read sees the declared default. Read it in onStart() (fires
+once all inputs are set) or in a lambda/observer." Both spellings fire
+(`airingId` and `this.airingId` — K2 fact: a `val` constructor parameter is
+NOT in scope as a parameter inside init blocks/initializers, its bare name
+resolves to the PROPERTY with an implicit `this`); reads through another
+receiver (`peer?.airingId`), in methods, lambdas (`launch {}` in init
+included), `onStart`, and the delegated-super-call forward `: Base(airingId)`
+are clean. **Disclosed holes** (KDoc'd on the checker): a synchronously-invoked
+INLINE lambda in init (`run { airingId }`) classifies as deferred and passes;
+a same-class helper called from init that reads the input is a method read
+(interprocedural — not chased). `@Suppress("BRS_COMPONENT_INPUT_READ_IN_INIT")`
+on the statement is the escape.
+
+### The FIR family (fixture-pinned in the checkers.brs suite: `componentInputs/` 14 + `nameCaseClash/` 1)
+
+| Diagnostic | Severity | Fires on |
+|---|---|---|
+| `BRS_COMPONENT_INPUT_READ_IN_INIT` | ERROR | a constructor input read with implicit/explicit `this` inside the owner's `init {}` or a sibling property initializer |
+| `BRS_CREATE_COMPONENT_HAS_INPUTS` | ERROR | `createComponent<T>()` / `brsCreateComponent<T>()` where `T` declares constructor inputs (precedence over INVALID_TYPE; `runTask` exempt) |
+| `BRS_TASK_CONSTRUCTOR_INPUT` | ERROR | an `@SG*Field`/`@BrsField` primary-constructor property on any `TaskComponent` descendant (abstract task bases included) |
+
+Plus the static-layout missing/non-constant-input ERROR above (a compiler
+`reportError`, not a FIR diagnostic — pinned by `LayoutInputValidationTest`,
+which `run-compiler-tests.sh` gates alongside the goldens), and the
+`BRS_TASK_STATE_NOT_FIELD` widening (plain task constructor `val`s now fire).
+
+### Backlog (plan B, recorded 2026-09-09 — surfaced by execution, none in v1 scope)
+
+- (a) **CROSS-MODULE component constructor call is SILENT-WRONG codegen**: a
+  dependency-klib input-bearing class lowers to a bare `CreateObject` — no
+  input writes, no marker, no diagnostic (the deserialized class lacks the IR
+  backing-field link `isConstructorParameterProperty` needs; FIR's
+  `fromPrimaryConstructor` is likewise never set by deserialization, so
+  `BRS_CREATE_COMPONENT_HAS_INPUTS` is clean too). The gate then times out
+  with the watchdog's "created outside its Kotlin constructor?" guess. Want a
+  LOUD FIR error + a multi-module golden. Found by Task 7 round 1 (ruling R39
+  reshaped the tests to the in-scope same-module driver).
+- (b) **Alias-shape mirror gap**: backend `constructorInputs` is LINK-based
+  (`@SGStringField val b: String = a` counts `b` as an input, written from
+  arg `a`), FIR `isConstructorInput` uses `fromPrimaryConstructor` (does not) —
+  same annotation set, different "which properties" on that alias shape.
+- (c) **Constructor-input FIR hardening bundle** (each needs a NEW diagnostic
+  + regen): inherited `@SG` constructor input (`abstract Base(@SGStringField val x)`
+  + `class Leaf(x) : Base(x)` — the leaf's own inputs are empty, so no
+  marker attribute/write while the inherited marker FIELD defaults false →
+  silent 30s watchdog, R34); a default-valued constructor input (an all-defaulted
+  call site writes no marker → gate never opens); a secondary constructor on a
+  component (still emits the undefined `<Class>_create_…` call); a plain
+  non-`@SG` constructor value parameter on a component (silently skipped);
+  a subclass `init` reading an inherited input (clean by owner-identity
+  scoping).
+- (d) `@BrsField(name = "other")` on a constructor parameter: `requiredInputs`
+  and the input write use the PROPERTY name while the XML field uses the
+  override — property-name-vs-XML-name mismatch, now reachable through inputs.
+- (e) **Generator grammar holes** (rejected, not guessed): a supertype list
+  that starts with an interface (`class X : Foo, GroupComponent()`) is not
+  recognized as a component (no builder, no warning); a comma inside a string
+  default breaks the parameter split (WARN, no builder); `stripComments` does
+  not understand char literals (`'"'` opens a "string"). Plus the
+  `interfaceField` collision (Task 6 C1): the generator's built-in-DSL-name
+  set omits `LayoutBuilder.interfaceField`, so `class InterfaceField :
+  GroupComponent()` gets a builder, and a POSITIONAL `interfaceField("x")`
+  call resolves to the MEMBER (member beats extension) — it declares an
+  interface field named `x` instead of a child, silently (the named
+  `id = "x"` form is unaffected). Also: non-constant builder `id` silently
+  drops the node; no end-to-end negative pin for the layout error (the golden
+  harness has no expected-error mode — the unit test is the pin).
+
+### Key files
+
+| File | Purpose |
+|------|---------|
+| `compiler/ir/backend.brightscript/src/.../BrsComponentExtractor.kt` | `requiredInputs` + the marker `<field>` on input-bearing types; `@SGComponentBuilder` call recognition (`extractBuilderComponentNode`) |
+| `compiler/ir/backend.brightscript/src/.../BrsComponentInfo.kt` | `LayoutInputValidation` (`validate`, `withInputMarkers`, `READY_MARKER_ATTRIBUTE`), `LayoutInputFinding.message()`; invoked from `BrsCompiler` post-extraction |
+| `compiler/ir/backend.brightscript/src/.../lower/BrsComponentConstructorCallLowering.kt` | constructor call → `CreateObject` + `COMPONENT_INPUT_WRITE` field writes + `kotlinLifecycleMarkInputsReady` (phase 0.0555) |
+| `compiler/ir/backend.brightscript/src/.../irToBrs/IrToBrsTransformer.kt` | the init-emission SKIP for constructor-parameter `@SG` properties (`transformComponentInitBlock`); `brsTransformerUtils.componentFieldWriteRoute` is the shared write-routing decision |
+| `compiler/ir/backend.brightscript/src/.../BrsIntrinsics.kt` | `isConstructorParameterProperty`, `constructorInputs`, `interfaceFieldAnnotationIds` / `hasInterfaceFieldAnnotation` — THE backend predicate |
+| `compiler/fir/checkers/checkers.brs/src/.../BrsComponentTypes.kt` | the FIR mirror: `isComponentClass`, `isTaskComponentClass`, `isConstructorInput`, `constructorInputs`, `fieldAnnotationIds` |
+| `compiler/fir/checkers/checkers.brs/src/.../expression/FirBrsComponentInputEarlyReadChecker.kt` | `BRS_COMPONENT_INPUT_READ_IN_INIT` |
+| `compiler/fir/checkers/checkers.brs/src/.../expression/FirBrsCreateComponentTypeChecker.kt` | `BRS_CREATE_COMPONENT_HAS_INPUTS` (beside the existing INVALID_TYPE) |
+| `compiler/fir/checkers/checkers.brs/src/.../declaration/FirBrsTaskConstructorInputChecker.kt` | `BRS_TASK_CONSTRUCTOR_INPUT` |
+| `compiler/fir/checkers/checkers.brs/src/.../declaration/FirBrsNameClashFileTopLevelDeclarationsChecker.kt` | the `@SGComponentBuilder` exemption (R33) |
+| `libraries/stdlib/brs/src/kotlin/brs/scenegraph/NodeEntry.kt` | `@SGComponentBuilder(componentType)` |
+| `libraries/stdlib/brs/src/kotlin/brs/lifecycle/ComponentLifecycle.kt` | `LIFECYCLE_INPUTS_READY_FIELD`, `kotlinLifecycleMarkInputsReady`, the inputs half of the gate + the watchdog UNSET clause |
+| `../kotlin-roku/src/main/kotlin/com/example/roku/gradle/tasks/GenerateLayoutStubsTask.kt` | pass 1: constrained-grammar component scan + `ComponentBuilders_<pkg>.kt`; pass 2 layout stubs include builder-call ids |
+| `../roku-test-app/src/brsMain/kotlin/com/nuvyyo/roku/components/fixtures/LifecycleInputProbe.kt` + `LifecycleBuilderParentProbe.kt` + `LifecycleInputDriverProbe.kt` | Suite 11 constructor-input fixtures (probe, generated-builder parent, same-module constructor driver) |
+
+Goldens: `compiler/testData/codegen/brs/components/{ctorInputs, ctorCallLowering,
+builderCallExtraction}`; unit: `compiler/ir/backend.brightscript/test/.../LayoutInputValidationTest.kt`.
 
 ## Coroutine Utilities (awaitAll & friends)
 
@@ -1837,7 +2131,7 @@ classes — there is no separate components compilation), sideloads it, and pars
 the stdlib runner: replayed events from a previous run are discarded).
 Results land in `build/test-results/roku/` as JSON + JUnit XML.
 
-**The suites (11 suites, 116 active tests + 3 red-guarded `xtest` placeholders):**
+**The suites (11 suites, 121 active tests + 3 red-guarded `xtest` placeholders):**
 
 | Suite | File | Exercises |
 |-------|------|-----------|
@@ -1851,7 +2145,7 @@ Results land in `build/test-results/roku/` as JSON + JUnit XML.
 | 8 ScopeHandle | `tests/ScopeHandleTests.kt` | cross-component scope borrowing: both surfaces, close/watchdog, cancellation both directions, dual-backend + mixed pairs, the flagship child→owner→task-thread chain, retire settles pending requests closed / re-expose after retire+revive / post-retire requests answer closed promptly |
 | 9 SharedService | `tests/SharedServiceTests.kt` | reference-shared classes over SetRef: shared-identity mutation chains, guided ISEs, explicit keys, republish + isLive generations, scene stash, static dispatch cross-component (final/base-hook/template/super/suspend), the fn-slot CANARY |
 | 10 Flow | `tests/FlowTests.kt` | the flow family on device: 10a flowOn/spawnTask (lift round trips, mid-stream cancel, flatMapLatest switch STOPs the task, spawnTask success/error/cancel, ensureTaskActive) + 10b StateFlow (same- and cross-component collect, late-join current value, equality dedup, burst conflation, collector-death teardown, onCompletion-on-cancel, stateIn bridge) |
-| 11 ComponentLifecycle | `tests/ComponentLifecycleTests.kt` | onStart after parent init (layout child), once-per-instance driver reaching the leaf override, `super.onStart()`/`super.onKeyEvent()` static dispatch (incl. component-scope access after a suspension), inherited onKeyEvent reached through the leaf wrapper, dumb component launches nothing, retire → onStop + runTask STOP + idempotence (main-thread callFunc path), full recycle cycle (onStart again, revived scope runs a launch), 1000-instance attach timing (informational, 598 ms) |
+| 11 ComponentLifecycle | `tests/ComponentLifecycleTests.kt` | onStart after parent init (layout child), once-per-instance driver reaching the leaf override, `super.onStart()`/`super.onKeyEvent()` static dispatch (incl. component-scope access after a suspension), inherited onKeyEvent reached through the leaf wrapper, dumb component launches nothing, retire → onStop + runTask STOP + idempotence (main-thread callFunc path), full recycle cycle (onStart again, revived scope runs a launch), 1000-instance attach timing (informational, 598 ms); plan-B constructor inputs (5, 2026-09-09): `constructorInputsReadableInOnStartViaConstructorCall` (same-module lowered constructor call → input readable in onStart), `constructorInputsFromTypedBuilderConstant` (plugin-generated builder → XML constant + marker), `rawCreatedInputComponentStaysClosedUntilMarkerAndWatchdogFires` (gate parks, watchdog fires once, manual marker wakes it), `retireCancelsOnStartParkedInAwaitReady`, `constructorInputsSurviveRetireRevive` |
 
 **The main-thread driver:** `tests/TestMain.kt` is a `main()` that creates the
 SceneGraph screen, installs the screen's message port as the shared `TestPort`,
@@ -1895,7 +2189,7 @@ Predicates must return false rather than throw. Probe nodes are created via
 | E2E test suites + driver | `roku-test-app/src/brsTest/kotlin/tests/` (TestMain.kt is the main-thread driver) |
 | E2E fixture components | `roku-test-app/src/brsMain/kotlin/com/nuvyyo/roku/components/fixtures/` |
 
-### Current Gate Numbers (as of the component-lifecycle core close — plan A, 2026-09-09)
+### Current Gate Numbers (as of the constructor-inputs close — plan B, 2026-09-09)
 
 These are the whole-branch green gates; a drop in any of them is a regression.
 (Counting note: the gate is EXECUTED tests. A raw `grep -c "@Test"` on
@@ -1904,15 +2198,19 @@ BrsGoldenFileTests.kt reads one high — it counts the commented-out
 
 | Gate | Count |
 |------|-------|
-| Golden file tests | 105 (2026-09-09: +onKeyEventInheritedWrapper, superDispatchComponent, onStartDriver, retireReviveEntries, suspendMemberComponentScope; componentAttachUnconditional replaced componentNoCoroutinesNoPumpAttach) |
-| FIR diagnostic suite (checkers.brs) | 232 (untouched by plan A) |
-| Stdlib device suite | 618 tests / 64 suites (+4/1 `coroutineFieldShadowingTests` now device-counted; +4/1 `ComponentLifecycle (awaitReady/retire/revive)`) |
-| rokuTest E2E | 116 active tests / 11 suites (+3 red-guarded xtests) — Suite 11 ComponentLifecycle (9) + Suite 8 30 → 33 |
+| Golden file tests | 108 (plan B, 2026-09-09: +ctorInputs, ctorCallLowering, builderCallExtraction; plan A: +onKeyEventInheritedWrapper, superDispatchComponent, onStartDriver, retireReviveEntries, suspendMemberComponentScope, componentAttachUnconditional replaced componentNoCoroutinesNoPumpAttach) |
+| `LayoutInputValidationTest` (unit, gated by `run-compiler-tests.sh` alongside the goldens, counted separately) | 5 |
+| FIR diagnostic suite (checkers.brs) | 247 (plan B: +14 `componentInputs/` fixtures, +1 `nameCaseClash/sgComponentBuilderBesideComponentClassOk`) |
+| Stdlib device suite | 618 tests / 64 suites (unchanged by plan B; plan A: +4/1 `coroutineFieldShadowingTests` now device-counted; +4/1 `ComponentLifecycle (awaitReady/retire/revive)`) |
+| rokuTest E2E | 121 active tests / 11 suites (+3 red-guarded xtests) — Suite 11 ComponentLifecycle 9 → 14 (plan B); Suite 8 30 → 33 (plan A) |
 | `validateComponentIncludes` + `validateTestComponentIncludes` | strict mode, 0 findings (no allowlist) |
 
-Verified 2026-09-09 on device (Roku Ultra 4800X, OS 15.3.4) after the plan-A
-addendum (suspend-member `__this` routing): stdlib and E2E run back to back,
-first run, no re-run. Layout unchanged since 2026-09-04 (single BRS compilation,
+Verified 2026-09-09 on device (Roku Ultra 4800X, OS 15.3.4): E2E at the plan-B
+close (Task 7 round 2: 124 = 121 pass / 0 fail / 3 ignored, first run of the
+committed package); stdlib at the plan-A addendum (plan B added no stdlib
+device tests and changed no stdlib behavior — one annotation, one marker
+writer). Goldens 108 + `LayoutInputValidationTest` 5 and FIR 247 re-run at the
+plan-B docs close. Layout unchanged since 2026-09-04 (single BRS compilation,
 no `components` compilation; app scripts are `plugins {}` + `roku { test { }
 validation { } }`; no dependency substitution — the fork publishes correct
 coordinates).

@@ -1,10 +1,15 @@
 #!/bin/bash
-# Run BrightScript compiler tests (golden file tests)
+# Run BrightScript compiler tests: the golden file tests PLUS the
+# LayoutInputValidationTest unit test (static-layout constructor-input
+# validation — the spec §9 "layout-error case"; the golden harness has no
+# expected-error mode, so it lives as a plain JUnit test and is gated here).
 # No Roku device required
 #
 # Usage:
-#   ./run-compiler-tests.sh              # Run all golden file tests
+#   ./run-compiler-tests.sh              # Run all golden file tests + LayoutInputValidationTest
 #   ./run-compiler-tests.sh --update     # Update golden files with current output
+#                                        # (-PupdateGoldenFiles only affects the golden classes;
+#                                        #  LayoutInputValidationTest ignores it and just runs)
 
 set -e
 
@@ -32,12 +37,14 @@ else
 fi
 echo ""
 
-# Run the tests
-echo "Running golden file tests..."
+# Run the tests. Gradle accepts multiple --tests filters (OR-ed): the golden
+# classes plus LayoutInputValidationTest.
+echo "Running golden file tests + LayoutInputValidationTest..."
 echo ""
 
 if ./gradlew :compiler:backend.brightscript:test \
     --tests "*GoldenFile*" \
+    --tests "*LayoutInputValidation*" \
     --no-configuration-cache \
     -Dorg.gradle.dependency.verification=off \
     $UPDATE_FLAG; then
@@ -47,12 +54,26 @@ if ./gradlew :compiler:backend.brightscript:test \
     echo "  All compiler tests PASSED"
     echo -e "========================================${NC}"
 
-    # Show test count from report
-    REPORT_DIR="compiler/ir/backend.brightscript/build/reports/tests/test"
-    if [ -f "$REPORT_DIR/index.html" ]; then
-        TEST_COUNT=$(grep -o '<div class="counter">[0-9]*</div>' "$REPORT_DIR/index.html" | head -1 | grep -o '[0-9]*')
+    # Show test counts from the JUnit XML, split by gate: the golden-file
+    # classes (the "Golden file tests" gate number in CLAUDE.md) and
+    # LayoutInputValidationTest (gated alongside, counted separately).
+    RESULTS_DIR="compiler/ir/backend.brightscript/build/test-results/test"
+    if [ -d "$RESULTS_DIR" ]; then
+        count_tests() {
+            # Sum the tests="N" attribute over the given TEST-*.xml files (0 if none).
+            local total=0 n
+            for f in "$@"; do
+                [ -f "$f" ] || continue
+                n=$(grep -o '<testsuite[^>]*tests="[0-9]*"' "$f" | head -1 | grep -o 'tests="[0-9]*"' | grep -o '[0-9]*')
+                total=$((total + ${n:-0}))
+            done
+            echo "$total"
+        }
+        GOLDEN_COUNT=$(count_tests "$RESULTS_DIR"/TEST-*GoldenFile*.xml)
+        LAYOUT_COUNT=$(count_tests "$RESULTS_DIR"/TEST-*LayoutInputValidation*.xml)
         echo ""
-        echo "Tests run: $TEST_COUNT"
+        echo "Golden file tests run: $GOLDEN_COUNT"
+        echo "LayoutInputValidationTest run: $LAYOUT_COUNT"
     fi
 
     exit 0
