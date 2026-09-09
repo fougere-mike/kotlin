@@ -303,6 +303,16 @@ abstract class AbstractBrsDiagnosticTest {
         "BRS_CREATE_COMPONENT_INVALID_TYPE" to
             "'{1}' is not a valid component type for {0}(): {2}. The type argument must be a concrete component class " +
                 "(extending GroupComponent, SceneComponent, TaskComponent, etc., or annotated with @BrsComponent).",
+        "BRS_COMPONENT_INPUT_READ_IN_INIT" to
+            "Input '{0}' of component '{1}' is read during init: SceneGraph runs init() inside CreateObject, before any " +
+                "field is written, so this read sees the declared default. Read it in onStart() (fires once all inputs are set) " +
+                "or in a lambda/observer.",
+        "BRS_CREATE_COMPONENT_HAS_INPUTS" to
+            "'{0}' declares required inputs ({1}); construct it with {0}(…) so every input is written before onStart(), " +
+                "instead of createComponent<{0}>().",
+        "BRS_TASK_CONSTRUCTOR_INPUT" to
+            "Task components take inputs through runTask<{1}> { field = value }; declare '{0}' as a var field instead of a " +
+                "constructor parameter.",
         // Upstream (non-BRS) diagnostic: the createComponentInvalidType/interfaceRejected fixture
         // expects it alongside ours, because an interface also violates the T : ComponentBase bound.
         // Template from FirErrorsDefaultMessages; {2} is an optional trailing sentence.

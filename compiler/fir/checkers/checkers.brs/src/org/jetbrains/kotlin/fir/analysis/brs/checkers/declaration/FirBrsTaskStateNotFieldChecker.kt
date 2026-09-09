@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration
 
-import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
@@ -46,10 +45,11 @@ import org.jetbrains.kotlin.name.ClassId
  *    hole, documented in the inherited-property fixture.
  *  - Annotations are read from the declaration itself; an override must repeat the
  *    annotation (annotations are not inherited in Kotlin).
- *  - Delegated properties, accessor-only properties (no backing field), local variables
- *    in `run()`, and synthetic/fake-source properties (e.g. constructor-parameter
- *    properties — SceneGraph components are runtime-instantiated and cannot take
- *    constructor arguments anyway) are all skipped.
+ *  - Delegated properties, accessor-only properties (no backing field), and local
+ *    variables in `run()` are skipped.
+ *  - Constructor-parameter properties ARE checked (components take constructor inputs
+ *    since the lifecycle program): an @SG-annotated one is a task-input error
+ *    (FirBrsTaskConstructorInputChecker), a plain one is m-state and fires here.
  */
 object FirBrsTaskStateNotFieldChecker : FirPropertyChecker(MppCheckerKind.Common) {
 
@@ -58,7 +58,6 @@ object FirBrsTaskStateNotFieldChecker : FirPropertyChecker(MppCheckerKind.Common
 
     context(context: CheckerContext, reporter: DiagnosticReporter)
     override fun check(declaration: FirProperty) {
-        if (declaration.source?.kind is KtFakeSourceElementKind) return
         if (declaration.delegate != null) return
         if (!declaration.hasBackingField) return
 

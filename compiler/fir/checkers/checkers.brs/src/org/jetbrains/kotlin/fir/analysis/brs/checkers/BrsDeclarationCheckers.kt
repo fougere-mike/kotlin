@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsStaticCl
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsSharedTaskFieldChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsStaticOverloadFileChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsStaticTopLevelExtensionChecker
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsTaskConstructorInputChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.declaration.FirBrsTaskStateNotFieldChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.*
 
@@ -55,6 +56,7 @@ object BrsDeclarationCheckers : DeclarationCheckers() {
             FirBrsSceneGraphFieldTypeChecker,
             FirBrsOnChangeHandlerChecker,
             FirBrsTaskStateNotFieldChecker,
+            FirBrsTaskConstructorInputChecker,
             FirBrsSharedFnPropertyChecker,
             // Declaration half of the copy-channel rule; lives with its call-site
             // sibling in expression/FirBrsSharedCopyChannelChecker.kt.

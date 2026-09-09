@@ -86,5 +86,10 @@ object FirBrsErrors : KtDiagnosticsContainer() {
     val BRS_TASK_STATE_NOT_FIELD: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_TASK_STATE_NOT_FIELD", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
     val BRS_CREATE_COMPONENT_INVALID_TYPE: KtDiagnosticFactory3<String, String, String> = KtDiagnosticFactory3("BRS_CREATE_COMPONENT_INVALID_TYPE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
 
+    // Component constructor inputs
+    val BRS_COMPONENT_INPUT_READ_IN_INIT: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_COMPONENT_INPUT_READ_IN_INIT", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
+    val BRS_CREATE_COMPONENT_HAS_INPUTS: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_CREATE_COMPONENT_HAS_INPUTS", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
+    val BRS_TASK_CONSTRUCTOR_INPUT: KtDiagnosticFactory2<String, String> = KtDiagnosticFactory2("BRS_TASK_CONSTRUCTOR_INPUT", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtElement::class, getRendererFactory())
+
     override fun getRendererFactory(): BaseDiagnosticRendererFactory = FirBrsErrorsDefaultMessages
 }

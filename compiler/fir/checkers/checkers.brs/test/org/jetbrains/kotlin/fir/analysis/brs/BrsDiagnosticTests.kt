@@ -1300,4 +1300,86 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
     fun testFlowLiftSuspend() {
         runTest("flowLiftSuspend.kt")
     }
+
+    // Component constructor inputs (spec 2026-09-04-component-lifecycle §7, plan B Task 5).
+    // BRS_COMPONENT_INPUT_READ_IN_INIT (error) — a direct read of a constructor-parameter
+    // @SG property inside init {} or a sibling property initializer sees the declared
+    // default (init() runs inside CreateObject before any field write). Reads in
+    // lambdas, onStart, and methods are deferred/legal. BRS_CREATE_COMPONENT_HAS_INPUTS
+    // (error) — createComponent<T>() on an input-bearing T; construct it with T(...)
+    // instead (runTask<T> keeps its configure lambda and is exempt).
+    // BRS_TASK_CONSTRUCTOR_INPUT (error) — an @SG constructor parameter on a
+    // TaskComponent; task inputs go through runTask<T> { field = value }. The
+    // fake-source skip in FirBrsTaskStateNotFieldChecker is gone: a PLAIN constructor
+    // val on a task now fires BRS_TASK_STATE_NOT_FIELD.
+
+    @Test
+    fun testComponentInputsInitBlockRead() {
+        runTest("componentInputs/initBlockRead.kt")
+    }
+
+    @Test
+    fun testComponentInputsSiblingInitializerRead() {
+        runTest("componentInputs/siblingInitializerRead.kt")
+    }
+
+    @Test
+    fun testComponentInputsLambdaReadOk() {
+        runTest("componentInputs/lambdaReadOk.kt")
+    }
+
+    @Test
+    fun testComponentInputsOnStartReadOk() {
+        runTest("componentInputs/onStartReadOk.kt")
+    }
+
+    @Test
+    fun testComponentInputsMethodReadOk() {
+        runTest("componentInputs/methodReadOk.kt")
+    }
+
+    @Test
+    fun testComponentInputsInitReadSuppressed() {
+        runTest("componentInputs/initReadSuppressed.kt")
+    }
+
+    @Test
+    fun testComponentInputsInitBlockThisRead() {
+        runTest("componentInputs/initBlockThisRead.kt")
+    }
+
+    @Test
+    fun testComponentInputsSuperDelegateForwardOk() {
+        runTest("componentInputs/superDelegateForwardOk.kt")
+    }
+
+    @Test
+    fun testComponentInputsCreateComponentHasInputs() {
+        runTest("componentInputs/createComponentHasInputs.kt")
+    }
+
+    @Test
+    fun testComponentInputsCreateComponentHasInputsSuppressed() {
+        runTest("componentInputs/createComponentHasInputsSuppressed.kt")
+    }
+
+    @Test
+    fun testComponentInputsCreateComponentHasInputsAbstract() {
+        runTest("componentInputs/createComponentHasInputsAbstract.kt")
+    }
+
+    @Test
+    fun testComponentInputsTaskConstructorInput() {
+        runTest("componentInputs/taskConstructorInput.kt")
+    }
+
+    @Test
+    fun testComponentInputsTaskConstructorInputSuppressed() {
+        runTest("componentInputs/taskConstructorInputSuppressed.kt")
+    }
+
+    @Test
+    fun testComponentInputsTaskPlainConstructorVal() {
+        runTest("componentInputs/taskPlainConstructorVal.kt")
+    }
 }

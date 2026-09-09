@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.analysis.brs.checkers
 
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsAddFieldTypeChecker
+import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsComponentInputEarlyReadChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsCreateComponentTypeChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsCreateObjectTypeChecker
 import org.jetbrains.kotlin.fir.analysis.brs.checkers.expression.FirBrsFlowLiftChecker
@@ -41,6 +42,7 @@ object BrsExpressionCheckers : ExpressionCheckers() {
         get() = setOf(
             FirBrsIODispatcherChecker,
             FirBrsTaskTokenPositionChecker,
+            FirBrsComponentInputEarlyReadChecker,
         )
 
     override val tryExpressionCheckers: Set<FirTryExpressionChecker>

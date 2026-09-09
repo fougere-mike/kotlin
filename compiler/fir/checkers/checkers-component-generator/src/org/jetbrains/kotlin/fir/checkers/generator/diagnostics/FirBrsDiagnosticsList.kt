@@ -210,4 +210,22 @@ object BRS_DIAGNOSTICS_LIST : DiagnosticList("FirBrsErrors") {
             isSuppressible = true
         }
     }
+
+    val COMPONENT_INPUTS by object : DiagnosticGroup("Component constructor inputs") {
+        val BRS_COMPONENT_INPUT_READ_IN_INIT by error<KtElement> {
+            parameter<String>("propertyName")
+            parameter<String>("className")
+            isSuppressible = true
+        }
+        val BRS_CREATE_COMPONENT_HAS_INPUTS by error<KtElement> {
+            parameter<String>("className")
+            parameter<String>("inputs")
+            isSuppressible = true
+        }
+        val BRS_TASK_CONSTRUCTOR_INPUT by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
+            parameter<String>("propertyName")
+            parameter<String>("className")
+            isSuppressible = true
+        }
+    }
 }

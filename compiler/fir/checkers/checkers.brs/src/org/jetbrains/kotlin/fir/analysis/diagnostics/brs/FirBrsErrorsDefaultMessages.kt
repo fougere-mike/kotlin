@@ -15,6 +15,8 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_BRSCON
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_BRSNAME_BLANK
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_BRSNAME_INVALID_TARGET
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_BRSNAME_REQUIRES_CALLABLE_REF
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_COMPONENT_INPUT_READ_IN_INIT
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_CREATE_COMPONENT_HAS_INPUTS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_CREATE_COMPONENT_INVALID_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_CREATE_OBJECT_INVALID_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_FLOW_ON_INVALID_DISPATCHER
@@ -41,6 +43,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_STATIC
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_STATIC_OVERLOAD
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_TASK_CAPTURE_MUTATION_LOST
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_TASK_CAPTURE_UNMARSHALLABLE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_TASK_CONSTRUCTOR_INPUT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_TASK_EMIT_NOT_MARSHALLABLE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_TASK_STATE_NOT_FIELD
 import org.jetbrains.kotlin.fir.analysis.diagnostics.brs.FirBrsErrors.BRS_TASK_SUSPEND_IN_LIFTED
@@ -271,6 +274,25 @@ object FirBrsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             "''{1}'' is not a valid component type for {0}(): {2}. The type argument must be a concrete component class " +
                 "(extending GroupComponent, SceneComponent, TaskComponent, etc., or annotated with @BrsComponent).",
             CommonRenderers.STRING, CommonRenderers.STRING, CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_COMPONENT_INPUT_READ_IN_INIT,
+            "Input ''{0}'' of component ''{1}'' is read during init: SceneGraph runs init() inside CreateObject, before any " +
+                "field is written, so this read sees the declared default. Read it in onStart() (fires once all inputs are set) " +
+                "or in a lambda/observer.",
+            CommonRenderers.STRING, CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_CREATE_COMPONENT_HAS_INPUTS,
+            "''{0}'' declares required inputs ({1}); construct it with {0}(…) so every input is written before onStart(), " +
+                "instead of createComponent<{0}>().",
+            CommonRenderers.STRING, CommonRenderers.STRING,
+        )
+        map.put(
+            BRS_TASK_CONSTRUCTOR_INPUT,
+            "Task components take inputs through runTask<{1}> '{' field = value '}'; declare ''{0}'' as a var field instead of a " +
+                "constructor parameter.",
+            CommonRenderers.STRING, CommonRenderers.STRING,
         )
     }
 }
