@@ -65,8 +65,11 @@ object FirBrsComponentInputEarlyReadChecker : FirPropertyAccessExpressionChecker
 
         val inInit = when (accessedContext) {
             is FirAnonymousInitializerSymbol -> accessedContext.getContainingClassSymbol() == owner
-            // A sibling initializer; the input's OWN synthetic initializer (the fake-source
-            // parameter read that backs `val airingId`) is excluded by identity.
+            // A sibling initializer. The input's OWN synthetic initializer (the fake-source read
+            // that backs `val airingId`) never reaches here: its callee is the VALUE-PARAMETER
+            // symbol (FirPropertyFromParameterResolvedNamedReference), filtered by the
+            // `as? FirPropertySymbol` in resolveInputRead. The identity guard additionally
+            // excludes the property's own initializer as defense-in-depth.
             is FirPropertySymbol ->
                 !accessedContext.isLocal && accessedContext != property &&
                     accessedContext.getContainingClassSymbol() == owner

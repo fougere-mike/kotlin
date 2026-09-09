@@ -30,6 +30,10 @@ import kotlin.coroutines.registerCallerCancel
  * The ready marker: one boolean XML field on every input-bearing component
  * TYPE (plan B declares it); absent on input-less types, which is how the
  * stdlib learns whether a class has inputs at all (spec §4).
+ *
+ * MIRROR LAW: the literal is duplicated in the compiler as
+ * `LayoutInputValidation.READY_MARKER_ATTRIBUTE` (BrsComponentInfo.kt) — the module
+ * boundary forbids sharing the constant; a divergence lands in both in one commit.
  */
 public const val LIFECYCLE_INPUTS_READY_FIELD: String = "__kotlinInputsReady"
 

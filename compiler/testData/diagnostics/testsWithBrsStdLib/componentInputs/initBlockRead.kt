@@ -1,8 +1,10 @@
 // Expected: BRS_COMPONENT_INPUT_READ_IN_INIT on the init-block read — init() runs inside
 // CreateObject before any field is written, so the read sees the declared default.
-// The bare name resolves to the PRIMARY-CONSTRUCTOR VALUE PARAMETER in FIR (init blocks and
-// property initializers see the constructor parameter scope), not to the property — the
-// checker classifies that path too (Task 2 review note 2).
+// In K2 the bare `val` constructor-parameter name resolves to the PROPERTY here, with an implicit
+// `this` dispatch receiver: init blocks and property initializers see only the PURE parameter
+// scope (parameters that are NOT properties — BodyResolveContext.withAnonymousInitializer /
+// forPropertyInitializer), so this is exactly the R1 dispatch-receiver-`this` shape that
+// BRS_COMPONENT_INPUT_READ_IN_INIT catches (Task 2 review note 2: CAUGHT; see initBlockThisRead.kt).
 import kotlin.brs.GroupComponent
 import kotlin.brs.SGStringField
 

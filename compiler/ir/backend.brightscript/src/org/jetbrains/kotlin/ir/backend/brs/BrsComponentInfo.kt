@@ -208,6 +208,11 @@ object LayoutInputValidation {
      * (default false), AND the XML attribute a static layout sets to "true" on a
      * child whose required inputs are all present as constants — so the lifecycle
      * gate opens at creation for statically-declared children.
+     *
+     * MIRROR LAW: the literal is duplicated in the stdlib as
+     * `LIFECYCLE_INPUTS_READY_FIELD` (kotlin/brs/lifecycle/ComponentLifecycle.kt) —
+     * the module boundary forbids sharing the constant; a divergence lands in both in
+     * one commit.
      */
     const val READY_MARKER_ATTRIBUTE = "__kotlinInputsReady"
 

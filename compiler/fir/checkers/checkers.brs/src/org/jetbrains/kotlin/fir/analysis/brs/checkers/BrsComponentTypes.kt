@@ -34,6 +34,12 @@ import org.jetbrains.kotlin.name.Name
  * predicates here (BrsSharedServiceTypes ↔ BrsIntrinsics.isSharedServiceClass precedent),
  * so a change to what counts as a component, or as a constructor input, lands in every
  * mirrored site in the same commit.
+ *
+ * CROSS-MODULE DISCLOSURE: `fromPrimaryConstructor` is set only by the raw FIR builders,
+ * never by fir-deserialization, so an input-bearing component type from a DEPENDENCY klib is
+ * never seen as having constructor inputs — BRS_CREATE_COMPONENT_HAS_INPUTS is silently clean
+ * for it (the single-module closed-world convention, same as ScopeHandle `run {}` blocks,
+ * SharedService dispatchers, and Flow lifts).
  */
 object BrsComponentTypes {
     /**
