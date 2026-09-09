@@ -397,6 +397,9 @@ class BrsComponentGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun retireReviveEntries() = runTest("components/retireReviveEntries.kt")
+
+    @Test
+    fun suspendMemberComponentScope() = runTest("components/suspendMemberComponentScope.kt")
 }
 
 // ==================== Intrinsics Tests ====================

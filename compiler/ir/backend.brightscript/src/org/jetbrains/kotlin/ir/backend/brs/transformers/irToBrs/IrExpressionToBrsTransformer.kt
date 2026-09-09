@@ -1430,6 +1430,25 @@ class IrExpressionToBrsTransformer(
                     // an unrelated property that merely shares one of these names (a plain class's
                     // `top` val, SceneLayoutBase.top) stays on the ordinary accessor paths below.
                     if (context.intrinsics.isComponentScopeProperty(fieldName) && isComponentBaseScopeGetter(function)) {
+                        // Read through a lambda/coroutine-captured component `this` (a capture
+                        // field in genCtx.capturedComponentSelfFields): at runtime the captured
+                        // value IS the component's m-scope AA, which natively carries .top and
+                        // .global. The generic path below would emit an accessor call
+                        // (__get_top_k_()) that component init deliberately never attaches —
+                        // "Member function not found" on device. Checked BEFORE the
+                        // component-context shortcut: a suspend MEMBER's coroutine class is
+                        // NESTED in the component (isInComponentContext stays true inside its
+                        // doResume, where `m` is the coroutine object), so the shortcut would
+                        // emit `m.global` there — the Suite 11 LifecycleSuperProbe crash. The
+                        // receiver-specific test is the more precise one whenever it applies;
+                        // lowered suspend LAMBDAS are file-level classes and reach it with
+                        // isInComponentContext false either way.
+                        if (isCapturedComponentSelfReceiver(receiver)) {
+                            return when (fieldName) {
+                                "m" -> receiverExpr  // the captured value IS the m-scope AA
+                                else -> BrsDotAccess(receiverExpr, fieldName)  // m.this_0.top / m.__this.global
+                            }
+                        }
                         // In component context (init/methods, closure-AA lambdas): m / m.top /
                         // m.global, via getComponentMRef() so closure bodies use m._componentM
                         if (genCtx.isInComponentContext) {
@@ -1437,19 +1456,6 @@ class IrExpressionToBrsTransformer(
                             return when (fieldName) {
                                 "m" -> componentM  // Just m (or m._componentM in lambda)
                                 else -> BrsDotAccess(componentM, fieldName)  // m.top, m.global
-                            }
-                        }
-                        // Read through a lambda/coroutine-captured component `this` (a capture
-                        // field in genCtx.capturedComponentSelfFields — lowered suspend lambdas
-                        // are file-level classes, so isInComponentContext is false here): at
-                        // runtime the captured value IS the component's m-scope AA, which
-                        // natively carries .top and .global. The generic path below would emit
-                        // an accessor call (__get_top_k_()) that component init deliberately
-                        // never attaches — "Member function not found" on device.
-                        if (isCapturedComponentSelfReceiver(receiver)) {
-                            return when (fieldName) {
-                                "m" -> receiverExpr  // the captured value IS the m-scope AA
-                                else -> BrsDotAccess(receiverExpr, fieldName)  // m.this_0.top / m.this_0.global
                             }
                         }
                     }
@@ -3153,9 +3159,11 @@ class IrExpressionToBrsTransformer(
     /**
      * True when [receiver] reads a lambda/coroutine capture field known to hold a
      * component's own captured `this` (see
-     * [BrsGenerationContext.capturedComponentSelfFields]). At runtime that value is
-     * the component's m-scope AA — NOT a node handle — so interface-field access
-     * through it must route via `.top` to reach the node.
+     * [BrsGenerationContext.capturedComponentSelfFields]) — the LDL `this_0` of a
+     * lowered lambda or the `__this` parameter field of a suspend member's coroutine
+     * class. At runtime that value is the component's m-scope AA — NOT a node
+     * handle — so interface-field access through it must route via `.top` to reach
+     * the node.
      */
     private fun isCapturedComponentSelfReceiver(receiver: IrExpression): Boolean {
         val unwrapped = unwrapReceiverCasts(receiver)

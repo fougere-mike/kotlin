@@ -327,8 +327,10 @@ class BrsGenerationContext(
     }
 
     /**
-     * Capture fields (LocalDeclarationsLowering's `this$N` fields on lambda/coroutine
-     * classes) known to hold a SceneGraph component's own captured `this`.
+     * Capture fields known to hold a SceneGraph component's own captured `this`:
+     * LocalDeclarationsLowering's `this$N` fields on lambda classes (emitted
+     * `this_0`) and the suspend lowering's `<this>` parameter field on a suspend
+     * MEMBER's coroutine class (emitted `__this`).
      *
      * Component code only ever executes m-scoped (init, observers, attached methods),
      * so a captured component `this` is at runtime the component's m-scope AA — NOT a
@@ -340,7 +342,7 @@ class BrsGenerationContext(
      *
      * Populated per file by [IrToBrsTransformer.collectCapturedComponentSelfFields]
      * from constructor call-site provenance (which is why this covers only
-     * compiler-introduced lambda captures — see that function's KDoc for the residual
+     * compiler-introduced captures — see that function's KDoc for the residual
      * user-visible aliasing hole).
      */
     internal val capturedComponentSelfFields = mutableSetOf<IrFieldSymbol>()

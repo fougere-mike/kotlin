@@ -152,17 +152,30 @@ class IrToBrsTransformer(
     /**
      * Populate [BrsGenerationContext.capturedComponentSelfFields] for [irFile].
      *
-     * LocalDeclarationsLowering (and the coroutine lowering built on top of it) turns
-     * lambdas into classes whose captured values arrive as constructor parameters and
-     * are stored into capture fields. Whether such a field holds the component's own
-     * `this` (the m-scope AA at runtime — component code only ever executes m-scoped)
-     * or an unrelated component-typed value (a real node handle, e.g. a
-     * createComponent<T>() result held in a local) is invisible at the access site,
-     * so it is recovered from creation-site provenance: a capture field is marked
-     * self iff some constructor call in this file feeds it from a dispatch-receiver
-     * `<this>` of a SceneGraph component class — transitively, for capture fields
-     * re-fed from an already-marked field (a coroutine's create() copy method passes
-     * its own capture field to the fresh instance's constructor).
+     * Two lowerings produce the shape this scan recognizes — a class whose captured
+     * values arrive as constructor parameters and are stored into fields by the
+     * constructor body (`this.f = p`):
+     * - LocalDeclarationsLowering lifts lambdas into classes with
+     *   [LocalDeclarationsLowering.DECLARATION_ORIGIN_FIELD_FOR_CAPTURED_VALUE] fields
+     *   (`this$0`, emitted `this_0`) — the suspend-LAMBDA state machine's self.
+     * - AbstractSuspendFunctionsLowering builds a suspend MEMBER's coroutine class
+     *   with one [AbstractSuspendFunctionsLowering.DECLARATION_ORIGIN_COROUTINE_IMPL]
+     *   field per parameter, the dispatch receiver `<this>` included (emitted
+     *   `__this`); inside its doResume `m` is the coroutine object and the component
+     *   self is reachable only through that field.
+     * Whether such a field holds the component's own `this` (the m-scope AA at
+     * runtime — component code only ever executes m-scoped) or an unrelated
+     * component-typed value (a real node handle, e.g. a createComponent<T>() result
+     * held in a local, or a component-typed suspend PARAMETER) is invisible at the
+     * access site, so it is recovered from creation-site provenance: a field is
+     * marked self iff some constructor call in this file feeds it from a
+     * dispatch-receiver `<this>` of a SceneGraph component class — transitively, for
+     * fields re-fed from an already-marked field (a coroutine's create() copy method
+     * passes its own capture field to the fresh instance's constructor). Both origins
+     * ride one rule; the suspend-member half was missing until 2026-09-09, so
+     * post-suspension component-scope access in a suspend member emitted `m.global`
+     * (crash: `m` is the coroutine object) and `m.__this.<sgField> = v` (a dead AA
+     * key) — golden components/suspendMemberComponentScope, device: Suite 11.
      *
      * RESIDUAL HOLE (documented, not statically solvable at this layer): a component
      * `this` the USER passes around as a T-typed value — stored in a property, passed
@@ -190,7 +203,9 @@ class IrToBrsTransformer(
                 for (statement in statements) {
                     val setField = statement as? IrSetField ?: continue
                     val fieldOrigin = setField.symbol.owner.origin
-                    if (fieldOrigin != LocalDeclarationsLowering.DECLARATION_ORIGIN_FIELD_FOR_CAPTURED_VALUE) continue
+                    val isCaptureField = fieldOrigin == LocalDeclarationsLowering.DECLARATION_ORIGIN_FIELD_FOR_CAPTURED_VALUE ||
+                        fieldOrigin == AbstractSuspendFunctionsLowering.DECLARATION_ORIGIN_COROUTINE_IMPL
+                    if (!isCaptureField) continue
                     val value = setField.value as? IrGetValue ?: continue
                     val parameter = value.symbol.owner as? IrValueParameter ?: continue
                     if (parameter.parent == declaration) {

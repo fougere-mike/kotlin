@@ -1,0 +1,826 @@
+// --- File: SuspendSelfAwait.deps.json ---
+{
+  "version": 1,
+  "component": "SuspendSelfAwait",
+  "dependencies": [
+    "AnyKt.brs",
+    "ArrayListKt.brs",
+    "ArraysBrsKt.brs",
+    "ArraysKt.brs",
+    "BuildersKt.brs",
+    "CancellationExceptionKt.brs",
+    "CharCategoryBrsKt.brs",
+    "CollectionExtensionsKt.brs",
+    "CombinedContextKt.brs",
+    "ComponentCoroutinesKt.brs",
+    "ComponentLifecycleKt.brs",
+    "ContinuationInterceptorKt.brs",
+    "ContinuationKt.brs",
+    "CoroutineDispatcherKt.brs",
+    "CoroutineImplKt.brs",
+    "CoroutineQueueKt.brs",
+    "CoroutineScopeKt.brs",
+    "CoroutineSingletonsKt.brs",
+    "DefaultDispatcherKt.brs",
+    "DelayKt.brs",
+    "DelayTrackerKt.brs",
+    "DispatchersKt.brs",
+    "EmptyCoroutineContextKt.brs",
+    "ExceptionsKt.brs",
+    "HashMapKt.brs",
+    "HashSetKt.brs",
+    "IODispatcherKt.brs",
+    "IOWorkerRegistryKt.brs",
+    "IntrinsicsBrsKt.brs",
+    "JobKt.brs",
+    "KotlinKt.brs",
+    "MapExtensionsBrsKt.brs",
+    "PairKt.brs",
+    "ParkedContinuationKt.brs",
+    "PreconditionsKt.brs",
+    "PrimitiveIteratorsKt.brs",
+    "PumpSchedulerKt.brs",
+    "RangeOperatorsBrsKt.brs",
+    "RangesKt.brs",
+    "ResultKt.brs",
+    "StringBuilderBrsKt.brs",
+    "TaskPoolKt.brs",
+    "ThrowableKt.brs",
+    "UByteKt.brs",
+    "UIntKt.brs",
+    "ULongKt.brs",
+    "URangesKt.brs",
+    "UShortKt.brs",
+    "UnconfinedDispatcherKt.brs",
+    "UnsignedUtilsKt.brs",
+    "charBrsKt.brs",
+    "consoleKt.brs",
+    "coreRuntimeKt.brs",
+    "primitivesKt.brs",
+    "stringBrsKt.brs"
+  ]
+}
+
+
+// --- File: SuspendSelfAwait.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="SuspendSelfAwait" extends="Group">
+    <interface>
+        <field id="status" type="string" />
+        <function name="__kotlinRetire" />
+        <function name="__kotlinRevive" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/BuildersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CancellationExceptionKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineImplKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineQueueKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineScopeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineSingletonsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DefaultDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayTrackerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DispatchersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/EmptyCoroutineContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IODispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IOWorkerRegistryKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IntrinsicsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/JobKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/MapExtensionsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PairKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ParkedContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PrimitiveIteratorsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PumpSchedulerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ResultKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/TaskPoolKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ULongKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/URangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UShortKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnconfinedDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnsignedUtilsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/consoleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/SuspendSelfAwait/SuspendSelfAwaitKt.brs" />
+</component>
+
+
+// --- File: SuspendSelfBase.deps.json ---
+{
+  "version": 1,
+  "component": "SuspendSelfBase",
+  "dependencies": [
+    "AnyKt.brs",
+    "ArrayListKt.brs",
+    "ArraysBrsKt.brs",
+    "ArraysKt.brs",
+    "BuildersKt.brs",
+    "CancellationExceptionKt.brs",
+    "CharCategoryBrsKt.brs",
+    "CollectionExtensionsKt.brs",
+    "CombinedContextKt.brs",
+    "ComponentCoroutinesKt.brs",
+    "ComponentLifecycleKt.brs",
+    "ContinuationInterceptorKt.brs",
+    "ContinuationKt.brs",
+    "CoroutineDispatcherKt.brs",
+    "CoroutineImplKt.brs",
+    "CoroutineQueueKt.brs",
+    "CoroutineScopeKt.brs",
+    "CoroutineSingletonsKt.brs",
+    "DefaultDispatcherKt.brs",
+    "DelayKt.brs",
+    "DelayTrackerKt.brs",
+    "DispatchersKt.brs",
+    "EmptyCoroutineContextKt.brs",
+    "ExceptionsKt.brs",
+    "HashMapKt.brs",
+    "HashSetKt.brs",
+    "IODispatcherKt.brs",
+    "IOWorkerRegistryKt.brs",
+    "IntrinsicsBrsKt.brs",
+    "JobKt.brs",
+    "KotlinKt.brs",
+    "MapExtensionsBrsKt.brs",
+    "PairKt.brs",
+    "ParkedContinuationKt.brs",
+    "PreconditionsKt.brs",
+    "PrimitiveIteratorsKt.brs",
+    "PumpSchedulerKt.brs",
+    "RangeOperatorsBrsKt.brs",
+    "RangesKt.brs",
+    "ResultKt.brs",
+    "StringBuilderBrsKt.brs",
+    "TaskPoolKt.brs",
+    "ThrowableKt.brs",
+    "UByteKt.brs",
+    "UIntKt.brs",
+    "ULongKt.brs",
+    "URangesKt.brs",
+    "UShortKt.brs",
+    "UnconfinedDispatcherKt.brs",
+    "UnsignedUtilsKt.brs",
+    "charBrsKt.brs",
+    "consoleKt.brs",
+    "coreRuntimeKt.brs",
+    "primitivesKt.brs",
+    "stringBrsKt.brs"
+  ]
+}
+
+
+// --- File: SuspendSelfBase.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="SuspendSelfBase" extends="Group">
+    <interface>
+        <field id="status" type="string" />
+        <function name="__kotlinRetire" />
+        <function name="__kotlinRevive" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/BuildersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CancellationExceptionKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineImplKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineQueueKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineScopeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineSingletonsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DefaultDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayTrackerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DispatchersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/EmptyCoroutineContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IODispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IOWorkerRegistryKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IntrinsicsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/JobKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/MapExtensionsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PairKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ParkedContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PrimitiveIteratorsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PumpSchedulerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ResultKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/TaskPoolKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ULongKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/URangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UShortKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnconfinedDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnsignedUtilsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/consoleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/SuspendSelfBase/SuspendSelfBaseKt.brs" />
+</component>
+
+
+// --- File: SuspendSelfLeaf.deps.json ---
+{
+  "version": 1,
+  "component": "SuspendSelfLeaf",
+  "dependencies": [
+    "AnyKt.brs",
+    "ArrayListKt.brs",
+    "ArraysBrsKt.brs",
+    "ArraysKt.brs",
+    "BuildersKt.brs",
+    "CancellationExceptionKt.brs",
+    "CharCategoryBrsKt.brs",
+    "CollectionExtensionsKt.brs",
+    "CombinedContextKt.brs",
+    "ComponentCoroutinesKt.brs",
+    "ComponentLifecycleKt.brs",
+    "ContinuationInterceptorKt.brs",
+    "ContinuationKt.brs",
+    "CoroutineDispatcherKt.brs",
+    "CoroutineImplKt.brs",
+    "CoroutineQueueKt.brs",
+    "CoroutineScopeKt.brs",
+    "CoroutineSingletonsKt.brs",
+    "DefaultDispatcherKt.brs",
+    "DelayKt.brs",
+    "DelayTrackerKt.brs",
+    "DispatchersKt.brs",
+    "EmptyCoroutineContextKt.brs",
+    "ExceptionsKt.brs",
+    "HashMapKt.brs",
+    "HashSetKt.brs",
+    "IODispatcherKt.brs",
+    "IOWorkerRegistryKt.brs",
+    "IntrinsicsBrsKt.brs",
+    "JobKt.brs",
+    "KotlinKt.brs",
+    "MapExtensionsBrsKt.brs",
+    "PairKt.brs",
+    "ParkedContinuationKt.brs",
+    "PreconditionsKt.brs",
+    "PrimitiveIteratorsKt.brs",
+    "PumpSchedulerKt.brs",
+    "RangeOperatorsBrsKt.brs",
+    "RangesKt.brs",
+    "ResultKt.brs",
+    "StringBuilderBrsKt.brs",
+    "TaskPoolKt.brs",
+    "ThrowableKt.brs",
+    "UByteKt.brs",
+    "UIntKt.brs",
+    "ULongKt.brs",
+    "URangesKt.brs",
+    "UShortKt.brs",
+    "UnconfinedDispatcherKt.brs",
+    "UnsignedUtilsKt.brs",
+    "charBrsKt.brs",
+    "consoleKt.brs",
+    "coreRuntimeKt.brs",
+    "primitivesKt.brs",
+    "stringBrsKt.brs"
+  ]
+}
+
+
+// --- File: SuspendSelfLeaf.xml ---
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="SuspendSelfLeaf" extends="SuspendSelfBase">
+    <interface>
+        <function name="__kotlinRetire" />
+        <function name="__kotlinRevive" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/source/AnyKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArrayListKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ArraysKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/BuildersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CancellationExceptionKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CharCategoryBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CollectionExtensionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CombinedContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentCoroutinesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ComponentLifecycleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationInterceptorKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineImplKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineQueueKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineScopeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/CoroutineSingletonsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DefaultDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DelayTrackerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/DispatchersKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/EmptyCoroutineContextKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ExceptionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashMapKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/HashSetKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IODispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IOWorkerRegistryKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/IntrinsicsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/JobKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/KotlinKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/MapExtensionsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PairKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ParkedContinuationKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PreconditionsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PrimitiveIteratorsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/PumpSchedulerKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangeOperatorsBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/RangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ResultKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/StringBuilderBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/TaskPoolKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ThrowableKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UByteKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UIntKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/ULongKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/URangesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UShortKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnconfinedDispatcherKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/UnsignedUtilsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/charBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/consoleKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/coreRuntimeKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/primitivesKt.brs" />
+    <script type="text/brightscript" uri="pkg:/source/stringBrsKt.brs" />
+    <script type="text/brightscript" uri="pkg:/components/SuspendSelfLeaf/SuspendSelfLeafKt.brs" />
+</component>
+
+
+// --- File: suspendMemberComponentScopeKt.brs ---
+sub mark_RoSGNode_Str_k_(g as Object, entry as String)
+    g.setField("mark", entry)
+end sub
+
+sub init()
+    __kotlinComponentAttach(m.top, m.global)
+    m.top.status = ""
+    m.onStart_ContinuationV_k_ = SuspendSelfBase_onStart_ContinuationV_k_
+    m.__kotlinStartDriver_k_ = SuspendSelfBase___kotlinStartDriver_k_
+    m.__get_status_k_ = SuspendSelfBase___get_status_k_
+    m.__set_status_Str_k_ = SuspendSelfBase___set_status_Str_k_
+    m.__kotlinStartDriver_k_()
+end sub
+
+function SuspendSelfBase_onStart_ContinuationV_k_(_completion as Object) as Object
+    m.top.status = "base"
+    return invalid
+end function
+
+sub SuspendSelfBase___kotlinStartDriver_k_()
+    if not kotlinLifecycleClaimDriver_k_() then
+        return
+    end if
+    launch_rComponentBase_CoroutineContext_SuspendFunction1CoroutineScopeV_k_(m, invalid, SuspendSelfBase___kotlinStartDriver_slambda_create_SuspendSelfBase_ContinuationAnyNN_k_(m, invalid))
+end sub
+
+function onKeyEvent(key as String, press as Boolean) as Boolean
+    return false
+end function
+
+sub __kotlinRetire()
+    if __kotlinIsRetired() then
+        return
+    end if
+    __kotlinRetireImpl()
+end sub
+
+sub __kotlinRevive()
+    __kotlinReviveImpl()
+    SuspendSelfBase___kotlinStartDriver_k_()
+end sub
+
+function SuspendSelfBase___get_status_k_() as String
+    return m.top.status
+end function
+
+sub SuspendSelfBase___set_status_Str_k_(value as String)
+    m.top.status = value
+end sub
+
+sub init()
+    __kotlinComponentAttach(m.top, m.global)
+    m.internalCount = 0
+    m.tag_k_ = SuspendSelfLeaf_tag_k_
+    m.onStart_ContinuationV_k_ = SuspendSelfLeaf_onStart_ContinuationV_k_
+    m.__kotlinStartDriver_k_ = SuspendSelfLeaf___kotlinStartDriver_k_
+    m.__get_internalCount_k_ = SuspendSelfLeaf___get_internalCount_k_
+    m.__set_internalCount_I_k_ = SuspendSelfLeaf___set_internalCount_I_k_
+    m.__kotlinStartDriver_k_()
+end sub
+
+function SuspendSelfLeaf_tag_k_() as String
+    return "leaf"
+end function
+
+function SuspendSelfLeaf_onStart_ContinuationV_k_(_completion as Object) as Object
+    tmp = SuspendSelfLeaf__onStartCOROUTINE__create_SuspendSelfLeaf_ContinuationV_k_(m, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+sub SuspendSelfLeaf___kotlinStartDriver_k_()
+    if not kotlinLifecycleClaimDriver_k_() then
+        return
+    end if
+    launch_rComponentBase_CoroutineContext_SuspendFunction1CoroutineScopeV_k_(m, invalid, SuspendSelfLeaf___kotlinStartDriver_slambda_create_SuspendSelfLeaf_ContinuationAnyNN_k_(m, invalid))
+end sub
+
+function onKeyEvent(key as String, press as Boolean) as Boolean
+    return false
+end function
+
+sub __kotlinRetire()
+    if __kotlinIsRetired() then
+        return
+    end if
+    __kotlinRetireImpl()
+end sub
+
+sub __kotlinRevive()
+    __kotlinReviveImpl()
+    SuspendSelfLeaf___kotlinStartDriver_k_()
+end sub
+
+function SuspendSelfLeaf___get_internalCount_k_() as Integer
+    return m.internalCount
+end function
+
+sub SuspendSelfLeaf___set_internalCount_I_k_(value as Integer)
+    m.internalCount = value
+end sub
+
+function SuspendSelfLeaf__onStartCOROUTINE__create_SuspendSelfLeaf_ContinuationV_k_(__this as Object, resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["SuspendSelfLeaf__onStartCOROUTINE_", this.__proto]
+    this.__type = "SuspendSelfLeaf__onStartCOROUTINE_"
+    this.doResume_k_ = SuspendSelfLeaf__onStartCOROUTINE__doResume_k_
+    this.__this = __this
+    return this
+end function
+
+function SuspendSelfLeaf__onStartCOROUTINE__doResume_k_() as Dynamic
+    node = invalid
+    prev = invalid
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = SuspendSelfBase_onStart_ContinuationV_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                mark_RoSGNode_Str_k_(m.__this.global, "after-super")
+                node = m.__this.top
+                node.setFocus(true)
+                m.__this.addReplace("marker", true)
+                prev = m.__this.top.status
+                m.__this.top.status = ((prev + "+") + m.__this.tag_k_())
+                m.__this.__set_internalCount_I_k_(m.__this.__get_internalCount_k_() + 1)
+                                return invalid
+            else if __kotlin_identityEquals(tmp, 2) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 2) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+sub init()
+    __kotlinComponentAttach(m.top, m.global)
+    m.top.status = ""
+    m.onStart_ContinuationV_k_ = SuspendSelfAwait_onStart_ContinuationV_k_
+    m.__kotlinStartDriver_k_ = SuspendSelfAwait___kotlinStartDriver_k_
+    m.__get_status_k_ = SuspendSelfAwait___get_status_k_
+    m.__set_status_Str_k_ = SuspendSelfAwait___set_status_Str_k_
+    m.__kotlinStartDriver_k_()
+end sub
+
+function SuspendSelfAwait_onStart_ContinuationV_k_(_completion as Object) as Object
+    tmp = SuspendSelfAwait__onStartCOROUTINE__create_SuspendSelfAwait_ContinuationV_k_(m, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+sub SuspendSelfAwait___kotlinStartDriver_k_()
+    if not kotlinLifecycleClaimDriver_k_() then
+        return
+    end if
+    launch_rComponentBase_CoroutineContext_SuspendFunction1CoroutineScopeV_k_(m, invalid, SuspendSelfAwait___kotlinStartDriver_slambda_create_SuspendSelfAwait_ContinuationAnyNN_k_(m, invalid))
+end sub
+
+function onKeyEvent(key as String, press as Boolean) as Boolean
+    return false
+end function
+
+sub __kotlinRetire()
+    if __kotlinIsRetired() then
+        return
+    end if
+    __kotlinRetireImpl()
+end sub
+
+sub __kotlinRevive()
+    __kotlinReviveImpl()
+    SuspendSelfAwait___kotlinStartDriver_k_()
+end sub
+
+function SuspendSelfAwait___get_status_k_() as String
+    return m.top.status
+end function
+
+sub SuspendSelfAwait___set_status_Str_k_(value as String)
+    m.top.status = value
+end sub
+
+function SuspendSelfAwait__onStartCOROUTINE__create_SuspendSelfAwait_ContinuationV_k_(__this as Object, resultContinuation as Object) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.doResume_k_ = this.doResume_k_
+    this.__proto = ["SuspendSelfAwait__onStartCOROUTINE_", this.__proto]
+    this.__type = "SuspendSelfAwait__onStartCOROUTINE_"
+    this.doResume_k_ = SuspendSelfAwait__onStartCOROUTINE__doResume_k_
+    this.__this = __this
+    return this
+end function
+
+function SuspendSelfAwait__onStartCOROUTINE__doResume_k_() as Dynamic
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(2)
+                m.__set_state(1)
+                suspendResult = awaitReady_rComponentBase_ContinuationV_k_(m.__this, m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                m.__this.top.status = "ready"
+                mark_RoSGNode_Str_k_(m.__this.global, m.__this.top.status)
+                                return invalid
+            else if __kotlin_identityEquals(tmp, 2) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 2) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function SuspendSelfBase___kotlinStartDriver_slambda_create_SuspendSelfBase_ContinuationAnyNN_k_(this_0 as Object, resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_AnyN_Continuation_k_ = this.invoke_AnyN_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_AnyN_Continuation_k_ = this.create_AnyN_Continuation_k_
+    this.__proto = ["SuspendSelfBase___kotlinStartDriver_slambda", "SuspendFunction1", this.__proto]
+    this.__type = "SuspendSelfBase___kotlinStartDriver_slambda"
+    this.invoke_AnyN_Continuation_k_ = SuspendSelfBase___kotlinStartDriver_slambda_invoke_AnyN_Continuation_k_
+    this.doResume_k_ = SuspendSelfBase___kotlinStartDriver_slambda_doResume_k_
+    this.create_AnyN_Continuation_k_ = SuspendSelfBase___kotlinStartDriver_slambda_create_AnyN_Continuation_k_
+    this.this_0 = this_0
+    return this
+end function
+
+function SuspendSelfBase___kotlinStartDriver_slambda_invoke_AnyN_Continuation_k_(_receiver as Object, _completion as Object) as Object
+    tmp = m.create_AnyN_Continuation_k_(_receiver, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function SuspendSelfBase___kotlinStartDriver_slambda_doResume_k_() as Dynamic
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(3)
+                m.__set_state(1)
+                suspendResult = awaitReady_rComponentBase_ContinuationV_k_(m.this_0, m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                m.__set_state(2)
+                suspendResult = m.this_0.onStart_ContinuationV_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+                                return invalid
+            else if __kotlin_identityEquals(tmp, 3) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 3) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function SuspendSelfBase___kotlinStartDriver_slambda_create_AnyN_Continuation_k_(_receiver as Dynamic, completion as Object) as Object
+    i = SuspendSelfBase___kotlinStartDriver_slambda_create_SuspendSelfBase_ContinuationAnyNN_k_(m.this_0, completion)
+    i._receiver = _receiver
+    return i
+end function
+
+function SuspendSelfLeaf___kotlinStartDriver_slambda_create_SuspendSelfLeaf_ContinuationAnyNN_k_(this_0 as Object, resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_AnyN_Continuation_k_ = this.invoke_AnyN_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_AnyN_Continuation_k_ = this.create_AnyN_Continuation_k_
+    this.__proto = ["SuspendSelfLeaf___kotlinStartDriver_slambda", "SuspendFunction1", this.__proto]
+    this.__type = "SuspendSelfLeaf___kotlinStartDriver_slambda"
+    this.invoke_AnyN_Continuation_k_ = SuspendSelfLeaf___kotlinStartDriver_slambda_invoke_AnyN_Continuation_k_
+    this.doResume_k_ = SuspendSelfLeaf___kotlinStartDriver_slambda_doResume_k_
+    this.create_AnyN_Continuation_k_ = SuspendSelfLeaf___kotlinStartDriver_slambda_create_AnyN_Continuation_k_
+    this.this_0 = this_0
+    return this
+end function
+
+function SuspendSelfLeaf___kotlinStartDriver_slambda_invoke_AnyN_Continuation_k_(_receiver as Object, _completion as Object) as Object
+    tmp = m.create_AnyN_Continuation_k_(_receiver, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function SuspendSelfLeaf___kotlinStartDriver_slambda_doResume_k_() as Dynamic
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(3)
+                m.__set_state(1)
+                suspendResult = awaitReady_rComponentBase_ContinuationV_k_(m.this_0, m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                m.__set_state(2)
+                suspendResult = m.this_0.onStart_ContinuationV_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+                                return invalid
+            else if __kotlin_identityEquals(tmp, 3) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 3) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function SuspendSelfLeaf___kotlinStartDriver_slambda_create_AnyN_Continuation_k_(_receiver as Dynamic, completion as Object) as Object
+    i = SuspendSelfLeaf___kotlinStartDriver_slambda_create_SuspendSelfLeaf_ContinuationAnyNN_k_(m.this_0, completion)
+    i._receiver = _receiver
+    return i
+end function
+
+function SuspendSelfAwait___kotlinStartDriver_slambda_create_SuspendSelfAwait_ContinuationAnyNN_k_(this_0 as Object, resultContinuation as Dynamic) as Object
+    this = CoroutineImpl_create_ContinuationAnyNN_k_(resultContinuation)
+    this._super = {}
+    this._super.invoke_AnyN_Continuation_k_ = this.invoke_AnyN_Continuation_k_
+    this._super.doResume_k_ = this.doResume_k_
+    this._super.create_AnyN_Continuation_k_ = this.create_AnyN_Continuation_k_
+    this.__proto = ["SuspendSelfAwait___kotlinStartDriver_slambda", "SuspendFunction1", this.__proto]
+    this.__type = "SuspendSelfAwait___kotlinStartDriver_slambda"
+    this.invoke_AnyN_Continuation_k_ = SuspendSelfAwait___kotlinStartDriver_slambda_invoke_AnyN_Continuation_k_
+    this.doResume_k_ = SuspendSelfAwait___kotlinStartDriver_slambda_doResume_k_
+    this.create_AnyN_Continuation_k_ = SuspendSelfAwait___kotlinStartDriver_slambda_create_AnyN_Continuation_k_
+    this.this_0 = this_0
+    return this
+end function
+
+function SuspendSelfAwait___kotlinStartDriver_slambda_invoke_AnyN_Continuation_k_(_receiver as Object, _completion as Object) as Object
+    tmp = m.create_AnyN_Continuation_k_(_receiver, _completion)
+    tmp.__set_result(invalid)
+    tmp.__set_exception(invalid)
+    return tmp.doResume_k_()
+end function
+
+function SuspendSelfAwait___kotlinStartDriver_slambda_doResume_k_() as Dynamic
+    suspendResult = m.__get_result()
+    while true
+                try
+            tmp = m.__get_state()
+            if __kotlin_identityEquals(tmp, 0) then
+                m.__set_exceptionState(3)
+                m.__set_state(1)
+                suspendResult = awaitReady_rComponentBase_ContinuationV_k_(m.this_0, m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 1) then
+                m.__set_state(2)
+                suspendResult = m.this_0.onStart_ContinuationV_k_(m)
+                if __kotlin_identityEquals(suspendResult, __get_COROUTINE_SUSPENDED_k_()) then
+                    return suspendResult
+                end if
+                continue while
+            else if __kotlin_identityEquals(tmp, 2) then
+                                return invalid
+            else if __kotlin_identityEquals(tmp, 3) then
+                throw m.__get_exception()
+            end if
+        catch e
+            if __kotlin_identityEquals(m.__get_exceptionState(), 3) then
+                throw e
+            else
+                m.__set_state(m.__get_exceptionState())
+                m.__set_exception(e)
+            end if
+        end try
+    end while
+end function
+
+function SuspendSelfAwait___kotlinStartDriver_slambda_create_AnyN_Continuation_k_(_receiver as Dynamic, completion as Object) as Object
+    i = SuspendSelfAwait___kotlinStartDriver_slambda_create_SuspendSelfAwait_ContinuationAnyNN_k_(m.this_0, completion)
+    i._receiver = _receiver
+    return i
+end function
