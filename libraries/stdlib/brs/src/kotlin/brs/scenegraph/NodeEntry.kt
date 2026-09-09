@@ -56,6 +56,20 @@ public annotation class SGNodeDsl
 public annotation class SGLayout
 
 /**
+ * Marks a GENERATED typed layout builder (kotlin-roku `GenerateLayoutStubsTask`):
+ * `fun LayoutBuilder.airingDetailsScreen(id, airingId, …)` declares a child of
+ * component type [componentType] in a static layout. The compiler's layout
+ * extractor keys on this annotation and reads the CALL SITE's arguments by
+ * parameter name — `id`, the target's constructor inputs, then the standard
+ * attributes `component()` accepts — so required inputs are ordinary required
+ * Kotlin parameters and their values must be compile-time constants
+ * (spec 2026-09-04-component-lifecycle §3/§5.9).
+ */
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.BINARY)
+public annotation class SGComponentBuilder(val componentType: String)
+
+/**
  * Base interface for all SceneGraph node entries in the DSL.
  *
  * Each node entry describes a SceneGraph node to be generated in the component XML.

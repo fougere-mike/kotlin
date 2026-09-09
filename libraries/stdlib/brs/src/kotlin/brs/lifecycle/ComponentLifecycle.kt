@@ -226,6 +226,17 @@ internal fun kotlinLifecycleClaimDriver(): Boolean {
     return true
 }
 
+/**
+ * Written LAST by the lowered constructor call of an input-bearing component
+ * (after every input field write): proof of sanctioned construction. The gate
+ * reads it; a node created from raw BrightScript or hand-written XML never gets
+ * it, so onStart stays closed and the watchdog names that cause (spec §4).
+ */
+@PublishedApi
+internal fun kotlinLifecycleMarkInputsReady(node: RoSGNode) {
+    node.setField(LIFECYCLE_INPUTS_READY_FIELD, true)
+}
+
 // ---------------------------------------------------------------------------
 // Spec-2 interface (§13): dependency tickets, retire hooks
 // ---------------------------------------------------------------------------

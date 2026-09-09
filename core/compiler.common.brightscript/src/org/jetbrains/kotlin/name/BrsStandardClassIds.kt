@@ -325,6 +325,10 @@ object BrsStandardClassIds {
         @JvmField
         val SGColorField = "SGColorField".brsId()
 
+        /** Generated typed layout builder marker (kotlin.brs.scenegraph.SGComponentBuilder). */
+        @JvmField
+        val SGComponentBuilder = ClassId(FqName("kotlin.brs.scenegraph"), Name.identifier("SGComponentBuilder"))
+
         /**
          * Map of type-safe field annotation ClassIds to their BrightScript type strings.
          */
