@@ -156,6 +156,12 @@ object BrsLoweringPhases {
         // suspend call replaces another).
         phases += BrsRunTaskCallLowering(context)
 
+        // Phase 0.0555: component constructor-call rewrite
+        // `Screen("123")` → { val n = brsCreateComponent<Screen>(); n.airingId = "123";
+        // kotlinLifecycleMarkInputsReady(n); n } (spec 2026-09-04-component-lifecycle §5.7).
+        // Before any coroutine lowering; the codegen intrinsic lowers the create.
+        phases += BrsComponentConstructorCallLowering(context)
+
         // Phase 0.056: sharedFrom call-site rewrite
         // sharedFrom<T>/sharedFromOrNull<T> are klib inline functions, which this
         // backend never inlines at user call sites; the reified type argument only

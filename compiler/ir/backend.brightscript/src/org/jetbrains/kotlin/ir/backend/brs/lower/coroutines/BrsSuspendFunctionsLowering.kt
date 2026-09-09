@@ -703,6 +703,11 @@ object BrsStatementOrigins {
     // at this assignment (all other writes to the variable assign through .value).
     val SHARED_BOX_INIT = IrStatementOriginImpl("SHARED_BOX_INIT")
 
+    // Marks a constructor-input write emitted by BrsComponentConstructorCallLowering: the
+    // receiver is the freshly created roSGNode HANDLE, so the emitter writes the node field
+    // directly (`n.field = v`), never through the component-self `.top` route.
+    val COMPONENT_INPUT_WRITE = IrStatementOriginImpl("COMPONENT_INPUT_WRITE")
+
     // IO Worker extraction origins
     val IO_WORKER_CALL = IrStatementOriginImpl("IO_WORKER_CALL")
     val IO_WORKER_CAPTURES = IrStatementOriginImpl("IO_WORKER_CAPTURES")

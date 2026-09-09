@@ -352,6 +352,14 @@ class IrExpressionToBrsTransformer(
         // `$` capture prefix becomes `_`; special names like <this> are de-bracketed.
         val fieldName = sanitizeFieldName(field.name.asString())
 
+        // A lowered component constructor call writes constructor inputs onto the freshly
+        // created roSGNode HANDLE (BrsComponentConstructorCallLowering): the receiver IS the
+        // node, so the write is a plain node-field set — the `.top` route below is for a
+        // component's OWN backing-field writes, where the receiver is the m-scope object.
+        if (expression.origin == BrsStatementOrigins.COMPONENT_INPUT_WRITE) {
+            return BrsBinaryOp(BrsDotAccess(receiver, fieldName), BrsBinaryOperator.EQ, expression.value.accept(this, data))
+        }
+
         // @SG*Field-annotated component fields live on the NODE, not the component
         // m-scope object: backing-field writes (setter bodies) must write m.top.field.
         // Delegated properties are excluded — their backing field holds the delegate.

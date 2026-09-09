@@ -409,6 +409,13 @@ class BrsComponentGoldenFileTests : AbstractBrsGoldenFileTest() {
     // and the input-bearing type declares the boolean marker field.
     @Test
     fun builderCallExtraction() = runTest("components/builderCallExtraction.kt")
+
+    // Pins the constructor-call lowering (spec §5.7): `DetailsScreen(id, row)` becomes
+    // CreateObject("roSGNode", "DetailsScreen") + one node-field write per @SG
+    // constructor input + kotlinLifecycleMarkInputsReady(handle) LAST; a zero-input
+    // component (VideoItem) is a bare CreateObject with no marker.
+    @Test
+    fun ctorCallLowering() = runTest("components/ctorCallLowering.kt")
 }
 
 // ==================== Intrinsics Tests ====================

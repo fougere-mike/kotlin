@@ -361,6 +361,19 @@ class BrsSymbols(
         findOptionalClass(FqName("kotlin.coroutines"), "CoroutineScope")
     }
 
+    /**
+     * kotlin.brs.kotlinLifecycleMarkInputsReady(node) — written LAST by the lowered
+     * component constructor call (BrsComponentConstructorCallLowering, spec §5.7).
+     */
+    val kotlinLifecycleMarkInputsReadyOrNull: IrSimpleFunctionSymbol? by lazy {
+        findOptionalFunction(BrsStandardClassIds.BASE_BRS_PACKAGE, "kotlinLifecycleMarkInputsReady")
+    }
+
+    /** kotlin.brs.roku.RoSGNode — the marker writer's parameter type. */
+    val roSGNodeClassOrNull: IrClassSymbol? by lazy {
+        findOptionalClass(FqName("kotlin.brs.roku"), "RoSGNode")
+    }
+
     // ==================== ScopeHandle Symbols ====================
 
     /**
