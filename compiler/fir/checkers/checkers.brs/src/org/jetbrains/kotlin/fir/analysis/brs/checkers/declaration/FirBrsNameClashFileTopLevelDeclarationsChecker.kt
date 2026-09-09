@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.fir.declarations.FirClassLikeDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirFile
+import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 import org.jetbrains.kotlin.fir.declarations.getAnnotationByClassId
 import org.jetbrains.kotlin.fir.declarations.getStringArgument
 import org.jetbrains.kotlin.fir.packageFqName
@@ -50,6 +51,8 @@ import org.jetbrains.kotlin.name.Name
  *  - Groups where every effective name is identical (handled by upstream
  *    `REDECLARATION` / `CONFLICTING_OVERLOADS`).
  *  - Library-origin declarations (we only flag in-source clashes).
+ *  - `@SGComponentBuilder` top-level functions, in BOTH directions (as a local
+ *    member and as a package-scope peer) — see [isSGComponentBuilderFunction].
  */
 object FirBrsNameClashFileTopLevelDeclarationsChecker : FirFileChecker(MppCheckerKind.Common) {
     context(context: CheckerContext, reporter: DiagnosticReporter)
@@ -65,6 +68,7 @@ object FirBrsNameClashFileTopLevelDeclarationsChecker : FirFileChecker(MppChecke
         val localDeclarations = mutableSetOf<FirDeclaration>()
         @OptIn(DirectDeclarationsAccess::class)
         for (member in declaration.declarations) {
+            if (member.isSGComponentBuilderFunction(session)) continue
             val name = member.effectiveBrsName(session) ?: continue
             localByLowercase.getOrPut(name.lowercase()) { mutableListOf() }.add(member to name)
             localDeclarations += member
@@ -116,6 +120,7 @@ object FirBrsNameClashFileTopLevelDeclarationsChecker : FirFileChecker(MppChecke
         val peerDecl = peerSymbol.fir as? FirDeclaration ?: return
         if (peerDecl in localDeclarations) return
         if (!peerSymbol.origin.fromSource) return
+        if (peerDecl.isSGComponentBuilderFunction(session)) return
         val peerName = peerDecl.effectiveBrsName(session) ?: return
         // Only add this peer if its effective name actually lowercase-collides with
         // the current bucket. A probe with Name("Foo") may return a declaration
@@ -123,6 +128,21 @@ object FirBrsNameClashFileTopLevelDeclarationsChecker : FirFileChecker(MppChecke
         if (peerName.lowercase() != expectedLowercase) return
         combined += peerDecl to peerName
     }
+
+    /**
+     * R33 (spec 2026-09-04-component-lifecycle §6): a top-level function annotated
+     * `@SGComponentBuilder` — the typed layout builder the kotlin-roku plugin generates
+     * as `fun LayoutBuilder.badge(...)` beside `class Badge` in the same package — is
+     * exempt from case-clash grouping. Its mangled BRS global
+     * (`badge_rLayoutBuilder_…_k_`) never collides with a component class's globals
+     * (`Badge_*_k_` + the XML component name `Badge`); the checker's source-name
+     * grouping over-approximates for exactly this generated shape. The exemption is
+     * keyed on the annotation, never on the receiver type or the name: an un-annotated
+     * `fun LayoutBuilder.badge` beside `class Badge` still clashes.
+     */
+    private fun FirDeclaration.isSGComponentBuilderFunction(session: FirSession): Boolean =
+        this is FirSimpleFunction &&
+            getAnnotationByClassId(BrsStandardClassIds.Annotations.SGComponentBuilder, session) != null
 }
 
 private val BRS_NAME_ARG = Name.identifier("name")

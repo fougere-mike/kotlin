@@ -1025,6 +1025,15 @@ class BrsDiagnosticTests : AbstractBrsDiagnosticTest() {
         runTest("nameCaseClash/localFunctionSuppressed.kt")
     }
 
+    // R33: a generated @SGComponentBuilder builder (`fun LayoutBuilder.badge`) beside its
+    // component class (`class Badge`) is exempt in both directions; the un-annotated twin
+    // in the same fixture still clashes (narrowness guard).
+
+    @Test
+    fun testNameCaseClashSGComponentBuilderBesideComponentClassOk() {
+        runTest("nameCaseClash/sgComponentBuilderBesideComponentClassOk.kt")
+    }
+
     // BRS_BRSCREATEOBJECT_INVALID_TYPE — @BrsCreateObject(typeName) annotation argument validation.
     // Annotation-site twin of BRS_CREATE_OBJECT_INVALID_TYPE; same 24-element valid-type set.
 

@@ -2,11 +2,13 @@
 // child XML carries id, the constructor input as an attribute, the standard
 // attribute, and — because every required input is a constant — the ready
 // marker attribute __kotlinInputsReady="true". The builder below is hand-written
-// in the shape the kotlin-roku plugin (GenerateLayoutStubsTask) generates; the
-// extractor keys on @SGComponentBuilder, never on the function's name. NOTE the
-// name: a builder called `badge` next to `class Badge` in the same package is a
-// BRS_NAME_CASE_CLASH error (top-level names equal after lowercasing), so a
-// generated builder must not be the bare lowerCamel of its component class.
+// in EXACTLY the shape the kotlin-roku plugin (GenerateLayoutStubsTask) generates:
+// `fun LayoutBuilder.badge` — the bare lowerCamel of its component class — beside
+// `class Badge` in the same package. The two names are equal after lowercasing,
+// but @SGComponentBuilder functions are exempt from BRS_NAME_CASE_CLASH (R33):
+// the class emits `Badge_*_k_` globals + the XML component `Badge`, the builder
+// the mangled global `badge_rLayoutBuilder_…_k_` — distinct BRS identifiers. The
+// extractor keys on @SGComponentBuilder, never on the function's name.
 import kotlin.brs.GroupComponent
 import kotlin.brs.SGStringField
 import kotlin.brs.scenegraph.ComponentBuilder
@@ -18,7 +20,7 @@ import kotlin.brs.scenegraph.sceneLayout
 class Badge(@SGStringField val label: String) : GroupComponent()
 
 @SGComponentBuilder("Badge")
-fun LayoutBuilder.badgeComponent(id: String, label: String, visible: Boolean? = null, init: ComponentBuilder.() -> Unit = {}) {
+fun LayoutBuilder.badge(id: String, label: String, visible: Boolean? = null, init: ComponentBuilder.() -> Unit = {}) {
     component("Badge", id = id, visible = visible) {
         attr("label", label)
         init()
@@ -29,7 +31,7 @@ class BadgeHost : GroupComponent() {
     companion object {
         @SGLayout
         fun defineLayout() = sceneLayout {
-            badgeComponent(id = "hostBadge", label = "NEW", visible = true)
+            badge(id = "hostBadge", label = "NEW", visible = true)
         }
     }
 }

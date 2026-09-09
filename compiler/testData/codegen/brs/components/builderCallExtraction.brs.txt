@@ -308,14 +308,14 @@ function Badge___get_label_k_() as String
     return m.top.label
 end function
 
-sub badgeComponent_rLayoutBuilder_Str_Str_ZN_Function1ComponentBuilderV_k_(m as Object, id as String, label as String, visible = invalid, init = badgeComponent_lambda_create_k_())
+sub badge_rLayoutBuilder_Str_Str_ZN_Function1ComponentBuilderV_k_(m as Object, id as String, label as String, visible = invalid, init = badge_lambda_create_k_())
     if visible = invalid then
         visible = invalid
     end if
     if init = invalid then
-        init = badgeComponent_lambda_create_k_()
+        init = badge_lambda_create_k_()
     end if
-    m.component("Badge", id, invalid, invalid, invalid, invalid, invalid, visible, invalid, invalid, invalid, invalid, invalid, invalid, badgeComponent_lambda_1_create_Str_Function1ComponentBuilderV_k_(label, init))
+    m.component("Badge", id, invalid, invalid, invalid, invalid, invalid, visible, invalid, invalid, invalid, invalid, invalid, invalid, badge_lambda_1_create_Str_Function1ComponentBuilderV_k_(label, init))
 end sub
 
 sub init()
@@ -360,37 +360,37 @@ function BadgeHost_Companion_defineLayout_k_() as Object
     return sceneLayout_Function1LayoutBuilderV_k_(BadgeHost_Companion_defineLayout_lambda_create_k_())
 end function
 
-function badgeComponent_lambda_create_k_() as Object
+function badge_lambda_create_k_() as Object
     this = {}
-    this.__type = "badgeComponent_lambda"
-    this.__proto = ["badgeComponent_lambda", "Function1", "Function"]
+    this.__type = "badge_lambda"
+    this.__proto = ["badge_lambda", "Function1", "Function"]
     this.__id = __kotlin_nextObjectId()
     this.equals = Any_equals_AnyN_k_
     this.hashCode = Any_hashCode_k_
     this.toString = Any_toString_k_
-    this.invoke_AnyN_k_ = badgeComponent_lambda_invoke_AnyN_k_
+    this.invoke_AnyN_k_ = badge_lambda_invoke_AnyN_k_
     return this
 end function
 
-sub badgeComponent_lambda_invoke_AnyN_k_(p1 as Object)
+sub badge_lambda_invoke_AnyN_k_(p1 as Object)
     return
 end sub
 
-function badgeComponent_lambda_1_create_Str_Function1ComponentBuilderV_k_(_label as String, _init as Object) as Object
+function badge_lambda_1_create_Str_Function1ComponentBuilderV_k_(_label as String, _init as Object) as Object
     this = {}
-    this.__type = "badgeComponent_lambda_1"
-    this.__proto = ["badgeComponent_lambda_1", "Function1", "Function"]
+    this.__type = "badge_lambda_1"
+    this.__proto = ["badge_lambda_1", "Function1", "Function"]
     this.__id = __kotlin_nextObjectId()
     this.equals = Any_equals_AnyN_k_
     this.hashCode = Any_hashCode_k_
     this.toString = Any_toString_k_
-    this.invoke_AnyN_k_ = badgeComponent_lambda_1_invoke_AnyN_k_
+    this.invoke_AnyN_k_ = badge_lambda_1_invoke_AnyN_k_
     this._label = _label
     this._init = _init
     return this
 end function
 
-sub badgeComponent_lambda_1_invoke_AnyN_k_(_this_component as Object)
+sub badge_lambda_1_invoke_AnyN_k_(_this_component as Object)
     _this_component.attr_Str_Str_k_("label", m._label)
     m._init.invoke_AnyN_k_(_this_component)
 end sub
@@ -408,5 +408,5 @@ function BadgeHost_Companion_defineLayout_lambda_create_k_() as Object
 end function
 
 sub BadgeHost_Companion_defineLayout_lambda_invoke_AnyN_k_(_this_sceneLayout as Object)
-    badgeComponent_rLayoutBuilder_Str_Str_ZN_Function1ComponentBuilderV_k_(_this_sceneLayout, "hostBadge", "NEW", true, invalid)
+    badge_rLayoutBuilder_Str_Str_ZN_Function1ComponentBuilderV_k_(_this_sceneLayout, "hostBadge", "NEW", true, invalid)
 end sub
