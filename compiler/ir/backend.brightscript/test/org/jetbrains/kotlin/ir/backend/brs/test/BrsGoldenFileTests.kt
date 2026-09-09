@@ -400,6 +400,9 @@ class BrsComponentGoldenFileTests : AbstractBrsGoldenFileTest() {
 
     @Test
     fun suspendMemberComponentScope() = runTest("components/suspendMemberComponentScope.kt")
+
+    @Test
+    fun ctorInputs() = runTest("components/ctorInputs.kt")
 }
 
 // ==================== Intrinsics Tests ====================

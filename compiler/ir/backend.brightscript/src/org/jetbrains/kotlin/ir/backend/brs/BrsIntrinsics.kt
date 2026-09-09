@@ -9,8 +9,12 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.InternalSymbolFinderAPI
 import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrConstructor
+import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.expressions.IrConst
+import org.jetbrains.kotlin.ir.expressions.IrGetValue
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.*
@@ -398,6 +402,20 @@ class BrsIntrinsics(
      */
     fun isComponentScopeProperty(propertyName: String): Boolean {
         return propertyName in setOf("top", "global", "m")
+    }
+
+    /**
+     * True for a property whose backing field is initialized from a PRIMARY
+     * CONSTRUCTOR value parameter — the `class X(@SGStringField val a: String)`
+     * shape. SceneGraph components are runtime-instantiated, so such a property
+     * is a REQUIRED INPUT: its value arrives through the lowered constructor
+     * call's field write (or a static-layout constant), never through init().
+     */
+    fun isConstructorParameterProperty(property: IrProperty): Boolean {
+        val init = property.backingField?.initializer?.expression as? IrGetValue ?: return false
+        val owner = init.symbol.owner as? IrValueParameter ?: return false
+        val constructor = owner.parent as? IrConstructor ?: return false
+        return constructor.isPrimary
     }
 
     /**

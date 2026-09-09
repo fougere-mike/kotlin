@@ -1122,6 +1122,11 @@ class IrToBrsTransformer(
                 continue
             }
 
+            // Constructor-parameter inputs (spec §5.8): the value is written onto the
+            // node by the lowered constructor call (or a layout constant) — there is no
+            // local `airingId` inside sub init() to read.
+            if (context.intrinsics.isConstructorParameterProperty(property)) continue
+
             val backingField = property.backingField ?: continue
             // Sanitize field name for special names like <this>
             val rawFieldName = backingField.name.asString()
