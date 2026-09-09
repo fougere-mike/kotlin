@@ -1336,6 +1336,20 @@ which `run-compiler-tests.sh` gates alongside the goldens), and the
   `id = "x"` form is unaffected). Also: non-constant builder `id` silently
   drops the node; no end-to-end negative pin for the layout error (the golden
   harness has no expected-error mode — the unit test is the pin).
+- (f) **Generator vs compiler component-NAME divergence** (found by the
+  plan-B whole-branch review): the kotlin-roku generator derives the
+  `@SGComponentBuilder`/`component()` type name from the raw Kotlin simple
+  class name, but the compiler names the component via `getBrsName` (honors
+  `@BrsName`, prefixes nested classes `Outer_Inner`). For a `@BrsName`-renamed
+  or nested INPUT-BEARING component they diverge: the generated builder emits
+  a child of the raw-name type the compiler never registered (runtime: child
+  fails to instantiate) AND `requiredByType` is keyed by the compiler name, so
+  `LayoutInputValidation` never checks that child — no missing-input
+  diagnostic, no ready marker. Silent-wrong when it occurs; low likelihood
+  in-tree (no `@BrsName` on a component class; one-component-per-file rules out
+  nested components). Fix: the generator honors `getBrsName`, OR a LOUD FIR
+  guard forbidding `@BrsName`/nesting on an input-bearing `@SGComponentBuilder`
+  component. Same shape as (d) but for the type name, not an attribute name.
 
 ### Key files
 

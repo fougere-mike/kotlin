@@ -17,8 +17,9 @@ import kotlin.test.assertTrue
  * child missing a constructor input, and the `__kotlinInputsReady="true"`
  * marker attribute for satisfied input-bearing children.
  *
- * NOTE: `./run-compiler-tests.sh` filters `*GoldenFile*` only and does NOT run
- * this class; run it explicitly:
+ * NOTE: `./run-compiler-tests.sh` gates this class alongside the goldens
+ * (it passes `--tests "*GoldenFile*" --tests "*LayoutInputValidation*"` and
+ * fails loudly if either count is zero, since 2026-09-09). To run it alone:
  * `./gradlew :compiler:backend.brightscript:test --tests "*LayoutInputValidation*" --no-configuration-cache -Dorg.gradle.dependency.verification=off`
  */
 class LayoutInputValidationTest {
