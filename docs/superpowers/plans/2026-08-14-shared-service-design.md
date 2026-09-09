@@ -22,7 +22,7 @@ held as an exit (decision 1 below). Platform facts of record:
 | 7 | Floor | `shareOn` THROWS on pre-OS-15 with a guided message naming the floor decision (no silent field-copy fallback); `canShare()` for apps that gate features |
 | 8 | Republish | Same key on same node replaces; stale references from the prior generation fail `isLive()`. Pairs with the recreate-don't-reuse screen convention |
 | 9 | Canary | The fn-slot-through-SetRef canary is a NORMAL red-capable E2E test labeled CANARY, with docs saying what its failure means (Roku changed the disclaimed behavior; wrapper-slot residuals dead; normal operation unaffected) |
-| 10 | Adjacent (recorded, not scoped) | Component-input DX pair: `createComponent<T> { field = v }` configure-lambda (runTask precedent) + `@SGRequired` inputs with a generated `onInputsReady()` lifecycle hook. Constructor-parameter syntax for SG inputs is rejected on principle: the platform has no creation-time argument channel, and the syntax would promise init-time availability it cannot deliver |
+| 10 | Adjacent (recorded, not scoped) | Component-input DX pair: `createComponent<T> { field = v }` configure-lambda (runTask precedent) + `@SGRequired` inputs with a generated `onInputsReady()` lifecycle hook. Constructor-parameter syntax for SG inputs is rejected on principle: the platform has no creation-time argument channel, and the syntax would promise init-time availability it cannot deliver. **SUPERSEDED** by 2026-09-04-component-lifecycle-design.md (constructor inputs land in plan B). |
 
 ## 2. Context and load-bearing facts
 

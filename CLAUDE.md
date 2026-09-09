@@ -336,9 +336,9 @@ same-component-only; @SG fields and observers are for signalling; ScopeHandle
 is for awaiting owner-side work.) Design of record:
 `docs/superpowers/plans/2026-08-12-scopehandle-design.md` + Addendum A.1–A.6;
 spike truth in `spikes/scope-handle-spike/FINDINGS.md`. Device coverage: E2E
-Suite 8 (ScopeHandle, 30 tests — both carriers, mixed pairs, cancellation both
-directions, the flagship child→owner→task-thread chain) + the stdlib wire/
-registry unit suites.
+Suite 8 (ScopeHandle, 33 tests — both carriers, mixed pairs, cancellation both
+directions, retire/re-expose/post-retire, the flagship child→owner→task-thread
+chain) + the stdlib wire/registry unit suites.
 
 ### The two surfaces
 
@@ -352,7 +352,7 @@ object SlowAdd : ScopeRequest2<Int, Int, Int>("SlowAdd")             // arities 
 class VmHost : RectangleComponent() {
     private var host: ScopeHost? = null
     init {
-        host = exposeScope {                       // one host per component
+        host = exposeScope {                       // one OPEN host per component
             handle(RefreshWatchlist) { refreshInternal() }  // owner's code, owner's scope
             handle(SlowAdd) { a, b -> a + b }
         }
@@ -400,8 +400,12 @@ val shelf = owner.run { buildShelf(genre) }   // genre crosses BY COPY
   `IrToBrsTransformer.fileCallsExposeScope`).
 
 **v1 laws (both surfaces):** render-thread component callers only (like
-`runTask`); no timeouts in the API — compose with `withTimeout`; one
-`exposeScope` per component (second call throws); request names unique per
+`runTask`); no timeouts in the API — compose with `withTimeout`; one OPEN
+`exposeScope` host per component — a second call while a host is OPEN throws;
+after `retire()` closes it (via a scope-package retire hook) `exposeScope` may
+be called again, so recyclable owners expose in `onStart` (an init-time expose
+stays closed after `revive`; Suite 8 scopeReExposeAfterRetireAndRevive);
+request names unique per
 owner, `'#'` reserved for compiler-lowered block names; handles are
 construction-context-free (mint owner-side, inject into a plain-class VM, call
 from any child — all caller-side machinery resolves from the ambient component
@@ -418,7 +422,10 @@ args (`deepCopyAA`).
 
 ### The teardown LAW: `host.close()` before retiring an owner node
 
-`close()` (idempotent) tears down the EXPOSED scope only. The default exposed
+`close()` (idempotent) tears down the EXPOSED scope only. `retire(node)`
+(lifecycle program, 2026-09-09) runs it for you through a scope-package retire
+hook BEFORE the component-scope cancel — the recyclable-owner path; the manual
+`host.close()` remains for owners torn down without `retire`. The default exposed
 scope is a DEDICATED child supervisor scope of `componentScope()` — close()
 never touches the owner's unrelated coroutines (device-pinned:
 scopePostCloseOwnerLaunchAlive), and component-scope cancellation still
@@ -429,7 +436,10 @@ as-given — the caller owns its blast radius.
   `ScopeClosedException` (extends `CancellationException`, so an uncaught one
   winds the child down quietly — TimeoutCancellationException precedent).
 - Post-close requests are answered "closed" immediately, for as long as the
-  node lives (the inbox stays armed).
+  node lives (the inbox stays armed). Post-RETIRE requests likewise (Suite 8
+  scopePostRetireRequestSettlesClosed — prompt, not via the watchdog): retire
+  leaves the closed host installed and does NOT strip the inbox observer, so a
+  dual-role owner+child keeps its child-role observer too.
 - UNSIGNALED owner death (node retired without close()) cannot be signalled on
   this platform — writes to dead receivers drop silently. The child's watchdog
   makes it diagnosable: after 30s (default) pending, ONE console line per
@@ -599,11 +609,15 @@ hooks, any depth); the only structural rule is concrete descendants are final
   can ever be shared there — degrade-gracefully callers need no canShare gate
   of their own). Single-module closed world (dispatch section below).
 
-**Input timing (interim DX):** node handles arrive via `@SGNodeField` +
-`@BrsOnChange` — acquire in the onChange, not in `init` (SG sets fields after
-creation). The `createComponent<T> { }` configure-lambda +
-`@SGRequired`/`onInputsReady()` pair is the recorded adjacent program (design
-decision 10, backlogged). Scene-stash idiom for app-wide services: publish on
+**Input timing:** node handles arrive via `@SGNodeField` + `@BrsOnChange`
+(acquire in the onChange), or — since the lifecycle program, 2026-09-09 — in
+`override suspend fun onStart()`: for a layout child it runs after the parent's
+`init()` (device order child-init < parent-init < child-start, Suite 11 test 1),
+so a parent that publishes in `init` is visible there. Never acquire in `init`
+(SG sets fields after creation). Design decision 10's `createComponent<T> { }`
++ `@SGRequired`/`onInputsReady()` pair is SUPERSEDED: constructor `@SG` inputs
+land in plan B of the lifecycle design (see "Component Lifecycle"). Scene-stash
+idiom for app-wide services: publish on
 the SCENE at bootstrap, acquire anywhere via `sharedFrom<T>(top.getScene())`.
 
 **Publish-in-lambda (FIXED 2026-08-14):** `launch { shareOn(top, vm) }` used
@@ -781,13 +795,17 @@ How it works:
   **one-shot Timer** fallback (<15). `delay()` arms a one-shot timer at the
   NEXT deadline (no 10ms polling). Idle components run zero timers. Backend is
   detected once per app session (cached on the global node).
-- The compiler injects `__kotlinPumpAttach(m.top, m.global)` into the
-  generated `init()` of every component whose FILE uses coroutines (per-file
-  IR scan; task components excluded). Legacy
-  `CoroutineScope(Dispatchers.Main).launch` therefore auto-pumps too.
-  KNOWN HOLE: coroutine use hidden entirely inside another file's helper
-  escapes the scan — `launch {}`/`componentScope()` lazily attach at runtime,
-  so prefer them.
+- The compiler injects `__kotlinComponentAttach(m.top, m.global)`
+  UNCONDITIONALLY as the FIRST statement of every render component's generated
+  `init()` — abstract user intermediates included; the WHOLE task hierarchy
+  (abstract task intermediates included) excluded, since task threads have no
+  pump. It performs the pump attach internally
+  (`libraries/stdlib/brs/src/kotlin/brs/lifecycle/ComponentLifecycle.kt`), so
+  legacy `CoroutineScope(Dispatchers.Main).launch` auto-pumps too. The former
+  per-file coroutine scan, its helper-file KNOWN HOLE, and `__kotlinPumpAttach`
+  itself are GONE (2026-09-09, the lifecycle program — golden
+  `componentAttachUnconditional` replaced `componentNoCoroutinesNoPumpAttach`);
+  see "Component Lifecycle" below.
 - Test hooks: `kotlinPumpBackendName()`, `kotlinPumpForceTimerBackend(global)`
   (session-wide), `kotlinPumpForceTimerBackendLocal()` (one component — used
   by the PumpBackendProbe E2E fixture so both backends stay device-covered).
@@ -809,6 +827,231 @@ were only ever servicing `DelayTracker`. Fixed by storing dispatchers under
 `ContinuationInterceptor.Key` (CoroutineDispatcher.kt); pinned by stdlib tests
 ("dispatcher resolvable via ContinuationInterceptor key") and the E2E backend
 assertion.
+
+## Component Lifecycle: `onStart`/`onStop`, `retire`/`revive`
+
+Landed 2026-09-09 (plan A of the component-lifecycle program). Components get
+a "dependencies ready" moment and a REVERSIBLE teardown. Design of record:
+`docs/superpowers/plans/2026-09-04-component-lifecycle-design.md`; spike truth
+in `spikes/lifecycle-spike/FINDINGS.md`. Device coverage: E2E Suite 11
+(ComponentLifecycle, 9 tests) + Suite 8's retire/re-expose/post-retire trio +
+the stdlib `ComponentLifecycle (awaitReady/retire/revive)` unit suite.
+
+```kotlin
+class GuideScreen : GroupComponent() {
+    init { /* ONE-TIME structural setup only */ }
+    override suspend fun onStart() {                 // once per ACTIVATION, after the gate
+        val host = exposeScope { handle(Refresh) { refreshInternal() } }  // recyclable-owner idiom
+        val vm = sharedFrom<GuideVm>(top.getParent())
+        launch { vm.refresh() }
+    }
+    override fun onStop() { /* synchronous; live state still readable; don't launch here */ }
+}
+// Parent side — render thread OR main thread (callFunc rendezvouses into the child):
+retire(node)   // onStop → retire hooks (host closes) → cancel+reset scope → retired
+revive(node)   // after re-adding: reset tickets → re-arm → re-check gate → driver again
+```
+
+### The two hooks and the compiler-synthesized driver
+
+- **`onStart()`** (`protected open suspend` on ComponentBase) fires once per
+  ACTIVATION, on the render thread, as a child coroutine of `componentScope()`,
+  after `init()` has returned AND the gate below is open. Earliest: the first
+  pump tick after init — for an XML-declared layout child that is AFTER the
+  parent's `init()` (device order child-init < parent-init < child-start,
+  Suite 11 test 1). Fires again after every `revive`. A failure prints the
+  standard `[kotlin.coroutines] Unhandled exception in coroutine:` line and the
+  component stays alive; `retire` cancels an `onStart` still running.
+- **`onStop()`** (`protected open`, plain) runs synchronously inside `retire`,
+  BEFORE the scope cancel, so live state is still readable; try/caught
+  (`[kotlin.lifecycle] onStop threw: <message>`, retire continues). Launching
+  here is pointless — the scope dies next.
+- **The driver is compiler-synthesized**, ONLY for concrete render components
+  whose hierarchy overrides `onStart` (`BrsIntrinsics.hierarchyOverrides`):
+  `BrsComponentLifecycleLowering` (phase 0.054 — BEFORE the coroutine
+  lowerings so the lambda gets a real state machine; the stdlib cannot host it,
+  no state machines in stdlib compilation) adds a member `__kotlinStartDriver()`
+  = `if (!kotlinLifecycleClaimDriver()) return; launch { awaitReady(); onStart() }`
+  and calls it as the LAST init statement. The claim is SYNCHRONOUS and once
+  per activation: SceneGraph runs EVERY level's `init()` over the shared `m`,
+  base first, so a concrete base + concrete leaf launch exactly ONE driver, and
+  its body runs after the whole init cascade when the leaf's slot is attached →
+  the most-derived override by construction (Suite 11 test 2).
+- **Per-instance cost is statically gated** (spec decision 10): no hook
+  override → the attach only (one call, two ref stores); input-bearing types
+  will pay one boolean marker field (plan B); only hook-overriding types pay a
+  coroutine per instance. Informational pin: 1000 `LifecycleDumbProbe`
+  instances with attach = 598 ms (Roku Ultra 4800X; Suite 11
+  `timingThousandDumbInstancesInformational`, `[LIFECYCLE-INFO]` console line).
+
+### The gate: `awaitReady()`
+
+`ComponentBase.awaitReady()` (`kotlin.brs`, public) suspends until the current
+activation's gate is open: not retired AND inputs ready AND every registered
+dependency ticket resolved. Re-entrant (returns immediately once open);
+render-thread component context only (guided ISE "awaitReady must be called
+from a render-thread component context (like runTask)"). Public so a coroutine
+launched from an observer handler can await it too. Inputs readiness reads the
+`__kotlinInputsReady` marker field, which no class emits until plan B lands,
+and tickets are spec 2's interface (design §13) — so TODAY the gate opens on
+the first pump tick after init; the parking/wake machinery is exercised by the
+stdlib unit suite. Cancellation (retire cancels the scope) wakes a parked call
+with CancellationException.
+
+**The watchdog:** a gate still closed after 30s (default) prints ONE console
+line per activation, exact format:
+
+```
+[kotlin.lifecycle] <Subtype>(id=<id>) not ready after 30s — inputs <set|UNSET (created outside its Kotlin constructor?)>, unresolved: <labels>
+```
+
+Registry-miss no-op once the gate opens or the component retires. Hooks:
+`kotlinLifecycleWatchdogMillis(ms)` (per-component override),
+`kotlinLifecycleWatchdogFires()` (counter — assert the counter, not the line
+text, in sub-second tests; the ScopeHandle watchdog precedent).
+
+### `retire(node)` / `revive(node)` and THE RECYCLING LAW
+
+Both are parent-side `kotlin.brs` functions over `callFunc`
+(`__kotlinRetire`/`__kotlinRevive` — generated per concrete render component
+and advertised as XML `<function>` entries by
+`IrToBrsTransformer.generateLifecycleEntryFunctions`); callFunc rendezvouses
+into the child's owning thread with the CHILD's `m`, so they work from the
+render thread and from the main thread alike (Suite 11 test 7 is the
+main-thread path). Typed-handle overloads (`retire(component)`) take a
+createComponent/constructor handle. Guard FIRST: `node.hasFunc("__kotlinRetire")`
+— a node that is not a Kotlin render component (raw BRS, a ContentNode
+component, a legacy `@BrsComponent` plain class) gets a guided ISE ("… is not a
+Kotlin render component — retire/revive target components compiled from
+ComponentBase subclasses").
+
+**Retire sequence** (idempotent — the `__kotlinIsRetired` guard runs first, a
+second retire is a no-op): `onStop()` when the hierarchy overrides it → retire
+hooks (the scope package's close-the-exposed-host hook is one; spec 2's
+doorbell disarm will be another) → cancel + RESET the component scope (STOPs
+`runTask` task threads underneath, deregisters StateFlow collectors, wakes
+parked `awaitReady` calls with CE) → `retired = true`, activation bump. The
+scope SELF-HEALS: the next `launch {}` gets a fresh supervisor scope, so an app
+that forgets `revive` gets working coroutines and a visibly missing `onStart`,
+not silent dead jobs. Retire does NOT remove the node — the caller owns the tree.
+
+**Revive sequence** (no-op on a live component), two-phase on purpose: EVERY
+ticket is reset first, THEN each is re-armed (a synchronous resolve inside an
+early rearm must not see stale `resolved` on later tickets and open the gate
+early) → the gate is re-checked (a coroutine that called `awaitReady` during
+the retired window wakes here) → the driver relaunches, so `onStart` fires
+again.
+
+**THE RECYCLING LAW:** `retire(node) → removeChild → reconfigure var fields →
+appendChild → revive(node)`. `init {}` is ONE-TIME structural setup;
+per-activation work is `onStart`. Recyclable content is `@SG var` fields (Roku
+`itemContent` parity); constructor `val` inputs (plan B) are identity and
+survive the cycle. Device-pinned end to end by Suite 11
+`recycleCycleFiresOnStartAgainAndCoroutinesWork` (child-stop →
+child-start:second → a `launch` in the revived scope runs).
+
+**What retire cannot promise:**
+
+- **Unretired death is silent.** The platform cannot signal a node that dies
+  without `retire()`; the ScopeHandle child watchdog and this section's
+  watchdog are the only diagnosis.
+- **Task-side `finally` effectively never runs** on the STOP that retire's
+  scope cancel sends to a `runTask`/`flowOn` task thread (the Flow dispose
+  contract).
+- **removeChild does NOT silence observers** (device fact, spike Q7,
+  2026-09-05 — `spikes/lifecycle-spike/FINDINGS.md` F7.3): a removed but still
+  REFERENCED node keeps its scoped AND plain observers firing on later parent
+  mutations (nine fires from three mutations × three live observers, one per
+  observer per mutation). Observer death follows node DESTRUCTION, not tree
+  membership — this refines Probe A4, whose silence needed every reference
+  released. Only the explicit `retire()` disarm (through the retire hooks)
+  stops a retained node's Kotlin-side observers, so every node-field
+  `@BrsOnChange` handler must be IDEMPOTENT across the recycle cycle too (the
+  "Field Writes" re-fire finding).
+- **The positive Q7 detach signal is RECORDED, not built on:** the parent's
+  `change` field fires `remove` synchronously inside the mutating call, for
+  both observer forms (`reparent` records as `remove` on the old parent) — but
+  explicit `retire()` is the sole contract (decision D3, 2026-09-09; a backstop
+  is a future program).
+
+### Three latent compiler defects fixed en route (all golden-pinned)
+
+1. **`super.f()` in a component compiled to a self-recursive slot call.**
+   SceneGraph rule behind it: every level's `init()` runs over ONE shared `m`,
+   base first, so the leaf's slot attachment overwrites the base's same-named
+   slot and `m.f()` inside the base resolved to the leaf. Now a STATIC call to
+   the base's mangled global (`Base_f_..._k_(...)`, recording the include edge;
+   the SharedService super fix was the template) — `superDispatchComponent`
+   golden; Suite 11 test 3 also pins the runtime assumption that a bare
+   (non-method) call binds `m` to the COMPONENT scope even from inside a
+   coroutine `doResume`.
+2. **An inherited `onKeyEvent` override was shadowed by the leaf's generated
+   wrapper** (`return false`). SceneGraph rule behind it: one script per file,
+   the leaf's XML includes the whole chain, and the leaf's same-named
+   `onKeyEvent` entry WINS. The wrapper now dispatches to the slot whenever
+   `hierarchyOverrides(cls, "onKeyEvent")` — `onKeyEventInheritedWrapper`
+   golden; Suite 11 tests 4/5.
+3. **Suspend-MEMBER state machines read component scope unrouted** (first
+   device exposure: `suspend fun onStart()` is the first suspend member whose
+   body touches component scope AFTER a real suspension). Inside
+   `X__onStartCOROUTINE__doResume_k_`, `m` is the coroutine object and self is
+   the `__this` capture: `m.global` crashed ("'Dot' Operator attempted with
+   invalid BrightScript Component … (number 236)") and an @SG write landed as
+   a dead AA key on the coroutine object. Fixed 2026-09-09 (`784fef7f309e`):
+   the lambda `this_0` routing generalized to the `__this` capture — reads
+   `m.__this.<prop>`, @SG writes `m.__this.top.<field>`
+   (`collectCapturedComponentSelfFields` accepts the
+   `DECLARATION_ORIGIN_COROUTINE_IMPL` field origin under the SAME provenance
+   rule, so a component-typed suspend PARAMETER is still not marked; the
+   captured-self check now runs BEFORE the `isInComponentContext` shortcut).
+   `suspendMemberComponentScope` golden; Suite 11 tests 3 and 7. A suspend
+   `onStart` with NO suspension point compiles to a plain function and was
+   never affected.
+
+**Constructor inputs and typed layout builders: plan B (not yet landed)** —
+`class Screen(@SGStringField val airingId: String)`, the `Screen("123")`
+creation lowering, the `__kotlinInputsReady` marker, plugin-generated builders,
+the FIR family (`docs/superpowers/plans/2026-09-04-component-constructor-inputs.md`).
+
+### Backlog (lifecycle program, recorded 2026-09-09)
+
+1. **Two SceneGraph components in ONE file, or a SHARED helper declared in a
+   component file, are SILENT MISCOMPILES**: the compiler emits one script per
+   FILE and one XML per CLASS with a hardcoded own-script URI
+   (`pkg:/components/<Name>/<Name>Kt.brs`), so extra classes get dangling URIs
+   and any component whose closure pulls another component's script inherits a
+   duplicate `init()` (device: "Function init defined more than once"). Want a
+   FIR "one component per file" error and shared helpers in non-component
+   files. Fixture convention meanwhile: one component per file; shared helpers
+   (like `lifecycleLog`) in their own file (`fixtures/LifecycleLog.kt`).
+2. `validateComponentIncludes` does not flag a function DEFINED MORE THAN ONCE
+   in a closure, and does not run under `build` (only the rokuTest wrapper
+   runs the test variant) — `rebuild-all` reports success on output the
+   wrapper rejects.
+3. The Q7 detach signal exists; no backstop is built (explicit retire is the
+   contract).
+4. The kotlin.test harness duplicates delivery on a repeated same-node+field
+   `roundTrip` (re-observing from the main scope does not detach the port
+   observer — the `runPumping` comment in DeviceTestLoop.kt); Suite 11 tests
+   4/5 leave a 300 ms gap so the duplicate drains before the report read.
+   Want a predicate `roundTrip` overload and/or a real port unobserve.
+5. Plan B (constructor inputs + typed builders) NEXT, then spec 2 (scoped
+   SharedService lookup / `by sharedService`).
+
+### Key files
+
+| File | Purpose |
+|------|---------|
+| `libraries/stdlib/brs/src/kotlin/brs/lifecycle/ComponentLifecycle.kt` | ONE file (include-closure law): `__kotlinComponentAttach`, the registry, `awaitReady` + watchdog, `__kotlinRetireImpl`/`__kotlinReviveImpl`, `retire`/`revive`, test hooks |
+| `compiler/ir/backend.brightscript/src/.../lower/BrsComponentLifecycleLowering.kt` | `__kotlinStartDriver` synthesis (phase 0.054) |
+| `compiler/ir/backend.brightscript/src/.../BrsIntrinsics.kt` | `hierarchyOverrides`, `emitsLifecycleEntries` |
+| `compiler/ir/backend.brightscript/src/.../irToBrs/IrToBrsTransformer.kt` | unconditional attach injection; `generateLifecycleEntryFunctions` (`__kotlinRetire`/`__kotlinRevive` subs + XML `<function>` entries) |
+| `libraries/stdlib/brs/src/kotlin/brs/scope/ScopeApi.kt` | the retire hook that closes the exposed host; `exposeScope` re-callable after retire |
+| `../roku-test-app/src/brsMain/kotlin/com/nuvyyo/roku/components/fixtures/Lifecycle*.kt` | Suite 11 fixtures (Parent/Child/Base/Leaf/Super/Task/Dumb probes + `LifecycleLog.kt`) |
+
+Goldens: `compiler/testData/codegen/brs/components/{componentAttachUnconditional,
+onKeyEventInheritedWrapper, superDispatchComponent, onStartDriver,
+retireReviveEntries, suspendMemberComponentScope}`.
 
 ## Coroutine Utilities (awaitAll & friends)
 
@@ -1245,7 +1488,11 @@ FOUR handler fires as subsequent graph writes landed (the string/int rows
 above are unaffected; the truth table pins only those). Any node-field
 @BrsOnChange handler must therefore be IDEMPOTENT — the one-shot-guard idiom
 in `../roku-test-app/src/brsMain/kotlin/com/nuvyyo/roku/components/TestScreenChildLabel.kt` is the
-pattern (without it the flagship launched four duplicate collectors). A proper
+pattern (without it the flagship launched four duplicate collectors). The
+recycle cycle (`retire → removeChild → … → appendChild → revive`) is more of
+the same: removeChild does NOT silence a retained node's observers (spike Q7
+F7.3 — see "Component Lifecycle"), so every node-field handler must stay
+idempotent across activations. A proper
 Suite 6 probe row for node-typed fields is a recorded backlog candidate.
 
 ## Component Include Closure (deps.json)
@@ -1390,6 +1637,24 @@ the E2E runner with "no fresh [KOTLINTEST_END] marker received" within seconds
 of launch. Both runners now pre-flight probe the console and abort with a
 message naming this cause. Find the holder with `lsof -nP -iTCP | grep 8085`;
 if it's the IDE, ask Mike to disconnect its Roku console. Do NOT kill the IDE.
+
+### E2E Re-run With No Source Change Never Relaunches ("no fresh [KOTLINTEST_END] marker" / 300s event timeout on an identical package)
+
+Roku's dev installer answers `mysubmit=Replace` on a byte-identical package
+with "Identical to previous version -- not replacing." (HTTP 200) and does NOT
+relaunch the app. The kotlin-roku `installRokuTests` task recognizes only
+"Install Success" / "Application Received", falls through to a non-failing
+"Roku responded with status 200", and sends no ECP launch — `runRokuTests` then
+waits 300s for events that never come ("Connection to Roku device timed out"),
+the console backlog is byte-identical to the previous run, and ECP
+`query/active-app` shows the Home screen. `run-device-tests.sh` does not force
+a delete first; the stdlib runner is immune because
+`libraries/stdlib/brs/test/run-tests.sh:261-268` sends ECP Home +
+`mysubmit=Delete` before every install. Until the wrapper or plugin mirrors
+that (recorded tooling backlog — `deleteRoku` exists in kotlin-roku's
+RokuPlugin.kt but is not in the `rokuTest` chain), any "re-run once" of the E2E
+suite needs a source change or a manual Home + Delete on the dev installer
+page. Observed 2026-09-09 (lifecycle program, Task 9 runs 3–4).
 
 ### SSL Errors During Gradle Builds
 
@@ -1567,7 +1832,7 @@ classes — there is no separate components compilation), sideloads it, and pars
 the stdlib runner: replayed events from a previous run are discarded).
 Results land in `build/test-results/roku/` as JSON + JUnit XML.
 
-**The suites (10 suites, 104 active tests + 3 red-guarded `xtest` placeholders):**
+**The suites (11 suites, 116 active tests + 3 red-guarded `xtest` placeholders):**
 
 | Suite | File | Exercises |
 |-------|------|-----------|
@@ -1578,9 +1843,10 @@ Results land in `build/test-results/roku/` as JSON + JUnit XML.
 | 4 TypedTaskAcceptance | `tests/TypedTaskTests.kt` | `runTask` success/error/overlap/round-trip/derived/cancellation (await wake + task-thread STOP, the flow-program rider) |
 | 6 FieldSemantics | `tests/FieldSemanticsTests.kt` | dot-assign vs setField truth table + lambda self-write routing (case 8) + lambda scope-property reads (case 9) |
 | 7 CoroutineUtilities | `tests/CoroutineUtilityTests.kt` | awaitAll/coroutineScope/supervisor/withTimeout in the component pumping regime + awaitAll over concurrent `runTask`s |
-| 8 ScopeHandle | `tests/ScopeHandleTests.kt` | cross-component scope borrowing: both surfaces, close/watchdog, cancellation both directions, dual-backend + mixed pairs, the flagship child→owner→task-thread chain |
+| 8 ScopeHandle | `tests/ScopeHandleTests.kt` | cross-component scope borrowing: both surfaces, close/watchdog, cancellation both directions, dual-backend + mixed pairs, the flagship child→owner→task-thread chain, retire settles pending requests closed / re-expose after retire+revive / post-retire requests answer closed promptly |
 | 9 SharedService | `tests/SharedServiceTests.kt` | reference-shared classes over SetRef: shared-identity mutation chains, guided ISEs, explicit keys, republish + isLive generations, scene stash, static dispatch cross-component (final/base-hook/template/super/suspend), the fn-slot CANARY |
 | 10 Flow | `tests/FlowTests.kt` | the flow family on device: 10a flowOn/spawnTask (lift round trips, mid-stream cancel, flatMapLatest switch STOPs the task, spawnTask success/error/cancel, ensureTaskActive) + 10b StateFlow (same- and cross-component collect, late-join current value, equality dedup, burst conflation, collector-death teardown, onCompletion-on-cancel, stateIn bridge) |
+| 11 ComponentLifecycle | `tests/ComponentLifecycleTests.kt` | onStart after parent init (layout child), once-per-instance driver reaching the leaf override, `super.onStart()`/`super.onKeyEvent()` static dispatch (incl. component-scope access after a suspension), inherited onKeyEvent reached through the leaf wrapper, dumb component launches nothing, retire → onStop + runTask STOP + idempotence (main-thread callFunc path), full recycle cycle (onStart again, revived scope runs a launch), 1000-instance attach timing (informational, 598 ms) |
 
 **The main-thread driver:** `tests/TestMain.kt` is a `main()` that creates the
 SceneGraph screen, installs the screen's message port as the shared `TestPort`,
@@ -1624,7 +1890,7 @@ Predicates must return false rather than throw. Probe nodes are created via
 | E2E test suites + driver | `roku-test-app/src/brsTest/kotlin/tests/` (TestMain.kt is the main-thread driver) |
 | E2E fixture components | `roku-test-app/src/brsMain/kotlin/com/nuvyyo/roku/components/fixtures/` |
 
-### Current Gate Numbers (as of the single-BRS-compilation program close, 2026-09-04)
+### Current Gate Numbers (as of the component-lifecycle core close — plan A, 2026-09-09)
 
 These are the whole-branch green gates; a drop in any of them is a regression.
 (Counting note: the gate is EXECUTED tests. A raw `grep -c "@Test"` on
@@ -1633,15 +1899,18 @@ BrsGoldenFileTests.kt reads one high — it counts the commented-out
 
 | Gate | Count |
 |------|-------|
-| Golden file tests | 100 (coroutineFieldNameShadowing added 2026-09-04) |
-| FIR diagnostic suite (checkers.brs) | 232 |
-| Stdlib device suite | 610 tests / 62 suites (+4 tests / 1 suite added 2026-09-04, `coroutineFieldShadowingTests` — device run pending) |
-| rokuTest E2E | 104 active tests / 10 suites (+3 red-guarded xtests) |
+| Golden file tests | 105 (2026-09-09: +onKeyEventInheritedWrapper, superDispatchComponent, onStartDriver, retireReviveEntries, suspendMemberComponentScope; componentAttachUnconditional replaced componentNoCoroutinesNoPumpAttach) |
+| FIR diagnostic suite (checkers.brs) | 232 (untouched by plan A) |
+| Stdlib device suite | 618 tests / 64 suites (+4/1 `coroutineFieldShadowingTests` now device-counted; +4/1 `ComponentLifecycle (awaitReady/retire/revive)`) |
+| rokuTest E2E | 116 active tests / 11 suites (+3 red-guarded xtests) — Suite 11 ComponentLifecycle (9) + Suite 8 30 → 33 |
 | `validateComponentIncludes` + `validateTestComponentIncludes` | strict mode, 0 findings (no allowlist) |
 
-Verified 2026-09-04 on the single-compilation layout (no `components` compilation;
-app scripts are `plugins {}` + `roku { test { } validation { } }`; no dependency
-substitution anywhere — the fork publishes correct coordinates).
+Verified 2026-09-09 on device (Roku Ultra 4800X, OS 15.3.4) after the plan-A
+addendum (suspend-member `__this` routing): stdlib and E2E run back to back,
+first run, no re-run. Layout unchanged since 2026-09-04 (single BRS compilation,
+no `components` compilation; app scripts are `plugins {}` + `roku { test { }
+validation { } }`; no dependency substitution — the fork publishes correct
+coordinates).
 
 ### Test Output
 

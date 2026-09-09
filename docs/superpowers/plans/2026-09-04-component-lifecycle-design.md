@@ -319,10 +319,11 @@ instance via GetGlobalAA; ComponentMailbox precedent). State: `attached`, `retir
 `retireHooks: ArrayList<() -> Unit>`, `watchdogArmedFor: Int`.
 
 **`__kotlinComponentAttach(top, global)`** (`@BrsStatic`, bare-named, stdlib): the
-FIRST statement of every concrete render component's `init()` — UNCONDITIONAL (replaces
-the coroutine-scan-gated `__kotlinPumpAttach` injection). Performs `PumpScheduler.attach`
-internally, sets `attached`. Cost: one call, two ref stores. Task components stay
-excluded (their own thread; pump attach was already excluded).
+FIRST statement of every render component's `init()` — abstract user intermediates
+included (§5.1) — UNCONDITIONAL (replaces the coroutine-scan-gated `__kotlinPumpAttach`
+injection). Performs `PumpScheduler.attach` internally, sets `attached`. Cost: one call,
+two ref stores. The WHOLE task hierarchy stays excluded, abstract task intermediates
+included (§5.1 ruling 2026-09-05: their own thread, no pump).
 
 **Inputs readiness.** Input-bearing classes carry one boolean XML field
 `__kotlinInputsReady` (extractor-emitted, §5). `inputsReady() = !top.hasField(MARKER) ||
