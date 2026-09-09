@@ -241,6 +241,12 @@ class IrStatementToBrsTransformer(
                 }
                 stmt is IrExpression -> {
                     val expr = parent.transformExpression(stmt)
+                    // Statements hoisted while transforming this expression (a nested block in
+                    // an IrSetField VALUE — e.g. a lowered constructor call as the argument of
+                    // another's input write, `Outer(Inner(...))`) must precede the expression
+                    // that consumes their results; left in the queue they surface at the NEXT
+                    // drain point, after the consumer (device: read of a not-yet-created node).
+                    output.addAll(genCtx.takeHoistedStatements())
                     // For the LAST expression, always add it as an expression statement
                     // because it may be the value of the block (e.g., __when_tmp variable read)
                     // For non-last expressions, skip side-effect-free ones
@@ -1225,19 +1231,13 @@ class IrStatementToBrsTransformer(
                 is IrDelegatingConstructorCall -> emptyList()
                 is IrInstanceInitializerCall -> emptyList()
                 is IrEnumConstructorCall -> emptyList()
-                // Skip temp variable REFERENCES (IrGetValue) from increment/decrement blocks
-                // and when-lowering blocks. These are return values that shouldn't be statements.
-                is IrGetValue -> {
-                    val varName = stmt.symbol.owner.name.asString()
-                    if (varName.startsWith("<") && varName.endsWith(">")) {
-                        emptyList()  // Skip temp variable returns like <unary>
-                    } else if (varName.startsWith("__when_tmp")) {
-                        emptyList()  // Skip when-lowering temp variable returns
-                    } else {
-                        val expr = parent.transformExpression(stmt)
-                        prependHoisted(listOf(BrsExpressionStatement(expr)))
-                    }
-                }
+                // A variable READ in statement position is a discarded block value — the
+                // increment/decrement `<unary>` temp, a when-lowering `__when_tmp`, or the
+                // handle read that ends a lowered component constructor call
+                // (`__kotlinNewComponent_N`) whose result nobody uses. It is side-effect free,
+                // and BrightScript cannot emit a bare identifier as a statement (syntax error
+                // at device-side compile), so it is dropped whatever the variable's name.
+                is IrGetValue -> emptyList()
                 // Keep temp variable DECLARATIONS - they're needed by the setter call
                 is IrVariable -> {
                     val varName = stmt.name.asString()
@@ -2298,24 +2298,21 @@ class IrStatementToBrsTransformer(
             else -> rawFieldName.replace("$", "_")
         }
 
-        // @SG*Field-annotated component fields live on the NODE, not the component
-        // m-scope object: backing-field writes (setter bodies) must write m.top.field.
-        // Delegated properties are excluded — their backing field holds the delegate.
-        val parentClass = field.parent as? IrClass
-        val fieldProperty = field.correspondingPropertySymbol?.owner
-        if (parentClass != null && fieldProperty != null &&
-            !fieldProperty.isDelegated &&
-            context.intrinsics.isSceneGraphComponent(parentClass) &&
-            hasInterfaceFieldAnnotation(fieldProperty)
-        ) {
+        // Component interface-field writes — ONE routing decision shared with the expression
+        // site (componentFieldWriteRoute): a constructor-input write lands on the created
+        // roSGNode HANDLE (`n.field = v`); a component's own @SG*Field/@BrsField backing-field
+        // write lands on the node through the m-scope object (`m.top.field = v`). The value
+        // may hoist statements of its own (a nested lowered constructor call) — they go first.
+        val route = componentFieldWriteRoute(expression, context)
+        if (route != ComponentFieldWriteRoute.NONE) {
+            val interfaceFieldTarget = when (route) {
+                ComponentFieldWriteRoute.INPUT_WRITE -> BrsDotAccess(receiver, fieldName)
+                else -> BrsDotAccess(BrsDotAccess(receiver, "top"), fieldName)
+            }
             val interfaceFieldValue = parent.transformExpression(expression.value)
             val interfaceFieldHoisted = genCtx.takeHoistedStatements()
             val interfaceFieldAssignment = BrsExpressionStatement(
-                BrsBinaryOp(
-                    BrsDotAccess(BrsDotAccess(receiver, "top"), fieldName),
-                    BrsBinaryOperator.EQ,
-                    interfaceFieldValue
-                )
+                BrsBinaryOp(interfaceFieldTarget, BrsBinaryOperator.EQ, interfaceFieldValue)
             )
             return if (interfaceFieldHoisted.isNotEmpty()) {
                 BrsBlock((interfaceFieldHoisted + interfaceFieldAssignment).toMutableList())
@@ -2323,6 +2320,7 @@ class IrStatementToBrsTransformer(
                 interfaceFieldAssignment
             }
         }
+        val parentClass = field.parent as? IrClass
 
         // Check if this field holds a shared variable box (mutable captured variable)
         // If so, we need to write to field.value instead of field

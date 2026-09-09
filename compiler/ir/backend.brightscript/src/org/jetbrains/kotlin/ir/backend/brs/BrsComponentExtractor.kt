@@ -69,14 +69,14 @@ class BrsComponentExtractor(
         val extendsComponent = getExtendsComponent(irClass, componentAnnotation)
         val fields = extractFields(irClass)
 
-        // Constructor-parameter @SG properties are REQUIRED INPUTS (spec §3): the type
-        // also gains the boolean ready-marker field the lifecycle gate reads (§4) —
+        // Constructor-parameter @SG*Field/@BrsField properties are REQUIRED INPUTS (spec §3):
+        // the type also gains the boolean ready-marker field the lifecycle gate reads (§4) —
         // default false; a static layout sets it "true" as an attribute on a child
         // whose inputs are all constants (LayoutInputValidation.withInputMarkers),
         // and code-constructed children get it from kotlinLifecycleMarkInputsReady.
-        val requiredInputs = irClass.declarations.filterIsInstance<IrProperty>()
-            .filter { !it.isFakeOverride && context.intrinsics.isConstructorParameterProperty(it) && extractTypeSafeField(it) != null }
-            .map { it.name.asString() }
+        // BrsIntrinsics.constructorInputs is THE definition — the constructor-call lowering
+        // writes exactly these properties, so declared fields and written fields agree.
+        val requiredInputs = context.intrinsics.constructorInputs(irClass).map { it.name.asString() }
         val fieldsWithMarker = if (requiredInputs.isEmpty()) fields else fields + BrsFieldInfo(
             name = LayoutInputValidation.READY_MARKER_ATTRIBUTE,
             type = BrsFieldTypes.BOOLEAN,

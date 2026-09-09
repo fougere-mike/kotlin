@@ -18,12 +18,14 @@ import org.jetbrains.kotlin.ir.expressions.IrGetValue
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.*
+import org.jetbrains.kotlin.ir.util.classId
 import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.util.getAnnotation
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.ir.util.superTypes
 import org.jetbrains.kotlin.name.BrsStandardClassIds
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 
 /**
@@ -417,6 +419,26 @@ class BrsIntrinsics(
         val constructor = owner.parent as? IrConstructor ?: return false
         return constructor.isPrimary
     }
+
+    /**
+     * The class's OWN constructor inputs, in declaration order: primary-constructor-parameter
+     * properties ([isConstructorParameterProperty]) that ALSO carry an interface-field
+     * annotation ([hasInterfaceFieldAnnotation] — `@SG*Field` or `@BrsField`, the set that
+     * gets an XML `<field>`). This is THE definition of "constructor input", shared by the
+     * extractor's `requiredInputs` (XML field list + ready-marker field), the constructor-call
+     * lowering's input writes (BrsComponentConstructorCallLowering), and the layout-builder
+     * validation — one predicate, so a parameter can never be an input on one side and not
+     * the other (a write to an undeclared node field is a silent drop on device). A plain
+     * `val` parameter has no node field and is NOT an input (the init-time SKIP stays
+     * annotation-agnostic on purpose: there is no local to read inside sub init() either way).
+     *
+     * MIRROR: checkers.brs `BrsComponentTypes.constructorInputs` / `isConstructorInput` is the
+     * FIR-side copy (module boundary) — a change to what counts as an input lands in both in
+     * the same commit.
+     */
+    fun constructorInputs(irClass: IrClass): List<IrProperty> =
+        irClass.declarations.filterIsInstance<IrProperty>()
+            .filter { !it.isFakeOverride && isConstructorParameterProperty(it) && hasInterfaceFieldAnnotation(it) }
 
     /**
      * Checks if a type implements NativeIterable.
@@ -843,5 +865,29 @@ class BrsIntrinsics(
      */
     fun hasSGLayoutAnnotation(function: IrSimpleFunction): Boolean {
         return function.hasAnnotation(sgLayoutFqn)
+    }
+
+    companion object {
+        /**
+         * The interface-field annotations: the `@SG*Field` family
+         * ([BrsStandardClassIds.Annotations.sgFieldAnnotationTypes]) plus legacy `@BrsField` —
+         * exactly the properties BrsComponentExtractor turns into XML `<field>` declarations,
+         * and therefore the properties whose writes live on the NODE (`m.top.<field>`).
+         *
+         * MIRROR: checkers.brs `BrsComponentTypes.fieldAnnotationIds` is the FIR-side copy of
+         * this set (module boundary) — keep them identical in the same commit.
+         */
+        val interfaceFieldAnnotationIds: Set<ClassId> =
+            BrsStandardClassIds.Annotations.sgFieldAnnotationTypes.keys + BrsStandardClassIds.Annotations.BrsField
+
+        /**
+         * True for a property carrying one of [interfaceFieldAnnotationIds] — a SceneGraph
+         * interface field (it has a node field; its backing-field writes route to `.top`).
+         */
+        fun hasInterfaceFieldAnnotation(property: IrProperty): Boolean =
+            property.annotations.any { annotation ->
+                val id = annotation.type.classOrNull?.owner?.classId
+                id != null && id in interfaceFieldAnnotationIds
+            }
     }
 }

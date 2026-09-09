@@ -25,15 +25,21 @@ import org.jetbrains.kotlin.name.Name
  * MIRROR NOTE: [isComponentClass] mirrors the backend's `BrsComponentExtractor.isComponent`
  * (`@BrsComponent` on the class itself, or `@BrsSceneGraphComponent` on a strict supertype)
  * and `BrsIntrinsics.isSceneGraphComponent`; [constructorInputs] mirrors
- * `BrsIntrinsics.isConstructorParameterProperty` + the extractor's `requiredInputs`
- * (the class's OWN primary-constructor `@SG`/`@BrsField` properties — inherited inputs
- * are not enumerated on either side). The module boundary forbids importing the backend
+ * `BrsIntrinsics.constructorInputs` (= `isConstructorParameterProperty` +
+ * `BrsIntrinsics.hasInterfaceFieldAnnotation`), the ONE backend definition the extractor's
+ * `requiredInputs` and the constructor-call lowering both consume (the class's OWN
+ * primary-constructor `@SG*Field`/`@BrsField` properties — inherited inputs are not
+ * enumerated on either side); [fieldAnnotationIds] mirrors
+ * `BrsIntrinsics.interfaceFieldAnnotationIds`. The module boundary forbids importing the backend
  * predicates here (BrsSharedServiceTypes ↔ BrsIntrinsics.isSharedServiceClass precedent),
  * so a change to what counts as a component, or as a constructor input, lands in every
  * mirrored site in the same commit.
  */
 object BrsComponentTypes {
-    /** `@SG*Field` + `@BrsField` — the annotations that make a property a node field. */
+    /**
+     * `@SG*Field` + `@BrsField` — the annotations that make a property a node field.
+     * MIRROR of the backend's `BrsIntrinsics.interfaceFieldAnnotationIds` (same expression).
+     */
     val fieldAnnotationIds: Set<ClassId> =
         BrsStandardClassIds.Annotations.sgFieldAnnotationTypes.keys + BrsStandardClassIds.Annotations.BrsField
 

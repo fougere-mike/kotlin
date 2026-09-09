@@ -10,13 +10,11 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
 import org.jetbrains.kotlin.ir.backend.brs.lower.coroutines.BrsStatementOrigins
-import org.jetbrains.kotlin.ir.backend.brs.transformers.irToBrs.hasInterfaceFieldAnnotation
 import org.jetbrains.kotlin.ir.builders.declarations.buildVariable
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationBase
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationParent
 import org.jetbrains.kotlin.ir.declarations.IrFile
-import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrGetValue
@@ -48,12 +46,17 @@ import org.jetbrains.kotlin.name.Name
  * }
  * ```
  *
- * Constructor inputs are the primary-constructor properties (the `isConstructorParameterProperty`
- * shape) that ALSO carry an `@SG*Field` annotation — only those have an XML interface field on
- * the node; a plain `val` parameter has no field to write, so its write is skipped (a write to
- * an undeclared node field is a silent drop on device). Each argument goes to the field of the
- * property whose backing-field initializer reads THAT parameter — the IR link, never the name
- * (an alias `@SGStringField val b: String = a` maps `a` → field `b`).
+ * Constructor inputs are `BrsIntrinsics.constructorInputs(irClass)` — the ONE definition shared
+ * with the extractor's `requiredInputs`: primary-constructor properties that carry an
+ * interface-field annotation (`@SG*Field` or `@BrsField`), i.e. exactly the properties that get
+ * an XML field. A plain `val` parameter has no field to write, so no write is emitted for it
+ * (a write to an undeclared node field is a silent drop on device). Each argument goes to the
+ * field of the input whose backing-field initializer reads THAT parameter — the IR link, never
+ * the name (an alias `@SGStringField val b: String = a` maps `a` → field `b`).
+ *
+ * Every input write carries `BrsStatementOrigins.COMPONENT_INPUT_WRITE`; BOTH codegen
+ * `visitSetField` sites honor it through the shared `componentFieldWriteRoute` (a plain
+ * `n.field = v` on the handle, never the component-self `.top` route).
  *
  * Components with no inputs lower to the bare create; the ready marker is written only when at
  * least one input write was emitted. Abstract classes are left alone (FIR rejects them).
@@ -113,18 +116,17 @@ class BrsComponentConstructorCallLowering(private val context: BrsIrBackendConte
                 ).apply { initializer = createCall }
                 fun handleRead() = IrGetValueImpl(expression.startOffset, expression.endOffset, classType, handle.symbol)
 
-                val properties = irClass.declarations.filterIsInstance<IrProperty>()
+                val inputs = context.intrinsics.constructorInputs(irClass)
                 val statements = mutableListOf<IrStatement>(handle)
                 var wroteInput = false
                 for ((index, parameter) in constructor.valueParameters.withIndex()) {
-                    // param → property by the IR link: the property whose backing field is
-                    // initialized from THIS parameter (not by name).
-                    val property = properties.firstOrNull { p ->
+                    // param → input by the IR link: the input property whose backing field is
+                    // initialized from THIS parameter (not by name). A parameter with no input
+                    // property (plain `val`, or no property at all) gets no write.
+                    val property = inputs.firstOrNull { p ->
                         val init = p.backingField?.initializer?.expression as? IrGetValue
                         init?.symbol == parameter.symbol
                     } ?: continue
-                    // Only @SG-annotated inputs have a node field to write.
-                    if (!hasInterfaceFieldAnnotation(property)) continue
                     val field = property.backingField ?: continue
                     val argument = expression.getValueArgument(index) ?: continue
                     statements.add(

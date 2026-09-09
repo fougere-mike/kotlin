@@ -16,7 +16,9 @@ import org.jetbrains.kotlin.brs.backend.ast.BrsParameter
 import org.jetbrains.kotlin.brs.backend.ast.BrsStringLiteral
 import org.jetbrains.kotlin.brs.backend.ast.BrsType
 import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.backend.brs.BrsIntrinsics
 import org.jetbrains.kotlin.ir.backend.brs.BrsIrBackendContext
+import org.jetbrains.kotlin.ir.backend.brs.lower.coroutines.BrsStatementOrigins
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrProperty
@@ -28,6 +30,7 @@ import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrGetEnumValue
 import org.jetbrains.kotlin.ir.expressions.IrGetValue
 import org.jetbrains.kotlin.ir.expressions.IrLoop
+import org.jetbrains.kotlin.ir.expressions.IrSetField
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.IrTypeOperator
 import org.jetbrains.kotlin.ir.expressions.IrTypeOperatorCall
@@ -420,19 +423,50 @@ internal fun unwrapReceiverCasts(expression: IrExpression): IrExpression {
  *
  * Interface fields live on the NODE (accessed via `<node m>.top.fieldName`), not on
  * the component m-scope object. This includes properties annotated with any
- * @SG*Field annotation or @BrsField.
+ * @SG*Field annotation or @BrsField — the ONE set is [BrsIntrinsics.interfaceFieldAnnotationIds]
+ * (shared with the extractor's field list and `BrsIntrinsics.constructorInputs`).
  */
-internal fun hasInterfaceFieldAnnotation(property: IrProperty): Boolean {
-    val sgFieldAnnotations = setOf(
-        "SGStringField", "SGIntegerField", "SGLongIntegerField", "SGFloatField",
-        "SGDoubleField", "SGBooleanField", "SGArrayField", "SGAssocArrayField",
-        "SGNodeField", "SGFunctionField", "SGUriField", "SGTimeField",
-        "SGVector2DField", "SGColorField", "BrsField"
-    )
-    return property.annotations.any { annotation ->
-        val annotationClass = annotation.type.classifierOrNull?.owner as? IrClass
-        annotationClass?.name?.asString() in sgFieldAnnotations
-    }
+internal fun hasInterfaceFieldAnnotation(property: IrProperty): Boolean =
+    BrsIntrinsics.hasInterfaceFieldAnnotation(property)
+
+/**
+ * How an `IrSetField` whose field belongs to a SceneGraph component is emitted. ONE decision
+ * for BOTH `visitSetField` sites — `IrExpressionToBrsTransformer` (a write in expression
+ * position) and `IrStatementToBrsTransformer` (a write in statement position, including a
+ * coroutine-field write whose VALUE is a hoisted block) each carry their own emission code,
+ * and which one a given write reaches depends only on its position in the tree, so the two
+ * must never disagree. (The first COMPONENT_INPUT_WRITE guard lived on only the expression
+ * site: `val s = Screen(id)` in a plain body was right while `return Screen(id)`,
+ * `held = Screen(id)`, `Outer(Inner())`, and a local live across a suspension all emitted
+ * `n.top.field = v` — a silent input drop on device.)
+ */
+internal enum class ComponentFieldWriteRoute {
+    /**
+     * A constructor-input write from BrsComponentConstructorCallLowering: the receiver IS the
+     * freshly created roSGNode handle → plain `receiver.field = v`.
+     */
+    INPUT_WRITE,
+
+    /**
+     * A component's OWN `@SG*Field`/`@BrsField` backing-field write (setter body, init): the
+     * receiver is the m-scope object and the field lives on its node → `receiver.top.field = v`.
+     */
+    INTERFACE_FIELD,
+
+    /** Not a component interface-field write — the ordinary field-assignment path. */
+    NONE,
+}
+
+internal fun componentFieldWriteRoute(expression: IrSetField, context: BrsIrBackendContext): ComponentFieldWriteRoute {
+    if (expression.origin == BrsStatementOrigins.COMPONENT_INPUT_WRITE) return ComponentFieldWriteRoute.INPUT_WRITE
+    val field = expression.symbol.owner
+    val parentClass = field.parent as? IrClass ?: return ComponentFieldWriteRoute.NONE
+    val property = field.correspondingPropertySymbol?.owner ?: return ComponentFieldWriteRoute.NONE
+    // Delegated properties are excluded — their backing field holds the delegate.
+    if (property.isDelegated) return ComponentFieldWriteRoute.NONE
+    if (!context.intrinsics.isSceneGraphComponent(parentClass)) return ComponentFieldWriteRoute.NONE
+    if (!hasInterfaceFieldAnnotation(property)) return ComponentFieldWriteRoute.NONE
+    return ComponentFieldWriteRoute.INTERFACE_FIELD
 }
 
 /**
