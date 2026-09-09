@@ -250,7 +250,7 @@ public abstract class ComponentBase {
 /** Re-entrant; returns when the current activation's gate is open. Public for coroutines launched from observer handlers. */
 public suspend fun ComponentBase.awaitReady()
 
-/** Parent-side, render thread. Hops into the child; onStop → stdlib retire hooks → close exposed ScopeHost → cancel + reset scope → retired. Idempotent. Does NOT remove the node. */
+/** Parent-side, main OR render thread (the callFunc rendezvous hops into the child). onStop → stdlib retire hooks (the exposed ScopeHost closes HERE, via the scope-package hook `exposeScope` registers — R17, 2026-09-06; no dedicated close step) → cancel + reset scope → retired. Idempotent. Does NOT remove the node. */
 public fun retire(node: RoSGNode)
 public fun retire(component: ComponentBase)          // typed-handle overload; same BRS
 
@@ -369,7 +369,13 @@ child, the generated `__kotlinRetire` (§5) runs:
    wrapped in try/catch → `[kotlin.lifecycle] onStop threw: <message>`; retire continues);
 3. `retireHooks` run (spec 2 disarms doorbell observers here);
 4. `ScopeHostHolder.state?.let { ScopeHostImpl(it).close() }` — `ScopeClosedException`
-   reaches children (not a bare CE; hazard 13 of the runtime map);
+   reaches children (not a bare CE; hazard 13 of the runtime map).
+   **As built (R17, 2026-09-06):** this is NOT a dedicated lifecycle step — the close
+   is a scope-package retire hook that `exposeScope` registers via
+   `kotlinLifecycleOnRetire` (ScopeApi.kt), so it runs among step 3's hooks, the
+   lifecycle file imports no scope class, and owners that never expose carry no scope
+   closure. Also: `retire`/`__kotlinRetire` run from the main OR render thread (the
+   `callFunc` rendezvous hops into the child), not render-only;
 5. `componentScope().coroutineContext[Job]!!.cancel()`; then `ComponentScopeHolder.scope
    = null` — the SCOPE SELF-HEALS: the next `launch {}` gets a fresh supervisor scope
    (an app that forgets `revive` gets working coroutines and a visibly missing

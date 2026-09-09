@@ -352,6 +352,7 @@ object SlowAdd : ScopeRequest2<Int, Int, Int>("SlowAdd")             // arities 
 class VmHost : RectangleComponent() {
     private var host: ScopeHost? = null
     init {
+        // an init-time expose stays CLOSED after retire→revive; recyclable owners expose in onStart
         host = exposeScope {                       // one OPEN host per component
             handle(RefreshWatchlist) { refreshInternal() }  // owner's code, owner's scope
             handle(SlowAdd) { a, b -> a + b }
@@ -392,12 +393,11 @@ val shelf = owner.run { buildShelf(genre) }   // genre crosses BY COPY
   gets an immediate `ScopeRequestException` naming the fix ("declare the
   operation in a file the owner includes — typically your VM class").
   Cross-module `run {}` blocks get the guided miss too — single-module only
-  today (backlog). KNOWN HOLE
-  (pump-scan parity): an `exposeScope` call reached only via another file's
-  helper escapes the per-file scan — no binding table is injected; hand-
+  today (backlog). KNOWN HOLE: the binding-table injection is gated on a
+  per-file scan for `exposeScope` CALLS, so an `exposeScope` reached only via
+  another file's helper escapes it — no binding table is injected; hand-
   registered requests still work, and `run {}` blocks get the guided
-  dispatch-miss error (lower stakes than the pump hole; KDoc'd at
-  `IrToBrsTransformer.fileCallsExposeScope`).
+  dispatch-miss error (KDoc'd at `IrToBrsTransformer.fileCallsExposeScope`).
 
 **v1 laws (both surfaces):** render-thread component callers only (like
 `runTask`); no timeouts in the API — compose with `withTimeout`; one OPEN
@@ -893,10 +893,15 @@ render-thread component context only (guided ISE "awaitReady must be called
 from a render-thread component context (like runTask)"). Public so a coroutine
 launched from an observer handler can await it too. Inputs readiness reads the
 `__kotlinInputsReady` marker field, which no class emits until plan B lands,
-and tickets are spec 2's interface (design §13) — so TODAY the gate opens on
-the first pump tick after init; the parking/wake machinery is exercised by the
-stdlib unit suite. Cancellation (retire cancels the scope) wakes a parked call
-with CancellationException.
+and tickets are spec 2's interface (design §13) — so TODAY the gate has NO
+closing condition other than `retired`: every driver takes the fast path and
+NOTHING ever parks. The park/wake/watchdog path (marker observer, ticket
+resolution, revive wake, cancellation wake with CancellationException) ships
+inspection-verified against the ParkedContinuation idiom but is NOT yet
+device-exercised; the stdlib `ComponentLifecycle` unit suite covers only the
+main-thread-legal subset (off-context ISE, the `hasFunc` guard, watchdog-hook
+plumbing). The pins are plan B's Suite 11 rows: retire cancels a parked
+`onStart`; the watchdog fires for a raw-subtype node.
 
 **The watchdog:** a gate still closed after 30s (default) prints ONE console
 line per activation, exact format:
