@@ -1038,9 +1038,10 @@ class IrToBrsTransformer(
         }
 
         // Lifecycle attach (spec §5.1): UNCONDITIONAL for every render component
-        // that emits an init() — abstract user intermediates included (they sit
-        // in the SceneGraph extends chain; the attach is idempotent). Performs
-        // the pump attach internally, so the per-file coroutine scan no longer
+        // that emits an init() — render components ONLY (not task, not
+        // ContentNode) — abstract user intermediates included (they sit in the
+        // SceneGraph extends chain; the attach is idempotent). Performs the
+        // pump attach internally, so the per-file coroutine scan no longer
         // gates anything here (its helper-file hole is closed by construction).
         // Task components are excluded — the WHOLE hierarchy, abstract
         // intermediates included (ruling 2026-09-05): their init() only ever
@@ -1048,8 +1049,14 @@ class IrToBrsTransformer(
         // (attaching there would copy a hostTop-armed PumpScheduler into every
         // derived task's task-thread m), and the lifecycle include closure is
         // unwanted bloat in task XML. The old concrete-only exclusion was an
-        // accident of the retired per-file scan.
-        if (!context.intrinsics.isTaskComponent(irClass)) {
+        // accident of the retired per-file scan. ContentNode components are
+        // excluded too: they get NO lifecycle (no retire/revive entries, no
+        // driver — spec §5.1), so the attach and its include closure would be
+        // dead weight, and a ContentNode's init() can run on a task thread.
+        // The gate is the SAME render-component predicate the driver, the
+        // __kotlinRetire/__kotlinRevive entries, and the XML <function> lines
+        // use, so the four can never disagree.
+        if (context.intrinsics.componentNeedsOnKeyEvent(irClass)) {
             bodyStatements.add(
                 BrsExpressionStatement(
                     createFunctionCall(
