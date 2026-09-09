@@ -49,32 +49,44 @@ if ./gradlew :compiler:backend.brightscript:test \
     -Dorg.gradle.dependency.verification=off \
     $UPDATE_FLAG; then
 
+    # Test counts from the JUnit XML, split by gate: the golden-file classes
+    # (the "Golden file tests" gate number in CLAUDE.md) and
+    # LayoutInputValidationTest (gated alongside, counted separately).
+    RESULTS_DIR="compiler/ir/backend.brightscript/build/test-results/test"
+    count_tests() {
+        # Sum the tests="N" attribute over the given TEST-*.xml files (0 if none).
+        local total=0 n
+        for f in "$@"; do
+            [ -f "$f" ] || continue
+            n=$(grep -o '<testsuite[^>]*tests="[0-9]*"' "$f" | head -1 | grep -o 'tests="[0-9]*"' | grep -o '[0-9]*')
+            total=$((total + ${n:-0}))
+        done
+        echo "$total"
+    }
+    GOLDEN_COUNT=$(count_tests "$RESULTS_DIR"/TEST-*GoldenFile*.xml)
+    LAYOUT_COUNT=$(count_tests "$RESULTS_DIR"/TEST-*LayoutInputValidation*.xml)
+
+    # Guard: a renamed/moved test class would stop matching its --tests filter
+    # and Gradle would still exit 0 (the other filter's tests pass) — the gate
+    # would degrade silently. Refuse a zero count for either gate.
+    if [ "$LAYOUT_COUNT" -eq 0 ] || [ "$GOLDEN_COUNT" -eq 0 ]; then
+        echo ""
+        echo -e "${RED}========================================"
+        echo "  Gate degraded: a filtered test class did not run"
+        echo -e "========================================${NC}"
+        echo "Golden file tests run: $GOLDEN_COUNT"
+        echo "LayoutInputValidationTest run: $LAYOUT_COUNT"
+        echo "Check the --tests filters in this script against the test class names."
+        exit 1
+    fi
+
     echo ""
     echo -e "${GREEN}========================================"
     echo "  All compiler tests PASSED"
     echo -e "========================================${NC}"
-
-    # Show test counts from the JUnit XML, split by gate: the golden-file
-    # classes (the "Golden file tests" gate number in CLAUDE.md) and
-    # LayoutInputValidationTest (gated alongside, counted separately).
-    RESULTS_DIR="compiler/ir/backend.brightscript/build/test-results/test"
-    if [ -d "$RESULTS_DIR" ]; then
-        count_tests() {
-            # Sum the tests="N" attribute over the given TEST-*.xml files (0 if none).
-            local total=0 n
-            for f in "$@"; do
-                [ -f "$f" ] || continue
-                n=$(grep -o '<testsuite[^>]*tests="[0-9]*"' "$f" | head -1 | grep -o 'tests="[0-9]*"' | grep -o '[0-9]*')
-                total=$((total + ${n:-0}))
-            done
-            echo "$total"
-        }
-        GOLDEN_COUNT=$(count_tests "$RESULTS_DIR"/TEST-*GoldenFile*.xml)
-        LAYOUT_COUNT=$(count_tests "$RESULTS_DIR"/TEST-*LayoutInputValidation*.xml)
-        echo ""
-        echo "Golden file tests run: $GOLDEN_COUNT"
-        echo "LayoutInputValidationTest run: $LAYOUT_COUNT"
-    fi
+    echo ""
+    echo "Golden file tests run: $GOLDEN_COUNT"
+    echo "LayoutInputValidationTest run: $LAYOUT_COUNT"
 
     exit 0
 else

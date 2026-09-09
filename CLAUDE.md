@@ -896,8 +896,9 @@ launched from an observer handler can await it too. Inputs readiness reads the
 since plan B (2026-09-09; a type without the field is inputs-ready by
 definition — see "Constructor Inputs and Typed Layout Builders"); tickets are
 spec 2's interface (design §13), not yet registered by anything. So today the
-gate parks for exactly one reason: an input-bearing node whose marker nobody
-wrote (created outside its Kotlin constructor / static layout). That park/wake/
+gate parks for exactly one reason besides `retired`: an input-bearing node
+whose marker nobody wrote (created outside its Kotlin constructor / static
+layout). That park/wake/
 watchdog path (marker observer wake, retire cancels a parked driver with
 CancellationException, one watchdog line per activation) is DEVICE-PINNED by
 Suite 11 `rawCreatedInputComponentStaysClosedUntilMarkerAndWatchdogFires` +
@@ -1074,7 +1075,8 @@ typed builder per component. Design of record:
 `docs/superpowers/plans/2026-09-04-component-lifecycle-design.md` (§3 inputs +
 builders, §4 inputs readiness, §5.7–5.10 compiler, §6 plugin, §7 FIR); plan
 `docs/superpowers/plans/2026-09-04-component-constructor-inputs.md`; execution
-record `.superpowers/sdd/2026-09-04-component-constructor-inputs/`. Device
+record `.superpowers/sdd/2026-09-04-component-constructor-inputs/` (local,
+untracked — not present in other clones). Device
 coverage: E2E Suite 11 tests 10–14 (the five constructor-input tests, named in
 the suite row) + goldens `components/{ctorInputs, ctorCallLowering,
 builderCallExtraction}` + the `LayoutInputValidationTest` unit test + the
@@ -1149,7 +1151,8 @@ screen = __kotlinNewComponent_1
   `componentFieldWriteRoute` (ONE decision for both `visitSetField` sites)
   emits `handle.field = v`, NOT the component-class `.top` routing (the handle
   is a bare roSGNode; `n.top` is invalid there).
-- Per-call-site temp names (`_1`, `_2`, …): nested `Outer(Inner(…))`,
+- Temp names carry a per-FILE ordinal, unique per call site (`_1`, `_2`, …):
+  nested `Outer(Inner(…))`,
   argument position, property-write position, discarded-statement position
   and locals hoisted into coroutine state machines are all pinned by the
   `ctorCallLowering` golden.
@@ -1212,15 +1215,19 @@ fun LayoutBuilder.badge(id: String, label: String, translation: Vector2D? = null
   the builder's mangled BRS global never collides with the class's globals; the
   exemption is annotation-keyed and pinned by a negative-control fixture,
   `nameCaseClash/sgComponentBuilderBesideComponentClassOk`).
-- **Which classes get NO builder** (the plugin logs each skip — WARN when it
-  could not parse, INFO for designed-in ineligibility): an input typed
-  node/AA/nullable — only `String`/`Int`/`Float`/`Double`/`Boolean` can be XML
-  constants (construct those in code; INFO); an input named `id`/`init`/a
-  standard attribute (WARN); abstract/sealed/data/enum/inner/value/private
-  classes (INFO for abstract); a builder name colliding with a built-in DSL
-  method or a Kotlin hard keyword (WARN); a header the grammar cannot parse
-  (WARN). Kotlin default values on constructor inputs are parsed and IGNORED —
-  the builder parameter stays required because the marker needs EVERY input.
+- **Which classes get NO builder** (the plugin logs each skip — WARN when a
+  constructor PARAMETER piece could not be parsed or a name collides, INFO for
+  designed-in ineligibility): an input typed node/AA/nullable — only
+  `String`/`Int`/`Float`/`Double`/`Boolean` can be XML constants (construct
+  those in code; INFO); a constructor parameter that is not an
+  `@SG<Kind>Field val name: Type` input (WARN); an input named `id`/`init`/a
+  standard attribute (WARN); abstract/sealed/data/enum/annotation/inner/value/
+  private classes (INFO — not instantiable as layout children); a builder name
+  colliding with a built-in DSL method or a Kotlin hard keyword (WARN). A class
+  whose HEADER the grammar does not recognize never enters the scan at all —
+  SILENT: no builder, no warning (backlog (e)). Kotlin default values on
+  constructor inputs are parsed and IGNORED — the builder parameter stays
+  required because the marker needs EVERY input.
 - **The grammar** is `[modifiers] class X(<@SG…Field val a: T, …>) : Base(`
   with `Base` a stdlib render base or another component of the module
   (cross-file base chains resolved module-wide; comments stripped
